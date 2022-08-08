@@ -141,17 +141,17 @@ describe('End to End tests', () => {
     const transferValue = 4;
 
     /*
-     * dummy pkd of user who does not exist
+     * dummy recipientPublicKey of user who does not exist
      * Note: even though we are passing recipientPkd, but in code
      *   it gets override by sender's pdk for now
      *   hence two check
      */
-    const recipientPkd = Cypress.env('RECIPIENT_PKD') || ' ';
+    const recipientZkpPublicKey = Cypress.env('RECIPIENT_PKD') || ' ';
 
     it(`transfer token of value ${transferValue}`, () => {
       cy.get('#TokenItem_tokenSendMATIC').click();
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
-      cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
+      cy.get('#TokenItem_modalSend_compressedZkpPublicKey').clear().type(recipientZkpPublicKey);
       cy.get('button').contains('Continue').click();
       cy.contains('L2 Bridge', { timeout: 10000 }).click();
       cy.wait(10000);
@@ -191,17 +191,17 @@ describe('End to End tests', () => {
     const returnValue = commitmentValues - transferValue;
 
     /*
-     * dummy pkd of user who does not exist
+     * dummy recipientPublicKey of user who does not exist
      * Note: even though we are passing recipientPkd, but in code
      *   it gets override by sender's pdk for now
      *   hence two check
      */
-    const recipientPkd = Cypress.env('RECIPIENT_PKD') || ' ';
+    const recipientZkpPublicKey = Cypress.env('RECIPIENT_PKD') || ' ';
 
     it(`transfer token of value ${transferValue}`, () => {
       cy.get('#TokenItem_tokenSendMATIC').click();
       cy.get('#TokenItem_modalSend_tokenAmount').clear().type(transferValue);
-      cy.get('#TokenItem_modalSend_compressedPkd').clear().type(recipientPkd);
+      cy.get('#TokenItem_modalSend_compressedZkpPublicKey').clear().type(recipientZkpPublicKey);
       cy.get('button').contains('Continue').click();
       cy.wait(50000);
       cy.contains('L2 Bridge').click();

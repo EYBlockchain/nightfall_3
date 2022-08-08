@@ -29,6 +29,19 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "uint8",
+        "name": "version",
+        "type": "uint8"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "bytes32",
         "name": "withdrawTransactionHash",
         "type": "bytes32"
@@ -47,6 +60,32 @@
       }
     ],
     "name": "InstantWithdrawalRequested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "NewBootChallengerSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "NewBootProposerSet",
     "type": "event"
   },
   {
@@ -135,21 +174,22 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "blockHash",
-        "type": "bytes32"
-      },
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Paused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
       {
         "indexed": false,
         "internalType": "uint256",
         "name": "blockNumberL2",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "leafCount",
         "type": "uint256"
       }
     ],
@@ -158,8 +198,40 @@
   },
   {
     "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "ercAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ShieldBalanceTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
     "inputs": [],
     "name": "TransactionSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Unpaused",
     "type": "event"
   },
   {
@@ -337,6 +409,27 @@
     "constant": true
   },
   {
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256[]",
@@ -360,11 +453,6 @@
         "internalType": "address",
         "name": "tokenAddr",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "transactionType",
-        "type": "uint256"
       }
     ],
     "name": "removeRestriction",
@@ -457,6 +545,13 @@
       }
     ],
     "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -563,9 +658,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[8]",
+            "internalType": "bytes32[2]",
             "name": "compressedSecrets",
-            "type": "bytes32[8]"
+            "type": "bytes32[2]"
           },
           {
             "internalType": "uint256[4]",
@@ -671,9 +766,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[8]",
+            "internalType": "bytes32[2]",
             "name": "compressedSecrets",
-            "type": "bytes32[8]"
+            "type": "bytes32[2]"
           },
           {
             "internalType": "uint256[4]",
@@ -851,9 +946,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[8]",
+            "internalType": "bytes32[2]",
             "name": "compressedSecrets",
-            "type": "bytes32[8]"
+            "type": "bytes32[2]"
           },
           {
             "internalType": "uint256[4]",
@@ -975,9 +1070,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[8]",
+            "internalType": "bytes32[2]",
             "name": "compressedSecrets",
-            "type": "bytes32[8]"
+            "type": "bytes32[2]"
           },
           {
             "internalType": "uint256[4]",
@@ -1055,9 +1150,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[8]",
+            "internalType": "bytes32[2]",
             "name": "compressedSecrets",
-            "type": "bytes32[8]"
+            "type": "bytes32[2]"
           },
           {
             "internalType": "uint256[4]",
@@ -1162,9 +1257,9 @@
             "type": "bytes32[2]"
           },
           {
-            "internalType": "bytes32[8]",
+            "internalType": "bytes32[2]",
             "name": "compressedSecrets",
-            "type": "bytes32[8]"
+            "type": "bytes32[2]"
           },
           {
             "internalType": "uint256[4]",
