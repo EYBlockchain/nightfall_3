@@ -61,7 +61,6 @@ export async function storeCircuit(key, data, dataHash) {
 
 export async function getStoreCircuitHash(key) {
   const db = await connectDB();
-  const val = await db.get(CIRCUIT_HASH_COLLECTION, key);
   return db.get(CIRCUIT_HASH_COLLECTION, key);
 }
 
