@@ -1,4 +1,4 @@
-// ignore unused exports default
+// ignore unused exports
 
 /*
  * can also be used as worker file to download circuits files from AWS (a worker thread).
