@@ -33,28 +33,26 @@ async function withdraw(withdrawParams) {
   const maticAddress = await shieldContractInstance.methods.getMaticAddress().call();
 
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value;
-  const commitmentsInfo = await getCommitmentsValues(
-    withdrawValue.bigInt,
-    [],
-    [],
+
+  const commitmentsInfo = await getCommitmentsValues({
+    totalValue: withdrawValue.bigInt,
+    valuesArray: [],
+    recipientZkpPublicKeysArray: [],
     ercAddress,
     tokenId,
     rootKey,
-    [],
-    false,
-  );
+    isFee: false,
+  });
 
-  const usedCommitments = commitmentsInfo.oldCommitments.map(commitment => commitment.hash.hex(32));
-  const commitmentsInfoFee = await getCommitmentsValues(
-    fee.bigInt,
-    [],
-    [],
-    generalise(maticAddress.toLowerCase()),
-    generalise(0),
+  const commitmentsInfoFee = await getCommitmentsValues({
+    totalValue: fee.bigInt,
+    valuesArray: [],
+    recipientZkpPublicKeysArray: [],
+    ercAddress: generalise(maticAddress.toLowerCase()),
+    tokenId: generalise(0),
     rootKey,
-    usedCommitments,
-    true,
-  );
+    isFee: true,
+  });
 
   // now we have everything we need to create a Witness and compute a proof
   const transaction = new Transaction({

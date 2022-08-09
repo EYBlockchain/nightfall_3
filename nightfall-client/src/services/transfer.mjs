@@ -41,28 +41,25 @@ async function transfer(transferParams) {
 
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
 
-  const commitmentsInfo = await getCommitmentsValues(
-    totalValueToSend,
-    values,
-    recipientZkpPublicKeys,
+  const commitmentsInfo = await getCommitmentsValues({
+    totalValue: totalValueToSend,
+    valuesArray: values,
+    recipientZkpPublicKeysArray: recipientZkpPublicKeys,
     ercAddress,
     tokenId,
     rootKey,
-    [],
-    false,
-  );
+    isFee: false,
+  });
 
-  const usedCommitments = commitmentsInfo.oldCommitments.map(commitment => commitment.hash.hex(32));
-  const commitmentsInfoFee = await getCommitmentsValues(
-    fee.bigInt,
-    [],
-    [],
-    generalise(maticAddress.toLowerCase()),
-    generalise(0),
+  const commitmentsInfoFee = await getCommitmentsValues({
+    totalValue: fee.bigInt,
+    valuesArray: [],
+    recipientZkpPublicKeysArray: [],
+    ercAddress: generalise(maticAddress.toLowerCase()),
+    tokenId: generalise(0),
     rootKey,
-    usedCommitments,
-    true,
-  );
+    isFee: true,
+  });
 
   // KEM-DEM encryption
   const [ePrivate, ePublic] = await genEphemeralKeys();

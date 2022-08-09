@@ -49,7 +49,7 @@ async function localTest() {
   // Create a block of deposits
   for (let i = 0; i < txPerBlock; i++) {
     try {
-      await nf3.deposit(ercAddress, tokenType, value, tokenId);
+      await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
     } catch (err) {
       logger.warn(`Error in deposit ${err}`);
     }
@@ -67,6 +67,7 @@ async function localTest() {
           value,
           tokenId,
           IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
+          0,
         );
       } catch (err) {
         if (err.message.includes('No suitable commitments')) {
@@ -85,6 +86,7 @@ async function localTest() {
             value,
             tokenId,
             IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
+            0,
           );
         }
       }

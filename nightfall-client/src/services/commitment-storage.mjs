@@ -594,13 +594,7 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
 // also mark any found commitments as nullified (TODO mark them as un-nullified
 // if the transaction errors). The mutex lock is in the function
 // findUsableCommitmentsMutex, which calls this function.
-async function findUsableCommitments(
-  compressedZkpPublicKey,
-  ercAddress,
-  tokenId,
-  _value,
-  nonUsableCommitments = [],
-) {
+async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -615,12 +609,9 @@ async function findUsableCommitments(
     })
     .toArray();
 
-  const usableCommitments = commitmentArray.filter(
-    commitment => !nonUsableCommitments.includes(commitment),
-  );
-  if (usableCommitments === []) return null;
+  if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
-  const commitments = usableCommitments
+  const commitments = commitmentArray
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage));
   // if we have an exact match, we can do a single-commitment transfer.
@@ -746,16 +737,9 @@ export async function findUsableCommitmentsMutex(
   ercAddress,
   tokenId,
   _value,
-  nonUsableCommitments = [],
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(
-      compressedZkpPublicKey,
-      ercAddress,
-      tokenId,
-      _value,
-      nonUsableCommitments,
-    ),
+    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value),
   );
 }
 
