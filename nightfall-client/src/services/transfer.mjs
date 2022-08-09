@@ -15,13 +15,26 @@ import { waitForContract } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
-import { getCommitmentsValues } from '../utils/getCommitmentValues.mjs';
+import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
-import { updateCommitments } from '../utils/updateCommitments.mjs';
+import { markNullified, storeCommitment } from './commitment-storage.mjs';
+import getProposersUrl from './peers.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
+
+const NULL_COMMITMENT_INFO = {
+  oldCommitments: [],
+  nullifiers: [],
+  newCommitments: [],
+  localSiblingPaths: [],
+  leafIndices: [],
+  blockNumberL2s: [],
+  roots: [],
+  salts: [],
+};
+const NEXT_N_PROPOSERS = 3;
 
 async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
@@ -40,26 +53,23 @@ async function transfer(transferParams) {
   const maticAddress = await shieldContractInstance.methods.getMaticAddress().call();
 
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
-
-  const commitmentsInfo = await getCommitmentsValues({
-    totalValue: totalValueToSend,
+  const commitmentsInfo = await getCommitmentInfo({
+    transferValue: totalValueToSend,
     valuesArray: values,
     recipientZkpPublicKeysArray: recipientZkpPublicKeys,
     ercAddress,
     tokenId,
     rootKey,
-    isFee: false,
   });
 
-  const commitmentsInfoFee = await getCommitmentsValues({
-    totalValue: fee.bigInt,
-    valuesArray: [],
-    recipientZkpPublicKeysArray: [],
-    ercAddress: generalise(maticAddress.toLowerCase()),
-    tokenId: generalise(0),
-    rootKey,
-    isFee: true,
-  });
+  const commitmentsInfoFee =
+    fee === 0
+      ? NULL_COMMITMENT_INFO
+      : await getCommitmentInfo({
+          transferValue: fee.bigInt,
+          ercAddress: generalise(maticAddress.toLowerCase()),
+          rootKey,
+        });
 
   // KEM-DEM encryption
   const [ePrivate, ePublic] = await genEphemeralKeys();
@@ -160,13 +170,46 @@ async function transfer(transferParams) {
       2,
     )} offchain ${offchain}`,
   );
-  return updateCommitments(
-    offchain,
-    optimisticTransferTransaction,
-    [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments],
-    [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments],
-    rootKey,
+
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+
+  // Store new commitments that are ours.
+  await Promise.all(
+    [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments]
+      .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
+      .map(c => storeCommitment(c, nullifierKey)),
   );
+
+  // mark the old commitments as nullified
+  await Promise.all(
+    [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments].map(c =>
+      markNullified(c, optimisticTransferTransaction),
+    ),
+  );
+  const returnObj = { transaction: optimisticTransferTransaction };
+
+  if (offchain) {
+    // dig up connection peers
+    const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
+    logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
+    await Promise.all(
+      Object.keys(peerList).map(async address => {
+        logger.debug(
+          `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
+        );
+        return axios.post(
+          `${peerList[address]}/proposer/offchain-transaction`,
+          { transaction: optimisticTransferTransaction },
+          { timeout: 3600000 },
+        );
+      }),
+    );
+  } else {
+    returnObj.rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
+      .encodeABI();
+  }
+  return returnObj;
 }
 
 export default transfer;

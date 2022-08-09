@@ -1,5 +1,4 @@
 const { upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-const config = require('config');
 
 const Verifier = artifacts.require('Verifier.sol');
 const Shield = artifacts.require('Shield.sol');
