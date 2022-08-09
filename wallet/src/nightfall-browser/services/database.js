@@ -37,7 +37,7 @@ const connectDB = async () => {
 };
 
 /*
- * function stores circuit data and hash 
+ * function stores circuit data and hash
  */
 export async function storeCircuit(key, data, dataHash) {
   const db = await connectDB();
