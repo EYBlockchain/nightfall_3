@@ -61,6 +61,7 @@ export async function storeCircuit(key, data, dataHash) {
 
 export async function getStoreCircuitHash(key) {
   const db = await connectDB();
+  const val = await db.get(CIRCUIT_HASH_COLLECTION, key);
   return db.get(CIRCUIT_HASH_COLLECTION, key);
 }
 
@@ -75,6 +76,7 @@ export async function getStoreCircuit(key) {
  * return array of arrays if all files found, else return false
  */
 export async function checkIndexDBForCircuit(circuit) {
+  console.log('XXXX', circuit);
   const record = await Promise.all([
     getStoreCircuit(`${circuit}-abi`),
     getStoreCircuit(`${circuit}-program`),
@@ -90,11 +92,19 @@ export async function checkIndexDBForCircuit(circuit) {
 export async function checkIndexDBForCircuitHash(circuitInfo) {
   const circuitName = circuitInfo.name;
   const record = await Promise.all([
-    getStoreCircuitHash(`${circuitName}-abi`) === circuitInfo.abi_hash,
-    getStoreCircuitHash(`${circuitName}-program`) === circuitInfo.program_hash,
-    getStoreCircuitHash(`${circuitName}-pk` === circuitInfo.pk_hash),
+    getStoreCircuitHash(`${circuitName}-abi`),
+    getStoreCircuitHash(`${circuitName}-program`),
+    getStoreCircuitHash(`${circuitName}-pk`),
   ]);
-  return record.every(r => r);
+  if (record.every(r => typeof r !== 'undefined')) {
+    return record.every(
+      r =>
+        r.dataHash === circuitInfo.abih ||
+        r.dataHash === circuitInfo.programh ||
+        r.dataHash === circuitInfo.pkh,
+    );
+  }
+  return false;
 }
 
 /**

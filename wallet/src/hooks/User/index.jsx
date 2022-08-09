@@ -12,9 +12,12 @@ import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
+import init from '../../web-worker/index.js';
 
 const {
+  utilApiServerUrl,
   AWS: { s3Bucket },
+  isLocalRun,
 } = global.config;
 
 const { eventWsUrl } = global.config;
@@ -172,9 +175,9 @@ export const UserProvider = ({ children }) => {
 
   useInterval(
     async () => {
-      const circuitInfo = JSON.parse(
-        new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')),
-      );
+      const circuitInfo = isLocalRun
+        ? await fetch(`${utilApiServerUrl}/s3_hash.txt`).then(response => response.json())
+        : JSON.parse(new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')));
 
       const circuitCheck = await Promise.all(circuitInfo.map(c => checkIndexDBForCircuit(c.name)));
       console.log('Circuit Check', circuitCheck);
@@ -186,6 +189,9 @@ export const UserProvider = ({ children }) => {
           };
         });
         setSyncing(false);
+      } else {
+        console.log('RELOAD CIRCUITS');
+        init();
       }
     },
     isSyncing ? 30000 : null,
@@ -196,12 +202,11 @@ export const UserProvider = ({ children }) => {
   */
   useInterval(
     async () => {
-      const circuitInfo = JSON.parse(
-        new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')),
-      );
-
+      const circuitInfo = isLocalRun
+        ? await fetch(`${utilApiServerUrl}/s3_hash.txt`).then(response => response.json())
+        : JSON.parse(new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')));
       const hashCheck = await Promise.all(circuitInfo.map(c => checkIndexDBForCircuitHash(c)));
-      console.log('Circuit Check', hashCheck);
+      console.log('Circuit Hash Check', hashCheck);
       if (!hashCheck.every(c => c)) {
         setState(previousState => {
           return {
@@ -210,6 +215,8 @@ export const UserProvider = ({ children }) => {
           };
         });
         setSyncing(true);
+        console.log('RELOAD CIRCUITS');
+        init();
       }
     },
     isSyncing ? null : 30000,

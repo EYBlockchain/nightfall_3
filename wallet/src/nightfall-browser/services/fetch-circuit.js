@@ -18,14 +18,14 @@ export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS:
   let { abi, program, pk } = circuit; // keys path in bucket
   const { abih = null, programh = null, pkh = null } = circuit; // keys hash in bucket
   if (isLocalRun) {
-    abi = await fetch(`${utilApiServerUrl}/${circuit}/${circuit}_abi.json`).then(response =>
-      response.json(),
+    abi = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}_abi.json`).then(
+      response => response.json(),
     );
-    program = await fetch(`${utilApiServerUrl}/${circuit}/${circuit}_out`)
+    program = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}_out`)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
-    pk = await fetch(`${utilApiServerUrl}/${circuit}/${circuit}_pk.key`)
+    pk = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}_pk.key`)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
@@ -34,5 +34,6 @@ export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS:
     program = await fetchAWSfiles(s3Bucket, program);
     pk = await fetchAWSfiles(s3Bucket, pk);
   }
+  console.log('ABI: ', abi, abih);
   return { abi, abih, program, programh, pk, pkh };
 }
