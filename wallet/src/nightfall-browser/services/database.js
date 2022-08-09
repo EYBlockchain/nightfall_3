@@ -75,7 +75,6 @@ export async function getStoreCircuit(key) {
  * return array of arrays if all files found, else return false
  */
 export async function checkIndexDBForCircuit(circuit) {
-  console.log('XXXX', circuit);
   const record = await Promise.all([
     getStoreCircuit(`${circuit}-abi`),
     getStoreCircuit(`${circuit}-program`),
