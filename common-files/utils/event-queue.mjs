@@ -53,6 +53,15 @@ async function enqueueEvent(callback, priority, args) {
 }
 
 /**
+This function immediately and unceremoniously empties the queue. It should probably
+be used with extreme care on a running queue because the exact state on emptying, and thus
+the last job that ran, will be unclear. It will cause the end event to fire.
+*/
+function emptyQueue(priority) {
+  return queues[priority].end();
+}
+
+/**
 These functions pause the queue once the current process at the head of the queue has
 completed.  It will then wait until we tell it to start again via unpause.
 While paused, it will still accept incoming items.
@@ -169,4 +178,5 @@ export {
   waitForConfirmation,
   pauseQueue,
   unpauseQueue,
+  emptyQueue,
 };

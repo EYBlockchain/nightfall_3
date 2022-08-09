@@ -141,7 +141,7 @@ async function blockProposedEventHandler(data) {
       // push anything into the queue and that would work but it's useful to
       // have the actual challenge to support syncing
       await enqueueEvent(commitToChallenge, 2, txDataToSign);
-      commitToChallenge(txDataToSign);
+      await commitToChallenge(txDataToSign);
     } else {
       logger.error(err.stack);
       throw new Error(err);

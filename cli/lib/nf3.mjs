@@ -259,11 +259,11 @@ class Nf3 {
     const gasPrice = await this.estimateGasPrice();
     // Estimate the gasLimit
     const gas = await this.estimateGas(contractAddress, unsignedTransaction);
-    logger.debug(
-      `Transaction gasPrice was set at ${Math.ceil(
-        gasPrice / 10 ** 9,
-      )} GWei, gas limit was set at ${gas}`,
-    );
+    // logger.debug(
+    //  `Transaction gasPrice was set at ${Math.ceil(
+    //    gasPrice / 10 ** 9,
+    //  )} GWei, gas limit was set at ${gas}`,
+    // );
     const tx = {
       from: this.ethereumAddress,
       to: contractAddress,
@@ -273,8 +273,6 @@ class Nf3 {
       gasPrice,
     };
 
-    // logger.debug(`The nonce for the unsigned transaction ${tx.data} is ${this.nonce}`);
-    // this.nonce++;
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
       const promiseTest = new Promise((resolve, reject) => {
@@ -892,7 +890,7 @@ class Nf3 {
       );
       // and a listener for the pong
       // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
+      logger.debug('Proposer websocket connection opened');
       connection.send('blocks');
     };
     connection.onmessage = async message => {
@@ -940,43 +938,6 @@ class Nf3 {
   }
 
   /**
-    Returns an emitter, whose 'data' event fires whenever a block is
-    detected, passing out the transaction needed to propose the block. This
-    is a lower level method than `Nf3.startProposer` because it does not sign and
-    send the transaction to the blockchain. If required, `Nf3.submitTransaction`
-    can be used to do that.
-    @method
-    @async
-    @returns {Promise} A Promise that resolves into an event emitter.
-    */
-  async getNewBlockEmitter() {
-    const newBlockEmitter = new EventEmitter();
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
-    this.websockets.push(connection); // save so we can close it properly later
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-          // logger.debug('sent websocket ping');
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
-      connection.send('blocks');
-    };
-    connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
-      if (type === 'block') {
-        newBlockEmitter.emit('data', txDataToSign);
-      }
-    };
-    return newBlockEmitter;
-  }
-
-  /**
     Registers our address as a challenger address with the optimist container.
     This is so that the optimist container can tell when a challenge that we have
     committed to has appeared on chain.
@@ -1007,6 +968,7 @@ class Nf3 {
     @async
     */
   async startChallenger() {
+    const challengeEmitter = new EventEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
@@ -1014,37 +976,43 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          // logger.debug('sent websocket ping');
+          // logger.debug('sent challenge websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
       // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
+      logger.debug('Challenge websocket connection opened');
       connection.send('challenge');
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
+      logger.debug(`Challenger received websocket message of type ${type}`);
       if (type === 'commit' || type === 'challenge') {
-        return new Promise((resolve, reject) => {
-          logger.debug('-> Push transaction to challengerQueue');
-          challengerQueue.push(async () => {
-            try {
-              logger.debug('-> Submit transaction from challengerQueue');
-              const receipt = await this.submitTransaction(
-                txDataToSign,
-                this.challengesContractAddress,
-                0,
-              );
-              resolve(receipt);
-            } catch (err) {
-              reject(err);
-            }
-          });
+        challengerQueue.push(async () => {
+          try {
+            const receipt = await this.submitTransaction(
+              txDataToSign,
+              this.challengesContractAddress,
+              0,
+            );
+            challengeEmitter.emit('receipt', receipt, type);
+          } catch (err) {
+            logger.debug(`Challenge error ${err.message}`);
+            challengeEmitter.emit('error', err, type);
+          }
         });
       }
       return null;
     };
+    connection.onerror = () => logger.error('websocket connection error');
+    connection.onclosed = () => logger.warn('websocket connection closed');
+    return challengeEmitter;
+  }
+
+  // method to turn challenges off and on.  Note, this does not affect the queue
+  challengeEnable(enable) {
+    return axios.post(`${this.optimistBaseUrl}/challenger/enable`, { enable });
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -1071,6 +1039,7 @@ class Nf3 {
   }
 
   /**
+    @deprecated - .startChallenger returns a challenge emitter directly now
     Returns an emitter, whose 'data' event fires whenever a challengeable block is
     detected, passing out the transaction needed to raise the challenge. This
     is a lower level method than `Nf3.startChallenger` because it does not sign and
@@ -1094,7 +1063,7 @@ class Nf3 {
       );
       // and a listener for the pong
       // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
+      logger.debug(' challenge websocket connection opened');
       connection.send('challenge');
     };
     connection.onmessage = async message => {

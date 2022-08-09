@@ -30,28 +30,27 @@ export function setChallengeWebSocketConnection(_ws) {
 export function startMakingChallenges() {
   logger.info(`Challenges ON`);
   makeChallenges = true;
+  return makeChallenges;
 }
 export function stopMakingChallenges() {
   logger.info(`Challenges OFF`);
   makeChallenges = false;
+  return makeChallenges;
 }
 
 export async function commitToChallenge(txDataToSign) {
   // we always compute a challenge but we'll only commit when we actually want to challenge
-  if (!makeChallenges) return;
+  if (!makeChallenges) {
+    logger.debug('Challenges are paused so committing to challenge has been skipped');
+    return;
+  }
+  logger.debug('Committing to challenge');
   const web3 = Web3.connection();
   const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
   const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   const commitToSign = await challengeContractInstance.methods
     .commitToChallenge(commitHash)
     .encodeABI();
-  logger.debug(
-    `raw transaction for committing to challenge has been sent to be signed and submitted ${JSON.stringify(
-      commitToSign,
-      null,
-      2,
-    )}`,
-  );
   await saveCommit(commitHash, txDataToSign);
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects
@@ -64,6 +63,13 @@ export async function commitToChallenge(txDataToSign) {
     if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
   }
   ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
+  logger.debug(
+    `raw transaction for committing to challenge has been sent to be signed and submitted ${JSON.stringify(
+      commitToSign,
+      null,
+      2,
+    )}`,
+  );
 }
 
 export async function revealChallenge(txDataToSign) {

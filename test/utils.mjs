@@ -142,7 +142,7 @@ export class Web3Client {
       receipt = await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
       // the confirmations Promivent doesn't seem to terminate in Ganache, so we'll
       // just count 12 blocks before returning. TODO this won't handle a chain reorg.
-      console.log('waiting for twelve confirmations of transaction');
+      // console.log('waiting for twelve confirmations of transaction');
       const startBlock = await this.web3.eth.getBlock('latest');
       await new Promise(resolve => {
         const id = setInterval(async () => {
@@ -153,7 +153,7 @@ export class Web3Client {
           }
         }, 1000);
       });
-      console.log('transaction confirmed');
+      // console.log('transaction confirmed');
     } finally {
       this.isSubmitTxLocked = false;
     }

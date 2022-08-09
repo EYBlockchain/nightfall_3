@@ -116,8 +116,8 @@ services:
 
   optimist1:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-    depends_on:
-      - deployer
+  #  depends_on:
+  #    - deployer
     networks:
       - nightfall_network
     ports:
