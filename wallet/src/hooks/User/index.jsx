@@ -78,7 +78,7 @@ export const UserProvider = ({ children }) => {
       console.log(`Websocket is open`);
       const lastBlock = (await getMaxBlock()) ?? -1;
       console.log('LastBlock', lastBlock);
-      socket.send(JSON.stringify({ type: 'sync', lastBlock, lastBlockHash }));
+      socket.send(JSON.stringify({ type: 'sync', lastBlock }));
     });
 
     setState(previousState => {
@@ -111,13 +111,26 @@ export const UserProvider = ({ children }) => {
             return blockProposedEventHandler(curr, [zkpPrivateKey], [nullifierKey]); // TODO Should be array
           }, Promise.resolve());
         if (Number(parsed.maxBlock) !== 1) {
-          socket.send(
-            JSON.stringify({
-              type: 'sync',
-              lastBlock:
-                parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2,
-            }),
-          );
+          if (
+            parsed.historicalData.block.previousBlockHash !== lastBlockHash &&
+            Number(lastBlockHash) !== 0
+          ) {
+            // resync
+            // TODO - handle resync correctly
+            //  This is a temporary solution, and it doesn't cover all scenarios.
+            //  For example, if requested block is higher than what's in the db,
+            //  a resync will not be detected until next block is proposed
+            console.log('Resync DB');
+          } else {
+            setLastBlockHash(parsed.historicalData.block.blockHash);
+            socket.send(
+              JSON.stringify({
+                type: 'sync',
+                lastBlock:
+                  parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2,
+              }),
+            );
+          }
         }
         console.log('Sync complete');
         setState(previousState => {
@@ -127,9 +140,14 @@ export const UserProvider = ({ children }) => {
           };
         });
       } else if (parsed.type === 'blockProposed') {
-        setLastBlockHash(parsed.data.blockHash);
-        await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);
-      } else if (parsed.type === 'resync') console.log('Resync DB');
+        if (parsed.data.previousBlockHash !== lastBlockHash && Number(lastBlockHash) !== 0) {
+          // resync
+          console.log('Resync DB');
+        } else {
+          setLastBlockHash(parsed.data.blockHash);
+          await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);
+        }
+      }
       // TODO Rollback Handler
     };
 
