@@ -15,7 +15,7 @@ const { BN128_GROUP_ORDER } = config;
 export const getCommitmentsValues = async txInfo => {
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(txInfo.rootKey);
 
-  if (txInfo.isFee && txInfo.totalValueToSend === 0n) {
+  if (txInfo.isFee && txInfo.totalValue === 0n) {
     return {
       oldCommitments: [],
       nullifiers: [],
@@ -32,7 +32,7 @@ export const getCommitmentsValues = async txInfo => {
     compressedZkpPublicKey,
     txInfo.ercAddress,
     txInfo.tokenId,
-    txInfo.totalValueToSend,
+    txInfo.totalValue,
   );
   if (oldCommitments) logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
   else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
@@ -54,24 +54,26 @@ export const getCommitmentsValues = async txInfo => {
   }
 
   // we may need to return change to the recipient
-  const change = totalInputCommitmentFeeValue - txInfo.totalValueToSend;
+  const change = totalInputCommitmentFeeValue - txInfo.totalValue;
 
   // if so, add an output commitment to do that
   if (change !== 0n) {
-    txInfo.values.push(new GN(change));
-    txInfo.recipientZkpPublicKeys.push(zkpPublicKey);
+    txInfo.valuesArray.push(new GN(change));
+    txInfo.recipientZkpPublicKeysArray.push(zkpPublicKey);
   }
 
-  const salts = await Promise.all(txInfo.values.map(async () => randValueLT(BN128_GROUP_ORDER)));
+  const salts = await Promise.all(
+    txInfo.valuesArray.map(async () => randValueLT(BN128_GROUP_ORDER)),
+  );
 
   // Generate new commitments, already truncated to u32[7]
-  const newCommitments = txInfo.values.map(
+  const newCommitments = txInfo.valuesArray.map(
     (value, i) =>
       new Commitment({
         ercAddress: txInfo.ercAddress,
         tokenId: txInfo.tokenId,
         value,
-        zkpPublicKey: txInfo.recipientZkpPublicKeys[i],
+        zkpPublicKey: txInfo.recipientZkpPublicKeysArray[i],
         salt: salts[i].bigInt,
       }),
   );
