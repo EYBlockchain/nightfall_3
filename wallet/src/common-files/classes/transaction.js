@@ -191,7 +191,7 @@ class Transaction {
       compressedSecrets,
       commitmentFee,
       nullifiersFee,
-      proof: compressProof(proof),
+      proof: arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof),
     };
   }
 }

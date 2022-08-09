@@ -37,9 +37,10 @@ async function blockProposedEventHandler(data, syncing) {
     `Received Block Proposed event with layer 2 block number ${block.blockNumberL2} and tx hash ${transactionHashL1}`,
   );
   const latestTree = await getLatestTree();
-  const blockCommitments = transactions.map(t =>
-    [t.commitments, t.commitmentFee].flat(Infinity).filter(c => c !== ZERO),
-  );
+  const blockCommitments = transactions
+    .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
+    .flat(Infinity);
+
   let timeBlockL2 = await getTimeByBlock(transactionHashL1);
   timeBlockL2 = new Date(timeBlockL2 * 1000);
 

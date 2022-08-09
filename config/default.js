@@ -76,10 +76,6 @@ module.exports = {
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
-  PAYMENT_ADDRESS:
-    process.env.ETH_NETWORK === 'mainnet'
-      ? '0x7D1AfA7B718fb893dB30A3aBc0Cfc608AaCfeBB0'
-      : '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',

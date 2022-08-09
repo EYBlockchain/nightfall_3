@@ -280,6 +280,7 @@ export async function createChallenge(block, transactions, err) {
               oldTxIdx,
               oldNullifierIdx,
               oldIsNullifierFee,
+              salt,
             )
             .encodeABI();
         }
@@ -297,6 +298,7 @@ export async function createChallenge(block, transactions, err) {
             priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)), // the transactions in the prior block
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
+            salt,
           )
           .encodeABI();
         break;
