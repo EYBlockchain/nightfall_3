@@ -180,9 +180,10 @@ describe('Testing with an adversary', () => {
             value2,
             tokenId,
             nf3User.zkpKeys.compressedZkpPublicKey,
+            fee,
           );
           nTransfers++;
-          // expectedBalance += value2;
+          expectedBalance -= fee;
         } catch (err) {
           if (err.message.includes('No suitable commitments')) {
             // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -200,9 +201,10 @@ describe('Testing with an adversary', () => {
               value2,
               tokenId,
               nf3User.zkpKeys.compressedZkpPublicKey,
+              fee,
             );
             nTransfers++;
-            // expectedBalance += value2; // transfer to self, so balance does not increase
+            expectedBalance -= fee; // transfer to self, so balance does not increase
           }
         }
         for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
