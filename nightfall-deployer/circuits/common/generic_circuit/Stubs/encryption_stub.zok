@@ -1,0 +1,16 @@
+from "../../utils/calculations.zok" import sum
+from "utils/pack/u32/pack256.zok" import main as u32_8_to_field
+
+def main(\
+    private u32[8] ephemeralKey,\
+    private field ercAddressTransfer,\
+    private u32[8] idTransfer\
+)-> (bool):
+    
+    field s = ercAddressTransfer * sum([\
+        u32_8_to_field(ephemeralKey),\
+        u32_8_to_field(idTransfer)\
+    ])
+    assert(s == s)
+
+    return true

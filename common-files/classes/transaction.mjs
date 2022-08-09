@@ -14,6 +14,13 @@ const { generalise } = gen;
 const TOKEN_TYPES = { ERC20: 0, ERC721: 1, ERC1155: 2 };
 const { TRANSACTION_TYPES } = constants;
 
+const arrayEquality = (as, bs) => {
+  if (as.length === bs.length) {
+    return as.every(a => bs.includes(a));
+  }
+  return false;
+};
+
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
   const web3 = Web3.connection();
@@ -30,7 +37,7 @@ function keccak(preimage) {
     compressedSecrets,
   } = preimage;
   let { proof } = preimage;
-  proof = compressProof(proof);
+  proof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof);
   const transaction = [
     value,
     historicRootBlockNumberL2,
@@ -57,7 +64,7 @@ class Transaction {
   // them undefined work?)
   constructor({
     fee,
-    historicRootBlockNumberL2,
+    historicRootBlockNumberL2: _historicRoot,
     transactionType,
     tokenType,
     tokenId,
@@ -69,11 +76,13 @@ class Transaction {
     compressedSecrets: _compressedSecrets, // this must be array of objects that are compressed from Secrets class
     proof, // this must be a proof object, as computed by zokrates worker
   }) {
-    if (proof === undefined) throw new Error('Proof cannot be undefined');
-    const flatProof = Object.values(proof).flat(Infinity);
     let commitments;
     let nullifiers;
     let compressedSecrets;
+    let flatProof;
+    let historicRootBlockNumberL2;
+    if (proof === undefined) flatProof = [0, 0, 0, 0, 0, 0, 0, 0];
+    else flatProof = Object.values(proof).flat(Infinity);
     if (_commitments === undefined) commitments = [{ hash: 0 }, { hash: 0 }];
     else if (_commitments.length === 1) commitments = [..._commitments, { hash: 0 }];
     else commitments = _commitments;
@@ -82,8 +91,11 @@ class Transaction {
     else nullifiers = _nullifiers;
     if (_compressedSecrets === undefined) compressedSecrets = [0, 0];
     else compressedSecrets = _compressedSecrets;
+    if (_historicRoot === undefined) historicRootBlockNumberL2 = [0, 0];
+    else if (_historicRoot.length === 1) historicRootBlockNumberL2 = [..._historicRoot, 0];
+    else historicRootBlockNumberL2 = _historicRoot;
 
-    if ((transactionType === 0 || transactionType === 3) && TOKEN_TYPES[tokenType] === undefined)
+    if ((transactionType === 0 || transactionType === 2) && TOKEN_TYPES[tokenType] === undefined)
       throw new Error('Unrecognized token type');
     // convert everything to hex(32) for interfacing with web3
     const preimage = generalise({
@@ -143,7 +155,7 @@ class Transaction {
       commitments,
       nullifiers,
       compressedSecrets,
-      proof: compressProof(proof),
+      proof: arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof),
     };
   }
 }

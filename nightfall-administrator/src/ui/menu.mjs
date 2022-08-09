@@ -38,7 +38,7 @@ export async function askQuestions(approved) {
       name: 'workflow',
       type: 'list',
       message: 'Add an existing signed transaction or create a new one?',
-      choices: ['add', 'create'],
+      choices: ['add', 'create', 'get nonce'],
       when: () => !approved,
     },
     {
@@ -75,7 +75,6 @@ export async function askQuestions(approved) {
         'Remove token restrictions',
         'Pause contracts',
         'Unpause contracts',
-        'Transfer Shield contract balance',
         'Transfer ownership',
         'Set new boot proposer',
         'Set new boot challenger',

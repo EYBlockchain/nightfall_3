@@ -485,8 +485,8 @@ export default function Wallet() {
   }, []);
 
   useEffect(async () => {
-    const pkdsDerived = Storage.pkdArrayGet('');
-    if (state.compressedPkd === '' && !pkdsDerived) setModalShow(true);
+    const zkpPubKeysDerived = Storage.ZkpPubKeyArrayGet('');
+    if (state.compressedZkpPublicKey === '' && !zkpPubKeysDerived) setModalShow(true);
     else setModalShow(false);
   }, []);
 
@@ -498,12 +498,12 @@ export default function Wallet() {
   }, []);
 
   useInterval(async () => {
-    const l2BalanceObj = await getWalletBalance(state.compressedPkd);
+    const l2BalanceObj = await getWalletBalance(state.compressedZkpPublicKey);
     const updatedState = await Promise.all(
       tokens.map(async t => {
         const currencyValue = currencyValues[t.id];
-        if (Object.keys(l2BalanceObj).includes(state.compressedPkd)) {
-          const token = l2BalanceObj[state.compressedPkd][t.address.toLowerCase()] ?? 0;
+        if (Object.keys(l2BalanceObj).includes(state.compressedZkpPublicKey)) {
+          const token = l2BalanceObj[state.compressedZkpPublicKey][t.address.toLowerCase()] ?? 0;
           return {
             ...t,
             l2Balance: token.toString(),

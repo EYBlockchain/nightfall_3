@@ -1,7 +1,7 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { generateKeys } from '@Nightfall/services/keys';
+import { ZkpKeys } from '@Nightfall/services/keys';
 import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
 import { checkIndexDBForCircuit, getMaxBlock } from '@Nightfall/services/database';
 import * as Storage from '../../utils/lib/local-storage';
@@ -11,7 +11,7 @@ import useInterval from '../useInterval';
 const { eventWsUrl, USE_STUBS } = global.config;
 
 export const initialState = {
-  compressedPkd: '',
+  compressedZkpPublicKey: '',
   chainSync: false,
   circuitSync: false,
 };
@@ -30,31 +30,31 @@ export const UserProvider = ({ children }) => {
   const deriveAccounts = async (mnemonic, numAccts) => {
     const accountRange = Array.from({ length: numAccts }, (v, i) => i);
     const zkpKeys = await Promise.all(
-      accountRange.map(i => generateKeys(mnemonic, `m/44'/60'/0'/${i.toString()}`)),
+      accountRange.map(i => ZkpKeys.generateZkpKeysFromMnemonic(mnemonic, i)),
     );
     const aesGenParams = { name: 'AES-GCM', length: 128 };
     const key = await crypto.subtle.generateKey(aesGenParams, false, ['encrypt', 'decrypt']);
     await storeBrowserKey(key);
     await Promise.all(zkpKeys.map(zkpKey => encryptAndStore(zkpKey)));
-    Storage.pkdArraySet(
+    Storage.ZkpPubKeyArraySet(
       '',
-      zkpKeys.map(z => z.compressedPkd),
+      zkpKeys.map(z => z.compressedZkpPublicKey),
     );
     setState(previousState => {
       return {
         ...previousState,
-        compressedPkd: zkpKeys[0].compressedPkd,
+        compressedZkpPublicKey: zkpKeys[0].compressedZkpPublicKey,
       };
     });
   };
 
   const syncState = async () => {
-    const pkds = Storage.pkdArrayGet('');
-    if (pkds) {
+    const compressedZkpPublicKeys = Storage.ZkpPubKeyArrayGet('');
+    if (compressedZkpPublicKeys) {
       setState(previousState => {
         return {
           ...previousState,
-          compressedPkd: pkds[0],
+          compressedZkpPublicKey: compressedZkpPublicKeys[0],
         };
       });
     }
@@ -81,8 +81,8 @@ export const UserProvider = ({ children }) => {
 
   let messageEventHandler;
   const configureMessageListener = () => {
-    const { compressedPkd, socket } = state;
-    if (compressedPkd === '') return;
+    const { compressedZkpPublicKey, socket } = state;
+    if (compressedZkpPublicKey === '') return;
 
     if (messageEventHandler) {
       socket.removeEventListener('message', messageEventHandler);
@@ -92,13 +92,13 @@ export const UserProvider = ({ children }) => {
     messageEventHandler = async function (event) {
       console.log('Message from server ', JSON.parse(event.data));
       const parsed = JSON.parse(event.data);
-      const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
+      const { nullifierKey, zkpPrivateKey } = await retrieveAndDecrypt(compressedZkpPublicKey);
       if (parsed.type === 'sync') {
         await parsed.historicalData
           .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
           .reduce(async (acc, curr) => {
             await acc; // Acc is a promise so we await it before processing the next one;
-            return blockProposedEventHandler(curr, [ivk], [nsk]); // TODO Should be array
+            return blockProposedEventHandler(curr, [zkpPrivateKey], [nullifierKey]); // TODO Should be array
           }, Promise.resolve());
         if (Number(parsed.maxBlock) !== 1) {
           socket.send(
@@ -117,7 +117,7 @@ export const UserProvider = ({ children }) => {
           };
         });
       } else if (parsed.type === 'blockProposed')
-        await blockProposedEventHandler(parsed.data, [ivk], [nsk]);
+        await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);
       // TODO Rollback Handler
     };
 
@@ -129,7 +129,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   React.useEffect(async () => {
-    if (state.compressedPkd === '') {
+    if (state.compressedZkpPublicKey === '') {
       console.log('Sync State');
       await syncState();
     }
@@ -138,13 +138,13 @@ export const UserProvider = ({ children }) => {
 
   React.useEffect(() => {
     configureMessageListener();
-  }, [state.compressedPkd]);
+  }, [state.compressedZkpPublicKey]);
 
   useInterval(
     async () => {
       const circuitName = USE_STUBS
-        ? ['deposit_stub', 'single_transfer_stub', 'double_transfer_stub', 'withdraw_stub']
-        : ['deposit', 'single_transfer', 'double_transfer', 'withdraw'];
+        ? ['deposit_stub', 'transfer_stub', 'withdraw_stub']
+        : ['deposit', 'transfer', 'withdraw'];
 
       const circuitCheck = await Promise.all(circuitName.map(c => checkIndexDBForCircuit(c)));
       console.log('Circuit Check', circuitCheck);
