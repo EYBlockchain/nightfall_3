@@ -4,10 +4,13 @@
 /*
  * main thread file
  */
+/*
 import {
   fetchCircuit,
   fetchAWSfiles,
 } from 'comlink-loader?singleton!@Nightfall/services/fetch-circuit';
+*/
+import fetchCircuit from 'comlink-loader?singleton!@Nightfall/services/fetch-circuit';
 import { checkIndexDBForCircuit, storeCircuit } from '@Nightfall/services/database';
 
 const {
@@ -17,9 +20,12 @@ const {
 } = global.config;
 
 export default async function fetchCircuitFileAndStoreInIndexedDB() {
+  /*
   const circuitInfo = JSON.parse(
     new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')),
   );
+  */
+  const circuitInfo = [1, 2, 3, 4];
   for (const circuit in circuitInfo) {
     if (!(await checkIndexDBForCircuit(circuit))) {
       const { abi, abih, program, programh, pk, pkh } = await fetchCircuit(circuit, {
