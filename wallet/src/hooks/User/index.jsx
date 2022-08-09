@@ -8,7 +8,7 @@ import {
   checkIndexDBForCircuitHash,
   getMaxBlock,
 } from '@Nightfall/services/database';
-// import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
+import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
@@ -154,12 +154,9 @@ export const UserProvider = ({ children }) => {
 
   useInterval(
     async () => {
-      /*
       const circuitInfo = JSON.parse(
         new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')),
       );
-      */
-      const circuitInfo = [1, 2, 3, 4];
 
       const circuitCheck = await Promise.all(circuitInfo.map(c => checkIndexDBForCircuit(c.name)));
       console.log('Circuit Check', circuitCheck);
