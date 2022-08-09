@@ -3,12 +3,21 @@ import { useHistory } from 'react-router-dom';
 
 import { ZkpKeys } from '@Nightfall/services/keys';
 import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
-import { checkIndexDBForCircuit, getMaxBlock } from '@Nightfall/services/database';
+import {
+  checkIndexDBForCircuit,
+  checkIndexDBForCircuitHash,
+  getMaxBlock,
+} from '@Nightfall/services/database';
+import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
 
-const { eventWsUrl, USE_STUBS } = global.config;
+const {
+  AWS: { s3Bucket },
+} = global.config;
+
+const { eventWsUrl } = global.config;
 
 export const initialState = {
   compressedZkpPublicKey: '',
@@ -25,6 +34,7 @@ export const UserProvider = ({ children }) => {
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false); // This is not really a sync;
   const [isSyncing, setSyncing] = React.useState(true);
+  const [lastBlockHash, setLastBlockHash] = React.useState('0x0');
   const history = useHistory();
 
   const deriveAccounts = async (mnemonic, numAccts) => {
@@ -68,7 +78,7 @@ export const UserProvider = ({ children }) => {
       console.log(`Websocket is open`);
       const lastBlock = (await getMaxBlock()) ?? -1;
       console.log('LastBlock', lastBlock);
-      socket.send(JSON.stringify({ type: 'sync', lastBlock }));
+      socket.send(JSON.stringify({ type: 'sync', lastBlock, lastBlockHash }));
     });
 
     setState(previousState => {
@@ -116,8 +126,10 @@ export const UserProvider = ({ children }) => {
             chainSync: true,
           };
         });
-      } else if (parsed.type === 'blockProposed')
+      } else if (parsed.type === 'blockProposed') {
+        setLastBlockHash(parsed.data.blockHash);
         await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);
+      } else if (parsed.type === 'resync') console.log('Resync DB');
       // TODO Rollback Handler
     };
 
@@ -142,11 +154,11 @@ export const UserProvider = ({ children }) => {
 
   useInterval(
     async () => {
-      const circuitName = USE_STUBS
-        ? ['deposit_stub', 'transfer_stub', 'withdraw_stub']
-        : ['deposit', 'transfer', 'withdraw'];
+      const circuitInfo = JSON.parse(
+        new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')),
+      );
 
-      const circuitCheck = await Promise.all(circuitName.map(c => checkIndexDBForCircuit(c)));
+      const circuitCheck = await Promise.all(circuitInfo.map(c => checkIndexDBForCircuit(c.name)));
       console.log('Circuit Check', circuitCheck);
       if (circuitCheck.every(c => c)) {
         setState(previousState => {
@@ -159,6 +171,30 @@ export const UserProvider = ({ children }) => {
       }
     },
     isSyncing ? 30000 : null,
+  );
+
+  /*
+    Check if hash circuit functions from manifest have changed. If the have, resync again
+  */
+  useInterval(
+    async () => {
+      const circuitInfo = JSON.parse(
+        new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')),
+      );
+
+      const hashCheck = await Promise.all(circuitInfo.map(c => checkIndexDBForCircuitHash(c)));
+      console.log('Circuit Check', hashCheck);
+      if (!hashCheck.every(c => c)) {
+        setState(previousState => {
+          return {
+            ...previousState,
+            circuitSync: false,
+          };
+        });
+        setSyncing(true);
+      }
+    },
+    isSyncing ? null : 30000,
   );
   /*
    * TODO: children should render when sync is complete

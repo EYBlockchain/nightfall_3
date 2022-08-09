@@ -4,26 +4,32 @@
 /*
  * main thread file
  */
-import fetchCircuit from 'comlink-loader?singleton!@Nightfall/services/fetch-circuit';
+import {
+  fetchCircuit,
+  fetchAWSfiles,
+} from 'comlink-loader?singleton!@Nightfall/services/fetch-circuit';
 import { checkIndexDBForCircuit, storeCircuit } from '@Nightfall/services/database';
 
 const {
   utilApiServerUrl,
   isLocalRun,
-  AWS: { s3Bucket, circuitFiles },
+  AWS: { s3Bucket },
 } = global.config;
 
 export default async function fetchCircuitFileAndStoreInIndexedDB() {
-  for (const circuit in circuitFiles) {
+  const circuitInfo = JSON.parse(
+    new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')),
+  );
+  for (const circuit in circuitInfo) {
     if (!(await checkIndexDBForCircuit(circuit))) {
-      const { abi, program, pk } = await fetchCircuit(circuit, {
+      const { abi, abih, program, programh, pk, pkh } = await fetchCircuit(circuit, {
         utilApiServerUrl,
         isLocalRun,
-        AWS: { s3Bucket, circuitFiles },
+        AWS: { s3Bucket },
       });
-      await storeCircuit(`${circuit}-abi`, abi);
-      await storeCircuit(`${circuit}-program`, program);
-      await storeCircuit(`${circuit}-pk`, pk);
+      await storeCircuit(`${circuit}-abi`, abi, abih);
+      await storeCircuit(`${circuit}-program`, program, programh);
+      await storeCircuit(`${circuit}-pk`, pk, pkh);
     }
   }
 }

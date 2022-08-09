@@ -15,6 +15,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
+  CIRCUIT_HASH_COLLECTION,
   TIMBER_HEIGHT,
   HASH_TYPE,
 } = global.config;
@@ -30,12 +31,24 @@ const connectDB = async () => {
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
+      newDb.createObjectStore(CIRCUIT_HASH_COLLECTION);
     },
   });
 };
 
-export async function storeCircuit(key, data) {
+/*
+ * function stores circuit data and hash 
+ */
+export async function storeCircuit(key, data, dataHash) {
   const db = await connectDB();
+  db.put(
+    CIRCUIT_HASH_COLLECTION,
+    {
+      _id: key,
+      dataHash,
+    },
+    key,
+  );
   return db.put(
     CIRCUIT_COLLECTION,
     {
@@ -44,6 +57,11 @@ export async function storeCircuit(key, data) {
     },
     key,
   );
+}
+
+export async function getStoreCircuitHash(key) {
+  const db = await connectDB();
+  return db.get(CIRCUIT_HASH_COLLECTION, key);
 }
 
 export async function getStoreCircuit(key) {
@@ -63,6 +81,20 @@ export async function checkIndexDBForCircuit(circuit) {
     getStoreCircuit(`${circuit}-pk`),
   ]);
   return record.every(r => typeof r !== 'undefined');
+}
+
+/*
+ * function checks indexedDb for all files hashes
+ * for a particular circuit match the S3 manifest
+ */
+export async function checkIndexDBForCircuitHash(circuitInfo) {
+  const circuitName = circuitInfo.name;
+  const record = await Promise.all([
+    getStoreCircuitHash(`${circuitName}-abi`) === circuitInfo.abi_hash,
+    getStoreCircuitHash(`${circuitName}-program`) === circuitInfo.program_hash,
+    getStoreCircuitHash(`${circuitName}-pk` === circuitInfo.pk_hash),
+  ]);
+  return record.every(r => r);
 }
 
 /**

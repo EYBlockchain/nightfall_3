@@ -9,16 +9,14 @@ import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 const s3 = new S3();
 
-async function fetchAWSfiles(Bucket, Key) {
+export async function fetchAWSfiles(Bucket, Key) {
   const res = await s3.makeUnauthenticatedRequest('getObject', { Bucket, Key }).promise();
   return res.Body;
 }
 
-export default async function fetchCircuit(
-  circuit,
-  { utilApiServerUrl, isLocalRun, AWS: { s3Bucket, circuitFiles } },
-) {
-  let { abi, program, pk } = circuitFiles[circuit]; // keys path in bucket
+export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS: { s3Bucket } }) {
+  let { abi, program, pk } = circuit; // keys path in bucket
+  const { abih = null, programh = null, pkh = null } = circuit; // keys hash in bucket
   if (isLocalRun) {
     abi = await fetch(`${utilApiServerUrl}/${circuit}/${circuit}_abi.json`).then(response =>
       response.json(),
@@ -36,5 +34,5 @@ export default async function fetchCircuit(
     program = await fetchAWSfiles(s3Bucket, program);
     pk = await fetchAWSfiles(s3Bucket, pk);
   }
-  return { abi, program, pk };
+  return { abi, abih, program, programh, pk, pkh };
 }
