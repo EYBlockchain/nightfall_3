@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import logger from 'common-files/utils/logger.mjs';
 import { compile, extractVk, exportKeys, setup } from '../zokrates-lib/index.mjs';
-import logger from '../utils/logger.mjs';
 
 export default async function generateKeys({ filepath, curve = 'bn128' }) {
   const outputPath = `./output`;

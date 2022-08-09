@@ -2,9 +2,9 @@ import fs from 'fs';
 import util from 'util';
 import crypto from 'crypto';
 import path from 'path';
+import logger from 'common-files/utils/logger.mjs';
 import { computeWitness, generateProof } from '../zokrates-lib/index.mjs';
 import { getProofFromFile } from '../utils/filing.mjs';
-import logger from '../utils/logger.mjs';
 
 const unlink = util.promisify(fs.unlink);
 

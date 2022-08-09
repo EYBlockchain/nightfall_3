@@ -70,7 +70,7 @@ async function withdraw(withdrawParams) {
   });
   const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
   const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
-  logger.silly(`SiblingPath was: ${JSON.stringify(localSiblingPaths)}`);
+  logger.trace(`SiblingPath was: ${JSON.stringify(localSiblingPaths)}`);
 
   const newCommitment = [];
   const salt = await randValueLT(BN128_GROUP_ORDER);
@@ -128,7 +128,7 @@ async function withdraw(withdrawParams) {
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
   });
-  logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
+  logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
