@@ -43,9 +43,11 @@ async function withdraw(withdrawParams) {
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = await shieldContractInstance.methods.getMaticAddress().call();
+  const maticAddress = generalise(
+    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  );
 
-  const addedFee = maticAddress === ercAddress ? fee.bigInt : 0;
+  const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
 
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value;
 
@@ -58,11 +60,11 @@ async function withdraw(withdrawParams) {
   });
 
   const commitmentsInfoFee =
-    fee === 0 || (maticAddress === ercAddress && commitmentsInfo.feeIncluded)
+    fee === 0 || commitmentsInfo.feeIncluded
       ? NULL_COMMITMENT_INFO
       : await getCommitmentInfo({
           transferValue: fee.bigInt,
-          ercAddress: generalise(maticAddress.toLowerCase()),
+          ercAddress: maticAddress,
           rootKey,
         });
 

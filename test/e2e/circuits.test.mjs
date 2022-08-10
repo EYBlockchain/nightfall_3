@@ -21,7 +21,7 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
-const nf3Users = [new Nf3(signingKeys.user1, environment)];
+const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
@@ -51,12 +51,48 @@ describe('General Circuit Test', () => {
     });
 
     await nf3Users[0].init(mnemonics.user1);
+    await nf3Users[1].init(mnemonics.user2);
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     await nf3Users[0].makeBlockNow();
+  });
+
+  it('Test that matic transfers pays the fee from the same transfer commitment', async () => {
+    async function getBalance() {
+      return Promise.all([
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0,
+        (await nf3Users[1].getLayer2Balances())[erc20Address]?.[0].balance || 0,
+      ]);
+    }
+    logger.debug(`Sending 1 deposit of 10...`);
+    await nf3Users[0].deposit(erc20Address, tokenType, 10, tokenId, 0);
+
+    await nf3Users[0].makeBlockNow();
+    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+    const beforeBalances = await getBalance();
+
+    const singleTransfer = await nf3Users[0].transfer(
+      false,
+      erc20Address,
+      tokenType,
+      7,
+      tokenId,
+      nf3Users[1].zkpKeys.compressedZkpPublicKey,
+      1,
+    );
+    expectTransaction(singleTransfer);
+
+    await nf3Users[0].makeBlockNow();
+    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+    const afterBalances = await getBalance();
+
+    expect(afterBalances[0] - beforeBalances[0]).to.be.equal(-8);
+    expect(afterBalances[1] - beforeBalances[1]).to.be.equal(7);
   });
 
   it('Test that all circuits are working without fees', async () => {

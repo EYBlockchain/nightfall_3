@@ -55,7 +55,7 @@ async function blockProposedEventHandler(data, syncing) {
     const nonZeroCommitmentsFee = transaction.commitmentFee.filter(n => n !== ZERO);
     const nonZeroNullifiersFee = transaction.nullifiersFee.filter(n => n !== ZERO);
 
-    const countOfNonZeroCommitments = await countCommitments(nonZeroCommitments);
+    const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
     const countOfNonZeroNullifiers = await countNullifiers(nonZeroNullifiers);
 
     if (transaction.transactionType === '1') {
