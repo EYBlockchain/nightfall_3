@@ -67,5 +67,5 @@ def main<TxType>(\
     //Check fee structure
     //Fee can be set to zero
     assert((TxType == 0 || fee == 0) && nullifiersFee[0] == 0 && nullifiersFee[1] == 0 && commitmentFee[0] == 0\
-     || (TxType != 0 && nullifiersFee[0] != 0))
+     || TxType != 0)
     return true

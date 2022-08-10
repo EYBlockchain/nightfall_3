@@ -52,9 +52,12 @@ async function transfer(transferParams) {
 
   const maticAddress = await shieldContractInstance.methods.getMaticAddress().call();
 
+  const addedFee = maticAddress === ercAddress ? fee.bigInt : 0;
+
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
     transferValue: totalValueToSend,
+    addedFee,
     valuesArray: values,
     recipientZkpPublicKeysArray: recipientZkpPublicKeys,
     ercAddress,
@@ -63,7 +66,7 @@ async function transfer(transferParams) {
   });
 
   const commitmentsInfoFee =
-    fee === 0
+    fee === 0 || (maticAddress === ercAddress && commitmentsInfo.feeIncluded)
       ? NULL_COMMITMENT_INFO
       : await getCommitmentInfo({
           transferValue: fee.bigInt,

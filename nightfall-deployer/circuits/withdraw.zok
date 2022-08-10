@@ -43,11 +43,11 @@ def main(\
     field[1] commitmentFeeValue = u8_array_to_field(commitmentFee.newCommitments.value)
 
     //Check that values match
-    assert(sum(nullifiersValue) == sum(commitmentsValue) + tx.value)
-
-    //Check that values fee match
-    assert(sum(nullifiersFeeValue) == tx.fee + sum(commitmentFeeValue))
-
+    assert((ercAddressFee != tx.ercAddress &&\
+        sum(nullifiersValue) == sum(commitmentsValue) + tx.value && sum(nullifiersFeeValue) == tx.fee + sum(commitmentFeeValue)) ||\
+        (ercAddressFee == tx.ercAddress &&\
+            sum(nullifiersValue) == tx.fee + tx.value + sum(commitmentsValue)))
+    
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
     field idRemainder = u32_array_to_field(tx.tokenId[1..8])

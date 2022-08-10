@@ -19,6 +19,7 @@ const { BN128_GROUP_ORDER } = config;
 export const getCommitmentInfo = async txInfo => {
   const {
     transferValue,
+    addedFee = 0,
     recipientZkpPublicKeysArray = [],
     ercAddress,
     tokenId = generalise(0),
@@ -26,16 +27,34 @@ export const getCommitmentInfo = async txInfo => {
   } = txInfo;
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
+  let feeIncluded = false;
+
   const valuesArray = recipientZkpPublicKeysArray.map(() => transferValue);
 
-  const oldCommitments = await findUsableCommitmentsMutex(
+  let oldCommitments = await findUsableCommitmentsMutex(
     compressedZkpPublicKey,
     ercAddress,
     tokenId,
-    generalise(transferValue),
+    generalise(transferValue + addedFee),
   );
-  if (oldCommitments) logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
-  else {
+  if (oldCommitments) {
+    if (addedFee > 0) feeIncluded = true;
+    logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
+  } else if (addedFee > 0) {
+    // If addedFee is higher than zero it is possible that the user had needed more than two commitments to perform the transaction + fee
+    oldCommitments = await findUsableCommitmentsMutex(
+      compressedZkpPublicKey,
+      ercAddress,
+      tokenId,
+      generalise(transferValue),
+    );
+    if (oldCommitments) {
+      logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
+    } else {
+      await Promise.all(oldCommitments.map(o => clearPending(o)));
+      throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
+    }
+  } else {
     await Promise.all(oldCommitments.map(o => clearPending(o)));
     throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
   }
@@ -106,6 +125,7 @@ export const getCommitmentInfo = async txInfo => {
       blockNumberL2s,
       roots,
       salts,
+      feeIncluded,
     };
   } catch (err) {
     logger.erro('Err', err);
