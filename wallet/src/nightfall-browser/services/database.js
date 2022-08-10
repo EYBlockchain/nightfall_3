@@ -69,6 +69,20 @@ export async function getStoreCircuit(key) {
   return db.get(CIRCUIT_COLLECTION, key);
 }
 
+
+/*
+ * function to empty object store contents
+ */
+export async function emptyStoreBlocks() {
+  const db = await connectDB();
+  return db.clear(SUBMITTED_BLOCKS_COLLECTION);
+}
+
+export async function emptyStoreTimber() {
+  const db = await connectDB();
+  return db.clear(TIMBER_COLLECTION);
+}
+
 /*
  * function checks indexedDb for all files(stored as Uint8Aray)
  * for a particular circuit
@@ -247,9 +261,17 @@ export async function getMaxBlock() {
   const keys = timbers.map(t => t.blockNumberL2);
   const maxKey = Math.max(...keys);
   return maxKey;
-  // return db.get(SUBMITTED_BLOCKS_COLLECTION, maxKey);
 }
 
+export async function getLastBlock() {
+  const db = await connectDB();
+  const blocks = await db.getAll(SUBMITTED_BLOCKS_COLLECTION);
+  if (blocks.length === 0) return null;
+  const keys = blocks.map(t => t.blockNumberL2);
+  const maxBlockL2 = Math.max(...keys);
+  const block = await getBlockByBlockNumberL2(maxBlockL2);
+  return block;
+}
 /**
 Transaction Collection
 */

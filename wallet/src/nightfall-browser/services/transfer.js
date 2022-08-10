@@ -11,6 +11,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
+import confirmBlock from '../../utils/lib/check-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -24,7 +25,7 @@ import {
   getSiblingInfo,
 } from './commitment-storage';
 import { ZkpKeys } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit, getLastBlock } from './database';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { computeWitness } from '../utils/compute-witness';
 
@@ -46,6 +47,12 @@ async function transfer(transferParams, shieldContractAddress) {
   );
   if (recipientCompressedZkpPublicKeys.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
+
+  const lastBlock = await getLastBlock();
+  console.log('Last Block', lastBlock);
+  if (lastBlock !== null) {
+    confirmBlock(lastBlock.blockNumberL2 - 1);
+  }
 
   // the first thing we need to do is to find some input commitments which
   // will enable us to conduct our transfer.  Let's rummage in the db...

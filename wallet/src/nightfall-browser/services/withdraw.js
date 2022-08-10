@@ -9,6 +9,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
+import confirmBlock from '../../utils/lib/check-block';
 import { getContractInstance } from '../../common-files/utils/contract';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import logger from '../../common-files/utils/logger';
@@ -22,7 +23,7 @@ import {
 } from './commitment-storage';
 import { ZkpKeys } from './keys';
 import { computeWitness } from '../utils/compute-witness';
-import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit, getLastBlock } from './database';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
@@ -45,6 +46,11 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     getStoreCircuit(`${circuitName}-pk`),
   ]);
 
+  const lastBlock = await getLastBlock();
+  console.log('Last Block', lastBlock);
+  if (lastBlock !== null) {
+    confirmBlock(lastBlock.blockNumberL2 - 1);
+  }
   const abi = abiData.data;
   const program = programData.data;
   const pk = pkData.data;

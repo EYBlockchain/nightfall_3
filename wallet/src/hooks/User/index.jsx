@@ -7,6 +7,9 @@ import {
   checkIndexDBForCircuit,
   checkIndexDBForCircuitHash,
   getMaxBlock,
+  emptyStoreBlocks,
+  emptyStoreTimber,
+  getLastBlock,
 } from '@Nightfall/services/database';
 import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import * as Storage from '../../utils/lib/local-storage';
@@ -37,7 +40,7 @@ export const UserProvider = ({ children }) => {
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false); // This is not really a sync;
   const [isSyncing, setSyncing] = React.useState(true);
-  const [lastBlockHash, setLastBlockHash] = React.useState('0x0');
+  const [lastBlock, setLastBlock] = React.useState({ blockHash: '0x0' });
   const history = useHistory();
 
   const deriveAccounts = async (mnemonic, numAccts) => {
@@ -113,10 +116,18 @@ export const UserProvider = ({ children }) => {
             await acc; // Acc is a promise so we await it before processing the next one;
             return blockProposedEventHandler(curr, [zkpPrivateKey], [nullifierKey]); // TODO Should be array
           }, Promise.resolve());
+
+        // We want to verify that the received block is from the current contract deployment.
+        // for this, we store the lastBlock received in lastBlock, and compare the hash with the previousBlockHash
+        // from the received block. If they don't match, then there has been a redeployment.
+        // Additionally, before a transfer/withdraw, there is a check the the last block stored hash, lasbBlockDb
+        // matches the blockChain.
         if (Number(parsed.maxBlock) !== 1) {
+          const lastBlockDb = await getLastBlock();
           if (
-            parsed.historicalData.block.previousBlockHash !== lastBlockHash &&
-            Number(lastBlockHash) !== 0
+            parsed.historicalData.block.previousBlockHash !== lastBlock.blockHash &&
+            Number(lastBlock.lastBlockHash) !== 0 &&
+            parsed.historicalData.block.blockHash !== lastBlockDb.blockHash
           ) {
             // resync
             // TODO - handle resync correctly
@@ -124,8 +135,13 @@ export const UserProvider = ({ children }) => {
             //  For example, if requested block is higher than what's in the db,
             //  a resync will not be detected until next block is proposed
             console.log('Resync DB');
-          } else {
-            setLastBlockHash(parsed.historicalData.block.blockHash);
+            emptyStoreBlocks();
+            emptyStoreTimber();
+          } else if (
+            parsed.historicalData.block.previousBlockHash === lastBlock.blockHash ||
+            Number(lastBlock.lastBlock) === 0
+          ) {
+            setLastBlock(parsed.historicalData.block);
             socket.send(
               JSON.stringify({
                 type: 'sync',
@@ -143,11 +159,16 @@ export const UserProvider = ({ children }) => {
           };
         });
       } else if (parsed.type === 'blockProposed') {
-        if (parsed.data.previousBlockHash !== lastBlockHash && Number(lastBlockHash) !== 0) {
+        if (
+          parsed.data.block.previousBlockHash !== lastBlock.blockHash &&
+          Number(lastBlock.blockHash) !== 0
+        ) {
           // resync
           console.log('Resync DB');
+          emptyStoreBlocks();
+          emptyStoreTimber();
         } else {
-          setLastBlockHash(parsed.data.blockHash);
+          setLastBlock(parsed.data.block);
           await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);
         }
       }
