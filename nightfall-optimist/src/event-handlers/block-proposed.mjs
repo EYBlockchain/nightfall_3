@@ -91,7 +91,12 @@ async function blockProposedEventHandler(data) {
     // asociated with a failed block, and we can't do that if we haven't
     // associated them with a blockHash.
     await stampNullifiers(
-      transactions.map(tx => tx.nullifiers.filter(nulls => nulls !== ZERO)).flat(Infinity),
+      transactions
+        .map(tx => [
+          ...tx.nullifiers.filter(nulls => nulls !== ZERO),
+          ...tx.nullifiersFee.filter(nulls => nulls !== ZERO),
+        ])
+        .flat(Infinity),
       block.blockHash,
     );
     // mark transactions so that they are out of the mempool,
@@ -99,7 +104,9 @@ async function blockProposedEventHandler(data) {
     await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2, timeBlockL2); // TODO is await needed?
 
     const latestTree = await getLatestTree();
-    const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+    const blockCommitments = transactions
+      .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
+      .flat(Infinity);
     const updatedTimber = Timber.statelessUpdate(
       latestTree,
       blockCommitments,

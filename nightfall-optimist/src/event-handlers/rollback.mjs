@@ -107,8 +107,9 @@ async function rollbackEventHandler(data) {
   // If two mempool transactions have duplicate nullifiers, the choice of which to delete will differ
   // between optimist instances, this is also fine as mempools are locally-contexted anyways
   transactions.forEach(t => {
-    const { transactionHash, nullifiers } = t;
-    const nonZeroNullifiers = nullifiers.filter(n => n !== ZERO);
+    const { transactionHash, nullifiers, nullifiersFee } = t;
+    const nullifiersTx = [...nullifiers, ...nullifiersFee];
+    const nonZeroNullifiers = nullifiersTx.filter(n => n !== ZERO);
     // Is there a duplicate nullifier in our list of mempool: true and block transactions
     const duplicateSeenNullifier = nonZeroNullifiers.some(nz => nullifierSet.has(nz));
     // Is there a duplicate nullifier in our list of already spent nullifier
@@ -156,7 +157,7 @@ async function rollbackEventHandler(data) {
     tx => !invalidTransactionHashesArr.includes(tx.transactionHash),
   );
   const validTransactionNullifiers = validTransactions
-    .map(v => v.nullifiers)
+    .map(v => [v.nullifiers, v.nullifiersFee])
     .flat(Infinity)
     .filter(n => n !== ZERO);
 

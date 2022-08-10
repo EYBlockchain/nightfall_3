@@ -594,7 +594,7 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
 // also mark any found commitments as nullified (TODO mark them as un-nullified
 // if the transaction errors). The mutex lock is in the function
 // findUsableCommitmentsMutex, which calls this function.
-async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
+async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -608,6 +608,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
       isPendingNullification: false,
     })
     .toArray();
+
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
   const commitments = commitmentArray
@@ -621,12 +622,13 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     return [singleCommitment];
   }
   // If we only want one or there is only 1 commitment - then we should try a single transfer with change
-  if (onlyOne || commitments.length === 1) {
+  if (commitments.length === 1) {
     const valuesGreaterThanTarget = commitments.filter(c => c.preimage.value.bigInt > value.bigInt); // Do intermediary step since reduce has ugly exception
     if (valuesGreaterThanTarget.length === 0) return null;
     const singleCommitmentWithChange = valuesGreaterThanTarget.reduce((prev, curr) =>
       prev.preimage.value.bigInt < curr.preimage.value.bigInt ? prev : curr,
     );
+    await markPending(singleCommitmentWithChange);
     return [singleCommitmentWithChange];
   }
   // If we get here it means that we have not been able to find a single commitment that satisfies our requirements (onlyOne)
@@ -694,8 +696,12 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   // then we will need to use a commitment of greater value than the target
   if (twoGreatestSum < value.bigInt) {
     if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
-    if (commitsLessThanTargetValue.length === 0) return [sortedCommits[0], sortedCommits[1]]; // return smallest in GT if LT array is empty
-    return [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+    const commitmentsToUse =
+      commitsLessThanTargetValue.length === 0
+        ? [(sortedCommits[0], sortedCommits[1])] // return smallest in GT if LT array is empty
+        : [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse; // return smallest in GT if LT array is empty
   }
 
   // If we are here than we can use our commitments less than the target value to sum to greater than the target value
@@ -736,10 +742,9 @@ export async function findUsableCommitmentsMutex(
   ercAddress,
   tokenId,
   _value,
-  onlyOne,
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne),
+    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value),
   );
 }
 

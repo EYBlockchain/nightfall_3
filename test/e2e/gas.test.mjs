@@ -22,7 +22,6 @@ chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
-  fee,
   transferValue,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
@@ -81,7 +80,7 @@ describe('Gas test', () => {
         tokenType,
         transferValue,
         tokenId,
-        fee,
+        0,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
@@ -96,7 +95,7 @@ describe('Gas test', () => {
         tokenType,
         transferValue,
         tokenId,
-        fee,
+        0,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
@@ -115,7 +114,7 @@ describe('Gas test', () => {
         transferValue,
         tokenId,
         nf3Users[0].zkpKeys.compressedZkpPublicKey,
-        fee,
+        0,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
@@ -137,7 +136,7 @@ describe('Gas test', () => {
         transferValue / 2,
         tokenId,
         nf3Users[0].zkpKeys.compressedZkpPublicKey,
-        fee,
+        0,
       );
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
@@ -159,7 +158,7 @@ describe('Gas test', () => {
         transferValue / 2,
         tokenId,
         nf3Users[0].ethereumAddress,
-        fee,
+        0,
       );
       await nf3Users[0].makeBlockNow();
       eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);

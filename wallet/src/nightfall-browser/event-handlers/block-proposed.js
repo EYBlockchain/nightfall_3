@@ -42,8 +42,12 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
 
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
-    const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
-    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
+    const nonZeroCommitments = [...transaction.commitments, ...transaction.commitmentFee]
+      .flat(Infinity)
+      .filter(n => n !== ZERO);
+    const nonZeroNullifiers = [...transaction.nullifiers, ...transaction.nullifiersFee]
+      .flat(Infinity)
+      .filter(n => n !== ZERO);
     const storeCommitments = [];
     const tempTransactionStore = [];
     if (

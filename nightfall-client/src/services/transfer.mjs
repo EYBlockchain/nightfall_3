@@ -8,29 +8,32 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { edwardsCompress } from 'common-files/utils/curve-maths/curves.mjs';
 import constants from 'common-files/constants/index.mjs';
-import { Nullifier, Commitment, Transaction } from '../classes/index.mjs';
-import {
-  findUsableCommitmentsMutex,
-  storeCommitment,
-  markNullified,
-  clearPending,
-  getSiblingInfo,
-} from './commitment-storage.mjs';
-import getProposersUrl from './peers.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
+import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
+import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
+import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
-import { computeWitness } from '../utils/compute-witness.mjs';
+import { markNullified, storeCommitment } from './commitment-storage.mjs';
+import getProposersUrl from './peers.mjs';
 
-const { BN128_GROUP_ORDER, ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } =
-  config;
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
-const { generalise, GN } = gen;
+const { generalise } = gen;
 
+const NULL_COMMITMENT_INFO = {
+  oldCommitments: [],
+  nullifiers: [],
+  newCommitments: [],
+  localSiblingPaths: [],
+  leafIndices: [],
+  blockNumberL2s: [],
+  roots: [],
+  salts: [],
+};
 const NEXT_N_PROPOSERS = 3;
 
 async function transfer(transferParams) {
@@ -38,7 +41,6 @@ async function transfer(transferParams) {
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
   const { ercAddress, tokenId, recipientData, rootKey, fee } = generalise(items);
-  const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),
@@ -46,47 +48,32 @@ async function transfer(transferParams) {
   if (recipientCompressedZkpPublicKeys.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
 
-  // the first thing we need to do is to find some input commitments which
-  // will enable us to conduct our transfer.  Let's rummage in the db...
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+
+  const maticAddress = generalise(
+    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  );
+
+  const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
+
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
-  const oldCommitments = await findUsableCommitmentsMutex(
-    compressedZkpPublicKey,
+  const commitmentsInfo = await getCommitmentInfo({
+    transferValue: totalValueToSend,
+    addedFee,
+    recipientZkpPublicKeysArray: recipientZkpPublicKeys,
     ercAddress,
     tokenId,
-    totalValueToSend,
-  );
-  if (oldCommitments) logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
-  else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
-  // Having found either 1 or 2 commitments, which are suitable inputs to the
-  // proof, the next step is to compute their nullifiers;
-  const nullifiers = oldCommitments.map(commitment => new Nullifier(commitment, nullifierKey));
-  // then the new output commitment(s)
-  const totalInputCommitmentValue = oldCommitments.reduce(
-    (acc, commitment) => acc + commitment.preimage.value.bigInt,
-    0n,
-  );
-  // we may need to return change to the recipient
-  const change = totalInputCommitmentValue - totalValueToSend;
-  // if so, add an output commitment to do that
-  if (change !== 0n) {
-    values.push(new GN(change));
-    recipientZkpPublicKeys.push(zkpPublicKey);
-    recipientCompressedZkpPublicKeys.push(compressedZkpPublicKey);
-  }
-  // Generate salts, constrained to be < field size
-  const salts = await Promise.all(values.map(async () => randValueLT(BN128_GROUP_ORDER)));
+    rootKey,
+  });
 
-  // Generate new commitments, already truncated to u32[7]
-  const newCommitments = values.map(
-    (value, i) =>
-      new Commitment({
-        ercAddress,
-        tokenId,
-        value,
-        zkpPublicKey: recipientZkpPublicKeys[i],
-        salt: salts[i].bigInt,
-      }),
-  );
+  const commitmentsInfoFee =
+    fee.bigInt === 0n || commitmentsInfo.feeIncluded
+      ? NULL_COMMITMENT_INFO
+      : await getCommitmentInfo({
+          transferValue: fee.bigInt,
+          ercAddress: maticAddress,
+          rootKey,
+        });
 
   // KEM-DEM encryption
   const [ePrivate, ePublic] = await genEphemeralKeys();
@@ -95,68 +82,61 @@ async function transfer(transferParams) {
     packedErc.bigInt,
     unpackedTokenID.bigInt,
     values[0].bigInt,
-    salts[0].bigInt,
+    commitmentsInfo.salts[0].bigInt,
   ]);
 
   // Compress the public key as it will be put on-chain
   const compressedEPub = edwardsCompress(ePublic);
 
-  // Commitment Tree Information
-  const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
-  const localSiblingPaths = commitmentTreeInfo.map(l => {
-    const path = l.siblingPath.path.map(p => p.value);
-    return generalise([l.root].concat(path.reverse()));
-  });
-  const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
-  const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
-  const roots = commitmentTreeInfo.map(l => l.root);
-  logger.info(
-    'Constructing transfer transaction with blockNumberL2s',
-    blockNumberL2s,
-    'and roots',
-    roots,
-  );
-
-  // time for a quick sanity check.  We expect the number of old commitments and nullifiers to be equal.
-  if (nullifiers.length !== oldCommitments.length) {
-    logger.error(
-      `number of old commitments: ${oldCommitments.length}, number of nullifiers: ${nullifiers.length}`,
-    );
-    throw new Error('Number of nullifiers and old commitments are mismatched');
-  }
-
   // now we have everything we need to create a Witness and compute a proof
-  const transaction = Transaction.buildSolidityStruct(
-    new Transaction({
-      fee,
-      historicRootBlockNumberL2: blockNumberL2s,
-      transactionType: 1,
-      ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-      tokenId: compressedSecrets[1], // this is the encrypted tokenID
-      recipientAddress: compressedEPub,
-      commitments: newCommitments,
-      nullifiers,
-      compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-    }),
-  );
+  const transaction = new Transaction({
+    fee,
+    historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+    historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
+    transactionType: 1,
+    ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
+    tokenId: compressedSecrets[1], // this is the encrypted tokenID
+    recipientAddress: compressedEPub,
+    commitments: commitmentsInfo.newCommitments,
+    commitmentFee: commitmentsInfoFee.newCommitments,
+    nullifiers: commitmentsInfo.nullifiers,
+    nullifiersFee: commitmentsInfoFee.nullifiers,
+    compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
+  });
 
   const privateData = {
     rootKey: [rootKey, rootKey],
-    oldCommitmentPreimage: oldCommitments.map(o => {
+    oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
       return { value: o.preimage.value, salt: o.preimage.salt };
     }),
-    paths: localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-    orders: leafIndices,
-    newCommitmentPreimage: newCommitments.map(o => {
+    paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+    orders: commitmentsInfo.leafIndices,
+    newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
       return { value: o.preimage.value, salt: o.preimage.salt };
     }),
-    recipientPublicKeys: newCommitments.map(o => o.preimage.zkpPublicKey),
+    recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
+    rootKeyFee: [rootKey, rootKey],
+    oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+    ordersFee: commitmentsInfoFee.leafIndices,
+    newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
     ercAddress,
     tokenId,
     ephemeralKey: ePrivate,
   };
 
-  const witness = computeWitness(transaction, roots, privateData);
+  const witness = computeCircuitInputs(
+    transaction,
+    privateData,
+    commitmentsInfo.roots,
+    commitmentsInfoFee.roots,
+    maticAddress,
+  );
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
   let folderpath = 'transfer';
@@ -170,19 +150,23 @@ async function transfer(transferParams) {
   logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+
   const optimisticTransferTransaction = new Transaction({
     fee,
-    historicRootBlockNumberL2: blockNumberL2s,
+    historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+    historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
     transactionType: 1,
     ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
     tokenId: compressedSecrets[1], // this is the encrypted tokenID
     recipientAddress: compressedEPub,
-    commitments: newCommitments,
-    nullifiers,
+    commitments: commitmentsInfo.newCommitments,
+    nullifiers: commitmentsInfo.nullifiers,
+    commitmentFee: commitmentsInfoFee.newCommitments,
+    nullifiersFee: commitmentsInfoFee.nullifiers,
     compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
     proof,
   });
+
   logger.debug(
     `Client made transaction ${JSON.stringify(
       optimisticTransferTransaction,
@@ -190,60 +174,46 @@ async function transfer(transferParams) {
       2,
     )} offchain ${offchain}`,
   );
-  try {
-    if (offchain) {
-      // dig up connection peers
-      const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
-      logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
-      await Promise.all(
-        Object.keys(peerList).map(async address => {
-          logger.debug(
-            `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
-          );
-          return axios.post(
-            `${peerList[address]}/proposer/offchain-transaction`,
-            { transaction: optimisticTransferTransaction },
-            { timeout: 3600000 },
-          );
-        }),
-      );
-      // we only want to store our own commitments so filter those that don't
-      // have our public key
-      newCommitments
-        .filter(
-          commitment =>
-            commitment.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
-        )
-        .forEach(commitment => storeCommitment(commitment, nullifierKey)); // TODO insertMany
-      // mark the old commitments as nullified
-      await Promise.all(
-        oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
-      );
-      return {
-        transaction: optimisticTransferTransaction,
-      };
-    }
-    const rawTransaction = await shieldContractInstance.methods
+
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+
+  // Store new commitments that are ours.
+  await Promise.all(
+    [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments]
+      .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
+      .map(c => storeCommitment(c, nullifierKey)),
+  );
+
+  // mark the old commitments as nullified
+  await Promise.all(
+    [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments].map(c =>
+      markNullified(c, optimisticTransferTransaction),
+    ),
+  );
+  const returnObj = { transaction: optimisticTransferTransaction };
+
+  if (offchain) {
+    // dig up connection peers
+    const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
+    logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
+    await Promise.all(
+      Object.keys(peerList).map(async address => {
+        logger.debug(
+          `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
+        );
+        return axios.post(
+          `${peerList[address]}/proposer/offchain-transaction`,
+          { transaction: optimisticTransferTransaction },
+          { timeout: 3600000 },
+        );
+      }),
+    );
+  } else {
+    returnObj.rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
       .encodeABI();
-    // store the commitment on successful computation of the transaction
-    newCommitments
-      .filter(
-        commitment => commitment.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
-      )
-      .forEach(commitment => storeCommitment(commitment, nullifierKey)); // TODO insertMany
-    // mark the old commitments as nullified
-    await Promise.all(
-      oldCommitments.map(commitment => markNullified(commitment, optimisticTransferTransaction)),
-    );
-    return {
-      rawTransaction,
-      transaction: optimisticTransferTransaction,
-    };
-  } catch (err) {
-    await Promise.all(oldCommitments.map(commitment => clearPending(commitment)));
-    throw new Error(err); // let the caller handle the error
   }
+  return returnObj;
 }
 
 export default transfer;
