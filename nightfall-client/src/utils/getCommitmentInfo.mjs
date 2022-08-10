@@ -40,7 +40,7 @@ export const getCommitmentInfo = async txInfo => {
   if (oldCommitments) {
     if (addedFee > 0) feeIncluded = true;
     logger.debug(
-      `Found commitments ${addedFee > 0 ? 'including fee' : null} ${JSON.stringify(
+      `Found commitments ${addedFee > 0 ? 'including fee' : ''} ${JSON.stringify(
         oldCommitments,
         null,
         2,
@@ -114,10 +114,7 @@ export const getCommitmentInfo = async txInfo => {
     const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
     const roots = commitmentTreeInfo.map(l => l.root);
     logger.info(
-      'Constructing transfer transaction with blockNumberL2s',
-      blockNumberL2s,
-      'and roots',
-      roots,
+      `Constructing transfer transaction with blockNumberL2s ${blockNumberL2s} and roots ${roots}`,
     );
 
     return {
