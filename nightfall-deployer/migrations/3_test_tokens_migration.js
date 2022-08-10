@@ -29,7 +29,6 @@ module.exports = function (deployer, _, accounts) {
     await ERC20deployed.transfer(addresses.user2, 1000000000000);
     await ERC20deployed.transfer(shield.address, 1000000000000); // for testing Shield balance withdraw
 
-    await shield.setMaticAddress(ERC20deployed.address);
     // set restictions for test ERC20Mock contract (we handle this differently because the address is not fixed)
     // set payment address to ERC20Mock contract
     try {
@@ -48,6 +47,9 @@ module.exports = function (deployer, _, accounts) {
     }
 
     if (!config.ETH_ADDRESS) {
+      //modify the matic address to be ERCMock for tests
+      await shield.setMaticAddress(ERC20deployed.address);
+
       // indicates we're running a wallet test that uses hardcoded addresses
       // For e2e tests
       await deployer.deploy(ERC721Mock);
