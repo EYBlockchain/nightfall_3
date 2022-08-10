@@ -47,10 +47,7 @@ def main(\
 
 
     //Check that values match
-    assert((ercAddressFee != transfer.ercAddress &&\
-        sum(nullifiersValue) == sum(commitmentsValue) && sum(nullifiersFeeValue) == tx.fee + sum(commitmentFeeValue)) ||\
-        (ercAddressFee == transfer.ercAddress &&\
-            sum(nullifiersValue) == tx.fee + sum(commitmentsValue)))
+    assert(sum(nullifiersValue) + sum(nullifiersFeeValue) == sum(commitmentsValue) + tx.fee + sum(commitmentFeeValue)) 
    
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
