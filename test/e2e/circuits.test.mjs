@@ -60,7 +60,7 @@ describe('General Circuit Test', () => {
     await nf3Users[0].makeBlockNow();
   });
 
-  it('Test that matic transfers pays the fee from the same transfer commitment', async () => {
+  it.skip('Test that matic transfers pays the fee from the same transfer commitment', async () => {
     async function getBalance() {
       return Promise.all([
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0,

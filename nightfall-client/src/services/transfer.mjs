@@ -67,7 +67,7 @@ async function transfer(transferParams) {
   });
 
   const commitmentsInfoFee =
-    fee === 0 || commitmentsInfo.feeIncluded
+    fee.bigInt === 0n || commitmentsInfo.feeIncluded
       ? NULL_COMMITMENT_INFO
       : await getCommitmentInfo({
           transferValue: fee.bigInt,
