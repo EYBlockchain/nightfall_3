@@ -19,7 +19,7 @@ const { BN128_GROUP_ORDER } = config;
 export const getCommitmentInfo = async txInfo => {
   const {
     transferValue,
-    addedFee = 0,
+    addedFee = 0n,
     recipientZkpPublicKeysArray = [],
     ercAddress,
     tokenId = generalise(0),
@@ -39,7 +39,13 @@ export const getCommitmentInfo = async txInfo => {
   );
   if (oldCommitments) {
     if (addedFee > 0) feeIncluded = true;
-    logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
+    logger.debug(
+      `Found commitments ${addedFee > 0 ? 'including fee' : null} ${JSON.stringify(
+        oldCommitments,
+        null,
+        2,
+      )}`,
+    );
   } else if (addedFee > 0) {
     // If addedFee is higher than zero it is possible that the user had needed more than two commitments to perform the transaction + fee
     oldCommitments = await findUsableCommitmentsMutex(
@@ -51,11 +57,9 @@ export const getCommitmentInfo = async txInfo => {
     if (oldCommitments) {
       logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
     } else {
-      await Promise.all(oldCommitments.map(o => clearPending(o)));
       throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
     }
   } else {
-    await Promise.all(oldCommitments.map(o => clearPending(o)));
     throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
   }
   // Having found either 1 or 2 commitments, which are suitable inputs to the
@@ -77,7 +81,7 @@ export const getCommitmentInfo = async txInfo => {
   }
 
   // we may need to return change to the recipient
-  const change = totalInputCommitmentFeeValue - transferValue;
+  const change = totalInputCommitmentFeeValue - transferValue - addedFee;
 
   // if so, add an output commitment to do that
   if (change !== 0n) {
@@ -128,7 +132,7 @@ export const getCommitmentInfo = async txInfo => {
       feeIncluded,
     };
   } catch (err) {
-    logger.erro('Err', err);
+    logger.error('Err', err);
     await Promise.all(oldCommitments.map(o => clearPending(o)));
     throw new Error('Failed getting commitment info');
   }
