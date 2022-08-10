@@ -69,7 +69,6 @@ export async function getStoreCircuit(key) {
   return db.get(CIRCUIT_COLLECTION, key);
 }
 
-
 /*
  * function to empty object store contents
  */
