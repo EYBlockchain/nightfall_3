@@ -30,6 +30,8 @@ while [ -n "$1" ]; do
                                     ;;
       -r  | --ropsten )              FILE="-f docker-compose.yml -f docker-compose.ropsten.yml"
                                     ;;
+      -e  | --edge )                FILE="-f docker-compose.yml -f docker-compose.polygon-edge.yml"
+                                    ;;
       -h  | --help )                usage
                                     ;;
       -s  | --stubs )               STUBS="-f docker-compose.stubs.yml"

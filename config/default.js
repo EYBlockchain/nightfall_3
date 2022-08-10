@@ -51,7 +51,7 @@ module.exports = {
   },
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
-    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH}`,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   WEB3_OPTIONS: {
@@ -135,7 +135,7 @@ module.exports = {
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
-          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH}`
           : process.env.BLOCKCHAIN_WS_HOST
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
@@ -158,6 +158,14 @@ module.exports = {
       adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
       CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+    },
+    polygonEdge: {
+      name: 'Polygon Edge',
+      clientApiUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
+      optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
+      optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
+      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH}`,
     },
   },
   TEST_OPTIONS: {

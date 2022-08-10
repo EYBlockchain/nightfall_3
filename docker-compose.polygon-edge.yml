@@ -1,0 +1,48 @@
+version: '3.5'
+services:
+  client1:
+    environment:
+      BLOCKCHAIN_WS_HOST: localhost
+      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_PATH: /ws
+      USE_EXTERNAL_NODE: 'true'
+      AUTOSTART_RETRIES: 600
+      ETH_NETWORK: edge
+
+  client2:
+    environment:
+      BLOCKCHAIN_WS_HOST: localhost
+      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_PATH: /ws
+      USE_EXTERNAL_NODE: 'true'
+      AUTOSTART_RETRIES: 600
+      ETH_NETWORK: edge
+
+  deployer:
+    environment:
+      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # startup routines will wait for a blockchain client to be reachable on this network
+      BLOCKCHAIN_WS_HOST: localhost
+      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_PATH: /ws
+      USE_EXTERNAL_NODE: 'true'
+      FROM_ADDRESS: 0x29100e7e3da66600000000000000000000000000
+      ETH_NETWORK: edge
+
+  optimist1:
+    environment:
+      BLOCKCHAIN_WS_HOST: localhost
+      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_PATH: /ws
+      USE_EXTERNAL_NODE: 'true'
+      AUTOSTART_RETRIES: 600
+      ETH_NETWORK: edge
+
+  optimist2:
+    environment:
+      BLOCKCHAIN_WS_HOST: localhost
+      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_PATH: /ws
+      USE_EXTERNAL_NODE: 'true'
+      AUTOSTART_RETRIES: 600
+      ETH_NETWORK: edge

@@ -70,6 +70,13 @@ module.exports = {
       gas: 8000000,
     },
 
+    edge: {
+      url: 'ws://host.docker.internal:20002/ws',
+      network_id: '*', // Any network (default: none)
+      gas: 8000000,
+      websockets: true,
+    },
+
     development: {
       url: 'ws://host.docker.internal:8546',
       network_id: 1337, // Any network (default: none)
