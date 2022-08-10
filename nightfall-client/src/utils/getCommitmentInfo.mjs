@@ -19,7 +19,7 @@ const { BN128_GROUP_ORDER } = config;
 export const getCommitmentInfo = async txInfo => {
   const {
     transferValue,
-    addedFee = generalise(0),
+    addedFee = 0n,
     recipientZkpPublicKeysArray = [],
     ercAddress,
     tokenId = generalise(0),
