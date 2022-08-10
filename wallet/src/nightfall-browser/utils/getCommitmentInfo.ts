@@ -1,13 +1,13 @@
 import gen, { GeneralNumber } from 'general-number';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
-import Commitment from '../../../../nightfall-client/src/classes/commitment.mjs';
-import Nullifier from '../../../../nightfall-client/src/classes/nullifier.mjs';
+import Commitment from '../classes/commitment';
+import Nullifier from '../classes/nullifier';
 import {
   clearPending,
   findUsableCommitmentsMutex,
   getSiblingInfo,
-} from '../../../../nightfall-client/src/services/commitment-storage.mjs';
-import { ZkpKeys } from '../../../../nightfall-client/src/services/keys.mjs';
+} from '../services/commitment-storage';
+import { ZkpKeys } from '../services/keys';
 
 const { generalise } = gen;
 const { BN128_GROUP_ORDER } = global.config;
