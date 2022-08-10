@@ -47,11 +47,8 @@ def main(\
 
 
     //Check that values match
-    assert(sum(nullifiersValue) == sum(commitmentsValue))
-
-    //Check that values fee match
-    assert(sum(nullifiersFeeValue) == tx.fee + sum(commitmentFeeValue))
-
+    assert(sum(nullifiersValue) + sum(nullifiersFeeValue) == sum(commitmentsValue) + tx.fee + sum(commitmentFeeValue)) 
+   
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
     field idRemainder = u32_array_to_field(transfer.idTransfer[1..8]) 

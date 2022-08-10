@@ -696,14 +696,12 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   // then we will need to use a commitment of greater value than the target
   if (twoGreatestSum < value.bigInt) {
     if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
-    if (commitsLessThanTargetValue.length === 0) {
-      const commitmentsToUse = [sortedCommits[0], sortedCommits[1]];
-      await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
-      return commitmentsToUse; // return smallest in GT if LT array is empty
-    }
-    const commitmentsToUse = [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]];
+    const commitmentsToUse =
+      commitsLessThanTargetValue.length === 0
+        ? [(sortedCommits[0], sortedCommits[1])] // return smallest in GT if LT array is empty
+        : [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
     await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
-    return commitmentsToUse; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+    return commitmentsToUse; // return smallest in GT if LT array is empty
   }
 
   // If we are here than we can use our commitments less than the target value to sum to greater than the target value
