@@ -4,10 +4,11 @@ An optimistic layer 2 Block class
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { getLatestBlockInfo, getTreeByBlockNumberL2 } from '../services/database.mjs';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT, BLOCK_TYPES } =
-  config;
+const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const { ZERO, BLOCK_TYPES } = constants;
 
 /**
 This Block class does not have the Block components that are computed on-chain.
@@ -107,7 +108,9 @@ class Block {
     // extract the commitment hashes from the transactions
     // we filter out zeroes commitments that can come from withdrawals
     const leafValues = transactions
-      .map(transaction => transaction.commitments.filter(c => c !== ZERO))
+      .map(transaction =>
+        [...transaction.commitments, ...transaction.commitmentFee].filter(c => c !== ZERO),
+      )
       .flat(Infinity);
     const nCommitments = leafValues.length;
 

@@ -7,6 +7,7 @@ from posted transactions and proposes these blocks.
 import WebSocket from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -21,7 +22,8 @@ import {
   increaseProposerBlockNotSent,
 } from './debug-counters.mjs';
 
-const { TRANSACTIONS_PER_BLOCK, STATE_CONTRACT_NAME } = config;
+const { TRANSACTIONS_PER_BLOCK } = config;
+const { STATE_CONTRACT_NAME } = constants;
 
 let ws;
 let makeNow = false;

@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
 
-import config from 'config';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { pauseQueue, unpauseQueue } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
@@ -14,7 +14,7 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 
 // TODO can we remove these await-in-loops?
 
-const { SHIELD_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = config;
+const { SHIELD_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = constants;
 
 const syncState = async (
   proposer,
@@ -46,6 +46,7 @@ const syncState = async (
     .sort((a, b) => a.blockNumber - b.blockNumber);
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
+    console.log('PAST EVENT', pastEvent);
     switch (pastEvent.event) {
       case 'NewCurrentProposer':
         await newCurrentProposerEventHandler(pastEvent, [proposer]);

@@ -8,7 +8,8 @@
 import { getContractInstance, getContractAddress } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 
-const { STATE_CONTRACT_NAME, RETRIES } = global.config;
+const { STATE_CONTRACT_NAME } = global.nightfallConstants;
+const { RETRIES } = global.config;
 
 /**
  * Function that tries to get a (named) contract instance and, if it fails, will

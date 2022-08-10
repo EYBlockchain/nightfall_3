@@ -3,13 +3,13 @@ Function to retreive calldata associated with a blockchain event.
 This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
-import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
 import { decompressProof } from 'common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 
-const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES, ZERO } = config;
+const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES, ZERO } = constants;
 
 export async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -33,27 +33,35 @@ export async function getProposeBlockCalldata(eventData) {
   const transactions = transactionsData.map(t => {
     const [
       value,
-      historicRootBlockNumberL2,
+      fee,
       transactionType,
       tokenType,
+      historicRootBlockNumberL2,
+      historicRootBlockNumberL2Fee,
       tokenId,
       ercAddress,
       recipientAddress,
       commitments,
       nullifiers,
+      commitmentFee,
+      nullifiersFee,
       compressedSecrets,
       proof,
     ] = t;
     const transaction = {
       value,
-      historicRootBlockNumberL2,
+      fee,
       transactionType,
       tokenType,
+      historicRootBlockNumberL2,
+      historicRootBlockNumberL2Fee,
       tokenId,
       ercAddress,
       recipientAddress,
       commitments,
       nullifiers,
+      commitmentFee,
+      nullifiersFee,
       compressedSecrets,
       proof: decompressProof(proof),
     };
@@ -68,7 +76,7 @@ export async function getProposeBlockCalldata(eventData) {
   // we no longer put the number of commitments in the on-chain struct but for
   // backwards compatibility, we'll recreate it here.
   block.nCommitments = transactions
-    .map(t => t.commitments.filter(c => c !== ZERO))
+    .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
     .flat(Infinity).length;
   block.transactionHashes = transactions.map(t => t.transactionHash);
   // currentLeafCount holds the count of the next leaf to be added
@@ -85,28 +93,35 @@ export async function getTransactionSubmittedCalldata(eventData) {
   const transactionData = web3.eth.abi.decodeParameter(SUBMIT_TRANSACTION_TYPES, abiBytecode);
   const [
     value,
-    historicRootBlockNumberL2,
+    fee,
     transactionType,
     tokenType,
+    historicRootBlockNumberL2,
+    historicRootBlockNumberL2Fee,
     tokenId,
     ercAddress,
     recipientAddress,
     commitments,
     nullifiers,
+    commitmentFee,
+    nullifiersFee,
     compressedSecrets,
     proof,
   ] = transactionData;
   const transaction = {
-    fee: Number(tx.value),
+    fee,
     value,
-    historicRootBlockNumberL2,
     transactionType,
     tokenType,
+    historicRootBlockNumberL2,
+    historicRootBlockNumberL2Fee,
     tokenId,
     ercAddress,
     recipientAddress,
     commitments,
     nullifiers,
+    commitmentFee,
+    nullifiersFee,
     compressedSecrets,
     proof: decompressProof(proof),
   };

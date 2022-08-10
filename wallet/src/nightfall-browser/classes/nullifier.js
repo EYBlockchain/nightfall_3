@@ -1,10 +1,9 @@
 // ignore unused exports default
-
 /**
 A nullifier class
 */
 import gen from 'general-number';
-import sha256 from '../../common-files/utils/crypto/sha256';
+import poseidon from '../../common-files/utils/crypto/poseidon/poseidon';
 
 const { generalise } = gen;
 
@@ -13,12 +12,12 @@ class Nullifier {
 
   hash;
 
-  constructor(commitment, nsk) {
+  constructor(commitment, nullifierKey) {
     this.preimage = generalise({
-      nsk,
+      nullifierKey,
       commitment: commitment.hash,
     });
-    this.hash = generalise(sha256([this.preimage.nsk, this.preimage.commitment]).hex(32, 31));
+    this.hash = poseidon([this.preimage.nullifierKey, this.preimage.commitment]);
   }
 }
 

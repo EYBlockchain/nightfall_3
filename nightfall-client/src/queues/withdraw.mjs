@@ -13,7 +13,7 @@ export default function receiveMessage() {
     try {
       const txDataToSign = await withdraw(JSON.parse(message.content.toString()));
       logger.debug('returning raw transaction');
-      logger.silly(` raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+      logger.trace(` raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
 
       response.data = { txDataToSign };
     } catch (err) {

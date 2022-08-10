@@ -1,9 +1,10 @@
 import WebSocket from 'ws';
+import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import getTimeByBlock from 'common-files/utils/block-info.mjs';
-import config from 'config';
 import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import checkBlock from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import { createChallenge } from '../services/challenges.mjs';
@@ -20,7 +21,8 @@ import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
 import transactionSubmittedEventHandler from './transaction-submitted.mjs';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT } = config;
+const { TIMBER_HEIGHT, HASH_TYPE } = config;
+const { ZERO } = constants;
 
 let ws;
 
@@ -89,7 +91,12 @@ async function blockProposedEventHandler(data) {
     // asociated with a failed block, and we can't do that if we haven't
     // associated them with a blockHash.
     await stampNullifiers(
-      transactions.map(tx => tx.nullifiers.filter(nulls => nulls !== ZERO)).flat(Infinity),
+      transactions
+        .map(tx => [
+          ...tx.nullifiers.filter(nulls => nulls !== ZERO),
+          ...tx.nullifiersFee.filter(nulls => nulls !== ZERO),
+        ])
+        .flat(Infinity),
       block.blockHash,
     );
     // mark transactions so that they are out of the mempool,
@@ -97,7 +104,9 @@ async function blockProposedEventHandler(data) {
     await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2, timeBlockL2); // TODO is await needed?
 
     const latestTree = await getLatestTree();
-    const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+    const blockCommitments = transactions
+      .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
+      .flat(Infinity);
     const updatedTimber = Timber.statelessUpdate(
       latestTree,
       blockCommitments,

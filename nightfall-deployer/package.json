@@ -21,21 +21,22 @@
   },
   "homepage": "https://github.com/EYBlockchain/nightfall-deployer#readme",
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.2",
-    "@openzeppelin/contracts-upgradeable": "^4.5.1",
-    "axios": "^0.21.1",
+    "@openzeppelin/contracts": "^4.7.2",
+    "@openzeppelin/contracts-upgradeable": "^4.7.2",
+    "axios": "^0.21.4",
     "big-integer": "^1.6.48",
     "common-files": "file:../common-files",
     "config": "^3.3.1",
     "hex-to-binary": "^1.0.1",
+    "pino": "^8.3.1",
+    "pino-pretty": "^8.1.0",
     "safe-buffer": "^5.2.1",
-    "truffle": "^5.5.13",
-    "web3": "^1.4.0",
-    "winston": "^3.3.3"
+    "truffle": "^5.5.21",
+    "web3": "^1.4.0"
   },
   "devDependencies": {
-    "@truffle/hdwallet-provider": "^1.5.0",
-    "truffle-contract-size": "^2.0.1",
-    "@openzeppelin/truffle-upgrades": "^1.12.0"
+    "@openzeppelin/truffle-upgrades": "^1.13.0",
+    "@truffle/hdwallet-provider": "^2.0.10",
+    "truffle-contract-size": "^2.0.1"
   }
 }

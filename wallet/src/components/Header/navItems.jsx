@@ -17,9 +17,11 @@ export default function NavItems() {
       {!isSmallScreen && (
         <div className="accountBox">
           <img src={polygonNightfall} />
-          {state.compressedPkd && (
+          {state.compressedZkpPublicKey && (
             <div className="accountAddress">
-              {`${state.compressedPkd.slice(0, 6)}...${state.compressedPkd.slice(-6)}`}
+              {`${state.compressedZkpPublicKey.slice(0, 6)}...${state.compressedZkpPublicKey.slice(
+                -6,
+              )}`}
             </div>
           )}
           <span>

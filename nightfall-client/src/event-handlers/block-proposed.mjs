@@ -2,6 +2,7 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import getTimeByBlock from 'common-files/utils/block-info.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   markNullifiedOnChain,
   markOnChain,
@@ -22,7 +23,8 @@ import {
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { ZERO, HASH_TYPE, TIMBER_HEIGHT, TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT } = config;
+const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const { ZERO } = constants;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -35,7 +37,9 @@ async function blockProposedEventHandler(data, syncing) {
     `Received Block Proposed event with layer 2 block number ${block.blockNumberL2} and tx hash ${transactionHashL1}`,
   );
   const latestTree = await getLatestTree();
-  const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+  const blockCommitments = transactions
+    .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
+    .flat(Infinity);
 
   let timeBlockL2 = await getTimeByBlock(transactionHashL1);
   timeBlockL2 = new Date(timeBlockL2 * 1000);
@@ -44,13 +48,17 @@ async function blockProposedEventHandler(data, syncing) {
     let saveTxToDb = false;
 
     // filter out non zero commitments and nullifiers
-    const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
-    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
+    const nonZeroCommitments = transaction.commitments.filter(n => n !== ZERO);
+    const nonZeroNullifiers = transaction.nullifiers.filter(n => n !== ZERO);
 
-    const countOfNonZeroCommitments = await countCommitments(nonZeroCommitments);
+    // filter out non zero commitments fee and nullifiers fee
+    const nonZeroCommitmentsFee = transaction.commitmentFee.filter(n => n !== ZERO);
+    const nonZeroNullifiersFee = transaction.nullifiersFee.filter(n => n !== ZERO);
+
+    const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
     const countOfNonZeroNullifiers = await countNullifiers(nonZeroNullifiers);
 
-    if (transaction.transactionType === '1' || transaction.transactionType === '2') {
+    if (transaction.transactionType === '1') {
       if (countOfNonZeroCommitments === 0) {
         await decryptCommitment(transaction, zkpPrivateKeys, nullifierKeys)
           .then(isDecrypted => {
@@ -74,7 +82,7 @@ async function blockProposedEventHandler(data, syncing) {
     } else if (transaction.transactionType === '0' && countOfNonZeroCommitments >= 1) {
       // case when deposit transaction created by user
       saveTxToDb = true;
-    } else if (transaction.transactionType === '3' && countOfNonZeroNullifiers >= 1) {
+    } else if (transaction.transactionType === '2' && countOfNonZeroNullifiers >= 1) {
       // case when withdraw transaction created by user
       saveTxToDb = true;
     }
@@ -93,9 +101,14 @@ async function blockProposedEventHandler(data, syncing) {
 
     return Promise.all([
       saveTxToDb,
-      markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
+      markOnChain(
+        [...nonZeroCommitments, ...nonZeroCommitmentsFee],
+        block.blockNumberL2,
+        data.blockNumber,
+        data.transactionHash,
+      ),
       markNullifiedOnChain(
-        nonZeroNullifiers,
+        [...nonZeroNullifiers, ...nonZeroNullifiersFee],
         block.blockNumberL2,
         data.blockNumber,
         data.transactionHash,

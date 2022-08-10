@@ -7,7 +7,7 @@ const STORAGE_VERSION_KEY = 'nightfallStorageVersion';
 const STORAGE_VERSION = 1;
 const TOKEN_POOL_KEY = 'nightfallTokensPool';
 
-const { SHIELD_CONTRACT_NAME } = global.config;
+const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 
 const storage = window.localStorage;
 
@@ -31,13 +31,13 @@ function clear() {
   storage.clear();
 }
 
-function pkdArraySet(userKey, pkds) {
+function ZkpPubKeyArraySet(userKey, zkpPubKeys) {
   init();
-  storage.setItem(`${userKey}/pkds`, JSON.stringify(pkds));
+  storage.setItem(`${userKey}/zkpPubKeys`, JSON.stringify(zkpPubKeys));
 }
 
-function pkdArrayGet(userKey) {
-  return JSON.parse(storage.getItem(`${userKey}/pkds`));
+function ZkpPubKeyArrayGet(userKey) {
+  return JSON.parse(storage.getItem(`${userKey}/zkpPubKeys`));
 }
 
 async function setPricing(tokenIDs) {
@@ -88,7 +88,6 @@ async function shieldAddressSet() {
 
 function shieldAddressGet() {
   const addressObj = storage.getItem('/shieldAddress');
-  console.log('AddressObj', addressObj);
   if (!addressObj)
     return shieldAddressSet().then(() => {
       return shieldAddressGet();
@@ -101,8 +100,8 @@ export {
   tokensSet,
   tokensGet,
   clear,
-  pkdArrayGet,
-  pkdArraySet,
+  ZkpPubKeyArrayGet,
+  ZkpPubKeyArraySet,
   setPricing,
   getPricing,
   shieldAddressGet,

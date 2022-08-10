@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import config from 'config';
+import constants from 'nightfallConstants';
 
 function parse(configs) {
   for (const key of Object.keys(configs)) {
@@ -15,3 +16,4 @@ function parse(configs) {
 }
 parse(config);
 global.config = config;
+global.nightfallConstants = constants;

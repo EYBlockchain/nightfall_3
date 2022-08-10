@@ -20,15 +20,10 @@ import exportIndexdDB from '../../utils/CommitmentsBackup/export';
 
 const supportedTokens = importTokens();
 
-const { SHIELD_CONTRACT_NAME, ZERO } = global.config;
+const { SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
 
-const txTypeOptions = ['Deposit', 'Transfer', 'Transfer', 'Withdraw'];
-const txTypeDest = [
-  'From Ethereum to L2',
-  'Private Transfer',
-  'Private Transfer',
-  'From L2 to Ethereum',
-];
+const txTypeOptions = ['Deposit', 'Transfer', 'Withdraw'];
+const txTypeDest = ['From Ethereum to L2', 'Private Transfer', 'From L2 to Ethereum'];
 
 const displayTime = (start, end) => {
   const diff = Number(end) - Number(start);
@@ -63,7 +58,6 @@ const Transactions = () => {
   }, []);
 
   useInterval(async () => {
-    console.log('currencyVals', currencyValues);
     const transactionsDB = await getAllTransactions();
     const commitmentsDB = await getAllCommitments();
     const commits = commitmentsDB.map(c => c._id);
@@ -88,7 +82,7 @@ const Transactions = () => {
       // The value of transfers need to be derived from the components making up the transfer
       // Add sum nullifiers in transactions
       // Subtract sum of commitments we have.
-      if (safeTransactionType === '1' || safeTransactionType === '2')
+      if (safeTransactionType === '1')
         commitmentsDB.forEach(c => {
           if (tx.nullifiers.includes(c.nullifier)) value -= BigInt(c.preimage.value);
           else if (tx.commitments.includes(c._id)) value += BigInt(c.preimage.value);
@@ -115,7 +109,7 @@ const Transactions = () => {
 
       let withdrawReady = false;
       if (
-        safeTransactionType === '3' &&
+        safeTransactionType === '2' &&
         tx.isOnChain > 0 &&
         tx.withdrawState !== 'finalised' &&
         Math.floor(Date.now() / 1000) - tx.createdTime > 3600 * 24 * 7
@@ -225,9 +219,9 @@ const Transactions = () => {
                 case 'deposit':
                   return f.txType === '0';
                 case 'transfer':
-                  return f.txType === '1' || f.txType === '2';
+                  return f.txType === '1';
                 case 'withdraw':
-                  return f.txType === '3';
+                  return f.txType === '2';
                 case 'pending':
                   return f.isOnChain === -1;
                 default:

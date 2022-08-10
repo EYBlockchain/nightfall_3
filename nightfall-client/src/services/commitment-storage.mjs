@@ -82,7 +82,10 @@ export async function countNullifiers(nullifiers) {
 // function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
 export async function countWithdrawTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash: { $in: transactionHashes }, nullifierTransactionType: '3' };
+  const query = {
+    transactionHash: { $in: transactionHashes },
+    nullifierTransactionType: '2',
+  };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
@@ -90,7 +93,7 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
 // function to get if the transaction hash belongs to a withdraw transaction
 export async function isTransactionHashWithdraw(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash, nullifierTransactionType: '3' };
+  const query = { transactionHash, nullifierTransactionType: '2' };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
@@ -511,7 +514,7 @@ export async function getWithdrawCommitments() {
   const db = connection.db(COMMITMENTS_DB);
   const query = {
     isNullified: true,
-    nullifierTransactionType: '3',
+    nullifierTransactionType: '2',
     isNullifiedOnChain: { $gte: 0 },
   };
   // Get associated nullifiers of commitments that have been spent on-chain and are used for withdrawals.
@@ -591,7 +594,7 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
 // also mark any found commitments as nullified (TODO mark them as un-nullified
 // if the transaction errors). The mutex lock is in the function
 // findUsableCommitmentsMutex, which calls this function.
-async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
+async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -605,6 +608,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
       isPendingNullification: false,
     })
     .toArray();
+
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
   const commitments = commitmentArray
@@ -617,12 +621,31 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     await markPending(singleCommitment);
     return [singleCommitment];
   }
-  // If we get here it means that we have not been able to find a single commitment that matches the required value
-  if (onlyOne || commitments.length < 2) return null; // sometimes we require just one commitment
+  // If we only want one or there is only 1 commitment - then we should try a single transfer with change
+  if (commitments.length === 1) {
+    const valuesGreaterThanTarget = commitments.filter(c => c.preimage.value.bigInt > value.bigInt); // Do intermediary step since reduce has ugly exception
+    if (valuesGreaterThanTarget.length === 0) return null;
+    const singleCommitmentWithChange = valuesGreaterThanTarget.reduce((prev, curr) =>
+      prev.preimage.value.bigInt < curr.preimage.value.bigInt ? prev : curr,
+    );
+    await markPending(singleCommitmentWithChange);
+    return [singleCommitmentWithChange];
+  }
+  // If we get here it means that we have not been able to find a single commitment that satisfies our requirements (onlyOne)
+  if (commitments.length < 2) return null; // sometimes we require just one commitment
 
-  /* if not, maybe we can do a two-commitment transfer. The current strategy aims to prioritise smaller commitments while also
-     minimising the creation of low value commitments (dust)
+  /* if not, maybe we can do more flexible single or double commitment transfers. The current strategy aims to prioritise reducing the complexity of
+    the commitment set. I.e. Minimise the size of the commitment set by using smaller commitments while also minimising the creation of 
+    low value commitments (dust).
 
+    Transaction type in order of priority. (1) Double transfer without change, (2) Double Transfer with change, (3) Single Transfer with change.
+
+    Double Transfer Without Change:
+    1) Sort all commitments by value
+    2) Find candidate pairs of commitments that equal the transfer sum.
+    3) Select candidate that uses the smallest commitment as one of the input.
+
+    Double Transfer With Change:
     1) Sort all commitments by value
     2) Split commitments into two sets based of if their values are less than or greater than the target value. LT & GT respectively.
     3) If the sum of the two largest values in set LT is LESS than the target value:
@@ -636,6 +659,9 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
       iii) If the sum of the commitments at the pointers is greater than the target value, we move pointer rhs to the left.
       iv) Otherwise, we move pointer lhs to the right.
       v) The selected commitments are the pair that minimise the change difference. The best case in this scenario is a change difference of -1.
+
+    Single Transfer With Change:
+    1) If this is the only commitment and it is greater than the transfer sum.
   */
 
   // sorting will help with making the search easier
@@ -643,6 +669,21 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     Number(a.preimage.value.bigInt - b.preimage.value.bigInt),
   );
 
+  // Find two commitments that matches the transfer value exactly. Double Transfer With No Change.
+  let lhs = 0;
+  let rhs = sortedCommits.length - 1;
+  /** THIS WILL BE ENABLED LATED
+  while (lhs < rhs) {
+    const tempSum = sortedCommits[lhs].bigInt + sortedCommits[rhs].bigInt;
+    // The first valid solution will include the smallest usable commitment in the set.
+    if (tempSum === value.bigInt) break;
+    else if (tempSum > value.bigInt) rhs--;
+    else lhs++;
+  }
+  if (lhs < rhs) return [sortedCommits[lhs], sortedCommits[rhs]];
+   */
+
+  // Find two commitments are greater than the target. Double Transfer With Change
   // get all commitments less than the target value
   const commitsLessThanTargetValue = sortedCommits.filter(
     s => s.preimage.value.bigInt < value.bigInt,
@@ -655,13 +696,17 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   // then we will need to use a commitment of greater value than the target
   if (twoGreatestSum < value.bigInt) {
     if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
-    if (commitsLessThanTargetValue.length === 0) return [sortedCommits[0], sortedCommits[1]]; // return smallest in GT if LT array is empty
-    return [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+    const commitmentsToUse =
+      commitsLessThanTargetValue.length === 0
+        ? [(sortedCommits[0], sortedCommits[1])] // return smallest in GT if LT array is empty
+        : [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse; // return smallest in GT if LT array is empty
   }
 
   // If we are here than we can use our commitments less than the target value to sum to greater than the target value
-  let lhs = 0;
-  let rhs = commitsLessThanTargetValue.length - 1;
+  lhs = 0;
+  rhs = commitsLessThanTargetValue.length - 1;
   let changeDiff = -Infinity;
   let commitmentsToUse = null;
   while (lhs < rhs) {
@@ -672,7 +717,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     // This value will always be negative,
     // this is equivalent to  tempSum - value.bigInt - commitsLessThanTargetValue[lhs].preimage.value.bigInt
     const tempChangeDiff = commitsLessThanTargetValue[rhs].preimage.value.bigInt - value.bigInt;
-    if (tempSum > value.bigInt) {
+    if (tempSum >= value.bigInt) {
       if (tempChangeDiff > changeDiff) {
         // We have a set of commitments that has a lower negative change in our outputs.
         changeDiff = tempChangeDiff;
@@ -685,9 +730,10 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     logger.info(
       `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
     );
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse;
   }
-  await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
-  return commitmentsToUse;
+  return null;
 }
 
 // mutex for the above function to ensure it only runs with a concurrency of one
@@ -696,10 +742,9 @@ export async function findUsableCommitmentsMutex(
   ercAddress,
   tokenId,
   _value,
-  onlyOne,
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne),
+    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value),
   );
 }
 
@@ -718,7 +763,7 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
   const commitmentsByListOfCompressedZkpPublicKey = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
-      'preimage.compressedZkpPublicKey': { $in: listOfCompressedZkpPublicKey },
+      compressedZkpPublicKey: { $in: listOfCompressedZkpPublicKey },
     })
     .toArray();
   return commitmentsByListOfCompressedZkpPublicKey;

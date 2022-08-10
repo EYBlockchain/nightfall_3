@@ -15,8 +15,8 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
-  HASH_TYPE,
   TIMBER_HEIGHT,
+  HASH_TYPE,
 } = global.config;
 
 // This needs to have better indexDB performance.
@@ -267,13 +267,17 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
 export async function getTransactionByCommitment(commitmentHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(r => r.commitments.includes(commitmentHash));
+  return res.filter(
+    r => r.commitments.includes(commitmentHash) || r.commitmentFee.includes(commitmentHash),
+  );
 }
 
 export async function getTransactionByNullifier(nullifierHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(r => r.nullifiers.includes(nullifierHash));
+  return res.filter(
+    r => r.nullifiers.includes(nullifierHash) || r.nullifiersFee.includes(nullifierHash),
+  );
 }
 export async function getTransactionByTransactionHash(transactionHash) {
   const db = await connectDB();

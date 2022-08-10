@@ -7,6 +7,9 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
 import Timber from 'common-files/classes/timber.mjs';
+import constants from 'common-files/constants/index.mjs';
+
+const { ZERO } = constants;
 
 const {
   MONGO_URL,
@@ -19,9 +22,8 @@ const {
   NULLIFIER_COLLECTION,
   COMMIT_COLLECTION,
   TIMBER_COLLECTION,
-  ZERO,
-  HASH_TYPE,
   TIMBER_HEIGHT,
+  HASH_TYPE,
 } = config;
 
 /**
@@ -249,7 +251,7 @@ export async function isRegisteredProposerAddressMine(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const metadata = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
-  logger.silly(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
+  logger.trace(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
   return metadata;
 }
 
@@ -264,7 +266,7 @@ export async function deleteRegisteredProposerAddress(address) {
   if (foundProposer) {
     await db.collection(PROPOSER_COLLECTION).deleteOne(query);
   }
-  logger.silly(`deleted registered proposer`);
+  logger.trace(`deleted registered proposer`);
 }
 
 /**
