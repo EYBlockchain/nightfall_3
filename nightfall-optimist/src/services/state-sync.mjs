@@ -2,7 +2,7 @@
 
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import constants from 'common-files/constants/index.mjs';
-import { pauseQueue, unpauseQueue, dequeueEvent, queues } from 'common-files/utils/event-queue.mjs';
+import { pauseQueue, unpauseQueue, queues, flushQueue } from 'common-files/utils/event-queue.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -112,6 +112,7 @@ export default async proposer => {
   }
   // pause the queues so we stop processing incoming events while we sync
   await Promise.all([pauseQueue(0), pauseQueue(1)]);
+  logger.info('Begining synchronisation with the blockchain');
   const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
   // const [fromBlock] = missingBlocks[0];
   const latestBlockLocally = (await getBlockByBlockNumberL2(lastBlockNumberL2)) ?? undefined;
@@ -128,18 +129,19 @@ export default async proposer => {
     // challenges (all rollbacks have completed) then we're done.  It's possible however that
     // we had a bad block that was not rolled back. If this is the case then there will still be
     // a challenge in the stop queue that was not removed by a rollback.
+    // If this is the case we'll run the stop queue to challenge the bad block.
+    await startMakingChallenges();
     if (queues[2].length === 0)
       logger.info('After synchronisation, no challenges remain unresolved');
     else {
       logger.info(
         `After synchronisation, there were ${queues[2].length} unresolved challenges.  Running them now.`,
       );
-    }
-    await startMakingChallenges();
-    // running the unresolved challenges
-    while (queues[2].length !== 0) {
-      const challenge = dequeueEvent(2);
-      await challenge();
+      // start queue[2] and await all the unresolved challenges being run
+      const p = flushQueue(2);
+      queues[2].start();
+      await p;
+      logger.debug('All challenges in the stop queue have now been made.');
     }
   }
   const currentProposer = (await stateContractInstance.methods.currentProposer().call())

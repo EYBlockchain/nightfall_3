@@ -186,7 +186,6 @@ export async function createChallenge(block, transactions, err) {
         }),
       );
 
-<<<<<<< HEAD
         const [historicInputFee1, historicInputFee2] = await Promise.all(
           transactions[transactionIndex].historicRootBlockNumberL2Fee.map(async (b, i) => {
             if (transactions[transactionIndex].nullifiersFee[i] === 0) {
@@ -232,39 +231,8 @@ export async function createChallenge(block, transactions, err) {
           .flat(Infinity); // List of Nullifiers in block
         const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
           blockNullifiers.includes(sNull.hash),
-=======
-      txDataToSign = await challengeContractInstance.methods
-        .challengeProofVerification(
-          Block.buildSolidityStruct(block),
-          transactions.map(t => Transaction.buildSolidityStruct(t)),
-          transactionIndex,
-          [historicInput1.historicBlock, historicInput2.historicBlock],
-          [
-            historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-          ],
-          uncompressedProof,
-          salt,
-        )
-        .encodeABI();
-      break;
-    }
-    // Challenge Duplicate Nullfier
-    case 6: {
-      const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
-      const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
-      const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
-        blockNullifiers.includes(sNull.hash),
-      );
-      if (alreadyMinedNullifiers.length > 0) {
-        const n = alreadyMinedNullifiers[0]; // We can only slash this block no matter which nullifier we pick anyways.
-        const oldBlock = await getBlockByBlockHash(n.blockHash);
-        const oldBlockTransactions = await getTransactionsByTransactionHashes(
-          oldBlock.transactionHashes,
->>>>>>> 7140b9ed (fix: rebase issues)
         );
 
-<<<<<<< HEAD
           const [oldTxIdx, oldNullifierIdx, oldIsNullifierFee] = oldBlockTransactions
             .map((txs, txIndex) => {
               let txIndexNullifier = txs.nullifiers.findIndex(oldN => oldN.toString() === n.hash);
@@ -316,22 +284,6 @@ export async function createChallenge(block, transactions, err) {
         const priorBlockTransactions = await getTransactionsByTransactionHashes(
           priorBlockL2.transactionHashes,
         );
-=======
-        const [oldTxIdx, oldNullifierIdx] = oldBlockTransactions
-          .map((txs, txIndex) => [
-            txIndex,
-            txs.nullifiers.findIndex(oldN => oldN.toString() === n.hash),
-          ])
-          .filter(oldIdxs => oldIdxs[1] >= 0)
-          .flat(Infinity);
-        const [currentTxIdx, currentNullifierIdx] = transactions
-          .map((txs, txIndex) => [
-            txIndex,
-            txs.nullifiers.findIndex(currN => currN.toString() === n.hash),
-          ])
-          .filter(currentIdx => currentIdx[1] >= 0)
-          .flat(Infinity);
->>>>>>> 7140b9ed (fix: rebase issues)
         txDataToSign = await challengeContractInstance.methods
           .challengeNullifier(
             Block.buildSolidityStruct(block),

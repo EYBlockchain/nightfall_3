@@ -874,7 +874,7 @@ class Nf3 {
     @async
     */
   async startProposer() {
-    const blockProposeEmitter = new EventEmitter();
+    const proposeEmitter = new EventEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
     this.websockets.push(connection); // save so we can close it properly later
     // we can't setup up a ping until the connection is made because the ping function
@@ -895,7 +895,7 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign, block, transactions } = msg;
+      const { type, txDataToSign, block, transactions, data } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
         proposerQueue.push(async () => {
@@ -905,20 +905,21 @@ class Nf3 {
               this.stateContractAddress,
               this.BLOCK_STAKE,
             );
-            blockProposeEmitter.emit('receipt', receipt, block, transactions);
+            proposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
             // block proposed is reverted. Send transactions back to mempool
-            blockProposeEmitter.emit('error', err, block, transactions);
+            proposeEmitter.emit('error', err, block, transactions);
             await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
           }
         });
       }
+      if (type === 'rollback') proposeEmitter.emit('rollback', data);
       return null;
     };
     connection.onerror = () => logger.error('websocket connection error');
     connection.onclosed = () => logger.warn('websocket connection closed');
     // add this proposer to the list of peers that can accept direct transfers and withdraws
-    return blockProposeEmitter;
+    return proposeEmitter;
   }
 
   /**
@@ -935,30 +936,6 @@ class Nf3 {
       { timeout: 3600000 },
     );
     return res.status;
-  }
-
-  /**
-    Registers our address as a challenger address with the optimist container.
-    This is so that the optimist container can tell when a challenge that we have
-    committed to has appeared on chain.
-    @method
-    @async
-    @return {Promise} A promise that resolves to an axios response.
-    */
-  async registerChallenger() {
-    return axios.post(`${this.optimistBaseUrl}/challenger/add`, { address: this.ethereumAddress });
-  }
-
-  /**
-    De-registers our address as a challenger address with the optimist container.
-    @method
-    @async
-    @return {Promise} A promise that resolves to an axios response.
-    */
-  async deregisterChallenger() {
-    return axios.post(`${this.optimistBaseUrl}/challenger/remove`, {
-      address: this.ethereumAddress,
-    });
   }
 
   /**
@@ -986,8 +963,10 @@ class Nf3 {
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
+      const { type, txDataToSign, sender } = msg;
       logger.debug(`Challenger received websocket message of type ${type}`);
+      // if we're about to challenge, check it's actually our challenge, so as not to waste gas
+      if (type === 'challenge' && sender !== this.ethereumAddress) return null;
       if (type === 'commit' || type === 'challenge') {
         challengerQueue.push(async () => {
           try {
@@ -1036,44 +1015,6 @@ class Nf3 {
   unpauseQueueChallenger() {
     challengerQueue.autostart = true;
     challengerQueue.unshift(async () => logger.info(`queue challengerQueue has been unpaused`));
-  }
-
-  /**
-    @deprecated - .startChallenger returns a challenge emitter directly now
-    Returns an emitter, whose 'data' event fires whenever a challengeable block is
-    detected, passing out the transaction needed to raise the challenge. This
-    is a lower level method than `Nf3.startChallenger` because it does not sign and
-    send the transaction to the blockchain. If required, `Nf3.submitTransaction`
-    can be used to do that.
-    @method
-    @async
-    @returns {Promise} A Promise that resolves into an event emitter.
-    */
-  async getChallengeEmitter() {
-    const newChallengeEmitter = new EventEmitter();
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
-    this.websockets.push(connection); // save so we can close it properly later
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-          // logger.debug('sent websocket ping');
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug(' challenge websocket connection opened');
-      connection.send('challenge');
-    };
-    connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign } = msg;
-      if (type === 'challenge') {
-        newChallengeEmitter.emit('data', txDataToSign);
-      }
-    };
-    return newChallengeEmitter;
   }
 
   /**

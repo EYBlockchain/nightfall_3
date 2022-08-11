@@ -36,6 +36,27 @@ export function setMakeNow(_makeNow = true) {
   makeNow = _makeNow;
 }
 
+/**
+Function to indicate to a listening proposer that a rollback has been completed. This
+is of little use at the moment but will enable the proposer to take actions such as
+checking they haven't been removed. This function may be a little out of place here but
+we need to use the proposer's websocket!
+*/
+export async function signalRollbackCompleted(data) {
+  // check that the websocket exists (it should) and its readyState is OPEN
+  // before sending. If not wait until the challenger reconnects
+  let tryCount = 0;
+  while (!ws || ws.readyState !== WebSocket.OPEN) {
+    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+    logger.warn(
+      `Websocket to proposer is closed for rollback complete.  Waiting for challenger to reconnect`,
+    );
+    if (tryCount++ > 100) throw new Error(`Websocket to proposer has failed`);
+  }
+  logger.debug('Rollback completed');
+  ws.send(JSON.stringify({ type: 'rollback', data }));
+}
+
 async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   logger.debug('Block Assembler - about to make a new block');
   // we retrieve un-processed transactions from our local database, relying on

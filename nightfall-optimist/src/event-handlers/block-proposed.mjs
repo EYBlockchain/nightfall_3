@@ -140,6 +140,7 @@ async function blockProposedEventHandler(data) {
       // made until the challenge has run and a rollback has happened.  We could
       // push anything into the queue and that would work but it's useful to
       // have the actual challenge to support syncing
+      logger.debug('enqueuing event to stop queue');
       await enqueueEvent(commitToChallenge, 2, txDataToSign);
       await commitToChallenge(txDataToSign);
     } else {
