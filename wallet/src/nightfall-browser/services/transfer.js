@@ -79,132 +79,138 @@ async function transfer(transferParams, shieldContractAddress) {
             transferValue: fee.bigInt,
             ercAddress: maticAddress,
             rootKey,
+          }).catch(async () => {
+            await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
+            throw new Error('Failed getting fee commitments');
           });
 
-    // KEM-DEM encryption
-    const [ePrivate, ePublic] = await genEphemeralKeys();
-    const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
-    const compressedSecrets = encrypt(generalise(ePrivate), generalise(recipientZkpPublicKeys[0]), [
-      packedErc.bigInt,
-      unpackedTokenID.bigInt,
-      values[0].bigInt,
-      commitmentsInfo.salts[0].bigInt,
-    ]);
-
-    // Compress the public key as it will be put on-chain
-    const compressedEPub = edwardsCompress(ePublic);
-
-    // now we have everything we need to create a Witness and compute a proof
-    const transaction = new Transaction({
-      fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
-      transactionType: 1,
-      ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-      tokenId: compressedSecrets[1], // this is the encrypted tokenID
-      recipientAddress: compressedEPub,
-      commitments: commitmentsInfo.newCommitments,
-      commitmentFee: commitmentsInfoFee.newCommitments,
-      nullifiers: commitmentsInfo.nullifiers,
-      nullifiersFee: commitmentsInfoFee.nullifiers,
-      compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-    });
-
-    const privateData = {
-      rootKey: [rootKey, rootKey],
-      oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
-        return { value: o.preimage.value, salt: o.preimage.salt };
-      }),
-      paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-      orders: commitmentsInfo.leafIndices,
-      newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
-        return { value: o.preimage.value, salt: o.preimage.salt };
-      }),
-      recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      rootKeyFee: [rootKey, rootKey],
-      oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
-        return { value: o.preimage.value, salt: o.preimage.salt };
-      }),
-      pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-      ordersFee: commitmentsInfoFee.leafIndices,
-      newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
-        return { value: o.preimage.value, salt: o.preimage.salt };
-      }),
-      recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
-      ercAddress,
-      tokenId,
-      ephemeralKey: ePrivate,
-    };
-
-    const witnessInput = computeCircuitInputs(
-      transaction,
-      privateData,
-      commitmentsInfo.roots,
-      commitmentsInfoFee.roots,
-      maticAddress,
-    );
-
-    // call a zokrates worker to generate the proof
-    // This is (so far) the only place where we need to get specific about the
-    // circuit
-    if (!(await checkIndexDBForCircuit(circuitName)))
-      throw Error('Some circuit data are missing from IndexedDB');
-    const [abiData, programData, pkData] = await Promise.all([
-      getStoreCircuit(`${circuitName}-abi`),
-      getStoreCircuit(`${circuitName}-program`),
-      getStoreCircuit(`${circuitName}-pk`),
-    ]);
-    const abi = abiData.data;
-    const program = programData.data;
-    const pk = pkData.data;
-
-    const zokratesProvider = await initialize();
-    const artifacts = { program: new Uint8Array(program), abi };
-    const keypair = { pk: new Uint8Array(pk) };
-    console.log('Computing witness');
-    const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
-    // generate proof
-    console.log('Generating Proof');
-    let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
-    console.log('Proof Generated');
-    proof = [...proof.a, ...proof.b, ...proof.c];
-    proof = proof.flat(Infinity);
-    // and work out the ABI encoded data that the caller should sign and send to the shield contract
-    const optimisticTransferTransaction = new Transaction({
-      fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
-      transactionType: 1,
-      ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-      tokenId: compressedSecrets[1], // this is the encrypted tokenID
-      recipientAddress: compressedEPub,
-      commitments: commitmentsInfo.newCommitments,
-      nullifiers: commitmentsInfo.nullifiers,
-      commitmentFee: commitmentsInfoFee.newCommitments,
-      nullifiersFee: commitmentsInfoFee.nullifiers,
-      compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-      proof,
-    });
-
     try {
+      // KEM-DEM encryption
+      const [ePrivate, ePublic] = await genEphemeralKeys();
+      const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
+      const compressedSecrets = encrypt(
+        generalise(ePrivate),
+        generalise(recipientZkpPublicKeys[0]),
+        [
+          packedErc.bigInt,
+          unpackedTokenID.bigInt,
+          values[0].bigInt,
+          commitmentsInfo.salts[0].bigInt,
+        ],
+      );
+
+      // Compress the public key as it will be put on-chain
+      const compressedEPub = edwardsCompress(ePublic);
+
+      // now we have everything we need to create a Witness and compute a proof
+      const transaction = new Transaction({
+        fee,
+        historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+        historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
+        transactionType: 1,
+        ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
+        tokenId: compressedSecrets[1], // this is the encrypted tokenID
+        recipientAddress: compressedEPub,
+        commitments: commitmentsInfo.newCommitments,
+        commitmentFee: commitmentsInfoFee.newCommitments,
+        nullifiers: commitmentsInfo.nullifiers,
+        nullifiersFee: commitmentsInfoFee.nullifiers,
+        compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
+      });
+
+      const privateData = {
+        rootKey: [rootKey, rootKey],
+        oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
+          return { value: o.preimage.value, salt: o.preimage.salt };
+        }),
+        paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+        orders: commitmentsInfo.leafIndices,
+        newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
+          return { value: o.preimage.value, salt: o.preimage.salt };
+        }),
+        recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
+        rootKeyFee: [rootKey, rootKey],
+        oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
+          return { value: o.preimage.value, salt: o.preimage.salt };
+        }),
+        pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+        ordersFee: commitmentsInfoFee.leafIndices,
+        newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
+          return { value: o.preimage.value, salt: o.preimage.salt };
+        }),
+        recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
+        ercAddress,
+        tokenId,
+        ephemeralKey: ePrivate,
+      };
+
+      const witnessInput = computeCircuitInputs(
+        transaction,
+        privateData,
+        commitmentsInfo.roots,
+        commitmentsInfoFee.roots,
+        maticAddress,
+      );
+
+      // call a zokrates worker to generate the proof
+      // This is (so far) the only place where we need to get specific about the
+      // circuit
+      if (!(await checkIndexDBForCircuit(circuitName)))
+        throw Error('Some circuit data are missing from IndexedDB');
+      const [abiData, programData, pkData] = await Promise.all([
+        getStoreCircuit(`${circuitName}-abi`),
+        getStoreCircuit(`${circuitName}-program`),
+        getStoreCircuit(`${circuitName}-pk`),
+      ]);
+      const abi = abiData.data;
+      const program = programData.data;
+      const pk = pkData.data;
+
+      const zokratesProvider = await initialize();
+      const artifacts = { program: new Uint8Array(program), abi };
+      const keypair = { pk: new Uint8Array(pk) };
+      console.log('Computing witness');
+      const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
+      // generate proof
+      console.log('Generating Proof');
+      let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+      console.log('Proof Generated');
+      proof = [...proof.a, ...proof.b, ...proof.c];
+      proof = proof.flat(Infinity);
+      // and work out the ABI encoded data that the caller should sign and send to the shield contract
+      const optimisticTransferTransaction = new Transaction({
+        fee,
+        historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+        historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
+        transactionType: 1,
+        ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
+        tokenId: compressedSecrets[1], // this is the encrypted tokenID
+        recipientAddress: compressedEPub,
+        commitments: commitmentsInfo.newCommitments,
+        nullifiers: commitmentsInfo.nullifiers,
+        commitmentFee: commitmentsInfoFee.newCommitments,
+        nullifiersFee: commitmentsInfoFee.nullifiers,
+        compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
+        proof,
+      });
+
       const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
       const rawTransaction = await shieldContractInstance.methods
         .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
         .encodeABI();
-      // store the commitment on successful computation of the transaction
-      [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments]
-        .filter(
-          commitment =>
-            commitment.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
-        )
-        .forEach(commitment => storeCommitment(commitment, nullifierKey));
-      // mark the old commitments as nullified
-      await Promise.all(
-        [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments].map(commitment =>
-          markNullified(commitment, optimisticTransferTransaction),
-        ),
-      );
+      // Store new commitments that are ours.
+      const storeNewCommitments = [
+        ...commitmentsInfo.newCommitments,
+        ...commitmentsInfoFee.newCommitments,
+      ]
+        .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
+        .map(c => storeCommitment(c, nullifierKey));
+      const nullifyOldCommitments = [
+        ...commitmentsInfo.oldCommitments,
+        ...commitmentsInfoFee.oldCommitments,
+      ].map(c => markNullified(c, optimisticTransferTransaction));
+      await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
       return {
         rawTransaction,
         transaction: optimisticTransferTransaction,

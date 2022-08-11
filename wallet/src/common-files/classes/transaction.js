@@ -142,10 +142,8 @@ class Transaction {
       compressedSecrets,
       proof: flatProof,
     }).all.hex(32);
-
     // compute the solidity hash, using suitable type conversions
     preimage.transactionHash = keccak(preimage);
-
     return preimage;
   }
 

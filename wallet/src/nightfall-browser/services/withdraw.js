@@ -60,37 +60,37 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   const program = programData.data;
   const pk = pkData.data;
 
+  const shieldContractInstance = await getContractInstance(
+    SHIELD_CONTRACT_NAME,
+    shieldContractAddress,
+  );
+
+  const maticAddress = generalise(
+    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  );
+
+  const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
+
+  const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value;
+
+  const commitmentsInfo = await getCommitmentInfo({
+    transferValue: withdrawValue.bigInt,
+    addedFee,
+    ercAddress,
+    tokenId,
+    rootKey,
+  });
+
+  const commitmentsInfoFee =
+    fee.bigInt === 0n || commitmentsInfo.feeIncluded
+      ? NULL_COMMITMENT_INFO
+      : await getCommitmentInfo({
+          transferValue: fee.bigInt,
+          ercAddress: maticAddress,
+          rootKey,
+        });
+
   try {
-    const shieldContractInstance = await getContractInstance(
-      SHIELD_CONTRACT_NAME,
-      shieldContractAddress,
-    );
-
-    const maticAddress = generalise(
-      (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
-    );
-
-    const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
-
-    const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value;
-
-    const commitmentsInfo = await getCommitmentInfo({
-      transferValue: withdrawValue.bigInt,
-      addedFee,
-      ercAddress,
-      tokenId,
-      rootKey,
-    });
-
-    const commitmentsInfoFee =
-      fee.bigInt === 0n || commitmentsInfo.feeIncluded
-        ? NULL_COMMITMENT_INFO
-        : await getCommitmentInfo({
-            transferValue: fee.bigInt,
-            ercAddress: maticAddress,
-            rootKey,
-          });
-
     // now we have everything  we need to create a Witness and compute a proof
     const transaction = new Transaction({
       fee,
@@ -175,19 +175,20 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       const rawTransaction = await shieldContractInstance.methods
         .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
         .encodeABI();
-      // store the commitment on successful computation of the transaction
-      [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments]
-        .filter(
-          commitment =>
-            commitment.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32),
-        )
-        .forEach(commitment => storeCommitment(commitment, nullifierKey));
-      // mark the old commitments as nullified
-      await Promise.all(
-        [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments].map(commitment =>
-          markNullified(commitment, optimisticWithdrawTransaction),
-        ),
-      );
+
+      // Store new commitments that are ours.
+      const storeNewCommitments = [
+        ...commitmentsInfo.newCommitments,
+        ...commitmentsInfoFee.newCommitments,
+      ]
+        .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
+        .map(c => storeCommitment(c, nullifierKey));
+      const nullifyOldCommitments = [
+        ...commitmentsInfo.oldCommitments,
+        ...commitmentsInfoFee.oldCommitments,
+      ].map(c => markNullified(c, optimisticWithdrawTransaction));
+      await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
+
       return {
         rawTransaction,
         transaction: optimisticWithdrawTransaction,

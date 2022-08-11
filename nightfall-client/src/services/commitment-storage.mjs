@@ -621,22 +621,19 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     await markPending(singleCommitment);
     return [singleCommitment];
   }
-  // If we only want one or there is only 1 commitment - then we should try a single transfer with change
-  if (commitments.length === 1) {
-    const valuesGreaterThanTarget = commitments.filter(c => c.preimage.value.bigInt > value.bigInt); // Do intermediary step since reduce has ugly exception
-    if (valuesGreaterThanTarget.length === 0) return null;
-    const singleCommitmentWithChange = valuesGreaterThanTarget.reduce((prev, curr) =>
-      prev.preimage.value.bigInt < curr.preimage.value.bigInt ? prev : curr,
-    );
-    await markPending(singleCommitmentWithChange);
-    return [singleCommitmentWithChange];
-  }
-  // If we get here it means that we have not been able to find a single commitment that satisfies our requirements (onlyOne)
-  if (commitments.length < 2) return null; // sometimes we require just one commitment
 
-  /* if not, maybe we can do more flexible single or double commitment transfers. The current strategy aims to prioritise reducing the complexity of
-    the commitment set. I.e. Minimise the size of the commitment set by using smaller commitments while also minimising the creation of 
-    low value commitments (dust).
+  // If there is only 1 commitment - then we should try a single transfer with change
+  if (commitments.length === 1) {
+    if (commitments[0].preimage.value.bigInt > value.bigInt) {
+      await markPending(commitments[0]);
+      return commitments;
+    }
+    return null;
+  }
+
+  /* The current strategy aims to prioritise reducing the complexity of the commitment set. 
+    I.e. Minimise the size of the commitment set by using smaller commitments while also 
+    minimising the creation of low value commitments (dust).
 
     Transaction type in order of priority. (1) Double transfer without change, (2) Double Transfer with change, (3) Single Transfer with change.
 
@@ -672,18 +669,23 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   // Find two commitments that matches the transfer value exactly. Double Transfer With No Change.
   let lhs = 0;
   let rhs = sortedCommits.length - 1;
+  let commitmentsToUse = null;
   while (lhs < rhs) {
     const tempSum = sortedCommits[lhs].bigInt + sortedCommits[rhs].bigInt;
     // The first valid solution will include the smallest usable commitment in the set.
-    if (tempSum === value.bigInt) break;
-    else if (tempSum > value.bigInt) rhs--;
+    if (tempSum === value.bigInt) {
+      commitmentsToUse = [sortedCommits[lhs], sortedCommits[rhs]];
+      break;
+    }
+
+    if (tempSum > value.bigInt) rhs--;
     else lhs++;
   }
-  if (lhs < rhs) {
-    await Promise.all(
-      [sortedCommits[lhs], sortedCommits[rhs]].map(commitment => markPending(commitment)),
-    );
-    return [sortedCommits[lhs], sortedCommits[rhs]];
+
+  // If we have found two commitments that match the transfer value, mark them as pending and return
+  if (commitmentsToUse) {
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse;
   }
 
   // Find two commitments are greater than the target. Double Transfer With Change
@@ -699,7 +701,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   // then we will need to use a commitment of greater value than the target
   if (twoGreatestSum < value.bigInt) {
     if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
-    const commitmentsToUse =
+    commitmentsToUse =
       commitsLessThanTargetValue.length === 0
         ? [(sortedCommits[0], sortedCommits[1])] // return smallest in GT if LT array is empty
         : [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
@@ -711,7 +713,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   lhs = 0;
   rhs = commitsLessThanTargetValue.length - 1;
   let changeDiff = -Infinity;
-  let commitmentsToUse = null;
+  commitmentsToUse = null;
   while (lhs < rhs) {
     const tempSum =
       commitsLessThanTargetValue[lhs].preimage.value.bigInt +
