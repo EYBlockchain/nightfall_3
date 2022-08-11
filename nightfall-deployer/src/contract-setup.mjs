@@ -4,13 +4,12 @@ address of the contract that holds global state (State.sol)
 */
 
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
 
 async function setupContracts() {
   const stateInstance = await waitForContract('State');
-  logger.debug(`address of State contract is ${stateInstance.options.address}`);
+  console.log(`address of State contract is ${stateInstance.options.address}`);
 
   const simpleMultiSigAddress = (await waitForContract('SimpleMultiSig')).options.address;
   const shieldContractInstance = await waitForContract('Shield');

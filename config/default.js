@@ -288,6 +288,28 @@ module.exports = {
           amount: '1000000000000',
         },
       ],
+      edge: [
+        {
+          name: 'ERC20Mock',
+          address: '0x7578E001dCF334F48a87dA44e30C7ab3b517a5B8',
+          amount: '100000000000',
+        },
+        {
+          name: 'Test-Eth',
+          address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0x07865c6e87b9f70255377e024ace6630c1eaa37f',
+          amount: '1000000000000',
+        },
+      ],
       staging: [
         {
           name: 'ERC20Mock',

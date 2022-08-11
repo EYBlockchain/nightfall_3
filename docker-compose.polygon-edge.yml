@@ -2,8 +2,9 @@ version: '3.5'
 services:
   client1:
     environment:
-      BLOCKCHAIN_WS_HOST: localhost
-      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+
+      BLOCKCHAIN_PORT: 10002
       BLOCKCHAIN_PATH: /ws
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
@@ -11,8 +12,9 @@ services:
 
   client2:
     environment:
-      BLOCKCHAIN_WS_HOST: localhost
-      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+
+      BLOCKCHAIN_PORT: 10002
       BLOCKCHAIN_PATH: /ws
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
@@ -22,17 +24,19 @@ services:
     environment:
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      BLOCKCHAIN_WS_HOST: localhost
-      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      BLOCKCHAIN_PORT: 10002
       BLOCKCHAIN_PATH: /ws
       USE_EXTERNAL_NODE: 'true'
-      FROM_ADDRESS: 0x29100e7e3da66600000000000000000000000000
+      FROM_ADDRESS: "0x6E571D5cA3FA895Cd78Da57C6FE1b1C0aa99421E"
+      ETH_PRIVATE_KEY: "797b05c3d9fec75daaf9d3fb5dfe31a6056cc30ccc5825b2bb84a1cce2c12180"
       ETH_NETWORK: edge
 
   optimist1:
     environment:
-      BLOCKCHAIN_WS_HOST: localhost
-      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+
+      BLOCKCHAIN_PORT: 10002
       BLOCKCHAIN_PATH: /ws
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
@@ -40,8 +44,9 @@ services:
 
   optimist2:
     environment:
-      BLOCKCHAIN_WS_HOST: localhost
-      BLOCKCHAIN_PORT: 20002
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+
+      BLOCKCHAIN_PORT: 10002
       BLOCKCHAIN_PATH: /ws
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600

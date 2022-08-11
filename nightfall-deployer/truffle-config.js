@@ -71,9 +71,14 @@ module.exports = {
     },
 
     edge: {
-      url: 'ws://host.docker.internal:20002/ws',
-      network_id: '*', // Any network (default: none)
+      provider: () =>
+        new HDWalletProvider({
+          privateKeys: [config.ETH_PRIVATE_KEY],
+          providerOrUrl: 'ws://host.docker.internal:10002/ws',
+        }),
+      network_id: 100, // Any network (default: none)
       gas: 8000000,
+      gasPrice: config.WEB3_OPTIONS.gasPrice,
       websockets: true,
     },
 
