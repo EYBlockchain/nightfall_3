@@ -43,7 +43,7 @@ async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const { ...items } = transferParams;
-  const { ercAddress, tokenId, recipientData, rootKey, fee } = generalise(items);
+  const { ercAddress, tokenId, recipientData, rootKey, fee = generalise(0) } = generalise(items);
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),
@@ -88,7 +88,7 @@ async function transfer(transferParams, shieldContractAddress) {
       packedErc.bigInt,
       unpackedTokenID.bigInt,
       values[0].bigInt,
-      commitmentsInfo[0].bigInt,
+      commitmentsInfo.salts[0].bigInt,
     ]);
 
     // Compress the public key as it will be put on-chain

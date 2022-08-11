@@ -221,6 +221,7 @@ const computeCircuitInputs = (
       witness.push(computePrivateInputsEncryption(ephemeralKey, ercAddress, tokenId));
     }
   }
+  return witness;
 };
 
 export default computeCircuitInputs;

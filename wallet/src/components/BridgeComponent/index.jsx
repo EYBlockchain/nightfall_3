@@ -245,7 +245,7 @@ const BridgeComponent = () => {
             value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
             compressedZkpPublicKey: state.compressedZkpPublicKey,
             nullifierKey: zkpKeys.nullifierKey,
-            fee: 1,
+            fee: 0,
             tokenType: 'ERC20',
           },
           shieldContractAddress,

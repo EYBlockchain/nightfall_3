@@ -678,16 +678,19 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   // Find two commitments that matches the transfer value exactly. Double Transfer With No Change.
   let lhs = 0;
   let rhs = sortedCommits.length - 1;
-  /** THIS WILL BE ENABLED LATED	
-  while (lhs < rhs) {	
-    const tempSum = sortedCommits[lhs].bigInt + sortedCommits[rhs].bigInt;	
-    // The first valid solution will include the smallest usable commitment in the set.	
-    if (tempSum === value.bigInt) break;	
-    else if (tempSum > value.bigInt) rhs--;	
-    else lhs++;	
-  }	
-  if (lhs < rhs) return [sortedCommits[lhs], sortedCommits[rhs]];	
-  */
+  while (lhs < rhs) {
+    const tempSum = sortedCommits[lhs].bigInt + sortedCommits[rhs].bigInt;
+    // The first valid solution will include the smallest usable commitment in the set.
+    if (tempSum === value.bigInt) break;
+    else if (tempSum > value.bigInt) rhs--;
+    else lhs++;
+  }
+  if (lhs < rhs) {
+    await Promise.all(
+      [sortedCommits[lhs], sortedCommits[rhs]].map(commitment => markPending(commitment)),
+    );
+    return [sortedCommits[lhs], sortedCommits[rhs]];
+  }
   // Find two commitments are greater than the target. Double Transfer With Change
   // get all commitments less than the target value
   const commitsLessThanTargetValue = sortedCommits.filter(
