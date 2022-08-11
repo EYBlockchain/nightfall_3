@@ -7,7 +7,7 @@ import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
 
-export const web3 = Web3.connection();
+const web3 = Web3.connection();
 
 async function setupContracts() {
   const stateInstance = await waitForContract('State');

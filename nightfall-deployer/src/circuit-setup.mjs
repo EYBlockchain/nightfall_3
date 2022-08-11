@@ -12,7 +12,7 @@ import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
 
-export const web3 = Web3.connection();
+const web3 = Web3.connection();
 
 const fsPromises = fs.promises;
 
