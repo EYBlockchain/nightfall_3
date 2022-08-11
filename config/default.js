@@ -51,7 +51,9 @@ module.exports = {
   },
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
-    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH}`,
+    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
+      process.env.BLOCKCHAIN_PATH || ''
+    }`,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   WEB3_OPTIONS: {
@@ -135,7 +137,9 @@ module.exports = {
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
-          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH}`
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
+              process.env.BLOCKCHAIN_PATH || ''
+            }`
           : process.env.BLOCKCHAIN_WS_HOST
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
@@ -161,11 +165,22 @@ module.exports = {
     },
     polygonEdge: {
       name: 'Polygon Edge',
-      clientApiUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
-      optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
-      optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
-      proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
-      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH}`,
+      chainId: 100,
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      web3WsUrl: `ws://localhost:10002/ws`,
     },
   },
   TEST_OPTIONS: {

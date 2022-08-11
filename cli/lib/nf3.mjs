@@ -128,11 +128,13 @@ class Nf3 {
       default:
         throw new Error('Unknown contract address server');
     }
+
     // once we know where to ask, we can get the contract addresses
     this.shieldContractAddress = await this.contractGetter('Shield');
     this.proposersContractAddress = await this.contractGetter('Proposers');
     this.challengesContractAddress = await this.contractGetter('Challenges');
     this.stateContractAddress = await this.contractGetter('State');
+
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
       this.ethereumAddress = await this.getAccounts();
@@ -339,7 +341,11 @@ class Nf3 {
     @returns {Promise} Resolves into the Ethereum address of the contract
     */
   async getContractAddress(contractName) {
+    console.log(this.clientBaseUrl);
+
     const res = await axios.get(`${this.clientBaseUrl}/contract-address/${contractName}`);
+    console.log('hello1');
+
     return res.data.address.toLowerCase();
   }
 

@@ -10,7 +10,9 @@ import fs from 'fs';
 import path from 'path';
 import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import { waitForContract, getContractAddress } from 'common-files/utils/contract.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
+
+export const web3 = Web3.connection();
 
 const fsPromises = fs.promises;
 
@@ -109,7 +111,6 @@ async function setupCircuits() {
   }
 
   const keyRegistry = await waitForContract('Challenges');
-  const keyRegistryAddress = await getContractAddress('Challenges');
 
   // we should register the vk now
   for (let i = 0; i < vks.length; i++) {
@@ -122,24 +123,32 @@ async function setupCircuits() {
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
       const folderpath = circuit.slice(0, -4); // remove the .zok extension
 
-      let tx;
+      let call;
       if (config.USE_STUBS) {
-        tx = keyRegistry.methods.registerVerificationKey(
-          vkArray,
-          config.VK_IDS[folderpath.slice(0, -5)],
-        );
+        call = keyRegistry.methods
+          .registerVerificationKey(vkArray, config.VK_IDS[folderpath.slice(0, -5)])
+          .encodeABI();
       } else {
-        tx = keyRegistry.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]);
+        call = keyRegistry.methods
+          .registerVerificationKey(vkArray, config.VK_IDS[folderpath])
+          .encodeABI();
       }
 
       // when deploying on infura - do serial tx execution to avoid nonce issue
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
-      if (config.ETH_PRIVATE_KEY) {
-        console.log('hello');
-        Web3.submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
-        console.log('hello0');
-      } else await tx.send();
-      console.log('hello1');
+      // if (config.ETH_PRIVATE_KEY) {
+      const tx = {
+        from: process.env.FROM_ADDRESS,
+        to: keyRegistry.options.address,
+        data: call,
+        // value: fee,
+        gas: config.WEB3_OPTIONS.gas,
+        gasPrice: 20000000000,
+      };
+
+      const signed = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
+
+      await web3.eth.sendSignedTransaction(signed.rawTransaction);
     } catch (err) {
       logger.error(err);
       throw new Error(err);
