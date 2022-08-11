@@ -154,9 +154,9 @@ module.exports = {
     ropsten: {
       name: 'Ropsten',
       chainId: 3,
-      clientApiUrl: 'https://client1.testnet.nightfall3.com',
-      optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
-      optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
+      clientApiUrl: 'https://client.testnet.nightfall3.com',
+      optimistApiUrl: 'https://optimist.testnet.nightfall3.com',
+      optimistWsUrl: 'wss://optimist-ws.testnet.nightfall3.com',
       web3WsUrl: `${process.env.ROPSTEN_NODE}`,
     },
     rinkeby: {
@@ -299,7 +299,7 @@ module.exports = {
         process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
     },
     tokens: {
-      blockchain1: [
+      blockchain: [
         {
           name: 'ERC20Mock',
           address: '0x9b7bD670D87C3Dd5C808ba627c75ba7E88aD066f',

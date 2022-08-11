@@ -1,6 +1,6 @@
 #! /bin/bash
 
-docker exec -t nightfall_3_optimist1_1 bash -c \
+docker exec -t nightfall_3_optimist_1 bash -c \
     'mongo --quiet --eval "db = db.getSiblingDB(\"optimist_data\");
     db.blocks.drop( { writeConcern: { w: \"majority\" } } );
     db.nullifiers.drop( { writeConcern: { w: \"majority\" } } );

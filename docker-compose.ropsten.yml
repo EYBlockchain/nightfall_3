@@ -1,12 +1,6 @@
 version: '3.5'
 services:
-  client1:
-    environment:
-      BLOCKCHAIN_URL: $ROPSTEN_NODE
-      USE_EXTERNAL_NODE: 'true'
-      AUTOSTART_RETRIES: 600
-
-  client2:
+  client:
     environment:
       BLOCKCHAIN_URL: $ROPSTEN_NODE
       USE_EXTERNAL_NODE: 'true'
@@ -22,13 +16,7 @@ services:
       FROM_ADDRESS: ${FROM_ADDRESS:-0x29100E7E3dA6654BF63d9E7804ADe518aCc5AaA5}
       ETH_PRIVATE_KEY: $ETH_PRIVATE_KEY
 
-  optimist1:
-    environment:
-      BLOCKCHAIN_URL: $ROPSTEN_NODE
-      USE_EXTERNAL_NODE: 'true'
-      AUTOSTART_RETRIES: 600
-
-  optimist2:
+  optimist:
     environment:
       BLOCKCHAIN_URL: $ROPSTEN_NODE
       USE_EXTERNAL_NODE: 'true'

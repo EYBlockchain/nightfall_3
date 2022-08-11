@@ -22,7 +22,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: debug
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq
@@ -53,7 +53,7 @@ services:
         target: /app/build/
     environment:
       WEBSOCKET_PORT: 8080
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: poseidon
       LOG_LEVEL: debug
@@ -79,8 +79,8 @@ services:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: blockchain1
-      BLOCKCHAIN_WS_HOST: blockchain1
+      ETH_NETWORK: blockchain
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
@@ -112,7 +112,7 @@ services:
       PROPOSER_HOST: proposer
       PROPOSER_PORT: 8080
       OPTIMIST_PORT: 80
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       CLIENT_HOST: client
       CLIENT_PORT: 80
@@ -130,7 +130,7 @@ services:
       OPTIMIST_PORT: 80
       CLIENT_HOST: client
       CLIENT_PORT: 80
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       IS_TEST_RUNNER: 'yes'
       PROPOSER_PORT: 8080
@@ -149,7 +149,7 @@ services:
       OPTIMIST_PORT: 80
       CLIENT_HOST: client
       CLIENT_PORT: 80
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       PROPOSER_PORT: 8080
       PROPOSER_HOST: proposer

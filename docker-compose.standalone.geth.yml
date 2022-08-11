@@ -14,7 +14,7 @@ services:
         ipv4_address: 172.16.239.10
     command: bootnode --nodekey=setup/node.key
 
-  blockchain1:
+  blockchain:
     image: ethereum/client-go:stable
     ports:
       - 8546:8546

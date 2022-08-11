@@ -2,14 +2,14 @@ version: '3.5'
 # Use this script for running up nightfall_3 client in 'developer' mode with local
 # bindings.  See the readme for more information.
 services:
-  client1:
+  client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
     volumes:
       - type: volume
         source: build
         target: /app/build
       - type: volume
-        source: mongodb1
+        source: mongodb
         target: /app/mongodb
     networks:
       - nightfall_network
@@ -18,13 +18,13 @@ services:
       - 8080:80
     depends_on:
       - worker
-      - rabbitmq1
+      - rabbitmq
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: debug
       ZOKRATES_WORKER_HOST: worker
-      RABBITMQ_HOST: amqp://rabbitmq1
+      RABBITMQ_HOST: amqp://rabbitmq
       RABBITMQ_PORT: 5672
       ENABLE_QUEUE: 1
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
@@ -35,7 +35,7 @@ services:
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
     command: ['npm', 'run', 'dev']
 
-  rabbitmq1:
+  rabbitmq:
     image: rabbitmq
     ports:
       - '15674:15674'
@@ -58,7 +58,7 @@ services:
       CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL}
 
 volumes:
-  mongodb1:
+  mongodb:
   proving_files:
   build:
 

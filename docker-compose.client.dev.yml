@@ -2,7 +2,7 @@ version: '3.5'
 # Use this script for running up nightfall_3 client in 'developer' mode with local
 # bindings.  See the readme for more information.
 services:
-  client1:
+  client:
     build:
       dockerfile: client.Dockerfile
       context: .

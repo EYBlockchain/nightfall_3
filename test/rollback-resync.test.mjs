@@ -245,7 +245,7 @@ describe('Running rollback and resync test', () => {
         stdio: 'ignore',
       });
       resetOptimistDB.on('close', async () => {
-        spawn('docker', ['restart', 'nightfall_3_optimist1_1'], {
+        spawn('docker', ['restart', 'nightfall_3_optimist_1'], {
           stdio: 'ignore',
         });
 
@@ -380,7 +380,7 @@ describe('Running rollback and resync test', () => {
         stdio: 'ignore',
       });
       resetOptimistDB.on('close', async () => {
-        spawn('docker', ['restart', 'nightfall_3_optimist1_1'], {
+        spawn('docker', ['restart', 'nightfall_3_optimist_1'], {
           stdio: 'ignore',
         });
         let healthCheck;

@@ -45,10 +45,10 @@ module.exports = {
     // options below to some value.
     //
 
-    blockchain1: {
+    blockchain: {
       // host: 'blockchain', // Localhost (default: none)
       // port: 8546, // Standard Ethereum port (default: none)
-      url: 'ws://blockchain1:8546',
+      url: 'ws://blockchain:8546',
       network_id: 1337, // Any network (default: none)
       gas: 1000000000,
       websockets: true,

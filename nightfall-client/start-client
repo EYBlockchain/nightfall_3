@@ -37,9 +37,9 @@ fi
 
 if [ -n "$REMOVE_VOLUMES" ]; then
   # if-else block checks - volume exist and then removes it.
-  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
     echo -n 'Removing '
-    docker volume rm nightfall_3_mongodb1
+    docker volume rm nightfall_3_mongodb
   fi
 
   if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then

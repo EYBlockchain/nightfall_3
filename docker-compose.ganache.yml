@@ -3,7 +3,7 @@ version: '3.5'
 # bindings and using a Ganache private blockchain.  See the readme for more information.
 # It acts as an override file for docker-compose.yml
 services:
-  blockchain1:
+  blockchain:
     image: trufflesuite/ganache-cli:v6.12.1
     ports:
       - 8546:8546
