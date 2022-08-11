@@ -129,8 +129,8 @@ describe('ERC1155 tests', () => {
     it('should deposit some ERC1155 crypto into a ZKP commitment', async function () {
       let balances = await nf3Users[0].getLayer2Balances();
       const balanceBefore = [
-        balances[erc1155Address]?.find(e => e.tokenId === 0)?.balance || 0,
-        balances[erc1155Address]?.find(e => e.tokenId === 1)?.balance || 0,
+        balances[erc1155Address]?.find(e => Number(e.tokenId) === 0)?.balance || 0,
+        balances[erc1155Address]?.find(e => Number(e.tokenId) === 1)?.balance || 0,
       ];
       // We create enough transactions to fill blocks full of deposits.
       let res = await nf3Users[0].deposit(
@@ -157,8 +157,8 @@ describe('ERC1155 tests', () => {
       balances = await nf3Users[0].getLayer2Balances();
 
       const balanceAfter = [
-        balances[erc1155Address]?.find(e => e.tokenId === 0).balance,
-        balances[erc1155Address]?.find(e => e.tokenId === 1).balance,
+        balances[erc1155Address]?.find(e => Number(e.tokenId) === 0).balance,
+        balances[erc1155Address]?.find(e => Number(e.tokenId) === 1).balance,
       ];
 
       expect(balanceAfter[0] - balanceBefore[0]).to.be.equal(transferValue);
@@ -190,10 +190,11 @@ describe('ERC1155 tests', () => {
       let balances;
       async function getBalances() {
         balances = [
-          (await nf3Users[0].getLayer2Balances())[erc1155Address].find(e => e.tokenId === 0)
+          (await nf3Users[0].getLayer2Balances())[erc1155Address].find(e => Number(e.tokenId) === 0)
             .balance,
-          (await nf3Users[1].getLayer2Balances())[erc1155Address]?.find(e => e.tokenId === 0)
-            ?.balance || 0,
+          (await nf3Users[1].getLayer2Balances())[erc1155Address]?.find(
+            e => Number(e.tokenId) === 0,
+          )?.balance || 0,
         ];
       }
 
@@ -225,7 +226,7 @@ describe('ERC1155 tests', () => {
   describe('Withdraw', () => {
     it('should withdraw from L2, checking for missing commitment', async function () {
       const beforeBalance = (await nf3Users[0].getLayer2Balances())[erc1155Address].find(
-        e => e.tokenId === 0,
+        e => Number(e.tokenId) === 0,
       ).balance;
 
       const rec = await nf3Users[0].withdraw(
@@ -242,7 +243,7 @@ describe('ERC1155 tests', () => {
       await emptyL2(nf3Users[0]);
 
       const balanceAfter =
-        (await nf3Users[0].getLayer2Balances())[erc1155Address]?.find(e => e.tokenId === 0)
+        (await nf3Users[0].getLayer2Balances())[erc1155Address]?.find(e => Number(e.tokenId) === 0)
           ?.balance || 0;
 
       expect(balanceAfter).to.be.lessThan(beforeBalance);
@@ -252,7 +253,7 @@ describe('ERC1155 tests', () => {
       const nodeInfo = await web3Client.getInfo();
       if (nodeInfo.includes('TestRPC')) {
         const beforeBalance = (await nf3Users[0].getLayer2Balances())[erc1155Address]?.find(
-          e => e.tokenId === 0,
+          e => Number(e.tokenId) === 0,
         )?.balance;
 
         const rec = await nf3Users[0].withdraw(
@@ -285,7 +286,7 @@ describe('ERC1155 tests', () => {
         expectTransaction(res);
 
         const endBalance = (await nf3Users[0].getLayer2Balances())[erc1155Address]?.find(
-          e => e.tokenId === 0,
+          e => Number(e.tokenId) === 0,
         )?.balance;
         expect(endBalance).to.be.lessThan(beforeBalance);
       } else {
