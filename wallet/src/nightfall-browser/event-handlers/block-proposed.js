@@ -37,9 +37,9 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block, blockTimestamp } = data;
   const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
-  const blockCommitments = transactions.map(t =>
-    [t.commitments, t.commitmentFee].flat(Infinity).filter(c => c !== ZERO),
-  );
+  const blockCommitments = transactions
+    .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
+    .flat(Infinity);
   let isTxDecrypt = false;
 
   const dbUpdates = transactions.map(async transaction => {
