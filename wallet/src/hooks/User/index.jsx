@@ -123,11 +123,11 @@ export const UserProvider = ({ children }) => {
         // Additionally, before a transfer/withdraw, there is a check the the last block stored hash, lasbBlockDb
         // matches the blockChain.
         if (Number(parsed.maxBlock) !== 1) {
-          const lastBlockDb = await getLastBlock();
+          const { blockHash = null } = await getLastBlock();
           if (
             parsed.historicalData.block.previousBlockHash !== lastBlock.blockHash &&
             Number(lastBlock.lastBlockHash) !== 0 &&
-            parsed.historicalData.block.blockHash !== lastBlockDb.blockHash
+            parsed.historicalData.block.blockHash !== blockHash
           ) {
             // resync
             // TODO - handle resync correctly
