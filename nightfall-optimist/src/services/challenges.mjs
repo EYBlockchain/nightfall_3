@@ -65,8 +65,10 @@ export async function commitToChallenge(txDataToSign) {
   ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
 }
 
-export async function revealChallenge(txDataToSign) {
-  logger.debug('raw challenge transaction has been sent to be signed and submitted');
+export async function revealChallenge(txDataToSign, sender) {
+  logger.debug(
+    'An unsigned reveal-challenge transaction is being sent to the challenger(s) to be signed and submitted',
+  );
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects
   let tryCount = 0;
@@ -77,7 +79,7 @@ export async function revealChallenge(txDataToSign) {
     );
     if (tryCount++ > 100) throw new Error(`Websocket to $challenger has failed`);
   }
-  ws.send(JSON.stringify({ type: 'challenge', txDataToSign }));
+  ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
 }
 
 export async function createChallenge(block, transactions, err) {

@@ -37,6 +37,7 @@ const web3Client = new Web3Client();
 let erc20Address;
 let stateAddress;
 let eventLogs = [];
+let eventsSeen;
 
 describe('Optimist synchronisation tests', () => {
   let blockProposeEmitter;
@@ -56,7 +57,10 @@ describe('Optimist synchronisation tests', () => {
     blockProposeEmitter = await nf3Proposer1.startProposer();
     challengeEmitter = await nf3Challenger.startChallenger();
     challengeEmitter.on('receipt', (receipt, type) =>
-      logger.debug(`got challenge receipt of type ${type}`),
+      logger.debug(`challenge listener received challenge receipt of type ${type}`),
+    );
+    challengeEmitter.on('error', (err, type) =>
+      logger.debug(`challenge listener received error ${err.message} of type ${type}`),
     );
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
@@ -152,15 +156,26 @@ describe('Optimist synchronisation tests', () => {
       const { block, transactions } = await p;
       const firstBlock = { ...block };
       // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-
+      ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // turn off challenging.  We're going to make a bad block and we don't want it challenged
       await nf3Challenger.challengeEnable(false);
       // update the block so we can submit it again
       // we'll do the easiest thing and submit it again with no change other than to increment
-      // the L2 block number and block hash.
+      // the L2 block number and block hash so that it doesn't get reverted straight away.
+      // It will be a bad block because we'll have submitted the same transactions and leafcount
+      // before.
+      // To achieve that, we'll manually assemble and submit a new proposeBlock call
+      // in the following lines...
+
+      // retrieve the code for the 'proposeBlock' function. We'll check it every time rather than
+      // hard code it, in case someone changes the function.
+      const functionCode = (
+        await web3Client.getWeb3().eth.getTransaction(eventsSeen[0].log.transactionHash)
+      ).input.slice(0, 10);
+      // fix up the blockHash and blockNumberL2 to prevent an immediate revert
       block.previousBlockHash = block.blockHash;
       block.blockNumberL2++;
+      // now assemble our bad-block transaction; first the parameters
       const blockData = Object.values(buildBlockSolidityStruct(block));
       const transactionsData = Object.values(
         transactions.map(t => Object.values(Transaction.buildSolidityStruct(t))),
@@ -168,7 +183,9 @@ describe('Optimist synchronisation tests', () => {
       const encodedParams = web3Client
         .getWeb3()
         .eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [blockData, transactionsData]);
-      const newTx = `0xa9cb3b6f${encodedParams.slice(2)}`;
+      // then the function identifier is added
+      const newTx = `${functionCode}${encodedParams.slice(2)}`;
+      // then send it!
       logger.debug('Resubmitting the same transactions in the next block');
       await web3Client.submitTransaction(newTx, signingKeys.proposer1, stateAddress, 8000000, 1);
       logger.debug('bad block submitted');
@@ -179,6 +196,7 @@ describe('Optimist synchronisation tests', () => {
       await compose.upOne('optimist', options);
       await healthy();
 
+      logger.debug('waiting for rollback to complete');
       await r;
       logger.debug('rollback complete event received');
       // the rollback will have removed us as proposer. We need to re-register because we

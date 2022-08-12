@@ -272,14 +272,14 @@ class Nf3 {
       gas,
       gasPrice,
     };
-
+    logger.debug(`nf3 processing submitTransaction with transaction data ${tx.data}`);
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
       const promiseTest = new Promise((resolve, reject) => {
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .once('receipt', receipt => {
-            logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
+            logger.debug(`Transaction ${receipt.transactionHash} has been receipted.`);
             resolve(receipt);
           })
           .on('error', err => {
@@ -981,6 +981,7 @@ class Nf3 {
             challengeEmitter.emit('error', err, type);
           }
         });
+        logger.debug(`queued ${type} ${txDataToSign}`);
       }
       return null;
     };
