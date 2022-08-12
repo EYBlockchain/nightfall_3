@@ -37,14 +37,11 @@ export async function getProposeBlockCalldata(eventData) {
       transactionType,
       tokenType,
       historicRootBlockNumberL2,
-      historicRootBlockNumberL2Fee,
       tokenId,
       ercAddress,
       recipientAddress,
       commitments,
       nullifiers,
-      commitmentFee,
-      nullifiersFee,
       compressedSecrets,
       proof,
     ] = t;
@@ -54,14 +51,11 @@ export async function getProposeBlockCalldata(eventData) {
       transactionType,
       tokenType,
       historicRootBlockNumberL2,
-      historicRootBlockNumberL2Fee,
       tokenId,
       ercAddress,
       recipientAddress,
       commitments,
       nullifiers,
-      commitmentFee,
-      nullifiersFee,
       compressedSecrets,
       proof: decompressProof(proof),
     };
@@ -76,7 +70,7 @@ export async function getProposeBlockCalldata(eventData) {
   // we no longer put the number of commitments in the on-chain struct but for
   // backwards compatibility, we'll recreate it here.
   block.nCommitments = transactions
-    .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
+    .map(t => t.commitments.filter(c => c !== ZERO))
     .flat(Infinity).length;
   block.transactionHashes = transactions.map(t => t.transactionHash);
   // currentLeafCount holds the count of the next leaf to be added
@@ -97,14 +91,11 @@ export async function getTransactionSubmittedCalldata(eventData) {
     transactionType,
     tokenType,
     historicRootBlockNumberL2,
-    historicRootBlockNumberL2Fee,
     tokenId,
     ercAddress,
     recipientAddress,
     commitments,
     nullifiers,
-    commitmentFee,
-    nullifiersFee,
     compressedSecrets,
     proof,
   ] = transactionData;
@@ -114,14 +105,11 @@ export async function getTransactionSubmittedCalldata(eventData) {
     transactionType,
     tokenType,
     historicRootBlockNumberL2,
-    historicRootBlockNumberL2Fee,
     tokenId,
     ercAddress,
     recipientAddress,
     commitments,
     nullifiers,
-    commitmentFee,
-    nullifiersFee,
     compressedSecrets,
     proof: decompressProof(proof),
   };

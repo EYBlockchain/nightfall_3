@@ -13,12 +13,9 @@ def main<TxType>(\
 	u32[8] tokenId,\
 	field ercAddress,\
 	u32[8] recipientAddress,\
-	field[2] commitments,\
-	field[2] nullifiers,\
-    field[1] commitmentFee,\
-    field[2] nullifiersFee,\
-	field[2] historicRootBlockNumberL2,\
-    field[2] historicRootBlockNumberL2Fee,\
+	field[3] commitments,\
+	field[4] nullifiers,\
+	field[4] historicRootBlockNumberL2,\
 	field[2] compressedSecrets\
 ) -> (bool):
 
@@ -47,13 +44,13 @@ def main<TxType>(\
         ||  (tokenType == 2 && value != 0)))
     
     //Check commitments
-    assert((TxType == 0 && commitments[0] != 0 && commitments[1] == 0) ||\
+    assert((TxType == 0 && commitments[0] != 0 && commitments[1] == 0 && commitments[2] == 0) ||\
         (TxType == 1 && commitments[0] != 0 && commitments[0] != commitments[1]) ||\
         (TxType == 2 && commitments[1] == 0))
     
     //Check nullifiers
     assert(\
-        (TxType == 0 && nullifiers[0] == 0 &&  nullifiers[1] == 0) || \
+        (TxType == 0 && nullifiers[0] == 0 &&  nullifiers[1] == 0 && nullifiers[2] == 0 && nullifiers[3] == 0) || \
         ((TxType == 1 || TxType == 2) &&\
             (nullifiers[0] != 0 && nullifiers[0] != nullifiers[1])\
         )\
@@ -64,8 +61,4 @@ def main<TxType>(\
     assert((TxType == 1 && (compressedSecrets[0] != 0 || compressedSecrets[1] != 0))\
         || (TxType != 1 && compressedSecrets[0] == 0 && compressedSecrets[1] == 0))
     
-    //Check fee structure
-    //Fee can be set to zero
-    assert((TxType == 0 || fee == 0) && nullifiersFee[0] == 0 && nullifiersFee[1] == 0 && commitmentFee[0] == 0\
-     || TxType != 0)
     return true

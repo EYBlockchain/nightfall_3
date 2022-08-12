@@ -118,10 +118,8 @@ contract Challenges is Stateful, Key_Registry, Config {
         Block memory blockL2,
         Transaction[] calldata transactions,
         uint256 transactionIndex,
-        Block[2] calldata blockL2ContainingHistoricRoot,
-        Block[2] calldata blockL2ContainingHistoricRootFee,
-        Transaction[][2] memory transactionsOfblockL2ContainingHistoricRoot,
-        Transaction[][2] memory transactionsOfblockL2ContainingHistoricRootFee,
+        Block[4] calldata blockL2ContainingHistoricRoot,
+        Transaction[][4] memory transactionsOfblockL2ContainingHistoricRoot,
         uint256[8] memory uncompressedProof,
         bytes32 salt
     ) external onlyBootChallenger {
@@ -157,31 +155,33 @@ contract Challenges is Stateful, Key_Registry, Config {
             extraPublicInputs.roots[1] = uint256(blockL2ContainingHistoricRoot[1].root);
         }
 
-        if (uint256(transactions[transactionIndex].nullifiersFee[0]) != 0) {
+       if (uint256(transactions[transactionIndex].nullifiers[2]) != 0) {
             state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRootFee[0],
-                transactionsOfblockL2ContainingHistoricRootFee[0]
+                blockL2ContainingHistoricRoot[2],
+                transactionsOfblockL2ContainingHistoricRoot[2]
             );
             require(
-                transactions[transactionIndex].historicRootBlockNumberL2Fee[0] ==
-                    blockL2ContainingHistoricRootFee[0].blockNumberL2,
+                transactions[transactionIndex].historicRootBlockNumberL2[2] ==
+                    blockL2ContainingHistoricRoot[2].blockNumberL2,
                 'Incorrect historic root block'
             );
-            extraPublicInputs.roots[2] = uint256(blockL2ContainingHistoricRootFee[0].root);
+            extraPublicInputs.roots[2] = uint256(blockL2ContainingHistoricRoot[2].root);
         }
 
-        if (uint256(transactions[transactionIndex].nullifiersFee[1]) != 0) {
+
+        if (uint256(transactions[transactionIndex].nullifiers[3]) != 0) {
             state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRootFee[1],
-                transactionsOfblockL2ContainingHistoricRootFee[1]
+                blockL2ContainingHistoricRoot[3],
+                transactionsOfblockL2ContainingHistoricRoot[3]
             );
             require(
-                transactions[transactionIndex].historicRootBlockNumberL2Fee[1] ==
-                    blockL2ContainingHistoricRootFee[1].blockNumberL2,
+                transactions[transactionIndex].historicRootBlockNumberL2[3] ==
+                    blockL2ContainingHistoricRoot[3].blockNumberL2,
                 'Incorrect historic root block'
             );
-            extraPublicInputs.roots[3] = uint256(blockL2ContainingHistoricRootFee[1].root);
+            extraPublicInputs.roots[3] = uint256(blockL2ContainingHistoricRoot[3].root);
         }
+
 
         // first check the transaction and block do not overflow
         ChallengesUtil.libCheckOverflows(blockL2, transactions[transactionIndex]);
@@ -205,12 +205,10 @@ contract Challenges is Stateful, Key_Registry, Config {
         Transaction[] memory txs1,
         uint256 transactionIndex1,
         uint256 nullifierIndex1,
-        bool isNullifierFee1,
         Block memory block2,
         Transaction[] memory txs2,
         uint256 transactionIndex2,
         uint256 nullifierIndex2,
-        bool isNullifierFee2,
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
@@ -220,10 +218,8 @@ contract Challenges is Stateful, Key_Registry, Config {
         ChallengesUtil.libChallengeNullifier(
             txs1[transactionIndex1],
             nullifierIndex1,
-            isNullifierFee1,
             txs2[transactionIndex2],
-            nullifierIndex2,
-            isNullifierFee2
+            nullifierIndex2
         );
 
         // The blocks are different and we prune the later block of the two
@@ -248,57 +244,58 @@ contract Challenges is Stateful, Key_Registry, Config {
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(blockL2, transactions);
-        if (
-            uint256(transactions[transactionIndex].nullifiers[0]) != 0 &&
-            uint256(transactions[transactionIndex].nullifiers[1]) != 0
-        ) {
+        if (uint256(transactions[transactionIndex].nullifiers[0]) != 0) {
             require(
                 state.getNumberOfL2Blocks() <
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) ||
-                    state.getNumberOfL2Blocks() <
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]),
-                'Historic root exists'
-            );
-        } else if (uint256(transactions[transactionIndex].nullifiers[0]) != 0) {
-            require(
-                state.getNumberOfL2Blocks() <
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) ||
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) != 0,
+                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]),
                 'Historic root exists'
             );
         } else {
             require(
-                uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) != 0 ||
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) != 0,
+                uint256(transactions[transactionIndex].historicRootBlockNumberL2[0]) != 0,
                 'Historic root exists'
             );
         }
 
-        if (
-            uint256(transactions[transactionIndex].nullifiersFee[0]) != 0 &&
-            uint256(transactions[transactionIndex].nullifiersFee[1]) != 0
-        ) {
+        if (uint256(transactions[transactionIndex].nullifiers[1]) != 0) {
             require(
                 state.getNumberOfL2Blocks() <
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) ||
-                    state.getNumberOfL2Blocks() <
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[1]),
-                'Historic root exists'
-            );
-        } else if (uint256(transactions[transactionIndex].nullifiersFee[0]) != 0) {
-            require(
-                state.getNumberOfL2Blocks() <
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) ||
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[1]) != 0,
+                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]),
                 'Historic root exists'
             );
         } else {
             require(
-                uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[0]) != 0 ||
-                    uint256(transactions[transactionIndex].historicRootBlockNumberL2Fee[1]) != 0,
+                uint256(transactions[transactionIndex].historicRootBlockNumberL2[1]) != 0,
                 'Historic root exists'
             );
         }
+
+        if (uint256(transactions[transactionIndex].nullifiers[2]) != 0) {
+            require(
+                state.getNumberOfL2Blocks() <
+                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[2]),
+                'Historic root exists'
+            );
+        } else {
+            require(
+                uint256(transactions[transactionIndex].historicRootBlockNumberL2[2]) != 0,
+                'Historic root exists'
+            );
+        }
+
+        if (uint256(transactions[transactionIndex].nullifiers[3]) != 0) {
+            require(
+                state.getNumberOfL2Blocks() <
+                    uint256(transactions[transactionIndex].historicRootBlockNumberL2[3]),
+                'Historic root exists'
+            );
+        } else {
+            require(
+                uint256(transactions[transactionIndex].historicRootBlockNumberL2[3]) != 0,
+                'Historic root exists'
+            );
+        }
+
         challengeAccepted(blockL2);
     }
 

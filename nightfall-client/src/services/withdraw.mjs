@@ -83,41 +83,42 @@ async function withdraw(withdrawParams) {
     // now we have everything we need to create a Witness and compute a proof
     const transaction = new Transaction({
       fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
-      commitments: commitmentsInfo.newCommitments,
-      commitmentFee: commitmentsInfoFee.newCommitments,
+      historicRootBlockNumberL2: [
+        ...commitmentsInfo.blockNumberL2s,
+        ...commitmentsInfoFee.blockNumberL2s,
+      ],
       transactionType: 2,
       tokenType: items.tokenType,
       tokenId,
       value,
       ercAddress,
       recipientAddress,
-      nullifiers: commitmentsInfo.nullifiers,
-      nullifiersFee: commitmentsInfoFee.nullifiers,
+      commitments: [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments],
+      nullifiers: [...commitmentsInfo.nullifiers, ...commitmentsInfoFee.nullifiers],
     });
 
     const privateData = {
-      rootKey: [rootKey, rootKey],
-      oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
+      rootKey: [rootKey, rootKey, rootKey, rootKey],
+      oldCommitmentPreimage: [
+        ...commitmentsInfo.oldCommitments,
+        ...commitmentsInfoFee.oldCommitments,
+      ].map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
-      paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-      orders: commitmentsInfo.leafIndices,
-      newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
+      paths: [...commitmentsInfo.localSiblingPaths, ...commitmentsInfoFee.localSiblingPaths].map(
+        siblingPath => siblingPath.slice(1),
+      ),
+      orders: [...commitmentsInfo.leafIndices, ...commitmentsInfoFee.leafIndices],
+      newCommitmentPreimage: [
+        ...commitmentsInfo.newCommitments,
+        ...commitmentsInfoFee.newCommitments,
+      ].map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
-      recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      rootKeyFee: [rootKey, rootKey],
-      oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
-        return { value: o.preimage.value, salt: o.preimage.salt };
-      }),
-      pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-      ordersFee: commitmentsInfoFee.leafIndices,
-      newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
-        return { value: o.preimage.value, salt: o.preimage.salt };
-      }),
-      recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
+      recipientPublicKeys: [
+        ...commitmentsInfo.newCommitments,
+        ...commitmentsInfoFee.newCommitments,
+      ].map(o => o.preimage.zkpPublicKey),
       ercAddress,
       tokenId,
     };
@@ -125,8 +126,7 @@ async function withdraw(withdrawParams) {
     const witness = computeCircuitInputs(
       transaction,
       privateData,
-      commitmentsInfo.roots,
-      commitmentsInfoFee.roots,
+      [...commitmentsInfo.roots, ...commitmentsInfoFee.roots],
       maticAddress,
     );
     logger.debug(`witness input is ${witness.join(' ')}`);
@@ -145,18 +145,18 @@ async function withdraw(withdrawParams) {
 
     const optimisticWithdrawTransaction = new Transaction({
       fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
-      commitments: commitmentsInfo.newCommitments,
-      commitmentFee: commitmentsInfoFee.newCommitments,
+      historicRootBlockNumberL2: [
+        ...commitmentsInfo.blockNumberL2s,
+        ...commitmentsInfoFee.blockNumberL2s,
+      ],
       transactionType: 2,
       tokenType: items.tokenType,
       tokenId,
       value,
       ercAddress,
       recipientAddress,
-      nullifiers: commitmentsInfo.nullifiers,
-      nullifiersFee: commitmentsInfoFee.nullifiers,
+      commitments: [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments],
+      nullifiers: [...commitmentsInfo.nullifiers, ...commitmentsInfoFee.nullifiers],
       proof,
     });
 

@@ -640,14 +640,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[2]",
+            "internalType": "uint64[4]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[2]"
-          },
-          {
-            "internalType": "uint64[2]",
-            "name": "historicRootBlockNumberL2Fee",
-            "type": "uint64[2]"
+            "type": "uint64[4]"
           },
           {
             "internalType": "bytes32",
@@ -665,24 +660,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[3]",
             "name": "commitments",
-            "type": "bytes32[2]"
+            "type": "bytes32[3]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[4]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
-          },
-          {
-            "internalType": "bytes32[1]",
-            "name": "commitmentFee",
-            "type": "bytes32[1]"
-          },
-          {
-            "internalType": "bytes32[2]",
-            "name": "nullifiersFee",
-            "type": "bytes32[2]"
+            "type": "bytes32[4]"
           },
           {
             "internalType": "bytes32[2]",
@@ -886,14 +871,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[2]",
+            "internalType": "uint64[4]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[2]"
-          },
-          {
-            "internalType": "uint64[2]",
-            "name": "historicRootBlockNumberL2Fee",
-            "type": "uint64[2]"
+            "type": "uint64[4]"
           },
           {
             "internalType": "bytes32",
@@ -911,24 +891,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[3]",
             "name": "commitments",
-            "type": "bytes32[2]"
+            "type": "bytes32[3]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[4]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
-          },
-          {
-            "internalType": "bytes32[1]",
-            "name": "commitmentFee",
-            "type": "bytes32[1]"
-          },
-          {
-            "internalType": "bytes32[2]",
-            "name": "nullifiersFee",
-            "type": "bytes32[2]"
+            "type": "bytes32[4]"
           },
           {
             "internalType": "bytes32[2]",
@@ -1030,14 +1000,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[2]",
+            "internalType": "uint64[4]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[2]"
-          },
-          {
-            "internalType": "uint64[2]",
-            "name": "historicRootBlockNumberL2Fee",
-            "type": "uint64[2]"
+            "type": "uint64[4]"
           },
           {
             "internalType": "bytes32",
@@ -1055,24 +1020,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[3]",
             "name": "commitments",
-            "type": "bytes32[2]"
+            "type": "bytes32[3]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[4]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
-          },
-          {
-            "internalType": "bytes32[1]",
-            "name": "commitmentFee",
-            "type": "bytes32[1]"
-          },
-          {
-            "internalType": "bytes32[2]",
-            "name": "nullifiersFee",
-            "type": "bytes32[2]"
+            "type": "bytes32[4]"
           },
           {
             "internalType": "bytes32[2]",
@@ -1130,14 +1085,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[2]",
+            "internalType": "uint64[4]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[2]"
-          },
-          {
-            "internalType": "uint64[2]",
-            "name": "historicRootBlockNumberL2Fee",
-            "type": "uint64[2]"
+            "type": "uint64[4]"
           },
           {
             "internalType": "bytes32",
@@ -1155,24 +1105,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[3]",
             "name": "commitments",
-            "type": "bytes32[2]"
+            "type": "bytes32[3]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[4]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
-          },
-          {
-            "internalType": "bytes32[1]",
-            "name": "commitmentFee",
-            "type": "bytes32[1]"
-          },
-          {
-            "internalType": "bytes32[2]",
-            "name": "nullifiersFee",
-            "type": "bytes32[2]"
+            "type": "bytes32[4]"
           },
           {
             "internalType": "bytes32[2]",
@@ -1257,14 +1197,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[2]",
+            "internalType": "uint64[4]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[2]"
-          },
-          {
-            "internalType": "uint64[2]",
-            "name": "historicRootBlockNumberL2Fee",
-            "type": "uint64[2]"
+            "type": "uint64[4]"
           },
           {
             "internalType": "bytes32",
@@ -1282,24 +1217,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[3]",
             "name": "commitments",
-            "type": "bytes32[2]"
+            "type": "bytes32[3]"
           },
           {
-            "internalType": "bytes32[2]",
+            "internalType": "bytes32[4]",
             "name": "nullifiers",
-            "type": "bytes32[2]"
-          },
-          {
-            "internalType": "bytes32[1]",
-            "name": "commitmentFee",
-            "type": "bytes32[1]"
-          },
-          {
-            "internalType": "bytes32[2]",
-            "name": "nullifiersFee",
-            "type": "bytes32[2]"
+            "type": "bytes32[4]"
           },
           {
             "internalType": "bytes32[2]",

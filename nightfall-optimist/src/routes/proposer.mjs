@@ -321,9 +321,7 @@ router.post('/encode', async (req, res, next) => {
 
     if (!block.root) {
       const leafValues = newTransactions
-        .map(newTransaction =>
-          [...newTransaction.commitments, ...newTransaction.commitmentFee].filter(c => c !== ZERO),
-        )
+        .map(newTransaction => newTransaction.commitments.filter(c => c !== ZERO))
         .flat(Infinity);
       const { root } = Timber.statelessUpdate(latestTree, leafValues, HASH_TYPE, TIMBER_HEIGHT);
       block.root = root;

@@ -10,7 +10,8 @@ def main<MinCommitments, MaxCommitments>(\
     field[MaxCommitments] commitmentHashes,\
     private field[MaxCommitments] newCommitmentValues,\
     private field[MaxCommitments] newCommitmentSalts,\
-    private Point[MaxCommitments] recipientPublicKey\
+    private Point[MaxCommitments] recipientPublicKey,\
+    field ercAddressFee\
 ) -> bool:
 
     //Check that all the commitments are valid. If NumCommitments equals zero this loop will be ignored
@@ -26,18 +27,32 @@ def main<MinCommitments, MaxCommitments>(\
             5) Finally, we check the "optional extra commitments" that are only allowable to erc20/1155 (characterised by value > 0)
         */
 
-        field commitment = if (newCommitmentValues[i] != 0 || (i+1) == MinCommitments) then\
-            poseidon([\
+        // uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+        
+        field calculatedCommitmentHash = poseidon([\
                 packedErcAddress,\
                 idRemainder,\
                 newCommitmentValues[i],\
                 ...recipientPublicKey[i],\
                 newCommitmentSalts[i]\
-            ])  else 0\
-        fi
+            ])
+
+        field calculatedCommitmentHashFee = poseidon([\
+                ercAddressFee,\
+                0,\
+                newCommitmentValues[i],\
+                ...recipientPublicKey[i],\
+                newCommitmentSalts[i]\
+            ])
+        
+        field commitment = if (newCommitmentValues[i] != 0 || (i+1) == MinCommitments) then\
+            calculatedCommitmentHash else 0 fi
+
+        field commitmentFee = if (newCommitmentValues[i] != 0) then\
+            calculatedCommitmentHashFee else 0 fi
 
         //Check that the calculated commitment matches with the one contained in the transaction
-        assert(commitment == commitmentHashes[i])
+        assert(commitment == commitmentHashes[i] || commitmentFee == commitmentHashes[i])
     endfor    
     
     return true

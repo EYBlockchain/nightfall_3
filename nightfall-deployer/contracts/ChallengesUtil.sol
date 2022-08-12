@@ -101,36 +101,13 @@ library ChallengesUtil {
     function libChallengeNullifier(
         Structures.Transaction memory tx1,
         uint256 nullifierIndex1,
-        bool isNullifierFee1,
         Structures.Transaction memory tx2,
-        uint256 nullifierIndex2,
-        bool isNullifierFee2
+        uint256 nullifierIndex2
     ) public pure {
-        if (!isNullifierFee1 && !isNullifierFee2) {
-            require(
-                tx1.nullifiers[nullifierIndex1] != 0 &&
-                    tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        } else if (!isNullifierFee1) {
-            require(
-                tx1.nullifiers[nullifierIndex1] != 0 &&
-                    tx1.nullifiers[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        } else if (!isNullifierFee2) {
-            require(
-                tx1.nullifiersFee[nullifierIndex1] != 0 &&
-                    tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        } else {
-            require(
-                tx1.nullifiersFee[nullifierIndex1] != 0 &&
-                    tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        }
+        require(
+            tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
+            'Not matching nullifiers'
+        );
 
         require(
             Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2),

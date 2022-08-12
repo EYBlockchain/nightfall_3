@@ -125,40 +125,41 @@ async function transfer(transferParams, shieldContractAddress) {
       // now we have everything we need to create a Witness and compute a proof
       const transaction = new Transaction({
         fee,
-        historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-        historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
+        historicRootBlockNumberL2: [
+          ...commitmentsInfo.blockNumberL2s,
+          ...commitmentsInfoFee.blockNumberL2s,
+        ],
         transactionType: 1,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
         tokenId: compressedSecrets[1], // this is the encrypted tokenID
         recipientAddress: compressedEPub,
-        commitments: commitmentsInfo.newCommitments,
-        commitmentFee: commitmentsInfoFee.newCommitments,
-        nullifiers: commitmentsInfo.nullifiers,
-        nullifiersFee: commitmentsInfoFee.nullifiers,
+        commitments: [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments],
+        nullifiers: [...commitmentsInfo.nullifiers, ...commitmentsInfoFee.nullifiers],
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
       });
 
       const privateData = {
-        rootKey: [rootKey, rootKey],
-        oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
+        rootKey: [rootKey, rootKey, rootKey, rootKey],
+        oldCommitmentPreimage: [
+          ...commitmentsInfo.oldCommitments,
+          ...commitmentsInfoFee.oldCommitments,
+        ].map(o => {
           return { value: o.preimage.value, salt: o.preimage.salt };
         }),
-        paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-        orders: commitmentsInfo.leafIndices,
-        newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
+        paths: [...commitmentsInfo.localSiblingPaths, ...commitmentsInfoFee.localSiblingPaths].map(
+          siblingPath => siblingPath.slice(1),
+        ),
+        orders: [...commitmentsInfo.leafIndices, ...commitmentsInfoFee.leafIndices],
+        newCommitmentPreimage: [
+          ...commitmentsInfo.newCommitments,
+          ...commitmentsInfoFee.newCommitments,
+        ].map(o => {
           return { value: o.preimage.value, salt: o.preimage.salt };
         }),
-        recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-        rootKeyFee: [rootKey, rootKey],
-        oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
-          return { value: o.preimage.value, salt: o.preimage.salt };
-        }),
-        pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-        ordersFee: commitmentsInfoFee.leafIndices,
-        newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
-          return { value: o.preimage.value, salt: o.preimage.salt };
-        }),
-        recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
+        recipientPublicKeys: [
+          ...commitmentsInfo.newCommitments,
+          ...commitmentsInfoFee.newCommitments,
+        ].map(o => o.preimage.zkpPublicKey),
         ercAddress,
         tokenId,
         ephemeralKey: ePrivate,
@@ -167,8 +168,7 @@ async function transfer(transferParams, shieldContractAddress) {
       const witnessInput = computeCircuitInputs(
         transaction,
         privateData,
-        commitmentsInfo.roots,
-        commitmentsInfoFee.roots,
+        [...commitmentsInfo.roots, ...commitmentsInfoFee.roots],
         maticAddress,
       );
 
@@ -200,16 +200,16 @@ async function transfer(transferParams, shieldContractAddress) {
       // and work out the ABI encoded data that the caller should sign and send to the shield contract
       const optimisticTransferTransaction = new Transaction({
         fee,
-        historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-        historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
+        historicRootBlockNumberL2: [
+          ...commitmentsInfo.blockNumberL2s,
+          ...commitmentsInfoFee.blockNumberL2s,
+        ],
         transactionType: 1,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
         tokenId: compressedSecrets[1], // this is the encrypted tokenID
         recipientAddress: compressedEPub,
-        commitments: commitmentsInfo.newCommitments,
-        nullifiers: commitmentsInfo.nullifiers,
-        commitmentFee: commitmentsInfoFee.newCommitments,
-        nullifiersFee: commitmentsInfoFee.nullifiers,
+        commitments: [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments],
+        nullifiers: [...commitmentsInfo.nullifiers, ...commitmentsInfoFee.nullifiers],
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
         proof,
       });

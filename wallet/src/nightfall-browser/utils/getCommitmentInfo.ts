@@ -72,7 +72,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
 
   const nullifiers = oldCommitments.map(commitment => new Nullifier(commitment, nullifierKey));
   // then the new output commitment(s)
-  const totalInputCommitmentFeeValue: bigint = oldCommitments.reduce(
+  const totalInputCommitmentValue: bigint = oldCommitments.reduce(
     (acc, commitment) => acc + commitment.preimage.value.bigInt,
     0n,
   );
@@ -83,7 +83,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
   }
 
   // we may need to return change to the recipient
-  const change = totalInputCommitmentFeeValue - transferValue - addedFee;
+  const change = totalInputCommitmentValue - transferValue - addedFee;
 
   // if so, add an output commitment to do that
   if (change !== 0n) {

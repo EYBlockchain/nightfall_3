@@ -23,10 +23,7 @@ def main(\
 	    tx.recipientAddress,\
 	    tx.commitments,\
 	    tx.nullifiers,\
-        tx.commitmentFee,\
-        tx.nullifiersFee,\
 	    tx.historicRootBlockNumberL2,\
-        tx.historicRootBlockNumberL2Fee,\
 	    tx.compressedSecrets\
     ))
 
@@ -34,9 +31,9 @@ def main(\
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
     field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
     field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
-
+    field ercAddressFee = 0
     //Verify new Commmitments
     assert(verify_commitments::<1,1>(packedErcAddress, idRemainder, [tx.commitments[0]],\
-    [tx.value], [salt], [recipientPublicKey]))
+    [tx.value], [salt], [recipientPublicKey], ercAddressFee))
 
     return

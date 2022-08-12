@@ -8,10 +8,10 @@
   "NODE_HASHLENGTH": 32,
   "ZERO": "0x0000000000000000000000000000000000000000000000000000000000000000",
   "BLOCK_TYPES": "(uint48,address,bytes32,uint256,bytes32,bytes32)",
-  "TRANSACTION_TYPES": "(uint112, uint112,uint8,uint8, uint64[2],uint64[2], bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[1],bytes32[2], bytes32[2],uint[4])",
+  "TRANSACTION_TYPES": "(uint112, uint112,uint8,uint8, uint64[4], bytes32,bytes32,bytes32,bytes32[3],bytes32[4], bytes32[2],uint[4])",
   "PROPOSE_BLOCK_TYPES": [
     "(uint48,address,bytes32,uint256,bytes32,bytes32)",
-    "(uint112, uint112,uint8,uint8, uint64[2],uint64[2], bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[1],bytes32[2], bytes32[2],uint[4])[]"
+    "(uint112, uint112,uint8,uint8, uint64[4], bytes32,bytes32,bytes32,bytes32[3],bytes32[4], bytes32[2],uint[4])[]"
   ],
-  "SUBMIT_TRANSACTION_TYPES": "(uint112, uint112,uint8,uint8, uint64[2],uint64[2], bytes32,bytes32,bytes32,bytes32[2],bytes32[2],bytes32[1],bytes32[2], bytes32[2],uint[4])"
+  "SUBMIT_TRANSACTION_TYPES": "(uint112, uint112,uint8,uint8, uint64[4], bytes32,bytes32,bytes32,bytes32[3],bytes32[4], bytes32[2],uint[4])"
 }

@@ -108,9 +108,7 @@ class Block {
     // extract the commitment hashes from the transactions
     // we filter out zeroes commitments that can come from withdrawals
     const leafValues = transactions
-      .map(transaction =>
-        [...transaction.commitments, ...transaction.commitmentFee].filter(c => c !== ZERO),
-      )
+      .map(transaction => transaction.commitments.filter(c => c !== ZERO))
       .flat(Infinity);
     const nCommitments = leafValues.length;
 
