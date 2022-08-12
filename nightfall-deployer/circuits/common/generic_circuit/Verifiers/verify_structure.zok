@@ -7,6 +7,7 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8
 */
 def main<TxType>(\
     field value,\
+    field fee,\
 	field transactionType,\
 	field tokenType,\
 	u32[8] tokenId,\
@@ -14,7 +15,10 @@ def main<TxType>(\
 	u32[8] recipientAddress,\
 	field[2] commitments,\
 	field[2] nullifiers,\
+    field[1] commitmentFee,\
+    field[2] nullifiersFee,\
 	field[2] historicRootBlockNumberL2,\
+    field[2] historicRootBlockNumberL2Fee,\
 	field[2] compressedSecrets\
 ) -> (bool):
 
@@ -60,4 +64,8 @@ def main<TxType>(\
     assert((TxType == 1 && (compressedSecrets[0] != 0 || compressedSecrets[1] != 0))\
         || (TxType != 1 && compressedSecrets[0] == 0 && compressedSecrets[1] == 0))
     
+    //Check fee structure
+    //Fee can be set to zero
+    assert((TxType == 0 || fee == 0) && nullifiersFee[0] == 0 && nullifiersFee[1] == 0 && commitmentFee[0] == 0\
+     || TxType != 0)
     return true

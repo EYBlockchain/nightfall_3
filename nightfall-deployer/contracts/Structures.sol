@@ -40,14 +40,18 @@ contract Structures {
     // nullifiers for a Deposit transaction.
     struct Transaction {
         uint112 value;
-        uint64[2] historicRootBlockNumberL2; // number of L2 block containing historic root
+        uint112 fee;
         TransactionTypes transactionType;
         TokenType tokenType;
+        uint64[2] historicRootBlockNumberL2; // number of L2 block containing historic root
+        uint64[2] historicRootBlockNumberL2Fee; //number of L2 block containing historic root fee
         bytes32 tokenId;
         bytes32 ercAddress;
         bytes32 recipientAddress;
         bytes32[2] commitments;
         bytes32[2] nullifiers;
+        bytes32[1] commitmentFee;
+        bytes32[2] nullifiersFee;
         bytes32[2] compressedSecrets;
         uint256[4] proof;
     }
@@ -76,5 +80,15 @@ contract Structures {
     struct TimeLockedBond {
         uint256 amount; // The amount held
         uint256 time; // The time the funds were locked from
+    }
+
+    struct Fee {
+        address proposer;
+        uint256 blockNumberL2;
+    }
+
+    struct PublicInputs {
+        uint256[4] roots;
+        address maticAddress;
     }
 }

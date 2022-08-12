@@ -64,11 +64,8 @@ export async function clientCommitmentSync(zkpPrivateKey, nullifierKey) {
   const transactions = await getAllTransactions();
   for (let i = 0; i < transactions.length; i++) {
     // filter out non zero commitments and nullifiers
-    const nonZeroCommitments = transactions[i].commitments.flat().filter(n => n !== ZERO);
-    if (
-      (transactions[i].transactionType === '1' || transactions[i].transactionType === '2') &&
-      countCommitments(nonZeroCommitments) === 0
-    )
+    const nonZeroCommitments = transactions[i].commitments.filter(n => n !== ZERO);
+    if (transactions[i].transactionType === '1' && countCommitments([nonZeroCommitments[0]]) === 0)
       decryptCommitment(transactions[i], zkpPrivateKey, nullifierKey);
   }
 }

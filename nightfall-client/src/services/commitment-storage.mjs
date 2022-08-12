@@ -313,7 +313,7 @@ export async function getWalletBalance(compressedZkpPublicKey, ercList) {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedZkpPublicKey: e.compressedZkpPublicKey,
-      tokenId: Number(BigInt(e.preimage.tokenId)),
+      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(
@@ -370,7 +370,7 @@ export async function getWalletPendingDepositBalance(compressedZkpPublicKey, erc
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedZkpPublicKey: e.compressedZkpPublicKey,
-      tokenId: Number(BigInt(e.preimage.tokenId)),
+      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(
@@ -431,7 +431,7 @@ export async function getWalletPendingSpentBalance(compressedZkpPublicKey, ercLi
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedZkpPublicKey: e.compressedZkpPublicKey,
-      tokenId: Number(BigInt(e.preimage.tokenId)),
+      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(
@@ -490,7 +490,7 @@ export async function getWalletCommitments() {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`,
       compressedZkpPublicKey: e.compressedZkpPublicKey,
-      tokenId: Number(BigInt(e.preimage.tokenId)),
+      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
@@ -594,7 +594,7 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
 // also mark any found commitments as nullified (TODO mark them as un-nullified
 // if the transaction errors). The mutex lock is in the function
 // findUsableCommitmentsMutex, which calls this function.
-async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne) {
+async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -608,6 +608,7 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
       isPendingNullification: false,
     })
     .toArray();
+
   if (commitmentArray === []) return null;
   // turn the commitments into real commitment objects
   const commitments = commitmentArray
@@ -620,21 +621,19 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     await markPending(singleCommitment);
     return [singleCommitment];
   }
-  // If we only want one or there is only 1 commitment - then we should try a single transfer with change
-  if (onlyOne || commitments.length === 1) {
-    const valuesGreaterThanTarget = commitments.filter(c => c.preimage.value.bigInt > value.bigInt); // Do intermediary step since reduce has ugly exception
-    if (valuesGreaterThanTarget.length === 0) return null;
-    const singleCommitmentWithChange = valuesGreaterThanTarget.reduce((prev, curr) =>
-      prev.preimage.value.bigInt < curr.preimage.value.bigInt ? prev : curr,
-    );
-    return [singleCommitmentWithChange];
-  }
-  // If we get here it means that we have not been able to find a single commitment that satisfies our requirements (onlyOne)
-  if (commitments.length < 2) return null; // sometimes we require just one commitment
 
-  /* if not, maybe we can do more flexible single or double commitment transfers. The current strategy aims to prioritise reducing the complexity of
-    the commitment set. I.e. Minimise the size of the commitment set by using smaller commitments while also minimising the creation of 
-    low value commitments (dust).
+  // If there is only 1 commitment - then we should try a single transfer with change
+  if (commitments.length === 1) {
+    if (commitments[0].preimage.value.bigInt > value.bigInt) {
+      await markPending(commitments[0]);
+      return commitments;
+    }
+    return null;
+  }
+
+  /* The current strategy aims to prioritise reducing the complexity of the commitment set. 
+    I.e. Minimise the size of the commitment set by using smaller commitments while also 
+    minimising the creation of low value commitments (dust).
 
     Transaction type in order of priority. (1) Double transfer without change, (2) Double Transfer with change, (3) Single Transfer with change.
 
@@ -670,16 +669,24 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   // Find two commitments that matches the transfer value exactly. Double Transfer With No Change.
   let lhs = 0;
   let rhs = sortedCommits.length - 1;
-  /** THIS WILL BE ENABLED LATED
+  let commitmentsToUse = null;
   while (lhs < rhs) {
     const tempSum = sortedCommits[lhs].bigInt + sortedCommits[rhs].bigInt;
     // The first valid solution will include the smallest usable commitment in the set.
-    if (tempSum === value.bigInt) break;
-    else if (tempSum > value.bigInt) rhs--;
+    if (tempSum === value.bigInt) {
+      commitmentsToUse = [sortedCommits[lhs], sortedCommits[rhs]];
+      break;
+    }
+
+    if (tempSum > value.bigInt) rhs--;
     else lhs++;
   }
-  if (lhs < rhs) return [sortedCommits[lhs], sortedCommits[rhs]];
-   */
+
+  // If we have found two commitments that match the transfer value, mark them as pending and return
+  if (commitmentsToUse) {
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse;
+  }
 
   // Find two commitments are greater than the target. Double Transfer With Change
   // get all commitments less than the target value
@@ -694,15 +701,19 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
   // then we will need to use a commitment of greater value than the target
   if (twoGreatestSum < value.bigInt) {
     if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
-    if (commitsLessThanTargetValue.length === 0) return [sortedCommits[0], sortedCommits[1]]; // return smallest in GT if LT array is empty
-    return [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+    commitmentsToUse =
+      commitsLessThanTargetValue.length === 0
+        ? [(sortedCommits[0], sortedCommits[1])] // return smallest in GT if LT array is empty
+        : [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse; // return smallest in GT if LT array is empty
   }
 
   // If we are here than we can use our commitments less than the target value to sum to greater than the target value
   lhs = 0;
   rhs = commitsLessThanTargetValue.length - 1;
   let changeDiff = -Infinity;
-  let commitmentsToUse = null;
+  commitmentsToUse = null;
   while (lhs < rhs) {
     const tempSum =
       commitsLessThanTargetValue[lhs].preimage.value.bigInt +
@@ -736,10 +747,9 @@ export async function findUsableCommitmentsMutex(
   ercAddress,
   tokenId,
   _value,
-  onlyOne,
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value, onlyOne),
+    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value),
   );
 }
 

@@ -14,9 +14,9 @@ import { waitForContract } from '../event-handlers/subscribe.mjs';
 import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
-const { ZERO, CHALLENGES_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 const { PROVING_SCHEME, BACKEND, CURVE, BN128_GROUP_ORDER, MAX_PUBLIC_VALUES } = config;
+const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
 function isOverflow(value, check) {
   const bigValue = value.bigInt;
@@ -37,20 +37,24 @@ async function checkTransactionHash(transaction) {
 }
 
 async function checkHistoricRoot(transaction) {
-  // Deposit transaction have a historic root of 0
-  // the validity is tested in checkTransactionType
   if (Number(transaction.nullifiers[0]) !== 0) {
-    const historicRootFirst = await getBlockByBlockNumberL2(
-      transaction.historicRootBlockNumberL2[0],
-    );
-    if (historicRootFirst === null)
+    const historicRoot = await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[0]);
+    if (historicRoot === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
   if (Number(transaction.nullifiers[1]) !== 0) {
-    const historicRootSecond = await getBlockByBlockNumberL2(
-      transaction.historicRootBlockNumberL2[1],
-    );
-    if (historicRootSecond === null)
+    const historicRoot = await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[1]);
+    if (historicRoot === null)
+      throw new TransactionError('The historic root in the transaction does not exist', 3);
+  }
+  if (Number(transaction.nullifiersFee[0]) !== 0) {
+    const historicRoot = await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2Fee[0]);
+    if (historicRoot === null)
+      throw new TransactionError('The historic root in the transaction does not exist', 3);
+  }
+  if (Number(transaction.nullifiersFee[1]) !== 0) {
+    const historicRoot = await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2Fee[1]);
+    if (historicRoot === null)
       throw new TransactionError('The historic root in the transaction does not exist', 3);
   }
 }
@@ -72,17 +76,38 @@ async function verifyProof(transaction) {
       ? { root: ZERO }
       : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[1])) ?? { root: ZERO };
 
+  const historicRootFeeFirst =
+    transaction.nullifiersFee[0] === ZERO
+      ? { root: ZERO }
+      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2Fee[0])) ?? {
+          root: ZERO,
+        };
+  const historicRootFeeSecond =
+    transaction.nullifiersFee[1] === ZERO
+      ? { root: ZERO }
+      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2Fee[1])) ?? {
+          root: ZERO,
+        };
+
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+
+  const maticAddress = await shieldContractInstance.methods.getMaticAddress().call();
+
   const inputs = generalise(
     [
       transaction.value,
-      transaction.historicRootBlockNumberL2,
+      transaction.fee,
       transaction.transactionType,
       transaction.tokenType,
+      transaction.historicRootBlockNumberL2,
+      transaction.historicRootBlockNumberL2Fee,
       generalise(transaction.tokenId).limbs(32, 8),
       transaction.ercAddress,
       generalise(transaction.recipientAddress).limbs(32, 8),
       transaction.commitments,
       transaction.nullifiers,
+      transaction.commitmentFee,
+      transaction.nullifiersFee,
       transaction.compressedSecrets,
     ].flat(Infinity),
   ).all.hex(32);
@@ -90,14 +115,19 @@ async function verifyProof(transaction) {
   if (Number(transaction.transactionType) !== 0) {
     inputs.push(generalise(historicRootFirst.root).hex(32));
     inputs.push(generalise(historicRootSecond.root).hex(32));
+    inputs.push(generalise(historicRootFeeFirst.root).hex(32));
+    inputs.push(generalise(historicRootFeeSecond.root).hex(32));
+    inputs.push(generalise(maticAddress.toLowerCase()).hex(32));
   }
 
   if (
     isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
     isOverflow(historicRootFirst.root, BN128_GROUP_ORDER) ||
     isOverflow(historicRootSecond.root, BN128_GROUP_ORDER) ||
-    (transaction.transactionType === 2 &&
-      isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS))
+    isOverflow(historicRootFeeFirst.root, BN128_GROUP_ORDER) ||
+    isOverflow(historicRootFeeSecond.root, BN128_GROUP_ORDER) ||
+    (isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS) &&
+      transaction.transactionType === 2)
   ) {
     throw new TransactionError('Overflow in public input', 4);
   }
@@ -108,6 +138,15 @@ async function verifyProof(transaction) {
   }
   for (let i = 0; i < transaction.commitments.length; i++) {
     if (isOverflow(transaction.commitments[i], MAX_PUBLIC_VALUES.COMMITMENT))
+      throw new TransactionError('Overflow in public input', 4);
+  }
+
+  for (let i = 0; i < transaction.nullifiersFee.length; i++) {
+    if (isOverflow(transaction.nullifiersFee[i], MAX_PUBLIC_VALUES.NULLIFIER))
+      throw new TransactionError('Overflow in public input', 4);
+  }
+  for (let i = 0; i < transaction.commitmentFee.length; i++) {
+    if (isOverflow(transaction.commitmentFee[i], MAX_PUBLIC_VALUES.COMMITMENT))
       throw new TransactionError('Overflow in public input', 4);
   }
   // check for modular overflow attacks

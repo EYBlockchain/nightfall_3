@@ -1,44 +1,43 @@
 /* eslint import/no-extraneous-dependencies: "off" */
+/* eslint no-unused-vars: "off" */
 
-/*
-  Pulled from https://github.com/winstonjs/winston/issues/1427 with some edits.
-*/
-
-import winston from 'winston';
-import util from 'util';
 import config from 'config';
+import pino from 'pino';
+import isDev from './utils.mjs';
 
-const { createLogger, format, transports } = winston;
-const { inspect } = util;
+const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss.l';
 
-function formatWithInspect(val) {
-  return `${val instanceof Object ? '\n' : ''} ${inspect(val, {
-    depth: null,
-    colors: true,
-  })}`;
-}
+const getInstance = () => {
+  const pinoOptions = {
+    level: config.LOG_LEVEL || 'info',
+    formatters: {
+      // echoes the level as the label instead of the number
+      level(label, number) {
+        return { level: label };
+      },
+      // removes the pid and hostname fields from the logs
+      bindings(bindings) {
+        return {};
+      },
+    },
+    timestamp: () => `,"time": "${new Date(Date.now()).toISOString()}"`,
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        ignore: 'pid,hostname,filename',
+        translateTime: LOGGER_TIME_STRING,
+      },
+    },
+  };
 
-export default createLogger({
-  level: config.LOG_LEVEL,
-  format: winston.format.combine(
-    format.errors({ stack: true }),
-    format.colorize(),
-    format.printf(info => {
-      const splatArgs = info[Symbol.for('splat')];
-      let log = `${info.level}: ${info.message}`;
+  if (!isDev()) {
+    delete pinoOptions.transport;
+  }
 
-      // append splat messages to log
-      if (splatArgs) {
-        const rest = splatArgs.map(formatWithInspect).join();
-        log += ` ${rest}`;
-      }
+  return pino(pinoOptions);
+};
 
-      // check if error log, if so append error stack
-      if (info.stack) {
-        log += ` ${info.stack}`;
-      }
-      return log;
-    }),
-  ),
-  transports: [new transports.Console()],
-});
+const instance = getInstance();
+
+export default instance;

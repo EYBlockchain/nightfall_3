@@ -37,19 +37,25 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block, blockTimestamp } = data;
   const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
-  const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+  const blockCommitments = transactions
+    .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
+    .flat(Infinity);
   let isTxDecrypt = false;
 
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
-    const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
-    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
+    const nonZeroCommitments = transaction.commitments.filter(n => n !== ZERO);
+    const nonZeroNullifiers = transaction.nullifiers.filter(n => n !== ZERO);
+
+    // filter out non zero commitments fee and nullifiers fee
+    const nonZeroCommitmentsFee = transaction.commitmentFee.filter(n => n !== ZERO);
+    const nonZeroNullifiersFee = transaction.nullifiersFee.filter(n => n !== ZERO);
+
+    const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
+
     const storeCommitments = [];
     const tempTransactionStore = [];
-    if (
-      (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 2) &&
-      (await countCommitments(nonZeroCommitments)) === 0
-    ) {
+    if (Number(transaction.transactionType) === 1 && countOfNonZeroCommitments === 0) {
       zkpPrivateKeys.forEach((key, i) => {
         // decompress the secrets first and then we will decryp t the secrets from this
         const { zkpPublicKey } = ZkpKeys.calculateZkpPublicKey(generalise(key));
@@ -106,9 +112,14 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
       blockTimestamp,
     );
     return [
-      markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
+      markOnChain(
+        [...nonZeroCommitments, ...nonZeroCommitmentsFee],
+        block.blockNumberL2,
+        data.blockNumber,
+        data.transactionHash,
+      ),
       markNullifiedOnChain(
-        nonZeroNullifiers,
+        [...nonZeroNullifiers, ...nonZeroNullifiersFee],
         block.blockNumberL2,
         data.blockNumber,
         data.transactionHash,
