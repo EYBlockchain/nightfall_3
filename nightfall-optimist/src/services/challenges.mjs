@@ -66,9 +66,7 @@ export async function commitToChallenge(txDataToSign) {
 }
 
 export async function revealChallenge(txDataToSign, sender) {
-  logger.debug(
-    'An unsigned reveal-challenge transaction is being sent to the challenger(s) to be signed and submitted',
-  );
+  logger.debug('raw challenge transaction has been sent to be signed and submitted');
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects
   let tryCount = 0;
@@ -188,114 +186,96 @@ export async function createChallenge(block, transactions, err) {
         }),
       );
 
-        const [historicInputFee1, historicInputFee2] = await Promise.all(
-          transactions[transactionIndex].historicRootBlockNumberL2Fee.map(async (b, i) => {
-            if (transactions[transactionIndex].nullifiersFee[i] === 0) {
-              return {
-                historicBlock: {},
-                historicTxs: [],
-              };
-            }
-            const historicBlock = await getBlockByBlockNumberL2(b);
-            const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
+      const [historicInputFee1, historicInputFee2] = await Promise.all(
+        transactions[transactionIndex].historicRootBlockNumberL2Fee.map(async (b, i) => {
+          if (transactions[transactionIndex].nullifiersFee[i] === 0) {
             return {
-              historicBlock: Block.buildSolidityStruct(historicBlock),
-              historicTxs,
+              historicBlock: {},
+              historicTxs: [],
             };
-          }),
-        );
-        txDataToSign = await challengeContractInstance.methods
-          .challengeProofVerification(
-            Block.buildSolidityStruct(block),
-            transactions.map(t => Transaction.buildSolidityStruct(t)),
-            transactionIndex,
-            [historicInput1.historicBlock, historicInput2.historicBlock],
-            [
-              historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-              historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            ],
-            [historicInputFee1.historicBlock, historicInputFee2.historicBlock],
-            [
-              historicInputFee1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-              historicInputFee2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            ],
-            uncompressedProof,
-            salt,
-          )
-          .encodeABI();
-        break;
-      }
-      // Challenge Duplicate Nullfier
-      case 6: {
-        const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
-        const blockNullifiers = transactions
-          .map(tNull => [tNull.nullifiers, tNull.nullifiersFee])
-          .flat(Infinity); // List of Nullifiers in block
-        const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
-          blockNullifiers.includes(sNull.hash),
+          }
+          const historicBlock = await getBlockByBlockNumberL2(b);
+          const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
+          return {
+            historicBlock: Block.buildSolidityStruct(historicBlock),
+            historicTxs,
+          };
+        }),
+      );
+      txDataToSign = await challengeContractInstance.methods
+        .challengeProofVerification(
+          Block.buildSolidityStruct(block),
+          transactions.map(t => Transaction.buildSolidityStruct(t)),
+          transactionIndex,
+          [historicInput1.historicBlock, historicInput2.historicBlock],
+          [
+            historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+            historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+          ],
+          [historicInputFee1.historicBlock, historicInputFee2.historicBlock],
+          [
+            historicInputFee1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+            historicInputFee2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+          ],
+          uncompressedProof,
+          salt,
+        )
+        .encodeABI();
+      break;
+    }
+    // Challenge Duplicate Nullfier
+    case 6: {
+      const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
+      const blockNullifiers = transactions
+        .map(tNull => [tNull.nullifiers, tNull.nullifiersFee])
+        .flat(Infinity); // List of Nullifiers in block
+      const alreadyMinedNullifiers = storedMinedNullifiers.filter(sNull =>
+        blockNullifiers.includes(sNull.hash),
+      );
+      if (alreadyMinedNullifiers.length > 0) {
+        const n = alreadyMinedNullifiers[0]; // We can only slash this block no matter which nullifier we pick anyways.
+        const oldBlock = await getBlockByBlockHash(n.blockHash);
+        const oldBlockTransactions = await getTransactionsByTransactionHashes(
+          oldBlock.transactionHashes,
         );
 
-          const [oldTxIdx, oldNullifierIdx, oldIsNullifierFee] = oldBlockTransactions
-            .map((txs, txIndex) => {
-              let txIndexNullifier = txs.nullifiers.findIndex(oldN => oldN.toString() === n.hash);
-              let isFee = false;
-              if (txIndexNullifier === -1) {
-                txIndexNullifier = txs.nullifiersFee.findIndex(oldN => oldN.toString() === n.hash);
-                if (txIndexNullifier !== -1) isFee = true;
-              }
-              return [txIndex, txIndexNullifier, isFee];
-            })
-            .filter(oldIdxs => oldIdxs[1] >= 0)
-            .flat(Infinity);
+        const [oldTxIdx, oldNullifierIdx, oldIsNullifierFee] = oldBlockTransactions
+          .map((txs, txIndex) => {
+            let txIndexNullifier = txs.nullifiers.findIndex(oldN => oldN.toString() === n.hash);
+            let isFee = false;
+            if (txIndexNullifier === -1) {
+              txIndexNullifier = txs.nullifiersFee.findIndex(oldN => oldN.toString() === n.hash);
+              if (txIndexNullifier !== -1) isFee = true;
+            }
+            return [txIndex, txIndexNullifier, isFee];
+          })
+          .filter(oldIdxs => oldIdxs[1] >= 0)
+          .flat(Infinity);
 
-          const [currentTxIdx, currentNullifierIdx, currentIsNullifierFee] = transactions
-            .map((txs, txIndex) => {
-              let txIndexNullifier = txs.nullifiers.findIndex(currN => currN.toString() === n.hash);
-              let isFee = false;
-              if (txIndexNullifier === -1) {
-                txIndexNullifier = txs.nullifiersFee.findIndex(
-                  currN => currN.toString() === n.hash,
-                );
-                if (txIndexNullifier !== -1) isFee = true;
-              }
-              return [txIndex, txIndexNullifier, isFee];
-            })
-            .filter(oldIdxs => oldIdxs[1] >= 0)
-            .flat(Infinity);
-          txDataToSign = await challengeContractInstance.methods
-            .challengeNullifier(
-              Block.buildSolidityStruct(block),
-              transactions.map(t => Transaction.buildSolidityStruct(t)),
-              currentTxIdx,
-              currentNullifierIdx,
-              currentIsNullifierFee,
-              Block.buildSolidityStruct(oldBlock),
-              oldBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
-              oldTxIdx,
-              oldNullifierIdx,
-              oldIsNullifierFee,
-              salt,
-            )
-            .encodeABI();
-        }
-        break;
-      }
-      // challenge incorrect leaf count
-      case 7: {
-        const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
-        const priorBlockTransactions = await getTransactionsByTransactionHashes(
-          priorBlockL2.transactionHashes,
-        );
+        const [currentTxIdx, currentNullifierIdx, currentIsNullifierFee] = transactions
+          .map((txs, txIndex) => {
+            let txIndexNullifier = txs.nullifiers.findIndex(currN => currN.toString() === n.hash);
+            let isFee = false;
+            if (txIndexNullifier === -1) {
+              txIndexNullifier = txs.nullifiersFee.findIndex(currN => currN.toString() === n.hash);
+              if (txIndexNullifier !== -1) isFee = true;
+            }
+            return [txIndex, txIndexNullifier, isFee];
+          })
+          .filter(oldIdxs => oldIdxs[1] >= 0)
+          .flat(Infinity);
         txDataToSign = await challengeContractInstance.methods
           .challengeNullifier(
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             currentTxIdx,
             currentNullifierIdx,
+            currentIsNullifierFee,
             Block.buildSolidityStruct(oldBlock),
             oldBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
             oldTxIdx,
             oldNullifierIdx,
+            oldIsNullifierFee,
             salt,
           )
           .encodeABI();
@@ -326,7 +306,8 @@ export async function createChallenge(block, transactions, err) {
   // picked up by the challenge-commit event-handler and a reveal will be sent
   // to intiate the challenge transaction (after checking we haven't been
   // front-run)
-  commitToChallenge(txDataToSign);
+
   // only proposer not a challenger
   logger.info("Faulty block detected. Don't submit new blocks until the faulty blocks are removed");
+  return txDataToSign;
 }
