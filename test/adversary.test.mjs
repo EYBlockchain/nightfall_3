@@ -122,7 +122,7 @@ describe('Testing with an adversary', () => {
     }, 5000);
 
     // Chalenger listening for incoming events
-    const challengerEmitter = nf3Challenger.startChallenger();
+    const challengerEmitter = await nf3Challenger.startChallenger();
 
     challengerEmitter.on('data', txDataToSign => {
       logger.debug(`Challenger emitter with data ${txDataToSign}`);
