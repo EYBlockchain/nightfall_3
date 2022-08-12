@@ -50,11 +50,19 @@ async function transfer(transferParams) {
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const maticAddress = generalise(await shieldContractInstance.methods.getMaticAddress().call());
+
+  logger.debug(
+    `The erc address of the token transferred is the following: ${ercAddress
+      .hex(32)
+      .toLowerCase()}`,
   );
 
-  const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
+  logger.debug(
+    `The erc address of the fee is the following: ${maticAddress.hex(32).toLowerCase()}`,
+  );
+  const addedFee =
+    maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee.bigInt : 0n;
 
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
