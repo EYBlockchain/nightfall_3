@@ -12,6 +12,7 @@
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
+import computeCircuitInputs from '@Nightfall/utils/compute-witness';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -19,7 +20,6 @@ import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit } from './database';
-import { computeWitness } from '../utils/compute-witness';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
@@ -50,22 +50,19 @@ async function deposit(items, shieldContractAddress) {
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
-  const publicData = Transaction.buildSolidityStruct(
-    new Transaction({
-      fee,
-      transactionType: 0,
-      tokenType: items.tokenType,
-      tokenId,
-      value,
-      ercAddress,
-      commitments: [commitment],
-    }),
-  );
+  const publicData = new Transaction({
+    fee,
+    transactionType: 0,
+    tokenType: items.tokenType,
+    tokenId,
+    value,
+    ercAddress,
+    commitments: [commitment],
+  });
 
   const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
-  const roots = [];
 
-  const witnessInput = computeWitness(publicData, roots, privateData);
+  const witnessInput = computeCircuitInputs(publicData, privateData);
 
   try {
     const zokratesProvider = await initialize();

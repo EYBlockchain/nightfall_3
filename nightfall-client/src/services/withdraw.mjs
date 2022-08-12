@@ -14,7 +14,7 @@ import { waitForContract } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
-import { markNullified, storeCommitment } from './commitment-storage.mjs';
+import { clearPending, markNullified, storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
 import getProposersUrl from './peers.mjs';
 
@@ -66,127 +66,142 @@ async function withdraw(withdrawParams) {
           transferValue: fee.bigInt,
           ercAddress: maticAddress,
           rootKey,
+        }).catch(async () => {
+          await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
+          throw new Error('Failed getting fee commitments');
         });
 
-  // now we have everything we need to create a Witness and compute a proof
-  const transaction = new Transaction({
-    fee,
-    historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-    historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
-    commitments: commitmentsInfo.newCommitments,
-    commitmentFee: commitmentsInfoFee.newCommitments,
-    transactionType: 2,
-    tokenType: items.tokenType,
-    tokenId,
-    value,
-    ercAddress,
-    recipientAddress,
-    nullifiers: commitmentsInfo.nullifiers,
-    nullifiersFee: commitmentsInfoFee.nullifiers,
-  });
+  try {
+    // now we have everything we need to create a Witness and compute a proof
+    const transaction = new Transaction({
+      fee,
+      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+      historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
+      commitments: commitmentsInfo.newCommitments,
+      commitmentFee: commitmentsInfoFee.newCommitments,
+      transactionType: 2,
+      tokenType: items.tokenType,
+      tokenId,
+      value,
+      ercAddress,
+      recipientAddress,
+      nullifiers: commitmentsInfo.nullifiers,
+      nullifiersFee: commitmentsInfoFee.nullifiers,
+    });
 
-  const privateData = {
-    rootKey: [rootKey, rootKey],
-    oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
-      return { value: o.preimage.value, salt: o.preimage.salt };
-    }),
-    paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-    orders: commitmentsInfo.leafIndices,
-    newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
-      return { value: o.preimage.value, salt: o.preimage.salt };
-    }),
-    recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-    rootKeyFee: [rootKey, rootKey],
-    oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
-      return { value: o.preimage.value, salt: o.preimage.salt };
-    }),
-    pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-    ordersFee: commitmentsInfoFee.leafIndices,
-    newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
-      return { value: o.preimage.value, salt: o.preimage.salt };
-    }),
-    recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
-    ercAddress,
-    tokenId,
-  };
-
-  const witness = computeCircuitInputs(
-    transaction,
-    privateData,
-    commitmentsInfo.roots,
-    commitmentsInfoFee.roots,
-    maticAddress,
-  );
-  logger.debug(`witness input is ${witness.join(' ')}`);
-  // call a zokrates worker to generate the proof
-  let folderpath = 'withdraw';
-  if (USE_STUBS) folderpath = `${folderpath}_stub`;
-  const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
-    folderpath,
-    inputs: witness,
-    provingScheme: PROVING_SCHEME,
-    backend: BACKEND,
-  });
-  logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
-  const { proof } = res.data;
-  // and work out the ABI encoded data that the caller should sign and send to the shield contract
-
-  const optimisticWithdrawTransaction = new Transaction({
-    fee,
-    historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-    historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
-    commitments: commitmentsInfo.newCommitments,
-    commitmentFee: commitmentsInfoFee.newCommitments,
-    transactionType: 2,
-    tokenType: items.tokenType,
-    tokenId,
-    value,
-    ercAddress,
-    recipientAddress,
-    nullifiers: commitmentsInfo.nullifiers,
-    nullifiersFee: commitmentsInfoFee.nullifiers,
-    proof,
-  });
-
-  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
-
-  // Store new commitments that are ours.
-  await Promise.all(
-    [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments]
-      .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
-      .map(c => storeCommitment(c, nullifierKey)),
-  );
-
-  // mark the old commitments as nullified
-  await Promise.all(
-    [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments].map(c =>
-      markNullified(c, optimisticWithdrawTransaction),
-    ),
-  );
-  const returnObj = { transaction: optimisticWithdrawTransaction };
-
-  if (offchain) {
-    // dig up connection peers
-    const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
-    logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
-    await Promise.all(
-      Object.keys(peerList).map(async address => {
-        logger.debug(
-          `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
-        );
-        return axios.post(
-          `${peerList[address]}/proposer/offchain-transaction`,
-          { transaction: optimisticWithdrawTransaction },
-          { timeout: 3600000 },
-        );
+    const privateData = {
+      rootKey: [rootKey, rootKey],
+      oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
       }),
+      paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+      orders: commitmentsInfo.leafIndices,
+      newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+      recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
+      rootKeyFee: [rootKey, rootKey],
+      oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+      pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+      ordersFee: commitmentsInfoFee.leafIndices,
+      newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+      recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
+      ercAddress,
+      tokenId,
+    };
+
+    const witness = computeCircuitInputs(
+      transaction,
+      privateData,
+      commitmentsInfo.roots,
+      commitmentsInfoFee.roots,
+      maticAddress,
     );
-  } else {
-    returnObj.rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
-      .encodeABI();
+    logger.debug(`witness input is ${witness.join(' ')}`);
+    // call a zokrates worker to generate the proof
+    let folderpath = 'withdraw';
+    if (USE_STUBS) folderpath = `${folderpath}_stub`;
+    const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
+      folderpath,
+      inputs: witness,
+      provingScheme: PROVING_SCHEME,
+      backend: BACKEND,
+    });
+    logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
+    const { proof } = res.data;
+    // and work out the ABI encoded data that the caller should sign and send to the shield contract
+
+    const optimisticWithdrawTransaction = new Transaction({
+      fee,
+      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+      historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
+      commitments: commitmentsInfo.newCommitments,
+      commitmentFee: commitmentsInfoFee.newCommitments,
+      transactionType: 2,
+      tokenType: items.tokenType,
+      tokenId,
+      value,
+      ercAddress,
+      recipientAddress,
+      nullifiers: commitmentsInfo.nullifiers,
+      nullifiersFee: commitmentsInfoFee.nullifiers,
+      proof,
+    });
+
+    const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+
+    // Store new commitments that are ours.
+    const storeNewCommitments = [
+      ...commitmentsInfo.newCommitments,
+      ...commitmentsInfoFee.newCommitments,
+    ]
+      .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
+      .map(c => storeCommitment(c, nullifierKey));
+
+    const nullifyOldCommitments = [
+      ...commitmentsInfo.oldCommitments,
+      ...commitmentsInfoFee.oldCommitments,
+    ].map(c => markNullified(c, optimisticWithdrawTransaction));
+
+    await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
+
+    const returnObj = { transaction: optimisticWithdrawTransaction };
+
+    if (offchain) {
+      // dig up connection peers
+      const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
+      logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
+      await Promise.all(
+        Object.keys(peerList).map(async address => {
+          logger.debug(
+            `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
+          );
+          return axios.post(
+            `${peerList[address]}/proposer/offchain-transaction`,
+            { transaction: optimisticWithdrawTransaction },
+            { timeout: 3600000 },
+          );
+        }),
+      );
+    } else {
+      returnObj.rawTransaction = await shieldContractInstance.methods
+        .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
+        .encodeABI();
+    }
+    return returnObj;
+  } catch (error) {
+    logger.error('Err', error);
+    await Promise.all(
+      [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments].map(o =>
+        clearPending(o),
+      ),
+    );
+    throw new Error('Failed withdraw');
   }
-  return returnObj;
 }
 
 export default withdraw;
