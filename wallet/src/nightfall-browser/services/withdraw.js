@@ -88,6 +88,9 @@ async function withdraw(withdrawParams, shieldContractAddress) {
           transferValue: fee.bigInt,
           ercAddress: maticAddress,
           rootKey,
+        }).catch(async () => {
+          await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
+          throw new Error('Failed getting fee commitments');
         });
 
   try {
