@@ -1,10 +1,5 @@
 module.exports = {
-  extends: [
-    'codfish',
-    'eslint:recommended',
-    'plugin:react/recommended',
-    'plugin:prettier/recommended',
-  ],
+  extends: ['codfish', 'eslint:recommended', 'plugin:prettier/recommended'],
   rules: {
     'no-underscore-dangle': 'off',
     'no-console': 'off',
@@ -23,9 +18,6 @@ module.exports = {
     sourceType: 'module', // Allows for the use of imports
   },
   settings: {
-    react: {
-      version: 'latest',
-    },
     'import/resolver': {
       node: {
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
