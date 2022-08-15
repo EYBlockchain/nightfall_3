@@ -124,7 +124,7 @@ describe('Testing with an adversary', () => {
     // Chalenger listening for incoming events
     const challengerEmitter = await nf3Challenger.startChallenger();
 
-    challengerEmitter.on('data', txDataToSign => {
+    challengerEmitter.on('receipt', txDataToSign => {
       logger.debug(`Challenger emitter with data ${txDataToSign}`);
     });
 
@@ -141,7 +141,7 @@ describe('Testing with an adversary', () => {
 
     console.log('Pausing challenger queue...');
     // we pause the challenger queue and don't process challenger until unpauseQueueChallenger
-    nf3Challenger.pauseQueueChallenger();
+    await nf3Challenger.pauseQueueChallenger();
   });
 
   describe('User creates deposit and transfer transactions', () => {
@@ -224,7 +224,7 @@ describe('Testing with an adversary', () => {
     it('User should have the correct balance after challenge and a series of rollbacks', async () => {
       console.log('Unpausing challenger queue...');
       // Challenger unpause
-      await nf3Challenger.unpauseQueueChallenger();
+      nf3Challenger.unpauseQueueChallenger();
       // waiting sometime to ensure that all the good transactions from bad
       // blocks were proposed in other good blocks
       console.log('Waiting for rollbacks...');
