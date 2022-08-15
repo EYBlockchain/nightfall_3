@@ -36,6 +36,20 @@ export const syncState = async (
   console.log('From block', fromBlock);
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // Rollback, BlockProposed
 
+  // console.log(
+  //   await stateContractInstance.getPastEvents(eventFilter, {
+  //     fromBlock: 1,
+  //     toBlock: 'latest',
+  //   }),
+  // );
+
+  // const res = await axios
+  //   .post('http://host.docker.internal:10002', {
+  //     method: 'eth_getLogs',
+  //     params: [{ fromBlock: 'earliest' }],
+  //   })
+  //   .then(e => console.log(e.data.result))
+  //   .catch(err => console.log(err));
   const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
     fromBlock,
     toBlock,

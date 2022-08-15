@@ -29,6 +29,7 @@ export async function getContractAddress(contractName) {
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
     deployedAddress = contractInterface.networks[networkId].address;
   }
+
   return deployedAddress;
 }
 

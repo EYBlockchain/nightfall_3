@@ -68,7 +68,7 @@ describe('Basic Proposer tests', () => {
 
   it('should fail to register a proposer other than the boot proposer', async () => {
     try {
-      const res = await testProposer.registerProposer();
+      const res = await testProposer.registerProposer(testProposersUrl[1]);
       expectTransaction(res);
     } catch (error) {
       expect(error.message).to.satisfy(message =>
