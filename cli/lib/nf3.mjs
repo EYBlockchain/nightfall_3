@@ -219,7 +219,7 @@ class Nf3 {
         data: unsignedTransaction,
       });
     } catch (error) {
-      logger.warn(`estimateGas failed. Falling back to constant value`);
+      // logger.warn(`estimateGas failed. Falling back to constant value`);
       gasLimit = GAS; // backup if estimateGas failed
     }
     return Math.ceil(Number(gasLimit) * GAS_MULTIPLIER); // 50% seems a more than reasonable buffer.
@@ -232,11 +232,11 @@ class Nf3 {
       const res = (await axios.get(GAS_ESTIMATE_ENDPOINT)).data.result;
       proposedGasPrice = Number(res?.ProposeGasPrice) * 10 ** 9;
     } catch (error) {
-      logger.warn('Gas Estimation Failed, using previous block gasPrice');
+      // logger.warn('Gas Estimation Failed, using previous block gasPrice');
       try {
         proposedGasPrice = Number(await this.web3.eth.getGasPrice());
       } catch (err) {
-        logger.warn('Failed to get previous block gasprice.  Falling back to default');
+        // logger.warn('Failed to get previous block gasprice.  Falling back to default');
         proposedGasPrice = GAS_PRICE;
       }
     }
@@ -272,14 +272,14 @@ class Nf3 {
       gas,
       gasPrice,
     };
-    logger.debug(`nf3 processing submitTransaction with transaction data ${tx.data}`);
+    // logger.debug(`nf3 processing submitTransaction with transaction data ${tx.data}`);
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
       const promiseTest = new Promise((resolve, reject) => {
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .once('receipt', receipt => {
-            logger.debug(`Transaction ${receipt.transactionHash} has been receipted.`);
+            // logger.debug(`Transaction ${receipt.transactionHash} has been receipted.`);
             resolve(receipt);
           })
           .on('error', err => {

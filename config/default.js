@@ -88,7 +88,7 @@ module.exports = {
       // Keep keepalive interval small so that socket doesn't die
       keepaliveInterval: 1500,
     },
-    timeout: 3600000,
+    timeout: 0,
     reconnect: {
       auto: true,
       delay: 5000, // ms
