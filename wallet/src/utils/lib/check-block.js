@@ -26,7 +26,6 @@ export default async function confirmBlock(lastBlock, lastTimber) {
   await waitForOpenConnection(socket);
   if (socket.readyState !== socket.OPEN) throw new Error(`Cannot open socket`);
   socket.send(JSON.stringify({ type: 'sync-timber', lastBlock: lastBlock - 1 }));
-  console.log('WOCKER', lastTimber);
   socket.addEventListener('message', async function (event) {
     const parsed = JSON.parse(event.data);
     if (parsed.type === 'sync-timber') {
