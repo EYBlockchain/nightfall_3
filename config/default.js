@@ -5,11 +5,6 @@ function configureAWSBucket() {
   return `${bucket}-${mode}`;
 }
 
-/* eslint-disable no-extend-native */
-BigInt.prototype.toJSON = function () {
-  return `${this.toString()} BigInt`;
-};
-
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',

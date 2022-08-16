@@ -1,3 +1,8 @@
+/* eslint-disable no-extend-native */
+BigInt.prototype.toJSON = function () {
+  return `${this.toString()} BigInt`;
+};
+
 module.exports = {
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal
   // BABYJUBJUB
