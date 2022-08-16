@@ -224,17 +224,20 @@ class Nf3 {
   async estimateGas(contractAddress, unsignedTransaction) {
     let gasLimit;
     try {
-      // eslint-disable-next-line no-await-in-loop
-      gasLimit = await this.web3.eth
-        .estimateGas({
-          from: this.ethereumAddress,
-          to: contractAddress,
-          data: unsignedTransaction,
-          value: this.defaultFee,
-        })
-        .on('error', err => console.log(err));
+      const res = await axios.post('http://localhost:10002', {
+        method: 'eth_estimateGas',
+        params: [
+          {
+            from: this.ethereumAddress,
+            to: contractAddress,
+            data: unsignedTransaction,
+            value: this.defaultFee.toString(),
+          },
+        ],
+      });
+      if (res.data.error) throw new Error(res.data.error);
+      gasLimit = parseInt(res.data.result, 16);
     } catch (error) {
-      // logger.warn(`estimateGas failed. Falling back to constant value`);
       gasLimit = GAS; // backup if estimateGas failed
     }
     return Math.ceil(Number(gasLimit) * GAS_MULTIPLIER); // 50% seems a more than reasonable buffer.
@@ -289,9 +292,19 @@ class Nf3 {
     };
 
     if (this.ethereumSigningKey) {
-      console.log('sign for');
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-      console.log(signed.rawTransaction);
+      const promiseTest = new Promise((resolve, reject) => {
+        this.web3.eth
+          .sendSignedTransaction(signed.rawTransaction)
+          .once('receipt', receipt => {
+            logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
+            resolve(receipt);
+          })
+          .on('error', err => {
+            reject(err);
+          });
+      });
+      return promiseTest;
 
       // try {
       //   console.log(
@@ -314,15 +327,15 @@ class Nf3 {
       // } catch (err) {
       //   console.log(err);
       // }
-      this.web3.eth
-        .sendSignedTransaction(signed.rawTransaction)
-        // .once('sent', payload => console.log(payload))
-        .once('transactionHash', hash => {
-          console.log(`Transaction ${hash} has been received.`);
-          // this.web3.getTransa
-          // resolve(hash);
-        })
-        .on('error', error => console.log(error));
+      // this.web3.eth
+      //   .sendSignedTransaction(signed.rawTransaction)
+      //   // .once('sent', payload => console.log(payload))
+      //   .once('transactionHash', hash => {
+      //     console.log(`Transaction ${hash} has been received.`);
+      //     // this.web3.getTransa
+      //     // resolve(hash);
+      //   })
+      //   .on('error', error => console.log(error));
     }
     return this.web3.eth.sendTransaction(tx);
   }
@@ -736,8 +749,6 @@ class Nf3 {
       url,
     });
 
-    console.log('registering proposer', url, this.ethereumAddress);
-    console.log(res.data.txDataToSign);
     if (res.data.txDataToSign === '') return false; // already registered
     return new Promise((resolve, reject) => {
       proposerQueue.push(async () => {
