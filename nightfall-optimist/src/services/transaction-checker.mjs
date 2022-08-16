@@ -245,7 +245,7 @@ async function verifyProof(transaction) {
   if (!res) throw new TransactionError('The proof did not verify', 2);
 }
 
-export async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
+async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
   return Promise.all([
     checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
     checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumberL2),
