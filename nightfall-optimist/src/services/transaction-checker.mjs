@@ -9,6 +9,7 @@ Here are the things that could be wrong with a transaction:
 
 import config from 'config';
 import gen from 'general-number';
+import constants from 'common-files/constants/index.mjs';
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import {

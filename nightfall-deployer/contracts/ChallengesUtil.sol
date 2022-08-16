@@ -43,12 +43,11 @@ library ChallengesUtil {
         uint256 commitmentIndex =
             priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
-        (bytes32 root, , ) =
-            MerkleTree_Stateless.insertLeaves(
-                Utils.filterCommitments(transactions),
-                _frontier,
-                commitmentIndex
-            );
+        (root, , ) = MerkleTree_Stateless.insertLeaves(
+            Utils.filterCommitments(transactions),
+            _frontier,
+            commitmentIndex
+        );
         require(root != blockL2.root, 'The root is actually fine');
     }
 
@@ -107,19 +106,19 @@ library ChallengesUtil {
         uint256 commitmentIndex2,
         bool isCommitmentFee2
     ) public pure {
-        if (!commitmentIndex1 && !commitmentIndex2) {
+        if (!isCommitmentFee1 && !isCommitmentFee2) {
             require(
                 tx1.commitments[commitmentIndex1] != 0 &&
                     tx1.commitments[commitmentIndex1] == tx2.commitments[commitmentIndex2],
                 'Not matching commitments'
             );
-        } else if (!commitmentIndex1 && commitmentIndex2) {
+        } else if (!isCommitmentFee1) {
             require(
                 tx1.commitments[commitmentIndex1] != 0 &&
                     tx1.commitments[commitmentIndex1] == tx2.commitmentFee[commitmentIndex2],
                 'Not matching commitments'
             );
-        } else if (!commitmentIndex2 && commitmentIndex1) {
+        } else if (!isCommitmentFee2) {
             require(
                 tx1.commitmentFee[commitmentIndex1] != 0 &&
                     tx1.commitmentFee[commitmentIndex1] == tx2.commitments[commitmentIndex2],
@@ -148,13 +147,13 @@ library ChallengesUtil {
                     tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
                 'Not matching nullifiers'
             );
-        } else if (!isNullifierFee1 && isNullifierFee2) {
+        } else if (!isNullifierFee1) {
             require(
                 tx1.nullifiers[nullifierIndex1] != 0 &&
                     tx1.nullifiers[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
                 'Not matching nullifiers'
             );
-        } else if (!isNullifierFee2 && isNullifierFee1) {
+        } else if (!isNullifierFee2) {
             require(
                 tx1.nullifiersFee[nullifierIndex1] != 0 &&
                     tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
