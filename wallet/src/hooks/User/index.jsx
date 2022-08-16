@@ -80,7 +80,7 @@ export const UserProvider = ({ children }) => {
 
     // Connection opened
     socket.addEventListener('open', async function () {
-      console.log(`Websocket is open`, eventWsUrl);
+      console.log(`Websocket is open`);
       const lastBlockL2 = (await getMaxBlock()) ?? -1;
       console.log('LastBlock', lastBlockL2);
       socket.send(JSON.stringify({ type: 'sync', lastBlock: lastBlockL2 }));
