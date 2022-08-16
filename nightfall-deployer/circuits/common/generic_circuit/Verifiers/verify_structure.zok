@@ -45,16 +45,27 @@ def main<TxType>(\
     
     //Check commitments
     assert((TxType == 0 && commitments[0] != 0 && commitments[1] == 0 && commitments[2] == 0) ||\
-        (TxType == 1 && commitments[0] != 0 && commitments[0] != commitments[1]) ||\
-        (TxType == 2 && commitments[1] == 0))
+        (TxType == 1 && commitments[0] != 0) || (TxType == 2 && commitments[2] == 0))
     
+    //Check that there are not duplicate commitments in the same transaction
+    for u32 i in 0..3 do
+        for u32 j in (i+1)..3 do
+            assert(commitments[j] == 0 || commitments[i] != commitments[j])
+        endfor
+    endfor
+
     //Check nullifiers
     assert(\
         (TxType == 0 && nullifiers[0] == 0 &&  nullifiers[1] == 0 && nullifiers[2] == 0 && nullifiers[3] == 0) || \
-        ((TxType == 1 || TxType == 2) &&\
-            (nullifiers[0] != 0 && nullifiers[0] != nullifiers[1])\
-        )\
+        (TxType != 0 && nullifiers[0] != 0)\
     )
+
+    //Check that there are not duplicate nullifiers in the same transaction
+    for u32 i in 0..4 do
+        for u32 j in (i+1)..4 do
+            assert(nullifiers[j] == 0 || nullifiers[i] != nullifiers[j])
+        endfor
+    endfor
 
     //For transfers, compressedSecrets needs to have at least one element different than zero
     //For deposits and withdrawals, compressedSecrets will be zero
