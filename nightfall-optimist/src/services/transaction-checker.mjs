@@ -24,11 +24,7 @@ const { generalise } = gen;
 const { PROVING_SCHEME, BACKEND, CURVE } = config;
 const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
-export async function checkDuplicateCommitment(
-  transaction,
-  inL2AndNotInL2 = false,
-  blockNumberL2OfTx,
-) {
+async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blockNumberL2OfTx) {
   // check if there are duplicate commitments in the same transaction
   transaction.commitments.forEach((commitment, index) => {
     const lastIndex = transaction.commitments.lastIndexOf(commitment);
