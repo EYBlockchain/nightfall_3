@@ -15,7 +15,14 @@ import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
-import { checkIndexDBForCircuit, getStoreCircuit, getLastBlock } from './database';
+import {
+  checkIndexDBForCircuit,
+  getStoreCircuit,
+  getLatestTree,
+  getMaxBlock,
+  emptyStoreBlocks,
+  emptyStoreTimber,
+} from './database';
 import { ZkpKeys } from './keys';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
@@ -57,11 +64,18 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     getStoreCircuit(`${circuitName}-pk`),
   ]);
 
-  const lastBlock = await getLastBlock();
-  console.log('Last Block', lastBlock);
-  if (lastBlock !== null) {
-    confirmBlock(lastBlock.blockNumberL2 - 1);
+  const lastTree = await getLatestTree();
+  const lastBlockNumber = await getMaxBlock();
+
+  try {
+    await confirmBlock(lastBlockNumber, lastTree);
+  } catch (err) {
+    emptyStoreBlocks();
+    emptyStoreTimber();
+    console.log('Resync Done Withraw');
+    throw new Error(err);
   }
+
   const abi = abiData.data;
   const program = programData.data;
   const pk = pkData.data;

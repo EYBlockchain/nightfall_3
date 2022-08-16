@@ -19,7 +19,14 @@ import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
 import { edwardsCompress } from '../../common-files/utils/curve-maths/curves';
 import { ZkpKeys } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit, getLastBlock } from './database';
+import {
+  checkIndexDBForCircuit,
+  getStoreCircuit,
+  getLatestTree,
+  getMaxBlock,
+  emptyStoreBlocks,
+  emptyStoreTimber,
+} from './database';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
@@ -52,10 +59,16 @@ async function transfer(transferParams, shieldContractAddress) {
   if (recipientCompressedZkpPublicKeys.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
 
-  const lastBlock = await getLastBlock();
-  console.log('Last Block', lastBlock);
-  if (lastBlock !== null) {
-    confirmBlock(lastBlock.blockNumberL2 - 1);
+  const lastTree = await getLatestTree();
+  const lastBlockNumber = await getMaxBlock();
+
+  try {
+    await confirmBlock(lastBlockNumber, lastTree);
+  } catch (err) {
+    emptyStoreBlocks();
+    emptyStoreTimber();
+    console.log('Resync Done Transfer');
+    throw new Error(err);
   }
 
   try {
