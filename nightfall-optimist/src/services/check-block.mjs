@@ -51,7 +51,7 @@ async function checkBlock(block, transactions) {
       // eslint-disable-next-line no-await-in-loop
       history = await getTreeByLeafCount(block.leafCount + block.nCommitments);
       logger.debug(`Block has commitments - retrieved history from Timber`);
-      logger.silly(`Timber history was ${JSON.stringify(history, null, 2)}`);
+      logger.trace(`Timber history was ${JSON.stringify(history, null, 2)}`);
 
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -81,7 +81,9 @@ async function checkBlock(block, transactions) {
   // sufficient just to check transactions for duplicate nullifiers. Also, we have to be careful not
   // to check a block against itself (hence the second filter).
   const storedMinedNullifiers = await retrieveMinedNullifiers(); // List of Nullifiers stored by blockProposer
-  const blockNullifiers = transactions.map(tNull => tNull.nullifiers).flat(Infinity); // List of Nullifiers in block
+  const blockNullifiers = transactions
+    .map(tNull => [...tNull.nullifiers, ...tNull.nullifiersFee])
+    .flat(Infinity); // List of Nullifiers in block
   const alreadyMinedNullifiers = storedMinedNullifiers
     .filter(sNull => blockNullifiers.includes(sNull.hash))
     .filter(aNull => aNull.blockHash !== block.blockHash);

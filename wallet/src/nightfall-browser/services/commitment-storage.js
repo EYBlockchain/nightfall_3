@@ -40,11 +40,12 @@ const connectDB = async () => {
 };
 
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment(commitment, nsk) {
-  const nullifierHash = new Nullifier(commitment, nsk).hash.hex(32);
+export async function storeCommitment(commitment, nullifierKey) {
+  const nullifierHash = new Nullifier(commitment, nullifierKey).hash.hex(32);
   const data = {
     _id: commitment.hash.hex(32),
     preimage: commitment.preimage.all.hex(32),
+    compressedZkpPublicKey: commitment.compressedZkpPublicKey.hex(32),
     isDeposited: commitment.isDeposited || false,
     isOnChain: Number(commitment.isOnChain) || -1,
     isPendingNullification: false, // will not be pending when stored
@@ -86,7 +87,7 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '3';
+    return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '2';
   });
   // const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
   return filtered.length;
@@ -97,7 +98,7 @@ export async function isTransactionHashWithdraw(transactionHash) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '3';
+    return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '2';
   });
   return filtered.length;
 }
@@ -322,12 +323,17 @@ export async function markNullifiedOnChain(
 }
 
 // function to get the balance of commitments for each ERC address
-export async function getWalletBalance(pkd) {
+export async function getWalletBalance(compressedZkpPublicKey) {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const wallet =
     Object.keys(vals).length > 0
-      ? vals.filter(v => !v.isNullified && v.isOnChain >= 0 && v.compressedPkd === pkd)
+      ? vals.filter(
+          v =>
+            !v.isNullified &&
+            v.isOnChain >= 0 &&
+            v.compressedZkpPublicKey === compressedZkpPublicKey,
+        )
       : [];
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
@@ -339,20 +345,21 @@ export async function getWalletBalance(pkd) {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: BigInt(e.preimage.value),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0n;
-      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = 0n;
+      acc[e.compressedZkpPublicKey][e.ercAddress] += e.balance;
       return acc;
     }, {});
 }
@@ -372,24 +379,24 @@ export async function getWalletPendingDepositBalance() {
   // work out the balance contribution of each commitment  - a 721 token has no value field in the
   // commitment but each 721 token counts as a balance of 1. Then finally add up the individual
   // commitment balances to get a balance for each erc address.
-  console.log(`Wallet: ${JSON.stringify(wallet)}`);
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
-      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = 0;
+      acc[e.compressedZkpPublicKey][e.ercAddress] += e.balance;
       return acc;
     }, {});
 }
@@ -409,26 +416,27 @@ export async function getWalletPendingSpentBalance() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = 0;
-      acc[e.compressedPkd][e.ercAddress] += e.balance;
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = 0;
+      acc[e.compressedZkpPublicKey][e.ercAddress] += e.balance;
       return acc;
     }, {});
 }
 
 // function to get the balance of commitments for each ERC address
-export async function getWalletBalanceDetails(compressedPkd, ercList) {
+export async function getWalletBalanceDetails(compressedZkpPublicKey, ercList) {
   let ercAddressList = ercList || [];
   ercAddressList = ercAddressList.map(e => e.toUpperCase());
   const db = await connectDB();
@@ -446,7 +454,7 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
   const res = wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
       id: Number(BigInt(e.preimage.tokenId)),
@@ -454,22 +462,26 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
     .filter(
       e =>
         (e.tokenId || e.value > 0) &&
-        e.compressedPkd === compressedPkd &&
+        e.compressedZkpPublicKey === compressedZkpPublicKey &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     ) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
       tokenId: e.id,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
-      if (e.tokenId === 0 && acc[e.compressedPkd][e.ercAddress].length > 0) {
-        acc[e.compressedPkd][e.ercAddress][0].balance += e.balance;
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = [];
+      if (e.tokenId === 0 && acc[e.compressedZkpPublicKey][e.ercAddress].length > 0) {
+        acc[e.compressedZkpPublicKey][e.ercAddress][0].balance += e.balance;
       } else {
-        acc[e.compressedPkd][e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
+        acc[e.compressedZkpPublicKey][e.ercAddress].push({
+          balance: e.balance,
+          tokenId: e.tokenId,
+        });
       }
       return acc;
     }, {});
@@ -477,7 +489,7 @@ export async function getWalletBalanceDetails(compressedPkd, ercList) {
   return res;
 }
 
-// function to get the commitments for each ERC address of a pkd
+// function to get the commitments for each ERC address of a compressedZkpPublicKey
 export async function getWalletCommitments() {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
@@ -493,31 +505,32 @@ export async function getWalletCommitments() {
   return wallet
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`,
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       tokenId: !!BigInt(e.preimage.tokenId),
       value: Number(BigInt(e.preimage.value)),
     }))
     .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => ({
-      compressedPkd: e.compressedPkd,
+      compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.tokenId ? 1 : e.value,
     }))
     .reduce((acc, e) => {
-      if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-      if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
-      acc[e.compressedPkd][e.ercAddress].push(e);
+      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+        acc[e.compressedZkpPublicKey][e.ercAddress] = [];
+      acc[e.compressedZkpPublicKey][e.ercAddress].push(e);
       return acc;
     }, {});
 }
 
-// function to get the withdraw commitments for each ERC address of a pkd
+// function to get the withdraw commitments for each ERC address of a compressedZkpPublicKey
 export async function getWithdrawCommitments() {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const withdraws =
     Object.keys(vals).length > 0
-      ? vals.filter(v => v.isNullified && v.isOnChain >= 0 && v.nullifierTransactionType === '3')
+      ? vals.filter(v => v.isNullified && v.isOnChain >= 0 && v.nullifierTransactionType === '2')
       : [];
 
   // To check validity we need the withdrawal transaction, the block the transaction is in and all other
@@ -533,7 +546,7 @@ export async function getWithdrawCommitments() {
         block,
         transactions,
         index,
-        compressedPkd: w.compressedPkd,
+        compressedZkpPublicKey: w.compressedZkpPublicKey,
         ercAddress: `0x${BigInt(w.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to be a correct address length
         balance: w.preimage.tokenId ? 1 : w.preimage.value,
       };
@@ -547,7 +560,7 @@ export async function getWithdrawCommitments() {
       // TODO isValidWithdrawal is called with wrong parameters
       const valid = await isValidWithdrawal(block, transactions, index);
       return {
-        compressedPkd: wt.compressedPkd,
+        compressedZkpPublicKey: wt.compressedZkpPublicKey,
         ercAddress: wt.ercAddress,
         balance: wt.balance,
         valid,
@@ -556,9 +569,10 @@ export async function getWithdrawCommitments() {
   );
 
   return withdrawsDetailsValid.reduce((acc, e) => {
-    if (!acc[e.compressedPkd]) acc[e.compressedPkd] = {};
-    if (!acc[e.compressedPkd][e.ercAddress]) acc[e.compressedPkd][e.ercAddress] = [];
-    acc[e.compressedPkd][e.ercAddress].push(e);
+    if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
+    if (!acc[e.compressedZkpPublicKey][e.ercAddress])
+      acc[e.compressedZkpPublicKey][e.ercAddress] = [];
+    acc[e.compressedZkpPublicKey][e.ercAddress].push(e);
     return acc;
   }, {});
 }
@@ -584,14 +598,14 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
 // also mark any found commitments as nullified (TODO mark them as un-nullified
 // if the transaction errors). The mutex lock is in the function
 // findUsableCommitmentsMutex, which calls this function.
-async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne) {
+async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   // eslint-disable-next-line no-undef
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
   const commitmentArray = res.filter(
     r =>
-      r.compressedPkd === compressedPkd.hex(32) &&
+      r.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
       r.preimage.ercAddress.toLowerCase() === ercAddress.hex(32).toLowerCase() &&
       r.preimage.tokenId === tokenId.hex(32) &&
       !r.isNullified &&
@@ -599,14 +613,13 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   );
 
   if (commitmentArray === []) return null;
+
   // turn the commitments into real commitment objects
   const commitments = commitmentArray
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage));
   // if we have an exact match, we can do a single-commitment transfer.
-  console.log(`Looking for ${value.hex(32)}, with ercAddress ${ercAddress.hex(32)}`);
   const [singleCommitment] = commitments.filter(c => {
-    console.log(`Commitment: ${c.preimage.value.hex(32)}`);
     return c.preimage.value.hex(32) === value.hex(32);
   });
   if (singleCommitment) {
@@ -614,12 +627,27 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     await markPending(singleCommitment);
     return [singleCommitment];
   }
-  // If we get here it means that we have not been able to find a single commitment that matches the required value
-  if (onlyOne || commitments.length < 2) return null; // sometimes we require just one commitment
+  // If we only want one or there is only 1 commitment - then we should try a single transfer with change
+  if (commitments.length === 1) {
+    if (commitments[0].preimage.value.bigInt > value.bigInt) {
+      await markPending(commitments[0]);
+      return commitments;
+    }
+    return null;
+  }
 
-  /* if not, maybe we can do a two-commitment transfer. The current strategy aims to prioritise smaller commitments while also
-     minimising the creation of low value commitments (dust)
+  /* The current strategy aims to prioritise reducing the complexity of the commitment set. 	
+    I.e. Minimise the size of the commitment set by using smaller commitments while also 	
+    minimising the creation of low value commitments (dust).
 
+    Transaction type in order of priority. (1) Double transfer without change, (2) Double Transfer with change, (3) Single Transfer with change.
+
+    Double Transfer Without Change:
+    1) Sort all commitments by value
+    2) Find candidate pairs of commitments that equal the transfer sum.
+    3) Select candidate that uses the smallest commitment as one of the input.
+
+    Double Transfer With Change:
     1) Sort all commitments by value
     2) Split commitments into two sets based of if their values are less than or greater than the target value. LT & GT respectively.
     3) If the sum of the two largest values in set LT is LESS than the target value:
@@ -633,6 +661,9 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
       iii) If the sum of the commitments at the pointers is greater than the target value, we move pointer rhs to the left.
       iv) Otherwise, we move pointer lhs to the right.
       v) The selected commitments are the pair that minimise the change difference. The best case in this scenario is a change difference of -1.
+
+    Single Transfer With Change:
+    1) If this is the only commitment and it is greater than the transfer sum.
   */
 
   // sorting will help with making the search easier
@@ -640,6 +671,26 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     Number(a.preimage.value.bigInt - b.preimage.value.bigInt),
   );
 
+  // Find two commitments that matches the transfer value exactly. Double Transfer With No Change.
+  let lhs = 0;
+  let rhs = sortedCommits.length - 1;
+  let commitmentsToUse = null;
+  while (lhs < rhs) {
+    const tempSum = sortedCommits[lhs].bigInt + sortedCommits[rhs].bigInt;
+    // The first valid solution will include the smallest usable commitment in the set.
+    if (tempSum === value.bigInt) {
+      commitmentsToUse = [sortedCommits[lhs], sortedCommits[rhs]];
+      break;
+    }
+    if (tempSum > value.bigInt) rhs--;
+    else lhs++;
+  }
+  // If we have found two commitments that match the transfer value, mark them as pending and return
+  if (commitmentsToUse) {
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse;
+  }
+  // Find two commitments are greater than the target. Double Transfer With Change
   // get all commitments less than the target value
   const commitsLessThanTargetValue = sortedCommits.filter(
     s => s.preimage.value.bigInt < value.bigInt,
@@ -652,15 +703,19 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
   // then we will need to use a commitment of greater value than the target
   if (twoGreatestSum < value.bigInt) {
     if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
-    if (commitsLessThanTargetValue.length === 0) return [sortedCommits[0], sortedCommits[1]]; // return smallest in GT if LT array is empty
-    return [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+    commitmentsToUse =
+      commitsLessThanTargetValue.length === 0
+        ? [(sortedCommits[0], sortedCommits[1])] // return smallest in GT if LT array is empty
+        : [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse; // return smallest in GT if LT array is empty
   }
 
   // If we are here than we can use our commitments less than the target value to sum to greater than the target value
-  let lhs = 0;
-  let rhs = commitsLessThanTargetValue.length - 1;
+  lhs = 0;
+  rhs = commitsLessThanTargetValue.length - 1;
   let changeDiff = -Infinity;
-  let commitmentsToUse = null;
+  commitmentsToUse = null;
   while (lhs < rhs) {
     const tempSum =
       commitsLessThanTargetValue[lhs].preimage.value.bigInt +
@@ -669,7 +724,7 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     // This value will always be negative,
     // this is equivalent to  tempSum - value.bigInt - commitsLessThanTargetValue[lhs].preimage.value.bigInt
     const tempChangeDiff = commitsLessThanTargetValue[rhs].preimage.value.bigInt - value.bigInt;
-    if (tempSum > value.bigInt) {
+    if (tempSum >= value.bigInt) {
       if (tempChangeDiff > changeDiff) {
         // We have a set of commitments that has a lower negative change in our outputs.
         changeDiff = tempChangeDiff;
@@ -682,21 +737,20 @@ async function findUsableCommitments(compressedPkd, ercAddress, tokenId, _value,
     logger.info(
       `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
     );
+    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
+    return commitmentsToUse;
   }
-  await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
-  return commitmentsToUse;
+  return null;
 }
 
-// mutex for the above function to ensure it only runs with a concurrency of one
 export async function findUsableCommitmentsMutex(
-  compressedPkd,
+  compressedZkpPublicKey,
   ercAddress,
   tokenId,
   _value,
-  onlyOne,
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(compressedPkd, ercAddress, tokenId, _value, onlyOne),
+    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value),
   );
 }
 

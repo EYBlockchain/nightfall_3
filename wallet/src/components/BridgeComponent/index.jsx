@@ -8,9 +8,9 @@ import importTokens from '@TokenList/index';
 import deposit from '@Nightfall/services/deposit';
 import withdraw from '@Nightfall/services/withdraw';
 import { getWalletBalance } from '@Nightfall/services/commitment-storage';
-import { decompressKey } from '@Nightfall/services/keys';
 import { saveTransaction } from '@Nightfall/services/database';
 import Lottie from 'lottie-react';
+import { generalise } from 'general-number';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
@@ -122,11 +122,6 @@ const supportedTokens = importTokens();
 
 const { proposerUrl } = global.config;
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const gen = require('general-number');
-
-const { generalise } = gen;
-
 const BridgeComponent = () => {
   const [state] = useContext(UserContext);
   const { accountInstance } = useAccount();
@@ -229,10 +224,9 @@ const BridgeComponent = () => {
   async function triggerTx() {
     if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
     const ercAddress = token.address;
-    const zkpKeys = await retrieveAndDecrypt(state.compressedPkd);
+    const zkpKeys = await retrieveAndDecrypt(state.compressedZkpPublicKey);
     switch (txType) {
       case 'deposit': {
-        const pkd = decompressKey(generalise(state.compressedPkd));
         await approve(
           ercAddress,
           shieldContractAddress,
@@ -249,9 +243,9 @@ const BridgeComponent = () => {
             ercAddress,
             tokenId: 0,
             value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
-            pkd,
-            nsk: zkpKeys.nsk,
-            fee: 1,
+            compressedZkpPublicKey: state.compressedZkpPublicKey,
+            nullifierKey: zkpKeys.nullifierKey,
+            fee: 0,
             tokenType: 'ERC20',
           },
           shieldContractAddress,
@@ -284,8 +278,8 @@ const BridgeComponent = () => {
             tokenId: 0,
             value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
             recipientAddress: await Web3.getAccount(),
-            nsk: zkpKeys.nsk,
-            ask: zkpKeys.ask,
+            nullifierKey: generalise(zkpKeys.nullifierKey),
+            rootKey: zkpKeys.rootKey,
             tokenType: 'ERC20',
             fees: 1,
           },
@@ -359,9 +353,9 @@ const BridgeComponent = () => {
 
   async function updateL2Balance() {
     if (token && token.address) {
-      const l2bal = await getWalletBalance(state.compressedPkd);
-      if (Object.hasOwnProperty.call(l2bal, state.compressedPkd))
-        setL2Balance(l2bal[state.compressedPkd][token.address.toLowerCase()] ?? 0n);
+      const l2bal = await getWalletBalance(state.compressedZkpPublicKey);
+      if (Object.hasOwnProperty.call(l2bal, state.compressedZkpPublicKey))
+        setL2Balance(l2bal[state.compressedZkpPublicKey][token.address.toLowerCase()] ?? 0n);
       else setL2Balance(0n);
     }
   }

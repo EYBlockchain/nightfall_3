@@ -102,10 +102,10 @@
     "webpack-dev-server": "3.11.1",
     "webpack-manifest-plugin": "2.2.0",
     "workbox-webpack-plugin": "5.1.4",
-    "zokrates-js": "1.0.39"
+    "zokrates-js": "1.0.41"
   },
   "scripts": {
-    "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' USE_STUBS=true REACT_APP_MODE=local node scripts/start.js",
+    "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=local node scripts/start.js",
     "start:testnet": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=testnet env-cmd -f .testnet.env node scripts/start.js",
     "start:mainnet": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=mainnet env-cmd -f .mainnet.env node scripts/start.js",
     "build": "LOCAL_PROPOSER=false USE_STUBS=false REACT_APP_MODE=production PUBLIC_URL='https://wallet-beta.polygon.technology/nightfall/' node scripts/build.js",

@@ -5,4 +5,5 @@ export default {
   debug: console.log,
   info: console.log,
   silly: console.log,
+  trace: console.log,
 };

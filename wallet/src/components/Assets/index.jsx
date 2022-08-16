@@ -130,10 +130,10 @@ function ReceiveModal(props) {
         <Modal.Body style={{ padding: '0px' }}>
           <MyBody>
             <div>
-              <QRCode value={state.compressedPkd} />
+              <QRCode value={state.compressedZkpPublicKey} />
             </div>
             <p>Wallet Address</p>
-            <span>{state.compressedPkd}</span>
+            <span>{state.compressedZkpPublicKey}</span>
             {copied ? (
               <MyFooter>
                 <Lottie
@@ -143,7 +143,7 @@ function ReceiveModal(props) {
                 />
               </MyFooter>
             ) : (
-              <CopyToClipboard text={state.compressedPkd} onCopy={() => setCopied(true)}>
+              <CopyToClipboard text={state.compressedZkpPublicKey} onCopy={() => setCopied(true)}>
                 <MyFooter>
                   <QrCodeButton>Copy Address</QrCodeButton>
                 </MyFooter>
