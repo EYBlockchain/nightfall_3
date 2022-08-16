@@ -108,6 +108,7 @@
     "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=local node scripts/start.js",
     "start:testnet": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=testnet env-cmd -f .testnet.env node scripts/start.js",
     "start:mainnet": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=mainnet env-cmd -f .mainnet.env node scripts/start.js",
+    "start:internal": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=internal env-cmd -f .internal.env node scripts/start.js",
     "build": "LOCAL_PROPOSER=false USE_STUBS=false REACT_APP_MODE=production PUBLIC_URL='https://wallet-beta.polygon.technology/nightfall/' node scripts/build.js",
     "deploy": "npm run build && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/unit/**/*.js'",

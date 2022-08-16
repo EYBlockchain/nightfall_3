@@ -5,6 +5,7 @@ import TokenType from './TokenType';
 
 const supportedTokens = (): TokenType[] => {
   switch (process.env.REACT_APP_MODE) {
+    case 'internal':
     case 'testnet':
     case 'preprod':
     case 'staging':

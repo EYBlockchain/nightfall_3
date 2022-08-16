@@ -82,9 +82,9 @@ export const UserProvider = ({ children }) => {
     // Connection opened
     socket.addEventListener('open', async function () {
       console.log(`Websocket is open`);
-      const lastBlock = (await getMaxBlock()) ?? -1;
-      console.log('LastBlock', lastBlock);
-      socket.send(JSON.stringify({ type: 'sync', lastBlock }));
+      const lastBlockL2 = (await getMaxBlock()) ?? -1;
+      console.log('LastBlock', lastBlockL2);
+      socket.send(JSON.stringify({ type: 'sync', lastBlock: lastBlockL2 }));
     });
 
     setState(previousState => {
@@ -125,9 +125,9 @@ export const UserProvider = ({ children }) => {
         if (Number(parsed.maxBlock) !== 1) {
           const { blockHash = null } = await getLastBlock();
           if (
-            parsed.historicalData.block.previousBlockHash !== lastBlock.blockHash &&
-            Number(lastBlock.lastBlockHash) !== 0 &&
-            parsed.historicalData.block.blockHash !== blockHash
+            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash !== lastBlock.blockHash &&
+            Number(lastBlock.blockHash) !== 0 &&
+            parsed.historicalData[parsed.historicalData.length - 1].block.blockHash !== blockHash
           ) {
             // resync
             // TODO - handle resync correctly
@@ -138,10 +138,10 @@ export const UserProvider = ({ children }) => {
             emptyStoreBlocks();
             emptyStoreTimber();
           } else if (
-            parsed.historicalData.block.previousBlockHash === lastBlock.blockHash ||
-            Number(lastBlock.lastBlock) === 0
+            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash === lastBlock.blockHash ||
+            Number(lastBlock.blockHash) === 0
           ) {
-            setLastBlock(parsed.historicalData.block);
+            setLastBlock(parsed.historicalData[parsed.historicalData.length - 1].block);
             socket.send(
               JSON.stringify({
                 type: 'sync',

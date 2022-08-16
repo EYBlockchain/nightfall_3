@@ -265,7 +265,7 @@ export async function getMaxBlock() {
 export async function getLastBlock() {
   const db = await connectDB();
   const blocks = await db.getAll(SUBMITTED_BLOCKS_COLLECTION);
-  if (blocks.length === 0) return null;
+  if (blocks.length === 0) return {};
   const keys = blocks.map(t => t.blockNumberL2);
   const maxBlockL2 = Math.max(...keys);
   const block = await getBlockByBlockNumberL2(maxBlockL2);
