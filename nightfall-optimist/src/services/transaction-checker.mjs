@@ -30,11 +30,7 @@ function isOverflow(value, check) {
   return false;
 }
 
-export async function checkDuplicateCommitment(
-  transaction,
-  inL2AndNotInL2 = false,
-  blockNumberL2OfTx,
-) {
+async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blockNumberL2OfTx) {
   // check if there are duplicate commitments in the same transaction
   if (
     transaction.commitments[0] !== ZERO &&
