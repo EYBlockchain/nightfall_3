@@ -36,7 +36,7 @@ library ChallengesUtil {
         uint256 commitmentIndex = priorBlockL2.leafCount +
             Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
-        (bytes32 root, , ) = MerkleTree_Stateless.insertLeaves(
+        (root, , ) = MerkleTree_Stateless.insertLeaves(
             Utils.filterCommitments(transactions),
             _frontier,
             commitmentIndex
