@@ -10,7 +10,7 @@ import {
 import { ZkpKeys } from '../services/keys';
 
 const { generalise } = gen;
-const { BN128_GROUP_ORDER } = global.config;
+const { BN128_GROUP_ORDER } = global.nightfallConstants;
 
 type CommitmentsInfo = {
   oldCommitments: any[];

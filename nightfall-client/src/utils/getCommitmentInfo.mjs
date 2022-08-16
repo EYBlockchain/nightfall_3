@@ -1,7 +1,7 @@
 import gen from 'general-number';
-import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import constants from 'common-files/constants/index.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import {
   clearPending,
@@ -13,7 +13,7 @@ import { ZkpKeys } from '../services/keys.mjs';
 
 const { GN, generalise } = gen;
 
-const { BN128_GROUP_ORDER } = config;
+const { BN128_GROUP_ORDER } = constants;
 
 // eslint-disable-next-line import/prefer-default-export
 export const getCommitmentInfo = async txInfo => {
