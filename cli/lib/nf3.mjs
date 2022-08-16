@@ -957,7 +957,7 @@ class Nf3 {
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
+      // connection._ws.on('pong', () => logger.debug('Challenge websocket received pong'));
       logger.debug('Challenge websocket connection opened');
       connection.send('challenge');
     };

@@ -37,7 +37,10 @@ export function stopMakingChallenges() {
 }
 
 export async function commitToChallenge(txDataToSign) {
-  if (!makeChallenges) return;
+  if (!makeChallenges) {
+    logger.debug('makeChallenges is off, no challenge commitment was sent');
+    return;
+  }
   const web3 = Web3.connection();
   const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
   const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
@@ -60,6 +63,8 @@ export async function commitToChallenge(txDataToSign) {
     logger.warn(
       `Websocket to challenger is closed for commit.  Waiting for challenger to reconnect`,
     );
+    if (!ws) logger.debug('There is no challenge websocket object');
+    if (ws.readyState !== WebSocket.OPEN) logger.debug('The challenge websocket is not ready');
     if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
   }
   ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));

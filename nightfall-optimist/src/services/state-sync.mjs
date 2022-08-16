@@ -107,6 +107,7 @@ export default async proposer => {
   if (lastBlockNumberL2 === -1) {
     unpauseQueue(0); // queues are started paused, therefore we need to unpause them before proceeding.
     unpauseQueue(1);
+    startMakingChallenges();
     return null; // The blockchain is empty
   }
   // pause the queues so we stop processing incoming events while we sync

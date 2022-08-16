@@ -121,7 +121,7 @@ describe('Testing with an adversary', () => {
       registerProposerOnNoProposer(nf3AdversarialProposer);
     }, 5000);
 
-    // Chalenger listening for incoming events
+    // Challenger listening for incoming events
     const challengerEmitter = await nf3Challenger.startChallenger();
 
     challengerEmitter.on('receipt', txDataToSign => {
