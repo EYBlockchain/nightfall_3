@@ -46,7 +46,6 @@ async function deposit(items, shieldContractAddress) {
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
-  console.log('LAst block', lastTree, lastBlockNumber);
   await confirmBlock(lastBlockNumber, lastTree);
 
   const abi = abiData.data;

@@ -24,14 +24,12 @@ const waitForOpenConnection = socket => {
 };
 export default async function confirmBlock(lastBlock, lastTimber) {
   const socket = new WebSocket(eventWsUrl);
-  console.log('CONFI', lastBlock - 1, lastTimber);
   if (lastTimber.root === 0) return;
   await waitForOpenConnection(socket);
   if (socket.readyState !== socket.OPEN) return;
   socket.send(JSON.stringify({ type: 'sync', lastBlock: lastBlock - 1, syncInfo: 'sync-timber' }));
   socket.addEventListener('message', async function (event) {
     const parsed = JSON.parse(event.data);
-    console.log('PARSED', parsed);
     if (parsed.type === 'sync-timber') {
       if (
         parsed.maxBlock === 1 ||
