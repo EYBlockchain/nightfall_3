@@ -19,5 +19,6 @@ declare module globalThis {
         COMMITMENTS_COLLECTION: string,
         KEYS_COLLECTION: string,
         CIRCUIT_COLLECTION: string,
+        CIRCUIT_HASH_COLLECTION: string,
     }
 }

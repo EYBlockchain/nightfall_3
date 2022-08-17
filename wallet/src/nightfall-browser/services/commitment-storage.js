@@ -21,6 +21,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
+  CIRCUIT_HASH_COLLECTION,
 } = global.config;
 
 const { generalise } = gen;
@@ -35,6 +36,7 @@ const connectDB = async () => {
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
+      newDb.createObjectStore(CIRCUIT_HASH_COLLECTION);
     },
   });
 };
