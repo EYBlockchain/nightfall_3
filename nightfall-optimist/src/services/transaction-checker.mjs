@@ -15,14 +15,8 @@ import { getBlockByBlockNumberL2 } from './database.mjs';
 import verify from './verify.mjs';
 
 const { generalise } = gen;
-const { PROVING_SCHEME, BACKEND, CURVE, BN128_GROUP_ORDER, MAX_PUBLIC_VALUES } = config;
+const { PROVING_SCHEME, BACKEND, CURVE } = config;
 const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
-
-function isOverflow(value, check) {
-  const bigValue = value.bigInt;
-  if (bigValue < 0 || bigValue >= check) return true;
-  return false;
-}
 
 // first, let's check the hash. That's nice and easy:
 // NB as we actually now comput the hash on receipt of the transaction this
@@ -114,30 +108,6 @@ async function verifyProof(transaction) {
     ].flat(Infinity),
   ).all.hex(32);
 
-  if (
-    isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||
-    isOverflow(historicRootFirst.root, BN128_GROUP_ORDER) ||
-    isOverflow(historicRootSecond.root, BN128_GROUP_ORDER) ||
-    isOverflow(historicRootThird.root, BN128_GROUP_ORDER) ||
-    isOverflow(historicRootFourth.root, BN128_GROUP_ORDER) ||
-    (isOverflow(transaction.recipientAddress, MAX_PUBLIC_VALUES.ERCADDRESS) &&
-      transaction.transactionType === 2)
-  ) {
-    throw new TransactionError('Overflow in public input', 4);
-  }
-
-  for (let i = 0; i < transaction.nullifiers.length; i++) {
-    if (isOverflow(transaction.nullifiers[i], MAX_PUBLIC_VALUES.NULLIFIER))
-      throw new TransactionError('Overflow in public input', 4);
-  }
-  for (let i = 0; i < transaction.commitments.length; i++) {
-    if (isOverflow(transaction.commitments[i], MAX_PUBLIC_VALUES.COMMITMENT))
-      throw new TransactionError('Overflow in public input', 4);
-  }
-
-  // check for modular overflow attacks
-  // if (inputs.filter(input => input.bigInt >= BN128_GROUP_ORDER).length > 0)
-  //  throw new TransactionError('Modular overflow in public input', 4);
   const res = await verify({
     vk: new VerificationKey(vkArray),
     proof: new Proof(transaction.proof),

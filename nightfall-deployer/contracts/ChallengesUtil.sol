@@ -84,20 +84,6 @@ library ChallengesUtil {
         );
     }
 
-    function libCheckOverflows(
-        Structures.Block calldata blockL2,
-        Structures.Transaction calldata transaction
-    ) public pure {
-        require(uint256(transaction.ercAddress) <= MAX20, 'ERC address out of range');
-        require(
-            (transaction.transactionType != Structures.TransactionTypes.TRANSFER &&
-                uint256(transaction.recipientAddress) <= MAX20) ||
-                (transaction.transactionType == Structures.TransactionTypes.TRANSFER),
-            'Recipient ERC address out of range'
-        );
-        require(uint256(blockL2.root) < BN128_GROUP_ORDER, 'root out of range');
-    }
-
     function libChallengeNullifier(
         Structures.Transaction memory tx1,
         uint256 nullifierIndex1,

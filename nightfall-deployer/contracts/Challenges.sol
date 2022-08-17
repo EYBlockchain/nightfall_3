@@ -155,7 +155,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             extraPublicInputs.roots[1] = uint256(blockL2ContainingHistoricRoot[1].root);
         }
 
-       if (uint256(transactions[transactionIndex].nullifiers[2]) != 0) {
+        if (uint256(transactions[transactionIndex].nullifiers[2]) != 0) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRoot[2],
                 transactionsOfblockL2ContainingHistoricRoot[2]
@@ -167,7 +167,6 @@ contract Challenges is Stateful, Key_Registry, Config {
             );
             extraPublicInputs.roots[2] = uint256(blockL2ContainingHistoricRoot[2].root);
         }
-
 
         if (uint256(transactions[transactionIndex].nullifiers[3]) != 0) {
             state.areBlockAndTransactionsReal(
@@ -182,9 +181,6 @@ contract Challenges is Stateful, Key_Registry, Config {
             extraPublicInputs.roots[3] = uint256(blockL2ContainingHistoricRoot[3].root);
         }
 
-
-        // first check the transaction and block do not overflow
-        ChallengesUtil.libCheckOverflows(blockL2, transactions[transactionIndex]);
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
             transactions[transactionIndex],
