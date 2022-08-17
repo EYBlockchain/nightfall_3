@@ -13,7 +13,7 @@ import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
 import computeCircuitInputs from '@Nightfall/utils/compute-witness';
-import confirmBlock from './check-block';
+import confirmBlock from './confirm-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
