@@ -11,7 +11,7 @@ def main<MinCommitments, MaxCommitments>(\
     private field[MaxCommitments] newCommitmentValues,\
     private field[MaxCommitments] newCommitmentSalts,\
     private Point[MaxCommitments] recipientPublicKey,\
-    field ercAddressFee\
+    field maticAddress\
 ) -> bool:
 
     //Check that all the commitments are valid. If NumCommitments equals zero this loop will be ignored
@@ -38,7 +38,7 @@ def main<MinCommitments, MaxCommitments>(\
             ])
 
         field calculatedCommitmentHashFee = poseidon([\
-                ercAddressFee,\
+                maticAddress,\
                 0,\
                 newCommitmentValues[i],\
                 ...recipientPublicKey[i],\

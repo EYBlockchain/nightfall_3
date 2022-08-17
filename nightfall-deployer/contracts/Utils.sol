@@ -130,13 +130,11 @@ library Utils {
         inputs[31] = uint256(ts.nullifiers[3]);
         inputs[32] = uint256(ts.compressedSecrets[0]);
         inputs[33] = uint256(ts.compressedSecrets[1]);
-        if (uint256(ts.transactionType) != 0) {
-            inputs[34] = uint256(roots[0]);
-            inputs[35] = uint256(roots[1]);
-            inputs[36] = uint256(roots[2]);
-            inputs[37] = uint256(roots[3]);
-            inputs[38] = uint256(uint160(maticAddress));
-        }
+        inputs[34] = uint256(roots[0]);
+        inputs[35] = uint256(roots[1]);
+        inputs[36] = uint256(roots[2]);
+        inputs[37] = uint256(roots[3]);
+        inputs[38] = uint256(uint160(maticAddress));
     }
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {

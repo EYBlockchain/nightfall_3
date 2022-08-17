@@ -106,16 +106,13 @@ async function verifyProof(transaction) {
       transaction.commitments,
       transaction.nullifiers,
       transaction.compressedSecrets,
+      historicRootFirst.root,
+      historicRootSecond.root,
+      historicRootThird.root,
+      historicRootFourth.root,
+      maticAddress.toLowerCase(),
     ].flat(Infinity),
   ).all.hex(32);
-
-  if (Number(transaction.transactionType) !== 0) {
-    inputs.push(generalise(historicRootFirst.root).hex(32));
-    inputs.push(generalise(historicRootSecond.root).hex(32));
-    inputs.push(generalise(historicRootThird.root).hex(32));
-    inputs.push(generalise(historicRootFourth.root).hex(32));
-    inputs.push(generalise(maticAddress.toLowerCase()).hex(32));
-  }
 
   if (
     isOverflow(transaction.ercAddress, MAX_PUBLIC_VALUES.ERCADDRESS) ||

@@ -18,7 +18,7 @@ def main<MinNullifiers, MaxNullifiers>(\
     private field[MaxNullifiers] rootKey,\
     private field[MaxNullifiers][32] paths,\
 	private field[MaxNullifiers] orders,\
-    field ercAddressFee\
+    field maticAddress\
 ) -> (Point):
     // Get Curve Params
     BabyJubJubParams context = curveParams()
@@ -58,7 +58,7 @@ def main<MinNullifiers, MaxNullifiers>(\
         field nullifier = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) then poseidon([nullifierKeys, calculatedOldCommitmentHash]) else 0 fi
 
         field calculatedOldCommitmentHashFee = poseidon([\
-            ercAddressFee,\
+            maticAddress,\
             0,\
             oldCommitmentValues[i],\
             ...zkpPublicKeys,\

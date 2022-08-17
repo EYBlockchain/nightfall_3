@@ -19,8 +19,10 @@ const padArray = (arr, padWith, n) => {
 };
 
 const computePublicInputs = (tx, rootsOldCommitments, maticAddress) => {
+  const roots = padArray(generalise(rootsOldCommitments), 0, 4);
+
   const transaction = generalise(tx);
-  let publicInputs = [
+  return [
     transaction.value.field(BN128_GROUP_ORDER),
     transaction.fee.field(BN128_GROUP_ORDER),
     transaction.transactionType.field(BN128_GROUP_ORDER),
@@ -32,18 +34,9 @@ const computePublicInputs = (tx, rootsOldCommitments, maticAddress) => {
     transaction.commitments.map(c => c.field(BN128_GROUP_ORDER)),
     transaction.nullifiers.map(n => n.field(BN128_GROUP_ORDER)),
     transaction.compressedSecrets.map(cs => cs.field(BN128_GROUP_ORDER)),
-  ];
-
-  if (Number(tx.transactionType) !== 0) {
-    const roots = padArray(generalise(rootsOldCommitments), 0, 4);
-    publicInputs = [
-      ...publicInputs,
-      roots.map(r => r.field(BN128_GROUP_ORDER)),
-      generalise(maticAddress).field(BN128_GROUP_ORDER),
-    ];
-  }
-
-  return publicInputs.flat(Infinity);
+    roots.map(r => r.field(BN128_GROUP_ORDER)),
+    generalise(maticAddress).field(BN128_GROUP_ORDER),
+  ].flat(Infinity);
 };
 
 const computePrivateInputsEncryption = (ephemeralKey, ercAddress, tokenId) => {
@@ -59,11 +52,6 @@ const computePrivateInputsNullifiers = (oldCommitmentPreimage, paths, orders, ro
   const paddedPaths = padArray(paths, new Array(32).fill(0), 4);
   const paddedOrders = padArray(orders, 0, 4);
   const paddedRootKeys = padArray(rootKey, 0, 4);
-
-  console.log('OLD COMMITMENT PREIMAGE', paddedOldCommitmentPreimage);
-  console.log('PATHS', paddedPaths);
-  console.log('ORDERS', paddedOrders);
-  console.log('ROOT KEYS', paddedRootKeys);
 
   const privateInputsNullifiers = [
     paddedOldCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),

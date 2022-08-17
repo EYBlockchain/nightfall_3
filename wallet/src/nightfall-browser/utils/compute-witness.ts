@@ -79,11 +79,9 @@ const computePublicInputs = (
   };
 
   publicInput.push(publicTx);
-  if (Number(tx.transactionType) !== 0) {
-    const roots = padArray(generalise(rootsOldCommitments), 0, 4);
-    publicInput.push(roots.map((r: any) => r.field(BN128_GROUP_ORDER)).flat());
-    publicInput.push(generalise(maticAddress).field(BN128_GROUP_ORDER));
-  }
+  const roots = padArray(generalise(rootsOldCommitments), 0, 4);
+  publicInput.push(roots.map((r: any) => r.field(BN128_GROUP_ORDER)).flat());
+  publicInput.push(generalise(maticAddress).field(BN128_GROUP_ORDER));
 
   return publicInput;
 };

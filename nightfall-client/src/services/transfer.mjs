@@ -144,9 +144,6 @@ async function transfer(transferParams) {
       ephemeralKey: ePrivate,
     };
 
-    console.log('TRANSACTION', transaction);
-    console.log('PRIVATE DATA', privateData);
-
     const witness = computeCircuitInputs(
       transaction,
       privateData,

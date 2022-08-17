@@ -35,6 +35,15 @@ async function deposit(items, shieldContractAddress) {
     generalise(items);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
+  const shieldContractInstance = await getContractInstance(
+    SHIELD_CONTRACT_NAME,
+    shieldContractAddress,
+  );
+
+  const maticAddress = generalise(
+    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  );
+
   if (!(await checkIndexDBForCircuit(circuitName)))
     throw Error('Some circuit data are missing from IndexedDB');
   const [abiData, programData, pkData] = await Promise.all([
@@ -68,7 +77,7 @@ async function deposit(items, shieldContractAddress) {
 
   const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
 
-  const witnessInput = computeCircuitInputs(publicData, privateData);
+  const witnessInput = computeCircuitInputs(publicData, privateData, [0, 0, 0, 0], maticAddress);
 
   try {
     const zokratesProvider = await initialize();

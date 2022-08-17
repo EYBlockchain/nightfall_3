@@ -8,7 +8,7 @@ from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 def main(\
     PublicTransaction tx,\
     field[4] roots,\
-    field ercAddressFee,\
+    field maticAddress,\
     private Nullifiers<4> nullifiers,\
     private Commitments<3> commitments,\
     private Transfer transfer\
