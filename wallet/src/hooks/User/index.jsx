@@ -129,6 +129,7 @@ export const UserProvider = ({ children }) => {
             console.log('Resync DB');
             emptyStoreBlocks();
             emptyStoreTimber();
+            Storage.shieldAddressSet();
           } else if (
             parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash ===
               lastBlock.blockHash ||
@@ -160,6 +161,7 @@ export const UserProvider = ({ children }) => {
           console.log('Resync DB');
           emptyStoreBlocks();
           emptyStoreTimber();
+          Storage.shieldAddressSet();
         } else {
           setLastBlock(parsed.data.block);
           await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);

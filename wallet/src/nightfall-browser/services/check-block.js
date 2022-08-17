@@ -1,6 +1,7 @@
 // ignore unused exports
 
 import { emptyStoreBlocks, emptyStoreTimber } from './database';
+import * as Storage from '../../utils/lib/local-storage';
 
 const { eventWsUrl } = global.config;
 
@@ -36,6 +37,7 @@ export default async function confirmBlock(lastBlock, lastTimber) {
         parsed.historicalData[parsed.historicalData.length - 1].timber.root !== lastTimber.root
       ) {
         console.log('RESYNC DB');
+        Storage.shieldAddressSet();
         emptyStoreBlocks();
         emptyStoreTimber();
       }
