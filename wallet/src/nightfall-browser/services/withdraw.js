@@ -9,20 +9,13 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
-import confirmBlock from '../../utils/lib/check-block';
+import confirmBlock from './check-block';
 import computeCircuitInputs from '../utils/compute-witness';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
-import {
-  checkIndexDBForCircuit,
-  getStoreCircuit,
-  getLatestTree,
-  getMaxBlock,
-  emptyStoreBlocks,
-  emptyStoreTimber,
-} from './database';
+import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
 import { ZkpKeys } from './keys';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
@@ -67,14 +60,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
-  try {
-    await confirmBlock(lastBlockNumber, lastTree);
-  } catch (err) {
-    emptyStoreBlocks();
-    emptyStoreTimber();
-    console.log('Resync Done Withraw');
-    throw new Error(err);
-  }
+  await confirmBlock(lastBlockNumber, lastTree);
 
   const abi = abiData.data;
   const program = programData.data;

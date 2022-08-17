@@ -13,21 +13,14 @@ import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
 import computeCircuitInputs from '@Nightfall/utils/compute-witness';
-import confirmBlock from '../../utils/lib/check-block';
+import confirmBlock from './check-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
-import {
-  checkIndexDBForCircuit,
-  getStoreCircuit,
-  getLatestTree,
-  getMaxBlock,
-  emptyStoreBlocks,
-  emptyStoreTimber,
-} from './database';
+import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
@@ -53,14 +46,8 @@ async function deposit(items, shieldContractAddress) {
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
-  try {
-    await confirmBlock(lastBlockNumber, lastTree);
-  } catch (err) {
-    emptyStoreBlocks();
-    emptyStoreTimber();
-    console.log('Resync Done Deposit');
-    throw new Error(err);
-  }
+  console.log('LAst block', lastTree, lastBlockNumber);
+  await confirmBlock(lastBlockNumber, lastTree);
 
   const abi = abiData.data;
   const program = programData.data;

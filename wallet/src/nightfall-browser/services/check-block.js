@@ -1,5 +1,7 @@
 // ignore unused exports
 
+import { emptyStoreBlocks, emptyStoreTimber } from './database';
+
 const { eventWsUrl } = global.config;
 
 const waitForOpenConnection = socket => {
@@ -22,15 +24,22 @@ const waitForOpenConnection = socket => {
 };
 export default async function confirmBlock(lastBlock, lastTimber) {
   const socket = new WebSocket(eventWsUrl);
+  console.log('CONFI', lastBlock - 1, lastTimber);
   if (lastTimber.root === 0) return;
   await waitForOpenConnection(socket);
-  if (socket.readyState !== socket.OPEN) throw new Error(`Cannot open socket`);
-  socket.send(JSON.stringify({ type: 'sync-timber', lastBlock: lastBlock - 1 }));
+  if (socket.readyState !== socket.OPEN) return;
+  socket.send(JSON.stringify({ type: 'sync', lastBlock: lastBlock - 1, syncInfo: 'sync-timber' }));
   socket.addEventListener('message', async function (event) {
     const parsed = JSON.parse(event.data);
+    console.log('PARSED', parsed);
     if (parsed.type === 'sync-timber') {
-      if (parsed.historicalData[parsed.historicalData.length - 1].block.root !== lastTimber.root) {
-        throw new Error(`Resync required`);
+      if (
+        parsed.maxBlock === 1 ||
+        parsed.historicalData[parsed.historicalData.length - 1].timber.root !== lastTimber.root
+      ) {
+        console.log('RESYNC DB');
+        emptyStoreBlocks();
+        emptyStoreTimber();
       }
     }
   });
