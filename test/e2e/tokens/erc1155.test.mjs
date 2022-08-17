@@ -21,7 +21,7 @@ const {
   fee,
   txPerBlock,
   transferValue,
-  tokenConfigs: { tokenTypeERC1155, tokenType, tokenId },
+  tokenConfigs: { tokenTypeERC1155 },
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
@@ -34,11 +34,13 @@ const web3Client = new Web3Client();
 let erc1155Address;
 // why do we need an ERC20 token in an ERC1155 test, you ask?
 // let me tell you I also don't know, but I guess we just want to fill some blocks?
+// eslint-disable-next-line no-unused-vars
 let erc20Address;
 let stateAddress;
 const eventLogs = [];
 let availableTokenIds;
 
+<<<<<<< HEAD
 const emptyL2 = async () => {
   let count = await nf3Users[0].unprocessedTransactionCount();
 
@@ -50,6 +52,48 @@ const emptyL2 = async () => {
 
   await nf3Users[0].makeBlockNow();
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+=======
+/*
+  This function tries to zero the number of unprocessed transactions in the optimist node
+  that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
+  L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
+  of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
+*/
+const emptyL2 = async () => {
+  // let count = await nf3Instance.unprocessedTransactionCount();
+  // while (count !== 0) {
+  //   if (count % txPerBlock) {
+  //     await depositNTransactions(
+  //       nf3Instance,
+  //       count % txPerBlock ? count % txPerBlock : txPerBlock,
+  //       erc20Address,
+  //       tokenType,
+  //       transferValue,
+  //       tokenId,
+  //       fee,
+  //     );
+
+  //     eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  //   } else {
+  //     eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  //   }
+
+  //   count = await nf3Instance.unprocessedTransactionCount();
+  // }
+
+  // await depositNTransactions(
+  //   nf3Instance,
+  //   txPerBlock,
+  //   erc20Address,
+  //   tokenType,
+  //   transferValue,
+  //   tokenId,
+  //   fee,
+  // );
+  await nf3Proposer1.makeBlockNow();
+
+  // eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+>>>>>>> 7e3f8cfc (feat: tokens test working)
 };
 
 describe('ERC1155 tests', () => {
@@ -80,6 +124,7 @@ describe('ERC1155 tests', () => {
     ).details;
 
     availableTokenIds = availableTokens.map(t => t.tokenId);
+    console.log('availableTokens', availableTokens);
 
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
 
@@ -96,6 +141,40 @@ describe('ERC1155 tests', () => {
         )?.balance || 0;
 
       // We create enough transactions to fill blocks full of deposits.
+      let res = await nf3Users[0].deposit(
+        erc1155Address,
+        tokenTypeERC1155,
+        transferValue,
+        availableTokenIds[0],
+        fee,
+      );
+      expectTransaction(res);
+
+      res = await nf3Users[0].deposit(
+        erc1155Address,
+        tokenTypeERC1155,
+        transferValue,
+        availableTokenIds[1],
+        fee,
+      );
+      expectTransaction(res);
+      // Wait until we see the right number of blocks appear
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      await emptyL2(nf3Users[0]);
+      balances = await nf3Users[0].getLayer2Balances();
+
+      const balanceAfter = [
+        balances[erc1155Address]?.find(e => e.tokenId === 0).balance,
+        balances[erc1155Address]?.find(e => e.tokenId === 1).balance,
+      ];
+
+      expect(balanceAfter[0] - balanceBefore[0]).to.be.equal(transferValue);
+      expect(balanceAfter[1] - balanceBefore[1]).to.be.equal(transferValue);
+    });
+
+    it('should deposit some ERC1155 crypto into a ZKP commitment and make a block with a single transaction', async function () {
+      console.log(erc1155Address, tokenTypeERC1155, transferValue, availableTokenIds[2], fee);
       const res = await nf3Users[0].deposit(
         erc1155Address,
         tokenTypeERC1155,
