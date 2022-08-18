@@ -59,7 +59,7 @@ jobs:
           cd common-files && npm run test
 
   circuits-test:
-    needs: cache-dependencies
+    needs: cache-nightfall
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/setup-node@v1
