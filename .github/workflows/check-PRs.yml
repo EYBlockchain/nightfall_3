@@ -32,7 +32,6 @@ jobs:
           npm run lint
 
   cache-nightfall:
-    id: cache-nightfall
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
