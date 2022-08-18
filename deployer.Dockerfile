@@ -9,6 +9,9 @@ WORKDIR /
 COPY common-files common-files
 COPY config/default.js app/config/default.js
 
+WORKDIR /common-files
+RUN npm ci
+
 WORKDIR /app
 COPY nightfall-deployer/package*.json nightfall-deployer/pre-start-script.sh ./
 COPY nightfall-deployer/src src
