@@ -29,7 +29,7 @@ const testProof = {
   ],
 };
 
-describe('compression tests', () => {
+describe('Compression tests', () => {
   it('should compress and decompress G1 points, recovering the original', async () => {
     const [compressedG1a, compressedG1c] = await Promise.all([
       compressG1(testProof.a),
