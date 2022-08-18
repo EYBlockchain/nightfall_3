@@ -13,6 +13,7 @@
     "test-erc721-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc721.test.mjs ",
     "test-erc1155-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc1155.test.mjs ",
     "test-erc20-cli": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/client/erc20.test.mjs ",
+    "test-general-stuff": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/kem-dem.test.mjs test/timber.test.mjs",
     "lint": "eslint . --ext js,mjs,jsx,ts,tsx && find-unused-exports",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
