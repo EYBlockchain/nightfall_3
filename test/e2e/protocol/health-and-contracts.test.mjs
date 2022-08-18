@@ -36,11 +36,13 @@ describe('Health and Contract Checks', () => {
   });
 
   it('should get the address of the test ERC721 mock contract', async function () {
+    if (process.env.ENVIRONMENT === 'aws') this.skip();
     const res = await nf3User1.getContractAddress('ERC721Mock');
     expect(res).to.be.a('string').and.to.include('0x');
   });
 
   it('should get the address of the test ERC1155 mock contract', async function () {
+    if (process.env.ENVIRONMENT === 'aws') this.skip();
     const res = await nf3User1.getContractAddress('ERC1155Mock');
     expect(res).to.be.a('string').and.to.include('0x');
   });

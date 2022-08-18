@@ -56,164 +56,132 @@ const emptyL2 = async () => {
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 };
 
-describe('ERC721 tests', () => {
-  before(async () => {
-    await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer();
-
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
-    });
-
-    await nf3Users[0].init(mnemonics.user1);
-    await nf3Users[1].init(mnemonics.user2);
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-    erc721Address = await nf3Users[0].getContractAddress('ERC721Mock');
-
-    stateAddress = await nf3Users[0].stateContractAddress;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
-
-    availableTokenIds = (
-      await getERCInfo(erc721Address, nf3Users[0].ethereumAddress, web3Client.getWeb3(), {
-        details: true,
-      })
-    ).details.map(t => t.tokenId);
-
-    await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
-
-    await emptyL2();
+describe('ERC721 tests', function () {
+  before(async function () {
+    if (process.env.ENVIRONMENT === 'aws') this.skip();
   });
 
-  describe('Deposit', () => {
-    it('should deposit some ERC721 crypto into a ZKP commitment', async function () {
-      const tokenToDeposit = availableTokenIds.shift();
+  describe('', async function () {
+    before(async function () {
+      if (process.env.ENVIRONMENT === 'aws') this.skip();
+      await nf3Proposer1.init(mnemonics.proposer);
+      await nf3Proposer1.registerProposer();
 
-      const balanceBefore = (await nf3Users[0].getLayer2Balances())[erc721Address]?.length || 0;
+      // Proposer listening for incoming events
+      const newGasBlockEmitter = await nf3Proposer1.startProposer();
+      newGasBlockEmitter.on('gascost', async gasUsed => {
+        logger.debug(
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
+            gasUsed / txPerBlock
+          }`,
+        );
+      });
 
-      // We create enough transactions to fill blocks full of deposits.
-      const res = await nf3Users[0].deposit(erc721Address, tokenTypeERC721, 0, tokenToDeposit, fee);
-      expectTransaction(res);
+      await nf3Users[0].init(mnemonics.user1);
+      await nf3Users[1].init(mnemonics.user2);
+      erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
+      erc721Address = await nf3Users[0].getContractAddress('ERC721Mock');
 
-      await emptyL2();
+      stateAddress = await nf3Users[0].stateContractAddress;
+      web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
-      const balanceAfter = (await nf3Users[0].getLayer2Balances())[erc721Address]?.length || 0;
+      availableTokenIds = (
+        await getERCInfo(erc721Address, nf3Users[0].ethereumAddress, web3Client.getWeb3(), {
+          details: true,
+        })
+      ).details.map(t => t.tokenId);
 
-      expect(balanceAfter - balanceBefore).to.be.equal(1);
-    });
-  });
-
-  describe('Transfer', () => {
-    it('should decrement the balance after transfer ERC721 to other wallet and increment the other wallet', async function () {
-      const tokenToTransfer = availableTokenIds.shift();
-
-      const deposit = await nf3Users[0].deposit(
-        erc721Address,
-        tokenTypeERC721,
-        0,
-        tokenToTransfer,
-        fee,
-      );
-      expectTransaction(deposit);
-      await emptyL2();
-
-      async function getBalances() {
-        return Promise.all([
-          await nf3Users[0].getLayer2Balances(),
-          await nf3Users[1].getLayer2Balances(),
-        ]);
-      }
-
-      const balancesBefore = await getBalances();
-
-      const res = await nf3Users[0].transfer(
-        false,
-        erc721Address,
-        tokenTypeERC721,
-        0,
-        tokenToTransfer,
-        nf3Users[1].zkpKeys.compressedZkpPublicKey,
-        fee,
-      );
-      expectTransaction(res);
-
-      await emptyL2();
-
-      const balancesAfter = await getBalances();
-      expect(
-        (balancesAfter[0][erc721Address]?.length || 0) -
-          (balancesBefore[0][erc721Address]?.length || 0),
-      ).to.be.equal(-1);
-      expect(
-        (balancesAfter[1][erc721Address]?.length || 0) -
-          (balancesBefore[1][erc721Address]?.length || 0),
-      ).to.be.equal(1);
-      expect(
-        (balancesAfter[0][erc20Address]?.[0].balance || 0) -
-          (balancesBefore[0][erc20Address]?.[0].balance || 0),
-      ).to.be.equal(-fee);
-    });
-  });
-
-  describe('Withdraw', () => {
-    it('should withdraw from L2, checking for missing commitment', async function () {
-      const tokenToWithdraw = availableTokenIds.shift();
-
-      const res = await nf3Users[0].deposit(
-        erc721Address,
-        tokenTypeERC721,
-        0,
-        tokenToWithdraw,
-        fee,
-      );
-      expectTransaction(res);
-      await emptyL2();
-
-      const balancesBefore = await nf3Users[0].getLayer2Balances();
-
-      const rec = await nf3Users[0].withdraw(
-        false,
-        erc721Address,
-        tokenTypeERC721,
-        0,
-        tokenToWithdraw,
-        nf3Users[0].ethereumAddress,
-        fee,
-      );
-      expectTransaction(rec);
-      logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
-
-      await emptyL2();
-
-      const balancesAfter = await nf3Users[0].getLayer2Balances();
-      expect(
-        (balancesAfter[erc721Address]?.length || 0) - (balancesBefore[erc721Address]?.length || 0),
-      ).to.be.equal(-1);
-      expect(
-        (balancesAfter[erc20Address]?.[0].balance || 0) -
-          (balancesBefore[erc20Address]?.[0].balance || 0),
-      ).to.be.equal(-fee);
-    });
-
-    it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
-      const nodeInfo = await web3Client.getInfo();
-      if (nodeInfo.includes('TestRPC')) {
-        const tokenToWithdraw = availableTokenIds.shift();
-
-        const deposit = await nf3Users[0].deposit(
+      for (let i = 0; i < txPerBlock * 2; i++) {
+        await nf3Users[0].deposit(
           erc721Address,
           tokenTypeERC721,
           0,
-          tokenToWithdraw,
+          availableTokenIds.shift(),
           fee,
         );
-        expectTransaction(deposit);
-        await emptyL2();
+      }
+      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-        const balancesBefore = await nf3Users[0].getLayer2Balances();
+      await emptyL2(nf3Users[0]);
+    });
+
+    afterEach(async () => {
+      await emptyL2(nf3Users[0]);
+    });
+
+    describe('Deposit', () => {
+      it('should deposit some ERC721 crypto into a ZKP commitment', async function () {
+        let balances = await nf3Users[0].getLayer2Balances();
+        const balanceBefore = balances[erc721Address]?.length || 0;
+        // We create enough transactions to fill blocks full of deposits.
+        let res = await nf3Users[0].deposit(
+          erc721Address,
+          tokenTypeERC721,
+          0,
+          availableTokenIds.shift(),
+          fee,
+        );
+        expectTransaction(res);
+        res = await nf3Users[0].deposit(
+          erc721Address,
+          tokenTypeERC721,
+          0,
+          availableTokenIds.shift(),
+          fee,
+        );
+        expectTransaction(res);
+        // Wait until we see the right number of blocks appear
+        eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await emptyL2(nf3Users[0]);
+        balances = await nf3Users[0].getLayer2Balances();
+        const balanceAfter = balances[erc721Address].length;
+        expect(balanceAfter - balanceBefore).to.be.equal(2);
+      });
+    });
+
+    describe('Transfer', () => {
+      it('should decrement the balance after transfer ERC721 to other wallet and increment the other wallet', async function () {
+        let balances;
+        async function getBalances() {
+          balances = [
+            (await nf3Users[0].getLayer2Balances())[erc721Address],
+            (await nf3Users[1].getLayer2Balances())[erc721Address],
+          ];
+        }
+
+        await getBalances();
+        // weird way to clone an array, but we need a deep clone as it's a multidimensional array
+        const beforeBalances = JSON.parse(JSON.stringify(balances));
+
+        for (let i = 0; i < txPerBlock; i++) {
+          const res = await nf3Users[0].transfer(
+            false,
+            erc721Address,
+            tokenTypeERC721,
+            0,
+            balances[0].shift().tokenId,
+            nf3Users[1].zkpKeys.compressedZkpPublicKey,
+            fee,
+          );
+          expectTransaction(res);
+        }
+        eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        // await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // depositing some ERC20 transactions to fill the block
+        await emptyL2(nf3Users[0]);
+
+        await getBalances();
+        expect((balances[0]?.length || 0) - (beforeBalances[0]?.length || 0)).to.be.equal(-2);
+        expect((balances[1]?.length || 0) - (beforeBalances[1]?.length || 0)).to.be.equal(2);
+      });
+    });
+
+    describe('Withdraw', () => {
+      it('should withdraw from L2, checking for missing commitment', async function () {
+        const erc721balances = (await nf3Users[0].getLayer2Balances())[erc721Address];
+        const beforeBalance = erc721balances.length;
+        const tokenToWithdraw = erc721balances.shift().tokenId;
 
         const rec = await nf3Users[0].withdraw(
           false,
@@ -225,24 +193,28 @@ describe('ERC721 tests', () => {
           fee,
         );
         expectTransaction(rec);
+<<<<<<< HEAD
         await emptyL2();
+=======
+        logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
+>>>>>>> 936600ff (wip)
 
         const withdrawal = nf3Users[0].getLatestWithdrawHash();
 
         const balancesAfter = await nf3Users[0].getLayer2Balances();
 
-        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
+        const balanceAfter = (await nf3Users[0].getLayer2Balances())[erc721Address].length;
+        expect(balanceAfter).to.be.lessThan(beforeBalance);
+      });
 
-        const commitments = await nf3Users[0].getPendingWithdraws();
-        expect(
-          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc721Address].length,
-        ).to.be.greaterThan(0);
-        expect(
-          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc721Address].filter(
-            c => c.valid === true,
-          ).length,
-        ).to.be.greaterThan(0);
+      it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
+        const nodeInfo = await web3Client.getInfo();
+        if (nodeInfo.includes('TestRPC')) {
+          let erc721balances = (await nf3Users[0].getLayer2Balances())[erc721Address];
+          const beforeBalance = erc721balances.length;
+          const tokenToWithdraw = erc721balances.shift().tokenId;
 
+<<<<<<< HEAD
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
         expectTransaction(res);
 
@@ -258,14 +230,54 @@ describe('ERC721 tests', () => {
         console.log('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
-    });
-  });
+=======
+          const rec = await nf3Users[0].withdraw(
+            false,
+            erc721Address,
+            tokenTypeERC721,
+            0,
+            tokenToWithdraw,
+            nf3Users[0].ethereumAddress,
+          );
+          expectTransaction(rec);
+          const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
-  after(async () => {
-    await nf3Proposer1.deregisterProposer();
-    await nf3Proposer1.close();
-    await nf3Users[0].close();
-    await nf3Users[1].close();
-    await web3Client.closeWeb3();
+          await emptyL2(nf3Users[0]);
+
+          await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
+
+          const commitments = await nf3Users[0].getPendingWithdraws();
+          expect(
+            commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc721Address].length,
+          ).to.be.greaterThan(0);
+          expect(
+            commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc721Address].filter(
+              c => c.valid === true,
+            ).length,
+          ).to.be.greaterThan(0);
+
+          await new Promise(resolve => setTimeout(resolve, 15000));
+
+          const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
+          expectTransaction(res);
+
+          erc721balances = (await nf3Users[0].getLayer2Balances())[erc721Address];
+          const endBalance = erc721balances.length;
+          expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(beforeBalance, 10));
+        } else {
+          console.log('     Not using a time-jump capable test client so this test is skipped');
+          this.skip();
+        }
+      });
+    });
+
+    after(async function () {
+      await nf3Proposer1.deregisterProposer();
+      await nf3Proposer1.close();
+      await nf3Users[0].close();
+      await nf3Users[1].close();
+      await web3Client.closeWeb3();
+>>>>>>> 936600ff (wip)
+    });
   });
 });
