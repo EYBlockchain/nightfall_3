@@ -41,7 +41,7 @@ jobs:
           key: ${{ env.cache-name }}
           path: |
             /var/lib/docker
-            ${{ nightfall_repo_dir }}
+            ./nightfall_3
 
       - name: Setup Nightfall
         run: |
@@ -72,7 +72,7 @@ jobs:
           key: ${{ env.cache-name }}
           path: |
             /var/lib/docker
-            ${{ nightfall_repo_dir }}
+            ./nightfall_3
 
       - name: Start Containers
         run: |
