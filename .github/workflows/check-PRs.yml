@@ -68,7 +68,7 @@ jobs:
         if: always()
         run: cat circuit-test.log
 
-      - name: Circuits Test
+      - name: Run integration test
         run: |
           npm run test-circuits
 
