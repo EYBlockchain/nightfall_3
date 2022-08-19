@@ -6,7 +6,7 @@ on:
 
 env:
   cache-name: ${{ github.run_id }}-nightfall-setup
-  nightfall_repo_dir: ${{ GITHUB_WORKSPACE }}/nightfall_3
+  nightfall_repo_dir: $GITHUB_WORKSPACE/nightfall_3
 
 jobs:
   dependency-review:
