@@ -6,7 +6,6 @@ import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { depositNTransactions, expectTransaction, Web3Client } from '../../utils.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
-
 import { approve } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -85,7 +84,7 @@ describe('ERC20 tests', () => {
   });
 
   beforeEach(async () => {
-    await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+    await nf3Users[0].deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
     await emptyL2();
   });
 

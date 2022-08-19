@@ -15,25 +15,15 @@ import { waitForContract } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
-import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
+import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
-const NULL_COMMITMENT_INFO = {
-  oldCommitments: [],
-  nullifiers: [],
-  newCommitments: [],
-  localSiblingPaths: [],
-  leafIndices: [],
-  blockNumberL2s: [],
-  roots: [],
-  salts: [],
-};
 const NEXT_N_PROPOSERS = 3;
 
 async function transfer(transferParams) {
@@ -61,31 +51,16 @@ async function transfer(transferParams) {
   );
 
   logger.debug(`The erc address of the fee is the following: ${maticAddress.hex(32)}`);
-  const addedFee =
-    maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee.bigInt : 0n;
-
-  logger.debug(`Fee will be added as part of the transaction commitments: ${addedFee > 0n}`);
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
-    transferValue: totalValueToSend,
-    addedFee,
+    totalValueToSend,
+    fee,
     recipientZkpPublicKeysArray: recipientZkpPublicKeys,
     ercAddress,
+    maticAddress,
     tokenId,
     rootKey,
   });
-
-  const commitmentsInfoFee =
-    fee.bigInt === 0n || commitmentsInfo.feeIncluded
-      ? NULL_COMMITMENT_INFO
-      : await getCommitmentInfo({
-          transferValue: fee.bigInt,
-          ercAddress: maticAddress,
-          rootKey,
-        }).catch(async () => {
-          await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-          throw new Error('Failed getting fee commitments');
-        });
 
   try {
     // KEM-DEM encryption
@@ -104,41 +79,27 @@ async function transfer(transferParams) {
     // now we have everything we need to create a Witness and compute a proof
     const transaction = new Transaction({
       fee,
-      historicRootBlockNumberL2: [
-        ...commitmentsInfo.blockNumberL2s,
-        ...commitmentsInfoFee.blockNumberL2s,
-      ],
+      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       transactionType: 1,
       ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
       tokenId: compressedSecrets[1], // this is the encrypted tokenID
       recipientAddress: compressedEPub,
-      commitments: [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments],
-      nullifiers: [...commitmentsInfo.nullifiers, ...commitmentsInfoFee.nullifiers],
+      commitments: commitmentsInfo.newCommitments,
+      nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
     });
 
     const privateData = {
       rootKey: [rootKey, rootKey, rootKey, rootKey],
-      oldCommitmentPreimage: [
-        ...commitmentsInfo.oldCommitments,
-        ...commitmentsInfoFee.oldCommitments,
-      ].map(o => {
+      oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
-      paths: [...commitmentsInfo.localSiblingPaths, ...commitmentsInfoFee.localSiblingPaths].map(
-        siblingPath => siblingPath.slice(1),
-      ),
-      orders: [...commitmentsInfo.leafIndices, ...commitmentsInfoFee.leafIndices],
-      newCommitmentPreimage: [
-        ...commitmentsInfo.newCommitments,
-        ...commitmentsInfoFee.newCommitments,
-      ].map(o => {
+      paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+      orders: commitmentsInfo.leafIndices,
+      newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
-      recipientPublicKeys: [
-        ...commitmentsInfo.newCommitments,
-        ...commitmentsInfoFee.newCommitments,
-      ].map(o => o.preimage.zkpPublicKey),
+      recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
       ercAddress,
       tokenId,
       ephemeralKey: ePrivate,
@@ -147,7 +108,7 @@ async function transfer(transferParams) {
     const witness = computeCircuitInputs(
       transaction,
       privateData,
-      [...commitmentsInfo.roots, ...commitmentsInfoFee.roots],
+      [...commitmentsInfo.roots],
       maticAddress,
     );
     logger.debug(`witness input is ${witness.join(' ')}`);
@@ -166,16 +127,13 @@ async function transfer(transferParams) {
 
     const optimisticTransferTransaction = new Transaction({
       fee,
-      historicRootBlockNumberL2: [
-        ...commitmentsInfo.blockNumberL2s,
-        ...commitmentsInfoFee.blockNumberL2s,
-      ],
+      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       transactionType: 1,
       ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
       tokenId: compressedSecrets[1], // this is the encrypted tokenID
       recipientAddress: compressedEPub,
-      commitments: [...commitmentsInfo.newCommitments, ...commitmentsInfoFee.newCommitments],
-      nullifiers: [...commitmentsInfo.nullifiers, ...commitmentsInfoFee.nullifiers],
+      commitments: commitmentsInfo.newCommitments,
+      nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
       proof,
     });
@@ -191,17 +149,13 @@ async function transfer(transferParams) {
     const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
     // Store new commitments that are ours.
-    const storeNewCommitments = [
-      ...commitmentsInfo.newCommitments,
-      ...commitmentsInfoFee.newCommitments,
-    ]
+    const storeNewCommitments = commitmentsInfo.newCommitments
       .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
       .map(c => storeCommitment(c, nullifierKey));
 
-    const nullifyOldCommitments = [
-      ...commitmentsInfo.oldCommitments,
-      ...commitmentsInfoFee.oldCommitments,
-    ].map(c => markNullified(c, optimisticTransferTransaction));
+    const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
+      markNullified(c, optimisticTransferTransaction),
+    );
 
     await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
 
@@ -230,13 +184,8 @@ async function transfer(transferParams) {
     }
     return returnObj;
   } catch (error) {
-    logger.error('Err', error);
-    await Promise.all(
-      [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments].map(o =>
-        clearPending(o),
-      ),
-    );
-    throw new Error('Failed transfer');
+    await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
+    throw new Error(error);
   }
 }
 
