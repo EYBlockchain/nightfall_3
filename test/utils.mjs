@@ -12,8 +12,8 @@ const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const USE_EXTERNAL_NODE = config.USE_EXTERNAL_NODE === 'true';
 
-export const waitForTimeout = async timeoutInMs => {
-  await new Promise(resolve => setTimeout(resolve, timeoutInMs));
+export const waitForTimeout = timeoutInMs => {
+  return new Promise(resolve => setTimeout(resolve, timeoutInMs));
 };
 
 export const topicEventMapping = {
