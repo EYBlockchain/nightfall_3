@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /**
 Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
@@ -15,6 +16,7 @@ import {
   getTransactionByTransactionHash,
   getTransactionHashSiblingInfo,
 } from './database.mjs';
+import { syncState } from './state-sync.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -757,29 +759,48 @@ export async function findUsableCommitmentsMutex(
  *
  * @function saveCommitments save a list of commitments in the database
  * @param {[]} listOfCommitments a list of commitments to be saved in the database
- * @returns
+ * @returns if all the commitments in the list already exists in the database
+ * throw an error, else return a success message.
  */
 export async function saveCommitments(listOfCommitments) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  let exist = false;
-  for (const commitment of listOfCommitments) {
-    if (
-      // eslint-disable-next-line no-await-in-loop
-      (await db.collection(COMMITMENTS_COLLECTION).find({ _id: commitment._id }).toArray()).length >
-      0
-    ) {
-      exist = true;
-      break;
-    }
+
+  /**
+   * 1. listOfCommitments => get only the ids
+   */
+  const commitmentsIds = listOfCommitments.map(commitment => commitment._id);
+  /**
+   * 2. Find commitments that already exists in DB
+   */
+  const commitmentsFound = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ _id: { $in: commitmentsIds } })
+    .toArray();
+
+  /**
+   * 3. remove the commitments found in the database from the list
+   */
+  const onlyNewCommitments = listOfCommitments.filter(
+    commitments =>
+      commitmentsFound.find(commitmentFound => commitmentFound.id === commitments.id) === undefined,
+  );
+
+  if (onlyNewCommitments.length > 0) {
+    /**
+     * 4. Insert all
+     */
+    await db.collection(COMMITMENTS_COLLECTION).insertMany(onlyNewCommitments);
+
+    /**
+     * 5. Sycronize from beggining
+     */
+    await syncState();
+
+    return { successMessage: 'Commitments have been saved successfully!' };
   }
 
-  if (exist) {
-    return new Error('Some of these commitments already existis in the database!');
-  }
-
-  const response = await db.collection(COMMITMENTS_COLLECTION).insertMany(listOfCommitments);
-  return response;
+  throw new Error('All commitments of this list already exists in the database!');
 }
 
 /**
@@ -789,7 +810,6 @@ export async function saveCommitments(listOfCommitments) {
  * @param {string[]} listOfCompressedZkpPublicKey a list of compressedZkpPublicKey derivated from the user
  * mnemonic coming from the SDK or Wallet.
  * @returns all the commitments existent for this list of compressedZkpPublicKey.
- * @author luizoamorim
  */
 export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey) {
   const connection = await mongo.connection(MONGO_URL);
@@ -808,7 +828,6 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
  * business logic and of a repository doing the communication with the database for this
  * use case.
  * @returns all the commitments existent in this database.
- * @author luizoamorim
  */
 export async function getCommitments() {
   const connection = await mongo.connection(MONGO_URL);

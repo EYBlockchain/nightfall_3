@@ -27,7 +27,11 @@ const {
 
 const { ETH_NETWORK, CONTRACT_FILES_URL } = process.env;
 
-const syncState = async (fromBlock = 'earliest', toBlock = 'latest', eventFilter = 'allEvents') => {
+export const syncState = async (
+  fromBlock = 'earliest',
+  toBlock = 'latest',
+  eventFilter = 'allEvents',
+) => {
   console.log('From block', fromBlock);
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // Rollback, BlockProposed
 
