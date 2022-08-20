@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /**
 Resync code so that restarted client instances are able to read past events and update
 their local commitments databsae.
