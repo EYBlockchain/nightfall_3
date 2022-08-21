@@ -21,6 +21,8 @@
     "pino-pretty": "^8.1.0",
     "reconnecting-websocket": "^4.4.0",
     "web3": "^1.7.5",
-    "ws": "^8.2.3"
+    "ws": "^8.2.3",
+    "cls-hooked": "4.2.2",
+    "uuid": "8.3.2"
   }
 }

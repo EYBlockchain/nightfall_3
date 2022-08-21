@@ -18,8 +18,6 @@ const main = async () => {
     await initialClientSync();
     await startEventQueue(queueManager, eventHandlers);
 
-    app.get('/healthcheck', (req, res) => res.sendStatus(200));
-
     await mongo.connection(config.MONGO_URL); // get a db connection
     app.listen(80);
   } catch (err) {
