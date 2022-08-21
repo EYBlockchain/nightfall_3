@@ -4,6 +4,7 @@
 import config from 'config';
 import pino from 'pino';
 import isDev from './utils.mjs';
+import correlator from './correlation-id.mjs';
 
 const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss.l';
 
@@ -17,7 +18,7 @@ const getInstance = () => {
       },
       // removes the pid and hostname fields from the logs
       bindings(bindings) {
-        return {};
+        return { correlationId: correlator.getId() };
       },
     },
     timestamp: () => `,"time": "${new Date(Date.now()).toISOString()}"`,
