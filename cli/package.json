@@ -34,6 +34,9 @@
     "babel-plugin-module-extension": "^0.1.3",
     "pino-pretty": "^8.1.0"
   },
+  "overrides": {
+    "got": "12.1.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/EYBlockchain/nightfall_3.git"
