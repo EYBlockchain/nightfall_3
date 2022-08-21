@@ -24,6 +24,6 @@ COPY apps/proposer/package*.json ./
 COPY apps/proposer/src src
 COPY apps/proposer/docker-entrypoint.sh docker-entrypoint.sh
 
-RUN npm ci
+RUN npm i
 
 CMD ["npm", "start"]
