@@ -21,5 +21,8 @@
     "cls-hooked": "^4.2.2",
     "uuid": "^8.3.2",
     "express-fileupload": "^1.4.0"
+  },
+  "devDependencies": {
+    "mocha": "^10.0.0"
   }
 }
