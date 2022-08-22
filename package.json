@@ -4,9 +4,11 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
+    "lint": "eslint . --ext js,mjs,jsx,ts,tsx && find-unused-exports",
+    "prepare": "husky install",
+    "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
+    "build-adversary": "node test/adversary/transpile-adversary.mjs",
     "test": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs test/e2e/tokens/*.test.mjs",
-    "neg-test": "mocha --timeout 0 --bail --exit test/neg-http.mjs",
-    "neg-test-ropsten": "mocha --timeout 0 --bail --exit test/neg-http.mjs",
     "test-e2e-protocol": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs ",
     "test-gas": "mocha --timeout 0 --bail --exit test/e2e/gas.test.mjs ",
     "test-circuits": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/circuits.test.mjs ",
@@ -15,13 +17,9 @@
     "test-erc721-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc721.test.mjs ",
     "test-erc1155-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc1155.test.mjs ",
     "test-erc20-cli": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/client/erc20.test.mjs ",
-    "lint": "eslint . --ext js,mjs,jsx,ts,tsx && find-unused-exports",
-    "prepare": "husky install",
-    "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
-    "build-adversary": "node test/adversary/transpile-adversary.mjs",
-    "adversary-test": "CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs",
-    "adversary-test-all": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount IncorrectTreeRoot IncorrectLeafCount; do CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs; sleep 5; done",
-    "secrets-encryption-test": "mocha --timeout 0 --bail --exit test/encryption.test.mjs"
+    "test-adversary": "CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs",
+    "test-all-adversary": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount IncorrectTreeRoot IncorrectLeafCount; do CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs; sleep 5; done",
+    "test-general-stuff": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/kem-dem.test.mjs test/timber.test.mjs"
   },
   "repository": {
     "type": "git",
