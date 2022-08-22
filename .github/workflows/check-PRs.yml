@@ -1,8 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
-    branches: [master]
+  push:
+    branch:
+      - liju.jose/test-master
 
 jobs:
   dependency-review:
@@ -92,7 +93,7 @@ jobs:
         run: |
           ./setup-nightfall
           ./geth-standalone -s
-          sleep 300 
+          sleep 300
           ./start-nightfall -l -d -a &> adversary-test.log &disown
 
       - name: Wait for images to be ready
@@ -120,7 +121,7 @@ jobs:
       - name: If integration test failed, shutdown the Containers
         if: failure()
         run: |
-          docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ganache.yml -f docker-compose.adversary.yml down -v 
+          docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ganache.yml -f docker-compose.adversary.yml down -v
           ./geth-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
