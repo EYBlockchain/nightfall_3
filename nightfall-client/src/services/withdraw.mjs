@@ -43,7 +43,7 @@ async function withdraw(withdrawParams) {
 
   logger.debug(`The erc address of the fee is the following: ${maticAddress.hex(32)}`);
 
-  const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value;
+  const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
 
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: withdrawValue,

@@ -588,11 +588,6 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
   return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
 
-function min(a, b) {
-  if (a > b) return b;
-  return a;
-}
-
 async function verifyEnoughCommitments(
   compressedZkpPublicKey,
   ercAddress,
@@ -638,7 +633,7 @@ async function verifyEnoughCommitments(
     // At most, we can use 3 commitments to pay for the fee. However, it is possible that
     // the user has less than 3 matic commitments. Therefore, the maximum number of commitments
     // the user will be able to use is the minimum between 3 and the number of fee commitments (fc)
-    const maxPossibleCommitmentsFee = min(fc, 3);
+    const maxPossibleCommitmentsFee = Math.min(fc, 3);
 
     let i = 1;
     let sumHighestCommitmentsFee = 0n;
@@ -686,7 +681,7 @@ async function verifyEnoughCommitments(
   // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
   // Therefore, the maximum number of commitments the user will be able to use is the minimum between
   // 4 - minFc and the number of commitments (c)
-  const maxPossibleCommitments = min(c, 4 - minFc);
+  const maxPossibleCommitments = Math.min(c, 4 - minFc);
 
   let j = 1;
   let sumHighestCommitments = 0n;
@@ -938,7 +933,7 @@ async function findUsableCommitments(
   // minC commitments are required. On the other hand, we can use a maximum of 4 commitments
   // but we have to take into account that some spots needs to be used for the fee and that
   // maybe the user does not have as much commitments
-  for (let i = minC; i <= min(commitments.length, 4 - minFc); ++i) {
+  for (let i = minC; i <= Math.min(commitments.length, 4 - minFc); ++i) {
     const subset = getSubset(commitments, value, i);
     possibleSubsetsCommitments.unshift(subset);
   }
@@ -955,7 +950,7 @@ async function findUsableCommitments(
         return b.length - a.length;
       }
 
-      return Number(changeA - changeB);
+      return changeA > changeB ? 0 : -1;
     });
 
   // Select the first ranked subset as the commitments the user will spend
@@ -968,7 +963,7 @@ async function findUsableCommitments(
     // is better overall. We know that at least we require minFc commitments.
     // On the other hand, we can use a maximum of 4 commitments minus the spots already used
     // for the regular transfer. We also take into account that the user may not have as much commits
-    for (let i = minFc; i <= min(commitmentsFee.length, 4 - oldCommitments.length); ++i) {
+    for (let i = minFc; i <= Math.min(commitmentsFee.length, 4 - oldCommitments.length); ++i) {
       const subset = getSubset(commitmentsFee, fee, i);
       possibleSubsetsCommitmentsFee.unshift(subset);
     }
