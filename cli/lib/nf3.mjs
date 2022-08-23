@@ -448,7 +448,6 @@ class Nf3 {
     compressedZkpPublicKey,
     fee = this.defaultFeeMatic,
   ) {
-    console.log('hello');
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
       offchain,
       ercAddress,
@@ -460,7 +459,6 @@ class Nf3 {
       rootKey: this.zkpKeys.rootKey,
       fee,
     });
-    console.log('hello1');
 
     if (res.data.error && res.data.error === 'No suitable commitments') {
       throw new Error('No suitable commitments');

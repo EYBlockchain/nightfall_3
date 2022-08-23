@@ -60,7 +60,6 @@ export default async ({
       backend,
       opts,
     );
-
     ({ proof, inputs: publicInputs } = await getProofFromFile(`${folderpath}/${proofJsonFile}`));
 
     logger.info(`Complete`);
