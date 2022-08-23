@@ -54,8 +54,8 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
     generalise(transferValue + addedFee),
   );
   if (oldCommitments) {
-    if (addedFee > 0) feeIncluded = true;
-  } else if (addedFee > 0) {
+    if (addedFee > 0n) feeIncluded = true;
+  } else if (addedFee > 0n) {
     // If addedFee is higher than zero it is possible that the user had needed more than two commitments to perform the transaction + fee
     oldCommitments = await findUsableCommitmentsMutex(
       compressedZkpPublicKey,
