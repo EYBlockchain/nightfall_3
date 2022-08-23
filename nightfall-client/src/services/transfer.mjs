@@ -64,6 +64,7 @@ async function transfer(transferParams) {
   const addedFee =
     maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee.bigInt : 0n;
 
+  logger.debug(`Fee will be added as part of the transaction commitments: ${addedFee > 0n}`);
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
     transferValue: totalValueToSend,

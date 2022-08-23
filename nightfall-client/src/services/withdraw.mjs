@@ -55,6 +55,8 @@ async function withdraw(withdrawParams) {
   const addedFee =
     maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee.bigInt : 0n;
 
+  logger.debug(`Fee will be added as part of the transaction commitments: ${addedFee > 0n}`);
+
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value;
 
   const commitmentsInfo = await getCommitmentInfo({
