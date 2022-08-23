@@ -115,9 +115,7 @@ jobs:
       - name: Run integration test
         run: |
           npm run test-e2e-protocol
-          npm run test-erc20-tokens
-          npm run test-erc1155-tokens
-          npm run test-erc721-tokens
+          npm run test-e2e-tokens
 
       - name: Debug logs - after integration test run
         if: always()
