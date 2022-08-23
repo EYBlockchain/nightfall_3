@@ -78,7 +78,7 @@ describe('ERC721 tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     availableTokenIds = (
-      await getERCInfo(erc721Address, nf3Users[0].ethereumAddress, web3Client.getWeb3(), {
+      await getERCInfo(erc721Address, nf3Users[0].ethereumAddress, nf3Users[0].wallet, {
         details: true,
       })
     ).details.map(t => t.tokenId);

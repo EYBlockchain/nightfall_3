@@ -50,7 +50,7 @@ async function startProvider(testEnvironment) {
     nf3.shieldContractAddress,
     TOKEN_TYPE.ERC20,
     APPROVE_AMOUNT,
-    nf3.web3,
+    nf3.wallet,
   );
 
   // set up a listener to service requests for an instant withdrawal

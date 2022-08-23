@@ -204,7 +204,7 @@ describe('ERC20 tests', () => {
         message =>
           message.includes(
             'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
-          ) || message.includes('Transaction has been reverted by the EVM'),
+          ) || message.includes('transaction failed'),
       );
     });
 
@@ -283,7 +283,7 @@ describe('ERC20 tests', () => {
         nf3LiquidityProvider.shieldContractAddress,
         tokenType,
         Math.floor(transferValue / 2),
-        web3Client.getWeb3(),
+        nf3LiquidityProvider.wallet,
         !!nf3LiquidityProvider.ethereumSigningKey,
       );
       if (txDataToSign) {
@@ -386,11 +386,9 @@ describe('ERC20 tests', () => {
       // anything equal or above the restricted amount should fail
       try {
         await nf3Users[0].deposit(erc20Address, tokenType, maxERC20DepositValue + 1, tokenId, fee);
-        expect.fail('Transaction has not been reverted by the EVM');
+        expect.fail('transaction failed');
       } catch (error) {
-        expect(error.message).to.satisfy(message =>
-          message.includes('Transaction has been reverted by the EVM'),
-        );
+        expect(error.message).to.satisfy(message => message.includes('transaction failed'));
       }
     });
 
@@ -472,11 +470,9 @@ describe('ERC20 tests', () => {
           // anything equal or above the restricted amount should fail
           await nf3Users[0].finaliseWithdrawal(withdrawal);
 
-          expect.fail('Transaction has not been reverted by the EVM');
+          expect.fail('transaction failed');
         } catch (error) {
-          expect(error.message).to.satisfy(message =>
-            message.includes('Transaction has been reverted by the EVM'),
-          );
+          expect(error.message).to.satisfy(message => message.includes('transaction failed'));
         }
       } else {
         console.log('Not using a time-jump capable test client so this test is skipped');

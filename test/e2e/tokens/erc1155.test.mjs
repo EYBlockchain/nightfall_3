@@ -74,7 +74,7 @@ describe('ERC1155 tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     const availableTokens = (
-      await getERCInfo(erc1155Address, nf3Users[0].ethereumAddress, web3Client.getWeb3(), {
+      await getERCInfo(erc1155Address, nf3Users[0].ethereumAddress, nf3Users[0].wallet, {
         details: true,
       })
     ).details;

@@ -1,4 +1,4 @@
-import Web3 from 'web3';
+import { Contract, ethers } from 'ethers';
 import getAbi from './abi.mjs';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from './constants.mjs';
 import { fromBaseUnit } from './units.mjs';
@@ -23,31 +23,33 @@ async function approve(
   encodeABI,
 ) {
   const abi = getAbi(tokenType);
-  const ercContract = new provider.eth.Contract(abi, ercAddress);
+  const ercContract = new ethers.Contract(ercAddress, abi, provider);
 
   switch (tokenType) {
     case TOKEN_TYPE.ERC20: {
-      const allowance = await ercContract.methods.allowance(ownerAddress, spenderAddress).call();
-      const allowanceBN = new Web3.utils.BN(allowance);
-      const valueBN = new Web3.utils.BN(value);
+      const allowance = await ercContract.allowance(ownerAddress, spenderAddress);
+      const allowanceBN = ethers.BigNumber.from(allowance);
+      const valueBN = ethers.BigNumber.from(value);
       if (allowanceBN.lt(valueBN)) {
         if (process.env.USER_ETHEREUM_SIGNING_KEY || encodeABI)
-          return ercContract.methods.approve(spenderAddress, APPROVE_AMOUNT).encodeABI();
-        await ercContract.methods
-          .approve(spenderAddress, APPROVE_AMOUNT)
-          .send({ from: ownerAddress });
+          return ercContract.interface.encodeFunctionData('approve', [
+            spenderAddress,
+            APPROVE_AMOUNT,
+          ]);
+        await ercContract.approve(spenderAddress, APPROVE_AMOUNT);
       }
       return Promise.resolve(false);
     }
 
     case TOKEN_TYPE.ERC721:
     case TOKEN_TYPE.ERC1155: {
-      if (!(await ercContract.methods.isApprovedForAll(ownerAddress, spenderAddress).call())) {
+      if (!(await ercContract.isApprovedForAll(ownerAddress, spenderAddress))) {
         if (process.env.USER_ETHEREUM_SIGNING_KEY || encodeABI)
-          return ercContract.methods.setApprovalForAll(spenderAddress, true).encodeABI();
-        await ercContract.methods
-          .setApprovalForAll(spenderAddress, true)
-          .send({ from: ownerAddress });
+          return ercContract.interface.encodeFunctionData('setApprovalForAll', [
+            spenderAddress,
+            true,
+          ]);
+        await ercContract.setApprovalForAll(spenderAddress, true);
       }
       break;
     }
@@ -67,10 +69,10 @@ Get decimals configured  in ERC token
 */
 async function getDecimals(ercAddress, tokenType, provider) {
   const abi = getAbi(tokenType);
-  const ercContract = new provider.eth.Contract(abi, ercAddress);
+  const ercContract = ethers.Contract(ercAddress, abi, provider);
   switch (tokenType) {
     case TOKEN_TYPE.ERC20: {
-      const decimals = await ercContract.methods.decimals().call();
+      const decimals = await ercContract.decimals();
       return Number(decimals);
     }
     case TOKEN_TYPE.ERC721:
@@ -110,7 +112,6 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
   let balance;
   let decimals = 0;
   const tokenIds = [];
-
   if (tokenTypeFilter) {
     switch (tokenTypeFilter.toUpperCase()) {
       case 'ERC721':
@@ -129,12 +130,12 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
     try {
       // Check supportsInterface ERC165 that implements ERC721 and ERC1155
       const abi = getAbi(TOKEN_TYPE.ERC165);
-      const ercContract = new provider.eth.Contract(abi, ercAddress);
-      const interface721 = await ercContract.methods.supportsInterface('0x80ac58cd').call(); // ERC721 interface
+      const ercContract = new ethers.Contract(ercAddress, abi, provider);
+      const interface721 = await ercContract.supportsInterface('0x80ac58cd'); // ERC721 interface
       if (interface721) {
         tokenType = TOKEN_TYPE.ERC721;
       } else {
-        const interface1155 = await ercContract.methods.supportsInterface('0xd9b67a26').call(); // ERC1155 interface
+        const interface1155 = await ercContract.supportsInterface('0xd9b67a26'); // ERC1155 interface
         if (interface1155) tokenType = TOKEN_TYPE.ERC1155;
       }
     } catch {
@@ -146,68 +147,59 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
   if (tokenType === TOKEN_TYPE.ERC721) {
     // ERC721
     const abi = getAbi(TOKEN_TYPE.ERC721);
-    const ercContract = new provider.eth.Contract(abi, ercAddress);
-    balance = await ercContract.methods.balanceOf(ethereumAddress).call();
+    const ercContract = new ethers.Contract(ercAddress, abi, provider);
+    balance = await ercContract.balanceOf(ethereumAddress);
 
     if (details) {
-      const incomingTokenTransferEvents = await ercContract.getPastEvents('Transfer', {
-        filter: { to: ethereumAddress },
-        fromBlock: 0,
-        toBlock: 'latest',
-      });
+      // Transfer(from, to, tokenId)
+      const filter = ercContract.filters.Transfer(null, ethereumAddress);
+      const incomingTokenTransferEvents = await ercContract.queryFilter(filter, 0, 'latest');
       const tokenIdsEvents = [];
       incomingTokenTransferEvents.forEach(event => {
-        if (!tokenIdsEvents.includes(event.returnValues.tokenId))
-          tokenIdsEvents.push(event.returnValues.tokenId);
+        if (!tokenIdsEvents.includes(event.args.tokenId)) tokenIdsEvents.push(event.args.tokenId);
       });
 
       await Promise.all(
         tokenIdsEvents.map(async tkId => {
-          const ownerTokenId = await ercContract.methods.ownerOf(tkId).call();
-          if (ownerTokenId === ethereumAddress) tokenIds.push({ tokenId: tkId, amount: '1' });
+          const ownerTokenId = await ercContract.ownerOf(tkId);
+          if (ownerTokenId === ethereumAddress)
+            tokenIds.push({ tokenId: ethers.utils.hexlify(tkId), amount: '1' });
         }),
       );
     }
   } else if (tokenType === TOKEN_TYPE.ERC1155) {
     // ERC1155
     const abi = getAbi(TOKEN_TYPE.ERC1155);
-    const ercContract = new provider.eth.Contract(abi, ercAddress);
+    const ercContract = new ethers.Contract(ercAddress, abi, provider);
     if (!tokenId) tokenId = 0;
-    balance = await ercContract.methods.balanceOf(ethereumAddress, tokenId).call();
+    balance = await ercContract.balanceOf(ethereumAddress, tokenId);
     if (details) {
-      const incomingTokenTransferBatchEvents = await ercContract.getPastEvents('TransferBatch', {
-        filter: {},
-        fromBlock: 0,
-        toBlock: 'latest',
-      });
+      // TransferBatch(operator, from, to, ids, values)
+      let filter = ercContract.filters.TransferBatch();
+      const incomingTokenTransferBatchEvents = await ercContract.queryFilter(filter, 0, 'latest');
       const tokenIdsEvents = [];
       incomingTokenTransferBatchEvents.forEach(event => {
-        event.returnValues.ids.forEach(id => {
+        event.args.ids.forEach(id => {
           if (!tokenIdsEvents.includes(id)) tokenIdsEvents.push(id);
         });
       });
-
-      const incomingTokenTransferSingleEvents = await ercContract.getPastEvents('TransferSingle', {
-        filter: {},
-        fromBlock: 0,
-        toBlock: 'latest',
-      });
+      // TransferSingle(operator, from, to, id, value)
+      filter = ercContract.filters.TransferSingle();
+      const incomingTokenTransferSingleEvents = await ercContract.queryFilter(filter, 0, 'latest');
       incomingTokenTransferSingleEvents.forEach(event => {
-        if (!tokenIdsEvents.includes(event.returnValues.id))
-          tokenIdsEvents.push(event.returnValues.id);
+        if (!tokenIdsEvents.includes(event.args.id)) tokenIdsEvents.push(event.args.id);
       });
 
       await Promise.all(
         tokenIdsEvents.map(async Id => {
-          let amount = await ercContract.methods.balanceOf(ethereumAddress, Id).call();
+          let amount = await ercContract.balanceOf(ethereumAddress, Id);
           if (toEth) {
             decimals = await getDecimals(ercAddress, TOKEN_TYPE.ERC1155, provider);
             amount = fromBaseUnit(amount, decimals);
           }
-          tokenIds.push({ tokenId: Id, amount });
+          tokenIds.push({ tokenId: ethers.utils.hexlify(Id), amount });
         }),
       );
-
       balance = tokenIds
         .reduce((partialSum, tokenIdInfo) => partialSum + BigInt(tokenIdInfo.amount), BigInt(0))
         .toString();
@@ -216,8 +208,8 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
     // expected ERC20
     try {
       const abi = getAbi(TOKEN_TYPE.ERC20);
-      const ercContract = new provider.eth.Contract(abi, ercAddress);
-      balance = await ercContract.methods.balanceOf(ethereumAddress).call();
+      const ercContract = new ethers.Contract(ercAddress, abi, provider);
+      balance = await ercContract.balanceOf(ethereumAddress);
       decimals = await getDecimals(ercAddress, TOKEN_TYPE.ERC20, provider);
       if (toEth) balance = fromBaseUnit(balance, decimals);
       if (details) tokenIds.push({ tokenId: 0, amount: balance });

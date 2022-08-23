@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Queue from 'queue';
-import Web3 from 'web3';
+import { ethers } from 'ethers';
 import WebSocket from 'ws';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
@@ -50,7 +50,9 @@ class Nf3 {
 
   web3WsUrl;
 
-  web3;
+  provider;
+
+  wallet;
 
   websockets = [];
 
@@ -213,7 +215,7 @@ class Nf3 {
     let gasLimit;
     try {
       // eslint-disable-next-line no-await-in-loop
-      gasLimit = await this.web3.eth.estimateGas({
+      gasLimit = await this.provider.estimateGas({
         from: this.ethereumAddress,
         to: contractAddress,
         data: unsignedTransaction,
@@ -234,7 +236,7 @@ class Nf3 {
     } catch (error) {
       logger.warn('Gas Estimation Failed, using previous block gasPrice');
       try {
-        proposedGasPrice = Number(await this.web3.eth.getGasPrice());
+        proposedGasPrice = Number(await this.provider.getGasPrice());
       } catch (err) {
         logger.warn('Failed to get previous block gasprice.  Falling back to default');
         proposedGasPrice = GAS_PRICE;
@@ -269,28 +271,12 @@ class Nf3 {
       to: contractAddress,
       data: unsignedTransaction,
       value: fee,
-      gas,
+      gasLimit: gas,
       gasPrice,
     };
 
-    // logger.debug(`The nonce for the unsigned transaction ${tx.data} is ${this.nonce}`);
-    // this.nonce++;
-    if (this.ethereumSigningKey) {
-      const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-      const promiseTest = new Promise((resolve, reject) => {
-        this.web3.eth
-          .sendSignedTransaction(signed.rawTransaction)
-          .once('receipt', receipt => {
-            logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
-            resolve(receipt);
-          })
-          .on('error', err => {
-            reject(err);
-          });
-      });
-      return promiseTest;
-    }
-    return this.web3.eth.sendTransaction(tx);
+    const transaction = await this.wallet.sendTransaction(tx);
+    return transaction.wait();
   }
 
   /**
@@ -375,7 +361,7 @@ class Nf3 {
         this.shieldContractAddress,
         tokenType,
         value,
-        this.web3,
+        this.wallet,
         !!this.ethereumSigningKey,
       );
     } catch (err) {
@@ -680,8 +666,7 @@ class Nf3 {
     @method
     */
   close() {
-    this.intervalIDs.forEach(intervalID => clearInterval(intervalID));
-    this.web3.currentProvider.connection.close();
+    this.provider.destroy();
     this.websockets.forEach(websocket => websocket.close());
   }
 
@@ -1206,77 +1191,17 @@ class Nf3 {
     return res.data.commitments;
   }
 
-  // /**
-  //   Set a Web3 Provider URL
-  //   */
-  // async setWeb3Provider() {
-  //   this.web3 = new Web3(this.web3WsUrl);
-  //   this.web3.eth.transactionBlockTimeout = 200;
-  //   this.web3.eth.transactionConfirmationBlocks = 12;
-  //   if (typeof window !== 'undefined') {
-  //     if (window.ethereum && this.ethereumSigningKey === '') {
-  //       this.web3 = new Web3(window.ethereum);
-  //       await window.ethereum.request({ method: 'eth_requestAccounts' });
-  //     } else {
-  //       // Metamask not available
-  //       throw new Error('No Web3 provider found');
-  //     }
-  //   }
-  // }
-
   /**
 Set a Web3 Provider URL
 */
   async setWeb3Provider() {
-    // initialization of web3 provider has been taken from common-files/utils/web3.mjs
-    //  Target is to mainain web3 socker alive
-    const WEB3_PROVIDER_OPTIONS = {
-      clientConfig: {
-        // Useful to keep a connection alive
-        keepalive: true,
-        keepaliveInterval: 10,
-      },
-      timeout: 3600000,
-      reconnect: {
-        auto: true,
-        delay: 5000, // ms
-        maxAttempts: 120,
-        onTimeout: false,
-      },
-    };
-    const provider = new Web3.providers.WebsocketProvider(this.web3WsUrl, WEB3_PROVIDER_OPTIONS);
+    const provider = new ethers.providers.WebSocketProvider(this.web3WsUrl);
+    this.provider = provider;
+    this.wallet = new ethers.Wallet(this.ethereumSigningKey, this.provider);
 
-    this.web3 = new Web3(provider);
-    this.web3.eth.transactionBlockTimeout = 2000;
-    this.web3.eth.transactionConfirmationBlocks = 12;
-    if (typeof window !== 'undefined') {
-      if (window.ethereum && this.ethereumSigningKey === '') {
-        this.web3 = new Web3(window.ethereum);
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-      } else {
-        // Metamask not available
-        throw new Error('No Web3 provider found');
-      }
-    }
-
-    provider.on('error', err => logger.error(`web3 error: ${err}`));
+    /* provider.on('error', err => logger.error(`web3 error: ${err}`));
     provider.on('connect', () => logger.info('Blockchain Connected ...'));
-    provider.on('end', () => logger.info('Blockchain disconnected'));
-
-    // attempt a reconnect if the socket is down
-    this.intervalIDs.push(() => {
-      setInterval(() => {
-        if (!this.web3.currentProvider.connected) this.web3.setProvider(provider);
-      }, 2000);
-    });
-    // set up a pinger to ping the web3 provider. This will help to further ensure
-    // that the websocket doesn't timeout. We don't use the blockNumber but we save it
-    // anyway. Someone may find a use for it.
-    this.intervalIDs.push(() => {
-      setInterval(() => {
-        this.blockNumber = this.web3.eth.getBlockNumber();
-      }, WEBSOCKET_PING_TIME);
-    });
+    provider.on('end', () => logger.info('Blockchain disconnected')); */
   }
 
   /**
@@ -1284,7 +1209,7 @@ Set a Web3 Provider URL
     @returns {Object} provider
     */
   getWeb3Provider() {
-    return this.web3;
+    return this.provider;
   }
 
   /**
@@ -1293,8 +1218,8 @@ Set a Web3 Provider URL
     @returns {String} - Ether balance in account
     */
   getL1Balance(address) {
-    return this.web3.eth.getBalance(address).then(function (balanceWei) {
-      return Web3.utils.fromWei(balanceWei);
+    return this.provider.getBalance(address).then(function (balanceWei) {
+      return ethers.utils.formatEther(balanceWei);
     });
   }
 
@@ -1306,8 +1231,8 @@ Set a Web3 Provider URL
   getAccounts() {
     const account =
       this.ethereumSigningKey.length === 0
-        ? this.web3.eth.getAccounts().then(address => address[0])
-        : this.web3.eth.accounts.privateKeyToAccount(this.ethereumSigningKey).address;
+        ? this.provider.listAccounts().then(address => address[0])
+        : this.wallet.address;
     return account;
   }
 
@@ -1319,9 +1244,10 @@ Set a Web3 Provider URL
     */
   signMessage(msg, account) {
     if (this.ethereumSigningKey) {
-      return this.web3.eth.accounts.sign(msg, this.ethereumSigningKey).signature;
+      return this.wallet.signMessage(msg);
     }
-    return this.web3.eth.personal.sign(msg, account);
+    const signer = this.provider.getSigner(account);
+    return signer.signMessage(msg);
   }
 
   /**
@@ -1329,7 +1255,7 @@ Set a Web3 Provider URL
   @returns {Promise} - Network Id number
   */
   getNetworkId() {
-    return this.web3.eth.net.getId();
+    return this.provider.getNetwork().chainId;
   }
 }
 
