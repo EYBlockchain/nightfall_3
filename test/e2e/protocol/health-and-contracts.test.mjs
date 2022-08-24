@@ -3,6 +3,7 @@ import chai from 'chai';
 import config from 'config';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
+import { UserFactory } from 'nightfall-sdk';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 
 // so we can use require with mjs file
@@ -15,19 +16,29 @@ const { mnemonics, signingKeys } = config.TEST_OPTIONS;
 
 const nf3User1 = new Nf3(signingKeys.user1, environment);
 
+let user;
 before(async () => {
   await nf3User1.init(mnemonics.user1);
+  user = await UserFactory.create({
+    blockchainWsUrl: 'ws://localhost:8546',
+    clientApiUrl: 'http://localhost:8080',
+    ethereumPrivateKey: signingKeys.user1,
+  });
 });
 
 describe('Health and Contract Checks', () => {
   it('should respond with "true" the health check', async function () {
-    const res = await nf3User1.healthcheck('client');
-    expect(res).to.be.equal(true);
+    // const res = await nf3User1.healthcheck('client');
+    // expect(res).to.be.equal(true);
+    const statuses = await user.checkStatus();
+    expect(statuses.isClientAlive).to.be.equal(true);
   });
 
   it('should get the address of the shield contract', async function () {
-    const res = await nf3User1.getContractAddress('Shield');
-    expect(res).to.be.a('string').and.to.include('0x');
+    // const res = await nf3User1.getContractAddress('Shield');
+    // expect(res).to.be.a('string').and.to.include('0x');
+    const contractAddress = user.shieldContractAddress;
+    expect(contractAddress).to.be.a('string').and.to.include('0x');
   });
 
   it('should get the address of the test ERC20 mock contract', async function () {
