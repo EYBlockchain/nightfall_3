@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /**
 Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
@@ -15,6 +16,7 @@ import {
   getTransactionByTransactionHash,
   getTransactionHashSiblingInfo,
 } from './database.mjs';
+import { syncState } from './state-sync.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -1012,13 +1014,53 @@ export async function findUsableCommitmentsMutex(
 }
 
 /**
+ *
+ * @function insertCommitmentsAndResync save a list of commitments in the database
+ * @param {[]} listOfCommitments a list of commitments to be saved in the database
+ * @throws if all the commitments in the list already exists in the database
+ * throw an error
+ * @returns return a success message.
+ */
+export async function insertCommitmentsAndResync(listOfCommitments) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+
+  // 1. listOfCommitments => get only the ids
+  const commitmentsIds = listOfCommitments.map(commitment => commitment._id);
+
+  // 2. Find commitments that already exists in DB
+  const commitmentsFromDb = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ _id: { $in: commitmentsIds } })
+    .toArray();
+
+  // 3. remove the commitments found in the database from the list
+  const onlyNewCommitments = listOfCommitments.filter(
+    commitment =>
+      commitmentsFromDb.find(commitmentFound => commitmentFound._id === commitment._id) ===
+      undefined,
+  );
+
+  if (onlyNewCommitments.length > 0) {
+    // 4. Insert all
+    await db.collection(COMMITMENTS_COLLECTION).insertMany(onlyNewCommitments);
+
+    // 5. Sycronize from beggining
+    await syncState();
+
+    return { successMessage: 'Commitments have been saved successfully!' };
+  }
+
+  throw new Error('All commitments of this list already exists in the database!');
+}
+
+/**
  * @function getCommitmentsByCompressedZkpPublicKeyList do the role of a service taking care of the
  * business logic and of a repository doing the communication with the database for this
  * use case.
  * @param {string[]} listOfCompressedZkpPublicKey a list of compressedZkpPublicKey derivated from the user
  * mnemonic coming from the SDK or Wallet.
  * @returns all the commitments existent for this list of compressedZkpPublicKey.
- * @author luizoamorim
  */
 export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey) {
   const connection = await mongo.connection(MONGO_URL);
@@ -1037,7 +1079,6 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
  * business logic and of a repository doing the communication with the database for this
  * use case.
  * @returns all the commitments existent in this database.
- * @author luizoamorim
  */
 export async function getCommitments() {
   const connection = await mongo.connection(MONGO_URL);

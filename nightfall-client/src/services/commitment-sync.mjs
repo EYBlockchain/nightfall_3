@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /**
 commitmentsync services to decrypt commitments from transaction blockproposed events
 or use clientCommitmentSync to decrypt when new zkpPrivateKey is received.
