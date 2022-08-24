@@ -1,4 +1,4 @@
-import { Contract, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import getAbi from './abi.mjs';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from './constants.mjs';
 import { fromBaseUnit } from './units.mjs';
