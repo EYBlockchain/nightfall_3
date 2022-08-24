@@ -779,10 +779,11 @@ export async function insertCommitmentsAndResync(listOfCommitments) {
   // 3. remove the commitments found in the database from the list
   const onlyNewCommitments = listOfCommitments.filter(
     commitment =>
-      commitmentsFromDb.find(commitmentFound => commitmentFound.id === commitment.id) === undefined,
+      commitmentsFromDb.find(commitmentFound => commitmentFound._id === commitment._id) ===
+      undefined,
   );
 
-  if (onlyNewCommitments.length) {
+  if (onlyNewCommitments.length > 0) {
     // 4. Insert all
     await db.collection(COMMITMENTS_COLLECTION).insertMany(onlyNewCommitments);
 
