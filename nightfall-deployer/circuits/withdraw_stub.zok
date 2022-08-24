@@ -6,33 +6,21 @@ from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 
 def main(\
     PublicTransaction tx,\
-    field[2] roots,\
-    field[2] rootsFee,\
-    field ercAddressFee,\
-    private Nullifiers<2> nullifiers,\
-    private Commitments<1> commitments,\
-    private Nullifiers<2> nullifiersFee,\
-    private Commitments<1> commitmentFee\
+    field[4] roots,\
+    field maticAddress,\
+    private Nullifiers<4> nullifiers,\
+    private Commitments<2> commitments\
 )-> ():
     
-    field[2] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value)
-    field[1] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
+    field[4] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value)
+    field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
 
-    field[2] nullifiersFeeValue = u8_array_to_field(nullifiersFee.oldCommitments.value)
-    field[1] commitmentFeeValue = u8_array_to_field(commitmentFee.newCommitments.value)
 
-    assert(nullifier_stub::<2>(\
+    assert(nullifier_stub::<4>(\
         roots, nullifiersValue, nullifiers.oldCommitments.salt,\
         nullifiers.rootKey, nullifiers.paths, nullifiers.orders))
 
-    assert(commitment_stub::<1>(\
+    assert(commitment_stub::<2>(\
         commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
-
-    assert(nullifier_stub::<2>(\
-        rootsFee, nullifiersFeeValue, nullifiersFee.oldCommitments.salt,\
-        nullifiersFee.rootKey, nullifiersFee.paths, nullifiersFee.orders))
-
-    assert(commitment_stub::<1>(\
-        commitmentFeeValue, commitmentFee.newCommitments.salt, commitmentFee.recipientPublicKey))
 
     return

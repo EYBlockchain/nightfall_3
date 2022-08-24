@@ -38,7 +38,7 @@ async function blockProposedEventHandler(data, syncing) {
   );
   const latestTree = await getLatestTree();
   const blockCommitments = transactions
-    .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
+    .map(t => t.commitments.filter(c => c !== ZERO))
     .flat(Infinity);
 
   let timeBlockL2 = await getTimeByBlock(transactionHashL1);
@@ -50,10 +50,6 @@ async function blockProposedEventHandler(data, syncing) {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.filter(n => n !== ZERO);
     const nonZeroNullifiers = transaction.nullifiers.filter(n => n !== ZERO);
-
-    // filter out non zero commitments fee and nullifiers fee
-    const nonZeroCommitmentsFee = transaction.commitmentFee.filter(n => n !== ZERO);
-    const nonZeroNullifiersFee = transaction.nullifiersFee.filter(n => n !== ZERO);
 
     const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
     const countOfNonZeroNullifiers = await countNullifiers(nonZeroNullifiers);
@@ -101,14 +97,9 @@ async function blockProposedEventHandler(data, syncing) {
 
     return Promise.all([
       saveTxToDb,
-      markOnChain(
-        [...nonZeroCommitments, ...nonZeroCommitmentsFee],
-        block.blockNumberL2,
-        data.blockNumber,
-        data.transactionHash,
-      ),
+      markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(
-        [...nonZeroNullifiers, ...nonZeroNullifiersFee],
+        nonZeroNullifiers,
         block.blockNumberL2,
         data.blockNumber,
         data.transactionHash,

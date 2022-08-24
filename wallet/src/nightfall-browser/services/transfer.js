@@ -36,17 +36,6 @@ const { generalise } = gen;
 
 const circuitName = USE_STUBS ? 'transfer_stub' : 'transfer';
 
-const NULL_COMMITMENT_INFO = {
-  oldCommitments: [],
-  nullifiers: [],
-  newCommitments: [],
-  localSiblingPaths: [],
-  leafIndices: [],
-  blockNumberL2s: [],
-  roots: [],
-  salts: [],
-};
-
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
@@ -81,28 +70,16 @@ async function transfer(transferParams, shieldContractAddress) {
       (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
     );
 
-    const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
-
     const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
     const commitmentsInfo = await getCommitmentInfo({
-      transferValue: totalValueToSend,
-      addedFee,
+      totalValueToSend,
+      fee,
       recipientZkpPublicKeysArray: recipientZkpPublicKeys,
       ercAddress,
+      maticAddress,
       tokenId,
       rootKey,
     });
-    const commitmentsInfoFee =
-      fee.bigInt === 0n || commitmentsInfo.feeIncluded
-        ? NULL_COMMITMENT_INFO
-        : await getCommitmentInfo({
-            transferValue: fee.bigInt,
-            ercAddress: maticAddress,
-            rootKey,
-          }).catch(async () => {
-            await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-            throw new Error('Failed getting fee commitments');
-          });
 
     try {
       // KEM-DEM encryption
@@ -126,20 +103,17 @@ async function transfer(transferParams, shieldContractAddress) {
       const transaction = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-        historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
         transactionType: 1,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
         tokenId: compressedSecrets[1], // this is the encrypted tokenID
         recipientAddress: compressedEPub,
         commitments: commitmentsInfo.newCommitments,
-        commitmentFee: commitmentsInfoFee.newCommitments,
         nullifiers: commitmentsInfo.nullifiers,
-        nullifiersFee: commitmentsInfoFee.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
       });
 
       const privateData = {
-        rootKey: [rootKey, rootKey],
+        rootKey: [rootKey, rootKey, rootKey, rootKey],
         oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
           return { value: o.preimage.value, salt: o.preimage.salt };
         }),
@@ -149,16 +123,6 @@ async function transfer(transferParams, shieldContractAddress) {
           return { value: o.preimage.value, salt: o.preimage.salt };
         }),
         recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-        rootKeyFee: [rootKey, rootKey],
-        oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
-          return { value: o.preimage.value, salt: o.preimage.salt };
-        }),
-        pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-        ordersFee: commitmentsInfoFee.leafIndices,
-        newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
-          return { value: o.preimage.value, salt: o.preimage.salt };
-        }),
-        recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
         ercAddress,
         tokenId,
         ephemeralKey: ePrivate,
@@ -167,8 +131,7 @@ async function transfer(transferParams, shieldContractAddress) {
       const witnessInput = computeCircuitInputs(
         transaction,
         privateData,
-        commitmentsInfo.roots,
-        commitmentsInfoFee.roots,
+        [...commitmentsInfo.roots],
         maticAddress,
       );
 
@@ -201,15 +164,12 @@ async function transfer(transferParams, shieldContractAddress) {
       const optimisticTransferTransaction = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-        historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
         transactionType: 1,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
         tokenId: compressedSecrets[1], // this is the encrypted tokenID
         recipientAddress: compressedEPub,
         commitments: commitmentsInfo.newCommitments,
         nullifiers: commitmentsInfo.nullifiers,
-        commitmentFee: commitmentsInfoFee.newCommitments,
-        nullifiersFee: commitmentsInfoFee.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
         proof,
       });
@@ -220,27 +180,20 @@ async function transfer(transferParams, shieldContractAddress) {
         .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
         .encodeABI();
       // Store new commitments that are ours.
-      const storeNewCommitments = [
-        ...commitmentsInfo.newCommitments,
-        ...commitmentsInfoFee.newCommitments,
-      ]
+      const storeNewCommitments = commitmentsInfo.newCommitments
         .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
         .map(c => storeCommitment(c, nullifierKey));
-      const nullifyOldCommitments = [
-        ...commitmentsInfo.oldCommitments,
-        ...commitmentsInfoFee.oldCommitments,
-      ].map(c => markNullified(c, optimisticTransferTransaction));
+
+      const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
+        markNullified(c, optimisticTransferTransaction),
+      );
       await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
       return {
         rawTransaction,
         transaction: optimisticTransferTransaction,
       };
     } catch (err) {
-      await Promise.all(
-        [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments].map(commitment =>
-          clearPending(commitment),
-        ),
-      );
+      await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
       throw new Error(err);
     }
   } catch (err) {

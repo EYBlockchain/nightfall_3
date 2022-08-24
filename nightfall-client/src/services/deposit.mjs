@@ -10,7 +10,7 @@ import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
@@ -34,6 +34,13 @@ async function deposit(items) {
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
+
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+
+  const maticAddress = generalise(
+    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  );
+
   const publicData = new Transaction({
     fee,
     transactionType: 0,
@@ -46,7 +53,7 @@ async function deposit(items) {
 
   const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
 
-  const witness = computeCircuitInputs(publicData, privateData);
+  const witness = computeCircuitInputs(publicData, privateData, [0, 0, 0, 0], maticAddress);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
   let folderpath = 'deposit';
@@ -61,7 +68,6 @@ async function deposit(items) {
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   // first, get the contract instance
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({

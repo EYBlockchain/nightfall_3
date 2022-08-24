@@ -91,11 +91,6 @@ module.exports = {
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
-  MAX_PUBLIC_VALUES: {
-    ERCADDRESS: 2n ** 161n - 1n,
-    COMMITMENT: 2n ** 249n - 1n,
-    NULLIFIER: 2n ** 249n - 1n,
-  },
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
   BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal

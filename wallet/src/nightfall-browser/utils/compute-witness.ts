@@ -24,14 +24,11 @@ type PublicInputs = {
   transactionType: string;
   tokenType: string;
   historicRootBlockNumberL2: string[];
-  historicRootBlockNumberL2Fee: string[];
   tokenId: string[];
   ercAddress: string;
   recipientAddress: string;
   commitments: string[];
   nullifiers: string[];
-  commitmentFee: string[];
-  nullifiersFee: string[];
   compressedSecrets: string[];
 };
 
@@ -61,7 +58,6 @@ type Transfer = {
 const computePublicInputs = (
   tx: PublicInputs,
   rootsOldCommitments: string[],
-  rootsOldCommitmentsFee: string[],
   maticAddress: string,
 ) => {
   const transaction = generalise(tx);
@@ -74,27 +70,18 @@ const computePublicInputs = (
     historicRootBlockNumberL2: transaction.historicRootBlockNumberL2.map((h: any) =>
       h.field(BN128_GROUP_ORDER),
     ),
-    historicRootBlockNumberL2Fee: transaction.historicRootBlockNumberL2Fee.map((h: any) =>
-      h.field(BN128_GROUP_ORDER),
-    ),
     tokenId: transaction.tokenId.limbs(32, 8),
     ercAddress: transaction.ercAddress.field(BN128_GROUP_ORDER),
     recipientAddress: transaction.recipientAddress.limbs(32, 8),
     commitments: transaction.commitments.map((c: any) => c.field(BN128_GROUP_ORDER)),
     nullifiers: transaction.nullifiers.map((n: any) => n.field(BN128_GROUP_ORDER)),
-    commitmentFee: transaction.commitmentFee.map((c: any) => c.field(BN128_GROUP_ORDER)),
-    nullifiersFee: transaction.nullifiersFee.map((n: any) => n.field(BN128_GROUP_ORDER)),
     compressedSecrets: transaction.compressedSecrets.map((cs: any) => cs.field(BN128_GROUP_ORDER)),
   };
 
   publicInput.push(publicTx);
-  if (Number(tx.transactionType) !== 0) {
-    const roots = padArray(generalise(rootsOldCommitments), 0, 2);
-    const rootsFee = padArray(generalise(rootsOldCommitmentsFee), 0, 2);
-    publicInput.push(roots.map((r: any) => r.field(BN128_GROUP_ORDER)).flat());
-    publicInput.push(rootsFee.map((r: any) => r.field(BN128_GROUP_ORDER)).flat());
-    publicInput.push(generalise(maticAddress).field(BN128_GROUP_ORDER));
-  }
+  const roots = padArray(generalise(rootsOldCommitments), 0, 4);
+  publicInput.push(roots.map((r: any) => r.field(BN128_GROUP_ORDER)).flat());
+  publicInput.push(generalise(maticAddress).field(BN128_GROUP_ORDER));
 
   return publicInput;
 };
@@ -120,11 +107,11 @@ const computePrivateInputsNullifiers = (
   const paddedOldCommitmentPreimage: Record<string, GeneralNumber>[] = padArray(
     oldCommitmentPreimage,
     NULL_COMMITMENT,
-    2,
+    4,
   );
-  const paddedPaths: GeneralNumber[][] = padArray(paths, new Array(32).fill(0), 2);
-  const paddedOrders: GeneralNumber[] = padArray(orders, 0, 2);
-  const paddedRootKeys: GeneralNumber[] = padArray(rootKey, 0, 2);
+  const paddedPaths: GeneralNumber[][] = padArray(paths, new Array(32).fill(0), 4);
+  const paddedOrders: GeneralNumber[] = padArray(orders, 0, 4);
+  const paddedRootKeys: GeneralNumber[] = padArray(rootKey, 0, 4);
 
   return {
     oldCommitments: {
@@ -142,7 +129,7 @@ const computePrivateInputsCommitments = (
   recipientPublicKeys: GeneralNumber[][],
   isTransfer: boolean,
 ): Commitment => {
-  const padLength: number = isTransfer ? 2 : 1;
+  const padLength: number = isTransfer ? 3 : 2;
   const paddedNewCommitmentPreimage: Record<string, GeneralNumber>[] = padArray(
     newCommitmentPreimage,
     NULL_COMMITMENT,
@@ -182,24 +169,17 @@ const computeCircuitInputs = (
   txObject: PublicInputs,
   privateData: Record<string, any>,
   roots: string[],
-  rootsFee: string[],
   maticAddress: string,
 ): any => {
-  const publicInputs = computePublicInputs(txObject, roots, rootsFee, maticAddress);
+  const publicInputs = computePublicInputs(txObject, roots, maticAddress);
   const {
     salt,
     oldCommitmentPreimage,
     paths,
     orders,
     rootKey,
-    oldCommitmentPreimageFee,
-    pathsFee,
-    ordersFee,
-    rootKeyFee,
     newCommitmentPreimage,
     recipientPublicKeys,
-    newCommitmentPreimageFee,
-    recipientPublicKeysFee,
     ephemeralKey,
     ercAddress,
     tokenId,
@@ -213,8 +193,6 @@ const computeCircuitInputs = (
       ...publicInputs,
       computePrivateInputsNullifiers(oldCommitmentPreimage, paths, orders, rootKey),
       computePrivateInputsCommitments(newCommitmentPreimage, recipientPublicKeys, isTransfer),
-      computePrivateInputsNullifiers(oldCommitmentPreimageFee, pathsFee, ordersFee, rootKeyFee),
-      computePrivateInputsCommitments(newCommitmentPreimageFee, recipientPublicKeysFee, false),
     ];
 
     if (Number(txObject.transactionType) === 1) {

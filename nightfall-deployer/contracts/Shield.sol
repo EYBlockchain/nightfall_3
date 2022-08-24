@@ -36,8 +36,6 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     function submitTransaction(Transaction memory t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
-        // if this is a deposit transaction, take payment now (TODO: is there a
-        // better way? This feels expensive).
 
         if (t.transactionType == TransactionTypes.DEPOSIT) {
             require(uint256(t.fee) == msg.value);

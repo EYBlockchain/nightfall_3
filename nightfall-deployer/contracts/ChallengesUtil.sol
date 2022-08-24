@@ -84,53 +84,16 @@ library ChallengesUtil {
         );
     }
 
-    function libCheckOverflows(
-        Structures.Block calldata blockL2,
-        Structures.Transaction calldata transaction
-    ) public pure {
-        require(uint256(transaction.ercAddress) <= MAX20, 'ERC address out of range');
-        require(
-            (transaction.transactionType != Structures.TransactionTypes.TRANSFER &&
-                uint256(transaction.recipientAddress) <= MAX20) ||
-                (transaction.transactionType == Structures.TransactionTypes.TRANSFER),
-            'Recipient ERC address out of range'
-        );
-        require(uint256(blockL2.root) < BN128_GROUP_ORDER, 'root out of range');
-    }
-
     function libChallengeNullifier(
         Structures.Transaction memory tx1,
         uint256 nullifierIndex1,
-        bool isNullifierFee1,
         Structures.Transaction memory tx2,
-        uint256 nullifierIndex2,
-        bool isNullifierFee2
+        uint256 nullifierIndex2
     ) public pure {
-        if (!isNullifierFee1 && !isNullifierFee2) {
-            require(
-                tx1.nullifiers[nullifierIndex1] != 0 &&
-                    tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        } else if (!isNullifierFee1) {
-            require(
-                tx1.nullifiers[nullifierIndex1] != 0 &&
-                    tx1.nullifiers[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        } else if (!isNullifierFee2) {
-            require(
-                tx1.nullifiersFee[nullifierIndex1] != 0 &&
-                    tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        } else {
-            require(
-                tx1.nullifiersFee[nullifierIndex1] != 0 &&
-                    tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        }
+        require(
+            tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
+            'Not matching nullifiers'
+        );
 
         require(
             Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2),
