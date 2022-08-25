@@ -173,30 +173,16 @@ module.exports = {
     aws: {
       name: 'AWS',
       chainId: 1337,
-      clientApiUrl: process.env.CLIENT_HOST
-        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
-        : 'http://localhost:8080',
-      optimistApiUrl: process.env.OPTIMIST_HOST
-        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
-        : 'https://optimist-api.staging.polygon-nightfall.technology',
-      optimistWsUrl: process.env.OPTIMIST_HOST
-        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
-        : 'wss://optimist-ws.staging.polygon-nightfall.technology',
-      proposerBaseUrl: process.env.PROPOSER_HOST
-        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
-        : 'https://proposer.staging.polygon-nightfall.technology',
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'https://optimist-api.staging.polygon-nightfall.technology',
+      optimistWsUrl: 'wss://optimist-ws.staging.polygon-nightfall.technology',
+      proposerBaseUrl: 'https://proposer.staging.polygon-nightfall.technology',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
-      web3WsUrl:
-        // eslint-disable-next-line no-nested-ternary
-        process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
-          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
-          : process.env.BLOCKCHAIN_WS_HOST
-          ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
-          : 'wss://web3-ws.staging.polygon-nightfall.technology',
-      PROPOSER_KEY:
-        process.env.ETH_PRIVATE_KEY ||
-        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
+      web3WsUrl: 'wss://web3-ws.staging.polygon-nightfall.technology',
+      PROPOSER_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+      PROPOSER_MNEMONIC:
+        'high return hold whale promote payment hat panel reduce oyster ramp mouse',
     },
   },
   TEST_OPTIONS: {
