@@ -1,10 +1,9 @@
 /* eslint no-useless-constructor: off */
 
 /**
- * An Error class that designates a validation error. All sort of validations are supposed to throw this
- * error, which will sign that something wrong happened during a validation. By using the errorHandler defined
- * in httputils.mjs, this error is handled appropriately returning the 400 HTTP Status with the message provided
- * in the error caught.
+ * An Error class to report validation errors. It covers all sort of validations,
+ * and signals that something went wrong during a validation.
+ * It is used in the `errorHandler` to report 400 HTTP statuses (see httputils.mjs).
  */
 class ValidationError extends Error {
   constructor(message) {

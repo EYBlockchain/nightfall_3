@@ -77,7 +77,7 @@ const handleCorrelationId = (req, res, next) => {
 };
 
 /**
- * Create some defaults to axios so that one doesn't need to apply it in every call.
+ * Creates axios defaults to be applied in every call.
  */
 const applyAxiosDefaults = () => {
   // Creates a request interceptor that adds the correlationId as an HTTP header in every call
@@ -85,6 +85,95 @@ const applyAxiosDefaults = () => {
     config.headers[HEADER_CORRELATION_ID] = correlator.getId();
     return config;
   });
+};
+
+/**
+ * Logs request information if the DEBUG log level is enabled (We can create a 
+ * environment variable in another moment to handle this).
+ */
+const requestLogger = (req, res, next) => {
+  if(req.url === "/healthcheck" || !logger.isLevelEnabled('debug')) {
+    return next();
+  }
+
+  logger.debug({ 
+    message: 'Request info',
+    request: {
+      "method": req.method,
+      "url": req.url,
+      "originalUrl": req.originalUrl,
+      "query": req.query,
+      "params": req.params, 
+      "headers": req.headers,
+    },
+  });
+
+  next();
+};
+
+/**
+ * Intercepts res.json() calls then save the in the res.locals for getting the value
+ * later then logging it.
+ */
+const addInterceptorForJson = (res, next) => {
+  const originalJsonHandler = res.json;
+
+  res.json = (data) => {
+      if (data && data.then != undefined) {
+          data.then((responseData) => {
+            res.json = originalJsonHandler;
+            originalJsonHandler.call(res, responseData);
+            
+            // stores for getting it later
+            res.locals.jsonResponseData = responseData;
+          }).catch( error => {
+              next(error);
+          });
+      } else {
+          // stores for getting it later
+          res.locals.jsonResponseData = data;
+
+          res.json = originalJsonHandler;
+          originalJsonHandler.call(res, data);
+      }
+  }
+};
+
+const logResponseData = (res, jsonData) => {
+  logger.debug({ 
+    message: 'Response info',
+    response: {
+      "status": res.statusCode,
+      "data": jsonData,
+      "headers": res.getHeaders(),
+    },
+  });
+};
+
+/**
+ * Intercepts response completion then logs the response info.
+ */
+const addInterceptorForResponseCompletion = (res) => {
+  res.on('finish', () => {
+    logResponseData(res, res.locals.jsonResponseData);
+  });
+};
+
+/**
+ * Logs response information if the DEBUG log level is enabled.
+ */
+const responseLogger = (req, res, next) => {
+  if(req.url === "/healthcheck" || !logger.isLevelEnabled('debug')) {
+    return next();
+  }
+
+  try {
+    addInterceptorForJson(res, next);
+    addInterceptorForResponseCompletion(res);
+    next();
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**
@@ -113,6 +202,8 @@ export const setupHttpDefaults = (
   app.use(cors());
   app.use(bodyParser.json({ limit: '2mb' }));
   app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
+  app.use(requestLogger);
+  app.use(responseLogger);
 
   if (routesDefiner) {
     routesDefiner(app);

@@ -1,8 +1,8 @@
 /* eslint no-useless-constructor: off */
 
 /**
- * An Error class that reports that the operation wasn't able to find something. Is is used in the errorHandler
- * defined in httputils.mjs, this error reports a 404 HTTP Status.
+ * An Error class to report that the operation couldn't find results. It is used in the `errorHandler`
+ * to report 404 HTTP statuses (see httputils.mjs).
  */
 class NotFoundError extends Error {
   constructor(message) {

@@ -107,7 +107,7 @@ describe('HTTP Utils tests', function () {
       });
   });
 
-  it('Shouldn`t reply with header `x-powered-by`', function (done) {
+  it('Should not reply with header `x-powered-by`', function (done) {
     chai
       .request(app_0)
       .get('/healthcheck')
