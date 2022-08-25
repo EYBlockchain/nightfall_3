@@ -390,6 +390,11 @@ module.exports = {
           address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
           amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
         },
+        {
+          name: 'stMATIC',
+          address: '0x9A7c69A167160C507602ecB3Df4911e8E98e1279',
+          amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
+        },
       ],
       ropsten: [
         {
