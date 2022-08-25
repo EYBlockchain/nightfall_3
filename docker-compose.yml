@@ -184,25 +184,6 @@ services:
     environment:
       LOG_LEVEL: info
       MPC: ${MPC}
-
-  proposer:
-    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
-    build:
-      dockerfile: proposer.Dockerfile
-      context: .
-    networks:
-      - nightfall_network
-    environment:
-      OPTIMIST_HOST: optimist1
-      OPTIMIST_WS_PORT: 8080
-      PROPOSER_HOST: proposer
-      PROPOSER_PORT: 8080
-      OPTIMIST_PORT: 80
-      BLOCKCHAIN_WS_HOST: blockchain1
-      BLOCKCHAIN_PORT: 8546
-      CLIENT_HOST: client1
-      CLIENT_PORT: 80
-
 volumes:
   mongodb: null
   proving_files: null

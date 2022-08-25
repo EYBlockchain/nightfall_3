@@ -108,7 +108,7 @@ describe('ERC20 tests', () => {
     });
   });
 
-  describe.only('Transfers', () => {
+  describe('Transfers', () => {
     it('should decrement the balance after transfer ERC20 to other wallet and increment the other wallet', async function () {
       async function getBalances() {
         return Promise.all([
