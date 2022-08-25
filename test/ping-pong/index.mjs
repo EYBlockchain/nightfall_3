@@ -5,8 +5,8 @@ Module that runs up as a user
 /* eslint-disable no-await-in-loop */
 
 import config from 'config';
-import logger from '../../../../common-files/utils/logger.mjs';
-import Nf3 from '../../../../cli/lib/nf3.mjs';
+import logger from '../../common-files/utils/logger.mjs';
+import Nf3 from '../../cli/lib/nf3.mjs';
 import { waitForSufficientBalance, retrieveL2Balance } from './utils.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
@@ -18,18 +18,13 @@ const txPerBlock =
     ? process.env.TEST_LENGTH
     : config.TEST_OPTIONS.txPerBlock;
 
-const {
-  TEST_LENGTH,
-  ERC20_NAME,
-  TX_WAIT = 1000,
-  IS_TEST_RUNNER = '',
-  TEST_ERC20_ADDRESS,
-} = process.env;
+const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
 
+const TEST_LENGTH = 2;
 /**
 Does the preliminary setup and starts listening on the websocket
 */
-async function localTest() {
+export default async function localTest(IS_TEST_RUNNER) {
   logger.info('Starting local test...');
   logger.debug('ENVV', environment);
 
@@ -42,7 +37,7 @@ async function localTest() {
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
 
-  const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress(ERC20_NAME));
+  const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress('ERC20Mock'));
   const startBalance = await retrieveL2Balance(nf3);
 
   let offchainTx = !!IS_TEST_RUNNER;
@@ -58,7 +53,7 @@ async function localTest() {
 
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
-    await waitForSufficientBalance(nf3, value);
+    await waitForSufficientBalance(nf3, value, ercAddress);
     for (let j = 0; j < txPerBlock - 1; j++) {
       try {
         await nf3.transfer(
@@ -108,7 +103,7 @@ async function localTest() {
   let loopMax = 10000;
   if (IS_TEST_RUNNER) loopMax = 100; // the TEST_RUNNER must finish first so that its exit status is returned to the tester
   do {
-    const endBalance = await retrieveL2Balance(nf3);
+    const endBalance = await retrieveL2Balance(nf3, ercAddress);
     if (endBalance - startBalance === txPerBlock * value + value * TEST_LENGTH && IS_TEST_RUNNER) {
       logger.info('Test passed');
       logger.info(
@@ -120,6 +115,7 @@ async function localTest() {
       process.exit(0);
     } else {
       logger.info(
+        IS_TEST_RUNNER,
         'The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting',
         endBalance - startBalance,
         txPerBlock * value + value * TEST_LENGTH,
@@ -130,5 +126,3 @@ async function localTest() {
   } while (loop < loopMax);
   process.exit(1);
 }
-
-localTest();

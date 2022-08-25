@@ -92,4 +92,4 @@ if [[ -d "$DIR" ]]; then
 fi
 #docker-compose -f docker-compose.yml $FILE up -d deployer
 docker-compose $FILE $STUBS $DEV $ADVERSARY up -d --remove-orphans
-docker-compose logs -f client optimist worker deployer
+docker-compose logs -f
