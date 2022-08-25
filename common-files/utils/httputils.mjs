@@ -88,27 +88,27 @@ const applyAxiosDefaults = () => {
 };
 
 /**
- * Logs request information if the DEBUG log level is enabled (We can create a 
+ * Logs request information if the DEBUG log level is enabled (We can create a
  * environment variable in another moment to handle this).
  */
 const requestLogger = (req, res, next) => {
-  if(req.url === "/healthcheck" || !logger.isLevelEnabled('debug')) {
+  if (req.url === "/healthcheck" || !logger.isLevelEnabled('debug')) {
     return next();
   }
 
-  logger.debug({ 
+  logger.debug({
     message: 'Request info',
     request: {
-      "method": req.method,
-      "url": req.url,
-      "originalUrl": req.originalUrl,
-      "query": req.query,
-      "params": req.params, 
-      "headers": req.headers,
+      method: req.method,
+      url: req.url,
+      originalUrl: req.originalUrl,
+      query: req.query,
+      params: req.params, 
+      headers: req.headers,
     },
   });
 
-  next();
+  return next();
 };
 
 /**
@@ -118,34 +118,34 @@ const requestLogger = (req, res, next) => {
 const addInterceptorForJson = (res, next) => {
   const originalJsonHandler = res.json;
 
-  res.json = (data) => {
-      if (data && data.then != undefined) {
-          data.then((responseData) => {
-            res.json = originalJsonHandler;
-            originalJsonHandler.call(res, responseData);
-            
-            // stores for getting it later
-            res.locals.jsonResponseData = responseData;
-          }).catch( error => {
-              next(error);
-          });
-      } else {
-          // stores for getting it later
-          res.locals.jsonResponseData = data;
-
+  res.json = data => {
+    if (data && data.then != undefined) {
+        data.then((responseData) => {
           res.json = originalJsonHandler;
-          originalJsonHandler.call(res, data);
-      }
-  }
+          originalJsonHandler.call(res, responseData);
+          
+          // stores for getting it later
+          res.locals.jsonResponseData = responseData;
+        }).catch( error => {
+            next(error);
+        });
+    } else {
+        // stores for getting it later
+        res.locals.jsonResponseData = data;
+
+        res.json = originalJsonHandler;
+        originalJsonHandler.call(res, data);
+    }
+  };
 };
 
 const logResponseData = (res, jsonData) => {
-  logger.debug({ 
+  logger.debug({
     message: 'Response info',
     response: {
-      "status": res.statusCode,
-      "data": jsonData,
-      "headers": res.getHeaders(),
+      status: res.statusCode,
+      data: jsonData,
+      headers: res.getHeaders(),
     },
   });
 };
@@ -153,7 +153,7 @@ const logResponseData = (res, jsonData) => {
 /**
  * Intercepts response completion then logs the response info.
  */
-const addInterceptorForResponseCompletion = (res) => {
+const addInterceptorForResponseCompletion = res => {
   res.on('finish', () => {
     logResponseData(res, res.locals.jsonResponseData);
   });
@@ -163,16 +163,16 @@ const addInterceptorForResponseCompletion = (res) => {
  * Logs response information if the DEBUG log level is enabled.
  */
 const responseLogger = (req, res, next) => {
-  if(req.url === "/healthcheck" || !logger.isLevelEnabled('debug')) {
+  if (req.url === "/healthcheck" || !logger.isLevelEnabled('debug')) {
     return next();
   }
 
   try {
     addInterceptorForJson(res, next);
     addInterceptorForResponseCompletion(res);
-    next();
+    return next();
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
