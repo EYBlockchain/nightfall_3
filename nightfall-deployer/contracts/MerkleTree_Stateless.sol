@@ -166,7 +166,7 @@ library MerkleTree_Stateless {
         for (uint256 level = slot + 1; level <= treeHeight; level++) {
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                output = Poseidon.poseidon(uint256(_frontier[level - 1]), 0); // poseidon hash of concatenation of each node
+                output = Poseidon.poseidon(uint256(_frontier[level - 1]), nodeValue); // poseidon hash of concatenation of each node
 
                 nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
