@@ -13,6 +13,7 @@ import ValidationError from './validation-error.mjs';
 import NotFoundError from './not-found-error.mjs';
 import logger from './logger.mjs';
 import correlator from './correlation-id.mjs';
+import isDev from './utils.mjs';
 
 const finished = promisify(stream.finished);
 
