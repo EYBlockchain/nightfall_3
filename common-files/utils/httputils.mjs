@@ -13,7 +13,6 @@ import ValidationError from './validation-error.mjs';
 import NotFoundError from './not-found-error.mjs';
 import logger from './logger.mjs';
 import correlator from './correlation-id.mjs';
-import isDev from './utils.mjs';
 
 const finished = promisify(stream.finished);
 
@@ -102,9 +101,10 @@ const requestLogger = (req, res, next) => {
       method: req.method,
       url: req.url,
       originalUrl: req.originalUrl,
+      headers: req.headers,
       query: req.query,
       params: req.params,
-      headers: req.headers,
+      body: req.body,
     },
   });
 
