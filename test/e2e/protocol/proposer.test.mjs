@@ -143,9 +143,7 @@ describe('Basic Proposer tests', () => {
     await thirdProposer.init(mnemonics.proposer);
 
     stateAddress = await bootProposer.getContractAddress('State');
-
-    let proposers;
-    ({ proposers } = await bootProposer.getProposers());
+    const { proposers } = await bootProposer.getProposers();
 
     let findProposer = proposers.filter(p => p.thisAddress === secondProposer.ethereumAddress);
     if (findProposer.length === 1) {
