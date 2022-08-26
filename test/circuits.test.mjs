@@ -19,6 +19,7 @@ const {
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
+  MINIMUM_STAKE,
 } = config.TEST_OPTIONS;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
@@ -40,7 +41,13 @@ describe('General Circuit Test', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
+<<<<<<< HEAD
     await nf3Proposer.registerProposer('http://optimis1');
+||||||| parent of 34a3c451 (fix: register proposer in tests)
+    await nf3Proposer.registerProposer('http://optimist1');
+=======
+    await nf3Proposer.registerProposer('http://optimist1', MINIMUM_STAKE);
+>>>>>>> 34a3c451 (fix: register proposer in tests)
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
