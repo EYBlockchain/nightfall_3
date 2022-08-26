@@ -106,6 +106,17 @@ export async function getBlockByTransactionHashL1(transactionHashL1) {
 }
 
 /**
+function to get a block by blockHash, if you know the hash of the block. This
+is useful for rolling back Timber.
+*/
+export async function getBlockByBlockHash(blockHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { blockHash };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+}
+
+/**
 function to get a block by root, if you know the root of the block. This
 is useful for nightfall-client to establish the layer block number containing
 a given (historic) root.
@@ -201,6 +212,19 @@ export async function saveInvalidBlock(_block) {
   const query = { blockHash: block.blockHash };
   const update = { $set: block };
   return db.collection(INVALID_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
+}
+
+/**
+ * function to find blocks produced by a proposer
+ */
+export async function findBlocksByProposer(proposer) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { proposer };
+  return db
+    .collection(SUBMITTED_BLOCKS_COLLECTION)
+    .find(query, { sort: { blockNumberL2: 1 } })
+    .toArray();
 }
 
 /**

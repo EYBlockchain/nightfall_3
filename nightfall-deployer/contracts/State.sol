@@ -22,7 +22,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     BlockData[] public blockHashes; // array containing mainly blockHashes
     mapping(address => uint256[2]) public pendingWithdrawals;
     mapping(address => LinkedAddress) public proposers;
-    mapping(address => TimeLockedBond) public bondAccounts;
+    mapping(address => TimeLockedStake) public stakeAccounts;
     mapping(bytes32 => uint256[2]) public feeBook;
     mapping(bytes32 => bool) public claimedBlockStakes;
     LinkedAddress public currentProposer; // who can propose a new shield state
@@ -31,6 +31,11 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     address public proposersAddress;
     address public challengesAddress;
     address public shieldAddress;
+
+    uint256 public numProposers; // number of proposers
+    address[] public slots; // slots based on proposers stake
+    ProposerSet[] public proposersSet; // proposer set for next span
+    uint256 public currentSprint; // the current sprint of the span
 
     function initialize() public override(Pausable, Config) {
         Pausable.initialize();
@@ -54,7 +59,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             msg.sender == proposersAddress ||
                 msg.sender == challengesAddress ||
                 msg.sender == shieldAddress,
-            'This address is not authorised to call this function'
+            'State: Not authorised to call this function'
         );
         _;
     }
@@ -78,7 +83,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         // Modifier
         require(
             msg.sender == currentProposer.thisAddress,
-            'Only the current proposer can call this.'
+            'State: Only current proposer authorised'
         );
         _;
     }
@@ -99,16 +104,21 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         onlyCurrentProposer
         whenNotPaused
     {
-        require(b.blockNumberL2 == blockHashes.length, 'The block is out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
+        require(b.blockNumberL2 == blockHashes.length, 'State: Block out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
         if (blockHashes.length != 0)
             require(
                 b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash,
-                'The block is flawed or out of order'
+                'State: Block flawed or out of order'
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
-        require(BLOCK_STAKE <= msg.value, 'The stake payment is incorrect');
-        require(b.proposer == msg.sender, 'The proposer address is not the sender');
+
+        TimeLockedStake memory stake = getStakeAccount(msg.sender);
+        require(BLOCK_STAKE <= msg.value, 'State: Stake payment is incorrect');
+        require(b.proposer == msg.sender, 'State: Proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
-        require(t.length <= TRANSACTIONS_PER_BLOCK, 'The block has too many transactions');
+        require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
+        stake.amount -= BLOCK_STAKE;
+        stake.challengeLocked += BLOCK_STAKE;
+        stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
 
         uint256 feePaymentsEth = 0;
         uint256 feePaymentsMatic = 0;
@@ -343,17 +353,25 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return proposerStartBlock;
     }
 
+    function setNumProposers(uint256 np) public onlyRegistered {
+        numProposers = np;
+    }
+
+    function getNumProposers() public view returns (uint256) {
+        return numProposers;
+    }
+
     function removeProposer(address proposer) public onlyRegistered {
         address previousAddress = proposers[proposer].previousAddress;
         address nextAddress = proposers[proposer].nextAddress;
         delete proposers[proposer];
+        numProposers--;
         proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
         proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
-        // Cannot just call changeCurrentProposer directly due to the require time check
-        //change currentProposer to next aaddress irrespective of whether proposer is currentProposer
-        proposerStartBlock = block.number;
-        currentProposer = proposers[nextAddress];
-        emit NewCurrentProposer(currentProposer.thisAddress);
+        if (proposer == currentProposer.thisAddress) {
+            proposerStartBlock = 0;
+            changeCurrentProposer();
+        }
     }
 
     function updateProposer(address proposer, string calldata url) public onlyProposer {
@@ -370,11 +388,14 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         returns (bytes32)
     {
         bytes32 blockHash = Utils.hashBlock(b);
-        require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
-        bytes32 transactionHashesRoot = Utils.hashTransactionHashes(ts);
         require(
-            b.transactionHashesRoot == transactionHashesRoot,
-            'Some of these transactions are not in this block'
+            blockHashes[b.blockNumberL2].blockHash == blockHash,
+            'State: This block does not exist'
+        );
+        bytes32 tranasactionHashesRoot = Utils.hashTransactionHashes(ts);
+        require(
+            b.transactionHashesRoot == tranasactionHashesRoot,
+            'State: Some of these transactions are not in this block'
         );
         return blockHash;
     }
@@ -399,21 +420,34 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         bytes32[] calldata siblingPath
     ) public view {
         bytes32 blockHash = Utils.hashBlock(b);
-        require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
+        require(
+            blockHashes[b.blockNumberL2].blockHash == blockHash,
+            'State: This block does not exist'
+        );
         require(
             b.transactionHashesRoot == siblingPath[0],
-            'This transaction hashes root is incorrect'
+            'State: This transaction hashes root is incorrect'
         );
         bool valid = Utils.checkPath(siblingPath, index, Utils.hashTransaction(t));
-        require(valid, 'Transaction does not exist in block');
+        require(valid, 'State: Transaction does not exist in block');
     }
 
-    function setBondAccount(address addr, uint256 amount) public onlyProposer {
-        bondAccounts[addr] = TimeLockedBond(amount, 0);
+    /**
+     * @dev Set stake account for the address addr with amount of stake and challengeLocked
+     */
+    function setStakeAccount(
+        address addr,
+        uint256 amount,
+        uint256 challengeLocked
+    ) public onlyProposer {
+        stakeAccounts[addr] = TimeLockedStake(amount, challengeLocked, 0);
     }
 
-    function getBondAccount(address addr) public view returns (TimeLockedBond memory) {
-        return bondAccounts[addr];
+    /**
+     * @dev Get stake account for the address addr
+     */
+    function getStakeAccount(address addr) public view returns (TimeLockedStake memory) {
+        return stakeAccounts[addr];
     }
 
     function rewardChallenger(
@@ -422,15 +456,21 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         uint256 numRemoved
     ) public onlyChallenger {
         removeProposer(proposer);
-        TimeLockedBond memory bond = bondAccounts[proposer];
-        bondAccounts[proposer] = TimeLockedBond(0, 0);
-        pendingWithdrawals[challengerAddr][0] += bond.amount + numRemoved * BLOCK_STAKE;
+
+        TimeLockedStake memory stake = stakeAccounts[proposer];
+        // Give reward to challenger from the stake locked for challenges
+        stakeAccounts[proposer] = TimeLockedStake(
+            stake.amount,
+            stake.challengeLocked - numRemoved * BLOCK_STAKE,
+            0
+        );
+        pendingWithdrawals[challengerAddr][0] += numRemoved * BLOCK_STAKE;
     }
 
-    function updateBondAccountTime(address addr, uint256 time) public onlyProposer {
-        TimeLockedBond memory bond = bondAccounts[addr];
-        bond.time = time;
-        bondAccounts[addr] = bond;
+    function updateStakeAccountTime(address addr, uint256 time) external onlyProposer {
+        TimeLockedStake memory stake = stakeAccounts[addr];
+        stake.time = time;
+        stakeAccounts[addr] = stake;
     }
 
     function isBlockStakeWithdrawn(bytes32 blockHash) public view returns (bool) {
@@ -439,5 +479,149 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
 
     function setBlockStakeWithdrawn(bytes32 blockHash) public onlyRegistered {
         claimedBlockStakes[blockHash] = true;
+    }
+
+    /**
+     * Each proposer gets a chance to propose blocks for a certain time, defined
+     * in Ethereum blocks.  After a certain number of blocks has passed, the
+     * proposer can be rotated by calling this function. The method for choosing
+     * the next proposer is simple rotation for now.
+     */
+    function changeCurrentProposer() public {
+        require(
+            block.number - proposerStartBlock > ROTATE_PROPOSER_BLOCKS || proposerStartBlock == 0,
+            'State: Too soon to rotate proposer'
+        );
+
+        address addressBestPeer;
+
+        if (numProposers <= 1) {
+            currentSprint = 0; // We don't have sprints because always same proposer
+            addressBestPeer = currentProposer.thisAddress;
+        } else {
+            ProposerSet memory peer;
+            uint256 totalEffectiveWeight = 0;
+
+            if (currentSprint == SPRINTS_IN_SPAN || proposerStartBlock == 0) currentSprint = 0;
+            if (currentSprint == 0) initializeSpan();
+
+            for (uint256 i = 0; i < proposersSet.length; i++) {
+                peer = proposersSet[i];
+                totalEffectiveWeight += peer.effectiveWeight;
+                peer.currentWeight += int256(peer.effectiveWeight);
+
+                if (peer.effectiveWeight < peer.weight) peer.effectiveWeight++;
+                if (
+                    addressBestPeer == address(0) ||
+                    proposersSet[proposers[addressBestPeer].indexProposerSet].currentWeight <
+                    peer.currentWeight
+                ) {
+                    addressBestPeer = peer.thisAddress;
+                }
+            }
+
+            if (proposersSet[proposers[addressBestPeer].indexProposerSet].weight != 0)
+                proposersSet[proposers[addressBestPeer].indexProposerSet].currentWeight -= int256(
+                    totalEffectiveWeight
+                );
+
+            currentSprint += 1;
+        }
+
+        currentProposer = proposers[addressBestPeer];
+        proposerStartBlock = block.number;
+        emit NewCurrentProposer(currentProposer.thisAddress);
+    }
+
+    /**
+     * @dev Initialize a new span
+     */
+    function initializeSpan() internal {
+        fillSlots(); // 1) initialize slots based on the stake and VALUE_PER_SLOT
+        shuffleSlots(); // 2) shuffle the slots
+        spanProposerSet(); // 3) pop the proposer set from shuffled slots
+    }
+
+    /**
+     * @dev Fill slots based on the weight
+     */
+    function fillSlots() public {
+        require(
+            currentProposer.thisAddress != address(0),
+            'State: Current proposer not initialized'
+        );
+        LinkedAddress memory p = currentProposer;
+        TimeLockedStake memory stake;
+        uint256 weight;
+
+        // 1) remove all slots
+        delete slots;
+        // 2) assign slots based on the stake of the proposers
+        if (numProposers == 1) {
+            stake = getStakeAccount(p.thisAddress);
+            weight = stake.amount / VALUE_PER_SLOT;
+            for (uint256 i = 0; i < weight; i++) {
+                slots.push(p.thisAddress);
+            }
+        } else {
+            while (p.nextAddress != currentProposer.thisAddress) {
+                stake = getStakeAccount(p.thisAddress);
+                weight = stake.amount / VALUE_PER_SLOT;
+                for (uint256 i = 0; i < weight; i++) {
+                    slots.push(p.thisAddress);
+                }
+                p = proposers[p.nextAddress];
+            }
+            stake = getStakeAccount(p.thisAddress);
+            weight = stake.amount / VALUE_PER_SLOT;
+            for (uint256 i = 0; i < weight; i++) {
+                slots.push(p.thisAddress);
+            }
+        }
+    }
+
+    /**
+     * @dev Shuffle the slots of all proposers
+     */
+    function shuffleSlots() internal {
+        for (uint256 i = 0; i < slots.length; i++) {
+            uint256 n = i +
+                (uint256(keccak256(abi.encodePacked(block.timestamp))) % (slots.length - i));
+            address temp = slots[n];
+            slots[n] = slots[i];
+            slots[i] = temp;
+        }
+    }
+
+    /**
+     * @dev Pop the proposer set for next Span
+     */
+    function spanProposerSet() internal {
+        for (uint256 i = 0; i < proposersSet.length; i++) {
+            proposers[proposersSet[i].thisAddress].inProposerSet = false;
+            proposers[proposersSet[i].thisAddress].indexProposerSet = 0;
+        }
+
+        delete proposersSet;
+
+        // add proposersSet
+        for (uint256 i = 0; i < PROPOSER_SET_COUNT; i++) {
+            LinkedAddress memory p = proposers[slots[i]];
+            if (p.inProposerSet == false) {
+                p.inProposerSet = true;
+                p.indexProposerSet = proposersSet.length;
+                ProposerSet memory ps = ProposerSet(p.thisAddress, 1, 0, 0);
+                proposersSet.push(ps);
+                proposers[slots[i]] = p;
+            } else {
+                proposersSet[p.indexProposerSet].weight += 1;
+            }
+        }
+
+        // initialize weights for WRR
+        for (uint256 i = 0; i < proposersSet.length; i++) {
+            proposersSet[i].currentWeight = int256(proposersSet[i].weight);
+            proposersSet[i].effectiveWeight = proposersSet[i].weight;
+        }
     }
 }

@@ -2,7 +2,10 @@
 /**
 Module that runs up as a proposer
 */
-import logger from '../common-files/utils/logger.mjs';
+import config from 'config';
+import logger from '../../../common-files/utils/logger.mjs';
+
+const { PROPOSER_PORT, MINIMUM_STAKE } = config;
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -17,7 +20,8 @@ export default async function startProposer(nf3, proposerBaseUrl) {
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register proposer');
 
-  await nf3.registerProposer(proposerBaseUrl);
+  await nf3.registerProposer(proposerBaseUrl, MINIMUM_STAKE);
+  if (!PROPOSER_PORT) throw new Error('Please specify a proposer port');
   logger.debug('Proposer healthcheck up');
 
   // TODO subscribe to layer 1 blocks and call change proposer

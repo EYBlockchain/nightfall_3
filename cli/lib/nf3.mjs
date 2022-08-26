@@ -700,15 +700,16 @@ class Nf3 {
   }
 
   /**
-    Registers a new proposer and pays the Bond required to register.
+    Registers a new proposer and pays the stake required to register.
     It will use the address of the Ethereum Signing key that is holds to register
     the proposer.
     @method
     @async
-    @param {string} Proposer REST API URL with format https://xxxx.xxx.xx
+    @param {string} url REST API URL with format https://xxxx.xxx.xx
+    @param {number} stake - amount to stake
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
-  async registerProposer(url) {
+  async registerProposer(url, stake) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
       address: this.ethereumAddress,
       url,
@@ -720,7 +721,7 @@ class Nf3 {
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.proposersContractAddress,
-            this.PROPOSER_BOND,
+            stake,
           );
           resolve(receipt);
         } catch (err) {
@@ -775,7 +776,7 @@ class Nf3 {
         try {
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
-            this.proposersContractAddress,
+            this.stateContractAddress,
             0,
           );
           resolve(receipt);
@@ -787,14 +788,14 @@ class Nf3 {
   }
 
   /**
-    Withdraw the bond left by the proposer.
-    It will use the address of the Ethereum Signing key that is holds to withdraw the bond.
+    Withdraw the stake left by the proposer.
+    It will use the address of the Ethereum Signing key that is holds to withdraw the stake.
     @method
     @async
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
-  async withdrawBond() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawBond`, {
+  async withdrawStake() {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawStake`, {
       address: this.ethereumAddress,
     });
     return new Promise((resolve, reject) => {
@@ -811,6 +812,35 @@ class Nf3 {
         }
       });
     });
+  }
+
+  /**
+    Get all the list of existing proposers.
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum transaction receipt.
+    */
+  async getProposerPendingPayments() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
+      params: {
+        proposer: this.ethereumAddress,
+      },
+    });
+    return res.data;
+  }
+
+  /**
+    Request block payment.
+    @method
+    @async
+    @return {Promise} A promise that resolves to an axios response.
+    */
+  async requestBlockPayment(blockHash) {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/payment`, {
+      address: this.ethereumAddress,
+      blockHash,
+    });
+    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
   }
 
   /**
@@ -840,9 +870,10 @@ class Nf3 {
     @method
     @async
     @param {string} Proposer REST API URL with format https://xxxx.xxx.xx
+    @param {number} stake - amount to stake
     @returns {array} A promise that resolves to the Ethereum transaction receipt.
     */
-  async updateProposer(url) {
+  async updateProposer(url, stake) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/update`, {
       address: this.ethereumAddress,
       url,
@@ -854,7 +885,7 @@ class Nf3 {
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.proposersContractAddress,
-            0,
+            stake,
           );
           resolve(receipt);
         } catch (err) {
