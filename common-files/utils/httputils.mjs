@@ -92,7 +92,7 @@ const applyAxiosDefaults = () => {
  * environment variable in another moment to handle this).
  */
 const requestLogger = (req, res, next) => {
-  if (req.url === "/healthcheck" || !logger.isLevelEnabled('debug')) {
+  if (req.url === '/healthcheck' || !logger.isLevelEnabled('debug')) {
     return next();
   }
 
@@ -103,7 +103,7 @@ const requestLogger = (req, res, next) => {
       url: req.url,
       originalUrl: req.originalUrl,
       query: req.query,
-      params: req.params, 
+      params: req.params,
       headers: req.headers,
     },
   });
@@ -119,22 +119,24 @@ const addInterceptorForJson = (res, next) => {
   const originalJsonHandler = res.json;
 
   res.json = data => {
-    if (data && data.then != undefined) {
-        data.then((responseData) => {
+    if (data && data.then !== undefined) {
+        data
+        .then(responseData => {
           res.json = originalJsonHandler;
           originalJsonHandler.call(res, responseData);
-          
+
           // stores for getting it later
           res.locals.jsonResponseData = responseData;
-        }).catch( error => {
-            next(error);
+        })
+        .catch(error => {
+          next(error);
         });
     } else {
-        // stores for getting it later
-        res.locals.jsonResponseData = data;
+      // stores for getting it later
+      res.locals.jsonResponseData = data;
 
-        res.json = originalJsonHandler;
-        originalJsonHandler.call(res, data);
+      res.json = originalJsonHandler;
+      originalJsonHandler.call(res, data);
     }
   };
 };
@@ -163,7 +165,7 @@ const addInterceptorForResponseCompletion = res => {
  * Logs response information if the DEBUG log level is enabled.
  */
 const responseLogger = (req, res, next) => {
-  if (req.url === "/healthcheck" || !logger.isLevelEnabled('debug')) {
+  if (req.url === '/healthcheck' || !logger.isLevelEnabled('debug')) {
     return next();
   }
 
