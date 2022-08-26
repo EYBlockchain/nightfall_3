@@ -82,7 +82,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
     // Proposers are allowed to deregister themselves at any point (even if they are the current proposer)
     // However, their stake is only withdrawable after the CHALLENGE_PERIOD has passed. This ensures
     // they are not the proposer of any blocks that could be challenged.
-    function deRegisterProposer() external {
+    function deRegisterProposer() external nonReentrant {
         require(
             state.getProposer(msg.sender).thisAddress != address(0),
             'Proposers: Not a proposer'

@@ -502,7 +502,10 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             ProposerSet memory peer;
             uint256 totalEffectiveWeight = 0;
 
-            if (currentSprint == SPRINTS_IN_SPAN || proposerStartBlock == 0) currentSprint = 0;
+            if (currentSprint == SPRINTS_IN_SPAN || proposerStartBlock == 0) {
+                currentProposer = proposers[currentProposer.nextAddress]; // it could be removed
+                currentSprint = 0;
+            }
             if (currentSprint == 0) initializeSpan();
 
             for (uint256 i = 0; i < proposersSet.length; i++) {

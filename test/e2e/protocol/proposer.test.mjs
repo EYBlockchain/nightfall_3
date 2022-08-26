@@ -111,6 +111,47 @@ const miniStateABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  {
+    inputs: [
+      {
+        internalType: 'address',
+        name: 'addr',
+        type: 'address',
+      },
+    ],
+    name: 'getProposer',
+    outputs: [
+      {
+        components: [
+          {
+            internalType: 'address',
+            name: 'thisAddress',
+            type: 'address',
+          },
+          {
+            internalType: 'address',
+            name: 'previousAddress',
+            type: 'address',
+          },
+          {
+            internalType: 'address',
+            name: 'nextAddress',
+            type: 'address',
+          },
+          {
+            internalType: 'string',
+            name: 'url',
+            type: 'string',
+          },
+        ],
+        internalType: 'struct Structures.LinkedAddress',
+        name: '',
+        type: 'tuple',
+      },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
 ];
 
 let stateAddress;
@@ -124,6 +165,12 @@ const getStakeAccount = async ethAccount => {
 const getCurrentProposer = async () => {
   const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
   const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
+  return currentProposer;
+};
+
+const getProposer = async proposerAddress => {
+  const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
+  const currentProposer = await stateContractInstance.methods.getProposer(proposerAddress).call();
   return currentProposer;
 };
 
@@ -143,10 +190,9 @@ describe('Basic Proposer tests', () => {
     await thirdProposer.init(mnemonics.proposer);
 
     stateAddress = await bootProposer.getContractAddress('State');
-    const { proposers } = await bootProposer.getProposers();
 
-    let findProposer = proposers.filter(p => p.thisAddress === secondProposer.ethereumAddress);
-    if (findProposer.length === 1) {
+    let proposer = await getProposer(secondProposer.ethereumAddress);
+    if (proposer.thisAddress !== '0x0000000000000000000000000000000000000000') {
       console.log('De-register second proposer...');
       try {
         await secondProposer.deregisterProposer();
@@ -155,8 +201,8 @@ describe('Basic Proposer tests', () => {
       }
     }
 
-    findProposer = proposers.filter(p => p.thisAddress === thirdProposer.ethereumAddress);
-    if (findProposer.length === 1) {
+    proposer = await getProposer(thirdProposer.ethereumAddress);
+    if (proposer.thisAddress !== '0x0000000000000000000000000000000000000000') {
       console.log('De-register third proposer...');
       try {
         await secondProposer.deregisterProposer();
@@ -165,8 +211,8 @@ describe('Basic Proposer tests', () => {
       }
     }
 
-    findProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
-    if (findProposer.length === 1) {
+    proposer = await getProposer(bootProposer.ethereumAddress);
+    if (proposer.thisAddress !== '0x0000000000000000000000000000000000000000') {
       console.log('De-register boot proposer...');
       try {
         await bootProposer.deregisterProposer();
@@ -177,24 +223,11 @@ describe('Basic Proposer tests', () => {
   });
 
   it('should register the boot proposer', async () => {
-    let proposers;
-    ({ proposers } = await bootProposer.getProposers());
-    const currentProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
-    // In order to begin from 0 producing L2 blocks
-    if (currentProposer.length === 1) {
-      console.log('De-register proposer...');
-      try {
-        await bootProposer.deregisterProposer();
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
     const stakeAccount1 = await getStakeAccount(bootProposer.ethereumAddress);
     const res = await bootProposer.registerProposer(testProposersUrl[0], MINIMUM_STAKE);
     expectTransaction(res);
     const stakeAccount2 = await getStakeAccount(bootProposer.ethereumAddress);
-    ({ proposers } = await bootProposer.getProposers());
+    const { proposers } = await bootProposer.getProposers();
     const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
     expect(Number(stakeAccount2.amount)).equal(
@@ -203,24 +236,11 @@ describe('Basic Proposer tests', () => {
   });
 
   it('should allow to register a second proposer other than the boot proposer', async () => {
-    let proposers;
-    ({ proposers } = await secondProposer.getProposers());
-    const currentProposer = proposers.filter(p => p.thisAddress === secondProposer.ethereumAddress);
-    // In order to begin from 0 producing L2 blocks
-    if (currentProposer.length === 1) {
-      console.log('De-register proposer...');
-      try {
-        await secondProposer.deregisterProposer();
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
     const stakeAccount1 = await getStakeAccount(secondProposer.ethereumAddress);
     const res = await secondProposer.registerProposer(testProposersUrl[0], MINIMUM_STAKE);
     expectTransaction(res);
     const stakeAccount2 = await getStakeAccount(secondProposer.ethereumAddress);
-    ({ proposers } = await secondProposer.getProposers());
+    const { proposers } = await secondProposer.getProposers();
     const thisProposer = proposers.filter(p => p.thisAddress === secondProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
     expect(Number(stakeAccount2.amount)).equal(
@@ -229,24 +249,11 @@ describe('Basic Proposer tests', () => {
   });
 
   it('should allow to register a third proposer other than the boot proposer', async () => {
-    let proposers;
-    ({ proposers } = await thirdProposer.getProposers());
-    const currentProposer = proposers.filter(p => p.thisAddress === thirdProposer.ethereumAddress);
-    // In order to begin from 0 producing L2 blocks
-    if (currentProposer.length === 1) {
-      console.log('De-register proposer...');
-      try {
-        await thirdProposer.deregisterProposer();
-      } catch (e) {
-        console.log(e);
-      }
-    }
-
     const stakeAccount1 = await getStakeAccount(thirdProposer.ethereumAddress);
     const res = await thirdProposer.registerProposer(testProposersUrl[0], MINIMUM_STAKE);
     expectTransaction(res);
     const stakeAccount2 = await getStakeAccount(thirdProposer.ethereumAddress);
-    ({ proposers } = await thirdProposer.getProposers());
+    const { proposers } = await thirdProposer.getProposers();
     const thisProposer = proposers.filter(p => p.thisAddress === thirdProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
     expect(Number(stakeAccount2.amount)).equal(
@@ -296,7 +303,7 @@ describe('Basic Proposer tests', () => {
   });
 
   it('Should create a valid changeCurrentProposer (because blocks has passed)', async function () {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 6; i++) {
       try {
         // eslint-disable-next-line no-await-in-loop
         const currentSprint = await getCurrentSprint();
