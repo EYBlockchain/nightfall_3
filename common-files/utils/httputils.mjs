@@ -120,7 +120,7 @@ const addInterceptorForJson = (res, next) => {
 
   res.json = data => {
     if (data && data.then !== undefined) {
-        data
+      data
         .then(responseData => {
           res.json = originalJsonHandler;
           originalJsonHandler.call(res, responseData);
