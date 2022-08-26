@@ -11,6 +11,7 @@ const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss.l';
 const getInstance = () => {
   const pinoOptions = {
     level: config.LOG_LEVEL || 'info',
+    messageKey: 'message',
     mixin() {
       return { correlationId: correlator.getId() };
     },
