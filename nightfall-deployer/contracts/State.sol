@@ -372,9 +372,10 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             previousAddress == currentProposer.thisAddress ||
             nextAddress == currentProposer.thisAddress
         ) {
-            currentProposer = proposers[currentProposer.thisAddress]; // we need to refresh the current proposer
+            currentProposer = proposers[currentProposer.thisAddress]; // we need to refresh the current proposer addresses
         }
         if (proposer == currentProposer.thisAddress) {
+            currentProposer = proposers[currentProposer.nextAddress]; // we need to refresh the current proposer before the change
             proposerStartBlock = 0;
             changeCurrentProposer();
         }
