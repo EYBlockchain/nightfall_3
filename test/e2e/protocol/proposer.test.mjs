@@ -303,7 +303,7 @@ describe('Basic Proposer tests', () => {
   });
 
   it('Should create a valid changeCurrentProposer (because blocks has passed)', async function () {
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
       try {
         // eslint-disable-next-line no-await-in-loop
         const currentSprint = await getCurrentSprint();
@@ -330,6 +330,9 @@ describe('Basic Proposer tests', () => {
   });
 
   it('should unregister the third proposer', async () => {
+    const currentProposer = await getCurrentProposer();
+    console.log('currentProposer', currentProposer);
+    await new Promise(resolve => setTimeout(resolve, 10000));
     let proposers;
     ({ proposers } = await thirdProposer.getProposers());
     let thisProposer = proposers.filter(p => p.thisAddress === thirdProposer.ethereumAddress);
@@ -342,6 +345,9 @@ describe('Basic Proposer tests', () => {
   });
 
   it('should unregister the second proposer', async () => {
+    const currentProposer = await getCurrentProposer();
+    console.log('currentProposer', currentProposer);
+    await new Promise(resolve => setTimeout(resolve, 10000));
     let proposers;
     ({ proposers } = await secondProposer.getProposers());
     let thisProposer = proposers.filter(p => p.thisAddress === secondProposer.ethereumAddress);
@@ -354,6 +360,9 @@ describe('Basic Proposer tests', () => {
   });
 
   it('should unregister the boot proposer', async () => {
+    const currentProposer = await getCurrentProposer();
+    console.log('currentProposer', currentProposer);
+    await new Promise(resolve => setTimeout(resolve, 10000));
     let proposers;
     ({ proposers } = await bootProposer.getProposers());
     let thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);

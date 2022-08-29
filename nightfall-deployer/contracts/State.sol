@@ -368,6 +368,12 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         numProposers--;
         proposers[previousAddress].nextAddress = proposers[nextAddress].thisAddress;
         proposers[nextAddress].previousAddress = proposers[previousAddress].thisAddress;
+        if (
+            previousAddress == currentProposer.thisAddress ||
+            nextAddress == currentProposer.thisAddress
+        ) {
+            currentProposer = proposers[currentProposer.thisAddress]; // we need to refresh the current proposer
+        }
         if (proposer == currentProposer.thisAddress) {
             proposerStartBlock = 0;
             changeCurrentProposer();
