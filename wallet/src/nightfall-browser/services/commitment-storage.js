@@ -713,20 +713,6 @@ async function verifyEnoughCommitments(
 }
 
 /**
- * This function find if there is any single commitment
- * whose value is equal or higher.
- */
-function findSubsetOneCommitment(commitments, value) {
-  for (let i = 0; i < commitments.length; ++i) {
-    if (commitments[i].preimage.value.bigInt >= value.bigInt) {
-      return [commitments[i]];
-    }
-  }
-
-  return [];
-}
-
-/**
  * This function finds if there is any pair of commitments
  * whose sum value is equal or higher
  */
@@ -774,11 +760,16 @@ function findSubsetTwoCommitments(commitments, value) {
   return commitmentsToUse;
 }
 
-/**
- * This function finds if there is any triplet of commitments
- * whose sum value is equal or higher
- */
-function findSubsetThreeCommitments(commitments, value) {
+function findSubsetNCommitments(N, commitments, value) {
+  if (N === 1) {
+    for (let i = 0; i < commitments.length; ++i) {
+      if (commitments[i].preimage.value.bigInt >= value.bigInt) {
+        return [commitments[i]];
+      }
+    }
+    return [];
+  }
+
   // Since all commitments has a positive value, if target value is smaller than zero return
   if (value.bigInt <= 0n) return [];
 
@@ -787,118 +778,52 @@ function findSubsetThreeCommitments(commitments, value) {
   const commitmentsFiltered = commitments.filter(s => s.preimage.value.bigInt < value.bigInt);
 
   // If there isn't any valid subset of 3 in which all values are smaller, return
-  if (commitmentsFiltered.length < 3) return [];
+  if (commitmentsFiltered.length < N) return [];
+
+  if (N === 2) {
+    return findSubsetTwoCommitments(commitmentsFiltered, value);
+  }
 
   let commitmentsToUse = [];
   let change = Infinity;
+
   // We will fix a left pointer that will keep moving through the array
   // and then perform a search of two elements with the remaining elements of the array
-  for (let i = 0; i < commitmentsFiltered.length - 2; ++i) {
+  for (let i = 0; i < commitmentsFiltered.length - (N - 1); ++i) {
     // Calculate the target value for the two subset search by removing the value of
     // the commitment that is fixed
     const valueLeft = generalise(value.bigInt - commitmentsFiltered[i].preimage.value.bigInt);
 
     // Try to find a subset of two that matches using valueLeft as the target value
-    const twoCommitmentsSum = findSubsetTwoCommitments(commitmentsFiltered.slice(i + 1), valueLeft);
-
-    // It is possible that there are no possible solutions. Therefore, check first if it has find
-    // a solution by checking that it is a non void array
-    if (twoCommitmentsSum.length !== 0) {
-      const sumThreeCommitments =
-        commitmentsFiltered[i].preimage.value.bigInt +
-        twoCommitmentsSum[0].preimage.value.bigInt +
-        twoCommitmentsSum[1].preimage.value.bigInt;
-
-      // If an exact solution is found, return
-      if (sumThreeCommitments === value.bigInt)
-        return [commitmentsFiltered[i], ...twoCommitmentsSum];
-
-      // Work out what the change to the value smallest commit we used is.
-      const tempChange = sumThreeCommitments - value.bigInt;
-
-      if (tempChange < change) {
-        // We have a set of commitments that has a lower negative change in our outputs.
-        change = tempChange;
-        commitmentsToUse = [commitmentsFiltered[i], ...twoCommitmentsSum];
-      }
-    }
-  }
-
-  return commitmentsToUse;
-}
-
-/**
- * This function finds if there is any 4 commitments
- * whose sum value is equal or higher
- */
-function findSubsetFourCommitments(commitments, value) {
-  // Since all commitments has a positive value, if target value is smaller than zero return
-  if (value.bigInt <= 0n) return [];
-
-  // We are only interested in subsets of 4 in which all the commitments are
-  // smaller than the target value
-  const commitmentsFiltered = commitments.filter(s => s.preimage.value.bigInt < value.bigInt);
-
-  // If there isn't any valid subset of 3 in which all values are smaller, return
-  if (commitmentsFiltered.length < 4) return [];
-
-  let commitmentsToUse = [];
-  let change = Infinity;
-  for (let i = 0; i < commitmentsFiltered.length - 3; ++i) {
-    // Calculate the target value for the three subset search by removing the value of
-    // the commitment that is fixed
-    const valueLeft = generalise(value.bigInt - commitmentsFiltered[i].preimage.value.bigInt);
-
-    // Try to find a subset of three that matches using valueLeft as the target value
-    const threeCommitmentSum = findSubsetThreeCommitments(
+    const commitmentsSubset = findSubsetNCommitments(
+      N,
       commitmentsFiltered.slice(i + 1),
       valueLeft,
     );
 
     // It is possible that there are no possible solutions. Therefore, check first if it has find
     // a solution by checking that it is a non void array
-    if (threeCommitmentSum.length !== 0) {
-      const sumFourCommitments =
+    if (commitmentsSubset.length === N) {
+      const sumSubsetCommitment =
         commitmentsFiltered[i].preimage.value.bigInt +
-        threeCommitmentSum[0].preimage.value.bigInt +
-        threeCommitmentSum[1].preimage.value.bigInt +
-        threeCommitmentSum[2].preimage.value.bigInt;
+        commitmentsSubset.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n);
 
       // If an exact solution is found, return
-      if (sumFourCommitments === value.bigInt)
-        return [commitmentsFiltered[i], ...threeCommitmentSum];
+      if (sumSubsetCommitment === value.bigInt)
+        return [commitmentsFiltered[i], ...commitmentsSubset];
 
       // Work out what the change to the value smallest commit we used is.
-      const tempChange = sumFourCommitments - value.bigInt;
+      const tempChange = sumSubsetCommitment - value.bigInt;
 
       if (tempChange < change) {
         // We have a set of commitments that has a lower negative change in our outputs.
         change = tempChange;
-        commitmentsToUse = [commitmentsFiltered[i], ...threeCommitmentSum];
+        commitmentsToUse = [commitmentsFiltered[i], ...commitmentsSubset];
       }
     }
   }
 
   return commitmentsToUse;
-}
-
-/**
- * Given an array of commitments, tries to find a subset of N elements
- * whose sum is equal or higher than the target value
- */
-function getSubset(commitments, value, N) {
-  let subset = [];
-  if (N === 1) {
-    subset = findSubsetOneCommitment(commitments, value);
-  } else if (N === 2) {
-    subset = findSubsetTwoCommitments(commitments, value);
-  } else if (N === 3) {
-    subset = findSubsetThreeCommitments(commitments, value);
-  } else if (N === 4) {
-    subset = findSubsetFourCommitments(commitments, value);
-  }
-
-  return subset;
 }
 
 async function findUsableCommitments(
@@ -933,7 +858,7 @@ async function findUsableCommitments(
   // but we have to take into account that some spots needs to be used for the fee and that
   // maybe the user does not have as much commitments
   for (let i = minC; i <= Math.min(commitments.length, 4 - minFc); ++i) {
-    const subset = getSubset(commitments, value, i);
+    const subset = findSubsetNCommitments(i, commitments, value);
     possibleSubsetsCommitments.unshift(subset);
   }
 
@@ -949,7 +874,7 @@ async function findUsableCommitments(
         return b.length - a.length;
       }
 
-      return Number(changeA - changeB);
+      return changeA > changeB ? 0 : -1;
     });
 
   // Select the first ranked subset as the commitments the user will spend
@@ -963,7 +888,7 @@ async function findUsableCommitments(
     // On the other hand, we can use a maximum of 4 commitments minus the spots already used
     // for the regular transfer. We also take into account that the user may not have as much commits
     for (let i = minFc; i <= Math.min(commitmentsFee.length, 4 - oldCommitments.length); ++i) {
-      const subset = getSubset(commitmentsFee, fee, i);
+      const subset = findSubsetNCommitments(i, commitmentsFee, fee);
       possibleSubsetsCommitmentsFee.unshift(subset);
     }
   }
@@ -980,7 +905,7 @@ async function findUsableCommitments(
         return b.length - a.length;
       }
 
-      return changeA > changeB ? 0 : -1;
+      return Number(changeA - changeB);
     });
 
   // If fee was zero, ranked subset will be an empty array and therefore no commitments will be assigned
