@@ -22,4 +22,12 @@ router.post('/offchain-transaction', async (req, res) => {
   res.sendStatus(200);
 });
 
+router.get('/mempool', async (req, res) => {
+  const nf3 = req.app.get('nf3');
+  logger.debug(`Proposer/mempool endpoint received POST`);
+  logger.debug(`With content ${JSON.stringify(req.body, null, 2)}`);
+  const mempoolTransactions = await nf3.getMempoolTransactions();
+  res.json({ mempoolTransactions });
+});
+
 export default router;

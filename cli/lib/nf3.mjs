@@ -200,6 +200,16 @@ class Nf3 {
   }
 
   /**
+  Gets the mempool transactions on the optimist
+  @method
+  @async
+  */
+  async getMempoolTransactions() {
+    const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
+    return mempool;
+  }
+
+  /**
   Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
   until it has TRANSACTIONS_PER_BLOCK of them
   @method
