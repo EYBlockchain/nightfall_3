@@ -2,8 +2,10 @@
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
+import constants from 'common-files/constants/index.mjs';
 
 const { MONGO_URL, TRANSACTIONS_COLLECTION, OPTIMIST_DB } = config;
+const { ZERO } = constants;
 
 let error = process.env.BAD_TX_SEQUENCE
   ? process.env.BAD_TX_SEQUENCE.split(',')
@@ -31,6 +33,7 @@ import { Transaction } from '../classes/index.mjs';
 
 const duplicateCommitment = async number => {
   logger.debug('Creating Transaction with Duplicate Commitment');
+  let modifiedTransactions;
   try {
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
@@ -49,7 +52,7 @@ const duplicateCommitment = async number => {
     }
     const { commitments: spentCommitments } = spentTransaction[0];
     const { commitments: unspentCommitments, ...unspentRes } = unspentTransaction[0];
-    const modifiedTransaction = {
+    modifiedTransaction = {
       commitments: [spentCommitments[0], unspentCommitments[1], ZERO],
       ...unspentRes,
     };
@@ -68,34 +71,34 @@ const duplicateCommitment = async number => {
 
     const modifiedTransactions = transactions.slice(0, number - 1);
     modifiedTransactions.push(modifiedTransaction);
-
-    return modifiedTransactions;
   } catch (err) {
     logger.debug(err);
   }
+  return modifiedTransactions;
 };
 
 const duplicateNullifier = async number => {
+  logger.debug('Creating Transaction with Duplicate Nullifier');
+  let modifiedTransactions;
   try {
-    logger.debug('Creating Transaction with Duplicate Nullifier');
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
     const res = await db
       .collection(TRANSACTIONS_COLLECTION)
       .find({ transactionType: { $in: ['1', '2'] } })
       .toArray();
-    const spentTransfer = res.filter(t => t.mempool === false);
-    const unspentTransfer = res.filter(t => t.mempool);
-    if (unspentTransfer.length <= 0 || spentTransfer.length <= 0) {
+    const spentTransaction = res.filter(t => t.mempool === false);
+    const unspentTransaction = res.filter(t => t.mempool);
+    if (unspentTransaction.length <= 0 || spentTransaction.length <= 0) {
       logger.error('Could not create duplicate nullifier');
       return db
         .collection(TRANSACTIONS_COLLECTION)
         .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
         .toArray();
     }
-    const { nullifiers: spentNullifiers } = spentTransfer[0];
-    const { nullifiers: unspentNullifiers, ...unspentRes } = unspentTransfer[0];
-    const modifiedTransfer = {
+    const { nullifiers: spentNullifiers } = spentTransaction[0];
+    const { nullifiers: unspentNullifiers, ...unspentRes } = unspentTransaction[0];
+    const modifiedTransaction = {
       nullifiers: [spentNullifiers[0], unspentNullifiers[1], ZERO, ZERO],
       ...unspentRes,
     };
@@ -106,24 +109,23 @@ const duplicateNullifier = async number => {
       .toArray();
 
     const transactions = availableTxs.filter(
-      f => f.transactionHash !== modifiedTransfer.transactionHash,
+      f => f.transactionHash !== modifiedTransaction.transactionHash,
     );
 
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
-    modifiedTransfer.transactionHash = Transaction.calcHash(modifiedTransfer);
+    modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
 
     const modifiedTransactions = transactions.slice(0, number - 1);
-    modifiedTransactions.push(modifiedTransfer);
-
-    return modifiedTransactions;
+    modifiedTransactions.push(modifiedTransaction);
   } catch (err) {
     logger.debug(err);
   }
+  return modifiedTransactions;
 };
 
 const incorrectProof = async number => {
+  logger.debug('Creating Transaction with Incorrect Proof');
   try {
-    logger.debug('Creating Transaction with Incorrect Proof');
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
     const [{ proof, ...rest }, ...transactions] = await db
@@ -148,10 +150,12 @@ const incorrectProof = async number => {
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     incorrectProofTx.transactionHash = Transaction.calcHash(incorrectProofTx);
     transactions.push(incorrectProofTx);
+
     return transactions;
   } catch (err) {
     logger.debug(err);
   }
+  return null;
 };
 
 export const addTx = txType => {
