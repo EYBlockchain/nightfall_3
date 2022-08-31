@@ -52,7 +52,7 @@ const duplicateCommitment = async number => {
     }
     const { commitments: spentCommitments } = spentTransaction[0];
     const { commitments: unspentCommitments, ...unspentRes } = unspentTransaction[0];
-    modifiedTransaction = {
+    const modifiedTransaction = {
       commitments: [spentCommitments[0], unspentCommitments[1], ZERO],
       ...unspentRes,
     };
@@ -69,7 +69,7 @@ const duplicateCommitment = async number => {
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
 
-    const modifiedTransactions = transactions.slice(0, number - 1);
+    modifiedTransactions = transactions.slice(0, number - 1);
     modifiedTransactions.push(modifiedTransaction);
   } catch (err) {
     logger.debug(err);
@@ -115,7 +115,7 @@ const duplicateNullifier = async number => {
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
 
-    const modifiedTransactions = transactions.slice(0, number - 1);
+    modifiedTransactions = transactions.slice(0, number - 1);
     modifiedTransactions.push(modifiedTransaction);
   } catch (err) {
     logger.debug(err);
