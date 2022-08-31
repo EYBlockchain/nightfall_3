@@ -166,7 +166,7 @@ library MerkleTree_Stateless {
         for (uint256 level = slot + 1; level <= treeHeight; level++) {
             if (nodeIndex % 2 == 0) {
                 // even nodeIndex
-                output = Poseidon.poseidon(uint256(_frontier[level - 1]), 0); // poseidon hash of concatenation of each node
+                output = Poseidon.poseidon(uint256(_frontier[level - 1]), nodeValue); // poseidon hash of concatenation of each node
 
                 nodeValue = output; // the parentValue, but will become the nodeValue of the next level
                 prevNodeIndex = nodeIndex;
@@ -189,130 +189,5 @@ library MerkleTree_Stateless {
 
         _leafCount += numberOfLeaves; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
         return (root, _frontier, _leafCount); //the root of the tree
-    }
-
-    function checkPath(
-        bytes32[33] memory siblingPath,
-        uint256 leafIndex,
-        bytes32 node
-    )
-        public
-        pure
-        returns (
-            /* bytes32 root */
-            bool,
-            bytes32[33] memory
-        )
-    {
-        bytes32[33] memory _frontier;
-        /* if (siblingPath[0] != root) return (false, _frontier); // check root of sibling path is actually the prior block root */
-        // This is an incomplete check. Root parameter can be manipulated to pass the following check because this is not grounded to any data
-        uint256 nodeValue = uint256(node);
-        for (uint256 i = 32; i > 0; i--) {
-            _frontier[i] = bytes32(nodeValue);
-            if (leafIndex % 2 == 0)
-                nodeValue = Poseidon.poseidon(nodeValue, uint256(siblingPath[i]));
-            else nodeValue = Poseidon.poseidon(uint256(siblingPath[i]), nodeValue);
-            leafIndex >> 1;
-        }
-        _frontier[0] = node;
-        return (siblingPath[0] == node, _frontier);
-    }
-
-    function checkPath(
-        bytes32[] memory leafValues,
-        bytes32[33] memory _frontier,
-        uint256 _leafCount,
-        bytes32 _root
-    ) public pure returns (bool, bytes32[33] memory) {
-        uint256 numberOfLeaves = leafValues.length;
-
-        // check that space exists in the tree:
-        require(treeWidth > _leafCount, 'There is no space left in the tree.');
-        if (numberOfLeaves > treeWidth - _leafCount) {
-            uint256 numberOfExcessLeaves = numberOfLeaves - (treeWidth - _leafCount);
-            // remove the excess leaves, because we only want to emit those we've added as an event:
-            for (uint256 xs = 0; xs < numberOfExcessLeaves; xs++) {
-                /*
-          CAUTION!!! This attempts to succinctly achieve leafValues.pop() on a **memory** dynamic array. Not thoroughly tested!
-          Credit: https://ethereum.stackexchange.com/a/51897/45916
-          */
-
-                assembly {
-                    mstore(leafValues, sub(mload(leafValues), 1))
-                }
-            }
-            numberOfLeaves = treeWidth - _leafCount;
-        }
-
-        uint256 slot;
-        uint256 nodeIndex;
-        uint256 prevNodeIndex;
-        uint256 nodeValue;
-
-        uint256 output; // the output of the hash
-
-        // consider each new leaf in turn, from left to right:
-        for (uint256 leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
-            nodeValue = uint256(leafValues[leafIndex - _leafCount]);
-            nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
-
-            slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
-
-            if (slot == 0) {
-                _frontier[slot] = bytes32(nodeValue); // update Frontier
-                continue;
-            }
-
-            // hash up to the level whose nodeValue we'll store in the frontier slot:
-            for (uint256 level = 1; level <= slot; level++) {
-                if (nodeIndex % 2 == 0) {
-                    // even nodeIndex
-                    output = Poseidon.poseidon(uint256(_frontier[level - 1]), nodeValue); // poseidon hash of concatenation of each node
-
-                    nodeValue = output; // the parentValue, but will become the nodeValue of the next level
-                    prevNodeIndex = nodeIndex;
-                    nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
-                    // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
-                } else {
-                    // odd nodeIndex
-                    output = Poseidon.poseidon(nodeValue, 0); // poseidon hash of concatenation of each node
-
-                    nodeValue = output; // the parentValue, but will become the nodeValue of the next level
-                    prevNodeIndex = nodeIndex;
-                    nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
-                    // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
-                }
-            }
-            _frontier[slot] = bytes32(nodeValue); // update frontier
-        }
-
-        // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-        for (uint256 level = slot + 1; level <= treeHeight; level++) {
-            if (nodeIndex % 2 == 0) {
-                // even nodeIndex
-                output = Poseidon.poseidon(uint256(_frontier[level - 1]), nodeValue); // poseidon hash of concatenation of each node
-
-                nodeValue = output; // the parentValue, but will become the nodeValue of the next level
-                prevNodeIndex = nodeIndex;
-                nodeIndex = (nodeIndex - 1) / 2; // the parentIndex, but will become the nodeIndex of the next level
-                // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
-            } else {
-                // odd nodeIndex
-                output = Poseidon.poseidon(nodeValue, 0); // poseidon hash of concatenation of each node
-
-                nodeValue = output; // the parentValue, but will become the nodeValue of the next level
-                prevNodeIndex = nodeIndex;
-                nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
-                // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
-            }
-        }
-
-        /* root = nodeValue; */
-
-        //emit NewLeaves(_leafCount, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
-
-        /* return (root, _frontier, _leafCount); //the root of the tree */
-        return (_root == bytes32(nodeValue), _frontier);
     }
 }

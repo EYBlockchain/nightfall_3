@@ -1,5 +1,9 @@
 // ignore unused exports default
 
+import { ZkpKeys } from '@Nightfall/services/keys';
+import { Commitment } from '@Nightfall/classes';
+import { decrypt, packSecrets } from '@Nightfall/services/kem-dem';
+import { generalise } from 'general-number';
 import logger from '../../common-files/utils/logger';
 import Timber from '../../common-files/classes/timber';
 import {
@@ -12,9 +16,6 @@ import {
   countWithdrawTransactionHashes,
   isTransactionHashWithdraw,
 } from '../services/commitment-storage';
-// import getProposeBlockCalldata from '../services/process-calldata';
-import Secrets from '../classes/secrets';
-// import { ivks, nsks } from '../services/keys';
 import {
   getTreeByBlockNumberL2,
   saveTree,
@@ -23,6 +24,7 @@ import {
   setTransactionHashSiblingInfo,
   updateTransactionTime,
 } from '../services/database';
+import { edwardsDecompress } from '../../common-files/utils/curve-maths/curves';
 
 const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = global.config;
 const { ZERO } = global.nightfallConstants;
@@ -30,39 +32,58 @@ const { ZERO } = global.nightfallConstants;
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
-async function blockProposedEventHandler(data, ivks, nsks) {
+async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
   console.log(`Received Block Proposed event: ${JSON.stringify(data)}`);
-  // ivk will be used to decrypt secrets whilst nsk will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block, blockTimestamp } = data;
   const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
-  const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+  const blockCommitments = transactions
+    .map(t => t.commitments.filter(c => c !== ZERO))
+    .flat(Infinity);
   let isTxDecrypt = false;
 
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
-    const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
-    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
+    const nonZeroCommitments = transaction.commitments.filter(n => n !== ZERO);
+    const nonZeroNullifiers = transaction.nullifiers.filter(n => n !== ZERO);
+
+    const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
+
     const storeCommitments = [];
     const tempTransactionStore = [];
-    if (
-      (Number(transaction.transactionType) === 1 || Number(transaction.transactionType) === 2) &&
-      (await countCommitments(nonZeroCommitments)) === 0
-    ) {
-      ivks.forEach((key, i) => {
+    if (Number(transaction.transactionType) === 1 && countOfNonZeroCommitments === 0) {
+      zkpPrivateKeys.forEach((key, i) => {
         // decompress the secrets first and then we will decryp t the secrets from this
-        const decompressedSecrets = Secrets.decompressSecrets(transaction.compressedSecrets);
+        const { zkpPublicKey } = ZkpKeys.calculateZkpPublicKey(generalise(key));
         try {
-          const commitment = Secrets.decryptSecrets(
-            decompressedSecrets,
-            key,
-            nonZeroCommitments[0],
+          const cipherTexts = [
+            transaction.ercAddress,
+            transaction.tokenId,
+            ...transaction.compressedSecrets,
+          ];
+          const [packedErc, unpackedTokenID, ...rest] = decrypt(
+            generalise(key),
+            generalise(edwardsDecompress(transaction.recipientAddress)),
+            generalise(cipherTexts),
           );
-          if (Object.keys(commitment).length === 0)
-            logger.info("This encrypted message isn't for this recipient");
-          else {
+          const [erc, tokenId] = packSecrets(
+            generalise(packedErc),
+            generalise(unpackedTokenID),
+            2,
+            0,
+          );
+          const plainTexts = generalise([erc, tokenId, ...rest]);
+          const commitment = new Commitment({
+            zkpPublicKey,
+            ercAddress: plainTexts[0].bigInt,
+            tokenId: plainTexts[1].bigInt,
+            value: plainTexts[2].bigInt,
+            salt: plainTexts[3].bigInt,
+          });
+          if (commitment.hash.hex(32) === nonZeroCommitments[0]) {
             isTxDecrypt = true;
-            storeCommitments.push(storeCommitment(commitment, nsks[i]));
+            logger.info('Successfully decrypted commitment for this recipient');
+            storeCommitments.push(storeCommitment(commitment, nullifierKeys[i]));
             tempTransactionStore.push(
               saveTransaction({
                 transactionHashL1,
@@ -71,8 +92,8 @@ async function blockProposedEventHandler(data, ivks, nsks) {
             );
           }
         } catch (err) {
-          logger.info(err);
-          logger.info("This encrypted message isn't for this recipient");
+          // This error will be caught regularly if the commitment isn't for us
+          // We dont print anything in order not to pollute the logs
         }
       });
     }

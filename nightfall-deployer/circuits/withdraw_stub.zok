@@ -1,26 +1,26 @@
-struct OldCommitmentPreimage {
-	field salt
-	field hash
-	field rootKey
-}
+from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT
+from "./common/generic_circuit/Stubs/nullifiers_stub.zok" import main as nullifier_stub
+from "./common/generic_circuit/Stubs/commitments_stub.zok" import main as commitment_stub
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
+
 
 def main(\
-	field ercAddress,\
-	u32[8] id,\
- 	field value,\
-	private OldCommitmentPreimage oldCommitment,\
-	field nullifier,\
-	field recipientAddress,\
-	field root,\
-	private field[32] path,\
-	private field order\
-)->():
+    PublicTransaction tx,\
+    field[4] roots,\
+    field maticAddress,\
+    private Nullifiers<4> nullifiers,\
+    private Commitments<2> commitments\
+)-> ():
+    
+    field[4] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value)
+    field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value)
 
-	field u = ercAddress + value + oldCommitment.salt + oldCommitment.hash + oldCommitment.rootKey + nullifier + recipientAddress + root + order
-	u32 v = id[0] + id[1] + id[2] + id[3] + id[4] + id[5] + id[6] * id[7]
-	for u32 i in 0..32 do
-		u = u * path[i]
-	endfor
-	assert(u==u)
-	assert (v==v)
-	return
+
+    assert(nullifier_stub::<4>(\
+        roots, nullifiersValue, nullifiers.oldCommitments.salt,\
+        nullifiers.rootKey, nullifiers.paths, nullifiers.orders))
+
+    assert(commitment_stub::<2>(\
+        commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey))
+
+    return

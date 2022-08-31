@@ -4,9 +4,8 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { expectTransaction, depositNTransactions, Web3Client } from '../../utils.mjs';
+import { depositNTransactions, expectTransaction, Web3Client } from '../../utils.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
-
 import { approve } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -39,7 +38,7 @@ const web3Client = new Web3Client();
 
 let erc20Address;
 let stateAddress;
-let eventLogs = [];
+const eventLogs = [];
 const logs = {
   instantWithdraw: 0,
 };
@@ -49,44 +48,17 @@ const waitForTxExecution = async (count, txType) => {
   }
 };
 
-/*
-  This function tries to zero the number of unprocessed transactions in the optimist node
-  that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
-  L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
-  of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
-*/
-const emptyL2 = async nf3Instance => {
-  let count = await nf3Instance.unprocessedTransactionCount();
+const emptyL2 = async () => {
+  let count = await nf3Users[0].unprocessedTransactionCount();
+
   while (count !== 0) {
-    if (count % txPerBlock) {
-      await depositNTransactions(
-        nf3Instance,
-        count % txPerBlock ? count % txPerBlock : txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
-
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    } else {
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    }
-
-    count = await nf3Instance.unprocessedTransactionCount();
+    await nf3Users[0].makeBlockNow();
+    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    count = await nf3Users[0].unprocessedTransactionCount();
   }
 
-  await depositNTransactions(
-    nf3Instance,
-    txPerBlock,
-    erc20Address,
-    tokenType,
-    transferValue,
-    tokenId,
-    fee,
-  );
-  eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  await nf3Users[0].makeBlockNow();
+  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 };
 
 describe('ERC20 tests', () => {
@@ -109,158 +81,78 @@ describe('ERC20 tests', () => {
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
-
-    await emptyL2(nf3Users[0]);
   });
 
-  afterEach(async () => {
-    await emptyL2(nf3Users[0]);
+  beforeEach(async () => {
+    await nf3Users[0].deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
+    await emptyL2();
   });
 
   describe('Deposits', () => {
-    it('should deposit some ERC20 crypto into a ZKP commitment', async function () {
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
-      // We create enough transactions to fill blocks full of deposits.
-      const depositTransactions = await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
-      // Wait until we see the right number of blocks appear
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      const totalGas = depositTransactions.reduce((acc, { gasUsed }) => acc + Number(gasUsed), 0);
-      logger.debug(`     Average Gas used was ${Math.ceil(totalGas / txPerBlock)}`);
-    });
-
     it('should increment the balance after deposit some ERC20 crypto', async function () {
-      const currentZkpPublicKeyBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0]
-        .balance;
-      // We do txPerBlock deposits of 10 each
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      const afterZkpPublicKeyBalance = (await nf3Users[0].getLayer2Balances())[erc20Address][0]
-        .balance;
-      expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
-        txPerBlock * transferValue,
-      );
+      const currentZkpPublicKeyBalance =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+
+      await emptyL2();
+      const afterZkpPublicKeyBalance =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+      expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(transferValue);
     });
   });
 
   describe('Transfers', () => {
     it('should decrement the balance after transfer ERC20 to other wallet and increment the other wallet', async function () {
-      let balances;
       async function getBalances() {
-        balances = [
+        return Promise.all([
           (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0,
           (await nf3Users[1].getLayer2Balances())[erc20Address]?.[0].balance || 0,
-        ];
+        ]);
       }
 
-      await getBalances();
-      const beforeBalances = JSON.parse(JSON.stringify(balances));
+      const beforeBalances = await getBalances();
 
-      for (let i = 0; i < txPerBlock; i++) {
-        const res = await nf3Users[0].transfer(
-          false,
-          erc20Address,
-          tokenType,
-          transferValue,
-          tokenId,
-          nf3Users[1].zkpKeys.compressedZkpPublicKey,
-          fee,
-        );
-        expectTransaction(res);
+      const res = await nf3Users[0].transfer(
+        false,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3Users[1].zkpKeys.compressedZkpPublicKey,
+        fee,
+      );
+      expectTransaction(res);
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
+      await emptyL2();
+
       // stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      await getBalances();
+      const afterBalances = await getBalances();
 
-      expect(balances[0] - beforeBalances[0]).to.be.equal(-txPerBlock * transferValue);
-      expect(balances[1] - beforeBalances[1]).to.be.equal(txPerBlock * transferValue);
+      expect(afterBalances[0] - beforeBalances[0]).to.be.equal(-(transferValue + fee));
+      expect(afterBalances[1] - beforeBalances[1]).to.be.equal(transferValue);
     });
 
     it('should transfer some ERC20 crypto (back to us) using ZKP', async function () {
       const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
-      for (let i = 0; i < txPerBlock; i++) {
-        const res = await nf3Users[0].transfer(
-          false,
-          erc20Address,
-          tokenType,
-          transferValue,
-          tokenId,
-          nf3Users[0].zkpKeys.compressedZkpPublicKey,
-          fee,
-        );
-        expectTransaction(res);
-        logger.debug(`     Gas used was ${Number(res.gasUsed)}`);
-      }
+      const res = await nf3Users[0].transfer(
+        false,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3Users[0].zkpKeys.compressedZkpPublicKey,
+        fee,
+      );
+      expectTransaction(res);
+      await emptyL2();
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
       // stateBalance += fee * txPerBlock + BLOCK_STAKE;
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      expect(after).to.be.lessThan(before);
-    });
-
-    it('should send a single ERC20 transfer directly to a proposer', async function () {
-      const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
-
-      // here we don't need to emptyL2 because we're sending two transactions
-      for (let i = 0; i < txPerBlock; i++) {
-        const res = await nf3Users[0].transfer(
-          true,
-          erc20Address,
-          tokenType,
-          transferValue,
-          tokenId,
-          nf3Users[1].zkpKeys.compressedZkpPublicKey,
-          fee,
-        );
-        expect(res).to.be.equal(200);
-      }
-
-      const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
-      expect(after).to.be.lessThan(before);
-    });
-
-    it('should send a double ERC20 transfer directly to a proposer', async function () {
-      // we get some different transferValue than the commitments we have (all should be of value transferValue)
-      // then we send it, the client should pick two commitments to send the transaction
-      const doubleTransferValue = Math.ceil(transferValue * 1.2);
-
-      const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
-
-      // here we don't need to emptyL2 because we're sending two transactions
-      for (let i = 0; i < txPerBlock; i++) {
-        const res = await nf3Users[0].transfer(
-          true,
-          erc20Address,
-          tokenType,
-          doubleTransferValue,
-          tokenId,
-          nf3Users[1].zkpKeys.compressedZkpPublicKey,
-          fee,
-        );
-        expect(res).to.be.equal(200);
-      }
-
-      const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
-      expect(after).to.be.lessThan(before);
+      expect(after - before).to.be.equal(-fee);
     });
   });
 
@@ -271,15 +163,18 @@ describe('ERC20 tests', () => {
         false,
         erc20Address,
         tokenType,
-        transferValue,
+        transferValue / 2,
         tokenId,
         nf3Users[0].ethereumAddress,
+        fee,
       );
       expectTransaction(rec);
 
-      logger.debug(`     Gas used was ${Number(rec.gasUsed)}`);
+      await emptyL2();
+
+      logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
-      expect(afterBalance).to.be.lessThan(beforeBalance);
+      expect(afterBalance - beforeBalance).to.be.equal(-(transferValue / 2 + fee));
     });
 
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
@@ -289,13 +184,16 @@ describe('ERC20 tests', () => {
           false,
           erc20Address,
           tokenType,
-          transferValue,
+          Math.floor(transferValue / 2),
           tokenId,
           nf3Users[0].ethereumAddress,
+          fee,
         );
         expectTransaction(rec);
+
+        await emptyL2();
+
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-        await emptyL2(nf3Users[0]);
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
         expectTransaction(res);
       } catch (err) {
@@ -318,14 +216,16 @@ describe('ERC20 tests', () => {
           false,
           erc20Address,
           tokenType,
-          transferValue,
+          Math.floor(transferValue / 2),
           tokenId,
           nf3Users[0].ethereumAddress,
+          fee,
         );
         expectTransaction(rec);
-        const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
-        await emptyL2(nf3Users[0]);
+        await emptyL2();
+
+        const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
 
@@ -345,9 +245,29 @@ describe('ERC20 tests', () => {
         const endBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
         expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
       } else {
-        console.log('     Not using a time-jump capable test client so this test is skipped');
+        console.log('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
+    });
+
+    it('should withdraw from L2 with some change', async function () {
+      const beforeBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      const rec = await nf3Users[0].withdraw(
+        false,
+        erc20Address,
+        tokenType,
+        Math.floor(transferValue / 2),
+        tokenId,
+        nf3Users[0].ethereumAddress,
+        fee,
+      );
+      expectTransaction(rec);
+
+      await emptyL2();
+
+      logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
+      const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
+      expect(afterBalance - beforeBalance).to.be.equal(-(Math.floor(transferValue / 2) + fee));
     });
   });
 
@@ -361,7 +281,7 @@ describe('ERC20 tests', () => {
         nf3LiquidityProvider.ethereumAddress,
         nf3LiquidityProvider.shieldContractAddress,
         tokenType,
-        transferValue,
+        Math.floor(transferValue / 2),
         web3Client.getWeb3(),
         !!nf3LiquidityProvider.ethereumSigningKey,
       );
@@ -392,23 +312,26 @@ describe('ERC20 tests', () => {
         false,
         erc20Address,
         tokenType,
-        transferValue,
+        Math.floor(transferValue / 2),
         tokenId,
         nf3Users[0].ethereumAddress,
         fee,
       );
+
+      await emptyL2();
+
       const latestWithdrawTransactionHash = nf3Users[0].getLatestWithdrawHash();
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
       const count = logs.instantWithdraw;
 
-      await emptyL2(nf3Users[0]);
+      await emptyL2();
+
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
       const res = await nf3Users[0].requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
-      expectTransaction(res);
-      logger.debug(`     Gas used was ${Number(res.gasUsed)}`);
 
-      await emptyL2(nf3Users[0]);
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
 
       await waitForTxExecution(count, 'instantWithdraw');
 
@@ -418,12 +341,11 @@ describe('ERC20 tests', () => {
     });
 
     it('should not allow instant withdraw of non existing withdraw or not in block yet', async function () {
-      // We create enough transactions to fill numDeposits blocks full of deposits.
       await nf3Users[0].withdraw(
         false,
         erc20Address,
         tokenType,
-        transferValue,
+        Math.floor(transferValue / 2),
         tokenId,
         nf3Users[0].ethereumAddress,
         fee,
@@ -436,8 +358,7 @@ describe('ERC20 tests', () => {
     });
 
     after(async () => {
-      await emptyL2(nf3Users[0]);
-      await nf3LiquidityProvider.close();
+      nf3LiquidityProvider.close();
     });
   });
 
@@ -450,6 +371,8 @@ describe('ERC20 tests', () => {
     let maxERC20DepositValue;
 
     before(() => {
+      web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+
       maxERC20WithdrawValue =
         maxWithdrawValue.find(e => e.address.toLowerCase() === erc20Address)?.amount ||
         erc20default;
@@ -460,17 +383,8 @@ describe('ERC20 tests', () => {
 
     it('should restrict deposits', async () => {
       // anything equal or above the restricted amount should fail
-      // console.log('depositing', maxERC20DepositValue + 1);
       try {
-        await depositNTransactions(
-          nf3Users[0],
-          txPerBlock,
-          erc20Address,
-          tokenType,
-          maxERC20DepositValue + 1,
-          tokenId,
-          fee,
-        );
+        await nf3Users[0].deposit(erc20Address, tokenType, maxERC20DepositValue + 1, tokenId, fee);
         expect.fail('Transaction has not been reverted by the EVM');
       } catch (error) {
         expect(error.message).to.satisfy(message =>
@@ -519,7 +433,7 @@ describe('ERC20 tests', () => {
             fee,
           );
 
-          await emptyL2(nf3Users[0]);
+          await emptyL2();
           await new Promise(resolve => setTimeout(resolve, 15000));
 
           for (let i = 0; i < 5; i++) {
@@ -531,13 +445,12 @@ describe('ERC20 tests', () => {
               trnsferValue * (i + 2),
               tokenId,
               nf3Users[0].zkpKeys.compressedZkpPublicKey,
-              fee,
+              0,
             );
-            await emptyL2(nf3Users[0]);
+            await emptyL2();
             await new Promise(resolve => setTimeout(resolve, 30000));
           }
 
-          // console.log('withdrawing', trnsferValue * 6);
           const rec = await nf3Users[0].withdraw(
             false,
             erc20Address,
@@ -545,14 +458,15 @@ describe('ERC20 tests', () => {
             withdrawValue,
             tokenId,
             nf3Users[0].ethereumAddress,
-            fee,
+            0,
           );
 
-          await new Promise(resolve => setTimeout(resolve, 15000));
+          await emptyL2();
+          await new Promise(resolve => setTimeout(resolve, 30000));
+
           expectTransaction(rec);
 
-          const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-          await emptyL2(nf3Users[0]);
+          const withdrawal = nf3Users[0].getLatestWithdrawHash();
           await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
           // anything equal or above the restricted amount should fail
           await nf3Users[0].finaliseWithdrawal(withdrawal);
@@ -564,7 +478,7 @@ describe('ERC20 tests', () => {
           );
         }
       } else {
-        console.log('     Not using a time-jump capable test client so this test is skipped');
+        console.log('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
     });

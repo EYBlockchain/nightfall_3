@@ -1,17 +1,31 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { generateKeys } from '@Nightfall/services/keys';
+import { ZkpKeys } from '@Nightfall/services/keys';
 import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed';
-import { checkIndexDBForCircuit, getMaxBlock } from '@Nightfall/services/database';
+import {
+  checkIndexDBForCircuit,
+  checkIndexDBForCircuitHash,
+  getMaxBlock,
+  emptyStoreBlocks,
+  emptyStoreTimber,
+} from '@Nightfall/services/database';
+import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
+import init from '../../web-worker/index.js';
 
-const { eventWsUrl, USE_STUBS } = global.config;
+const {
+  utilApiServerUrl,
+  AWS: { s3Bucket },
+  isLocalRun,
+} = global.config;
+
+const { eventWsUrl } = global.config;
 
 export const initialState = {
-  compressedPkd: '',
+  compressedZkpPublicKey: '',
   chainSync: false,
   circuitSync: false,
 };
@@ -25,36 +39,37 @@ export const UserProvider = ({ children }) => {
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false); // This is not really a sync;
   const [isSyncing, setSyncing] = React.useState(true);
+  const [lastBlock, setLastBlock] = React.useState({ blockHash: '0x0' });
   const history = useHistory();
 
   const deriveAccounts = async (mnemonic, numAccts) => {
     const accountRange = Array.from({ length: numAccts }, (v, i) => i);
     const zkpKeys = await Promise.all(
-      accountRange.map(i => generateKeys(mnemonic, `m/44'/60'/0'/${i.toString()}`)),
+      accountRange.map(i => ZkpKeys.generateZkpKeysFromMnemonic(mnemonic, i)),
     );
     const aesGenParams = { name: 'AES-GCM', length: 128 };
     const key = await crypto.subtle.generateKey(aesGenParams, false, ['encrypt', 'decrypt']);
     await storeBrowserKey(key);
     await Promise.all(zkpKeys.map(zkpKey => encryptAndStore(zkpKey)));
-    Storage.pkdArraySet(
+    Storage.ZkpPubKeyArraySet(
       '',
-      zkpKeys.map(z => z.compressedPkd),
+      zkpKeys.map(z => z.compressedZkpPublicKey),
     );
     setState(previousState => {
       return {
         ...previousState,
-        compressedPkd: zkpKeys[0].compressedPkd,
+        compressedZkpPublicKey: zkpKeys[0].compressedZkpPublicKey,
       };
     });
   };
 
   const syncState = async () => {
-    const pkds = Storage.pkdArrayGet('');
-    if (pkds) {
+    const compressedZkpPublicKeys = Storage.ZkpPubKeyArrayGet('');
+    if (compressedZkpPublicKeys) {
       setState(previousState => {
         return {
           ...previousState,
-          compressedPkd: pkds[0],
+          compressedZkpPublicKey: compressedZkpPublicKeys[0],
         };
       });
     }
@@ -66,9 +81,9 @@ export const UserProvider = ({ children }) => {
     // Connection opened
     socket.addEventListener('open', async function () {
       console.log(`Websocket is open`);
-      const lastBlock = (await getMaxBlock()) ?? -1;
-      console.log('LastBlock', lastBlock);
-      socket.send(JSON.stringify({ type: 'sync', lastBlock }));
+      const lastBlockL2 = (await getMaxBlock()) ?? -1;
+      console.log('LastBlock', lastBlockL2);
+      socket.send(JSON.stringify({ type: 'sync', lastBlock: lastBlockL2 }));
     });
 
     setState(previousState => {
@@ -81,8 +96,8 @@ export const UserProvider = ({ children }) => {
 
   let messageEventHandler;
   const configureMessageListener = () => {
-    const { compressedPkd, socket } = state;
-    if (compressedPkd === '') return;
+    const { compressedZkpPublicKey, socket } = state;
+    if (compressedZkpPublicKey === '') return;
 
     if (messageEventHandler) {
       socket.removeEventListener('message', messageEventHandler);
@@ -92,32 +107,66 @@ export const UserProvider = ({ children }) => {
     messageEventHandler = async function (event) {
       console.log('Message from server ', JSON.parse(event.data));
       const parsed = JSON.parse(event.data);
-      const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
+      const { nullifierKey, zkpPrivateKey } = await retrieveAndDecrypt(compressedZkpPublicKey);
       if (parsed.type === 'sync') {
         await parsed.historicalData
           .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
           .reduce(async (acc, curr) => {
             await acc; // Acc is a promise so we await it before processing the next one;
-            return blockProposedEventHandler(curr, [ivk], [nsk]); // TODO Should be array
+            return blockProposedEventHandler(curr, [zkpPrivateKey], [nullifierKey]); // TODO Should be array
           }, Promise.resolve());
+
+        // We want to verify that the received block is from the current contract deployment.
+        // for this, we store the lastBlock received in lastBlock, and compare the hash with the previousBlockHash
+        // from the received block. If they don't match, then there has been a redeployment.
         if (Number(parsed.maxBlock) !== 1) {
-          socket.send(
-            JSON.stringify({
-              type: 'sync',
-              lastBlock:
-                parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2,
-            }),
-          );
-        }
-        console.log('Sync complete');
+          if (
+            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash !==
+              lastBlock.blockHash &&
+            Number(lastBlock.blockHash) !== 0
+          ) {
+            // resync
+            console.log('Resync DB');
+            emptyStoreBlocks();
+            emptyStoreTimber();
+            Storage.shieldAddressSet();
+          } else if (
+            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash ===
+              lastBlock.blockHash ||
+            Number(lastBlock.blockHash) === 0
+          ) {
+            setLastBlock(parsed.historicalData[parsed.historicalData.length - 1].block);
+            socket.send(
+              JSON.stringify({
+                type: 'sync',
+                lastBlock:
+                  parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2,
+              }),
+            );
+          }
+        } else if (lastBlock.blockHash) console.log('Sync complete');
         setState(previousState => {
           return {
             ...previousState,
             chainSync: true,
           };
         });
-      } else if (parsed.type === 'blockProposed')
-        await blockProposedEventHandler(parsed.data, [ivk], [nsk]);
+      } else if (parsed.type === 'blockProposed') {
+        console.log('blockProposed Event');
+        if (
+          parsed.data.block.previousBlockHash !== lastBlock.blockHash &&
+          Number(lastBlock.blockHash) !== 0
+        ) {
+          // resync
+          console.log('Resync DB');
+          emptyStoreBlocks();
+          emptyStoreTimber();
+          Storage.shieldAddressSet();
+        } else {
+          setLastBlock(parsed.data.block);
+          await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);
+        }
+      }
       // TODO Rollback Handler
     };
 
@@ -129,7 +178,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   React.useEffect(async () => {
-    if (state.compressedPkd === '') {
+    if (state.compressedZkpPublicKey === '') {
       console.log('Sync State');
       await syncState();
     }
@@ -138,15 +187,15 @@ export const UserProvider = ({ children }) => {
 
   React.useEffect(() => {
     configureMessageListener();
-  }, [state.compressedPkd]);
+  }, [state.compressedZkpPublicKey]);
 
   useInterval(
     async () => {
-      const circuitName = USE_STUBS
-        ? ['deposit_stub', 'single_transfer_stub', 'double_transfer_stub', 'withdraw_stub']
-        : ['deposit', 'single_transfer', 'double_transfer', 'withdraw'];
+      const circuitInfo = isLocalRun
+        ? await fetch(`${utilApiServerUrl}/s3_hash.txt`).then(response => response.json())
+        : JSON.parse(new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')));
 
-      const circuitCheck = await Promise.all(circuitName.map(c => checkIndexDBForCircuit(c)));
+      const circuitCheck = await Promise.all(circuitInfo.map(c => checkIndexDBForCircuit(c.name)));
       console.log('Circuit Check', circuitCheck);
       if (circuitCheck.every(c => c)) {
         setState(previousState => {
@@ -156,9 +205,37 @@ export const UserProvider = ({ children }) => {
           };
         });
         setSyncing(false);
+      } else {
+        console.log('RELOAD CIRCUITS');
+        init();
       }
     },
     isSyncing ? 30000 : null,
+  );
+
+  /*
+    Check if hash circuit functions from manifest have changed. If the have, resync again
+  */
+  useInterval(
+    async () => {
+      const circuitInfo = isLocalRun
+        ? await fetch(`${utilApiServerUrl}/s3_hash.txt`).then(response => response.json())
+        : JSON.parse(new TextDecoder().decode(await fetchAWSfiles(s3Bucket, 's3_hash.txt')));
+      const hashCheck = await Promise.all(circuitInfo.map(c => checkIndexDBForCircuitHash(c)));
+      console.log('Circuit Hash Check', hashCheck);
+      if (!hashCheck.every(c => c)) {
+        setState(previousState => {
+          return {
+            ...previousState,
+            circuitSync: false,
+          };
+        });
+        setSyncing(true);
+        console.log('RELOAD CIRCUITS');
+        init();
+      }
+    },
+    isSyncing ? null : 30000,
   );
   /*
    * TODO: children should render when sync is complete

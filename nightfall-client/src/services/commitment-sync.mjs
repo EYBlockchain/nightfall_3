@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /**
 commitmentsync services to decrypt commitments from transaction blockproposed events
 or use clientCommitmentSync to decrypt when new zkpPrivateKey is received.
@@ -53,9 +54,6 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
     }
   });
 
-  if (storeCommitments.length === 0) {
-    throw Error("This encrypted message isn't for any of recipients");
-  }
   return Promise.all(storeCommitments);
 }
 
@@ -67,11 +65,8 @@ export async function clientCommitmentSync(zkpPrivateKey, nullifierKey) {
   const transactions = await getAllTransactions();
   for (let i = 0; i < transactions.length; i++) {
     // filter out non zero commitments and nullifiers
-    const nonZeroCommitments = transactions[i].commitments.flat().filter(n => n !== ZERO);
-    if (
-      (transactions[i].transactionType === '1' || transactions[i].transactionType === '2') &&
-      countCommitments(nonZeroCommitments) === 0
-    )
+    const nonZeroCommitments = transactions[i].commitments.filter(n => n !== ZERO);
+    if (transactions[i].transactionType === '1' && countCommitments([nonZeroCommitments[0]]) === 0)
       decryptCommitment(transactions[i], zkpPrivateKey, nullifierKey);
   }
 }

@@ -1,6 +1,6 @@
 from "EMBED" import u8_to_bits
 
-def main<N>(u8[N] i) -> (field):
+def convert<N>(u8[N] i) -> (field):
     field res = 0
     for u32 k in 0..N do
         for u32 j in 0..8 do
@@ -8,5 +8,12 @@ def main<N>(u8[N] i) -> (field):
             u32 exponent = (N - k - 1) * 8 + (8 - j - 1)
             res = res + if bits[j] then 2 ** exponent else 0 fi
         endfor
+    endfor
+    return res
+
+def main<M,N>(u8[M][N] input) -> (field[M]):
+    field[M] res = [0; M]
+    for u32 i in 0..M do
+        res[i] = convert(input[i])
     endfor
     return res

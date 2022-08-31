@@ -165,7 +165,7 @@ function keccak256Hash(...items) {
 
 function mimcHash(...msgs) {
   const curve = !config.CURVE || config.CURVE === 'bn128' ? 'ALT_BN_254' : config.CURVE;
-  logger.silly(`curve: ${config.CURVE}`);
+  logger.trace(`curve: ${config.CURVE}`);
   return `0x${mimcHashFunction(msgs, curve)
     .toString(16) // hex string - can remove 0s
     .padStart(64, '0')}`; // so pad

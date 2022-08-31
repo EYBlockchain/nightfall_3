@@ -14,7 +14,7 @@ export default function receiveMessage() {
       logger.debug(`transfer queue handler ${message.content.toString()}`);
       const txDataToSign = await transfer(JSON.parse(message.content.toString()));
       logger.debug('returning raw transaction');
-      logger.silly(` raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+      logger.trace(` raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
 
       response.data = { txDataToSign };
     } catch (err) {

@@ -118,7 +118,7 @@ async function setupCircuits() {
     logger.info(`Registering verification key for ${circuit}`);
     try {
       delete vk.raw; // long and not needed
-      logger.silly('vk:', vk);
+      logger.trace('vk:', vk);
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
       const folderpath = circuit.slice(0, -4); // remove the .zok extension
 

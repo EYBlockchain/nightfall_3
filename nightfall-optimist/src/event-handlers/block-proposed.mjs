@@ -99,7 +99,9 @@ async function blockProposedEventHandler(data) {
     await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2, timeBlockL2); // TODO is await needed?
 
     const latestTree = await getLatestTree();
-    const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+    const blockCommitments = transactions
+      .map(t => t.commitments.filter(c => c !== ZERO))
+      .flat(Infinity);
     const updatedTimber = Timber.statelessUpdate(
       latestTree,
       blockCommitments,

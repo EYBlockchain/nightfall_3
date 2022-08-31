@@ -155,10 +155,7 @@ async function rollbackEventHandler(data) {
   const validTransactions = transactions.filter(
     tx => !invalidTransactionHashesArr.includes(tx.transactionHash),
   );
-  const validTransactionNullifiers = validTransactions
-    .map(v => v.nullifiers)
-    .flat(Infinity)
-    .filter(n => n !== ZERO);
+  const validTransactionNullifiers = validTransactions.nullifiers.filter(n => n !== ZERO);
 
   const deletedNullifiers = unspentNullifierHashes.filter(
     un => !validTransactionNullifiers.includes(un) && !nullifierArray.includes(un),

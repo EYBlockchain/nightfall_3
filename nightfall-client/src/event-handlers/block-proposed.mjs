@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
@@ -37,7 +38,9 @@ async function blockProposedEventHandler(data, syncing) {
     `Received Block Proposed event with layer 2 block number ${block.blockNumberL2} and tx hash ${transactionHashL1}`,
   );
   const latestTree = await getLatestTree();
-  const blockCommitments = transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat();
+  const blockCommitments = transactions
+    .map(t => t.commitments.filter(c => c !== ZERO))
+    .flat(Infinity);
 
   let timeBlockL2 = await getTimeByBlock(transactionHashL1);
   timeBlockL2 = new Date(timeBlockL2 * 1000);
@@ -46,13 +49,13 @@ async function blockProposedEventHandler(data, syncing) {
     let saveTxToDb = false;
 
     // filter out non zero commitments and nullifiers
-    const nonZeroCommitments = transaction.commitments.flat().filter(n => n !== ZERO);
-    const nonZeroNullifiers = transaction.nullifiers.flat().filter(n => n !== ZERO);
+    const nonZeroCommitments = transaction.commitments.filter(n => n !== ZERO);
+    const nonZeroNullifiers = transaction.nullifiers.filter(n => n !== ZERO);
 
-    const countOfNonZeroCommitments = await countCommitments(nonZeroCommitments);
+    const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
     const countOfNonZeroNullifiers = await countNullifiers(nonZeroNullifiers);
 
-    if (transaction.transactionType === '1' || transaction.transactionType === '2') {
+    if (transaction.transactionType === '1') {
       if (countOfNonZeroCommitments === 0) {
         await decryptCommitment(transaction, zkpPrivateKeys, nullifierKeys)
           .then(isDecrypted => {
@@ -76,7 +79,7 @@ async function blockProposedEventHandler(data, syncing) {
     } else if (transaction.transactionType === '0' && countOfNonZeroCommitments >= 1) {
       // case when deposit transaction created by user
       saveTxToDb = true;
-    } else if (transaction.transactionType === '3' && countOfNonZeroNullifiers >= 1) {
+    } else if (transaction.transactionType === '2' && countOfNonZeroNullifiers >= 1) {
       // case when withdraw transaction created by user
       saveTxToDb = true;
     }

@@ -7,11 +7,9 @@
 import { openDB } from 'idb';
 
 type ZkpAccount = {
-  pkd: Array<string>;
-  compressedPkd: string;
-  nsk: string;
-  ask: string;
-  ivk: string;
+  nullifierKey: string;
+  rootKey: string;
+  compressedZkpPublicKey: string;
 };
 
 type CipherText = {
@@ -27,6 +25,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
+  CIRCUIT_HASH_COLLECTION,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
 } = global.config;
@@ -40,6 +39,7 @@ const connectDB = async () => {
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
+      newDb.createObjectStore(CIRCUIT_HASH_COLLECTION);
     },
   });
 };
@@ -63,7 +63,7 @@ export const encryptAndStore = async (acct: ZkpAccount): Promise<IDBValidKey> =>
   const db = await connectDB();
   const key = await db.get(KEYS_COLLECTION, 'cryptokey');
   const cipherText = await encrypt(acct, key);
-  return db.put(KEYS_COLLECTION, cipherText, acct.compressedPkd);
+  return db.put(KEYS_COLLECTION, cipherText, acct.compressedZkpPublicKey);
 };
 
 const decrypt = async (
@@ -80,18 +80,18 @@ const decrypt = async (
   return JSON.parse(decodeBuffer); // TODO error handling
 };
 
-export const retrieveAndDecrypt = async (compressedPkd: string): Promise<ZkpAccount> => {
+export const retrieveAndDecrypt = async (compressedZkpPublicKey: string): Promise<ZkpAccount> => {
   const db = await connectDB();
   const key = await db.get(KEYS_COLLECTION, 'cryptokey');
-  const { cipherText, iv } = await db.get(KEYS_COLLECTION, compressedPkd); // TODO error handling
+  const { cipherText, iv } = await db.get(KEYS_COLLECTION, compressedZkpPublicKey); // TODO error handling
   return decrypt(Buffer.from(cipherText, 'base64'), key, iv);
 };
 
 export const rotateKey = async (): Promise<IDBValidKey> => {
   const db = await connectDB();
   const keysCollection = await db.getAllKeys(KEYS_COLLECTION);
-  // Retrieve pkds
-  const compressedPkds = keysCollection.filter(k => k !== 'cryptokey');
+  // Retrieve zkpPubKeys
+  const compressedZkpPublicKeys = keysCollection.filter(k => k !== 'cryptokey');
   // Generate New Key
   const aesGenParams = { name: 'AES-GCM', length: 128 };
   const newKey: CryptoKey = await crypto.subtle.generateKey(aesGenParams, false, [
@@ -100,13 +100,15 @@ export const rotateKey = async (): Promise<IDBValidKey> => {
   ]);
   // Retrieve and Decrypt all accounts
   const decryptedZkpAccounts = await Promise.all(
-    compressedPkds.map(async (pkd: IDBValidKey) => retrieveAndDecrypt(pkd.toString())),
+    compressedZkpPublicKeys.map(async (recipientPublicKey: IDBValidKey) =>
+      retrieveAndDecrypt(recipientPublicKey.toString()),
+    ),
   );
   // Re-encrypt these accounts under the new key and store.
   await Promise.all(
     decryptedZkpAccounts.map(async dec => {
       const cipherText = await encrypt(dec, newKey);
-      return db.put(KEYS_COLLECTION, cipherText, dec.compressedPkd);
+      return db.put(KEYS_COLLECTION, cipherText, dec.compressedZkpPublicKey);
     }),
   );
   // Store the new key.

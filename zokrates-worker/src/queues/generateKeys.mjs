@@ -1,5 +1,5 @@
+import logger from 'common-files/utils/logger.mjs';
 import rabbitmq from '../utils/rabbitmq.mjs';
-import logger from '../utils/logger.mjs';
 import generateKeys from '../services/generateKeys.mjs';
 
 export default function receiveMessage() {

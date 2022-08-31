@@ -5,11 +5,18 @@ module for manupulating elliptic curve points for an alt-bn128 curve. This
 is the curve that Ethereum currently has pairing precompiles for. All the
 return values are BigInts (or arrays of BigInts).
 */
+import utils from '../crypto/merkle-tree/utils';
 import { mulMod, addMod, squareRootModPrime } from '../crypto/number-theory';
 import Fq2 from '../../classes/fq2';
 import Proof from '../../classes/proof';
+import { modDivide } from '../crypto/modular-division';
 
-const { BN128_PRIME_FIELD } = global.config;
+const { BN128_PRIME_FIELD, BN128_GROUP_ORDER, BABYJUBJUB } = global.config;
+
+const one = BigInt(1);
+const { JUBJUBE, JUBJUBC, JUBJUBD, JUBJUBA } = BABYJUBJUB;
+const Fp = BN128_GROUP_ORDER; // the prime field used with the curve E(Fp)
+const Fq = JUBJUBE / JUBJUBC;
 
 /**
 function to compress a G1 point. If we throw away the y coodinate, we can
@@ -102,4 +109,87 @@ export function decompressProof(compressedProof) {
     decompressG2([bCompressedReal, bCompressedImaginary]),
     decompressG1(cCompressed),
   ].flat(2);
+}
+
+function isOnCurve(p) {
+  const { JUBJUBA: a, JUBJUBD: d } = BABYJUBJUB;
+  const uu = (p[0] * p[0]) % Fp;
+  const vv = (p[1] * p[1]) % Fp;
+  const uuvv = (uu * vv) % Fp;
+  return (a * uu + vv) % Fp === (one + d * uuvv) % Fp;
+}
+
+/**
+Point addition on the babyjubjub curve TODO - MOD P THIS
+*/
+export function add(p, q) {
+  const { JUBJUBA: a, JUBJUBD: d } = BABYJUBJUB;
+  const u1 = p[0];
+  const v1 = p[1];
+  const u2 = q[0];
+  const v2 = q[1];
+  const uOut = modDivide(u1 * v2 + v1 * u2, one + d * u1 * u2 * v1 * v2, Fp);
+  const vOut = modDivide(v1 * v2 - a * u1 * u2, one - d * u1 * u2 * v1 * v2, Fp);
+  if (!isOnCurve([uOut, vOut])) throw new Error('Addition point is not on the babyjubjub curve');
+  return [uOut, vOut];
+}
+
+/**
+Scalar multiplication on a babyjubjub curve
+@param {String} scalar - scalar mod q (will wrap if greater than mod q, which is probably ok)
+@param {Object} h - curve point in u,v coordinates
+*/
+export function scalarMult(scalar, h, form = 'Edwards') {
+  const { INFINITY } = BABYJUBJUB;
+  const a = ((BigInt(scalar) % Fq) + Fq) % Fq; // just in case we get a value that's too big or negative
+  const exponent = a.toString(2).split(''); // extract individual binary elements
+  let doubledP = [...h]; // shallow copy h to prevent h being mutated by the algorithm
+  let accumulatedP = INFINITY;
+  for (let i = exponent.length - 1; i >= 0; i--) {
+    const candidateP = add(accumulatedP, doubledP, form);
+    accumulatedP = exponent[i] === '1' ? candidateP : accumulatedP;
+    doubledP = add(doubledP, doubledP, form);
+  }
+  if (!isOnCurve(accumulatedP))
+    throw new Error('Scalar multiplication point is not on the babyjubjub curve');
+  return accumulatedP;
+}
+
+/** A useful function that takes a curve point and throws away the x coordinate
+retaining only the y coordinate and the odd/eveness of the x coordinate (plays the
+part of a sign in mod arithmetic with a prime field).  This loses no information
+because we know the curve that relates x to y and the odd/eveness disabiguates the two
+possible solutions. So it's a useful data compression.
+TODO - probably simpler to use integer arithmetic rather than binary manipulations
+*/
+export function edwardsCompress(p) {
+  const px = p[0];
+  const py = p[1];
+  const xBits = px.toString(2).padStart(256, '0');
+  const yBits = py.toString(2).padStart(256, '0');
+  const sign = xBits[255] === '1' ? '1' : '0';
+  const yBitsC = sign.concat(yBits.slice(1)); // add in the sign bit
+  const y = utils.ensure0x(BigInt('0b'.concat(yBitsC)).toString(16).padStart(64, '0')); // put yBits into hex
+  return y;
+}
+
+export function edwardsDecompress(y) {
+  const py = BigInt(y).toString(2).padStart(256, '0');
+  const sign = py[0];
+  const yfield = BigInt(`0b${py.slice(1)}`); // remove the sign encoding
+  if (yfield > Fp || yfield < 0) throw new Error(`y cordinate ${yfield} is not a field element`);
+  // 168700.x^2 + y^2 = 1 + 168696.x^2.y^2
+  const y2 = mulMod([yfield, yfield], Fp);
+  const x2 = modDivide(
+    addMod([y2, BigInt(-1)], Fp),
+    addMod([mulMod([JUBJUBD, y2], Fp), -JUBJUBA], Fp),
+    Fp,
+  );
+  if (x2 === 0n && sign === '0') return BABYJUBJUB.INFINITY;
+  let xfield = squareRootModPrime(x2, Fp);
+  const px = BigInt(xfield).toString(2).padStart(256, '0');
+  if (px[255] !== sign) xfield = Fp - xfield;
+  const p = [xfield, yfield];
+  if (!isOnCurve(p)) throw new Error('The computed point was not on the Babyjubjub curve');
+  return p;
 }

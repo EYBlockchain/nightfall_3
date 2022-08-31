@@ -18,7 +18,7 @@ export const contractPath = contractName => {
 export async function getContractInterface(contractName) {
   const path = contractPath(contractName);
   const contractInterface = JSON.parse(fs.readFileSync(path, 'utf8'));
-  // logger.silly('\ncontractInterface:', contractInterface);
+  // logger.trace('\ncontractInterface:', contractInterface);
   return contractInterface;
 }
 
@@ -49,7 +49,7 @@ export async function getContractInstance(contractName, deployedAddress) {
   const contractInstance = deployedAddress
     ? new web3.eth.Contract(contractInterface.abi, deployedAddress, options)
     : new web3.eth.Contract(contractInterface.abi, options);
-  // logger.silly('\ncontractInstance:', contractInstance);
+  // logger.trace('\ncontractInstance:', contractInstance);
 
   return contractInstance;
 }
@@ -76,7 +76,7 @@ export async function deploy(contractName, constructorParams, { from, gas, passw
       throw new Error(err);
     })
     .then(deployedContractInstance => {
-      // logger.silly('deployed contract instance:', deployedContractInstance);
+      // logger.trace('deployed contract instance:', deployedContractInstance);
       logger.info(
         `${contractName} contract deployed at address ${deployedContractInstance.options.address}`,
       ); // instance with the new contract address

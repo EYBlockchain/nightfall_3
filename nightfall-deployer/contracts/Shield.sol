@@ -22,7 +22,6 @@ import './Pausable.sol';
 contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => bool) public withdrawn;
-    mapping(bytes32 => uint256) public feeBook;
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
 
@@ -37,24 +36,22 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     function submitTransaction(Transaction memory t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
-        // if this is a deposit transaction, take payment now (TODO: is there a
-        // better way? This feels expensive).
-        if (t.transactionType == TransactionTypes.DEPOSIT) payIn(t);
-        // we need to remember the payment made for each transaction so we can pay
-        // the proposer later. We can override the transaction with a higher fee if
-        // we wish, but not lower it (because otherwise someone would be able to
-        // slow down or stop our transaction)
-        bytes32 transactionHash = Utils.hashTransaction(t);
-        if (feeBook[transactionHash] < msg.value) feeBook[transactionHash] = msg.value;
-        (bool success, ) = payable(address(state)).call{value: msg.value}('');
-        require(success, 'Transfer failed.');
+
+        if (t.transactionType == TransactionTypes.DEPOSIT) {
+            require(uint256(t.fee) == msg.value);
+            payIn(t);
+        }
     }
 
     // function to enable a proposer to get paid for proposing a block
-    function requestBlockPayment(Block memory b, Transaction[] memory ts) external {
-        bytes32 blockHash = state.areBlockAndTransactionsReal(b, ts);
+    function requestBlockPayment(Block memory b) external {
+        bytes32 blockHash = Utils.hashBlock(b);
+
+        BlockData memory blockData = state.getBlockData(b.blockNumberL2);
+        require(blockData.blockHash == blockHash, 'This block does not exist');
+
         // check that the block has been finalised
-        uint256 time = state.getBlockData(b.blockNumberL2).time;
+        uint256 time = blockData.time;
         require(
             time + COOLING_OFF_PERIOD < block.timestamp,
             'It is too soon to get paid for this block'
@@ -66,14 +63,28 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         );
         state.setBlockStakeWithdrawn(blockHash);
         // add up how much the proposer is owed.
-        uint256 payment;
-        for (uint256 i = 0; i < ts.length; i++) {
-            bytes32 transactionHash = Utils.hashTransaction(ts[i]);
-            payment += feeBook[transactionHash];
-            feeBook[transactionHash] = 0; // clear the payment
+
+        //Request fees
+        (uint256 feePaymentsEth, uint256 feePaymentsMatic) =
+            state.getFeeBookInfo(b.proposer, b.blockNumberL2);
+        feePaymentsEth += BLOCK_STAKE;
+
+        state.setFeeBookInfo(b.proposer, b.blockNumberL2, uint256(0), 0);
+
+        if (feePaymentsEth > 0) {
+            (bool success, ) = payable(address(state)).call{value: feePaymentsEth}('');
+            require(success, 'Transfer failed.');
         }
-        payment += BLOCK_STAKE;
-        state.addPendingWithdrawal(msg.sender, payment);
+
+        if (feePaymentsMatic > 0) {
+            IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
+                address(this),
+                address(state),
+                feePaymentsMatic
+            );
+        }
+
+        state.addPendingWithdrawal(msg.sender, feePaymentsEth, feePaymentsMatic);
     }
 
     function onERC721Received(
@@ -199,7 +210,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
             // set new owner of transaction, settign fee to zero.
             advancedFeeWithdrawals[withdrawTransactionHash] = 0;
             advancedWithdrawals[withdrawTransactionHash] = msg.sender;
-            state.addPendingWithdrawal(msg.sender, advancedFee);
+            state.addPendingWithdrawal(msg.sender, advancedFee, 0);
             IERC20Upgradeable(tokenAddress).safeTransferFrom(
                 address(msg.sender),
                 currentOwner,
@@ -274,7 +285,10 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     function payIn(Transaction memory t) internal {
         // check the address fits in 160 bits. This is so we can't overflow the circuit
         uint256 addrNum = uint256(t.ercAddress);
-        require (addrNum < 0x010000000000000000000000000000000000000000, 'The given address is more than 160 bits');
+        require(
+            addrNum < 0x010000000000000000000000000000000000000000,
+            'The given address is more than 160 bits'
+        );
         address addr = address(uint160(addrNum));
 
         if (t.tokenType == TokenType.ERC20) {

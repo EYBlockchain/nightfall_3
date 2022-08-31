@@ -6,7 +6,7 @@ on:
 
 jobs:
   dependency-review:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
@@ -14,9 +14,9 @@ jobs:
         uses: actions/dependency-review-action@v1.0.2
 
   eslint-check:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
@@ -28,10 +28,69 @@ jobs:
           cd ..
           npm run lint
 
-  ganache-test:
-    runs-on: ubuntu-18.04
+  general-tests:
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+      - name: General Tests
+        run: |
+          npm ci
+          npm run test-general-stuff
+          cd common-files
+          npm ci
+          npm run test
+
+  circuits-test:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14.17.0'
+
+      - name: Start Containers
+        run: |
+          ./setup-nightfall
+          ./start-nightfall -g -d &> circuit-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat circuit-test.log
+
+      - name: Circuits Test
+        run: |
+          npm run test-circuits
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat circuit-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: circuit-test-logs
+          path: ./circuit-test.log
+
+  ganache-test:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
@@ -55,8 +114,6 @@ jobs:
 
       - name: Run integration test
         run: |
-          npm ci
-          docker wait nightfall_3_deployer_1
           npm run test-e2e-protocol
           npm run test-e2e-tokens
 
@@ -76,11 +133,11 @@ jobs:
           path: ./ganache-test.log
 
   adversary-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env:
       TRANSACTIONS_PER_BLOCK: 32
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
@@ -109,9 +166,7 @@ jobs:
 
       - name: Run integration test
         run: |
-          npm ci
-          docker wait nightfall_3_deployer_1
-          VERBOSE=true npm run adversary-test
+          VERBOSE=true npm run test-adversary
 
       - name: debug logs - after integration test run
         if: always()
@@ -125,15 +180,15 @@ jobs:
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@v3
         with:
           name: adversary-test-logs
           path: ./adversary-test.log
 
   ping-pong-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
@@ -188,7 +243,7 @@ jobs:
     name: check gas for 32 transactions per block
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
         with:
           node-version: '14.17.0'
@@ -204,7 +259,6 @@ jobs:
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
-            docker ps
             docker wait nightfall_3_deployer_1
           attempt_limit: 100
           attempt_delay: 20000
@@ -215,7 +269,6 @@ jobs:
 
       - name: Run tx-gas.mjs test suites
         run: |
-          npm ci
           VERBOSE=true npm run test-gas
 
       - name: Debug logs - after integration test run

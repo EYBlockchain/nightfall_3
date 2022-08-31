@@ -8,24 +8,21 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import constants from 'common-files/constants/index.mjs';
-import { Nullifier, Transaction } from '../classes/index.mjs';
-import {
-  findUsableCommitmentsMutex,
-  markNullified,
-  clearPending,
-  getSiblingInfo,
-} from './commitment-storage.mjs';
-import getProposersUrl from './peers.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
+import { Transaction } from '../classes/index.mjs';
+import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
+import { clearPending, markNullified, storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
+import getProposersUrl from './peers.mjs';
+import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 
-const { BN128_GROUP_ORDER, ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } =
-  config;
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
+const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
 const NEXT_N_PROPOSERS = 3;
 
 async function withdraw(withdrawParams) {
@@ -33,76 +30,111 @@ async function withdraw(withdrawParams) {
   // let's extract the input items
   const { offchain = false, ...items } = withdrawParams;
   const { ercAddress, tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
-  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
-  // the first thing we need to do is to find and input commitment which
-  // will enable us to conduct our withdraw.  Let's rummage in the db...
-  const [oldCommitment] = (await findUsableCommitmentsMutex(
-    compressedZkpPublicKey,
-    ercAddress,
-    tokenId,
-    value,
-    true,
-  )) || [null];
-  if (oldCommitment) logger.debug(`Found commitment ${JSON.stringify(oldCommitment, null, 2)}`);
-  else throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
-  // Having found 1 commitment, which is a suitable input to the
-  // proof, the next step is to compute its nullifier;
-  const nullifier = new Nullifier(oldCommitment, nullifierKey);
-  // and the Merkle path from the commitment to the root
-  const commitmentTreeInfo = await getSiblingInfo(oldCommitment);
-  const siblingPath = generalise(
-    [commitmentTreeInfo.root].concat(
-      commitmentTreeInfo.siblingPath.path.map(p => p.value).reverse(),
-    ),
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+
+  const maticAddress = generalise(
+    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
-  logger.silly(`SiblingPath was: ${JSON.stringify(siblingPath)}`);
 
-  const { leafIndex, isOnChain } = commitmentTreeInfo;
+  logger.debug(
+    `The erc address of the token withdrawn is the following: ${ercAddress.hex(32).toLowerCase()}`,
+  );
 
-  // now we have everything we need to create a Witness and compute a proof
-  const witness = [
-    oldCommitment.preimage.ercAddress.field(BN128_GROUP_ORDER),
-    oldCommitment.preimage.tokenId.limbs(32, 8),
-    oldCommitment.preimage.value.field(BN128_GROUP_ORDER),
-    oldCommitment.preimage.salt.field(BN128_GROUP_ORDER),
-    oldCommitment.hash.field(BN128_GROUP_ORDER),
-    rootKey.field(BN128_GROUP_ORDER),
-    nullifier.hash.field(BN128_GROUP_ORDER),
-    recipientAddress.field(BN128_GROUP_ORDER),
-    siblingPath[0].field(BN128_GROUP_ORDER),
-    siblingPath.slice(1).map(node => node.field(BN128_GROUP_ORDER)), // siblingPAth[32] is a sha hash and will overflow a field but it's ok to take the mod here - hence the 'false' flag
-    leafIndex,
-  ].flat(Infinity);
+  logger.debug(`The erc address of the fee is the following: ${maticAddress.hex(32)}`);
 
-  logger.debug(`witness input is ${witness.join(' ')}`);
-  // call a zokrates worker to generate the proof
-  let folderpath = 'withdraw';
-  if (USE_STUBS) folderpath = `${folderpath}_stub`;
-  const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
-    folderpath,
-    inputs: witness,
-    provingScheme: PROVING_SCHEME,
-    backend: BACKEND,
-  });
-  logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
-  const { proof } = res.data;
-  // and work out the ABI encoded data that the caller should sign and send to the shield contract
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-  const optimisticWithdrawTransaction = new Transaction({
+  const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
+
+  const commitmentsInfo = await getCommitmentInfo({
+    totalValueToSend: withdrawValue,
     fee,
-    historicRootBlockNumberL2: [isOnChain, 0],
-    transactionType: 3,
-    tokenType: items.tokenType,
-    tokenId,
-    value,
     ercAddress,
-    recipientAddress,
-    nullifiers: [nullifier],
-    proof,
+    maticAddress,
+    tokenId,
+    rootKey,
   });
+
   try {
+    // now we have everything we need to create a Witness and compute a proof
+    const transaction = new Transaction({
+      fee,
+      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+      transactionType: 2,
+      tokenType: items.tokenType,
+      tokenId,
+      value,
+      ercAddress,
+      recipientAddress,
+      commitments: commitmentsInfo.newCommitments,
+      nullifiers: commitmentsInfo.nullifiers,
+    });
+
+    const privateData = {
+      rootKey: [rootKey, rootKey, rootKey, rootKey],
+      oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+      paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+      orders: commitmentsInfo.leafIndices,
+      newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+      recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
+      ercAddress,
+      tokenId,
+    };
+
+    const witness = computeCircuitInputs(
+      transaction,
+      privateData,
+      commitmentsInfo.roots,
+      maticAddress,
+    );
+    logger.debug(`witness input is ${witness.join(' ')}`);
+    // call a zokrates worker to generate the proof
+    let folderpath = 'withdraw';
+    if (USE_STUBS) folderpath = `${folderpath}_stub`;
+    const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
+      folderpath,
+      inputs: witness,
+      provingScheme: PROVING_SCHEME,
+      backend: BACKEND,
+    });
+    logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
+    const { proof } = res.data;
+    // and work out the ABI encoded data that the caller should sign and send to the shield contract
+
+    const optimisticWithdrawTransaction = new Transaction({
+      fee,
+      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+      transactionType: 2,
+      tokenType: items.tokenType,
+      tokenId,
+      value,
+      ercAddress,
+      recipientAddress,
+      commitments: commitmentsInfo.newCommitments,
+      nullifiers: commitmentsInfo.nullifiers,
+      proof,
+    });
+
+    const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+
+    // Store new commitments that are ours.
+    const storeNewCommitments = commitmentsInfo.newCommitments
+      .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
+      .map(c => storeCommitment(c, nullifierKey));
+
+    const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
+      markNullified(c, optimisticWithdrawTransaction),
+    );
+
+    await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
+
+    const returnObj = { transaction: optimisticWithdrawTransaction };
+
     if (offchain) {
+      // dig up connection peers
       const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
       logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
       await Promise.all(
@@ -117,22 +149,16 @@ async function withdraw(withdrawParams) {
           );
         }),
       );
-      // on successful computation of the transaction mark the old commitments as nullified
-      await markNullified(oldCommitment, optimisticWithdrawTransaction);
-      const th = optimisticWithdrawTransaction.transactionHash;
-      delete optimisticWithdrawTransaction.transactionHash;
-      optimisticWithdrawTransaction.transactionHash = th;
-      return { transaction: optimisticWithdrawTransaction };
+    } else {
+      returnObj.rawTransaction = await shieldContractInstance.methods
+        .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
+        .encodeABI();
     }
-    const rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
-      .encodeABI();
-    // on successful computation of the transaction mark the old commitments as nullified
-    await markNullified(oldCommitment, optimisticWithdrawTransaction);
-    return { rawTransaction, transaction: optimisticWithdrawTransaction };
-  } catch (err) {
-    await clearPending(oldCommitment);
-    throw new Error(err); // let the caller handle the error
+    return returnObj;
+  } catch (error) {
+    logger.error('Err', error);
+    await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
+    throw new Error('Failed withdraw');
   }
 }
 

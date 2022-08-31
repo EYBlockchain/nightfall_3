@@ -10,11 +10,11 @@ import { getContractAddress } from 'common-files/utils/contract.mjs';
 const router = express.Router();
 
 router.get('/:contract', async (req, res, next) => {
-  logger.silly('contract-address endpoint received GET');
+  logger.trace('contract-address endpoint received GET');
   const { contract } = req.params;
   try {
     const address = await getContractAddress(contract);
-    logger.silly(`returning address ${address}`);
+    logger.trace(`returning address ${address}`);
     res.json({ address });
   } catch (err) {
     logger.error(err);

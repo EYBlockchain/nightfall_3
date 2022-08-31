@@ -10,12 +10,13 @@ import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
+import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, BN128_GROUP_ORDER } =
   config;
@@ -33,14 +34,26 @@ async function deposit(items) {
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
-  const witness = [
-    ercAddress.field(BN128_GROUP_ORDER),
-    tokenId.limbs(32, 8),
-    value.field(BN128_GROUP_ORDER),
-    ...zkpPublicKey.all.field(BN128_GROUP_ORDER),
-    salt.field(BN128_GROUP_ORDER),
-    commitment.hash.field(BN128_GROUP_ORDER),
-  ].flat(Infinity);
+
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+
+  const maticAddress = generalise(
+    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  );
+
+  const publicData = new Transaction({
+    fee,
+    transactionType: 0,
+    tokenType: items.tokenType,
+    tokenId,
+    value,
+    ercAddress,
+    commitments: [commitment],
+  });
+
+  const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
+
+  const witness = computeCircuitInputs(publicData, privateData, [0, 0, 0, 0], maticAddress);
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
   let folderpath = 'deposit';
@@ -51,11 +64,10 @@ async function deposit(items) {
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
   });
-  logger.silly(`Received response ${JSON.stringify(res.data, null, 2)}`);
+  logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   // first, get the contract instance
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({
@@ -68,7 +80,7 @@ async function deposit(items) {
     commitments: [commitment],
     proof,
   });
-  logger.silly(
+  logger.trace(
     `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
   );
   // and then we can create an unsigned blockchain transaction

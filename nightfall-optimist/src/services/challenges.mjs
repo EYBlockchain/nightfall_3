@@ -1,10 +1,10 @@
 import WebSocket from 'ws';
 import config from 'config';
-import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import constants from 'common-files/constants/index.mjs';
+import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
 import {
   getBlockByBlockHash,
   getBlockByTransactionHash,
@@ -152,22 +152,6 @@ export async function createChallenge(block, transactions, err) {
           .encodeABI();
         break;
       }
-      // invalid transaction type
-      case 2: {
-        const { transactionHashIndex: transactionIndex } = err.metadata;
-        // Create a challenge
-        txDataToSign = await challengeContractInstance.methods
-          .challengeTransactionType(
-            Block.buildSolidityStruct(block),
-            transactions.map(t => Transaction.buildSolidityStruct(t)),
-            transactionIndex,
-            salt,
-          )
-          .encodeABI();
-        logger.debug('returning raw transaction');
-        logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
-        break;
-      }
       // historic root is incorrect
       case 3: {
         const { transactionHashIndex: transactionIndex } = err.metadata;
@@ -187,63 +171,44 @@ export async function createChallenge(block, transactions, err) {
         const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         const uncompressedProof = transactions[transactionIndex].proof;
-        if (transactions[transactionIndex].transactionType === '0') {
-          txDataToSign = await challengeContractInstance.methods
-            .challengeProofVerification(
-              Block.buildSolidityStruct(block),
-              transactions.map(t => Transaction.buildSolidityStruct(t)),
-              transactionIndex,
-              uncompressedProof,
-              salt,
-            )
-            .encodeABI();
-        } else if (transactions[transactionIndex].transactionType === '2') {
-          // Create a specific challenge for a double_transfer
-          const [historicInput1, historicInput2] = await Promise.all(
-            transactions[transactionIndex].historicRootBlockNumberL2.map(async b => {
-              const historicBlock = await getBlockByBlockNumberL2(b);
-              const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
+        const [historicInput1, historicInput2, historicInput3, historicInput4] = await Promise.all(
+          transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
+            if (transactions[transactionIndex].nullifiers[i] === 0) {
               return {
-                historicBlock,
-                historicTxs,
+                historicBlock: {},
+                historicTxs: [],
               };
-            }),
-          );
-          txDataToSign = await challengeContractInstance.methods
-            .challengeProofVerification(
-              Block.buildSolidityStruct(block),
-              transactions.map(t => Transaction.buildSolidityStruct(t)),
-              transactionIndex,
-              Block.buildSolidityStruct(historicInput1.historicBlock),
-              Block.buildSolidityStruct(historicInput2.historicBlock),
+            }
+            const historicBlock = await getBlockByBlockNumberL2(b);
+            const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
+            return {
+              historicBlock: Block.buildSolidityStruct(historicBlock),
+              historicTxs,
+            };
+          }),
+        );
+
+        txDataToSign = await challengeContractInstance.methods
+          .challengeProofVerification(
+            Block.buildSolidityStruct(block),
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
+            transactionIndex,
+            [
+              historicInput1.historicBlock,
+              historicInput2.historicBlock,
+              historicInput3.historicBlock,
+              historicInput4.historicBlock,
+            ],
+            [
               historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
               historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-              uncompressedProof,
-              salt,
-            )
-            .encodeABI();
-        } else {
-          const blockL2ContainingHistoricRoot = await getBlockByBlockNumberL2(
-            transactions[transactionIndex].historicRootBlockNumberL2[0], // TODO
-          );
-          const transactionsOfblockL2ContainingHistoricRoot =
-            await getTransactionsByTransactionHashes(
-              blockL2ContainingHistoricRoot.transactionHashes,
-            );
-          txDataToSign = await challengeContractInstance.methods
-            .challengeProofVerification(
-              Block.buildSolidityStruct(block),
-              transactions.map(t => Transaction.buildSolidityStruct(t)),
-              transactionIndex,
-              Block.buildSolidityStruct(blockL2ContainingHistoricRoot),
-              transactionsOfblockL2ContainingHistoricRoot.map(t =>
-                Transaction.buildSolidityStruct(t),
-              ),
-              uncompressedProof,
-              salt,
-            )
-            .encodeABI();
-        }
+              historicInput3.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+              historicInput4.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+            ],
+            uncompressedProof,
+            salt,
+          )
+          .encodeABI();
         break;
       }
       // Challenge Duplicate Nullfier
@@ -261,18 +226,22 @@ export async function createChallenge(block, transactions, err) {
           );
 
           const [oldTxIdx, oldNullifierIdx] = oldBlockTransactions
-            .map((txs, txIndex) => [
-              txIndex,
-              txs.nullifiers.findIndex(oldN => oldN.toString() === n.hash),
-            ])
+            .map((txs, txIndex) => {
+              const txIndexNullifier = txs.nullifiers.findIndex(oldN => oldN.toString() === n.hash);
+              return [txIndex, txIndexNullifier];
+            })
             .filter(oldIdxs => oldIdxs[1] >= 0)
             .flat(Infinity);
+
           const [currentTxIdx, currentNullifierIdx] = transactions
-            .map((txs, txIndex) => [
-              txIndex,
-              txs.nullifiers.findIndex(currN => currN.toString() === n.hash),
-            ])
-            .filter(currentIdx => currentIdx[1] >= 0)
+            .map((txs, txIndex) => {
+              const txIndexNullifier = txs.nullifiers.findIndex(
+                currN => currN.toString() === n.hash,
+              );
+
+              return [txIndex, txIndexNullifier];
+            })
+            .filter(oldIdxs => oldIdxs[1] >= 0)
             .flat(Infinity);
           txDataToSign = await challengeContractInstance.methods
             .challengeNullifier(

@@ -2,7 +2,7 @@
   "name": "common-files",
   "version": "1.0.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_CONFIG_DIR=../config mocha --timeout 0 --bail --exit test/*.mjs"
   },
   "author": "“Liju <“liju.jose@gds.ey.com”>",
   "license": "CC0-1.0",
@@ -12,8 +12,12 @@
     "config": "^3.3.7",
     "general-number": "^1.0.1",
     "mongodb": "^4.7.0",
-    "web3": "^1.7.3",
-    "winston": "^3.6.0",
+    "pino": "^8.3.1",
+    "pino-pretty": "^8.1.0",
+    "web3": "^1.7.5",
     "ws": "^8.5.0"
+  },
+  "devDependencies": {
+    "mocha": "^10.0.0"
   }
 }

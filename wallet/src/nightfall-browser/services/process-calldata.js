@@ -33,9 +33,10 @@ async function getProposeBlockCalldata(eventData) {
   const transactions = transactionsData.map(t => {
     const [
       value,
-      historicRootBlockNumberL2,
+      fee,
       transactionType,
       tokenType,
+      historicRootBlockNumberL2,
       tokenId,
       ercAddress,
       recipientAddress,
@@ -46,9 +47,10 @@ async function getProposeBlockCalldata(eventData) {
     ] = t;
     const transaction = {
       value,
-      historicRootBlockNumberL2,
+      fee,
       transactionType,
       tokenType,
+      historicRootBlockNumberL2,
       tokenId,
       ercAddress,
       recipientAddress,
@@ -64,7 +66,6 @@ async function getProposeBlockCalldata(eventData) {
   });
 
   block.transactionHashes = transactions.map(t => t.transactionHash);
-
   return { transactions, block };
 }
 

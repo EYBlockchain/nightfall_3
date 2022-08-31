@@ -1,0 +1,50 @@
+type Point = field[2]
+
+struct CommitmentPreimage<N> {
+ 	u8[N][31] value
+ 	field[N] salt
+}
+
+
+const field PRIVATE_KEY_DOMAIN = 2708019456231621178814538244712057499818649907582893776052749473028258908910
+const field NULLIFIER_KEY_DOMAIN = 7805187439118198468809896822299973897593108379494079213870562208229492109015
+
+// 2 ^ 160
+const field SHIFT = 1461501637330902918203684832716283019655932542976
+
+struct CompressedPoint<N> {
+	bool[N] parity
+	field[N] ordinate
+}
+
+struct PublicTransaction {
+	field value
+    field fee
+	field transactionType
+	field tokenType
+	field[4] historicRootBlockNumberL2
+	u32[8] tokenId
+	field ercAddress
+	u32[8] recipientAddress
+	field[3] commitments
+	field[4] nullifiers
+	field[2] compressedSecrets
+}
+
+struct Nullifiers<N> {
+	CommitmentPreimage<N> oldCommitments
+    field[N] rootKey
+    field[N][32] paths
+	field[N] orders
+}
+
+struct Commitments<N> {
+	CommitmentPreimage<N> newCommitments
+    Point[N] recipientPublicKey
+}
+
+struct Transfer {
+	u32[8] ephemeralKey
+    field ercAddressTransfer
+    u32[8] idTransfer
+}

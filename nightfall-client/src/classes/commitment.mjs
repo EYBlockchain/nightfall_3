@@ -30,7 +30,10 @@ class Commitment {
     // the compressedPkd is not part of the pre-image but it's used widely in the rest of
     // the code, so we hold it in the commitment object (but not as part of the preimage)
     this.preimage = generalise(items);
-    this.compressedZkpPublicKey = ZkpKeys.compressZkpPublicKey(this.preimage.zkpPublicKey);
+    this.compressedZkpPublicKey =
+      this.preimage.zkpPublicKey[0] === 0
+        ? [0, 0]
+        : ZkpKeys.compressZkpPublicKey(this.preimage.zkpPublicKey);
     // we encode the top four bytes of the tokenId into the empty bytes at the top of the erc address.
     // this is consistent to what we do in the ZKP circuits
     const [top4Bytes, remainder] = this.preimage.tokenId.limbs(224, 2).map(l => BigInt(l));

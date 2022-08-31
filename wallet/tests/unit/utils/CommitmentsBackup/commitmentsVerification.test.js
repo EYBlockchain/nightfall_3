@@ -4,9 +4,9 @@ const wrongCommitments = [
   {
     table: 'commitments',
     rows: [
-      { _id: '1', value: '1', preimage: { compressedPkd: '500' } },
-      { _id: '2', value: '2', preimage: { compressedPkd: '200' } },
-      { _id: '3', value: '3', preimage: { compressedPkd: '100' } },
+      { _id: '1', value: '1', preimage: { compressedZkpPublicKey: '500' } },
+      { _id: '2', value: '2', preimage: { compressedZkpPublicKey: '200' } },
+      { _id: '3', value: '3', preimage: { compressedZkpPublicKey: '100' } },
     ],
   },
 ];
@@ -15,14 +15,14 @@ const mockObject = [
   {
     table: 'commitments',
     rows: [
-      { _id: '1', value: '1', preimage: { compressedPkd: '100' } },
-      { _id: '2', value: '2', preimage: { compressedPkd: '200' } },
-      { _id: '3', value: '3', preimage: { compressedPkd: '100' } },
+      { _id: '1', value: '1', preimage: { compressedZkpPublicKey: '100' } },
+      { _id: '2', value: '2', preimage: { compressedZkpPublicKey: '200' } },
+      { _id: '3', value: '3', preimage: { compressedZkpPublicKey: '100' } },
     ],
   },
 ];
 
-describe('This suit test should insert some keys in a fake indexedDB and test the verification between commitmnets compressedPkds and these fake derived keys', () => {
+describe('This suit test should insert some keys in a fake indexedDB and test the verification between commitmnets compressedZkpPublicKeys and these fake derived keys', () => {
   let objResult;
   beforeAll(async () => {
     objResult = ['100', '200', '300'];

@@ -1,0 +1,20 @@
+from "../../utils/calculations.zok" import sum
+
+def main<NumNullifiers>(\
+    field[NumNullifiers] nullifierRoots,\
+    private field[NumNullifiers] oldCommitmentValues,\
+    private field[NumNullifiers] oldCommitmentSalts,\
+    private field[NumNullifiers] rootKey,\
+    private field[NumNullifiers][32] paths,\
+	private field[NumNullifiers] orders\
+)-> (bool):
+    
+    for u32 i in 0..NumNullifiers do
+        field s = nullifierRoots[i] * sum([\
+            rootKey[i], oldCommitmentValues[i],\
+            oldCommitmentSalts[i],...paths[i], orders[i]\
+        ])
+        assert(s == s)
+    endfor
+
+    return true

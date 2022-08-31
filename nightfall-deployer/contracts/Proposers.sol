@@ -108,7 +108,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
         );
         // Zero out the entry in the bond escrow
         state.setBondAccount(msg.sender, 0);
-        state.addPendingWithdrawal(msg.sender, bond.amount);
+        state.addPendingWithdrawal(msg.sender, bond.amount, 0);
     }
 
     // Proposers can change REST API URL

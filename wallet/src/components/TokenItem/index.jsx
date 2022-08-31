@@ -18,13 +18,14 @@ export default function TokenItem(props) {
   const [filteredTokens, setFilteredTokens] = useState(supportedTokens);
 
   useEffect(async () => {
-    const l2bal = await getWalletBalance(state.compressedPkd);
-    if (Object.hasOwnProperty.call(l2bal, state.compressedPkd))
+    const l2bal = await getWalletBalance(state.compressedZkpPublicKey);
+    console.log('Wallet Balance', l2bal);
+    if (Object.hasOwnProperty.call(l2bal, state.compressedZkpPublicKey))
       setFilteredTokens(
         filteredTokens.map(t => {
           return {
             ...t,
-            l2Balance: l2bal[state.compressedPkd][t.address.toLowerCase()] ?? 0,
+            l2Balance: l2bal[state.compressedZkpPublicKey][t.address.toLowerCase()] ?? 0,
           };
         }),
       );

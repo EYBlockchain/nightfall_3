@@ -20,15 +20,18 @@
     "cors": "2.8.5",
     "express": "^4.17.1",
     "jsonfile": "^6.1.0",
+    "pino": "^8.3.1",
+    "pino-pretty": "^8.1.0",
     "tar": "^6.1.11",
-    "web3": "^1.7.5",
-    "winston": "^3.3.3"
+    "web3": "^1.7.5"
   },
   "devDependencies": {
+    "async": "^3.2.2",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "mocha": "^10.0.0",
-    "nodemon": "^2.0.19"
+    "nodemon": "^2.0.19",
+    "url-parse": "^1.5.9"
   },
   "nodemonConfig": {
     "verbose": true,

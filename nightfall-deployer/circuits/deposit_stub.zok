@@ -1,28 +1,17 @@
-// Inputs for main:
-// - ercContractAddress (public) is the ERCx contract address
-// - value (public) is the 256 bit value (fungible) or identifier (non-fungible)
-// - compressedZkpPublicKey (private) is the public key of the newCommitment derived by hashing the Secret Key Sk of the newCommitment. IT IS KEPT PRIVATE!!
-// - salt (private) is the salt for the newCommitment
-// - newCommitment (public) is the newCommitment
 
-type Point = field[2]
-
-struct TokenId {
-	field top4Bytes
-	field remainder
-}
+from "./common/utils/structures.zok" import PublicTransaction, Commitments, Nullifiers
+from "./common/generic_circuit/Stubs/commitments_stub.zok" import main as commitment_stub
+from "./common/generic_circuit/Stubs/nullifiers_stub.zok" import main as nullifier_stub
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
 
 def main(\
-	field ercContractAddress,\
-	u32[8] id,\
- 	field value,\
-	private Point compressedZkpPublicKey,\
-	private field salt,\
-	field newCommitment\
-)->():
-
-	field u = compressedZkpPublicKey[0] * compressedZkpPublicKey[1] + ercContractAddress + value + newCommitment * salt
-	u32 v = id[0] * id[1] + id[2] + id[3] + id[4] + id[5] + id[6] * id[7]
-	assert(u==u)
-	assert (v==v)
-	return
+    PublicTransaction tx,\
+    field[4] roots,\
+    field maticAddress,\
+    private field salt,\
+    private field[2] recipientPublicKey\
+)-> ():
+    
+    assert(commitment_stub::<1>([tx.value], [salt], [recipientPublicKey]))
+        
+    return

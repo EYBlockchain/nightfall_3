@@ -1,0 +1,58 @@
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "../../utils/structures.zok" import Point
+
+/*
+* Verify that all commitments are correct
+*/
+def main<MinCommitments, MaxCommitments>(\
+    field packedErcAddress,\
+    field idRemainder,\
+    field[MaxCommitments] commitmentHashes,\
+    private field[MaxCommitments] newCommitmentValues,\
+    private field[MaxCommitments] newCommitmentSalts,\
+    private Point[MaxCommitments] recipientPublicKey,\
+    field maticAddress\
+) -> bool:
+
+    //Check that all the commitments are valid. If NumCommitments equals zero this loop will be ignored
+    for u32 i in 0..MaxCommitments do
+        
+        /*
+            Calculate the commmitment hash from the newCommitment parameters
+            We can check if commitment is supposed to be null or non-null by the following
+            1) Note that degenerate case for each circuit type (deposit, transfer, withdraw) also matches the possible uses involving erc721
+            2) Thus, we first perform checks based on this degenerate case (characterised by MinCommitments).
+            3) We use (i + 1) as the loop is zero-indexed while MinCommitments is a count of minimum allowable commitments.
+            4) Therefore we check (with a poseidon hash) any input when the incremented loop index matches this conditional.
+            5) Finally, we check the "optional extra commitments" that are only allowable to erc20/1155 (characterised by value > 0)
+        */
+
+        // uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+        
+        field calculatedCommitmentHash = poseidon([\
+                packedErcAddress,\
+                idRemainder,\
+                newCommitmentValues[i],\
+                ...recipientPublicKey[i],\
+                newCommitmentSalts[i]\
+            ])
+
+        field calculatedCommitmentHashFee = poseidon([\
+                maticAddress,\
+                0,\
+                newCommitmentValues[i],\
+                ...recipientPublicKey[i],\
+                newCommitmentSalts[i]\
+            ])
+        
+        field commitment = if (newCommitmentValues[i] != 0 || (i+1) == MinCommitments) then\
+            calculatedCommitmentHash else 0 fi
+
+        field commitmentFee = if (newCommitmentValues[i] != 0) then\
+            calculatedCommitmentHashFee else 0 fi
+
+        //Check that the calculated commitment matches with the one contained in the transaction
+        assert(commitment == commitmentHashes[i] || commitmentFee == commitmentHashes[i])
+    endfor    
+    
+    return true

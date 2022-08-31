@@ -1,0 +1,84 @@
+from "ecc/babyjubjubParams" import BabyJubJubParams, main as curveParams
+from "ecc/edwardsScalarMult" import main as scalarMult
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
+from "hashes/poseidon/poseidon.zok" import main as poseidon
+from "../../utils/structures.zok" import Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN
+from "../../merkle-tree/path-check.zok" import main as pathCheck
+
+/*
+* Verify that all the nullifiers are correct
+*/
+def main<MinNullifiers, MaxNullifiers>(\
+    field packedErcAddress,\
+    field idRemainder,\
+    field[MaxNullifiers] nullifierHashes,\
+    field[MaxNullifiers] roots,\
+    private field[MaxNullifiers] oldCommitmentValues,\
+    private field[MaxNullifiers] oldCommitmentSalts,\
+    private field[MaxNullifiers] rootKey,\
+    private field[MaxNullifiers][32] paths,\
+	private field[MaxNullifiers] orders,\
+    field maticAddress\
+) -> (Point):
+    // Get Curve Params
+    BabyJubJubParams context = curveParams()
+    Point g = [context.Gu, context.Gv]
+
+    //If the transaction contains change, the receiver of that change MUST be the same user that 
+    //created the transaction. In this field[2] we will store the zkpPublicKey of the sender in case
+    //we need it to check the change. 
+    Point firstInputZkpPublicKeys = [0,0]
+
+    //Check that all the nullifiers are valid. If NumNullifiers equals zero this loop will be ignored
+    for u32 i in 0..MaxNullifiers do
+        // Calculation of zkpPrivateKey and nullifierKey from rootKey
+        field zkpPrivateKeys = poseidon([rootKey[i], PRIVATE_KEY_DOMAIN])
+        field nullifierKeys = poseidon([rootKey[i], NULLIFIER_KEY_DOMAIN])
+
+        // Calculate zkpPublicKey
+        Point zkpPublicKeys = scalarMult(field_to_bool_256(zkpPrivateKeys), g, context)
+
+        /*
+            Calculate the nullifier hash from the oldCommitment parameters
+            We can check if nullifier is supposed to be null or non-null by the following
+            1) Note that degenerate case for each circuit type (deposit, transfer, withdraw) also matches the possible uses involving erc721
+            2) Thus, we first perform checks based on this degenerate case (characterised by MinNullifiers).
+            3) We use (i + 1) as the loop is zero-indexed while MinNullifiers is a count of minimum allowable nullifiers.
+            4) Therefore we check (with a poseidon hash/path check) any input when the incremented loop index matches this conditional.
+            5) Finally, we check the "optional extra nullifiers" that are only allowable to erc20/1155 (characterised by value > 0)
+        */
+
+        field calculatedOldCommitmentHash = poseidon([\
+            packedErcAddress,\
+            idRemainder,\
+            oldCommitmentValues[i],\
+            ...zkpPublicKeys,\
+            oldCommitmentSalts[i]\
+        ])
+        field nullifier = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) then poseidon([nullifierKeys, calculatedOldCommitmentHash]) else 0 fi
+
+        field calculatedOldCommitmentHashFee = poseidon([\
+            maticAddress,\
+            0,\
+            oldCommitmentValues[i],\
+            ...zkpPublicKeys,\
+            oldCommitmentSalts[i]\
+        ])
+
+        field nullifierFee = if(oldCommitmentValues[i] != 0 || (i+1) != MinNullifiers) then poseidon([nullifierKeys, calculatedOldCommitmentHashFee]) else 0 fi
+
+        //Check that the calculated nullifier matches with the one contained in the transaction
+        assert(nullifier == nullifierHashes[i] || nullifierFee == nullifierHashes[i])
+
+        field validCalculatedOldCommitmentHash = if (nullifier == nullifierHashes[i]) then\
+            calculatedOldCommitmentHash else calculatedOldCommitmentHashFee fi
+
+        //Check that the nullifier is contained in the tree
+        bool pathValidity = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) then pathCheck([roots[i], ...paths[i]], orders[i], validCalculatedOldCommitmentHash) else true fi
+        assert(pathValidity)
+
+        //Set the changeZkpPublicKeys if i = 0. Otherwise just set the same value
+        firstInputZkpPublicKeys = i == 0 ? zkpPublicKeys : firstInputZkpPublicKeys
+    endfor
+    
+    return firstInputZkpPublicKeys

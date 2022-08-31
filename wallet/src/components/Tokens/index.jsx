@@ -16,16 +16,19 @@ export default function Tokens(token) {
           <div className="headerH5">Balances on Polygon Nightfall</div>
           <div className="accountBox">
             <img src={polygonNightfall} />
-            {state.compressedPkd && (
+            {state.compressedZkpPublicKey && (
               <div className="accountAddress">
-                {`${state.compressedPkd.slice(0, 6)}...${state.compressedPkd.slice(-6)}`}
+                {`${state.compressedZkpPublicKey.slice(
+                  0,
+                  6,
+                )}...${state.compressedZkpPublicKey.slice(-6)}`}
               </div>
             )}
             <span>
               <IoIosArrowDown />
             </span>
           </div>
-          {/* <div className="headerH5 light-gray-500">{`Nightfall address: ${state.compressedPkd.slice(0, 6)}...${state.compressedPkd.slice(-6)}`}</div> */}
+          {/* <div className="headerH5 light-gray-500">{`Nightfall address: ${state.compressedZkpPublicKey.slice(0, 6)}...${state.compressedZkpPublicKey.slice(-6)}`}</div> */}
         </div>
       </div>
       <div className="seperator" />

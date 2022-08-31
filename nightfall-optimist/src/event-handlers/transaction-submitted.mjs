@@ -60,18 +60,18 @@ async function transactionSubmittedEventHandler(eventParams) {
     await checkTransaction(transaction);
     logger.info('Transaction checks passed');
     const storedNullifiers = (await retrieveNullifiers()).map(sNull => sNull.hash); // List of Nullifiers stored by blockProposer
-    const transactionNullifiers = transaction.nullifiers.filter(
+    const nullifiers = transaction.nullifiers.filter(
       hash => hash !== '0x0000000000000000000000000000000000000000000000000000000000000000',
     ); // Deposit transactions still have nullifier fields but they are 0
-    const dupNullifier = transactionNullifiers.some(txNull => storedNullifiers.includes(txNull)); // Move to Set for performance later.
+
+    const dupNullifier = nullifiers.some(txNull => storedNullifiers.includes(txNull)); // Move to Set for performance later.
     if (dupNullifier) {
       throw new TransactionError(
         'One of the Nullifiers in the transaction is a duplicate! Dropping tx',
         1,
       );
     }
-    if (transactionNullifiers.length > 0)
-      saveNullifiers(transactionNullifiers, transaction.blockNumber); // we can now safely store the nullifiers IFF they are present
+    if (nullifiers.length > 0) saveNullifiers(nullifiers, transaction.blockNumber); // we can now safely store the nullifiers IFF they are present
     saveTransaction({ ...transaction }); // then we need to save it
   } catch (err) {
     if (err instanceof TransactionError)

@@ -9,7 +9,7 @@ router.post('/', async (req, res, next) => {
   try {
     const { rawTransaction: txDataToSign } = await setInstantWithdrawl(req.body);
     logger.debug('returning raw transaction');
-    logger.silly(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+    logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     // convert commitment from GN to hex form for transmission
     res.json({ txDataToSign });
   } catch (err) {

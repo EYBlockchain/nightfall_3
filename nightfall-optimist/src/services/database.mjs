@@ -251,7 +251,7 @@ export async function isRegisteredProposerAddressMine(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const metadata = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
-  logger.silly(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
+  logger.trace(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
   return metadata;
 }
 
@@ -266,7 +266,7 @@ export async function deleteRegisteredProposerAddress(address) {
   if (foundProposer) {
     await db.collection(PROPOSER_COLLECTION).deleteOne(query);
   }
-  logger.silly(`deleted registered proposer`);
+  logger.trace(`deleted registered proposer`);
 }
 
 /**
@@ -278,7 +278,9 @@ export async function getMostProfitableTransactions(number) {
   const db = connection.db(OPTIMIST_DB);
   return db
     .collection(TRANSACTIONS_COLLECTION)
-    .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+    .find({ mempool: true }, { _id: 0 })
+    .sort({ fee: -1 })
+    .limit(number)
     .toArray();
 }
 

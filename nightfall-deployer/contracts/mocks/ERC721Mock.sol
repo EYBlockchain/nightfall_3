@@ -16,7 +16,7 @@ contract ERC721Mock is ERC721URIStorage {
     {
         _tokenIds.increment();
 
-        uint256 newItemId = _tokenIds.current();
+        uint256 newItemId = _tokenIds.current() + 2**254 + 1;
         _mint(player, newItemId);
         _setTokenURI(newItemId, tokenURI);
 
