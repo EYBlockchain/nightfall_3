@@ -89,7 +89,7 @@ describe('ERC20 tests', () => {
   });
 
   describe('Deposits', () => {
-    it('should increment the balance after deposit some ERC20 crypto', async function () {
+    it.skip('should increment the balance after deposit some ERC20 crypto', async function () {
       const currentZkpPublicKeyBalance =
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
@@ -102,7 +102,7 @@ describe('ERC20 tests', () => {
   });
 
   describe('Transfers', () => {
-    it('should decrement the balance after transfer ERC20 to other wallet and increment the other wallet', async function () {
+    it.skip('should decrement the balance after transfer ERC20 to other wallet and increment the other wallet', async function () {
       async function getBalances() {
         return Promise.all([
           (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0,
@@ -133,7 +133,7 @@ describe('ERC20 tests', () => {
       expect(afterBalances[1] - beforeBalances[1]).to.be.equal(transferValue);
     });
 
-    it('should transfer some ERC20 crypto (back to us) using ZKP', async function () {
+    it.skip('should transfer some ERC20 crypto (back to us) using ZKP', async function () {
       const before = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
 
       const res = await nf3Users[0].transfer(
@@ -157,7 +157,7 @@ describe('ERC20 tests', () => {
   });
 
   describe('Normal withdraws from L2', () => {
-    it('should withdraw from L2, checking for missing commitment', async function () {
+    it.skip('should withdraw from L2, checking for missing commitment', async function () {
       const beforeBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
       const rec = await nf3Users[0].withdraw(
         false,
@@ -177,7 +177,7 @@ describe('ERC20 tests', () => {
       expect(afterBalance - beforeBalance).to.be.equal(-(transferValue / 2 + fee));
     });
 
-    it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
+    it.skip('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
       let error = null;
       try {
         const rec = await nf3Users[0].withdraw(
@@ -207,7 +207,7 @@ describe('ERC20 tests', () => {
       );
     });
 
-    it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
+    it.skip('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
       const nodeInfo = await web3Client.getInfo();
       if (nodeInfo.includes('TestRPC')) {
         const startBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
@@ -250,7 +250,7 @@ describe('ERC20 tests', () => {
       }
     });
 
-    it('should withdraw from L2 with some change', async function () {
+    it.skip('should withdraw from L2 with some change', async function () {
       const beforeBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
       const rec = await nf3Users[0].withdraw(
         false,
@@ -305,7 +305,7 @@ describe('ERC20 tests', () => {
       web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     });
 
-    it('should allow instant withdraw of existing withdraw', async function () {
+    it.skip('should allow instant withdraw of existing withdraw', async function () {
       const startBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
 
       await nf3Users[0].withdraw(
@@ -340,7 +340,7 @@ describe('ERC20 tests', () => {
       expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
     });
 
-    it('should not allow instant withdraw of non existing withdraw or not in block yet', async function () {
+    it.skip('should not allow instant withdraw of non existing withdraw or not in block yet', async function () {
       await nf3Users[0].withdraw(
         false,
         erc20Address,
@@ -381,7 +381,7 @@ describe('ERC20 tests', () => {
       // console.log('Max ERC20 Withdraw Value', maxERC20WithdrawValue);
     });
 
-    it('should restrict deposits', async () => {
+    it.skip('should restrict deposits', async () => {
       // anything equal or above the restricted amount should fail
       try {
         await nf3Users[0].deposit(erc20Address, tokenType, maxERC20DepositValue + 1, tokenId, fee);
@@ -423,6 +423,7 @@ describe('ERC20 tests', () => {
           const trnsferValue = Math.floor(maxERC20WithdrawValue / 5); // maxERC20DepositValue < trnsferValue < maxERC20WithdrawValue
           const withdrawValue = trnsferValue * 6; // trnsferValue = ( maxERC20WithdrawValue / 5 ) * 6 > maxERC20WithdrawValue
 
+          console.log('Batch Deposit');
           await depositNTransactions(
             nf3Users[0],
             txPerBlock < 6 ? 6 : txPerBlock, // at least 6 deposits of max deposit value, put together it is bigger than max withdraw value
@@ -435,8 +436,10 @@ describe('ERC20 tests', () => {
 
           await emptyL2();
           await new Promise(resolve => setTimeout(resolve, 15000));
+          console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
 
           for (let i = 0; i < 5; i++) {
+            console.log('Transfer');
             // console.log('transfering self', trnsferValue * (i + 2));
             await nf3Users[0].transfer(
               false,
@@ -449,8 +452,14 @@ describe('ERC20 tests', () => {
             );
             await emptyL2();
             await new Promise(resolve => setTimeout(resolve, 30000));
+            console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
           }
 
+          await emptyL2();
+          await new Promise(resolve => setTimeout(resolve, 30000));
+          console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
+
+          console.log('Final Withdraw');
           const rec = await nf3Users[0].withdraw(
             false,
             erc20Address,
@@ -461,6 +470,7 @@ describe('ERC20 tests', () => {
             0,
           );
 
+          await new Promise(resolve => setTimeout(resolve, 30000));
           await emptyL2();
           await new Promise(resolve => setTimeout(resolve, 30000));
 
