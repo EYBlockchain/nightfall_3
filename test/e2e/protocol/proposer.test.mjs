@@ -14,7 +14,16 @@ chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys, MINIMUM_STAKE, ROTATE_PROPOSER_BLOCKS } = config.TEST_OPTIONS;
+const {
+  mnemonics,
+  signingKeys,
+  MINIMUM_STAKE,
+  ROTATE_PROPOSER_BLOCKS,
+  fee,
+  transferValue,
+  txPerBlock,
+  tokenConfigs: { tokenType, tokenId },
+} = config.TEST_OPTIONS;
 
 const bootProposer = new Nf3(signingKeys.proposer1, environment);
 const secondProposer = new Nf3(signingKeys.proposer2, environment);
@@ -155,6 +164,8 @@ const miniStateABI = [
 ];
 
 let stateAddress;
+const eventLogs = [];
+let erc20Address;
 
 const getStakeAccount = async ethAccount => {
   const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
@@ -180,6 +191,19 @@ const getCurrentSprint = async () => {
   return currentSprint;
 };
 
+const emptyL2 = async () => {
+  let count = await nf3User.unprocessedTransactionCount();
+
+  while (count !== 0) {
+    await nf3User.makeBlockNow();
+    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    count = await nf3User.unprocessedTransactionCount();
+  }
+
+  await nf3User.makeBlockNow();
+  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+};
+
 describe('Basic Proposer tests', () => {
   before(async () => {
     web3 = web3Client.getWeb3();
@@ -191,9 +215,11 @@ describe('Basic Proposer tests', () => {
 
     stateAddress = await bootProposer.getContractAddress('State');
 
+    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+
     let proposer = await getProposer(secondProposer.ethereumAddress);
     if (proposer.thisAddress !== '0x0000000000000000000000000000000000000000') {
-      console.log('De-register second proposer...');
       try {
         await secondProposer.deregisterProposer();
       } catch (e) {
@@ -203,9 +229,8 @@ describe('Basic Proposer tests', () => {
 
     proposer = await getProposer(thirdProposer.ethereumAddress);
     if (proposer.thisAddress !== '0x0000000000000000000000000000000000000000') {
-      console.log('De-register third proposer...');
       try {
-        await secondProposer.deregisterProposer();
+        await thirdProposer.deregisterProposer();
       } catch (e) {
         console.log(e);
       }
@@ -213,7 +238,6 @@ describe('Basic Proposer tests', () => {
 
     proposer = await getProposer(bootProposer.ethereumAddress);
     if (proposer.thisAddress !== '0x0000000000000000000000000000000000000000') {
-      console.log('De-register boot proposer...');
       try {
         await bootProposer.deregisterProposer();
       } catch (e) {
@@ -302,6 +326,27 @@ describe('Basic Proposer tests', () => {
     );
   });
 
+  it('should create some blocks and increase the L2 balance', async () => {
+    await bootProposer.startProposer(); // start proposer to listen making blocks
+
+    await nf3User.deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
+    await emptyL2();
+
+    const currentZkpPublicKeyBalance =
+      (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
+
+    for (let i = 0; i < txPerBlock; i++) {
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+    }
+
+    await emptyL2();
+    const afterZkpPublicKeyBalance =
+      (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
+    expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
+      transferValue * txPerBlock,
+    );
+  });
+
   it('Should create a valid changeCurrentProposer (because blocks has passed)', async function () {
     for (let i = 0; i < 8; i++) {
       try {
@@ -312,6 +357,7 @@ describe('Basic Proposer tests', () => {
         console.log(
           `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress} ]`,
         );
+
         console.log('     Waiting blocks to rotate current proposer...');
         const initBlock = await web3.eth.getBlockNumber();
         let currentBlock = initBlock;
