@@ -434,6 +434,7 @@ describe('ERC20 tests', () => {
             fee,
           );
 
+          await new Promise(resolve => setTimeout(resolve, 15000));
           await emptyL2();
           await new Promise(resolve => setTimeout(resolve, 15000));
           console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
