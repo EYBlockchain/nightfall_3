@@ -436,20 +436,30 @@ describe('ERC20 tests', () => {
           await emptyL2();
           await new Promise(resolve => setTimeout(resolve, 15000));
 
-          for (let i = 0; i < 5; i++) {
-            // console.log('transfering self', trnsferValue * (i + 2));
-            await nf3Users[0].transfer(
-              false,
-              erc20Address,
-              tokenType,
-              trnsferValue * (i + 2),
-              tokenId,
-              nf3Users[0].zkpKeys.compressedZkpPublicKey,
-              0,
-            );
-            await emptyL2();
-            await new Promise(resolve => setTimeout(resolve, 30000));
-          }
+          await nf3Users[0].transfer(
+            false,
+            erc20Address,
+            tokenType,
+            trnsferValue * 3,
+            tokenId,
+            nf3Users[0].zkpKeys.compressedZkpPublicKey,
+            0,
+          );
+
+          await emptyL2();
+          await new Promise(resolve => setTimeout(resolve, 30000));
+
+          await nf3Users[0].transfer(
+            false,
+            erc20Address,
+            tokenType,
+            trnsferValue * 5,
+            tokenId,
+            nf3Users[0].zkpKeys.compressedZkpPublicKey,
+            0,
+          );
+          await emptyL2();
+          await new Promise(resolve => setTimeout(resolve, 30000));
 
           const rec = await nf3Users[0].withdraw(
             false,
