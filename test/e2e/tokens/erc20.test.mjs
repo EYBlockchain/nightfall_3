@@ -49,6 +49,7 @@ const waitForTxExecution = async (count, txType) => {
 };
 
 const emptyL2 = async () => {
+  await new Promise(resolve => setTimeout(resolve, 15000));
   let count = await nf3Users[0].unprocessedTransactionCount();
 
   while (count !== 0) {
@@ -434,7 +435,6 @@ describe('ERC20 tests', () => {
             fee,
           );
 
-          await new Promise(resolve => setTimeout(resolve, 15000));
           await emptyL2();
           await new Promise(resolve => setTimeout(resolve, 15000));
           console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
@@ -471,7 +471,6 @@ describe('ERC20 tests', () => {
             0,
           );
 
-          await new Promise(resolve => setTimeout(resolve, 30000));
           await emptyL2();
           await new Promise(resolve => setTimeout(resolve, 30000));
 
