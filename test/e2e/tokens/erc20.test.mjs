@@ -446,14 +446,11 @@ describe('ERC20 tests', () => {
             0,
           );
 
-          await emptyL2();
-          await new Promise(resolve => setTimeout(resolve, 30000));
-
           await nf3Users[0].transfer(
             false,
             erc20Address,
             tokenType,
-            trnsferValue * 5,
+            trnsferValue * 2,
             tokenId,
             nf3Users[0].zkpKeys.compressedZkpPublicKey,
             0,
