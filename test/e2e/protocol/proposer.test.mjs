@@ -340,6 +340,8 @@ describe('Basic Proposer tests', () => {
     }
 
     await emptyL2();
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
     const afterZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
     expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
