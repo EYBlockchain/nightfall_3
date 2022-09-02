@@ -60,6 +60,7 @@ const emptyL2 = async () => {
 
   await nf3Users[0].makeBlockNow();
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  await new Promise(resolve => setTimeout(resolve, 3000));
 };
 
 describe('ERC20 tests', () => {
@@ -436,13 +437,13 @@ describe('ERC20 tests', () => {
           );
 
           await emptyL2();
-          await new Promise(resolve => setTimeout(resolve, 15000));
+          //await new Promise(resolve => setTimeout(resolve, 15000));
           console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
 
           for (let i = 0; i < 5; i++) {
             console.log('Transfer');
             // console.log('transfering self', trnsferValue * (i + 2));
-            await nf3Users[0].transfer(
+            const rec = await nf3Users[0].transfer(
               false,
               erc20Address,
               tokenType,
@@ -451,13 +452,14 @@ describe('ERC20 tests', () => {
               nf3Users[0].zkpKeys.compressedZkpPublicKey,
               0,
             );
+            expectTransaction(rec);
             await emptyL2();
-            await new Promise(resolve => setTimeout(resolve, 30000));
+            //await new Promise(resolve => setTimeout(resolve, 30000));
             console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
           }
 
           await emptyL2();
-          await new Promise(resolve => setTimeout(resolve, 30000));
+          //await new Promise(resolve => setTimeout(resolve, 30000));
           console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
 
           console.log('Final Withdraw');
@@ -471,10 +473,10 @@ describe('ERC20 tests', () => {
             0,
           );
 
-          await emptyL2();
-          await new Promise(resolve => setTimeout(resolve, 30000));
-
           expectTransaction(rec);
+
+          await emptyL2();
+          //await new Promise(resolve => setTimeout(resolve, 30000));
 
           const withdrawal = nf3Users[0].getLatestWithdrawHash();
           await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
