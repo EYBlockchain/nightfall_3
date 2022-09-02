@@ -337,7 +337,7 @@ export const sendTransactions = async (transactions, submitArgs, web3) => {
 };
 
 export const expectTransaction = res => {
-  console.log("EEEEE",res)
+  console.log('EEEEE', res);
   expect(res).to.have.property('transactionHash');
   expect(res).to.have.property('blockHash');
 };
