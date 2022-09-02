@@ -31,10 +31,10 @@ contract Challenges is Stateful, Key_Registry, Config {
   prior block.
   */
     function challengeLeafCountCorrect(
-        Block memory priorBlockL2, // the block immediately prior to this one
-        Transaction[] memory priorBlockTransactions, // the transactions in the prior block
-        Block memory blockL2,
-        Transaction[] memory transactions,
+        Block calldata priorBlockL2, // the block immediately prior to this one
+        Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
+        Block calldata blockL2,
+        Transaction[] calldata transactions,
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
@@ -57,11 +57,11 @@ contract Challenges is Stateful, Key_Registry, Config {
   is compared to the root stored within the block.
   */
     function challengeNewRootCorrect(
-        Block memory priorBlockL2, // the block immediately prior to this one
-        Transaction[] memory priorBlockTransactions, // the transactions in the prior block
+        Block calldata priorBlockL2, // the block immediately prior to this one
+        Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
         bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
-        Block memory blockL2,
-        Transaction[] memory transactions,
+        Block calldata blockL2,
+        Transaction[] calldata transactions,
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
@@ -85,10 +85,10 @@ contract Challenges is Stateful, Key_Registry, Config {
   (i.e. a trivial duplicate).
   */
     function challengeCommitment(
-        Block memory block1,
-        Block memory block2,
-        Transaction[] memory transactions1,
-        Transaction[] memory transactions2,
+        Block calldata block1,
+        Block calldata block2,
+        Transaction[] calldata transactions1,
+        Transaction[] calldata transactions2,
         uint256 transaction1Index,
         uint256 transaction2Index,
         uint256 commitment1Index,
@@ -122,10 +122,10 @@ contract Challenges is Stateful, Key_Registry, Config {
   (i.e. a trivial duplicate).
   */
     function challengeNullifier(
-        Block memory block1,
-        Block memory block2,
-        Transaction[] memory transactions1,
-        Transaction[] memory transactions2,
+        Block calldata block1,
+        Block calldata block2,
+        Transaction[] calldata transactions1,
+        Transaction[] calldata transactions2,
         uint256 transaction1Index,
         uint256 transaction2Index,
         uint256 nullifier1Index,
@@ -154,11 +154,11 @@ contract Challenges is Stateful, Key_Registry, Config {
     }
 
     function challengeProofVerification(
-        Block memory blockL2,
+        Block calldata blockL2,
         Transaction[] calldata transactions,
         uint256 transactionIndex,
         Block[4] calldata blockL2ContainingHistoricRoot,
-        Transaction[][4] memory transactionsOfblockL2ContainingHistoricRoot,
+        Transaction[][4] calldata transactionsOfblockL2ContainingHistoricRoot,
         uint256[8] memory uncompressedProof,
         bytes32 salt
     ) external onlyBootChallenger {
@@ -233,7 +233,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     }
 
     // This gets called when a challenge succeeds
-    function challengeAccepted(Block memory badBlock) private {
+    function challengeAccepted(Block calldata badBlock) private {
         // Check to ensure that the block being challenged is less than a week old
         require(
             state.getBlockData(badBlock.blockNumberL2).time >= (block.timestamp - 7 days),

@@ -181,7 +181,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         emit Rollback(blockNumberL2ToRollbackTo);
     }
 
-    function setProposer(address addr, LinkedAddress memory proposer) public onlyRegistered {
+    function setProposer(address addr, LinkedAddress calldata proposer) public onlyRegistered {
         proposers[addr] = proposer;
     }
 
@@ -221,7 +221,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         feeBook[input][1] = feePaymentsMatic;
     }
 
-    function pushBlockData(BlockData memory bd) public onlyRegistered {
+    function pushBlockData(BlockData calldata bd) public onlyRegistered {
         blockHashes.push(bd);
     }
 
@@ -302,14 +302,14 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         emit NewCurrentProposer(currentProposer.thisAddress);
     }
 
-    function updateProposer(address proposer, string memory url) public onlyRegistered {
+    function updateProposer(address proposer, string calldata url) public onlyRegistered {
         proposers[proposer].url = url;
     }
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function areBlockAndTransactionsReal(Block memory b, Transaction[] memory ts)
+    function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts)
         public
         view
         returns (bytes32)
@@ -325,10 +325,10 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     }
 
     function areBlockAndTransactionReal(
-        Block memory b,
-        Transaction memory t,
+        Block calldata b,
+        Transaction calldata t,
         uint256 index,
-        bytes32[6] memory siblingPath
+        bytes32[] calldata siblingPath
     ) public view {
         bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');

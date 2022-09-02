@@ -8,15 +8,15 @@ library Utils {
     bytes32 public constant ZERO = bytes32(0);
     uint256 constant TRANSACTIONS_BATCH_SIZE = 6; // TODO Change this from 2 to an appropriate value to control stack too deep error
 
-    function hashTransaction(Structures.Transaction memory t) internal pure returns (bytes32) {
+    function hashTransaction(Structures.Transaction calldata t) internal pure returns (bytes32) {
         return keccak256(abi.encode(t));
     }
 
-    function hashBlock(Structures.Block memory b) internal pure returns (bytes32) {
+    function hashBlock(Structures.Block calldata b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function hashTransactionHashes(Structures.Transaction[] memory ts)
+    function hashTransactionHashes(Structures.Transaction[] calldata ts)
         public
         pure
         returns (bytes32)
@@ -57,7 +57,7 @@ library Utils {
     }
 
     // counts the number of non-zero values (useful for counting real commitments and nullifiers)
-    function countNonZeroValues(bytes32[3] memory vals) internal pure returns (uint256) {
+    function countNonZeroValues(bytes32[3] calldata vals) internal pure returns (uint256) {
         uint256 count;
         if (vals[0] != ZERO) count++;
         if (vals[1] != ZERO) count++;
@@ -65,7 +65,11 @@ library Utils {
     }
 
     // counts the number of non-zero commitments in a block containing the ts transactions)
-    function countCommitments(Structures.Transaction[] memory ts) internal pure returns (uint256) {
+    function countCommitments(Structures.Transaction[] calldata ts)
+        internal
+        pure
+        returns (uint256)
+    {
         uint256 count;
         for (uint256 i = 0; i < ts.length; i++) {
             count += countNonZeroValues(ts[i].commitments);
@@ -74,7 +78,7 @@ library Utils {
     }
 
     // filters the non-zero commitments in a block containing the ts transactions)
-    function filterCommitments(Structures.Transaction[] memory ts)
+    function filterCommitments(Structures.Transaction[] calldata ts)
         internal
         pure
         returns (bytes32[] memory)
@@ -174,7 +178,7 @@ library Utils {
     }
 
     function checkPath(
-        bytes32[6] memory siblingPath,
+        bytes32[] calldata siblingPath,
         uint256 leafIndex,
         bytes32 node
     ) public pure returns (bool) {
