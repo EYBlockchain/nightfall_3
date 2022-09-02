@@ -51,10 +51,13 @@ const waitForTxExecution = async (count, txType) => {
 const emptyL2 = async () => {
   await new Promise(resolve => setTimeout(resolve, 3000));
   let count = await nf3Users[0].unprocessedTransactionCount();
+  console.log('empty tx', count);
 
   while (count !== 0) {
     await nf3Users[0].makeBlockNow();
+    console.log('pending tx');
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    console.log('pending tx event received');
     count = await nf3Users[0].unprocessedTransactionCount();
   }
 
@@ -452,6 +455,7 @@ describe('ERC20 tests', () => {
               nf3Users[0].zkpKeys.compressedZkpPublicKey,
               0,
             );
+            await web3Client.waitForEvent(eventLogs, ['transactionSubmitted']);
             expectTransaction(rec);
             await emptyL2();
             // await new Promise(resolve => setTimeout(resolve, 30000));
