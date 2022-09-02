@@ -31,7 +31,7 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blo
     if (commitment !== ZERO && index !== lastIndex) {
       throw new TransactionError(
         `The transaction holds duplicate commitments with commitment hash ${commitment}`,
-        1,
+        0,
         {
           transaction1: transaction,
           duplicateCommitment1Index: index,
