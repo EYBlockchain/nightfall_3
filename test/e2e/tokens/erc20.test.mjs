@@ -49,7 +49,7 @@ const waitForTxExecution = async (count, txType) => {
 };
 
 const emptyL2 = async () => {
-  await new Promise(resolve => setTimeout(resolve, 15000));
+  await new Promise(resolve => setTimeout(resolve, 3000));
   let count = await nf3Users[0].unprocessedTransactionCount();
 
   while (count !== 0) {
