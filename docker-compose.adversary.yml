@@ -35,11 +35,9 @@ services:
       HASH_TYPE: poseidon
       LOG_LEVEL: debug
       IS_CHALLENGER: 'true'
-      NONSTOP_QUEUE_AFTER_INVALID_BLOCK: 'true'
+      NONSTOP_QUEUE_AFTER_INVALID_BLOCK: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       AUTOSTART_RETRIES: 100
       BAD_BLOCK_SEQUENCE: ${BAD_BLOCK_SEQUENCE}
       BAD_TX_SEQUENCE: ${BAD_TX_SEQUENCE}
     command: ['npm', 'run', 'dev']
-
-
