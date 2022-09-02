@@ -63,8 +63,8 @@ const emptyL2 = async () => {
     count = await pendingCommitmentCount(nf3Users[0]);
   }
 
-  //await nf3Users[0].makeBlockNow();
-  //await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  // await nf3Users[0].makeBlockNow();
+  // await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   await new Promise(resolve => setTimeout(resolve, 3000));
 };
 
