@@ -4,7 +4,13 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { depositNTransactions, expectTransaction, Web3Client } from '../../utils.mjs';
+import {
+  depositNTransactions,
+  expectTransaction,
+  waitForNoPendingCommitments,
+  pendingCommitmentCount,
+  Web3Client,
+} from '../../utils.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
 
@@ -50,15 +56,15 @@ const waitForTxExecution = async (count, txType) => {
 
 const emptyL2 = async () => {
   await new Promise(resolve => setTimeout(resolve, 3000));
-  let count = await nf3Users[0].unprocessedTransactionCount();
+  let count = await pendingCommitmentCount(nf3Users[0]);
   console.log('empty tx', count);
 
   while (count !== 0) {
     await nf3Users[0].makeBlockNow();
     console.log('pending tx');
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    console.log('pending tx event received');
-    count = await nf3Users[0].unprocessedTransactionCount();
+    count = await pendingCommitmentCount(nf3Users[0]);
+    console.log('pending tx event received', count);
   }
 
   await nf3Users[0].makeBlockNow();
@@ -441,12 +447,12 @@ describe('ERC20 tests', () => {
 
           await emptyL2();
           // await new Promise(resolve => setTimeout(resolve, 15000));
-          console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
+          console.log('Pending Transactions', await pendingCommitmentCount(nf3Users[0]));
 
           for (let i = 0; i < 5; i++) {
             console.log('Transfer');
             // console.log('transfering self', trnsferValue * (i + 2));
-            const rec = await nf3Users[0].transfer(
+            await nf3Users[0].transfer(
               false,
               erc20Address,
               tokenType,
@@ -455,19 +461,13 @@ describe('ERC20 tests', () => {
               nf3Users[0].zkpKeys.compressedZkpPublicKey,
               0,
             );
-            await web3Client.waitForEvent(eventLogs, ['transactionSubmitted']);
-            expectTransaction(rec);
             await emptyL2();
             // await new Promise(resolve => setTimeout(resolve, 30000));
-            console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
+            console.log('Pending Transactions', await pendingCommitmentCount(nf3Users[0]));
           }
 
-          await emptyL2();
-          // await new Promise(resolve => setTimeout(resolve, 30000));
-          console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
-
           console.log('Final Withdraw');
-          const rec = await nf3Users[0].withdraw(
+          await nf3Users[0].withdraw(
             false,
             erc20Address,
             tokenType,
@@ -476,8 +476,6 @@ describe('ERC20 tests', () => {
             nf3Users[0].ethereumAddress,
             0,
           );
-
-          expectTransaction(rec);
 
           await emptyL2();
           // await new Promise(resolve => setTimeout(resolve, 30000));

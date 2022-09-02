@@ -475,11 +475,26 @@ export const waitForNoPendingCommitments = client => {
       const pendingDeposit = await client.getLayer2PendingDepositBalances(undefined, true);
       const pendingSpent = await client.getLayer2PendingSpentBalances(undefined, true);
       if (Object.keys(pendingDeposit).length !== 0 || Object.keys(pendingSpent).length !== 0) {
-        logger.debug(`Nonzero Pending commitments.`);
+        const pendingCommitmentsArr = [
+          Object.keys(pendingDeposit).length,
+          Object.keys(pendingSpent).length,
+        ];
+        logger.debug(`Pending commitments: ${pendingCommitmentsArr}`);
         await waitForTimeout(10000);
         pendingCommitments();
       } else resolve();
     }
     pendingCommitments();
   });
+};
+
+/**
+  function to count pending commitments
+*/
+export const pendingCommitmentCount = async client => {
+  const pendingDeposit = await client.getLayer2PendingDepositBalances(undefined, true);
+  const pendingSpent = await client.getLayer2PendingSpentBalances(undefined, true);
+  const pendingCommitments = Object.keys(pendingDeposit).length + Object.keys(pendingSpent).length;
+
+  return pendingCommitments;
 };
