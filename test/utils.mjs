@@ -483,3 +483,14 @@ export const waitForNoPendingCommitments = client => {
     pendingCommitments();
   });
 };
+
+/**
+  function to count pending commitments
+*/
+export const pendingCommitmentCount = async client => {
+  const pendingDeposit = await client.getLayer2PendingDepositBalances(undefined, true);
+  const pendingSpent = await client.getLayer2PendingSpentBalances(undefined, true);
+  const pendingCommitments = Object.keys(pendingDeposit).length + Object.keys(pendingSpent).length;
+
+  return pendingCommitments;
+};

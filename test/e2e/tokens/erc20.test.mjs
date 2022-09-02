@@ -4,7 +4,12 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { depositNTransactions, expectTransaction, Web3Client } from '../../utils.mjs';
+import {
+  depositNTransactions,
+  expectTransaction,
+  pendingCommitmentCount,
+  Web3Client,
+} from '../../utils.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
 
@@ -50,16 +55,17 @@ const waitForTxExecution = async (count, txType) => {
 
 const emptyL2 = async () => {
   await new Promise(resolve => setTimeout(resolve, 3000));
-  let count = await nf3Users[0].unprocessedTransactionCount();
+  let count = await pendingCommitmentCount(nf3Users[0]);
 
   while (count !== 0) {
     await nf3Users[0].makeBlockNow();
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    count = await nf3Users[0].unprocessedTransactionCount();
+    count = await pendingCommitmentCount(nf3Users[0]);
   }
 
   await nf3Users[0].makeBlockNow();
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  await new Promise(resolve => setTimeout(resolve, 3000));
 };
 
 describe('ERC20 tests', () => {
@@ -435,7 +441,6 @@ describe('ERC20 tests', () => {
           );
 
           await emptyL2();
-          await new Promise(resolve => setTimeout(resolve, 15000));
 
           await nf3Users[0].transfer(
             false,
@@ -448,7 +453,6 @@ describe('ERC20 tests', () => {
           );
 
           await emptyL2();
-          await new Promise(resolve => setTimeout(resolve, 30000));
 
           const rec = await nf3Users[0].withdraw(
             false,
