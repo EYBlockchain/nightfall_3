@@ -328,7 +328,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         Block calldata b,
         Transaction calldata t,
         uint256 index,
-        bytes32[] calldata siblingPath
+        bytes32[6] calldata siblingPath
     ) public view {
         bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');

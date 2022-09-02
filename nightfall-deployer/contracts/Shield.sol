@@ -116,7 +116,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         Block calldata b,
         Transaction calldata t,
         uint256 index,
-        bytes32[] calldata siblingPath
+        bytes32[6] calldata siblingPath
     ) external view returns (bool) {
         // check this block is a real one, in the queue, not something made up.
         state.areBlockAndTransactionReal(b, t, index, siblingPath);
@@ -149,7 +149,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         Block calldata b,
         Transaction calldata t,
         uint256 index,
-        bytes32[] calldata siblingPath
+        bytes32[6] calldata siblingPath
     ) external {
         // check this block is a real one, in the queue, not something made up and that the transaction exists in the block
         state.areBlockAndTransactionReal(b, t, index, siblingPath);
@@ -224,7 +224,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         Block calldata b,
         Transaction calldata t,
         uint256 index,
-        bytes32[] calldata siblingPath
+        bytes32[6] calldata siblingPath
     ) external payable nonReentrant {
         // The transaction is a withdrawal transaction
         require(t.transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');

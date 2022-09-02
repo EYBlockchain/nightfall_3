@@ -178,7 +178,7 @@ library Utils {
     }
 
     function checkPath(
-        bytes32[] calldata siblingPath,
+        bytes32[6] calldata siblingPath,
         uint256 leafIndex,
         bytes32 node
     ) public pure returns (bool) {
