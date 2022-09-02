@@ -34,6 +34,7 @@ export function stopMakingChallenges() {
 }
 
 async function commitToChallenge(txDataToSign) {
+  console.log('commitToChallenge--', txDataToSign);
   const web3 = Web3.connection();
   const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
   const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
@@ -204,50 +205,49 @@ export async function createChallenge(block, transactions, err) {
         const { transactionHashIndex: transactionIndex } = err.metadata;
         // Create a challenge
         const uncompressedProof = transactions[transactionIndex].proof;
-        const [historicInput1, historicInput2] = await Promise.all(
-          transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
+        const [historicInput1, historicInput2, historicInputFee1, historicInputFee2] =
+          await Promise.all([
+            ...transactions[transactionIndex].historicRootBlockNumberL2,
+            ...transactions[transactionIndex].historicRootBlockNumberL2Fee
+          ].map(async (b, i) => {
             if (transactions[transactionIndex].nullifiers[i] === 0) {
               return {
                 historicBlock: {},
                 historicTxs: [],
               };
             }
-            const historicBlock = await getBlockByBlockNumberL2(b);
-            const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
-            return {
-              historicBlock: Block.buildSolidityStruct(historicBlock),
-              historicTxs,
-            };
+            let historicBlock = await getBlockByBlockNumberL2(b);
+            let historicTxs = [];
+            if (historicBlock) {
+              historicTxs = await getTransactionsByTransactionHashes(historicBlock.transactionHashes);
+              historicBlock = Block.buildSolidityStruct(historicBlock);
+            } else {
+              // case when historicRootBlockNumberL2 greater than latest l2BlockNumber on chain
+              // creating dummy block
+              historicBlock = Block.buildSolidityStruct(new Block({
+                proposer: block.proposer,
+                root: ZERO,
+                leafCount: 0,
+                blockNumberL2: b,
+                previousBlockHash: ZERO,
+                transactionHashesRoot: ZERO,
+              }));
+            }
+            return { historicBlock, historicTxs };
           }),
         );
 
-        const [historicInputFee1, historicInputFee2] = await Promise.all(
-          transactions[transactionIndex].historicRootBlockNumberL2Fee.map(async (b, i) => {
-            if (transactions[transactionIndex].nullifiersFee[i] === 0) {
-              return {
-                historicBlock: {},
-                historicTxs: [],
-              };
-            }
-            const historicBlock = await getBlockByBlockNumberL2(b);
-            const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
-            return {
-              historicBlock: Block.buildSolidityStruct(historicBlock),
-              historicTxs,
-            };
-          }),
-        );
         txDataToSign = await challengeContractInstance.methods
           .challengeProofVerification(
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
             transactionIndex,
             [historicInput1.historicBlock, historicInput2.historicBlock],
+            [historicInputFee1.historicBlock, historicInputFee2.historicBlock],
             [
               historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
               historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
             ],
-            [historicInputFee1.historicBlock, historicInputFee2.historicBlock],
             [
               historicInputFee1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
               historicInputFee2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
@@ -256,6 +256,7 @@ export async function createChallenge(block, transactions, err) {
             salt,
           )
           .encodeABI();
+
         break;
       }
       default:

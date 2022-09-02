@@ -173,12 +173,19 @@ contract Challenges is Stateful, Key_Registry, Config {
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
+
+        PublicInputs memory extraPublicInputs = PublicInputs(
+            [uint256(0), 0, 0, 0],
+            super.getMaticAddress()
+        );
+
         state.areBlockAndTransactionsReal(blockL2, transactions);
 
-        PublicInputs memory extraPublicInputs =
-            PublicInputs([uint256(0), 0, 0, 0], super.getMaticAddress());
-
-        if (uint256(transactions[transactionIndex].nullifiers[0]) != 0) {
+        // check historic blocks and their transactions
+        if (
+            blockL2ContainingHistoricRoot[0].blockNumberL2 < state.getNumberOfL2Blocks() &&
+            uint256(transactions[transactionIndex].nullifiers[0]) != 0
+        ) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRoot[0],
                 transactionsOfblockL2ContainingHistoricRoot[0]
@@ -190,8 +197,10 @@ contract Challenges is Stateful, Key_Registry, Config {
             );
             extraPublicInputs.roots[0] = uint256(blockL2ContainingHistoricRoot[0].root);
         }
-
-        if (uint256(transactions[transactionIndex].nullifiers[1]) != 0) {
+        if (
+            blockL2ContainingHistoricRoot[1].blockNumberL2 < state.getNumberOfL2Blocks() &&
+            uint256(transactions[transactionIndex].nullifiers[1]) != 0
+        ) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRoot[1],
                 transactionsOfblockL2ContainingHistoricRoot[1]
@@ -203,8 +212,10 @@ contract Challenges is Stateful, Key_Registry, Config {
             );
             extraPublicInputs.roots[1] = uint256(blockL2ContainingHistoricRoot[1].root);
         }
-
-        if (uint256(transactions[transactionIndex].nullifiersFee[0]) != 0) {
+        if (
+            blockL2ContainingHistoricRootFee[0].blockNumberL2 < state.getNumberOfL2Blocks() &&
+            uint256(transactions[transactionIndex].nullifiersFee[0]) != 0
+        ) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRootFee[0],
                 transactionsOfblockL2ContainingHistoricRootFee[0]
@@ -216,8 +227,10 @@ contract Challenges is Stateful, Key_Registry, Config {
             );
             extraPublicInputs.roots[2] = uint256(blockL2ContainingHistoricRootFee[0].root);
         }
-
-        if (uint256(transactions[transactionIndex].nullifiersFee[1]) != 0) {
+        if (
+            blockL2ContainingHistoricRootFee[1].blockNumberL2 < state.getNumberOfL2Blocks() &&
+            uint256(transactions[transactionIndex].nullifiersFee[1]) != 0
+        ) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRootFee[1],
                 transactionsOfblockL2ContainingHistoricRootFee[1]
@@ -230,8 +243,6 @@ contract Challenges is Stateful, Key_Registry, Config {
             extraPublicInputs.roots[3] = uint256(blockL2ContainingHistoricRootFee[1].root);
         }
 
-        // first check the transaction and block do not overflow
-        ChallengesUtil.libCheckOverflows(blockL2, transactions[transactionIndex]);
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
             transactions[transactionIndex],

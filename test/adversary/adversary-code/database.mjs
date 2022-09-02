@@ -10,6 +10,7 @@ let error = process.env.BAD_TX_SEQUENCE
   : [
       'ValidTransaction',
       'ValidTransaction',
+      'HistoricRootError',
       'ValidTransaction',
       // 'IncorrectTreeRoot',
       // 'ValidTransaction',
@@ -138,6 +139,24 @@ const incorrectProof = async number => {
   return transactions;
 };
 
+const historicRootError = async number => {
+  logger.debug('Creating Block with Historic Root Error', number);
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const [{ historicRootBlockNumberL2, ...rest }, ...transactions] = await db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+    .toArray();
+  const incorrectHistoricRoot = {
+    historicRootBlockNumberL2: [Math.floor(Math.random() * 100).toString(), '0'],
+    ...rest,
+  };
+  // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
+  incorrectHistoricRoot.transactionHash = Transaction.calcHash(incorrectHistoricRoot);
+  transactions.push(incorrectHistoricRoot);
+  return transactions;
+};
+
 export const addTx = txType => {
   error = txType;
   resetErrorIdx = true;
@@ -163,6 +182,8 @@ export async function getMostProfitableTransactions(number, errorIndex) {
       return duplicateNullifier(number);
     case 'IncorrectProof':
       return incorrectProof(number);
+    case 'HistoricRootError':
+      return historicRootError(number);
     default: {
       const connection = await mongo.connection(MONGO_URL);
       const db = connection.db(OPTIMIST_DB);

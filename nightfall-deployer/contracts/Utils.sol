@@ -104,7 +104,12 @@ library Utils {
         Structures.Transaction calldata ts,
         uint256[4] memory roots,
         address maticAddress
-    ) internal pure returns (uint256[] memory inputs) {
+    ) internal pure returns (uint256[] memory) {
+        uint256 length = 34;
+        if (uint256(ts.transactionType) != 0) {
+          length = 39;
+        }
+        uint256[] memory inputs = new uint256[](length);
         inputs[0] = uint256(ts.value);
         inputs[1] = uint256(ts.fee);
         inputs[2] = uint256(ts.historicRootBlockNumberL2[0]);
@@ -146,6 +151,7 @@ library Utils {
             inputs[37] = uint256(roots[3]);
             inputs[38] = uint256(uint160(maticAddress));
         }
+        return inputs;
     }
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {
