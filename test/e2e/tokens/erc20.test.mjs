@@ -437,7 +437,7 @@ describe('ERC20 tests', () => {
           );
 
           await emptyL2();
-          //await new Promise(resolve => setTimeout(resolve, 15000));
+          // await new Promise(resolve => setTimeout(resolve, 15000));
           console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
 
           for (let i = 0; i < 5; i++) {
@@ -454,12 +454,12 @@ describe('ERC20 tests', () => {
             );
             expectTransaction(rec);
             await emptyL2();
-            //await new Promise(resolve => setTimeout(resolve, 30000));
+            // await new Promise(resolve => setTimeout(resolve, 30000));
             console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
           }
 
           await emptyL2();
-          //await new Promise(resolve => setTimeout(resolve, 30000));
+          // await new Promise(resolve => setTimeout(resolve, 30000));
           console.log('Pending Transactions', await nf3Users[0].unprocessedTransactionCount());
 
           console.log('Final Withdraw');
@@ -476,7 +476,7 @@ describe('ERC20 tests', () => {
           expectTransaction(rec);
 
           await emptyL2();
-          //await new Promise(resolve => setTimeout(resolve, 30000));
+          // await new Promise(resolve => setTimeout(resolve, 30000));
 
           const withdrawal = nf3Users[0].getLatestWithdrawHash();
           await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
