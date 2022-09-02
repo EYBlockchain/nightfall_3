@@ -32,7 +32,6 @@ module.exports = {
   PROOF_QUEUE: 'generate-proof',
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
-  TXHASH_TREE_HEIGHT: 5,
   CONFIRMATION_POLL_TIME: 1000,
   CONFIRMATIONS: 12,
   DEFAULT_ACCOUNT_NUM: 10,
@@ -88,7 +87,7 @@ module.exports = {
   CURVE: process.env.CURVE || 'bn128',
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 150,
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,

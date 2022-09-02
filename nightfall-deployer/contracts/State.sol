@@ -126,8 +126,17 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             }
             let transactionHashesRoot
             // calculate and store transaction hashes root
+            let height := 1
             for {
-                let i := 5
+
+            } lt(exp(2, height), t.length) {
+
+            } {
+                height := add(height, 1)
+            }
+
+            for {
+                let i := height
             } gt(i, 0) {
                 i := sub(i, 1)
             } {
@@ -328,7 +337,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         Block calldata b,
         Transaction calldata t,
         uint256 index,
-        bytes32[6] calldata siblingPath
+        bytes32[] calldata siblingPath
     ) public view {
         bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');

@@ -153,8 +153,16 @@ library Utils {
             } {
                 mstore(add(transactionHashesPos, mul(0x20, i)), mload(add(leavesPos, mul(0x20, i))))
             }
+            let height := 1
             for {
-                let i := 5
+
+            } lt(exp(2, height), length) {
+
+            } {
+                height := add(height, 1)
+            }
+            for {
+                let i := height
             } gt(i, 0) {
                 i := sub(i, 1)
             } {
@@ -178,11 +186,11 @@ library Utils {
     }
 
     function checkPath(
-        bytes32[6] calldata siblingPath,
+        bytes32[] calldata siblingPath,
         uint256 leafIndex,
         bytes32 node
     ) public pure returns (bool) {
-        for (uint256 i = 5; i > 0; i--) {
+        for (uint256 i = siblingPath.length; i > 0; i--) {
             if (leafIndex % 2 == 0) {
                 node = keccak256(abi.encodePacked(node, siblingPath[i]));
             } else {
