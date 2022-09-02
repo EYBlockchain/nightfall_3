@@ -7,7 +7,6 @@ import Nf3 from '../../../cli/lib/nf3.mjs';
 import {
   depositNTransactions,
   expectTransaction,
-  waitForNoPendingCommitments,
   pendingCommitmentCount,
   Web3Client,
 } from '../../utils.mjs';
