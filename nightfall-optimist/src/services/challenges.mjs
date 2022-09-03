@@ -189,32 +189,59 @@ export async function createChallenge(block, transactions, err) {
           transaction2Index,
           duplicateNullifier1Index,
           duplicateNullifier2Index,
-          salt,
-        )
-        .encodeABI();
-      break;
-    }
-    // proof does not verify
-    case 4: {
-      const { transactionHashIndex: transactionIndex } = err.metadata;
-      // Create a challenge
-      const uncompressedProof = transactions[transactionIndex].proof;
-      const [historicInput1, historicInput2, historicInput3, historicInput4] = await Promise.all(
-        transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
-          if (transactions[transactionIndex].nullifiers[i] === 0) {
-            return {
-              historicBlock: {},
-              historicTxs: [],
-            };
-          }
-          const historicBlock = await getBlockByBlockNumberL2(b);
-          const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
-          return {
-            historicBlock: Block.buildSolidityStruct(historicBlock),
-            historicTxs,
-          };
-        }),
-      );
+        } = err.metadata;
+        txDataToSign = await challengeContractInstance.methods
+          .challengeNullifier(
+            Block.buildSolidityStruct(block1),
+            Block.buildSolidityStruct(block2),
+            transactions1.map(t => Transaction.buildSolidityStruct(t)),
+            transactions2.map(t => Transaction.buildSolidityStruct(t)),
+            transaction1Index,
+            transaction2Index,
+            duplicateNullifier1Index,
+            duplicateNullifier2Index,
+            salt,
+          )
+          .encodeABI();
+        break;
+      }
+      // proof does not verify
+      case 4: {
+        const { transactionHashIndex: transactionIndex } = err.metadata;
+        // Create a challenge
+        const uncompressedProof = transactions[transactionIndex].proof;
+        const [historicInput1, historicInput2, historicInput3, historicInput4] = await Promise.all(
+          transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
+            if (transactions[transactionIndex].nullifiers[i] === 0) {
+              return {
+                historicBlock: {},
+                historicTxs: [],
+              };
+            }
+            let historicBlock = await getBlockByBlockNumberL2(b);
+            let historicTxs = [];
+            if (historicBlock) {
+              historicTxs = await getTransactionsByTransactionHashes(
+                historicBlock.transactionHashes,
+              );
+              historicBlock = Block.buildSolidityStruct(historicBlock);
+            } else {
+              // case when historicRootBlockNumberL2 greater than latest l2BlockNumber on chain
+              // creating dummy block
+              historicBlock = Block.buildSolidityStruct(
+                new Block({
+                  proposer: block.proposer,
+                  root: ZERO,
+                  leafCount: 0,
+                  blockNumberL2: b,
+                  previousBlockHash: ZERO,
+                  transactionHashesRoot: ZERO,
+                }),
+              );
+            }
+            return { historicBlock, historicTxs };
+          }),
+        );
 
       txDataToSign = await challengeContractInstance.methods
         .challengeProofVerification(
