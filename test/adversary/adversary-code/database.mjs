@@ -170,7 +170,7 @@ const historicRootError = async number => {
       .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
       .toArray();
     const incorrectHistoricRoot = {
-      historicRootBlockNumberL2: [Math.floor(Math.random() * 100).toString(), '0'],
+      historicRootBlockNumberL2: [Math.floor(Math.random() * 100).toString(), '0', '0', '0'],
       ...rest,
     };
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
@@ -200,7 +200,7 @@ export async function getMostProfitableTransactions(number, errorIndex) {
     indexOffset = errorIndex;
   }
   const badTxType = error[errorIndex - indexOffset];
-  logger.debug('Creating a transaction of type', badTxType);
+  logger.debug(`Creating a transaction of type ${badTxType}`);
   switch (badTxType) {
     case 'DuplicateCommitment':
       return duplicateCommitment(number);
