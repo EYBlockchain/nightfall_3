@@ -8,6 +8,8 @@ from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as 
 
 def main(\
     PublicTransaction tx,\
+    field[4] roots,\
+    field maticAddress,\
     private field salt,\
     private Point recipientPublicKey\
 )-> ():
@@ -23,10 +25,7 @@ def main(\
 	    tx.recipientAddress,\
 	    tx.commitments,\
 	    tx.nullifiers,\
-        tx.commitmentFee,\
-        tx.nullifiersFee,\
 	    tx.historicRootBlockNumberL2,\
-        tx.historicRootBlockNumberL2Fee,\
 	    tx.compressedSecrets\
     ))
 
@@ -34,9 +33,8 @@ def main(\
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
     field idRemainder = u32_array_to_field(tx.tokenId[1..8]) 
     field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT 
-
     //Verify new Commmitments
     assert(verify_commitments::<1,1>(packedErcAddress, idRemainder, [tx.commitments[0]],\
-    [tx.value], [salt], [recipientPublicKey]))
+    [tx.value], [salt], [recipientPublicKey], maticAddress))
 
     return

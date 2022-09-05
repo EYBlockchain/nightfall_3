@@ -272,14 +272,14 @@ class Nf3 {
       gas,
       gasPrice,
     };
-    // logger.debug(`nf3 processing submitTransaction with transaction data ${tx.data}`);
+
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
       const promiseTest = new Promise((resolve, reject) => {
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .once('receipt', receipt => {
-            // logger.debug(`Transaction ${receipt.transactionHash} has been receipted.`);
+            // logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
             resolve(receipt);
           })
           .on('error', err => {
@@ -644,7 +644,7 @@ class Nf3 {
       );
       // and a listener for the pong
       // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
+      logger.debug('Liquidity provider websocket connection opened');
       connection.send('instant');
     };
     connection.onmessage = async message => {
@@ -916,8 +916,8 @@ class Nf3 {
       if (type === 'rollback') proposeEmitter.emit('rollback', data);
       return null;
     };
-    connection.onerror = () => logger.error('websocket connection error');
-    connection.onclosed = () => logger.warn('websocket connection closed');
+    connection.onerror = () => logger.error('Proposer websocket connection error');
+    connection.onclosed = () => logger.warn('Proposer websocket connection closed');
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return proposeEmitter;
   }
@@ -977,7 +977,6 @@ class Nf3 {
             );
             challengeEmitter.emit('receipt', receipt, type);
           } catch (err) {
-            logger.debug(`Challenge error ${err.message}`);
             challengeEmitter.emit('error', err, type);
           }
         });

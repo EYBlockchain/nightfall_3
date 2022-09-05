@@ -13,13 +13,14 @@ import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
 import computeCircuitInputs from '@Nightfall/utils/compute-witness';
+import confirmBlock from './confirm-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
@@ -34,6 +35,15 @@ async function deposit(items, shieldContractAddress) {
     generalise(items);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
+  const shieldContractInstance = await getContractInstance(
+    SHIELD_CONTRACT_NAME,
+    shieldContractAddress,
+  );
+
+  const maticAddress = generalise(
+    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  );
+
   if (!(await checkIndexDBForCircuit(circuitName)))
     throw Error('Some circuit data are missing from IndexedDB');
   const [abiData, programData, pkData] = await Promise.all([
@@ -41,6 +51,11 @@ async function deposit(items, shieldContractAddress) {
     getStoreCircuit(`${circuitName}-program`),
     getStoreCircuit(`${circuitName}-pk`),
   ]);
+
+  const lastTree = await getLatestTree();
+  const lastBlockNumber = await getMaxBlock();
+
+  await confirmBlock(lastBlockNumber, lastTree);
 
   const abi = abiData.data;
   const program = programData.data;
@@ -62,7 +77,7 @@ async function deposit(items, shieldContractAddress) {
 
   const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
 
-  const witnessInput = computeCircuitInputs(publicData, privateData);
+  const witnessInput = computeCircuitInputs(publicData, privateData, [0, 0, 0, 0], maticAddress);
 
   try {
     const zokratesProvider = await initialize();

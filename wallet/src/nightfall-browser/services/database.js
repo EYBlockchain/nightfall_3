@@ -15,6 +15,7 @@ const {
   COMMITMENTS_COLLECTION,
   KEYS_COLLECTION,
   CIRCUIT_COLLECTION,
+  CIRCUIT_HASH_COLLECTION,
   TIMBER_HEIGHT,
   HASH_TYPE,
 } = global.config;
@@ -30,12 +31,24 @@ const connectDB = async () => {
       newDb.createObjectStore(TRANSACTIONS_COLLECTION);
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
+      newDb.createObjectStore(CIRCUIT_HASH_COLLECTION);
     },
   });
 };
 
-export async function storeCircuit(key, data) {
+/*
+ * function stores circuit data and hash
+ */
+export async function storeCircuit(key, data, dataHash) {
   const db = await connectDB();
+  db.put(
+    CIRCUIT_HASH_COLLECTION,
+    {
+      _id: key,
+      dataHash,
+    },
+    key,
+  );
   return db.put(
     CIRCUIT_COLLECTION,
     {
@@ -46,9 +59,27 @@ export async function storeCircuit(key, data) {
   );
 }
 
+export async function getStoreCircuitHash(key) {
+  const db = await connectDB();
+  return db.get(CIRCUIT_HASH_COLLECTION, key);
+}
+
 export async function getStoreCircuit(key) {
   const db = await connectDB();
   return db.get(CIRCUIT_COLLECTION, key);
+}
+
+/*
+ * function to empty object store contents
+ */
+export async function emptyStoreBlocks() {
+  const db = await connectDB();
+  return db.clear(SUBMITTED_BLOCKS_COLLECTION);
+}
+
+export async function emptyStoreTimber() {
+  const db = await connectDB();
+  return db.clear(TIMBER_COLLECTION);
 }
 
 /*
@@ -63,6 +94,28 @@ export async function checkIndexDBForCircuit(circuit) {
     getStoreCircuit(`${circuit}-pk`),
   ]);
   return record.every(r => typeof r !== 'undefined');
+}
+
+/*
+ * function checks indexedDb for all files hashes
+ * for a particular circuit match the S3 manifest
+ */
+export async function checkIndexDBForCircuitHash(circuitInfo) {
+  const circuitName = circuitInfo.name;
+  const record = await Promise.all([
+    getStoreCircuitHash(`${circuitName}-abi`),
+    getStoreCircuitHash(`${circuitName}-program`),
+    getStoreCircuitHash(`${circuitName}-pk`),
+  ]);
+  if (record.every(r => typeof r !== 'undefined')) {
+    return record.every(
+      r =>
+        r.dataHash === circuitInfo.abih ||
+        r.dataHash === circuitInfo.programh ||
+        r.dataHash === circuitInfo.pkh,
+    );
+  }
+  return false;
 }
 
 /**
@@ -207,7 +260,6 @@ export async function getMaxBlock() {
   const keys = timbers.map(t => t.blockNumberL2);
   const maxKey = Math.max(...keys);
   return maxKey;
-  // return db.get(SUBMITTED_BLOCKS_COLLECTION, maxKey);
 }
 
 /**
@@ -267,17 +319,13 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
 export async function getTransactionByCommitment(commitmentHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(
-    r => r.commitments.includes(commitmentHash) || r.commitmentFee.includes(commitmentHash),
-  );
+  return res.filter(r => r.commitments.includes(commitmentHash));
 }
 
 export async function getTransactionByNullifier(nullifierHash) {
   const db = await connectDB();
   const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(
-    r => r.nullifiers.includes(nullifierHash) || r.nullifiersFee.includes(nullifierHash),
-  );
+  return res.filter(r => r.nullifiers.includes(nullifierHash));
 }
 export async function getTransactionByTransactionHash(transactionHash) {
   const db = await connectDB();

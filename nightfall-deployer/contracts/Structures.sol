@@ -43,15 +43,12 @@ contract Structures {
         uint112 fee;
         TransactionTypes transactionType;
         TokenType tokenType;
-        uint64[2] historicRootBlockNumberL2; // number of L2 block containing historic root
-        uint64[2] historicRootBlockNumberL2Fee; //number of L2 block containing historic root fee
+        uint64[4] historicRootBlockNumberL2;
         bytes32 tokenId;
         bytes32 ercAddress;
         bytes32 recipientAddress;
-        bytes32[2] commitments;
-        bytes32[2] nullifiers;
-        bytes32[1] commitmentFee;
-        bytes32[2] nullifiersFee;
+        bytes32[3] commitments;
+        bytes32[4] nullifiers;
         bytes32[2] compressedSecrets;
         uint256[4] proof;
     }

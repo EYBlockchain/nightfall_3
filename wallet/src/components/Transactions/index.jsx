@@ -66,9 +66,7 @@ const Transactions = () => {
     const transactions = Array.from(new Set(transactionsDB)).filter(
       t =>
         t.commitments.some(c => commits.includes(c)) ||
-        t.nullifiers.some(n => nullifiers.includes(n)) ||
-        commits.includes(t.commitmentFee[0]) ||
-        t.nullifiersFee.some(n => nullifiers.includes(n)),
+        t.nullifiers.some(n => nullifiers.includes(n)),
     );
     const shieldContractAddress = shieldAddressGet();
     const shieldContractInstance = await getContractInstance(

@@ -1,4 +1,4 @@
-// ignore unused exports default
+// ignore unused exports
 
 /*
  * can also be used as worker file to download circuits files from AWS (a worker thread).
@@ -9,25 +9,23 @@ import { parseData, mergeUint8Array } from '../../utils/lib/file-reader-utils';
 
 const s3 = new S3();
 
-async function fetchAWSfiles(Bucket, Key) {
+export async function fetchAWSfiles(Bucket, Key) {
   const res = await s3.makeUnauthenticatedRequest('getObject', { Bucket, Key }).promise();
   return res.Body;
 }
 
-export default async function fetchCircuit(
-  circuit,
-  { utilApiServerUrl, isLocalRun, AWS: { s3Bucket, circuitFiles } },
-) {
-  let { abi, program, pk } = circuitFiles[circuit]; // keys path in bucket
+export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS: { s3Bucket } }) {
+  let { abi, program, pk } = circuit; // keys path in bucket
+  const { abih = null, programh = null, pkh = null } = circuit; // keys hash in bucket
   if (isLocalRun) {
-    abi = await fetch(`${utilApiServerUrl}/${circuit}/${circuit}_abi.json`).then(response =>
-      response.json(),
+    abi = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}_abi.json`).then(
+      response => response.json(),
     );
-    program = await fetch(`${utilApiServerUrl}/${circuit}/${circuit}_out`)
+    program = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}_out`)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
-    pk = await fetch(`${utilApiServerUrl}/${circuit}/${circuit}_pk.key`)
+    pk = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}_pk.key`)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
@@ -36,5 +34,6 @@ export default async function fetchCircuit(
     program = await fetchAWSfiles(s3Bucket, program);
     pk = await fetchAWSfiles(s3Bucket, pk);
   }
-  return { abi, program, pk };
+  console.log('ABI: ', abi, abih);
+  return { abi, abih, program, programh, pk, pkh };
 }

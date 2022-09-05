@@ -13,10 +13,10 @@ import constants from 'common-files/constants/index.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
-import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
 import getProposersUrl from './peers.mjs';
+import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
@@ -24,16 +24,6 @@ const { generalise } = gen;
 
 const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
 const NEXT_N_PROPOSERS = 3;
-const NULL_COMMITMENT_INFO = {
-  oldCommitments: [],
-  nullifiers: [],
-  newCommitments: [],
-  localSiblingPaths: [],
-  leafIndices: [],
-  blockNumberL2s: [],
-  roots: [],
-  salts: [],
-};
 
 async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
@@ -52,51 +42,35 @@ async function withdraw(withdrawParams) {
   );
 
   logger.debug(`The erc address of the fee is the following: ${maticAddress.hex(32)}`);
-  const addedFee =
-    maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee.bigInt : 0n;
 
-  const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value;
+  const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
 
   const commitmentsInfo = await getCommitmentInfo({
-    transferValue: withdrawValue.bigInt,
-    addedFee,
+    totalValueToSend: withdrawValue,
+    fee,
     ercAddress,
+    maticAddress,
     tokenId,
     rootKey,
   });
-
-  const commitmentsInfoFee =
-    fee.bigInt === 0n || commitmentsInfo.feeIncluded
-      ? NULL_COMMITMENT_INFO
-      : await getCommitmentInfo({
-          transferValue: fee.bigInt,
-          ercAddress: maticAddress,
-          rootKey,
-        }).catch(async () => {
-          await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-          throw new Error('Failed getting fee commitments');
-        });
 
   try {
     // now we have everything we need to create a Witness and compute a proof
     const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
-      commitments: commitmentsInfo.newCommitments,
-      commitmentFee: commitmentsInfoFee.newCommitments,
       transactionType: 2,
       tokenType: items.tokenType,
       tokenId,
       value,
       ercAddress,
       recipientAddress,
+      commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      nullifiersFee: commitmentsInfoFee.nullifiers,
     });
 
     const privateData = {
-      rootKey: [rootKey, rootKey],
+      rootKey: [rootKey, rootKey, rootKey, rootKey],
       oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
@@ -106,16 +80,6 @@ async function withdraw(withdrawParams) {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      rootKeyFee: [rootKey, rootKey],
-      oldCommitmentPreimageFee: commitmentsInfoFee.oldCommitments.map(o => {
-        return { value: o.preimage.value, salt: o.preimage.salt };
-      }),
-      pathsFee: commitmentsInfoFee.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
-      ordersFee: commitmentsInfoFee.leafIndices,
-      newCommitmentPreimageFee: commitmentsInfoFee.newCommitments.map(o => {
-        return { value: o.preimage.value, salt: o.preimage.salt };
-      }),
-      recipientPublicKeysFee: commitmentsInfoFee.newCommitments.map(o => o.preimage.zkpPublicKey),
       ercAddress,
       tokenId,
     };
@@ -124,7 +88,6 @@ async function withdraw(withdrawParams) {
       transaction,
       privateData,
       commitmentsInfo.roots,
-      commitmentsInfoFee.roots,
       maticAddress,
     );
     logger.debug(`witness input is ${witness.join(' ')}`);
@@ -144,34 +107,27 @@ async function withdraw(withdrawParams) {
     const optimisticWithdrawTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      historicRootBlockNumberL2Fee: commitmentsInfoFee.blockNumberL2s,
-      commitments: commitmentsInfo.newCommitments,
-      commitmentFee: commitmentsInfoFee.newCommitments,
       transactionType: 2,
       tokenType: items.tokenType,
       tokenId,
       value,
       ercAddress,
       recipientAddress,
+      commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      nullifiersFee: commitmentsInfoFee.nullifiers,
       proof,
     });
 
     const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
     // Store new commitments that are ours.
-    const storeNewCommitments = [
-      ...commitmentsInfo.newCommitments,
-      ...commitmentsInfoFee.newCommitments,
-    ]
+    const storeNewCommitments = commitmentsInfo.newCommitments
       .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
       .map(c => storeCommitment(c, nullifierKey));
 
-    const nullifyOldCommitments = [
-      ...commitmentsInfo.oldCommitments,
-      ...commitmentsInfoFee.oldCommitments,
-    ].map(c => markNullified(c, optimisticWithdrawTransaction));
+    const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
+      markNullified(c, optimisticWithdrawTransaction),
+    );
 
     await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
 
@@ -201,11 +157,7 @@ async function withdraw(withdrawParams) {
     return returnObj;
   } catch (error) {
     logger.error('Err', error);
-    await Promise.all(
-      [...commitmentsInfo.oldCommitments, ...commitmentsInfoFee.oldCommitments].map(o =>
-        clearPending(o),
-      ),
-    );
+    await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
     throw new Error('Failed withdraw');
   }
 }
