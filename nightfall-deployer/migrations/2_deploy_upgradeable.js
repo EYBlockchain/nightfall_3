@@ -79,5 +79,4 @@ module.exports = async function (deployer) {
     token => token.name === 'MATIC',
   ).address;
   await shield.setMaticAddress(maticAddress);
-  console.log('MATIC ADDRESS', maticAddress);
 };

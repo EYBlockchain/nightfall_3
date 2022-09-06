@@ -8,8 +8,8 @@ import './Structures.sol';
 
 library ChallengesUtil {
     function libChallengeLeafCountCorrect(
-        Structures.Block memory priorBlockL2,
-        Structures.Transaction[] memory priorBlockTransactions,
+        Structures.Block calldata priorBlockL2,
+        Structures.Transaction[] calldata priorBlockTransactions,
         uint256 leafCount
     ) public pure {
         uint256 expectedLeafCount = priorBlockL2.leafCount +
@@ -18,11 +18,11 @@ library ChallengesUtil {
     }
 
     function libChallengeNewRootCorrect(
-        Structures.Block memory priorBlockL2, // the block immediately prior to this one
-        Structures.Transaction[] memory priorBlockTransactions, // the transactions in the prior block
+        Structures.Block calldata priorBlockL2, // the block immediately prior to this one
+        Structures.Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
         bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
-        Structures.Block memory blockL2,
-        Structures.Transaction[] memory transactions
+        Structures.Block calldata blockL2,
+        Structures.Transaction[] calldata transactions
     ) public pure {
         // next check the sibling path is valid and get the Frontier
         bytes32 root;
@@ -77,9 +77,9 @@ library ChallengesUtil {
     }
 
     function libChallengeCommitment(
-        Structures.Transaction memory tx1,
+        Structures.Transaction calldata tx1,
         uint256 commitmentIndex1,
-        Structures.Transaction memory tx2,
+        Structures.Transaction calldata tx2,
         uint256 commitmentIndex2
     ) public pure {
         require(
@@ -90,9 +90,9 @@ library ChallengesUtil {
     }
 
     function libChallengeNullifier(
-        Structures.Transaction memory tx1,
+        Structures.Transaction calldata tx1,
         uint256 nullifierIndex1,
-        Structures.Transaction memory tx2,
+        Structures.Transaction calldata tx2,
         uint256 nullifierIndex2
     ) public pure {
         require(
