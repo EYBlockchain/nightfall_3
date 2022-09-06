@@ -11,7 +11,7 @@
     "test": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs test/e2e/tokens/*.test.mjs",
     "test-e2e-protocol": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/protocol/*.test.mjs ",
     "test-gas": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/gas.test.mjs ",
-    "test-circuits": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/circuits.test.mjs ",
+    "test-circuits": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/e2e/circuits.test.mjs ",
     "test-e2e-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/*.test.mjs ",
     "test-erc20-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc20.test.mjs ",
     "test-erc721-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc721.test.mjs ",
