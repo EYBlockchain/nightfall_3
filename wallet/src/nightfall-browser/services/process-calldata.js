@@ -9,7 +9,7 @@ import Web3 from '../../common-files/utils/web3';
 import Transaction from '../../common-files/classes/transaction';
 import { decompressProof } from '../../common-files/utils/curve-maths/curves';
 
-const { PROPOSE_BLOCK_TYPES } = global.nightfallConstants;
+const { PROPOSE_BLOCK_TYPES } = global.config;
 
 async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();

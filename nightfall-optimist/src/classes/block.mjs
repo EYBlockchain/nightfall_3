@@ -7,7 +7,7 @@ import constants from 'common-files/constants/index.mjs';
 import { getLatestBlockInfo, getTreeByBlockNumberL2 } from '../services/database.mjs';
 import { buildBlockSolidityStruct, calcBlockHash } from '../services/block-utils.mjs';
 
-const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE, BLOCK_TYPES } = config;
 const { ZERO } = constants;
 
 /**

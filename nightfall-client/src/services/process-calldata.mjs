@@ -3,12 +3,12 @@ Function to retreive calldata associated with a blockchain event.
 This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
+import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
 import Transaction from 'common-files/classes/transaction.mjs';
 import { decompressProof } from 'common-files/utils/curve-maths/curves.mjs';
-import constants from 'common-files/constants/index.mjs';
 
-const { PROPOSE_BLOCK_TYPES } = constants;
+const { PROPOSE_BLOCK_TYPES } = config;
 
 async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
