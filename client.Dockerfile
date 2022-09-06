@@ -7,7 +7,7 @@ RUN apt-get install build-essential -y
 # TEMPORARY WORKAROUND FOR ISSUE https://github.com/nodesource/distributions/issues/1266
 RUN apt-get install -y ca-certificates
 RUN apt-get install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs
 RUN apt-get install -y netcat
 

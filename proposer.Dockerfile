@@ -1,4 +1,4 @@
-FROM node:14.17
+FROM node:16.17
 
 RUN apt-get update -y
 RUN apt-get install -y netcat-openbsd
