@@ -120,8 +120,6 @@ describe('Testing with an adversary', () => {
       registerProposerOnNoProposer(nf3AdversarialProposer);
     }, 5000);
 
-    // Challenger registration
-    await nf3Challenger.registerChallenger();
     // Chalenger listening for incoming events
     const challengeEmitter = await nf3Challenger.startChallenger();
     challengeEmitter

@@ -17,7 +17,7 @@
     "test-erc721-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc721.test.mjs ",
     "test-erc1155-tokens": "LOG_LEVEL=error mocha --timeout 0 --bail --exit test/e2e/tokens/erc1155.test.mjs ",
     "test-erc20-cli": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/client/erc20.test.mjs ",
-    "test-optimist-sync": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/optimist-resync.test.mjs",
+    "test-optimist-sync": "LOG_LEVEL=silent mocha --timeout 0 --bail --exit test/optimist-resync.test.mjs",
     "test-adversary": "CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs",
     "test-all-adversary": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount IncorrectTreeRoot IncorrectLeafCount; do CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs; sleep 5; done",
     "test-general-stuff": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/kem-dem.test.mjs test/timber.test.mjs"
