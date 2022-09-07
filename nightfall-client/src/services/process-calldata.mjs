@@ -8,7 +8,7 @@ import Web3 from 'common-files/utils/web3.mjs';
 import Transaction from 'common-files/classes/transaction.mjs';
 import { decompressProof } from 'common-files/utils/curve-maths/curves.mjs';
 
-const { PROPOSE_BLOCK_TYPES } = config;
+const { SIGNATURES } = config;
 
 async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -16,7 +16,7 @@ async function getProposeBlockCalldata(eventData) {
   const tx = await web3.eth.getTransaction(transactionHash);
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
-  const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
+  const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
   const [leafCount, proposer, root, blockNumberL2, previousBlockHash, transactionHashesRoot] =

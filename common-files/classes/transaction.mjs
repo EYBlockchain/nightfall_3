@@ -12,7 +12,7 @@ import { compressProof } from '../utils/curve-maths/curves.mjs';
 const { generalise } = gen;
 
 const TOKEN_TYPES = { ERC20: 0, ERC721: 1, ERC1155: 2 };
-const { TRANSACTION_TYPES } = config;
+const { SIGNATURES } = config;
 
 const arrayEquality = (as, bs) => {
   if (as.length === bs.length) {
@@ -54,7 +54,7 @@ function keccak(preimage) {
     proof,
   ];
 
-  const encodedTransaction = web3.eth.abi.encodeParameters([TRANSACTION_TYPES], [transaction]);
+  const encodedTransaction = web3.eth.abi.encodeParameters([SIGNATURES.TRANSACTION], [transaction]);
   return web3.utils.soliditySha3({
     t: 'bytes',
     v: encodedTransaction,

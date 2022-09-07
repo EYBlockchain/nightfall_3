@@ -10,7 +10,7 @@ import constants from 'common-files/constants/index.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 
-const { PROPOSE_BLOCK_TYPES, SUBMIT_TRANSACTION_TYPES } = config;
+const { SIGNATURES } = config;
 const { ZERO } = constants;
 
 export async function getProposeBlockCalldata(eventData) {
@@ -19,7 +19,7 @@ export async function getProposeBlockCalldata(eventData) {
   const tx = await web3.eth.getTransaction(transactionHash);
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
-  const decoded = web3.eth.abi.decodeParameters(PROPOSE_BLOCK_TYPES, abiBytecode);
+  const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
   const [leafCount, proposer, root, blockNumberL2, previousBlockHash, transactionHashesRoot] =
@@ -86,7 +86,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
   const tx = await web3.eth.getTransaction(transactionHash);
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
-  const transactionData = web3.eth.abi.decodeParameter(SUBMIT_TRANSACTION_TYPES, abiBytecode);
+  const transactionData = web3.eth.abi.decodeParameter(SIGNATURES.SUBMIT_TRANSACTION, abiBytecode);
   const [
     value,
     fee,
