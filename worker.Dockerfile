@@ -15,6 +15,8 @@ ENV ZOKRATES_STDLIB /app/stdlib
 
 WORKDIR /
 COPY common-files common-files
+WORKDIR /common-files
+RUN npm ci
 
 WORKDIR /app
 COPY config/default.js config/default.js
