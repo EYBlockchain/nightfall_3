@@ -79,5 +79,10 @@
     "pino": "^8.3.1",
     "pino-pretty": "^8.1.0",
     "typescript": "^4.6.2"
+  },
+  "overrides": {
+    "swarm-js": {
+      "got": "11.8.5"
+    }
   }
 }
