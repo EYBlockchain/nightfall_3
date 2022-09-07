@@ -32,6 +32,10 @@
     "url": "https://github.com/EYBlockchain/optimistic-nightfall/issues"
   },
   "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme",
+  "engines": {
+    "node": ">=16.17 <17",
+    "npm": ">=8.15 <9"
+  },
   "devDependencies": {
     "@commitlint/cli": "^12.1.1",
     "@commitlint/config-conventional": "^12.1.1",
