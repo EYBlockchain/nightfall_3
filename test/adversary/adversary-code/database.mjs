@@ -165,14 +165,14 @@ const historicRootError = async number => {
   try {
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
-    const [{ historicRootBlockNumberL2, ...rest }, ...transactions] = await db
+    const [incorrectHistoricRoot, ...transactions] = await db
       .collection(TRANSACTIONS_COLLECTION)
       .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
       .toArray();
-    const incorrectHistoricRoot = {
-      historicRootBlockNumberL2: [Math.floor(Math.random() * 100).toString(), '0', '0', '0'],
-      ...rest,
-    };
+    incorrectHistoricRoot.historicRootBlockNumberL2 = [
+      (Math.floor(Math.random() * 100) + 10).toString(),
+      ...incorrectHistoricRoot.historicRootBlockNumberL2.slice(1),
+    ];
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     incorrectHistoricRoot.transactionHash = Transaction.calcHash(incorrectHistoricRoot);
     transactions.push(incorrectHistoricRoot);

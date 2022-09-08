@@ -243,28 +243,41 @@ export async function createChallenge(block, transactions, err) {
           }),
         );
 
-      txDataToSign = await challengeContractInstance.methods
-        .challengeProofVerification(
-          Block.buildSolidityStruct(block),
-          transactions.map(t => Transaction.buildSolidityStruct(t)),
-          transactionIndex,
-          [
-            historicInput1.historicBlock,
-            historicInput2.historicBlock,
-            historicInput3.historicBlock,
-            historicInput4.historicBlock,
-          ],
-          [
-            historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicInput3.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicInput4.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-          ],
-          uncompressedProof,
-          salt,
-        )
-        .encodeABI();
-      break;
+        txDataToSign = await challengeContractInstance.methods
+          .challengeProofVerification(
+            Block.buildSolidityStruct(block),
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
+            transactionIndex,
+            [
+              historicInput1.historicBlock,
+              historicInput2.historicBlock,
+              historicInput3.historicBlock,
+              historicInput4.historicBlock,
+            ],
+            [
+              historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+              historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+              historicInput3.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+              historicInput4.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
+            ],
+            uncompressedProof,
+            salt,
+          )
+          .encodeABI();
+        break;
+      }
+      case 5: {
+        txDataToSign = await challengeContractInstance.methods
+          .challengeHistoricRoot(
+            Block.buildSolidityStruct(block),
+            transactions.map(t => Transaction.buildSolidityStruct(t)),
+            transactionHashIndex,
+          )
+          .encodeABI();
+        break;
+      }
+      default:
+      // code block
     }
     default:
     // code block
