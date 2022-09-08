@@ -170,10 +170,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             super.getMaticAddress()
         );
 
-        if (
-            blockL2ContainingHistoricRoot[0].blockNumberL2 < state.getNumberOfL2Blocks() &&
-            uint256(transactions[transactionIndex].nullifiers[0]) != 0
-        ) {
+        if (uint256(transactions[transactionIndex].nullifiers[0]) != 0) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRoot[0],
                 transactionsOfblockL2ContainingHistoricRoot[0]
@@ -186,10 +183,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             extraPublicInputs.roots[0] = uint256(blockL2ContainingHistoricRoot[0].root);
         }
 
-        if (
-            blockL2ContainingHistoricRoot[1].blockNumberL2 < state.getNumberOfL2Blocks() &&
-            uint256(transactions[transactionIndex].nullifiers[1]) != 0
-        ) {
+        if (uint256(transactions[transactionIndex].nullifiers[1]) != 0) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRoot[1],
                 transactionsOfblockL2ContainingHistoricRoot[1]
@@ -202,10 +196,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             extraPublicInputs.roots[1] = uint256(blockL2ContainingHistoricRoot[1].root);
         }
 
-        if (
-            blockL2ContainingHistoricRoot[2].blockNumberL2 < state.getNumberOfL2Blocks() &&
-            uint256(transactions[transactionIndex].nullifiers[2]) != 0
-        ) {
+        if (uint256(transactions[transactionIndex].nullifiers[2]) != 0) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRoot[2],
                 transactionsOfblockL2ContainingHistoricRoot[2]
@@ -218,10 +209,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             extraPublicInputs.roots[2] = uint256(blockL2ContainingHistoricRoot[2].root);
         }
 
-        if (
-            blockL2ContainingHistoricRoot[3].blockNumberL2 < state.getNumberOfL2Blocks() &&
-            uint256(transactions[transactionIndex].nullifiers[3]) != 0
-        ) {
+        if (uint256(transactions[transactionIndex].nullifiers[3]) != 0) {
             state.areBlockAndTransactionsReal(
                 blockL2ContainingHistoricRoot[3],
                 transactionsOfblockL2ContainingHistoricRoot[3]
@@ -245,7 +233,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     }
 
     function challengeHistoricRoot(
-        Block memory blockL2,
+        Block calldata blockL2,
         Transaction[] calldata transactions,
         uint256 transactionIndex
     ) external onlyBootChallenger {
