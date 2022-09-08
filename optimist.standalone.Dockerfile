@@ -1,7 +1,7 @@
 # install zokrates for local verify
 FROM zokrates/zokrates:0.7.7 as builder
 
-FROM node:14.17
+FROM node:16.17
 
 # install node
 RUN apt-get update
