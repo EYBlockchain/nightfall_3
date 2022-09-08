@@ -135,16 +135,11 @@ async function checkHistoricRootGreaterThanL2BlockNumberOnChain(transaction) {
   transaction.historicRootBlockNumberL2.forEach(L2BlockNumber => {
     if (Number(L2BlockNumber) === 0 && LatestL2BlockNumber === -1) return;
     if (Number(L2BlockNumber) > LatestL2BlockNumber) {
-      throw new TransactionError(
-        'Historic root has L2BlockNumber greater than OnChain',
-        3,
-        {
-          transactionHash: transaction.transactionHash,
-        }
-      );
+      throw new TransactionError('Historic root has L2BlockNumber greater than OnChain', 3, {
+        transactionHash: transaction.transactionHash,
+      });
     }
   });
-
 }
 
 async function verifyProof(transaction) {

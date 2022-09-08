@@ -218,27 +218,10 @@ export async function createChallenge(block, transactions, err) {
                 historicTxs: [],
               };
             }
-            let historicBlock = await getBlockByBlockNumberL2(b);
-            let historicTxs = [];
-            if (historicBlock) {
-              historicTxs = await getTransactionsByTransactionHashes(
-                historicBlock.transactionHashes,
-              );
-              historicBlock = Block.buildSolidityStruct(historicBlock);
-            } else {
-              // case when historicRootBlockNumberL2 greater than latest l2BlockNumber on chain
-              // creating dummy block
-              historicBlock = Block.buildSolidityStruct(
-                new Block({
-                  proposer: block.proposer,
-                  root: ZERO,
-                  leafCount: 0,
-                  blockNumberL2: b,
-                  previousBlockHash: ZERO,
-                  transactionHashesRoot: ZERO,
-                }),
-              );
-            }
+            const historicBlock = Block.buildSolidityStruct(await getBlockByBlockNumberL2(b));
+            const historicTxs = await getTransactionsByTransactionHashes(
+              historicBlock.transactionHashes,
+            );
             return { historicBlock, historicTxs };
           }),
         );
@@ -267,6 +250,7 @@ export async function createChallenge(block, transactions, err) {
         break;
       }
       case 5: {
+        const { transactionHashIndex } = err.metadata;
         txDataToSign = await challengeContractInstance.methods
           .challengeHistoricRoot(
             Block.buildSolidityStruct(block),
