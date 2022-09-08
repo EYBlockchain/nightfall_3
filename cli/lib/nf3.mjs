@@ -200,6 +200,16 @@ class Nf3 {
   }
 
   /**
+  Gets the mempool transactions on the optimist
+  @method
+  @async
+  */
+  async getMempoolTransactions() {
+    const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
+    return mempool;
+  }
+
+  /**
   Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
   until it has TRANSACTIONS_PER_BLOCK of them
   @method
@@ -273,15 +283,13 @@ class Nf3 {
       gasPrice,
     };
 
-    // logger.debug(`The nonce for the unsigned transaction ${tx.data} is ${this.nonce}`);
-    // this.nonce++;
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
       const promiseTest = new Promise((resolve, reject) => {
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .once('receipt', receipt => {
-            logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
+            // logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
             resolve(receipt);
           })
           .on('error', err => {
@@ -646,7 +654,7 @@ class Nf3 {
       );
       // and a listener for the pong
       // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
+      logger.debug('Liquidity provider websocket connection opened');
       connection.send('instant');
     };
     connection.onmessage = async message => {
@@ -892,7 +900,7 @@ class Nf3 {
       );
       // and a listener for the pong
       // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
+      logger.debug('Proposer websocket connection opened');
       connection.send('blocks');
     };
     connection.onmessage = async message => {
@@ -917,8 +925,8 @@ class Nf3 {
       }
       return null;
     };
-    connection.onerror = () => logger.error('websocket connection error');
-    connection.onclosed = () => logger.warn('websocket connection closed');
+    connection.onerror = () => logger.error('Proposer websocket connection error');
+    connection.onclosed = () => logger.warn('Proposer websocket connection closed');
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return blockProposeEmitter;
   }
@@ -963,7 +971,7 @@ class Nf3 {
       );
       // and a listener for the pong
       // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
+      logger.debug('Proposer websocket connection opened');
       connection.send('blocks');
     };
     connection.onmessage = async message => {
@@ -1007,6 +1015,7 @@ class Nf3 {
     @async
     */
   async startChallenger() {
+    const challengeEmitter = new EventEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
@@ -1019,32 +1028,32 @@ class Nf3 {
       );
       // and a listener for the pong
       // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
+      logger.debug('Challenger websocket connection opened');
       connection.send('challenge');
     };
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign } = msg;
+      logger.debug(`Challenger received websocket message of type ${type}`);
       if (type === 'commit' || type === 'challenge') {
-        return new Promise((resolve, reject) => {
-          logger.debug('-> Push transaction to challengerQueue');
-          challengerQueue.push(async () => {
-            try {
-              logger.debug('-> Submit transaction from challengerQueue');
-              const receipt = await this.submitTransaction(
-                txDataToSign,
-                this.challengesContractAddress,
-                0,
-              );
-              resolve(receipt);
-            } catch (err) {
-              reject(err);
-            }
-          });
+        challengerQueue.push(async () => {
+          try {
+            const receipt = await this.submitTransaction(
+              txDataToSign,
+              this.challengesContractAddress,
+              0,
+            );
+            challengeEmitter.emit('receipt', receipt, type);
+          } catch (err) {
+            challengeEmitter.emit('error', err, type);
+          }
         });
       }
       return null;
     };
+    connection.onerror = () => logger.error('Challenger websocket connection error');
+    connection.onclosed = () => logger.warn('Challenger websocket connection closed');
+    return challengeEmitter;
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -1094,7 +1103,7 @@ class Nf3 {
       );
       // and a listener for the pong
       // connection._ws.on('pong', () => logger.debug('websocket received pong'));
-      logger.debug('websocket connection opened');
+      logger.debug('Challenger websocket connection opened');
       connection.send('challenge');
     };
     connection.onmessage = async message => {
