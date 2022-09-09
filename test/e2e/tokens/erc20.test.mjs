@@ -56,20 +56,15 @@ const waitForTxExecution = async (count, txType) => {
 const emptyL2 = async () => {
   await new Promise(resolve => setTimeout(resolve, 6000));
   let count = await pendingCommitmentCount(nf3Users[0]);
-  console.log('EmptyL2 : pending commitments', count);
   while (count !== 0) {
     await nf3Users[0].makeBlockNow();
     try {
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       count = await pendingCommitmentCount(nf3Users[0]);
     } catch (err) {
-      console.log(err);
       break;
     }
   }
-  // console.log('Empty L2: final pending commitments', count);
-  // await nf3Users[0].makeBlockNow();
-  // await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   await new Promise(resolve => setTimeout(resolve, 6000));
 };
 
@@ -431,7 +426,6 @@ describe('ERC20 tests', () => {
           // Transfer 800 + 200 to self       Input [800, 250]   Output [800, 50]     Commitment List after [50, 50, 50, 100, 250, 1000]
           // Transfer 1000 + 200 to self      Input [1000, 250]  Output [1200, 50]    Commitment List after [50, 50, 50, 50, 100, 1200]
 
-          // console.log('Making 6 deposits', maxERC20DepositValue);
           const trnsferValue = Math.floor(maxERC20WithdrawValue / 5); // maxERC20DepositValue < trnsferValue < maxERC20WithdrawValue
           const withdrawValue = trnsferValue * 6; // trnsferValue = ( maxERC20WithdrawValue / 5 ) * 6 > maxERC20WithdrawValue
 
@@ -447,7 +441,6 @@ describe('ERC20 tests', () => {
 
           await emptyL2();
 
-          console.log('Ready for transfer');
           await nf3Users[0].transfer(
             false,
             erc20Address,
@@ -457,11 +450,9 @@ describe('ERC20 tests', () => {
             nf3Users[0].zkpKeys.compressedZkpPublicKey,
             0,
           );
-          console.log('Transfer done');
 
           await emptyL2();
 
-          console.log('Read for Withdraw');
           const rec = await nf3Users[0].withdraw(
             false,
             erc20Address,
@@ -471,7 +462,6 @@ describe('ERC20 tests', () => {
             nf3Users[0].ethereumAddress,
             0,
           );
-          console.log('Withdraw done');
 
           await emptyL2();
           await new Promise(resolve => setTimeout(resolve, 30000));
