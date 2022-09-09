@@ -93,7 +93,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         require(BLOCK_STAKE <= msg.value, 'The stake payment is incorrect');
         require(b.proposer == msg.sender, 'The proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
-        require(t.length < 33, 'The block has too many transactions');
+        require(t.length <= TRANSACTIONS_PER_BLOCK, 'The block has too many transactions');
 
         uint256 feePaymentsEth = 0;
         uint256 feePaymentsMatic = 0;

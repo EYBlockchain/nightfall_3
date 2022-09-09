@@ -11,6 +11,7 @@ contract Config is Ownable, Structures {
     uint256 constant ROTATE_PROPOSER_BLOCKS = 4;
     uint256 constant COOLING_OFF_PERIOD = 1 weeks;
     bytes32 constant ZERO = bytes32(0);
+    uint256 constant TRANSACTIONS_PER_BLOCK = 32;
 
     address bootProposer;
     address bootChallenger;
