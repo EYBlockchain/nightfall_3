@@ -88,4 +88,11 @@ contract Structures {
         uint256[4] roots;
         address maticAddress;
     }
+
+    struct TransactionBlock {
+        Block blockL2;
+        Transaction transaction;
+        uint256 transactionIndex;
+        bytes32[] transactionSiblingPath;
+    }
 }

@@ -75,8 +75,6 @@ export async function getProposeBlockCalldata(eventData) {
     .map(t => t.commitments.filter(c => c !== ZERO))
     .flat(Infinity).length;
   block.transactionHashes = transactions.map(t => t.transactionHash);
-  // currentLeafCount holds the count of the next leaf to be added
-  // const currentLeafCount = Number(block.nCommitments) + Number(leafCount);
   return { block, transactions };
 }
 

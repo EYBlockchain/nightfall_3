@@ -16,7 +16,7 @@ import {
   getBlockByBlockNumberL2,
   getL2TransactionByCommitment,
   getL2TransactionByNullifier,
-  getTransactionsByTransactionHashes,
+  getTransactionHashSiblingInfo,
   getLatestBlockInfo,
 } from './database.mjs';
 import verify from './verify.mjs';
@@ -26,23 +26,6 @@ const { PROVING_SCHEME, BACKEND, CURVE } = config;
 const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
 async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blockNumberL2OfTx) {
-  // check if there are duplicate commitments in the same transaction
-  transaction.commitments.forEach((commitment, index) => {
-    const lastIndex = transaction.commitments.lastIndexOf(commitment);
-    if (commitment !== ZERO && index !== lastIndex) {
-      throw new TransactionError(
-        `The transaction holds duplicate commitments with commitment hash ${commitment}`,
-        0,
-        {
-          transaction1: transaction,
-          duplicateCommitment1Index: index,
-          transaction2: transaction,
-          duplicateCommitment2Index: lastIndex,
-        },
-      );
-    }
-  });
-
   // check if any commitment in the transaction is already part of an L2 block
   for (const [index, commitment] of transaction.commitments.entries()) {
     // transaction.commitments.forEach(async (commitment, index) => {
@@ -56,8 +39,8 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blo
         txWithOrgCommitment.blockNumberL2,
       );
       if (blockWithOrgCommitment !== null) {
-        const orgBlockTransactions = await getTransactionsByTransactionHashes(
-          blockWithOrgCommitment.transactionHashes,
+        const siblingPath2 = await getTransactionHashSiblingInfo(
+          txWithOrgCommitment.transactionHash,
         );
         throw new TransactionError(
           `The transaction has a duplicate commitment ${commitment}`,
@@ -66,10 +49,11 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blo
             ? {
                 duplicateCommitment1Index: index,
                 block2: blockWithOrgCommitment,
-                transactions2: orgBlockTransactions,
+                transaction2: txWithOrgCommitment,
                 transaction2Index: blockWithOrgCommitment.transactionHashes.indexOf(
                   txWithOrgCommitment.transactionHash,
                 ),
+                siblingPath2,
                 duplicateCommitment2Index: txWithOrgCommitment.commitments.indexOf(commitment),
               }
             : undefined,
@@ -80,23 +64,6 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blo
 }
 
 async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, blockNumberL2OfTx) {
-  // check if there are duplicate nullifiers in the same transaction
-  transaction.nullifiers.forEach((nullifier, index) => {
-    const lastIndex = transaction.nullifiers.lastIndexOf(nullifier);
-    if (nullifier !== ZERO && index !== lastIndex) {
-      throw new TransactionError(
-        `The transaction holds duplicate nullifiers with nullifier hash ${nullifier}`,
-        1,
-        {
-          transaction1: transaction,
-          duplicateNullifier1Index: index,
-          transaction2: transaction,
-          duplicateNullifier2Index: lastIndex,
-        },
-      );
-    }
-  });
-
   // check if any nullifier in the transction is already part of an L2 block
   for (const [index, nullifier] of transaction.nullifiers.entries()) {
     const txWithOrgNullifier = await getL2TransactionByNullifier(
@@ -107,8 +74,8 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, bloc
     if (nullifier !== ZERO && txWithOrgNullifier !== null) {
       const blockWithOrgNullifier = await getBlockByBlockNumberL2(txWithOrgNullifier.blockNumberL2);
       if (blockWithOrgNullifier !== null) {
-        const orgBlockTransactions = await getTransactionsByTransactionHashes(
-          blockWithOrgNullifier.transactionHashes,
+        const siblingPath2 = await getTransactionHashSiblingInfo(
+          txWithOrgNullifier.transactionHash,
         );
         throw new TransactionError(
           `The transaction has a duplicate nullifier ${nullifier}`,
@@ -117,10 +84,11 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, bloc
             ? {
                 duplicateNullifier1Index: index,
                 block2: blockWithOrgNullifier,
-                transactions2: orgBlockTransactions,
+                transaction2: txWithOrgNullifier,
                 transaction2Index: blockWithOrgNullifier.transactionHashes.indexOf(
                   txWithOrgNullifier.transactionHash,
                 ),
+                siblingPath2,
                 duplicateNullifier2Index: txWithOrgNullifier.nullifiers.indexOf(nullifier),
               }
             : undefined,

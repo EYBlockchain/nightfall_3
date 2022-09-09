@@ -333,6 +333,13 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return blockHash;
     }
 
+    function isBlockReal(Block calldata b) public view returns (bytes32) {
+        bytes32 blockHash = Utils.hashBlock(b);
+        require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
+
+        return blockHash;
+    }
+
     function areBlockAndTransactionReal(
         Block calldata b,
         Transaction calldata t,

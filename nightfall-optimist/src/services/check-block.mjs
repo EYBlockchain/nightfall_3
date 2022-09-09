@@ -3,9 +3,13 @@ Module to check that submitted Blocks and Transactions are valid
 */
 import logger from 'common-files/utils/logger.mjs';
 import constants from 'common-files/constants/index.mjs';
-import { BlockError } from '../classes/index.mjs';
+import { BlockError, Transaction } from '../classes/index.mjs';
 import checkTransaction from './transaction-checker.mjs';
-import { getBlockByBlockNumberL2, getTreeByLeafCount } from './database.mjs';
+import {
+  getBlockByBlockNumberL2,
+  getTransactionHashSiblingInfo,
+  getTreeByLeafCount,
+} from './database.mjs';
 
 const { ZERO } = constants;
 
@@ -18,18 +22,14 @@ const { ZERO } = constants;
  */
 async function checkLeafCount(block) {
   logger.debug(`Checking block with leafCount ${block.leafCount}`);
+  const currentBlock = await getBlockByBlockNumberL2(block.blockNumberL2);
 
   if (block.blockNumberL2 > 0) {
     const priorBlock = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
-
-    if (priorBlock === null) {
-      logger.warn('Could not find prior block while checking leaf count');
-    }
-
-    if (priorBlock.leafCount + priorBlock.nCommitments !== block.leafCount) {
+    if (priorBlock === null) logger.warn('Could not find prior block while checking leaf count');
+    if (priorBlock.leafCount + currentBlock.nCommitments !== block.leafCount)
       throw new BlockError('The leaf count in the block is not correct', 0);
-    }
-  } else if (block.leafCount !== 0) {
+  } else if (currentBlock.nCommitments !== block.leafCount) {
     // this throws if it's the first block and leafCount!=0, which is impossible
     throw new BlockError('The leaf count in the block is not correct', 0);
   }
@@ -48,7 +48,7 @@ async function checkBlockRoot(block) {
   } else {
     while (!history) {
       // eslint-disable-next-line no-await-in-loop
-      history = await getTreeByLeafCount(block.leafCount + block.nCommitments);
+      history = await getTreeByLeafCount(block.leafCount);
       logger.debug(`Block has commitments - retrieved history from Timber`);
       logger.trace(`Timber history was ${JSON.stringify(history, null, 2)}`);
 
@@ -66,59 +66,94 @@ async function checkBlockRoot(block) {
 }
 
 // check if there are duplicate commitments in different transactions of the same block
-export function checkDuplicateCommitmentsWithinBlock(block, transactions) {
-  const blockCommitments = transactions.map(transaction => transaction.commitments).flat(Infinity);
-  blockCommitments.forEach((blockCommitment, index) => {
-    const lastIndex = blockCommitments.lastIndexOf(blockCommitment);
-    if (
-      blockCommitment !== ZERO &&
-      // blockCommitments.indexOf(blockCommitment) !== blockCommitments.lastIndexOf(blockCommitment)
-      index !== lastIndex
-    ) {
+export async function checkDuplicateCommitmentsWithinBlock(block, transactions) {
+  const blockCommitments = transactions
+    .map(transaction => transaction.commitments)
+    .flat(Infinity)
+    .filter(c => c !== ZERO)
+    .map((c, i) => {
+      return { transactionIndex: i, commitment: c };
+    });
+  for (const [index, blockCommitment] of blockCommitments.entries()) {
+    const lastIndex = blockCommitments
+      .map(c => c.commitment)
+      .lastIndexOf(blockCommitment.commitment);
+
+    if (index !== lastIndex) {
+      const transaction1Index = blockCommitments[index].transactionIndex;
+      const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
+      const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
+
+      const transaction2Index = blockCommitments[lastIndex].transactionIndex;
+      const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
+      const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
+
       throw new BlockError(
         `The block check failed due to duplicate commitments in different transactions of the same block`,
         2,
         {
           block1: block,
-          transactions1: transactions,
-          transaction1Index: index % 2 === 0 ? index / 2 : (index - 1) / 2,
-          duplicateCommitment1Index: index % 2 === 0 ? 0 : 1,
+          transaction1: transactions[transaction1Index],
+          transaction1Index,
+          siblingPath1,
+          duplicateCommitment1Index: transactions[transaction1Index].commitments.find(
+            c => c === blockCommitment.commitment,
+          ),
           block2: block,
-          transactions2: transactions,
-          transaction2Index: lastIndex % 2 === 0 ? lastIndex / 2 : (lastIndex - 1) / 2,
-          duplicateCommitment2Index: lastIndex % 2 === 0 ? 0 : 1,
+          transaction2: transactions[transaction2Index],
+          transaction2Index,
+          siblingPath2,
+          duplicateCommitment2Index: transactions[transaction2Index].commitments.find(
+            c => c === blockCommitment.commitment,
+          ),
         },
       );
     }
-  });
+  }
 }
 
 // check if there are duplicate nullifiers in different transactions of the same block
-export function checkDuplicateNullifiersWithinBlock(block, transactions) {
-  const blockNullifiers = transactions.map(transaction => transaction.nullifiers).flat(Infinity);
-  blockNullifiers.forEach((blockNullifier, index) => {
-    const lastIndex = blockNullifiers.lastIndexOf(blockNullifier);
-    if (
-      blockNullifier !== ZERO &&
-      // blockNullifiers.indexOf(blockNullifier) !== blockNullifiers.lastIndexOf(blockNullifier)
-      index !== lastIndex
-    ) {
+export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
+  const blockNullifiers = transactions
+    .map(transaction => transaction.nullifiers)
+    .flat(Infinity)
+    .filter(n => n !== ZERO)
+    .map((n, i) => {
+      return { transactionIndex: i, nullifier: n };
+    });
+  for (const [index, blockNullifier] of blockNullifiers.entries()) {
+    const lastIndex = blockNullifiers.map(n => n.nullifier).lastIndexOf(blockNullifier.nullifier);
+    if (index !== lastIndex) {
+      const transaction1Index = blockNullifiers[index].transactionIndex;
+      const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
+      const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
+
+      const transaction2Index = blockNullifiers[lastIndex].transactionIndex;
+      const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
+      const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
+
       throw new BlockError(
         `The block check failed due to duplicate nullifiers in different transactions of the same block`,
         3,
         {
           block1: block,
-          transactions1: transactions,
-          transaction1Index: index % 2 === 0 ? index / 2 : (index - 1) / 2,
-          duplicateNullifier1Index: index % 2 === 0 ? 0 : 1,
+          transaction1: transactions[transaction1Index],
+          transaction1Index,
+          siblingPath1,
+          duplicateNullifier1Index: transactions[transaction1Index].nullifiers.find(
+            n => n === blockNullifier.nullifier,
+          ),
           block2: block,
-          transactions2: transactions,
-          transaction2Index: lastIndex % 2 === 0 ? lastIndex / 2 : (lastIndex - 1) / 2,
-          duplicateNullifier2Index: lastIndex % 2 === 0 ? 0 : 1,
+          transaction2: transactions[transaction2Index],
+          transaction2Index,
+          siblingPath2,
+          duplicateNullifier2Index: transactions[transaction2Index].nullifiers.find(
+            n => n === blockNullifier.nullifier,
+          ),
         },
       );
     }
-  });
+  }
 }
 
 /**
@@ -138,24 +173,28 @@ export async function checkBlock(block, transactions) {
   await checkDuplicateNullifiersWithinBlock(block, transactions);
 
   // check if the transactions are valid - transaction type, public input hash and proof verification are all checked
-  for (let i = 0; i < transactions.length; i++) {
+  for (const transaction of transactions) {
     try {
-      await checkTransaction(transactions[i], false, { blockNumberL2: block.blockNumberL2 }); // eslint-disable-line no-await-in-loop
+      await checkTransaction(transaction, false, { blockNumberL2: block.blockNumberL2 }); // eslint-disable-line no-await-in-loop
     } catch (err) {
-      if (err.code + 2 === 2 || err.code + 2 === 3)
+      if (err.code + 2 === 2 || err.code + 2 === 3) {
+        console.log(transaction.transactionHash);
+        const siblingPath1 = await getTransactionHashSiblingInfo(transaction.transactionHash);
         err.metadata = {
           ...err.metadata,
           block1: block,
-          transactions1: transactions,
-          transaction1Index: block.transactionHashes.indexOf(transactions[i].transactionHash),
+          transaction1: transaction,
+          transaction1Index: block.transactionHashes.indexOf(transaction.transactionHash),
+          siblingPath1,
         };
+      }
+
       throw new BlockError(
         `The transaction check failed with error: ${err.message}`,
         err.code + 2, // mapping transaction error to block error
         {
           ...err.metadata,
-          transaction: transactions[i],
-          transactionHashIndex: block.transactionHashes.indexOf(transactions[i].transactionHash),
+          transactionHashIndex: block.transactionHashes.indexOf(transaction.transactionHash),
         },
       );
     }
