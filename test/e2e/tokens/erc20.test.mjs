@@ -64,6 +64,7 @@ const emptyL2 = async () => {
       count = await pendingCommitmentCount(nf3Users[0]);
     } catch (err) {
       console.log(err);
+      break;
     }
   }
   // console.log('Empty L2: final pending commitments', count);
