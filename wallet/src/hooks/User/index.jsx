@@ -6,11 +6,14 @@ import blockProposedEventHandler from '@Nightfall/event-handlers/block-proposed'
 import rollbackEventHandler from '@Nightfall/event-handlers/rollback';
 import {
   checkIndexDBForCircuit,
-  storeClientId,
-  getClientId,
-  saveTree,
-  getMaxBlock,
+  checkIndexDBForCircuitHash,
+  storeClientId, getClientId, saveTree, getMaxBlock,
+  emptyStoreBlocks,
+  emptyStoreTimber,
+  getLatestTimber,
+  createClientidCollection,
 } from '@Nightfall/services/database';
+import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import mqtt from 'mqtt';
 import axios from 'axios';
 import logger from 'common-files/utils/logger';
@@ -18,10 +21,13 @@ import * as Storage from '../../utils/lib/local-storage';
 import { encryptAndStore, retrieveAndDecrypt, storeBrowserKey } from '../../utils/lib/key-storage';
 import useInterval from '../useInterval';
 import { wsMqMapping, topicRollback, topicBlockProposed } from '../../common-files/utils/mq';
-import logger from 'common-files/utils/logger';
 import init from '../../web-worker/index.js';
 
-const { USE_STUBS, usernameMq, pswMQ, twoStepSyncUrl, twoStepSyncDeployment } = global.config;
+const { USE_STUBS, usernameMq, pswMQ, twoStepSyncUrl, twoStepSyncDeploymentRegion, utilApiServerUrl,
+  AWS: { s3Bucket },
+  isLocalRun,
+  checkBlockVersionUrl,
+ } = global.config;
 
 export const initialState = {
   compressedZkpPublicKey: '',
@@ -39,10 +45,8 @@ export const UserProvider = ({ children }) => {
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false); // This is not really a sync;
   const [isSyncing, setSyncing] = React.useState(true);
-  const [client, setClient] = React.useState(null);  
+  const [client, setClient] = React.useState(null);
   const [blockClient, setBlockClient] = React.useState(null);
-  const [lastBlock, setLastBlock] = React.useState({ blockHash: '0x0' });
-  const history = useHistory();
 
   const mqttConnect = async host => {
     const currentClientId = await getClientId(0);
@@ -66,6 +70,8 @@ export const UserProvider = ({ children }) => {
     };
     setBlockClient(mqtt.connect(host, blockOptions));
   };
+
+  const history = useHistory();
 
   const setupMqtt = async () => {
     mqttConnect(wsMqMapping[process.env.REACT_APP_MODE]);
@@ -91,7 +97,7 @@ export const UserProvider = ({ children }) => {
       zkpKeys.map(z => z.compressedZkpPublicKey),
     );
 
-    createClientId(zkpKeys[0].compressedPkd);
+    createClientId(zkpKeys[0].compressedZkpPublicKey);
     setState(previousState => {
       return {
         ...previousState,
@@ -121,7 +127,7 @@ export const UserProvider = ({ children }) => {
 
     const res = await axios
       .get(
-        `${twoStepSyncUrl}?deployment=${twoStepSyncDeployment}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}&completeSync=${completeSync}`,
+        `${twoStepSyncUrl}?deployment=${process.env.REACT_APP_MODE}&lastTimberBlock=${lastTimberBlock}&lastL2Block=${lastL2Block}&isTimberSynced=${isTimberSynced}&completeSync=${completeSync}&region=${twoStepSyncDeploymentRegion}`,
       )
       .catch(err => {
         console.log(err);
@@ -143,7 +149,7 @@ export const UserProvider = ({ children }) => {
 
     for (const block of res.data.l2Block.data) {
       /* eslint-disable */
-      const { ivk, nsk } = await retrieveAndDecrypt(state.compressedPkd);
+      const { ivk, nsk } = await retrieveAndDecrypt(state.compressedZkpPublicKey);
       await blockProposedEventHandler(block, [ivk], [nsk], false);
       /* eslint-enable */
     }
@@ -157,13 +163,8 @@ export const UserProvider = ({ children }) => {
       });
     }
 
-    timberAndBlockSync(
-      res.data.timber.lastBlock,
-      res.data.l2Block.lastBlock,
-      res.data.timber.isSynced,
-      res.data.l2Block.isSynced,
-    );
-  };
+    timberAndBlockSync(res.data.timber.lastBlock, res.data.l2Block.lastBlock, res.data.timber.isSynced, res.data.l2Block.isSynced);
+  }
 
   const syncState = async () => {
     const compressedZkpPublicKeys = Storage.ZkpPubKeyArrayGet('');
@@ -186,30 +187,19 @@ export const UserProvider = ({ children }) => {
           logger.error(err);
         } else if (granted) {
           logger.debug('subscribe to ', topic, granted);
+          console.log('subscribe to ', topic, granted);
         }
       });
     });
 
-    // Listen for messages
-      if(client) {
-        client.on('message', async (topic, message) => {
+    mqClient.on('error', err => {
+      logger.error('Connection error: ', err);
+      mqClient.end();
+    });
 
-          const { type, data } = JSON.parse(message.toString());
-          const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
-          if (topic === 'blockProposed') {
-            if(type == topic)
-              await blockProposedEventHandler(data, [ivk], [nsk]);
-            else
-              logger.debug("Error: messange sent on wrong topic")
-          }
-          else if (topic === 'rollback'){
-            if(type == topic)
-              await rollbackEventHandler(data);
-            else
-              console.log("Error: messange sent on wrong topic")
-          }
-        });
-      }
+    mqClient.on('reconnect', () => {
+      logger.debug('Reconnecting');
+    });
   };
 
   React.useEffect(() => {
@@ -217,6 +207,7 @@ export const UserProvider = ({ children }) => {
       mqttClientOnChange(client, topicRollback);
       client.on('message', async (topic, message) => {
         logger.info(message.toString());
+        console.log(message.toString());
         const { type, data } = JSON.parse(message.toString());
         if (topic === topicBlockProposed) {
           logger.error('Error: messange sent on wrong topic');
@@ -236,11 +227,11 @@ export const UserProvider = ({ children }) => {
   React.useEffect(() => {
     if (blockClient) {
       mqttClientOnChange(blockClient, topicBlockProposed);
-      const { compressedPkd } = state;
-      if (compressedPkd === '') return;
+      const { compressedZkpPublicKey } = state;
+      if (compressedZkpPublicKey === '') return;
       blockClient.on('message', async (topic, message) => {
         const { type, data } = JSON.parse(message.toString());
-        const { ivk, nsk } = await retrieveAndDecrypt(compressedPkd);
+        const { ivk, nsk } = await retrieveAndDecrypt(compressedZkpPublicKey);
         if (topic === topicBlockProposed && state.chainSync) {
           if (type === topic) await blockProposedEventHandler(data, [ivk], [nsk]);
           else logger.error('Error: messange sent on wrong topic');
@@ -252,9 +243,25 @@ export const UserProvider = ({ children }) => {
   }, [blockClient]);
 
   React.useEffect(async () => {
-    const maxBlockTimber = await getMaxBlock();
-    if (await getClientId(0)) await setupMqtt();
-    await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false);
+    let maxBlockTimber = await getMaxBlock();
+    let completeSync = false;
+    const lastTimber = await getLatestTimber();
+    if(lastTimber){
+      const isSynced = (await verifyBlock(maxBlockTimber, lastTimber)).data.body;
+      if (!isSynced) {
+        maxBlockTimber = -1;
+        completeSync = true;
+        await emptyStoreBlocks();
+        await emptyStoreTimber();
+      }
+    }
+    if (await getClientId(0)){ 
+      await setupMqtt();
+    } else {
+      createClientidCollection();
+      if(state.compressedZkpPublicKey) createClientId(state.compressedZkpPublicKey);
+    }
+    await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false, false, completeSync);
   }, []);
 
   React.useEffect(async () => {
@@ -292,7 +299,7 @@ export const UserProvider = ({ children }) => {
   /*
     Check if hash circuit functions from manifest have changed. If the have, resync again
   */
-  useInterval(
+  useInterval( 
     async () => {
       const circuitInfo = isLocalRun
         ? await fetch(`${utilApiServerUrl}/s3_hash.txt`).then(response => response.json())
@@ -313,6 +320,22 @@ export const UserProvider = ({ children }) => {
     },
     isSyncing ? null : 30000,
   );
+
+  const verifyBlock = async (blockNumber, timberJson) => {
+    const res = await axios
+      .post(`${checkBlockVersionUrl}`, {
+        timber: timberJson,
+        deployment: process.env.REACT_APP_MODE,
+        block: blockNumber,
+        region: twoStepSyncDeploymentRegion,
+      })
+      .catch(err => {
+        console.log(err);
+      });
+
+    return res;
+  };
+
   /*
    * TODO: children should render when sync is complete
    * like implement a loader till sync is not complete
