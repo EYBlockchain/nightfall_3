@@ -239,16 +239,16 @@ export async function createChallenge(block, transactions, err) {
       break;
     }
     case 5: {
-        const { transactionHashIndex } = err.metadata;
-        txDataToSign = await challengeContractInstance.methods
-          .challengeHistoricRoot(
-            Block.buildSolidityStruct(block),
-            transactions.map(t => Transaction.buildSolidityStruct(t)),
-            transactionHashIndex,
-          )
-          .encodeABI();
-        break;
-      }
+      const { transactionHashIndex } = err.metadata;
+      txDataToSign = await challengeContractInstance.methods
+        .challengeHistoricRoot(
+          Block.buildSolidityStruct(block),
+          transactions.map(t => Transaction.buildSolidityStruct(t)),
+          transactionHashIndex,
+        )
+        .encodeABI();
+      break;
+    }
     default:
     // code block
   }
