@@ -18,18 +18,14 @@ module.exports = {
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   INVALID_BLOCKS_COLLECTION: 'invalid_blocks',
-  NULLIFIER_COLLECTION: 'nullifiers',
   COMMIT_COLLECTION: 'commits',
-  WALLETS_COLLECTION: 'wallets',
   COMMITMENTS_COLLECTION: 'commitments',
-  PEERS_COLLECTION: 'peers',
   TIMBER_COLLECTION: 'timber',
   CIRCUIT_COLLECTION: 'circuit_storage',
   CIRCUIT_HASH_COLLECTION: 'circuit_hash_storage',
   KEYS_COLLECTION: 'keys',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   EXCLUDE_DIRS: 'common',
-  PROOF_QUEUE: 'generate-proof',
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
@@ -112,9 +108,6 @@ module.exports = {
     JUBJUBC: BigInt(8),
     MONTA: BigInt(168698),
     MONTB: BigInt(1),
-  },
-  ELLIGATOR2: {
-    U: BigInt(5), // non square in Fp
   },
   MPC: {
     MPC_PARAMS_URL:
@@ -429,4 +422,15 @@ module.exports = {
   // assumption is if LOCAL_PROPOSER is true, wallet UI app
   // is running in local machine
   isLocalRun: process.env.LOCAL_PROPOSER === 'true',
+  SIGNATURES: {
+    BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+    TRANSACTION:
+      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+    PROPOSE_BLOCK: [
+      '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])[]',
+    ],
+    SUBMIT_TRANSACTION:
+      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+  },
 };
