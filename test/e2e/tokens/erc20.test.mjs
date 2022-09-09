@@ -4,7 +4,12 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { depositNTransactions, expectTransaction, Web3Client } from '../../utils.mjs';
+import {
+  depositNTransactions,
+  expectTransaction,
+  pendingCommitmentCount,
+  Web3Client,
+} from '../../utils.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
 
@@ -49,16 +54,18 @@ const waitForTxExecution = async (count, txType) => {
 };
 
 const emptyL2 = async () => {
-  let count = await nf3Users[0].unprocessedTransactionCount();
-
+  await new Promise(resolve => setTimeout(resolve, 6000));
+  let count = await pendingCommitmentCount(nf3Users[0]);
   while (count !== 0) {
     await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    count = await nf3Users[0].unprocessedTransactionCount();
+    try {
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      count = await pendingCommitmentCount(nf3Users[0]);
+    } catch (err) {
+      break;
+    }
   }
-
-  await nf3Users[0].makeBlockNow();
-  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  await new Promise(resolve => setTimeout(resolve, 6000));
 };
 
 describe('ERC20 tests', () => {
@@ -419,7 +426,6 @@ describe('ERC20 tests', () => {
           // Transfer 800 + 200 to self       Input [800, 250]   Output [800, 50]     Commitment List after [50, 50, 50, 100, 250, 1000]
           // Transfer 1000 + 200 to self      Input [1000, 250]  Output [1200, 50]    Commitment List after [50, 50, 50, 50, 100, 1200]
 
-          // console.log('Making 6 deposits', maxERC20DepositValue);
           const trnsferValue = Math.floor(maxERC20WithdrawValue / 5); // maxERC20DepositValue < trnsferValue < maxERC20WithdrawValue
           const withdrawValue = trnsferValue * 6; // trnsferValue = ( maxERC20WithdrawValue / 5 ) * 6 > maxERC20WithdrawValue
 
@@ -434,22 +440,18 @@ describe('ERC20 tests', () => {
           );
 
           await emptyL2();
-          await new Promise(resolve => setTimeout(resolve, 15000));
 
-          for (let i = 0; i < 5; i++) {
-            // console.log('transfering self', trnsferValue * (i + 2));
-            await nf3Users[0].transfer(
-              false,
-              erc20Address,
-              tokenType,
-              trnsferValue * (i + 2),
-              tokenId,
-              nf3Users[0].zkpKeys.compressedZkpPublicKey,
-              0,
-            );
-            await emptyL2();
-            await new Promise(resolve => setTimeout(resolve, 30000));
-          }
+          await nf3Users[0].transfer(
+            false,
+            erc20Address,
+            tokenType,
+            trnsferValue * 4,
+            tokenId,
+            nf3Users[0].zkpKeys.compressedZkpPublicKey,
+            0,
+          );
+
+          await emptyL2();
 
           const rec = await nf3Users[0].withdraw(
             false,
