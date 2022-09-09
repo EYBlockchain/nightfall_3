@@ -11,9 +11,9 @@ const SUPPORTED_ENVIRONMENTS = {
   ropsten: {
     name: 'Ropsten',
     chainId: 3,
-    clientApiUrl: 'https://client1.testnet.nightfall3.com',
-    optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
-    optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
+    clientApiUrl: 'https://client.testnet.nightfall3.com',
+    optimistApiUrl: 'https://optimist.testnet.nightfall3.com',
+    optimistWsUrl: 'wss://optimist-ws.testnet.nightfall3.com',
     web3WsUrl: 'wss://ropsten1-ws.testnet.nightfall3.com',
   },
   rinkeby: {
@@ -35,10 +35,10 @@ const SUPPORTED_ENVIRONMENTS = {
   docker: {
     name: 'Docker',
     chainId: 1337,
-    clientApiUrl: 'http://client1',
-    optimistApiUrl: 'http://optimist1',
-    optimistWsUrl: 'ws://optimist1:8080',
-    web3WsUrl: 'ws://blockchain1:8546',
+    clientApiUrl: 'http://client',
+    optimistApiUrl: 'http://optimist',
+    optimistWsUrl: 'ws://optimist:8080',
+    web3WsUrl: 'ws://blockchain:8546',
   },
 };
 

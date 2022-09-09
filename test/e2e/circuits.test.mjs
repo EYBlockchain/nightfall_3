@@ -144,7 +144,7 @@ describe('General Circuit Test', () => {
 
     await nf3Users[0].makeBlockNow();
 
-    eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 
     logger.debug(`Sending withdrawal with no change...`);
     const withdrawalNoChange = await nf3Users[0].withdraw(

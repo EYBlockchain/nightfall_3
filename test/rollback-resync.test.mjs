@@ -180,7 +180,7 @@ describe('Running rollback and resync test', () => {
       );
 
       await sendTransactions(depositTransactions, [privateKey, shieldAddress, gas, fee]);
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     });
 
     it('should make a block of transfers so we can make some bad blocks', async function () {
@@ -193,7 +193,7 @@ describe('Running rollback and resync test', () => {
       // eslint-disable-next-line prefer-destructuring
       duplicateTransaction = transferTransactions[0];
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     });
   });
 
@@ -219,7 +219,7 @@ describe('Running rollback and resync test', () => {
       validTransactions.push(...transferTransactions);
       await sendTransactions(transferTransactions, [privateKey, shieldAddress, gas, fee]);
 
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     });
     it('should send the commit-challenge', async function () {
       while (!commitTxDataToSign) {
@@ -229,7 +229,7 @@ describe('Running rollback and resync test', () => {
       commitTxDataToSign = null;
     });
     it('Should delete the flawed block and rollback the leaves', async () => {
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['Rollback']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['Rollback']));
       await web3Client.testForEvents(stateAddress, [
         web3.eth.abi.encodeEventSignature('Rollback(bytes32,uint256,uint256)'),
         web3.eth.abi.encodeParameter('bytes32', topicsBlockHashDuplicateTransaction),
@@ -245,7 +245,7 @@ describe('Running rollback and resync test', () => {
         stdio: 'ignore',
       });
       resetOptimistDB.on('close', async () => {
-        spawn('docker', ['restart', 'nightfall_3_optimist1_1'], {
+        spawn('docker', ['restart', 'nightfall_3_optimist_1'], {
           stdio: 'ignore',
         });
 
@@ -330,7 +330,7 @@ describe('Running rollback and resync test', () => {
 
     it('should automatically create a bad block, as the resync will re-populate our local db', async () => {
       // This block will be a bad block as it uses the blockSubmissionFunction from the first bad block.
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     });
 
     it('should make another good block on top of the bad block', async function () {
@@ -353,7 +353,7 @@ describe('Running rollback and resync test', () => {
       );
       await sendTransactions(depositTransactions, [privateKey, shieldAddress, gas, fee]);
       validTransactions.push(...depositTransactions);
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     });
 
     it('should fire off the commit-challenge', async function () {
@@ -380,7 +380,7 @@ describe('Running rollback and resync test', () => {
         stdio: 'ignore',
       });
       resetOptimistDB.on('close', async () => {
-        spawn('docker', ['restart', 'nightfall_3_optimist1_1'], {
+        spawn('docker', ['restart', 'nightfall_3_optimist_1'], {
           stdio: 'ignore',
         });
         let healthCheck;

@@ -29,4 +29,4 @@ COPY ./zokrates-worker/start-dev ./start-dev
 
 RUN npm ci
 
-CMD npm start
+CMD ["npm", "start"]
