@@ -11,7 +11,7 @@ describe('Ping-pong tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist1');
+    await nf3Proposer.registerProposer('http://optimist');
     await nf3Proposer.startProposer();
   });
 
