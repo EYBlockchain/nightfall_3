@@ -10,15 +10,8 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       ETH_NETWORK: development
-      
-  client1:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      AUTOSTART_RETRIES: 100
 
-  client2:
+  client:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     environment:
@@ -35,14 +28,7 @@ services:
       ETH_NETWORK: development
       BLOCKCHAIN_WS_HOST: host.docker.internal
 
-  optimist1:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      AUTOSTART_RETRIES: 100
-
-  optimist2:
+  optimist:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     environment:

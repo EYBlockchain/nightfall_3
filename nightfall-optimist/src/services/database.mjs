@@ -16,7 +16,6 @@ const {
   OPTIMIST_DB,
   TRANSACTIONS_COLLECTION,
   PROPOSER_COLLECTION,
-  CHALLENGER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   INVALID_BLOCKS_COLLECTION,
   COMMIT_COLLECTION,
@@ -46,43 +45,6 @@ export async function getCommit(commitHash) {
   if (commit)
     await db.collection(COMMIT_COLLECTION).updateOne(query, { $set: { retrieved: true } });
   return commit;
-}
-
-/**
-function to store addresses that are used to sign challenge transactions.  This
-is done so that we can check that a challenge commit is from us and hasn't been
-front-run (because that would change the origin address of the commit to that of
-the front-runner).
-*/
-export async function addChallengerAddress(address) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  logger.debug(`Saving challenger address ${address}`);
-  const data = { challenger: address };
-  return db.collection(CHALLENGER_COLLECTION).insertOne(data);
-}
-
-/**
-function to remove addresses that are used to sign challenge transactions. This
-is needed in the case of a key compromise, or if we simply no longer wish to use
-the address.
-*/
-export async function removeChallengerAddress(address) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  logger.debug(`Removing challenger address ${address}`);
-  const data = { challenger: address };
-  return db.collection(CHALLENGER_COLLECTION).deleteOne(data);
-}
-
-/**
-Function to tell us if an address used to commit to a challenge belongs to us
-*/
-export async function isChallengerAddressMine(address) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const metadata = await db.collection(CHALLENGER_COLLECTION).findOne({ challenger: address });
-  return metadata !== null;
 }
 
 /**

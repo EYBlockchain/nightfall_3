@@ -56,9 +56,9 @@ trap "docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' down --remove
 docker-compose -f docker/docker-compose.yml $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb1) ]]; then
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
   echo -n 'Removing '
-  docker volume rm nightfall_3_mongodb1
+  docker volume rm nightfall_3_mongodb
 fi
 
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb2) ]]; then
@@ -91,5 +91,5 @@ if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
 
-docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans
-cd docker && docker-compose -p 'nightfall_3' logs -f client1 optimist1 worker deployer
+docker-compose $FILE $STUBS $DEV $ADVERSARY  up -d --remove-orphans
+cd docker && docker-compose logs -f client optimist worker deployer

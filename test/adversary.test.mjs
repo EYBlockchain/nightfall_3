@@ -120,8 +120,6 @@ describe('Testing with an adversary', () => {
       registerProposerOnNoProposer(nf3AdversarialProposer);
     }, 5000);
 
-    // Challenger registration
-    await nf3Challenger.registerChallenger();
     // Chalenger listening for incoming events
     const challengeEmitter = await nf3Challenger.startChallenger();
     challengeEmitter
@@ -170,7 +168,7 @@ describe('Testing with an adversary', () => {
         nDeposits++;
         expectedBalance += value2;
       }
-
+      console.log('Number of deposits', nDeposits);
       for (let i = 0; i < TEST_LENGTH; i++) {
         await waitForSufficientBalance(
           nf3User,
@@ -209,11 +207,13 @@ describe('Testing with an adversary', () => {
             nTransfers++;
           }
         }
+        console.log('Number of transfers', nTransfers);
         for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
           await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
           nDeposits++;
           expectedBalance += value2;
         }
+        console.log('Number of deposits', nDeposits);
         await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
         console.log(`Completed ${i + 1} pings with expectedBalance ${expectedBalance}`);
       }
