@@ -38,6 +38,14 @@ const connectDB = async () => {
   });
 };
 
+export async function createClientidCollection() {
+  return openDB(COMMITMENTS_DB, 1, {
+    upgrade(newDb) {
+      newDb.createObjectStore(CLIENT_ID_COLLECTION);
+    },
+  });
+};
+
 /*
  * function stores circuit data and hash
  */
@@ -162,6 +170,18 @@ export async function getLatestTree() {
     timberObj.height,
   );
   return t;
+}
+
+export async function getLatestTimber() {
+  const db = await connectDB();
+  const keys = await db.getAllKeys(TIMBER_COLLECTION);
+  const maxKey = Math.max(...keys);
+  const timberObjArr = await db.get(TIMBER_COLLECTION, maxKey);
+  if (timberObjArr) {
+    timberObjArr.blockNumber = timberObjArr._id;
+    delete timberObjArr._id;
+  }
+  return timberObjArr;
 }
 
 export async function getTreeByRoot(treeRoot) {
