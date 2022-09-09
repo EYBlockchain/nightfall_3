@@ -54,7 +54,7 @@ const waitForTxExecution = async (count, txType) => {
 };
 
 const emptyL2 = async () => {
-  await new Promise(resolve => setTimeout(resolve, 6000));
+  // await new Promise(resolve => setTimeout(resolve, 6000));
   let count = await pendingCommitmentCount(nf3Users[0]);
   console.log('EmptyL2 : pending commitments', count);
   while (count !== 0) {
@@ -64,10 +64,9 @@ const emptyL2 = async () => {
       count = await pendingCommitmentCount(nf3Users[0]);
     } catch (err) {
       console.log(err);
-      break;
     }
   }
-  console.log('Empty L2: final pending commitments', count);
+  // console.log('Empty L2: final pending commitments', count);
   // await nf3Users[0].makeBlockNow();
   // await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   await new Promise(resolve => setTimeout(resolve, 6000));
