@@ -4,7 +4,6 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import compose from 'docker-compose';
-import constants from 'common-files/constants/index.mjs';
 import Transaction from 'common-files/classes/transaction.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
@@ -26,7 +25,7 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
-const { PROPOSE_BLOCK_TYPES } = constants;
+const { PROPOSE_BLOCK } = config.SIGNATURES;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
@@ -182,7 +181,7 @@ describe('Optimist synchronisation tests', () => {
       );
       const encodedParams = web3Client
         .getWeb3()
-        .eth.abi.encodeParameters(PROPOSE_BLOCK_TYPES, [blockData, transactionsData]);
+        .eth.abi.encodeParameters(PROPOSE_BLOCK, [blockData, transactionsData]);
       // then the function identifier is added
       const newTx = `${functionCode}${encodedParams.slice(2)}`;
       // then send it!
