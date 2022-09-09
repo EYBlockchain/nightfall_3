@@ -76,7 +76,7 @@ const checkBlocks = async () => {
     // Existing blocks found stored locally
     let expectedLeafCount = 0;
     // Loop through all our blocks to find any gaps in our internal block data
-    for (let i = 0; i < blocks.length; i++) {
+    for (let i = 0; i < blocks.length - 1; i++) {
       // If the leafCount of the next block stored internally does not match what we expect the leaf count to be
       // it means we may have a gap in our blockData
       expectedLeafCount += blocks[i].nCommitments;

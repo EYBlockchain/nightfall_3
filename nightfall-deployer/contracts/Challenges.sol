@@ -23,7 +23,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Config.initialize();
     }
 
-  /**
+    /**
   Check that the block correctly updates the leafCount.  Note that the leafCount
   is actually the value AFTER the commitments are added to the Merkle tree.
   */
