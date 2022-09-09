@@ -56,13 +56,13 @@ const waitForTxExecution = async (count, txType) => {
 const emptyL2 = async () => {
   await new Promise(resolve => setTimeout(resolve, 3000));
   let count = await pendingCommitmentCount(nf3Users[0]);
-
+  console.log('EmptyL2 : pending commitments', count);
   while (count !== 0) {
     await nf3Users[0].makeBlockNow();
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     count = await pendingCommitmentCount(nf3Users[0]);
   }
-
+  console.log('Empty L2: final pending commitments', count);
   // await nf3Users[0].makeBlockNow();
   // await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   await new Promise(resolve => setTimeout(resolve, 3000));
@@ -442,6 +442,7 @@ describe('ERC20 tests', () => {
 
           await emptyL2();
 
+          console.log('Ready for transfer');
           await nf3Users[0].transfer(
             false,
             erc20Address,
@@ -451,9 +452,11 @@ describe('ERC20 tests', () => {
             nf3Users[0].zkpKeys.compressedZkpPublicKey,
             0,
           );
+          console.log('Transfer done');
 
           await emptyL2();
 
+          console.log('Read for Withdraw');
           const rec = await nf3Users[0].withdraw(
             false,
             erc20Address,
@@ -463,6 +466,7 @@ describe('ERC20 tests', () => {
             nf3Users[0].ethereumAddress,
             0,
           );
+          console.log('Withdraw done');
 
           await emptyL2();
           await new Promise(resolve => setTimeout(resolve, 30000));

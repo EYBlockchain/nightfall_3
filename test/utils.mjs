@@ -350,6 +350,7 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
     while (count > 0) {
       try {
         res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+        console.log('Deposit');
         count = 0;
       } catch (e) {
         if (
