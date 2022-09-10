@@ -22,5 +22,10 @@
     "reconnecting-websocket": "^4.4.0",
     "web3": "^1.7.5",
     "ws": "^8.2.3"
+  },
+  "overrides": {
+    "swarm-js": {
+      "got": "11.8.5"
+    }
   }
 }

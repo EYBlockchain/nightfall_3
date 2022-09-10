@@ -22,4 +22,10 @@
   "devDependencies": {
     "pino-pretty": "^8.1.0"
   }
+  ,
+  "overrides": {
+    "swarm-js": {
+      "got": "11.8.5"
+    }
+  }
 }

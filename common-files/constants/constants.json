@@ -3,15 +3,5 @@
   "SHIELD_CONTRACT_NAME": "Shield",
   "CHALLENGES_CONTRACT_NAME": "Challenges",
   "STATE_CONTRACT_NAME": "State",
-  "BLOCK_PROPOSED_EVENT_NAME": "BlockProposed",
-  "ZKP_KEY_LENGTH": 32,
-  "NODE_HASHLENGTH": 32,
-  "ZERO": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "BLOCK_TYPES": "(uint48,address,bytes32,uint256,bytes32,bytes32)",
-  "TRANSACTION_TYPES": "(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])",
-  "PROPOSE_BLOCK_TYPES": [
-    "(uint48,address,bytes32,uint256,bytes32,bytes32)",
-    "(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])[]"
-  ],
-  "SUBMIT_TRANSACTION_TYPES": "(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])"
+  "ZERO": "0x0000000000000000000000000000000000000000000000000000000000000000"
 }

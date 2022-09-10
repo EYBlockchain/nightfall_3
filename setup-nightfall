@@ -1,4 +1,5 @@
 #! /bin/bash
+set -e
 
 # Install node dependencies
 npm ci
@@ -12,4 +13,10 @@ if [ $OS_ARCH != "x86_64" ]; then
 fi
 
 docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-zokrates:0.7.13 -f docker/zokrates.Dockerfile .
-docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG}
+# containers built separately. A parallel build fails.
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build administrator ${NO_CACHE_FLAG}
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build client ${NO_CACHE_FLAG}
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build optimist ${NO_CACHE_FLAG}
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build worker ${NO_CACHE_FLAG}
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build hosted-utils-api-server ${NO_CACHE_FLAG}
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.adversary.yml build adversary1 ${NO_CACHE_FLAG}

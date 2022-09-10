@@ -4,15 +4,15 @@
 /**
 An optimistic Transaction class
 */
+import config from 'config';
 import gen from 'general-number';
-import Web3 from '../utils/web3.mjs';
+import Web3 from 'web3';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
-import constants from '../constants/index.mjs';
 
 const { generalise } = gen;
 
 const TOKEN_TYPES = { ERC20: 0, ERC721: 1, ERC1155: 2 };
-const { TRANSACTION_TYPES } = constants;
+const { SIGNATURES } = config;
 
 const arrayEquality = (as, bs) => {
   if (as.length === bs.length) {
@@ -23,7 +23,7 @@ const arrayEquality = (as, bs) => {
 
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
-  const web3 = Web3.connection();
+  const web3 = new Web3();
   const {
     value,
     fee,
@@ -54,7 +54,7 @@ function keccak(preimage) {
     proof,
   ];
 
-  const encodedTransaction = web3.eth.abi.encodeParameters([TRANSACTION_TYPES], [transaction]);
+  const encodedTransaction = web3.eth.abi.encodeParameters([SIGNATURES.TRANSACTION], [transaction]);
   return web3.utils.soliditySha3({
     t: 'bytes',
     v: encodedTransaction,

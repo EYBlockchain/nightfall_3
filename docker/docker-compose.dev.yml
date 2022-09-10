@@ -20,22 +20,7 @@ services:
         source: ../config/default.js
         target: /app/admin/config/default.js
 
-  client1:
-    build:
-      dockerfile: docker/client.Dockerfile
-      context: ..
-    volumes:
-      - type: bind
-        source: ../nightfall-client/src
-        target: /app/src
-      - type: bind
-        source: ../common-files
-        target: /common-files
-      - type: bind
-        source: ../config/default.js
-        target: /app/config/default.js
-
-  client2:
+  client:
     build:
       dockerfile: docker/client.Dockerfile
       context: ..
@@ -51,7 +36,6 @@ services:
         target: /app/config/default.js
 
   deployer:
-    #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
     build:
       dockerfile: docker/deployer.Dockerfile
       context: ..
@@ -81,22 +65,7 @@ services:
         source: ../nightfall-deployer/entrypoint.sh
         target: /app/entrypoint.sh
 
-  optimist1:
-    build:
-      dockerfile: docker/optimist.Dockerfile
-      context: ..
-    volumes:
-      - type: bind
-        source: ../nightfall-optimist/src
-        target: /app/src
-      - type: bind
-        source: ../common-files
-        target: /common-files
-      - type: bind
-        source: ../config/default.js
-        target: /app/config/default.js
-
-  optimist2:
+  optimist:
     build:
       dockerfile: docker/optimist.Dockerfile
       context: ..
@@ -112,7 +81,6 @@ services:
         target: /app/config/default.js
 
   worker:
-    #  image: 3800decac71d
     build:
       dockerfile: docker/worker.Dockerfile
       context: ..
@@ -133,4 +101,3 @@ services:
       # to use with postman and etc
       - 8091:80
     entrypoint: [ "npm", "run", "start" ]
-  

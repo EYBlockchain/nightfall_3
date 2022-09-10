@@ -18,18 +18,14 @@ module.exports = {
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   INVALID_BLOCKS_COLLECTION: 'invalid_blocks',
-  NULLIFIER_COLLECTION: 'nullifiers',
   COMMIT_COLLECTION: 'commits',
-  WALLETS_COLLECTION: 'wallets',
   COMMITMENTS_COLLECTION: 'commitments',
-  PEERS_COLLECTION: 'peers',
   TIMBER_COLLECTION: 'timber',
   CIRCUIT_COLLECTION: 'circuit_storage',
   CIRCUIT_HASH_COLLECTION: 'circuit_hash_storage',
   KEYS_COLLECTION: 'keys',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   EXCLUDE_DIRS: 'common',
-  PROOF_QUEUE: 'generate-proof',
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
@@ -75,7 +71,7 @@ module.exports = {
       // Keep keepalive interval small so that socket doesn't die
       keepaliveInterval: 1500,
     },
-    timeout: 3600000,
+    timeout: 0,
     reconnect: {
       auto: true,
       delay: 5000, // ms
@@ -113,9 +109,6 @@ module.exports = {
     MONTA: BigInt(168698),
     MONTB: BigInt(1),
   },
-  ELLIGATOR2: {
-    U: BigInt(5), // non square in Fp
-  },
   MPC: {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
@@ -136,9 +129,9 @@ module.exports = {
     ropsten: {
       name: 'Ropsten',
       chainId: 3,
-      clientApiUrl: 'https://client1.testnet.nightfall3.com',
-      optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
-      optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
+      clientApiUrl: 'https://client.testnet.nightfall3.com',
+      optimistApiUrl: 'https://optimist.testnet.nightfall3.com',
+      optimistWsUrl: 'wss://optimist-ws.testnet.nightfall3.com',
       web3WsUrl: `${process.env.ROPSTEN_NODE}`,
     },
     rinkeby: {
@@ -281,7 +274,7 @@ module.exports = {
         process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
     },
     tokens: {
-      blockchain1: [
+      blockchain: [
         {
           name: 'ERC20Mock',
           address: '0x9b7bD670D87C3Dd5C808ba627c75ba7E88aD066f',
@@ -429,4 +422,15 @@ module.exports = {
   // assumption is if LOCAL_PROPOSER is true, wallet UI app
   // is running in local machine
   isLocalRun: process.env.LOCAL_PROPOSER === 'true',
+  SIGNATURES: {
+    BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+    TRANSACTION:
+      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+    PROPOSE_BLOCK: [
+      '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])[]',
+    ],
+    SUBMIT_TRANSACTION:
+      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+  },
 };
