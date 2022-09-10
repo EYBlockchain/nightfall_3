@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 /**
 Logic for storing and retrieving commitments from a mongo DB.  Abstracted from
 deposit/transfer/withdraw
@@ -15,6 +16,7 @@ import {
   getTransactionByTransactionHash,
   getTransactionHashSiblingInfo,
 } from './database.mjs';
+import { syncState } from './state-sync.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -588,16 +590,72 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
   return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
 
-// function to find commitments that can be used in the proposed transfer
-// We want to make sure that only one process runs this at a time, otherwise
-// two processes may pick the same commitment. Thus we'll use a mutex lock and
-// also mark any found commitments as nullified (TODO mark them as un-nullified
-// if the transaction errors). The mutex lock is in the function
-// findUsableCommitmentsMutex, which calls this function.
-async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value) {
-  const value = generalise(_value); // sometimes this is sent as a BigInt.
+async function verifyEnoughCommitments(
+  compressedZkpPublicKey,
+  ercAddress,
+  tokenId,
+  value,
+  ercAddressFee,
+  fee,
+) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
+
+  let fc = 0; // Number of fee commitments
+  let minFc = 0; // Minimum number of fee commitments required to pay the fee
+  let commitmentsFee = []; // Array containing the fee commitments available sorted
+
+  // If there is a fee and the ercAddress of the fee doesn't match the ercAddress, get
+  // the fee commitments available and check the minimum number of commitments the user
+  // would need to pay for the fee
+  if (fee.bigInt > 0n) {
+    // Get the fee commitments from the database
+    const commitmentArrayFee = await db
+      .collection(COMMITMENTS_COLLECTION)
+      .find({
+        compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
+        'preimage.ercAddress': ercAddressFee.hex(32),
+        'preimage.tokenId': generalise(0).hex(32),
+        isNullified: false,
+        isPendingNullification: false,
+      })
+      .toArray();
+
+    // If not commitments are found, the fee cannot be paid, so return null
+    if (commitmentArrayFee === []) return null;
+
+    // Turn the fee commitments into real commitment object and sort it
+    commitmentsFee = commitmentArrayFee
+      .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
+      .map(ct => new Commitment(ct.preimage))
+      .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
+
+    fc = commitmentsFee.length; // Store the number of fee commitments
+
+    // At most, we can use 3 commitments to pay for the fee. However, it is possible that
+    // the user has less than 3 matic commitments. Therefore, the maximum number of commitments
+    // the user will be able to use is the minimum between 3 and the number of fee commitments (fc)
+    const maxPossibleCommitmentsFee = Math.min(fc, 3);
+
+    let i = 1;
+    let sumHighestCommitmentsFee = 0n;
+    // We try to find the minimum number of commitments whose sum is higher than the fee.
+    // Since the array is sorted, we just need to try to sum the highest commitments.
+    while (i <= maxPossibleCommitmentsFee) {
+      sumHighestCommitmentsFee += commitmentsFee[fc - i].preimage.value.bigInt;
+      if (sumHighestCommitmentsFee >= fee.bigInt) {
+        minFc = i;
+        break;
+      }
+      ++i;
+    }
+
+    // If after the loop minFc is still zero means that we didn't found any sum of commitments
+    // higher or equal than the fee required. Therefore the user can not pay it
+    if (minFc === 0) return null;
+  }
+
+  // Get the commitments from the database
   const commitmentArray = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
@@ -609,136 +667,336 @@ async function findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId
     })
     .toArray();
 
+  // If not commitments are found, the transfer/withdrawal cannot be paid, so return null
   if (commitmentArray === []) return null;
-  // turn the commitments into real commitment objects
+
+  // Turn the fee commitments into real commitment object and sort it
   const commitments = commitmentArray
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
-    .map(ct => new Commitment(ct.preimage));
-  // if we have an exact match, we can do a single-commitment transfer.
-  const [singleCommitment] = commitments.filter(c => c.preimage.value.hex(32) === value.hex(32));
-  if (singleCommitment) {
-    logger.info('Found commitment suitable for single transfer or withdraw');
-    await markPending(singleCommitment);
-    return [singleCommitment];
-  }
+    .map(ct => new Commitment(ct.preimage))
+    .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
 
-  // If there is only 1 commitment - then we should try a single transfer with change
-  if (commitments.length === 1) {
-    if (commitments[0].preimage.value.bigInt > value.bigInt) {
-      await markPending(commitments[0]);
-      return commitments;
-    }
-    return null;
-  }
+  const c = commitments.length; // Store the number of commitments
+  let minC = 0;
 
-  /* The current strategy aims to prioritise reducing the complexity of the commitment set. 
-    I.e. Minimise the size of the commitment set by using smaller commitments while also 
-    minimising the creation of low value commitments (dust).
+  // At most, we can use (4 - number of fee commitments needed) commitments to pay for the
+  // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
+  // Therefore, the maximum number of commitments the user will be able to use is the minimum between
+  // 4 - minFc and the number of commitments (c)
+  const maxPossibleCommitments = Math.min(c, 4 - minFc);
 
-    Transaction type in order of priority. (1) Double transfer without change, (2) Double Transfer with change, (3) Single Transfer with change.
-
-    Double Transfer Without Change:
-    1) Sort all commitments by value
-    2) Find candidate pairs of commitments that equal the transfer sum.
-    3) Select candidate that uses the smallest commitment as one of the input.
-
-    Double Transfer With Change:
-    1) Sort all commitments by value
-    2) Split commitments into two sets based of if their values are less than or greater than the target value. LT & GT respectively.
-    3) If the sum of the two largest values in set LT is LESS than the target value:
-      i) We cannot arrive at the target value with two elements in this set.
-      ii) Our two selected commitments will be the smallest commitment in LT and in smallest commitment in GT.
-      iii) It is guaranteed that the output (change) commitments will be larger than the input commitment from LT.
-
-    5) If the sum of the two largest values in set LT is GREATER than the target value:
-      i) We use a standard inward search whereby we begin with a pointer, lhs & rhs at the start and end of the LT.
-      ii) We also track the change difference, this is the change in size of the smallest commitment in this set resulting from this transaction's output.
-      iii) If the sum of the commitments at the pointers is greater than the target value, we move pointer rhs to the left.
-      iv) Otherwise, we move pointer lhs to the right.
-      v) The selected commitments are the pair that minimise the change difference. The best case in this scenario is a change difference of -1.
-
-    Single Transfer With Change:
-    1) If this is the only commitment and it is greater than the transfer sum.
-  */
-
-  // sorting will help with making the search easier
-  const sortedCommits = commitments.sort((a, b) =>
-    Number(a.preimage.value.bigInt - b.preimage.value.bigInt),
-  );
-
-  // Find two commitments that matches the transfer value exactly. Double Transfer With No Change.
-  let lhs = 0;
-  let rhs = sortedCommits.length - 1;
-  let commitmentsToUse = null;
-  while (lhs < rhs) {
-    const tempSum = sortedCommits[lhs].bigInt + sortedCommits[rhs].bigInt;
-    // The first valid solution will include the smallest usable commitment in the set.
-    if (tempSum === value.bigInt) {
-      commitmentsToUse = [sortedCommits[lhs], sortedCommits[rhs]];
+  let j = 1;
+  let sumHighestCommitments = 0n;
+  // We try to find the minimum number of commitments whose sum is higher than the value sent.
+  // Since the array is sorted, we just need to try to sum the highest commitments.
+  while (j <= maxPossibleCommitments) {
+    sumHighestCommitments += commitments[c - j].preimage.value.bigInt;
+    if (sumHighestCommitments >= value.bigInt) {
+      minC = j;
       break;
     }
-
-    if (tempSum > value.bigInt) rhs--;
-    else lhs++;
+    ++j;
   }
 
-  // If we have found two commitments that match the transfer value, mark them as pending and return
-  if (commitmentsToUse) {
-    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
-    return commitmentsToUse;
+  // If after the loop minC is still zero means that we didn't found any sum of commitments
+  // higher or equal than the amount required. Therefore the user can not pay it
+  if (minC === 0) return null;
+
+  return { commitmentsFee, minFc, commitments, minC };
+}
+
+/**
+ * This function find if there is any single commitment
+ * whose value is equal or higher.
+ */
+function findSubsetOneCommitment(commitments, value) {
+  for (let i = 0; i < commitments.length; ++i) {
+    if (commitments[i].preimage.value.bigInt >= value.bigInt) {
+      return [commitments[i]];
+    }
   }
 
-  // Find two commitments are greater than the target. Double Transfer With Change
-  // get all commitments less than the target value
-  const commitsLessThanTargetValue = sortedCommits.filter(
-    s => s.preimage.value.bigInt < value.bigInt,
-  );
-  // get the sum of the greatest two values in this set
-  const twoGreatestSum = commitsLessThanTargetValue
-    .slice(commitsLessThanTargetValue.length - 2)
-    .reduce((acc, curr) => acc + curr.preimage.value.bigInt, 0n);
-  // If the sum of the two greatest values that are less than the target value is STILL less than the target value
-  // then we will need to use a commitment of greater value than the target
-  if (twoGreatestSum < value.bigInt) {
-    if (commitsLessThanTargetValue.length === sortedCommits.length) return null; // We don't have any more commitments
-    commitmentsToUse =
-      commitsLessThanTargetValue.length === 0
-        ? [(sortedCommits[0], sortedCommits[1])] // return smallest in GT if LT array is empty
-        : [sortedCommits[commitsLessThanTargetValue.length], sortedCommits[0]]; // This should guarantee that we will replace our smallest commitment with a greater valued one.
-    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
-    return commitmentsToUse; // return smallest in GT if LT array is empty
-  }
+  return [];
+}
 
-  // If we are here than we can use our commitments less than the target value to sum to greater than the target value
-  lhs = 0;
-  rhs = commitsLessThanTargetValue.length - 1;
-  let changeDiff = -Infinity;
-  commitmentsToUse = null;
+/**
+ * This function finds if there is any pair of commitments
+ * whose sum value is equal or higher
+ */
+function findSubsetTwoCommitments(commitments, value) {
+  // Since all commitments has a positive value, if target value is smaller than zero return
+  if (value.bigInt <= 0n) return [];
+
+  // We are only interested in subsets of 2 in which all the commitments are
+  // smaller than the target value
+  const commitmentsFiltered = commitments.filter(s => s.preimage.value.bigInt < value.bigInt);
+
+  // If there isn't any valid subset of 2 in which all values are smaller, return
+  if (commitmentsFiltered.length < 2) return [];
+
+  let lhs = 0; // Left pointer
+  let rhs = commitmentsFiltered.length - 1; // Right pointer
+
+  let change = Infinity;
+  let commitmentsToUse = [];
   while (lhs < rhs) {
-    const tempSum =
-      commitsLessThanTargetValue[lhs].preimage.value.bigInt +
-      commitsLessThanTargetValue[rhs].preimage.value.bigInt;
-    // Work out what the change to the value smallest commit we used is
-    // This value will always be negative,
-    // this is equivalent to  tempSum - value.bigInt - commitsLessThanTargetValue[lhs].preimage.value.bigInt
-    const tempChangeDiff = commitsLessThanTargetValue[rhs].preimage.value.bigInt - value.bigInt;
-    if (tempSum >= value.bigInt) {
-      if (tempChangeDiff > changeDiff) {
+    // Calculate the sum of the commitments that we are pointing to
+    const twoSumCommitments =
+      commitmentsFiltered[lhs].preimage.value.bigInt +
+      commitmentsFiltered[rhs].preimage.value.bigInt;
+
+    // If an exact solution is found, return
+    if (twoSumCommitments === value.bigInt)
+      return [commitmentsFiltered[lhs], commitmentsFiltered[rhs]];
+
+    // Since the array of commitments is sorted by value, depending if the sum is higher or smaller
+    // we will move the left pointer (increase) or the right one
+    if (twoSumCommitments > value.bigInt) {
+      // Work out what the change to the value smallest commit we used is.
+      const tempChange = twoSumCommitments - value.bigInt;
+
+      if (tempChange < change) {
         // We have a set of commitments that has a lower negative change in our outputs.
-        changeDiff = tempChangeDiff;
-        commitmentsToUse = [commitsLessThanTargetValue[lhs], commitsLessThanTargetValue[rhs]];
+        change = tempChange;
+        commitmentsToUse = [commitmentsFiltered[lhs], commitmentsFiltered[rhs]];
       }
       rhs--;
     } else lhs++;
   }
-  if (commitmentsToUse) {
-    logger.info(
-      `Found commitments suitable for two-token transfer: ${JSON.stringify(commitmentsToUse)}`,
-    );
-    await Promise.all(commitmentsToUse.map(commitment => markPending(commitment)));
-    return commitmentsToUse;
+
+  return commitmentsToUse;
+}
+
+/**
+ * This function finds if there is any triplet of commitments
+ * whose sum value is equal or higher
+ */
+function findSubsetThreeCommitments(commitments, value) {
+  // Since all commitments has a positive value, if target value is smaller than zero return
+  if (value.bigInt <= 0n) return [];
+
+  // We are only interested in subsets of 3 in which all the commitments are
+  // smaller than the target value
+  const commitmentsFiltered = commitments.filter(s => s.preimage.value.bigInt < value.bigInt);
+
+  // If there isn't any valid subset of 3 in which all values are smaller, return
+  if (commitmentsFiltered.length < 3) return [];
+
+  let commitmentsToUse = [];
+  let change = Infinity;
+  // We will fix a left pointer that will keep moving through the array
+  // and then perform a search of two elements with the remaining elements of the array
+  for (let i = 0; i < commitmentsFiltered.length - 2; ++i) {
+    // Calculate the target value for the two subset search by removing the value of
+    // the commitment that is fixed
+    const valueLeft = generalise(value.bigInt - commitmentsFiltered[i].preimage.value.bigInt);
+
+    // Try to find a subset of two that matches using valueLeft as the target value
+    const twoCommitmentsSum = findSubsetTwoCommitments(commitmentsFiltered.slice(i + 1), valueLeft);
+
+    // It is possible that there are no possible solutions. Therefore, check first if it has find
+    // a solution by checking that it is a non void array
+    if (twoCommitmentsSum.length !== 0) {
+      const sumThreeCommitments =
+        commitmentsFiltered[i].preimage.value.bigInt +
+        twoCommitmentsSum[0].preimage.value.bigInt +
+        twoCommitmentsSum[1].preimage.value.bigInt;
+
+      // If an exact solution is found, return
+      if (sumThreeCommitments === value.bigInt)
+        return [commitmentsFiltered[i], ...twoCommitmentsSum];
+
+      // Work out what the change to the value smallest commit we used is.
+      const tempChange = sumThreeCommitments - value.bigInt;
+
+      if (tempChange < change) {
+        // We have a set of commitments that has a lower negative change in our outputs.
+        change = tempChange;
+        commitmentsToUse = [commitmentsFiltered[i], ...twoCommitmentsSum];
+      }
+    }
   }
-  return null;
+
+  return commitmentsToUse;
+}
+
+/**
+ * This function finds if there is any 4 commitments
+ * whose sum value is equal or higher
+ */
+function findSubsetFourCommitments(commitments, value) {
+  // Since all commitments has a positive value, if target value is smaller than zero return
+  if (value.bigInt <= 0n) return [];
+
+  // We are only interested in subsets of 4 in which all the commitments are
+  // smaller than the target value
+  const commitmentsFiltered = commitments.filter(s => s.preimage.value.bigInt < value.bigInt);
+
+  // If there isn't any valid subset of 3 in which all values are smaller, return
+  if (commitmentsFiltered.length < 4) return [];
+
+  let commitmentsToUse = [];
+  let change = Infinity;
+  for (let i = 0; i < commitmentsFiltered.length - 3; ++i) {
+    // Calculate the target value for the three subset search by removing the value of
+    // the commitment that is fixed
+    const valueLeft = generalise(value.bigInt - commitmentsFiltered[i].preimage.value.bigInt);
+
+    // Try to find a subset of three that matches using valueLeft as the target value
+    const threeCommitmentSum = findSubsetThreeCommitments(
+      commitmentsFiltered.slice(i + 1),
+      valueLeft,
+    );
+
+    // It is possible that there are no possible solutions. Therefore, check first if it has find
+    // a solution by checking that it is a non void array
+    if (threeCommitmentSum.length !== 0) {
+      const sumFourCommitments =
+        commitmentsFiltered[i].preimage.value.bigInt +
+        threeCommitmentSum[0].preimage.value.bigInt +
+        threeCommitmentSum[1].preimage.value.bigInt +
+        threeCommitmentSum[2].preimage.value.bigInt;
+
+      // If an exact solution is found, return
+      if (sumFourCommitments === value.bigInt)
+        return [commitmentsFiltered[i], ...threeCommitmentSum];
+
+      // Work out what the change to the value smallest commit we used is.
+      const tempChange = sumFourCommitments - value.bigInt;
+
+      if (tempChange < change) {
+        // We have a set of commitments that has a lower negative change in our outputs.
+        change = tempChange;
+        commitmentsToUse = [commitmentsFiltered[i], ...threeCommitmentSum];
+      }
+    }
+  }
+
+  return commitmentsToUse;
+}
+
+/**
+ * Given an array of commitments, tries to find a subset of N elements
+ * whose sum is equal or higher than the target value
+ */
+function getSubset(commitments, value, N) {
+  let subset = [];
+  if (N === 1) {
+    subset = findSubsetOneCommitment(commitments, value);
+  } else if (N === 2) {
+    subset = findSubsetTwoCommitments(commitments, value);
+  } else if (N === 3) {
+    subset = findSubsetThreeCommitments(commitments, value);
+  } else if (N === 4) {
+    subset = findSubsetFourCommitments(commitments, value);
+  }
+
+  return subset;
+}
+
+async function findUsableCommitments(
+  compressedZkpPublicKey,
+  ercAddress,
+  tokenId,
+  ercAddressFee,
+  _value,
+  _fee,
+) {
+  const value = generalise(_value); // sometimes this is sent as a BigInt.
+  const fee = generalise(_fee); // sometimes this is sent as a BigInt.
+
+  const commitmentsVerification = await verifyEnoughCommitments(
+    compressedZkpPublicKey,
+    ercAddress,
+    tokenId,
+    value,
+    ercAddressFee,
+    fee,
+  );
+
+  if (!commitmentsVerification) return null;
+
+  const { commitments, minC, minFc, commitmentsFee } = commitmentsVerification;
+
+  logger.debug(
+    `The user has ${commitments.length} commitments and needs to use at least ${minC} commitments to perform the transfer`,
+  );
+
+  if (fee.bigInt > 0n) {
+    logger.debug(
+      `The user has ${commitmentsFee.length} commitments and needs to use at least ${minFc} commitments to perform the transfer`,
+    );
+  }
+
+  const possibleSubsetsCommitments = [];
+
+  // Get the "best" subset of each possible size to then decide which one is better overall
+  // From the calculations performed in "verifyEnoughCommitments" we know that at least
+  // minC commitments are required. On the other hand, we can use a maximum of 4 commitments
+  // but we have to take into account that some spots needs to be used for the fee and that
+  // maybe the user does not have as much commitments
+  for (let i = minC; i <= Math.min(commitments.length, 4 - minFc); ++i) {
+    const subset = getSubset(commitments, value, i);
+    possibleSubsetsCommitments.unshift(subset);
+  }
+
+  // Rank the possible commitments subsets.
+  // We prioritize the subset that minimizes the change.
+  // If two subsets have the same change, we priority the subset that uses more commitments
+  const rankedSubsetCommitmentsArray = possibleSubsetsCommitments
+    .filter(subset => subset.length > 0)
+    .sort((a, b) => {
+      const changeA = a.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
+      const changeB = b.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
+      if (changeA - changeB === 0n) {
+        return b.length - a.length;
+      }
+
+      return changeA > changeB ? 0 : -1;
+    });
+
+  // Select the first ranked subset as the commitments the user will spend
+  const oldCommitments = rankedSubsetCommitmentsArray[0];
+
+  const possibleSubsetsCommitmentsFee = [];
+
+  if (fee.bigInt > 0n) {
+    // Get the "best" subset of each possible size for the fee to then decide which one
+    // is better overall. We know that at least we require minFc commitments.
+    // On the other hand, we can use a maximum of 4 commitments minus the spots already used
+    // for the regular transfer. We also take into account that the user may not have as much commits
+    for (let i = minFc; i <= Math.min(commitmentsFee.length, 4 - oldCommitments.length); ++i) {
+      const subset = getSubset(commitmentsFee, fee, i);
+      possibleSubsetsCommitmentsFee.unshift(subset);
+    }
+  }
+
+  // Rank the possible commitments subsets.
+  // We prioritize the subset that minimizes the change.
+  // If two subsets have the same change, we priority the subset that uses more commitments
+  const rankedSubsetCommitmentsFeeArray = possibleSubsetsCommitmentsFee
+    .filter(subset => subset.length > 0)
+    .sort((a, b) => {
+      const changeA = a.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
+      const changeB = b.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
+      if (changeA - changeB === 0n) {
+        return b.length - a.length;
+      }
+
+      return Number(changeA - changeB);
+    });
+
+  // If fee was zero, ranked subset will be an empty array and therefore no commitments will be assigned
+  // Otherwise, set the best ranked as the commitments to spend
+  const oldCommitmentsFee =
+    rankedSubsetCommitmentsFeeArray.length > 0 ? rankedSubsetCommitmentsFeeArray[0] : [];
+
+  // Mark all the commitments used as pending so that they can not be used twice
+  await Promise.all(
+    [...oldCommitments, ...oldCommitmentsFee].map(commitment => markPending(commitment)),
+  );
+
+  return { oldCommitments, oldCommitmentsFee };
 }
 
 // mutex for the above function to ensure it only runs with a concurrency of one
@@ -746,11 +1004,54 @@ export async function findUsableCommitmentsMutex(
   compressedZkpPublicKey,
   ercAddress,
   tokenId,
+  ercAddressFee,
   _value,
+  _fee,
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, _value),
+    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, ercAddressFee, _value, _fee),
   );
+}
+
+/**
+ *
+ * @function insertCommitmentsAndResync save a list of commitments in the database
+ * @param {[]} listOfCommitments a list of commitments to be saved in the database
+ * @throws if all the commitments in the list already exists in the database
+ * throw an error
+ * @returns return a success message.
+ */
+export async function insertCommitmentsAndResync(listOfCommitments) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+
+  // 1. listOfCommitments => get only the ids
+  const commitmentsIds = listOfCommitments.map(commitment => commitment._id);
+
+  // 2. Find commitments that already exists in DB
+  const commitmentsFromDb = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ _id: { $in: commitmentsIds } })
+    .toArray();
+
+  // 3. remove the commitments found in the database from the list
+  const onlyNewCommitments = listOfCommitments.filter(
+    commitment =>
+      commitmentsFromDb.find(commitmentFound => commitmentFound._id === commitment._id) ===
+      undefined,
+  );
+
+  if (onlyNewCommitments.length > 0) {
+    // 4. Insert all
+    await db.collection(COMMITMENTS_COLLECTION).insertMany(onlyNewCommitments);
+
+    // 5. Sycronize from beggining
+    await syncState();
+
+    return { successMessage: 'Commitments have been saved successfully!' };
+  }
+
+  throw new Error('All commitments of this list already exists in the database!');
 }
 
 /**
@@ -760,7 +1061,6 @@ export async function findUsableCommitmentsMutex(
  * @param {string[]} listOfCompressedZkpPublicKey a list of compressedZkpPublicKey derivated from the user
  * mnemonic coming from the SDK or Wallet.
  * @returns all the commitments existent for this list of compressedZkpPublicKey.
- * @author luizoamorim
  */
 export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey) {
   const connection = await mongo.connection(MONGO_URL);
@@ -779,7 +1079,6 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
  * business logic and of a repository doing the communication with the database for this
  * use case.
  * @returns all the commitments existent in this database.
- * @author luizoamorim
  */
 export async function getCommitments() {
   const connection = await mongo.connection(MONGO_URL);

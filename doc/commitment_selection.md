@@ -1,31 +1,79 @@
 # Commitment Selection
 
-Current ZKP transfer circuits used in Nightfall_3 are restricted to 2-2 and 1-1 transfers, with all inputs and outputs having a value >0 . If a transactor's set of commitments contain primarily low value commitments (dust), they may find it hard to conduct future transfers.
+Current ZKP circuits used in Nightfall_3 are restricted to 4 inputs, which are used to pay for the
+transfer or withdrawal and the fees. All of those values are higher than zero. If a transactor's set
+of commitment contain primarily low value commitments (dust), they may find it hard to conduct
+future transfers.
 
-Observe the following value sets 
+**Note:** The fee is paid in MATIC in L2 for transfers and withdrawals. Usually some slots from the
+input will need to be saved to pay for the fee. However, if the user is transacting MATIC, the fee
+will directly be substracted from those commitments, maximizing the number of commitments the user
+can use.
 
-- Set A: [1, 1, 1, 1, 1, 1]
-- Set B: [2, 2, 2]
-- Set C: [2, 4]
+In order to select the best suitable commitments, the algorithm will perform as follows:
 
-While all three sets have equivalent total sums, the maximimum value transfer they can be transacted by sets A, B, and C are 1, 3, and 5 respectively. This is one of reasons why large commitments values are preferred. The commitment selection strategy used mitigates this risk by prioritising the use of small value commitments while also minimising the creation of dust commitments.
+0. Get all the commitments the user own related to the transacting ercAddress and MATIC address and
+   sort them by ascending value.
 
-## Single Transfer
-In the base case, whereby a transactor's set contains a commitment of exact value to the target value, it will be used for the transfer.
+1. Verify if there is any combination of commitments that suits into the 4 slots
 
-## Double Transfer
-If a single transfer is not possible, a double transfer will be attempted.
+2. Select the commitments used for transacting, giving priority to use the smallest possible
+   commitment as well as minimizing the change.
 
-1) Sort all commitments by value.
-2) Split commitments into two sets based of if their values are less than or greater than the target value. LT & GT respectively.
-3) If the sum of the two largest values in set LT is LESS than the target value:
-   - We cannot arrive at the target value with two elements in this set.
-   - Our two selected commitments will be the smallest commitment in LT and in smallest commitment in GT.
-   - It is guaranteed that the output (change) commitments will be larger than the input commitment from LT.
+3. If fee is higher than 0 and the user is transacting token other than MATIC, select the
+   commitments to pay for the fee
 
-4) If the sum of the two largest values in set LT is GREATER than the target value:
-   - We use a standard inward search whereby we begin with a pointer, lhs & rhs at the start and end of the LT.
-   - We also track the change difference, this is the change in size of the smallest commitment in this set resulting from this transaction's output.
-   - If the sum of the commitments at the pointers is greater than the target value, we move pointer rhs to the left.
-   - Otherwise, we move pointer lhs to the right.
-   - The selected commitments are the pair that minimise the change difference. The best case in this scenario is a change difference of -1.
+## Verifying commitments set
+
+In order to avoid performing unnecessary calculations, the first thing the algorithm does is to
+ensure that the current set of commitments the user has allows him to perform the transaction.
+
+To do so, it first calculates the minimum number of commitments needed for the fee by checking the
+highest values of the array. Then, it does the same for the value transacted taking into account the
+slots already used for the fee, and checks that the total number of commitments used in this process
+is <= 4.
+
+## Selecting transaction commitments
+
+If we reach this part of the algorithm, we are sure that there is at least one commitment subset
+that satisfies our needs. When selecting a subset, the algorithm takes several things into account:
+
+- It is always better to use a subset whose sum matches exactly the value
+- While possible, it will always try to use the smallest commitments
+- In addition, it will keep the change as reduced as possible
+
+The selection is split in two:
+
+### Determining the best commitment subset for each possible subset length
+
+Theoretically, the user could use up to 4 commitments to pay for transaction. However, there are
+some limitations:
+
+- The user has to use at least the minimum number of commitments needed (**minC**) determined when
+  doing the verification.
+- The user cannot use the slots reserved for the fee commitments
+- It is possible that the user has less than 4 commitments, reducing the available subsets range.
+
+For each of the possible sizes, we will select the best combination.
+
+To provide an example, imagine that a user has 5 commitments, and that by just using 1 commitment
+for the transaction and 1 for the fee would be enough. Therefore, the algorithm would calculate a
+subset of a single commitment, a subset of two commitments and a subset containing three
+commitments.
+
+For each subset size, the commitments that minimize the change will be selected.
+
+### Ranking all the subsets
+
+Once all the different possible subsets are calculated, the algorithm will rank all of them and pick
+the best. To do so, the following rules will be applied:
+
+- Commitments with a smaller change are better
+- If two commitments have the same change, the subset with a highest length will be prioritized
+
+The subset that is best ranked will be selected to perform the transaction.
+
+Once the subset of commitments used for the transaction has been decided, the algorithm will repeat
+the process to select the fee commitments taking into account the number of slots already filled.
+
+**Note:** This final step will be omitted if the user is transacting MATIC

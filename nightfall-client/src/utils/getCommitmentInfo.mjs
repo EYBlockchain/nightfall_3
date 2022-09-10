@@ -18,94 +18,113 @@ const { BN128_GROUP_ORDER } = config;
 // eslint-disable-next-line import/prefer-default-export
 export const getCommitmentInfo = async txInfo => {
   const {
-    transferValue,
-    addedFee = 0n,
+    totalValueToSend,
+    fee = 0n,
     recipientZkpPublicKeysArray = [],
     ercAddress,
+    maticAddress,
     tokenId = generalise(0),
     rootKey,
   } = txInfo;
+
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
-  let feeIncluded = false;
+  const valuesArray = recipientZkpPublicKeysArray.map(() => totalValueToSend);
 
-  const valuesArray = recipientZkpPublicKeysArray.map(() => transferValue);
+  const ercAddressArray = recipientZkpPublicKeysArray.map(() => ercAddress);
 
-  let oldCommitments = await findUsableCommitmentsMutex(
+  const tokenIdArray = recipientZkpPublicKeysArray.map(() => tokenId);
+
+  const addedFee =
+    maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee.bigInt : 0n;
+
+  logger.debug(`Fee will be added as part of the transaction commitments: ${addedFee > 0n}`);
+
+  const value = totalValueToSend + addedFee;
+  const feeValue = fee.bigInt - addedFee;
+
+  const commitments = await findUsableCommitmentsMutex(
     compressedZkpPublicKey,
     ercAddress,
     tokenId,
-    generalise(transferValue + addedFee),
-  );
-  if (oldCommitments) {
-    if (addedFee > 0n) feeIncluded = true;
-    logger.debug(
-      `Found commitments ${addedFee > 0 ? 'including fee' : ''} ${JSON.stringify(
-        oldCommitments,
-        null,
-        2,
-      )}`,
-    );
-  } else if (addedFee > 0n) {
-    // If addedFee is higher than zero it is possible that the user had needed more than two commitments to perform the transaction + fee
-    oldCommitments = await findUsableCommitmentsMutex(
-      compressedZkpPublicKey,
-      ercAddress,
-      tokenId,
-      generalise(transferValue),
-    );
-    if (oldCommitments) {
-      logger.debug(`Found commitments ${JSON.stringify(oldCommitments, null, 2)}`);
-    } else {
-      throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
-    }
-  } else {
-    throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
-  }
-  // Having found either 1 or 2 commitments, which are suitable inputs to the
-  // proof, the next step is to compute their nullifiers;
-  const nullifiers = oldCommitments.map(commitment => new Nullifier(commitment, nullifierKey));
-  // then the new output commitment(s)
-  const totalInputCommitmentFeeValue = oldCommitments.reduce(
-    (acc, commitment) => acc + commitment.preimage.value.bigInt,
-    0n,
+    maticAddress,
+    value,
+    feeValue,
   );
 
-  // time for a quick sanity check.  We expect the number of old commitments and nullifiers to be equal.
-  if (nullifiers.length !== oldCommitments.length) {
-    logger.error(
-      `number of old commitments: ${oldCommitments.length}, number of nullifiers: ${nullifiers.length}`,
-    );
-    await Promise.all(oldCommitments.map(o => clearPending(o)));
-    throw new Error('Number of nullifiers and old commitments are mismatched');
+  if (!commitments) throw new Error('Not available commitments has been found');
+
+  const { oldCommitments, oldCommitmentsFee } = commitments;
+
+  logger.debug(
+    `Found commitments ${addedFee > 0n ? 'including fee' : ''} ${JSON.stringify(
+      oldCommitments,
+      null,
+      2,
+    )}`,
+  );
+
+  if (feeValue > 0n) {
+    logger.debug(`Found commitments fee ${JSON.stringify(oldCommitmentsFee, null, 2)}`);
   }
 
-  // we may need to return change to the recipient
-  const change = totalInputCommitmentFeeValue - transferValue - addedFee;
-
-  // if so, add an output commitment to do that
-  if (change !== 0n) {
-    valuesArray.push(new GN(change));
-    recipientZkpPublicKeysArray.push(zkpPublicKey);
-  }
+  const spentCommitments = [...oldCommitments, ...oldCommitmentsFee];
 
   try {
-    const salts = await Promise.all(valuesArray.map(async () => randValueLT(BN128_GROUP_ORDER)));
+    // Compute the nullifiers
+    const nullifiers = spentCommitments.map(commitment => new Nullifier(commitment, nullifierKey));
 
-    // Generate new commitments, already truncated to u32[7]
-    const newCommitments = valuesArray.map(
-      (value, i) =>
+    // then the new output commitment(s)
+    const totalInputCommitmentValue = oldCommitments.reduce(
+      (acc, commitment) => acc + commitment.preimage.value.bigInt,
+      0n,
+    );
+
+    // we may need to return change to the recipient
+    const change = totalInputCommitmentValue - value;
+
+    // if so, add an output commitment to do that
+    if (change !== 0n) {
+      valuesArray.push(new GN(change));
+      recipientZkpPublicKeysArray.push(zkpPublicKey);
+      ercAddressArray.push(ercAddress);
+      tokenIdArray.push(tokenId);
+    }
+
+    // then the new output commitment(s) fee
+    const totalInputCommitmentFeeValue = oldCommitmentsFee.reduce(
+      (acc, commitment) => acc + commitment.preimage.value.bigInt,
+      0n,
+    );
+
+    // we may need to return change to the recipient
+    const changeFee = totalInputCommitmentFeeValue - feeValue;
+
+    // if so, add an output commitment to do that
+    if (changeFee !== 0n) {
+      valuesArray.push(new GN(changeFee));
+      recipientZkpPublicKeysArray.push(zkpPublicKey);
+      ercAddressArray.push(maticAddress);
+      tokenIdArray.push(generalise(0));
+    }
+
+    const salts = await Promise.all(
+      recipientZkpPublicKeysArray.map(async () => randValueLT(BN128_GROUP_ORDER)),
+    );
+
+    const newCommitments = recipientZkpPublicKeysArray.map(
+      (recipientKey, i) =>
         new Commitment({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey: recipientZkpPublicKeysArray[i],
+          ercAddress: ercAddressArray[i],
+          tokenId: tokenIdArray[i],
+          value: valuesArray[i],
+          zkpPublicKey: recipientKey,
           salt: salts[i].bigInt,
         }),
     );
 
     // Commitment Tree Information
-    const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
+    const commitmentTreeInfo = await Promise.all(spentCommitments.map(c => getSiblingInfo(c)));
     const localSiblingPaths = commitmentTreeInfo.map(l => {
       const path = l.siblingPath.path.map(p => p.value);
       return generalise([l.root].concat(path.reverse()));
@@ -114,11 +133,11 @@ export const getCommitmentInfo = async txInfo => {
     const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
     const roots = commitmentTreeInfo.map(l => l.root);
     logger.info(
-      `Constructing transfer transaction with blockNumberL2s ${blockNumberL2s} and roots ${roots}`,
+      `Constructing transaction with blockNumberL2s ${blockNumberL2s} and roots ${roots}`,
     );
 
     return {
-      oldCommitments,
+      oldCommitments: spentCommitments,
       nullifiers,
       newCommitments,
       localSiblingPaths,
@@ -126,11 +145,10 @@ export const getCommitmentInfo = async txInfo => {
       blockNumberL2s,
       roots,
       salts,
-      feeIncluded,
     };
   } catch (err) {
-    logger.error('Err', err);
-    await Promise.all(oldCommitments.map(o => clearPending(o)));
-    throw new Error('Failed getting commitment info');
+    logger.error('Error', err);
+    await Promise.all(spentCommitments.map(o => clearPending(o)));
+    throw err;
   }
 };

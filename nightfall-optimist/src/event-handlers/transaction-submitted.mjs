@@ -4,12 +4,9 @@ Module to handle new Transactions being posted
 import logger from 'common-files/utils/logger.mjs';
 import {
   saveTransaction,
-  retrieveNullifiers,
-  saveNullifiers,
   getBlockByTransactionHash,
   getTransactionByTransactionHash,
 } from '../services/database.mjs';
-// import mappedTransaction from '../event-mappers/transaction-submitted.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
@@ -42,7 +39,7 @@ async function checkAlreadyInBlock(_transaction) {
 This handler runs whenever a new transaction is submitted to the blockchain
 */
 async function transactionSubmittedEventHandler(eventParams) {
-  const { offchain = false, ...data } = eventParams;
+  const { offchain = false, fromBlockProposer, ...data } = eventParams;
   let transaction;
   if (offchain) {
     transaction = data;
@@ -57,25 +54,8 @@ async function transactionSubmittedEventHandler(eventParams) {
   logger.debug(`Transaction was ${JSON.stringify(transaction, null, 2)}`);
   try {
     transaction = await checkAlreadyInBlock(transaction);
-    await checkTransaction(transaction);
+    await checkTransaction(transaction, true);
     logger.info('Transaction checks passed');
-    const storedNullifiers = (await retrieveNullifiers()).map(sNull => sNull.hash); // List of Nullifiers stored by blockProposer
-    const transactionNullifiersFee = transaction.nullifiersFee.filter(
-      hash => hash !== '0x0000000000000000000000000000000000000000000000000000000000000000',
-    );
-    const transactionNullifiers = transaction.nullifiers.filter(
-      hash => hash !== '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ); // Deposit transactions still have nullifier fields but they are 0
-
-    const nullifiers = [...transactionNullifiers, ...transactionNullifiersFee];
-    const dupNullifier = nullifiers.some(txNull => storedNullifiers.includes(txNull)); // Move to Set for performance later.
-    if (dupNullifier) {
-      throw new TransactionError(
-        'One of the Nullifiers in the transaction is a duplicate! Dropping tx',
-        1,
-      );
-    }
-    if (nullifiers.length > 0) saveNullifiers(nullifiers, transaction.blockNumber); // we can now safely store the nullifiers IFF they are present
     saveTransaction({ ...transaction }); // then we need to save it
   } catch (err) {
     if (err instanceof TransactionError)
@@ -83,6 +63,7 @@ async function transactionSubmittedEventHandler(eventParams) {
         `The transaction check failed with error: ${err.message}. The transaction has been ignored`,
       );
     else logger.error(err.stack);
+    if (fromBlockProposer) saveTransaction({ ...transaction }); // then we need to save it
   }
 }
 

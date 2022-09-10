@@ -8,15 +8,15 @@ library Utils {
     bytes32 public constant ZERO = bytes32(0);
     uint256 constant TRANSACTIONS_BATCH_SIZE = 6; // TODO Change this from 2 to an appropriate value to control stack too deep error
 
-    function hashTransaction(Structures.Transaction memory t) internal pure returns (bytes32) {
+    function hashTransaction(Structures.Transaction calldata t) internal pure returns (bytes32) {
         return keccak256(abi.encode(t));
     }
 
-    function hashBlock(Structures.Block memory b) internal pure returns (bytes32) {
+    function hashBlock(Structures.Block calldata b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function hashTransactionHashes(Structures.Transaction[] memory ts)
+    function hashTransactionHashes(Structures.Transaction[] calldata ts)
         public
         pure
         returns (bytes32)
@@ -57,24 +57,19 @@ library Utils {
     }
 
     // counts the number of non-zero values (useful for counting real commitments and nullifiers)
-    function countNonZeroValues(bytes32[2] memory vals) internal pure returns (uint256) {
+    function countNonZeroValues(bytes32[3] calldata vals) internal pure returns (uint256) {
         uint256 count;
         if (vals[0] != ZERO) count++;
         if (vals[1] != ZERO) count++;
         return count;
     }
 
-    // filters the number of non-zero values (useful for getting real commitments and nullifiers)
-    function filterNonZeroValues(bytes32[2] memory vals) internal pure returns (bytes32[] memory) {
-        bytes32[] memory filtered = new bytes32[](countNonZeroValues(vals));
-        uint256 count;
-        if (vals[0] != ZERO) filtered[count++] = vals[0]; // a bit faster than looping?
-        if (vals[1] != ZERO) filtered[count++] = vals[1];
-        return filtered;
-    }
-
     // counts the number of non-zero commitments in a block containing the ts transactions)
-    function countCommitments(Structures.Transaction[] memory ts) internal pure returns (uint256) {
+    function countCommitments(Structures.Transaction[] calldata ts)
+        internal
+        pure
+        returns (uint256)
+    {
         uint256 count;
         for (uint256 i = 0; i < ts.length; i++) {
             count += countNonZeroValues(ts[i].commitments);
@@ -83,7 +78,7 @@ library Utils {
     }
 
     // filters the non-zero commitments in a block containing the ts transactions)
-    function filterCommitments(Structures.Transaction[] memory ts)
+    function filterCommitments(Structures.Transaction[] calldata ts)
         internal
         pure
         returns (bytes32[] memory)
@@ -93,7 +88,7 @@ library Utils {
         for (uint256 i = 0; i < ts.length; i++) {
             if (ts[i].commitments[0] != ZERO) filtered[count++] = ts[i].commitments[0];
             if (ts[i].commitments[1] != ZERO) filtered[count++] = ts[i].commitments[1];
-            if (ts[i].commitmentFee[0] != ZERO) filtered[count++] = ts[i].commitmentFee[0];
+            if (ts[i].commitments[2] != ZERO) filtered[count++] = ts[i].commitments[2];
         }
         return filtered;
     }
@@ -107,12 +102,12 @@ library Utils {
     ) internal pure returns (uint256[] memory inputs) {
         inputs[0] = uint256(ts.value);
         inputs[1] = uint256(ts.fee);
-        inputs[2] = uint256(ts.historicRootBlockNumberL2[0]);
-        inputs[3] = uint256(ts.historicRootBlockNumberL2[1]);
-        inputs[4] = uint256(ts.historicRootBlockNumberL2Fee[0]);
-        inputs[5] = uint256(ts.historicRootBlockNumberL2Fee[1]);
-        inputs[6] = uint256(ts.transactionType);
-        inputs[7] = uint256(ts.tokenType);
+        inputs[2] = uint256(ts.transactionType);
+        inputs[3] = uint256(ts.tokenType);
+        inputs[4] = uint256(ts.historicRootBlockNumberL2[0]);
+        inputs[5] = uint256(ts.historicRootBlockNumberL2[1]);
+        inputs[6] = uint256(ts.historicRootBlockNumberL2[2]);
+        inputs[7] = uint256(ts.historicRootBlockNumberL2[3]);
         inputs[8] = uint32(uint256(ts.tokenId) >> 224);
         inputs[9] = uint32(uint256(ts.tokenId) >> 192);
         inputs[10] = uint32(uint256(ts.tokenId) >> 160);
@@ -132,20 +127,18 @@ library Utils {
         inputs[24] = uint32(uint256(ts.recipientAddress));
         inputs[25] = uint256(ts.commitments[0]);
         inputs[26] = uint256(ts.commitments[1]);
-        inputs[27] = uint256(ts.nullifiers[0]);
-        inputs[28] = uint256(ts.nullifiers[1]);
-        inputs[29] = uint256(ts.commitmentFee[0]);
-        inputs[30] = uint256(ts.nullifiersFee[0]);
-        inputs[31] = uint256(ts.nullifiersFee[1]);
+        inputs[27] = uint256(ts.commitments[2]);
+        inputs[28] = uint256(ts.nullifiers[0]);
+        inputs[29] = uint256(ts.nullifiers[1]);
+        inputs[30] = uint256(ts.nullifiers[2]);
+        inputs[31] = uint256(ts.nullifiers[3]);
         inputs[32] = uint256(ts.compressedSecrets[0]);
         inputs[33] = uint256(ts.compressedSecrets[1]);
-        if (uint256(ts.transactionType) != 0) {
-            inputs[34] = uint256(roots[0]);
-            inputs[35] = uint256(roots[1]);
-            inputs[36] = uint256(roots[2]);
-            inputs[37] = uint256(roots[3]);
-            inputs[38] = uint256(uint160(maticAddress));
-        }
+        inputs[34] = uint256(roots[0]);
+        inputs[35] = uint256(roots[1]);
+        inputs[36] = uint256(roots[2]);
+        inputs[37] = uint256(roots[3]);
+        inputs[38] = uint256(uint160(maticAddress));
     }
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {
@@ -185,7 +178,7 @@ library Utils {
     }
 
     function checkPath(
-        bytes32[6] memory siblingPath,
+        bytes32[6] calldata siblingPath,
         uint256 leafIndex,
         bytes32 node
     ) public pure returns (bool) {

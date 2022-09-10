@@ -32,5 +32,10 @@
     "web3": "^1.7.5",
     "yargs": "^17.5.1",
     "express-fileupload": "^1.4.0"
+  },
+  "overrides": {
+    "swarm-js": {
+      "got": "11.8.5"
+    }
   }
 }

@@ -5,13 +5,14 @@ import Timber from 'common-files/classes/timber.mjs';
 import getTimeByBlock from 'common-files/utils/block-info.mjs';
 import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import constants from 'common-files/constants/index.mjs';
-import checkBlock from '../services/check-block.mjs';
+import { checkBlock } from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
-import { createChallenge } from '../services/challenges.mjs';
+import { createChallenge, commitToChallenge } from '../services/challenges.mjs';
 import {
   removeTransactionsFromMemPool,
+  removeCommitmentsFromMemPool,
+  removeNullifiersFromMemPool,
   saveBlock,
-  stampNullifiers,
   getLatestTree,
   saveTree,
   getTransactionByTransactionHash,
@@ -52,6 +53,7 @@ async function blockProposedEventHandler(data) {
     );
   }
   logger.info('Received BlockProposed event');
+  logger.debug(`With transactions ${transactions}`);
   try {
     // We get the L1 block time in order to save it in the database to have this information available
     let timeBlockL2 = await getTimeByBlock(transactionHashL1);
@@ -78,6 +80,7 @@ async function blockProposedEventHandler(data) {
             blockNumberL2: block.blockNumberL2,
             mempool: false,
             offchain: true,
+            fromBlockProposer: true,
             ...tx,
           }); // must be offchain or we'll have seen them, mempool = false
         }
@@ -85,28 +88,19 @@ async function blockProposedEventHandler(data) {
       }),
     );
 
-    // Update the nullifiers we have stored, with the blockhash. These will
-    // be deleted if the block check fails and we get a rollback.  We do this
-    // before running the block check because we want to delete the nullifiers
-    // asociated with a failed block, and we can't do that if we haven't
-    // associated them with a blockHash.
-    await stampNullifiers(
-      transactions
-        .map(tx => [
-          ...tx.nullifiers.filter(nulls => nulls !== ZERO),
-          ...tx.nullifiersFee.filter(nulls => nulls !== ZERO),
-        ])
-        .flat(Infinity),
-      block.blockHash,
-    );
     // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
-    await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2, timeBlockL2); // TODO is await needed?
+    await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2); // TODO is await needed?
+    const blockCommitments = transactions
+      .map(t => t.commitments.filter(c => c !== ZERO))
+      .flat(Infinity);
+    const blockNullifiers = transactions
+      .map(t => t.nullifiers.filter(c => c !== ZERO))
+      .flat(Infinity);
+    await removeCommitmentsFromMemPool(blockCommitments);
+    await removeNullifiersFromMemPool(blockNullifiers);
 
     const latestTree = await getLatestTree();
-    const blockCommitments = transactions
-      .map(t => [...t.commitments, ...t.commitmentFee].filter(c => c !== ZERO))
-      .flat(Infinity);
     const updatedTimber = Timber.statelessUpdate(
       latestTree,
       blockCommitments,
@@ -135,8 +129,14 @@ async function blockProposedEventHandler(data) {
         transactionHashL1,
         ...block,
       });
-      await enqueueEvent(() => logger.info('Stop Until Rollback'), 2);
-      await createChallenge(block, transactions, err);
+      const txDataToSign = await createChallenge(block, transactions, err);
+      // push the challenge into the stop queue.  This will stop blocks being
+      // made until the challenge has run and a rollback has happened.  We could
+      // push anything into the queue and that would work but it's useful to
+      // have the actual challenge to support syncing
+      logger.debug('enqueuing event to stop queue');
+      await enqueueEvent(commitToChallenge, 2, txDataToSign);
+      await commitToChallenge(txDataToSign);
     } else {
       logger.error(err.stack);
       throw new Error(err);

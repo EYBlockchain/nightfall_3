@@ -14,6 +14,7 @@ import {
   getWalletPendingSpentBalance,
   getCommitments,
   getCommitmentsByCompressedZkpPublicKeyList,
+  insertCommitmentsAndResync,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
@@ -84,6 +85,21 @@ router.get('/commitments', async (req, res, next) => {
   try {
     const commitments = await getWalletCommitments();
     res.json({ commitments });
+  } catch (err) {
+    logger.error(err);
+    next(err);
+  }
+});
+
+/**
+ * @description the endpoint that will save a list of commitments
+ */
+router.post('/save', async (req, res, next) => {
+  logger.debug('commitment/save endpoint received POST');
+  const listOfCommitments = req.body;
+  try {
+    const response = await insertCommitmentsAndResync(listOfCommitments);
+    res.json(response);
   } catch (err) {
     logger.error(err);
     next(err);

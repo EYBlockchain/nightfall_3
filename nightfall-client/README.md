@@ -14,7 +14,7 @@ This application runs in docker containers so you will need Docker installed and
 v3.5.
 
 You will need a local copy of `node` and `npm` to run the tests and `git` to clone the repository.
-We have tested with versions 14.15.1 and 6.14.13 of `node` and `npm`, respectively.
+We have tested with versions 16.17.0 and 8.15.0 of `node` and `npm`, respectively.
 
 This code generates a containerised client application that can be used to interact with Polygon
 Nightfall via http endpoints.

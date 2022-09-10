@@ -7,29 +7,22 @@ import './MerkleTree_Stateless.sol';
 import './Structures.sol';
 
 library ChallengesUtil {
-    bytes32 public constant ZERO =
-        0x0000000000000000000000000000000000000000000000000000000000000000;
-    uint256 public constant MAX31 = 2**249 - 1;
-    uint256 public constant MAX20 = 2**161 - 1;
-    uint256 public constant BN128_GROUP_ORDER =
-        21888242871839275222246405745257275088548364400416034343698204186575808495617;
-
     function libChallengeLeafCountCorrect(
-        Structures.Block memory priorBlockL2,
-        Structures.Transaction[] memory priorBlockTransactions,
+        Structures.Block calldata priorBlockL2,
+        Structures.Transaction[] calldata priorBlockTransactions,
         uint256 leafCount
     ) public pure {
-        uint256 expectedLeafCount =
-            priorBlockL2.leafCount + Utils.countCommitments(priorBlockTransactions);
+        uint256 expectedLeafCount = priorBlockL2.leafCount +
+            Utils.countCommitments(priorBlockTransactions);
         require(expectedLeafCount != leafCount, 'The leafCount is actually correct');
     }
 
     function libChallengeNewRootCorrect(
-        Structures.Block memory priorBlockL2, // the block immediately prior to this one
-        Structures.Transaction[] memory priorBlockTransactions, // the transactions in the prior block
+        Structures.Block calldata priorBlockL2, // the block immediately prior to this one
+        Structures.Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
         bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
-        Structures.Block memory blockL2,
-        Structures.Transaction[] memory transactions
+        Structures.Block calldata blockL2,
+        Structures.Transaction[] calldata transactions
     ) public pure {
         // next check the sibling path is valid and get the Frontier
         bytes32 root;
@@ -40,8 +33,8 @@ library ChallengesUtil {
             priorBlockL2.leafCount
         );
         require(root == priorBlockL2.root, 'The sibling path is invalid');
-        uint256 commitmentIndex =
-            priorBlockL2.leafCount + Utils.filterCommitments(priorBlockTransactions).length;
+        uint256 commitmentIndex = priorBlockL2.leafCount +
+            Utils.filterCommitments(priorBlockTransactions).length;
         // At last, we can check if the root itself is correct!
         (root, , ) = MerkleTree_Stateless.insertLeaves(
             Utils.filterCommitments(transactions),
@@ -63,12 +56,11 @@ library ChallengesUtil {
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[] memory publicInputs =
-            Utils.getPublicInputs(
-                transaction,
-                extraPublicInputs.roots,
-                extraPublicInputs.maticAddress
-            );
+        uint256[] memory publicInputs = Utils.getPublicInputs(
+            transaction,
+            extraPublicInputs.roots,
+            extraPublicInputs.maticAddress
+        );
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 
@@ -84,57 +76,29 @@ library ChallengesUtil {
         );
     }
 
-    function libCheckOverflows(
-        Structures.Block calldata blockL2,
-        Structures.Transaction calldata transaction
+    function libChallengeCommitment(
+        Structures.Transaction calldata tx1,
+        uint256 commitmentIndex1,
+        Structures.Transaction calldata tx2,
+        uint256 commitmentIndex2
     ) public pure {
-        require(uint256(transaction.ercAddress) <= MAX20, 'ERC address out of range');
         require(
-            (transaction.transactionType != Structures.TransactionTypes.TRANSFER &&
-                uint256(transaction.recipientAddress) <= MAX20) ||
-                (transaction.transactionType == Structures.TransactionTypes.TRANSFER),
-            'Recipient ERC address out of range'
+            tx1.commitments[commitmentIndex1] != 0 &&
+                tx1.commitments[commitmentIndex1] == tx2.commitments[commitmentIndex2],
+            'Not matching commitments'
         );
-        require(uint256(blockL2.root) < BN128_GROUP_ORDER, 'root out of range');
     }
 
     function libChallengeNullifier(
-        Structures.Transaction memory tx1,
+        Structures.Transaction calldata tx1,
         uint256 nullifierIndex1,
-        bool isNullifierFee1,
-        Structures.Transaction memory tx2,
-        uint256 nullifierIndex2,
-        bool isNullifierFee2
+        Structures.Transaction calldata tx2,
+        uint256 nullifierIndex2
     ) public pure {
-        if (!isNullifierFee1 && !isNullifierFee2) {
-            require(
-                tx1.nullifiers[nullifierIndex1] != 0 &&
-                    tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        } else if (!isNullifierFee1) {
-            require(
-                tx1.nullifiers[nullifierIndex1] != 0 &&
-                    tx1.nullifiers[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        } else if (!isNullifierFee2) {
-            require(
-                tx1.nullifiersFee[nullifierIndex1] != 0 &&
-                    tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        } else {
-            require(
-                tx1.nullifiersFee[nullifierIndex1] != 0 &&
-                    tx1.nullifiersFee[nullifierIndex1] == tx2.nullifiersFee[nullifierIndex2],
-                'Not matching nullifiers'
-            );
-        }
-
         require(
-            Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2),
-            'Transactions need to be different'
+            tx1.nullifiers[nullifierIndex1] != 0 &&
+                tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
+            'Not matching nullifiers'
         );
     }
 }

@@ -21,91 +21,112 @@ type CommitmentsInfo = {
   roots: any[];
   nullifiers: any[];
   salts: any[];
-  feeIncluded: boolean;
 };
 
 type TxInfo = {
-  transferValue: bigint;
-  addedFee: bigint;
+  totalValueToSend: bigint;
+  fee: bigint;
   recipientZkpPublicKeysArray: any[];
   ercAddress: GeneralNumber;
+  maticAddress: GeneralNumber;
   tokenId: GeneralNumber;
   rootKey: any;
 };
 
 const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
   const {
-    transferValue,
-    addedFee = 0n,
+    totalValueToSend,
+    fee = 0n,
     recipientZkpPublicKeysArray = [],
     ercAddress,
+    maticAddress,
     tokenId = generalise(0),
     rootKey,
   } = txInfo;
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
-  let feeIncluded = false;
-  const valuesArray = recipientZkpPublicKeysArray.map(() => transferValue);
+  const valuesArray = recipientZkpPublicKeysArray.map(() => totalValueToSend);
 
-  let oldCommitments = await findUsableCommitmentsMutex(
+  const ercAddressArray = recipientZkpPublicKeysArray.map(() => ercAddress);
+
+  const tokenIdArray = recipientZkpPublicKeysArray.map(() => tokenId);
+  const addedFee =
+    maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee : 0n;
+
+  const value = totalValueToSend + addedFee;
+  const feeValue = fee - addedFee;
+
+  const commitments = await findUsableCommitmentsMutex(
     compressedZkpPublicKey,
     ercAddress,
     tokenId,
-    generalise(transferValue + addedFee),
-  );
-  if (oldCommitments) {
-    if (addedFee > 0n) feeIncluded = true;
-  } else if (addedFee > 0n) {
-    // If addedFee is higher than zero it is possible that the user had needed more than two commitments to perform the transaction + fee
-    oldCommitments = await findUsableCommitmentsMutex(
-      compressedZkpPublicKey,
-      ercAddress,
-      tokenId,
-      generalise(transferValue),
-    );
-    if (!oldCommitments) {
-      throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
-    }
-  } else {
-    throw new Error('No suitable commitments were found'); // caller to handle - need to get the user to make some commitments or wait until they've been posted to the blockchain and Timber knows about them
-  }
-
-  const nullifiers = oldCommitments.map(commitment => new Nullifier(commitment, nullifierKey));
-  // then the new output commitment(s)
-  const totalInputCommitmentFeeValue: bigint = oldCommitments.reduce(
-    (acc, commitment) => acc + commitment.preimage.value.bigInt,
-    0n,
+    maticAddress,
+    value,
+    feeValue,
   );
 
-  // time for a quick sanity check.  We expect the number of old commitments and nullifiers to be equal.
-  if (nullifiers.length !== oldCommitments.length) {
-    throw new Error('Number of nullifiers and old commitments are mismatched');
-  }
+  if (!commitments) throw new Error('Not available commitments has been found');
 
-  // we may need to return change to the recipient
-  const change = totalInputCommitmentFeeValue - transferValue - addedFee;
+  const { oldCommitments, oldCommitmentsFee } = commitments;
 
-  // if so, add an output commitment to do that
-  if (change !== 0n) {
-    valuesArray.push(change);
-    recipientZkpPublicKeysArray.push(zkpPublicKey);
-  }
+  const spentCommitments = [...oldCommitments, ...oldCommitmentsFee];
 
   try {
-    const salts = await Promise.all(valuesArray.map(async () => randValueLT(BN128_GROUP_ORDER)));
+    // Compute the nullifiers
+    const nullifiers = spentCommitments.map(commitment => new Nullifier(commitment, nullifierKey));
+
+    // then the new output commitment(s)
+    const totalInputCommitmentValue = oldCommitments.reduce(
+      (acc, commitment) => acc + commitment.preimage.value.bigInt,
+      0n,
+    );
+
+    // we may need to return change to the recipient
+    const change = totalInputCommitmentValue - value;
+
+    // if so, add an output commitment to do that
+    if (generalise(change).bigInt !== 0n) {
+      valuesArray.push(generalise(change).bigInt);
+      recipientZkpPublicKeysArray.push(zkpPublicKey);
+      ercAddressArray.push(ercAddress);
+      tokenIdArray.push(tokenId);
+    }
+
+    // then the new output commitment(s) fee
+    const totalInputCommitmentFeeValue = oldCommitmentsFee.reduce(
+      (acc, commitment) => acc + commitment.preimage.value.bigInt,
+      0n,
+    );
+
+    // we may need to return change to the recipient
+    const changeFee = totalInputCommitmentFeeValue - feeValue;
+
+    // if so, add an output commitment to do that
+    if (generalise(changeFee).bigInt !== 0n) {
+      valuesArray.push(generalise(changeFee).bigInt);
+      recipientZkpPublicKeysArray.push(zkpPublicKey);
+      ercAddressArray.push(maticAddress);
+      tokenIdArray.push(generalise(0));
+    }
+
+    const salts = await Promise.all(
+      recipientZkpPublicKeysArray.map(async () => randValueLT(BN128_GROUP_ORDER)),
+    );
+
     // Generate new commitments, already truncated to u32[7]
-    const newCommitments = valuesArray.map(
-      (value, i) =>
+    const newCommitments = recipientZkpPublicKeysArray.map(
+      (recipientKey, i) =>
         new Commitment({
-          ercAddress,
-          tokenId,
-          value,
-          zkpPublicKey: recipientZkpPublicKeysArray[i],
+          ercAddress: ercAddressArray[i],
+          tokenId: tokenIdArray[i],
+          value: valuesArray[i],
+          zkpPublicKey: recipientKey,
           salt: salts[i],
         }),
     );
+
     // Commitment Tree Information
-    const commitmentTreeInfo = await Promise.all(oldCommitments.map(c => getSiblingInfo(c)));
+    const commitmentTreeInfo = await Promise.all(spentCommitments.map(c => getSiblingInfo(c)));
     const localSiblingPaths = commitmentTreeInfo.map(l => {
       const path = l.siblingPath.path.map((p: any) => p.value);
       return generalise([l.root].concat(path.reverse()));
@@ -115,7 +136,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
     const roots = commitmentTreeInfo.map(l => l.root);
 
     return {
-      oldCommitments,
+      oldCommitments: spentCommitments,
       nullifiers,
       newCommitments,
       localSiblingPaths,
@@ -123,7 +144,6 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
       blockNumberL2s,
       roots,
       salts,
-      feeIncluded,
     };
   } catch (err) {
     await Promise.all(oldCommitments.map(o => clearPending(o)));

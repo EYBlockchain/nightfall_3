@@ -59,5 +59,10 @@
       "mongodb/",
       "build/"
     ]
+  },
+  "overrides": {
+    "swarm-js": {
+      "got": "11.8.5"
+    }
   }
 }

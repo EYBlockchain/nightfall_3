@@ -11,19 +11,19 @@ services:
         source: build
         target: /app/build/
     environment:
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       LOG_LEVEL: error
-      ETH_NETWORK: blockchain1
+      ETH_NETWORK: blockchain
 
-  client1:
+  client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
     volumes:
       - type: volume
         source: build
         target: /app/build
       - type: volume
-        source: mongodb1
+        source: mongodb
         target: /app/mongodb
     networks:
       - nightfall_network
@@ -33,51 +33,18 @@ services:
     depends_on:
       - deployer
       - worker
-      - rabbitmq1
+      - rabbitmq
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       LOG_LEVEL: debug
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
-      RABBITMQ_HOST: amqp://rabbitmq1
+      RABBITMQ_HOST: amqp://rabbitmq
       RABBITMQ_PORT: 5672
       ENABLE_QUEUE: 1
-      OPTIMIST_HOST: optimist1
-      OPTIMIST_PORT: 80
-      USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: ['npm', 'run', 'dev']
-
-  client2:
-    image: ghcr.io/eyblockchain/nightfall3-client:latest
-    volumes:
-      - type: volume
-        source: build
-        target: /app/build
-      - type: volume
-        source: mongodb2
-        target: /app/mongodb
-    networks:
-      - nightfall_network
-    ports:
-      - 27018:27017
-      - 8084:80
-    depends_on:
-      - deployer
-      - worker
-      - rabbitmq2
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
-      LOG_LEVEL: error
-      BLOCKCHAIN_WS_HOST: blockchain1
-      BLOCKCHAIN_PORT: 8546
-      ZOKRATES_WORKER_HOST: worker
-      RABBITMQ_HOST: amqp://rabbitmq2
-      RABBITMQ_PORT: 5672
-      ENABLE_QUEUE: 1
-      OPTIMIST_HOST: optimist2
+      OPTIMIST_HOST: optimist
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
@@ -96,8 +63,8 @@ services:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: blockchain1
-      BLOCKCHAIN_WS_HOST: blockchain1
+      ETH_NETWORK: blockchain
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
@@ -114,10 +81,10 @@ services:
         source: proving_files
         target: /app/public/
 
-  optimist1:
+  optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-    depends_on:
-      - deployer
+  #  depends_on:
+  #    - deployer
     networks:
       - nightfall_network
     ports:
@@ -130,7 +97,7 @@ services:
         target: /app/build/
     environment:
       WEBSOCKET_PORT: 8080
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: poseidon
       LOG_LEVEL: debug
@@ -138,43 +105,11 @@ services:
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
 
-  optimist2:
-    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-    depends_on:
-      - deployer
-    networks:
-      - nightfall_network
-    ports:
-      - 8085:80
-      # websocket port for Optimist is on localhost:8086
-      - 8086:8080
-    volumes:
-      - type: volume
-        source: build
-        target: /app/build/
-    environment:
-      WEBSOCKET_PORT: 8080
-      BLOCKCHAIN_WS_HOST: blockchain1
-      BLOCKCHAIN_PORT: 8546
-      HASH_TYPE: poseidon
-      LOG_LEVEL: error
-      IS_CHALLENGER: 'false'
-      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: ['npm', 'run', 'dev']
-
-  rabbitmq1:
+  rabbitmq:
     image: rabbitmq
     ports:
       - '15674:15674'
       - '5672:5672'
-    networks:
-      - nightfall_network
-
-  rabbitmq2:
-    image: rabbitmq
-    ports:
-      - '15675:15674'
-      - '5673:5672'
     networks:
       - nightfall_network
 
@@ -195,8 +130,7 @@ services:
       MPC: ${MPC}
 
 volumes:
-  mongodb1: null
-  mongodb2: null
+  mongodb: null
   proving_files: null
   build: null
 networks:
