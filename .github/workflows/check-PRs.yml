@@ -159,8 +159,6 @@ jobs:
 
       - name: Run optimist sync test
         run: |
-          npm ci
-          docker wait nightfall_3_deployer_1
           npm run test-optimist-sync
 
       - name: Debug logs - after optimist sync test run
@@ -169,7 +167,7 @@ jobs:
 
       - name: If optimist sync test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: docker-compose -f docker/docker-compose.yml -f docker/docker-compose.ganache.yml -p 'nightfall_3' down -v
 
       - name: If optimist sync test failed, upload logs files as artifacts
         if: failure()
