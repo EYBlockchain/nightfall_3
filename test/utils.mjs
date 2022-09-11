@@ -429,13 +429,15 @@ export const withdrawNTransactions = async (
   function to retrieve balance of user because getLayer2Balances returns
   balances of all users
 */
-export const retrieveL2Balance = async client => {
+export const retrieveL2Balance = async (client, ercAddress) => {
   const balances = await client.getLayer2Balances();
   // if there are no balances
   if (Object.values(balances).length === 0) {
     return 0;
   }
-  const { balance } = Object.values(balances)[0][0];
+  const { balance } = ercAddress
+    ? Object.values(balances[ercAddress])[0]
+    : Object.values(balances)[0][0];
   return balance;
 };
 
@@ -452,11 +454,10 @@ export const registerProposerOnNoProposer = async proposer => {
   function to wait for sufficient balance by waiting for pending transaction
   to be proposed
 */
-export const waitForSufficientBalance = (client, value) => {
+export const waitForSufficientBalance = (client, value, ercAddress) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
-      const balance = await retrieveL2Balance(client);
-      logger.debug(` Balance needed ${value}. Current balance ${balance}.`);
+      const balance = await retrieveL2Balance(client, ercAddress);
       if (balance < value) {
         await waitForTimeout(10000);
         isSufficientBalance();

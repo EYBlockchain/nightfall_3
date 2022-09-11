@@ -4,6 +4,7 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
+    "ping-pong": "mocha --timeout 0 --bail --exit test/ping-pong/ping-pong.test.mjs",
     "lint": "eslint . --ext js,mjs,jsx,ts,tsx && find-unused-exports",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",

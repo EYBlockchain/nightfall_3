@@ -47,8 +47,7 @@ services:
       OPTIMIST_HOST: optimist
       OPTIMIST_PORT: 80
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
-    command: ['npm', 'run', 'dev']
-
+    command: [ 'npm', 'run', 'dev' ]
     # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
     #image: docker.pkg.github.com/eyblockchain/nightfall-deployer/nightfall_deployer:1.1.0
@@ -83,8 +82,8 @@ services:
 
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-  #  depends_on:
-  #    - deployer
+    #  depends_on:
+    #    - deployer
     networks:
       - nightfall_network
     ports:
@@ -103,7 +102,7 @@ services:
       LOG_LEVEL: debug
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: ['npm', 'run', 'dev']
+    command: [ 'npm', 'run', 'dev' ]
 
   rabbitmq:
     image: rabbitmq
@@ -128,7 +127,6 @@ services:
     environment:
       LOG_LEVEL: info
       MPC: ${MPC}
-
 volumes:
   mongodb: null
   proving_files: null
