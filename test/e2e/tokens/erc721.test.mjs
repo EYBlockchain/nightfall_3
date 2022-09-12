@@ -145,15 +145,15 @@ describe('ERC721 tests', () => {
       const balancesAfter = await getBalances();
       expect(
         (balancesAfter[0][erc721Address]?.length || 0) -
-        (balancesBefore[0][erc721Address]?.length || 0),
+          (balancesBefore[0][erc721Address]?.length || 0),
       ).to.be.equal(-1);
       expect(
         (balancesAfter[1][erc721Address]?.length || 0) -
-        (balancesBefore[1][erc721Address]?.length || 0),
+          (balancesBefore[1][erc721Address]?.length || 0),
       ).to.be.equal(1);
       expect(
         (balancesAfter[0][erc20Address]?.[0].balance || 0) -
-        (balancesBefore[0][erc20Address]?.[0].balance || 0),
+          (balancesBefore[0][erc20Address]?.[0].balance || 0),
       ).to.be.equal(-fee);
     });
   });
@@ -194,7 +194,7 @@ describe('ERC721 tests', () => {
       ).to.be.equal(-1);
       expect(
         (balancesAfter[erc20Address]?.[0].balance || 0) -
-        (balancesBefore[erc20Address]?.[0].balance || 0),
+          (balancesBefore[erc20Address]?.[0].balance || 0),
       ).to.be.equal(-fee);
     });
 
@@ -248,11 +248,11 @@ describe('ERC721 tests', () => {
 
         expect(
           (balancesAfter[erc721Address]?.length || 0) -
-          (balancesBefore[erc721Address]?.length || 0),
+            (balancesBefore[erc721Address]?.length || 0),
         ).to.be.equal(-1);
         expect(
           (balancesAfter[erc20Address]?.[0].balance || 0) -
-          (balancesBefore[erc20Address]?.[0].balance || 0),
+            (balancesBefore[erc20Address]?.[0].balance || 0),
         ).to.be.equal(-fee);
       } else {
         console.log('Not using a time-jump capable test client so this test is skipped');

@@ -70,7 +70,8 @@ export default async function localTest(IS_TEST_RUNNER) {
           // if we get here, it's possible that a block we are waiting for has not been proposed yet
           // let's wait 10x normal and then try again
           logger.warn(
-            `No suitable commitments were found for transfer. I will wait ${0.01 * TX_WAIT
+            `No suitable commitments were found for transfer. I will wait ${
+              0.01 * TX_WAIT
             } seconds and try one last time`,
           );
           await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));

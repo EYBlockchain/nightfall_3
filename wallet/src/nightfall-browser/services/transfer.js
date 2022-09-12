@@ -18,14 +18,7 @@ import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
 import { edwardsCompress } from '../../common-files/utils/curve-maths/curves';
 import { ZkpKeys } from './keys';
-import {
-  checkIndexDBForCircuit,
-  getStoreCircuit,
-  getLatestTree,
-  getMaxBlock,
-  emptyStoreBlocks,
-  emptyStoreTimber,
-} from './database';
+import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 

@@ -20,7 +20,6 @@ module.exports = {
   CIRCUIT_HASH_COLLECTION: 'circuit_hash_storage',
   KEYS_COLLECTION: 'keys',
   CLIENT_ID_COLLECTION: 'client_id',
-  KEYS_COLLECTION: 'keys',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   EXCLUDE_DIRS: 'common',
   MAX_QUEUE: 5,
@@ -436,7 +435,4 @@ module.exports = {
 
   // LAMBDA checkBlockVersion
   checkBlockVersionUrl: process.env.CHECK_BLOCK_VERSION_URL,
-
-  KEYS_COLLECTION: 'keys',
-  CLIENT_ID_COLLECTION: 'client_id',
 };

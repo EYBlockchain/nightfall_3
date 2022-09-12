@@ -7,7 +7,10 @@ import rollbackEventHandler from '@Nightfall/event-handlers/rollback';
 import {
   checkIndexDBForCircuit,
   checkIndexDBForCircuitHash,
-  storeClientId, getClientId, saveTree, getMaxBlock,
+  storeClientId,
+  getClientId,
+  saveTree,
+  getMaxBlock,
   emptyStoreBlocks,
   emptyStoreTimber,
   getLatestTimber,
@@ -23,11 +26,16 @@ import useInterval from '../useInterval';
 import { wsMqMapping, topicRollback, topicBlockProposed } from '../../common-files/utils/mq';
 import init from '../../web-worker/index.js';
 
-const { USE_STUBS, usernameMq, pswMQ, twoStepSyncUrl, twoStepSyncDeploymentRegion, utilApiServerUrl,
+const {
+  usernameMq,
+  pswMQ,
+  twoStepSyncUrl,
+  twoStepSyncDeploymentRegion,
+  utilApiServerUrl,
   AWS: { s3Bucket },
   isLocalRun,
   checkBlockVersionUrl,
- } = global.config;
+} = global.config;
 
 export const initialState = {
   compressedZkpPublicKey: '',
@@ -83,37 +91,6 @@ export const UserProvider = ({ children }) => {
     });
   };
 
-  const deriveAccounts = async (mnemonic, numAccts) => {
-    const accountRange = Array.from({ length: numAccts }, (v, i) => i);
-    const zkpKeys = await Promise.all(
-      accountRange.map(i => ZkpKeys.generateZkpKeysFromMnemonic(mnemonic, i)),
-    );
-    const aesGenParams = { name: 'AES-GCM', length: 128 };
-    const key = await crypto.subtle.generateKey(aesGenParams, false, ['encrypt', 'decrypt']);
-    await storeBrowserKey(key);
-    await Promise.all(zkpKeys.map(zkpKey => encryptAndStore(zkpKey)));
-    Storage.ZkpPubKeyArraySet(
-      '',
-      zkpKeys.map(z => z.compressedZkpPublicKey),
-    );
-
-    createClientId(zkpKeys[0].compressedZkpPublicKey);
-    setState(previousState => {
-      return {
-        ...previousState,
-        compressedZkpPublicKey: zkpKeys[0].compressedZkpPublicKey,
-      };
-    });
-    await timberAndBlockSync(-1, -1, false);
-    setupMqtt();
-  };
-
-  const createClientId = async (address) => {
-    const clientId =
-      Math.floor(new Date().getTime() / 1000) + Math.floor(Math.random() * 100) + address;
-    storeClientId(clientId);
-  };
-
   const timberAndBlockSync = async (
     lastTimberBlock,
     lastL2Block,
@@ -163,8 +140,44 @@ export const UserProvider = ({ children }) => {
       });
     }
 
-    timberAndBlockSync(res.data.timber.lastBlock, res.data.l2Block.lastBlock, res.data.timber.isSynced, res.data.l2Block.isSynced);
-  }
+    timberAndBlockSync(
+      res.data.timber.lastBlock,
+      res.data.l2Block.lastBlock,
+      res.data.timber.isSynced,
+      res.data.l2Block.isSynced,
+    );
+  };
+
+  const createClientId = async address => {
+    const clientId =
+      Math.floor(new Date().getTime() / 1000) + Math.floor(Math.random() * 100) + address;
+    storeClientId(clientId);
+  };
+
+  const deriveAccounts = async (mnemonic, numAccts) => {
+    const accountRange = Array.from({ length: numAccts }, (v, i) => i);
+    const zkpKeys = await Promise.all(
+      accountRange.map(i => ZkpKeys.generateZkpKeysFromMnemonic(mnemonic, i)),
+    );
+    const aesGenParams = { name: 'AES-GCM', length: 128 };
+    const key = await crypto.subtle.generateKey(aesGenParams, false, ['encrypt', 'decrypt']);
+    await storeBrowserKey(key);
+    await Promise.all(zkpKeys.map(zkpKey => encryptAndStore(zkpKey)));
+    Storage.ZkpPubKeyArraySet(
+      '',
+      zkpKeys.map(z => z.compressedZkpPublicKey),
+    );
+
+    createClientId(zkpKeys[0].compressedZkpPublicKey);
+    setState(previousState => {
+      return {
+        ...previousState,
+        compressedZkpPublicKey: zkpKeys[0].compressedZkpPublicKey,
+      };
+    });
+    await timberAndBlockSync(-1, -1, false);
+    setupMqtt();
+  };
 
   const syncState = async () => {
     const compressedZkpPublicKeys = Storage.ZkpPubKeyArrayGet('');
@@ -187,7 +200,6 @@ export const UserProvider = ({ children }) => {
           logger.error(err);
         } else if (granted) {
           logger.debug('subscribe to ', topic, granted);
-          console.log('subscribe to ', topic, granted);
         }
       });
     });
@@ -200,6 +212,21 @@ export const UserProvider = ({ children }) => {
     mqClient.on('reconnect', () => {
       logger.debug('Reconnecting');
     });
+  };
+
+  const verifyBlock = async (blockNumber, timberJson) => {
+    const res = await axios
+      .post(`${checkBlockVersionUrl}`, {
+        timber: timberJson,
+        deployment: process.env.REACT_APP_MODE,
+        block: blockNumber,
+        region: twoStepSyncDeploymentRegion,
+      })
+      .catch(err => {
+        console.log(err);
+      });
+
+    return res;
   };
 
   React.useEffect(() => {
@@ -245,7 +272,7 @@ export const UserProvider = ({ children }) => {
     let maxBlockTimber = await getMaxBlock();
     let completeSync = false;
     const lastTimber = await getLatestTimber();
-    if(lastTimber){
+    if (lastTimber) {
       const isSynced = (await verifyBlock(maxBlockTimber, lastTimber)).data.body;
       if (!isSynced) {
         maxBlockTimber = -1;
@@ -254,11 +281,11 @@ export const UserProvider = ({ children }) => {
         await emptyStoreTimber();
       }
     }
-    if (await getClientId(0)){ 
+    if (await getClientId(0)) {
       await setupMqtt();
     } else {
       createClientidCollection();
-      if(state.compressedZkpPublicKey) createClientId(state.compressedZkpPublicKey);
+      if (state.compressedZkpPublicKey) createClientId(state.compressedZkpPublicKey);
     }
     await timberAndBlockSync(maxBlockTimber, maxBlockTimber, false, false, completeSync);
   }, []);
@@ -298,7 +325,7 @@ export const UserProvider = ({ children }) => {
   /*
     Check if hash circuit functions from manifest have changed. If the have, resync again
   */
-  useInterval( 
+  useInterval(
     async () => {
       const circuitInfo = isLocalRun
         ? await fetch(`${utilApiServerUrl}/s3_hash.txt`).then(response => response.json())
@@ -319,21 +346,6 @@ export const UserProvider = ({ children }) => {
     },
     isSyncing ? null : 30000,
   );
-
-  const verifyBlock = async (blockNumber, timberJson) => {
-    const res = await axios
-      .post(`${checkBlockVersionUrl}`, {
-        timber: timberJson,
-        deployment: process.env.REACT_APP_MODE,
-        block: blockNumber,
-        region: twoStepSyncDeploymentRegion,
-      })
-      .catch(err => {
-        console.log(err);
-      });
-
-    return res;
-  };
 
   /*
    * TODO: children should render when sync is complete

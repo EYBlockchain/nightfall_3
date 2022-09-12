@@ -14,7 +14,7 @@ import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
-import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 import { ZkpKeys } from './keys';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
