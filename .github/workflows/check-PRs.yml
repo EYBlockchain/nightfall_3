@@ -219,7 +219,7 @@ jobs:
       - name: If integration test failed, shutdown the Containers
         if: failure()
         run: |
-          docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.ganache.yml -f docker/docker-compose.adversary.yml -p 'nightfall_3' down -v 
+          npm run nightfall-down 
           ./geth-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
