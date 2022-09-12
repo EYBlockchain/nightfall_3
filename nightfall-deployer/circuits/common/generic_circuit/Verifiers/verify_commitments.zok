@@ -1,5 +1,5 @@
-from "hashes/poseidon/poseidon.zok" import main as poseidon
-from "../../utils/structures.zok" import Point
+from "hashes/poseidon/poseidon.zok" import main as poseidon;
+from "../../utils/structures.zok" import Point;
 
 /*
 * Verify that all commitments are correct
@@ -12,10 +12,10 @@ def main<MinCommitments, MaxCommitments>(\
     private field[MaxCommitments] newCommitmentSalts,\
     private Point[MaxCommitments] recipientPublicKey,\
     field maticAddress\
-) -> bool:
+) -> bool {
 
     //Check that all the commitments are valid. If NumCommitments equals zero this loop will be ignored
-    for u32 i in 0..MaxCommitments do
+    for u32 i in 0..MaxCommitments {
         
         /*
             Calculate the commmitment hash from the newCommitment parameters
@@ -35,7 +35,7 @@ def main<MinCommitments, MaxCommitments>(\
                 newCommitmentValues[i],\
                 ...recipientPublicKey[i],\
                 newCommitmentSalts[i]\
-            ])
+            ]);
 
         field calculatedCommitmentHashFee = poseidon([\
                 maticAddress,\
@@ -43,16 +43,17 @@ def main<MinCommitments, MaxCommitments>(\
                 newCommitmentValues[i],\
                 ...recipientPublicKey[i],\
                 newCommitmentSalts[i]\
-            ])
+            ]);
         
-        field commitment = if (newCommitmentValues[i] != 0 || (i+1) == MinCommitments) then\
-            calculatedCommitmentHash else 0 fi
+        field commitment = if (newCommitmentValues[i] != 0 || (i+1) == MinCommitments) {\
+            calculatedCommitmentHash } else { 0 };
 
-        field commitmentFee = if (newCommitmentValues[i] != 0) then\
-            calculatedCommitmentHashFee else 0 fi
+        field commitmentFee = if (newCommitmentValues[i] != 0) {\
+            calculatedCommitmentHashFee } else { 0 };
 
         //Check that the calculated commitment matches with the one contained in the transaction
-        assert(commitment == commitmentHashes[i] || commitmentFee == commitmentHashes[i])
-    endfor    
+        assert(commitment == commitmentHashes[i] || commitmentFee == commitmentHashes[i]);
+    }    
     
-    return true
+    return true;
+}

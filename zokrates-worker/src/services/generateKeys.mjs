@@ -16,7 +16,7 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
   logger.info(
     `${circuitsPath}/${filepath}`,
     `${outputPath}/${circuitDir}`,
-    `${circuitName}_out`,
+    `${circuitName}`,
     curve,
   );
 

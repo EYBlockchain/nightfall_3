@@ -1,8 +1,7 @@
-
-from "./common/utils/structures.zok" import PublicTransaction, Commitments, Nullifiers
-from "./common/generic_circuit/Stubs/commitments_stub.zok" import main as commitment_stub
-from "./common/generic_circuit/Stubs/nullifiers_stub.zok" import main as nullifier_stub
-from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field
+from "./common/utils/structures.zok" import PublicTransaction, Commitments, Nullifiers;
+from "./common/generic_circuit/Stubs/commitments_stub.zok" import main as commitment_stub;
+from "./common/generic_circuit/Stubs/nullifiers_stub.zok" import main as nullifier_stub;
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field;
 
 def main(\
     PublicTransaction tx,\
@@ -10,8 +9,7 @@ def main(\
     field maticAddress,\
     private field salt,\
     private field[2] recipientPublicKey\
-)-> ():
-    
-    assert(commitment_stub::<1>([tx.value], [salt], [recipientPublicKey]))
-        
-    return
+) {
+    assert(commitment_stub::<1>([tx.value], [salt], [recipientPublicKey]));
+    return;
+}

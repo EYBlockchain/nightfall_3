@@ -1,4 +1,4 @@
-from "../../utils/calculations.zok" import sum
+from "../../utils/calculations.zok" import sum;
 
 def main<NumNullifiers>(\
     field[NumNullifiers] nullifierRoots,\
@@ -7,14 +7,15 @@ def main<NumNullifiers>(\
     private field[NumNullifiers] rootKey,\
     private field[NumNullifiers][32] paths,\
 	private field[NumNullifiers] orders\
-)-> (bool):
+)-> bool {
     
-    for u32 i in 0..NumNullifiers do
+    for u32 i in 0..NumNullifiers {
         field s = nullifierRoots[i] * sum([\
             rootKey[i], oldCommitmentValues[i],\
             oldCommitmentSalts[i],...paths[i], orders[i]\
-        ])
-        assert(s == s)
-    endfor
+        ]);
+        assert(s == s);
+    }
 
-    return true
+    return true;
+}
