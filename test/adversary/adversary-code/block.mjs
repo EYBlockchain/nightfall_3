@@ -15,6 +15,8 @@ let error = process.env.BAD_BLOCK_SEQUENCE
       'ValidBlock',
       'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
       'ValidBlock',
+      'HistoricRootError',
+      'ValidBlock',
       // 'IncorrectProof',
       // 'ValidBlock',
     ];
@@ -60,7 +62,7 @@ export const createBadBlock = (block, errorIndex) => {
     indexOffset = errorIndex;
   }
   const badBlockType = error[errorIndex - indexOffset];
-  logger.debug('Creating a block of type', badBlockType);
+  logger.debug(`Creating a block of type ${badBlockType}`);
   switch (badBlockType) {
     case 'IncorrectTreeRoot':
       return incorrectTreeRoot(block);

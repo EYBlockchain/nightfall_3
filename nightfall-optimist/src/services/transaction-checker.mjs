@@ -17,6 +17,7 @@ import {
   getL2TransactionByCommitment,
   getL2TransactionByNullifier,
   getTransactionsByTransactionHashes,
+  getLatestBlockInfo,
 } from './database.mjs';
 import verify from './verify.mjs';
 
@@ -129,6 +130,18 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, bloc
   }
 }
 
+async function checkHistoricRootGreaterThanL2BlockNumberOnChain(transaction) {
+  const { blockNumberL2: LatestL2BlockNumber } = await getLatestBlockInfo();
+  transaction.historicRootBlockNumberL2.forEach(L2BlockNumber => {
+    if (Number(L2BlockNumber) === 0 && LatestL2BlockNumber === -1) return;
+    if (Number(L2BlockNumber) > LatestL2BlockNumber) {
+      throw new TransactionError('Historic root has L2BlockNumber greater than OnChain', 3, {
+        transactionHash: transaction.transactionHash,
+      });
+    }
+  });
+}
+
 async function verifyProof(transaction) {
   // we'll need the verification key.  That's actually stored in the b/c
   const challengeInstance = await waitForContract(CHALLENGES_CONTRACT_NAME);
@@ -199,6 +212,7 @@ async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
   return Promise.all([
     checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
     checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumberL2),
+    checkHistoricRootGreaterThanL2BlockNumberOnChain(transaction),
     verifyProof(transaction),
   ]);
 }

@@ -207,12 +207,11 @@ export async function createChallenge(block, transactions, err) {
               historicTxs: [],
             };
           }
-          const historicBlock = await getBlockByBlockNumberL2(b);
-          const historicTxs = await getTransactionsByTransactionHashes(block.transactionHashes);
-          return {
-            historicBlock: Block.buildSolidityStruct(historicBlock),
-            historicTxs,
-          };
+          const historicBlock = Block.buildSolidityStruct(await getBlockByBlockNumberL2(b));
+          const historicTxs = await getTransactionsByTransactionHashes(
+            historicBlock.transactionHashes,
+          );
+          return { historicBlock, historicTxs };
         }),
       );
 
@@ -235,6 +234,17 @@ export async function createChallenge(block, transactions, err) {
           ],
           uncompressedProof,
           salt,
+        )
+        .encodeABI();
+      break;
+    }
+    case 5: {
+      const { transactionHashIndex } = err.metadata;
+      txDataToSign = await challengeContractInstance.methods
+        .challengeHistoricRoot(
+          Block.buildSolidityStruct(block),
+          transactions.map(t => Transaction.buildSolidityStruct(t)),
+          transactionHashIndex,
         )
         .encodeABI();
       break;

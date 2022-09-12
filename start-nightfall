@@ -92,4 +92,4 @@ if [[ -d "$DIR" ]]; then
 fi
 
 docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans
-cd docker && docker-compose -p 'nightfall_3' logs -f client optimist worker deployer
+docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY logs -f
