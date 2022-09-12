@@ -182,7 +182,6 @@ contract Challenges is Stateful, Key_Registry, Config {
     function challengeProofVerification(
         TransactionBlock calldata transactionBlock,
         Block[4] calldata blockL2ContainingHistoricRoot,
-        Transaction[][4] calldata transactionsOfblockL2ContainingHistoricRoot,
         uint256[8] memory uncompressedProof,
         bytes32 salt
     ) external onlyBootChallenger {
@@ -194,14 +193,13 @@ contract Challenges is Stateful, Key_Registry, Config {
             transactionBlock.transactionSiblingPath
         );
 
-        PublicInputs memory extraPublicInputs =
-            PublicInputs([uint256(0), 0, 0, 0], super.getMaticAddress());
+        PublicInputs memory extraPublicInputs = PublicInputs(
+            [uint256(0), 0, 0, 0],
+            super.getMaticAddress()
+        );
 
         if (uint256(transactionBlock.transaction.nullifiers[0]) != 0) {
-            state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRoot[0],
-                transactionsOfblockL2ContainingHistoricRoot[0]
-            );
+            state.isBlockReal(blockL2ContainingHistoricRoot[0]);
             require(
                 transactionBlock.transaction.historicRootBlockNumberL2[0] ==
                     blockL2ContainingHistoricRoot[0].blockNumberL2,
@@ -211,10 +209,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         }
 
         if (uint256(transactionBlock.transaction.nullifiers[1]) != 0) {
-            state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRoot[1],
-                transactionsOfblockL2ContainingHistoricRoot[1]
-            );
+            state.isBlockReal(blockL2ContainingHistoricRoot[1]);
             require(
                 transactionBlock.transaction.historicRootBlockNumberL2[1] ==
                     blockL2ContainingHistoricRoot[1].blockNumberL2,
@@ -224,10 +219,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         }
 
         if (uint256(transactionBlock.transaction.nullifiers[2]) != 0) {
-            state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRoot[2],
-                transactionsOfblockL2ContainingHistoricRoot[2]
-            );
+            state.isBlockReal(blockL2ContainingHistoricRoot[2]);
             require(
                 transactionBlock.transaction.historicRootBlockNumberL2[2] ==
                     blockL2ContainingHistoricRoot[2].blockNumberL2,
@@ -237,10 +229,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         }
 
         if (uint256(transactionBlock.transaction.nullifiers[3]) != 0) {
-            state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRoot[3],
-                transactionsOfblockL2ContainingHistoricRoot[3]
-            );
+            state.isBlockReal(blockL2ContainingHistoricRoot[3]);
             require(
                 transactionBlock.transaction.historicRootBlockNumberL2[3] ==
                     blockL2ContainingHistoricRoot[3].blockNumberL2,

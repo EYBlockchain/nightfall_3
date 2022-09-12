@@ -220,24 +220,13 @@ export async function createChallenge(block, transactions, err) {
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
       const uncompressedProof = transactions[transactionIndex].proof;
-      const [
-        historicNullifierInfo1,
-        historicNullifierInfo2,
-        historicNullifierInfo3,
-        historicNullifierInfo4,
-      ] = await Promise.all(
+      const [historicBlock1, historicBlock2, historicBlock3, historicBlock4] = await Promise.all(
         transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
           if (transactions[transactionIndex].nullifiers[i] === 0) {
-            return {
-              historicBlock: {},
-              historicTxs: [],
-            };
+            return {};
           }
-          const historicBlock = Block.buildSolidityStruct(await getBlockByBlockNumberL2(b));
-          const historicTxs = await getTransactionsByTransactionHashes(
-            historicBlock.transactionHashes,
-          );
-          return { historicBlock, historicTxs };
+          const historicBlock = await getBlockByBlockNumberL2(b);
+          return Block.buildSolidityStruct(historicBlock);
         }),
       );
 
@@ -253,18 +242,7 @@ export async function createChallenge(block, transactions, err) {
             transactionIndex,
             transactionSiblingPath,
           },
-          [
-            historicNullifierInfo1.historicBlock,
-            historicNullifierInfo2.historicBlock,
-            historicNullifierInfo3.historicBlock,
-            historicNullifierInfo4.historicBlock,
-          ],
-          [
-            historicNullifierInfo1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicNullifierInfo2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicNullifierInfo3.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicNullifierInfo4.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-          ],
+          [historicBlock1, historicBlock2, historicBlock3, historicBlock4],
           uncompressedProof,
           salt,
         )

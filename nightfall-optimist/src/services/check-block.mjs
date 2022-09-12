@@ -74,41 +74,50 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
     .map((c, i) => {
       return { transactionIndex: i, commitment: c };
     });
-  for (const [index, blockCommitment] of blockCommitments.entries()) {
+
+  let lastIndexDuplicated = 0;
+  let indexDuplicated = 0;
+  for (let index = 0; index < blockCommitments.length; ++index) {
     const lastIndex = blockCommitments
       .map(c => c.commitment)
-      .lastIndexOf(blockCommitment.commitment);
+      .lastIndexOf(blockCommitments[index].commitment);
 
     if (index !== lastIndex) {
-      const transaction1Index = blockCommitments[index].transactionIndex;
-      const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
-      const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
-
-      const transaction2Index = blockCommitments[lastIndex].transactionIndex;
-      const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
-      const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
-
-      throw new BlockError(
-        `The block check failed due to duplicate commitments in different transactions of the same block`,
-        2,
-        {
-          block1: block,
-          transaction1: transactions[transaction1Index],
-          transaction1Index,
-          siblingPath1,
-          duplicateCommitment1Index: transactions[transaction1Index].commitments.find(
-            c => c === blockCommitment.commitment,
-          ),
-          block2: block,
-          transaction2: transactions[transaction2Index],
-          transaction2Index,
-          siblingPath2,
-          duplicateCommitment2Index: transactions[transaction2Index].commitments.find(
-            c => c === blockCommitment.commitment,
-          ),
-        },
-      );
+      indexDuplicated = index;
+      lastIndexDuplicated = lastIndex;
+      break;
     }
+  }
+
+  if (lastIndexDuplicated !== 0) {
+    const transaction1Index = blockCommitments[indexDuplicated].transactionIndex;
+    const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
+    const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
+
+    const transaction2Index = blockCommitments[lastIndexDuplicated].transactionIndex;
+    const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
+    const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
+
+    throw new BlockError(
+      `The block check failed due to duplicate commitments in different transactions of the same block`,
+      2,
+      {
+        block1: block,
+        transaction1: transactions[transaction1Index],
+        transaction1Index,
+        siblingPath1,
+        duplicateCommitment1Index: transactions[transaction1Index].commitments.find(
+          c => c === blockCommitments[indexDuplicated].commitment,
+        ),
+        block2: block,
+        transaction2: transactions[transaction2Index],
+        transaction2Index,
+        siblingPath2,
+        duplicateCommitment2Index: transactions[transaction2Index].commitments.find(
+          c => c === blockCommitments[indexDuplicated].commitment,
+        ),
+      },
+    );
   }
 }
 
@@ -121,38 +130,50 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
     .map((n, i) => {
       return { transactionIndex: i, nullifier: n };
     });
-  for (const [index, blockNullifier] of blockNullifiers.entries()) {
-    const lastIndex = blockNullifiers.map(n => n.nullifier).lastIndexOf(blockNullifier.nullifier);
+
+  let lastIndexDuplicated = 0;
+  let indexDuplicated = 0;
+  for (let index = 0; index < blockNullifiers.length; ++index) {
+    const lastIndex = blockNullifiers
+      .map(n => n.nullifier)
+      .lastIndexOf(blockNullifiers[index].nullifier);
+
     if (index !== lastIndex) {
-      const transaction1Index = blockNullifiers[index].transactionIndex;
-      const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
-      const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
-
-      const transaction2Index = blockNullifiers[lastIndex].transactionIndex;
-      const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
-      const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
-
-      throw new BlockError(
-        `The block check failed due to duplicate nullifiers in different transactions of the same block`,
-        3,
-        {
-          block1: block,
-          transaction1: transactions[transaction1Index],
-          transaction1Index,
-          siblingPath1,
-          duplicateNullifier1Index: transactions[transaction1Index].nullifiers.find(
-            n => n === blockNullifier.nullifier,
-          ),
-          block2: block,
-          transaction2: transactions[transaction2Index],
-          transaction2Index,
-          siblingPath2,
-          duplicateNullifier2Index: transactions[transaction2Index].nullifiers.find(
-            n => n === blockNullifier.nullifier,
-          ),
-        },
-      );
+      indexDuplicated = index;
+      lastIndexDuplicated = lastIndex;
+      break;
     }
+  }
+
+  if (lastIndexDuplicated !== 0) {
+    const transaction1Index = blockNullifiers[indexDuplicated].transactionIndex;
+    const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
+    const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
+
+    const transaction2Index = blockNullifiers[lastIndexDuplicated].transactionIndex;
+    const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
+    const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
+
+    throw new BlockError(
+      `The block check failed due to duplicate nullifiers in different transactions of the same block`,
+      3,
+      {
+        block1: block,
+        transaction1: transactions[transaction1Index],
+        transaction1Index,
+        siblingPath1,
+        duplicateNullifier1Index: transactions[transaction1Index].nullifiers.find(
+          n => n === blockNullifiers[indexDuplicated].nullifier,
+        ),
+        block2: block,
+        transaction2: transactions[transaction2Index],
+        transaction2Index,
+        siblingPath2,
+        duplicateNullifier2Index: transactions[transaction2Index].nullifiers.find(
+          n => n === blockNullifiers[indexDuplicated].nullifier,
+        ),
+      },
+    );
   }
 }
 
@@ -173,30 +194,31 @@ export async function checkBlock(block, transactions) {
   await checkDuplicateNullifiersWithinBlock(block, transactions);
 
   // check if the transactions are valid - transaction type, public input hash and proof verification are all checked
-  for (const transaction of transactions) {
-    try {
-      await checkTransaction(transaction, false, { blockNumberL2: block.blockNumberL2 }); // eslint-disable-line no-await-in-loop
-    } catch (err) {
-      if (err.code + 2 === 2 || err.code + 2 === 3) {
-        console.log(transaction.transactionHash);
-        const siblingPath1 = await getTransactionHashSiblingInfo(transaction.transactionHash);
-        err.metadata = {
-          ...err.metadata,
-          block1: block,
-          transaction1: transaction,
-          transaction1Index: block.transactionHashes.indexOf(transaction.transactionHash),
-          siblingPath1,
-        };
-      }
 
-      throw new BlockError(
-        `The transaction check failed with error: ${err.message}`,
-        err.code + 2, // mapping transaction error to block error
-        {
-          ...err.metadata,
-          transactionHashIndex: block.transactionHashes.indexOf(transaction.transactionHash),
-        },
-      );
+  let transaction;
+  try {
+    for (let i = 0; i < transactions.length; i++) {
+      transaction = transactions[i];
+      await checkTransaction(transaction, false, { blockNumberL2: block.blockNumberL2 }); // eslint-disable-line no-await-in-loop
     }
+  } catch (err) {
+    if (err.code + 2 === 2 || err.code + 2 === 3) {
+      const siblingPath1 = await getTransactionHashSiblingInfo(transaction.transactionHash);
+      err.metadata = {
+        ...err.metadata,
+        block1: block,
+        transaction1: transaction,
+        transaction1Index: block.transactionHashes.indexOf(transaction.transactionHash),
+        siblingPath1,
+      };
+    }
+    throw new BlockError(
+      `The transaction check failed with error: ${err.message}`,
+      err.code + 2, // mapping transaction error to block error
+      {
+        ...err.metadata,
+        transactionHashIndex: block.transactionHashes.indexOf(transaction.transactionHash),
+      },
+    );
   }
 }
