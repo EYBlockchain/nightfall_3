@@ -3,7 +3,7 @@ set -e
 
 # Install node dependencies
 npm ci
-docker build -t ghcr.io/eyblockchain/local-zokrates:0.7.13 -f zokrates.Dockerfile .
+docker build -t ghcr.io/eyblockchain/local-zokrates:0.8.2 -f zokrates.Dockerfile .
 # containers built separately. A parallel build fails.
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml build administrator
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml build client
