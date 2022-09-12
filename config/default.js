@@ -118,30 +118,6 @@ module.exports = {
     DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
   },
   ENVIRONMENTS: {
-    mainnet: {
-      name: 'Mainnet',
-      chainId: 1,
-      clientApiUrl: '',
-      optimistApiUrl: '',
-      optimistWsUrl: '',
-      web3WsUrl: '',
-    },
-    ropsten: {
-      name: 'Ropsten',
-      chainId: 3,
-      clientApiUrl: 'https://client.testnet.nightfall3.com',
-      optimistApiUrl: 'https://optimist.testnet.nightfall3.com',
-      optimistWsUrl: 'wss://optimist-ws.testnet.nightfall3.com',
-      web3WsUrl: `${process.env.ROPSTEN_NODE}`,
-    },
-    rinkeby: {
-      name: 'Rinkeby',
-      chainId: 4,
-      clientApiUrl: '',
-      optimistApiUrl: '',
-      optimistWsUrl: '',
-      web3WsUrl: '',
-    },
     localhost: {
       name: 'Localhost',
       chainId: 1337,
@@ -166,12 +142,20 @@ module.exports = {
           : process.env.BLOCKCHAIN_WS_HOST
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
-      PROPOSER_KEY:
-        process.env.ETH_PRIVATE_KEY ||
-        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
     },
-    aws: {
-      name: 'AWS',
+    internal: {
+      name: 'AWS internal',
+      chainId: 1337,
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'https://optimist-api.internal.polygon-nightfall.technology',
+      optimistWsUrl: 'wss://optimist-ws.internal.polygon-nightfall.technology',
+      proposerBaseUrl: 'https://proposer.internal.polygon-nightfall.technology',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      web3WsUrl: 'wss://web3-ws.internal.polygon-nightfall.technology',
+    },
+    staging: {
+      name: 'AWS internal',
       chainId: 1337,
       clientApiUrl: 'http://localhost:8080',
       optimistApiUrl: 'https://optimist-api.staging.polygon-nightfall.technology',
@@ -180,9 +164,6 @@ module.exports = {
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: 'wss://web3-ws.staging.polygon-nightfall.technology',
-      PROPOSER_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
-      PROPOSER_MNEMONIC:
-        'high return hold whale promote payment hat panel reduce oyster ramp mouse',
     },
   },
   TEST_OPTIONS: {

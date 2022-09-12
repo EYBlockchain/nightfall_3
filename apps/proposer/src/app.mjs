@@ -17,7 +17,7 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 console.log(environment);
 
 const app = express();
-const nf3 = new Nf3(environment.PROPOSER_KEY, environment);
+const nf3 = new Nf3(process.env.PROPOSER_KEY, environment);
 
 app.set('nf3', nf3);
 

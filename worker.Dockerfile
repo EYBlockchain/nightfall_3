@@ -1,12 +1,12 @@
 # build zokrates from source for local verify
 FROM ghcr.io/eyblockchain/local-zokrates:0.7.13 as builder
 
-FROM ubuntu:20.04
+FROM node:16.17
+
 
 RUN apt-get update -y
-RUN apt-get install -y netcat curl
+RUN apt-get install -y netcat-openbsd curl nodejs gcc g++ make
 RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
-RUN apt-get install -y nodejs gcc g++ make
 
 EXPOSE 80
 
