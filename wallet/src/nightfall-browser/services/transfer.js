@@ -11,7 +11,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
-import confirmBlock from './confirm-block';
 import computeCircuitInputs from '../utils/compute-witness';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
@@ -47,18 +46,6 @@ async function transfer(transferParams, shieldContractAddress) {
   );
   if (recipientCompressedZkpPublicKeys.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
-
-  const lastTree = await getLatestTree();
-  const lastBlockNumber = await getMaxBlock();
-
-  try {
-    await confirmBlock(lastBlockNumber, lastTree);
-  } catch (err) {
-    emptyStoreBlocks();
-    emptyStoreTimber();
-    console.log('Resync Done Transfer');
-    throw new Error(err);
-  }
 
   try {
     const shieldContractInstance = await getContractInstance(

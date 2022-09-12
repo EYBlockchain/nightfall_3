@@ -207,7 +207,6 @@ export const UserProvider = ({ children }) => {
       mqttClientOnChange(client, topicRollback);
       client.on('message', async (topic, message) => {
         logger.info(message.toString());
-        console.log(message.toString());
         const { type, data } = JSON.parse(message.toString());
         if (topic === topicBlockProposed) {
           logger.error('Error: messange sent on wrong topic');
