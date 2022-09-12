@@ -13,7 +13,6 @@ import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
 import computeCircuitInputs from '@Nightfall/utils/compute-witness';
-import confirmBlock from './confirm-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -51,11 +50,6 @@ async function deposit(items, shieldContractAddress) {
     getStoreCircuit(`${circuitName}-program`),
     getStoreCircuit(`${circuitName}-pk`),
   ]);
-
-  const lastTree = await getLatestTree();
-  const lastBlockNumber = await getMaxBlock();
-
-  await confirmBlock(lastBlockNumber, lastTree);
 
   const abi = abiData.data;
   const program = programData.data;

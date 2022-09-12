@@ -9,7 +9,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
-import confirmBlock from './confirm-block';
 import computeCircuitInputs from '../utils/compute-witness';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
@@ -45,11 +44,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     getStoreCircuit(`${circuitName}-program`),
     getStoreCircuit(`${circuitName}-pk`),
   ]);
-
-  const lastTree = await getLatestTree();
-  const lastBlockNumber = await getMaxBlock();
-
-  await confirmBlock(lastBlockNumber, lastTree);
 
   const abi = abiData.data;
   const program = programData.data;
