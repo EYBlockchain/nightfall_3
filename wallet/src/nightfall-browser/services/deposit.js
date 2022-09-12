@@ -19,7 +19,7 @@ import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
 const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;

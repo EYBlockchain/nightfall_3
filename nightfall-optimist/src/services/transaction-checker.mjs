@@ -74,14 +74,14 @@ async function verifyProof(transaction) {
     transaction.nullifiers[2] === ZERO
       ? { root: ZERO }
       : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[2])) ?? {
-        root: ZERO,
-      };
+          root: ZERO,
+        };
   const historicRootFourth =
     transaction.nullifiers[3] === ZERO
       ? { root: ZERO }
       : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[3])) ?? {
-        root: ZERO,
-      };
+          root: ZERO,
+        };
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 

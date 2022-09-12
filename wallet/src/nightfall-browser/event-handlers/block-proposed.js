@@ -26,13 +26,18 @@ import {
 } from '../services/database';
 import { edwardsDecompress } from '../../common-files/utils/curve-maths/curves';
 
-const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = global.config;
+const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = global.config;
 const { ZERO } = global.nightfallConstants;
 
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
-async function blockProposedEventHandler(data, ivks, nsks, isProposedBlock = true) {
+async function blockProposedEventHandler(
+  data,
+  zkpPrivateKeys,
+  nullifierKeys,
+  isProposedBlock = true,
+) {
   console.log(`Received Block Proposed event: ${JSON.stringify(data)}`);
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block, blockTimestamp } = data;
@@ -135,6 +140,7 @@ async function blockProposedEventHandler(data, ivks, nsks, isProposedBlock = tru
     HASH_TYPE,
     TIMBER_HEIGHT,
   );
+
   if (isProposedBlock) await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
 
   await Promise.all(
@@ -154,6 +160,11 @@ async function blockProposedEventHandler(data, ivks, nsks, isProposedBlock = tru
     }),
   );
 
+  let height = 1;
+  while (2 ** height < block.transactionHashes.length) {
+    ++height;
+  }
+
   // If this L2 block contains withdraw transactions known to this client,
   // the following needs to be saved for later to be used during finalise/instant withdraw
   // 1. Save sibling path for the withdraw transaction hash that is present in transaction hashes timber tree
@@ -161,17 +172,13 @@ async function blockProposedEventHandler(data, ivks, nsks, isProposedBlock = tru
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
   if ((await countWithdrawTransactionHashes(block.transactionHashes)) > 0) {
-    const transactionHashesTimber = new Timber(
-      ...[, , , ,],
-      TXHASH_TREE_HASH_TYPE,
-      TXHASH_TREE_HEIGHT,
-    );
+    const transactionHashesTimber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
 
-    const updatedTransctionHashesTimber = Timber.statelessUpdate(
+    const updatedTransactionHashesTimber = Timber.statelessUpdate(
       transactionHashesTimber,
       block.transactionHashes,
       TXHASH_TREE_HASH_TYPE,
-      TXHASH_TREE_HEIGHT,
+      height,
     );
 
     await Promise.all(
@@ -179,12 +186,12 @@ async function blockProposedEventHandler(data, ivks, nsks, isProposedBlock = tru
       block.transactionHashes.map(async (transactionHash, i) => {
         if (await isTransactionHashWithdraw(transactionHash)) {
           const siblingPathTransactionHash =
-            updatedTransctionHashesTimber.getSiblingPath(transactionHash);
+            updatedTransactionHashesTimber.getSiblingPath(transactionHash);
           return setTransactionHashSiblingInfo(
             transactionHash,
             siblingPathTransactionHash,
             transactionHashesTimber.leafCount + i,
-            updatedTransctionHashesTimber.root,
+            updatedTransactionHashesTimber.root,
           );
         }
       }),

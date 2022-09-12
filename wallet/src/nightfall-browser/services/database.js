@@ -44,7 +44,7 @@ export async function createClientidCollection() {
       newDb.createObjectStore(CLIENT_ID_COLLECTION);
     },
   });
-};
+}
 
 /*
  * function stores circuit data and hash
