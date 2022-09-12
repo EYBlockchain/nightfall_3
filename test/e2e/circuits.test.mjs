@@ -40,7 +40,7 @@ describe('General Circuit Test', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist1');
+    await nf3Proposer.registerProposer('http://optimis1');
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();

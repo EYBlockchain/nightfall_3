@@ -239,49 +239,37 @@ jobs:
 
       - name: Start Containers
         run: |
-          docker build -t ghcr.io/eyblockchain/local-zokrates:0.7.13 -f docker/zokrates.Dockerfile .
-          cd test/ping-pong
-          docker-compose build
-          ./ganache-standalone -s
-          sleep 10
-          ./pong-nightfall -d -s &> ping-pong-test.log &disown
-
-      - name: debug logs - after container startup
-        if: always()
-        run: cat test/ping-pong/ping-pong-test.log
+          ./setup-nightfall
+          ./start-nightfall -g -d &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
-            docker wait ping-pong_deployer_1
+            docker wait nightfall_3_deployer_1
           attempt_limit: 100
           attempt_delay: 20000
 
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat ping-pong-test.log
+
       - name: Run ping-pong test
         run: |
-          cd test/ping-pong
-          ./pong-apps
-
-      - name: debug logs - after integration test run
-        if: always()
-        run:
-          results=$(cat test/ping-pong/ping-pong-test.log | grep passed); if [ ! -z "${results}" ];
-          then exit 0; else exit 1; fi
+          npm ci
+          docker wait nightfall_3_deployer_1
+          npm run ping-pong
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: |
-          cd test/ping-pong
-          ./pong-down -v
-          ./ganache-standalone -d
+        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
         uses: actions/upload-artifact@master
         with:
           name: ping-pong-test-logs
-          path: test/ping-pong/ping-pong-test.log
+          path: ./ping-pong-test.log
 
   test-gas:
     name: check gas for 32 transactions per block

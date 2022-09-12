@@ -11,10 +11,10 @@ services:
         source: build
         target: /app/build/
     environment:
-      BLOCKCHAIN_WS_HOST: blockchain1
+      BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
       LOG_LEVEL: error
-      ETH_NETWORK: blockchain1
+      ETH_NETWORK: blockchain
 
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest

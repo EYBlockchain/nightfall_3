@@ -28,7 +28,6 @@ module.exports = {
   EXCLUDE_DIRS: 'common',
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
-  TXHASH_TREE_HEIGHT: 5,
   CONFIRMATION_POLL_TIME: 1000,
   CONFIRMATIONS: 12,
   DEFAULT_ACCOUNT_NUM: 10,
@@ -84,7 +83,7 @@ module.exports = {
   CURVE: process.env.CURVE || 'bn128',
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 150,
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
@@ -166,14 +165,23 @@ module.exports = {
           : process.env.BLOCKCHAIN_WS_HOST
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
+      PROPOSER_KEY:
+        process.env.ETH_PRIVATE_KEY ||
+        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
     },
     aws: {
       name: 'AWS',
-      clientApiUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
-      optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
-      optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
-      proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
-      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+      chainId: 1337,
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'https://optimist-api.staging.polygon-nightfall.technology',
+      optimistWsUrl: 'wss://optimist-ws.staging.polygon-nightfall.technology',
+      proposerBaseUrl: 'https://proposer.staging.polygon-nightfall.technology',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      web3WsUrl: 'wss://web3-ws.staging.polygon-nightfall.technology',
+      PROPOSER_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+      PROPOSER_MNEMONIC:
+        'high return hold whale promote payment hat panel reduce oyster ramp mouse',
     },
   },
   TEST_OPTIONS: {
@@ -382,6 +390,11 @@ module.exports = {
           name: 'USDC',
           address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
           amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
+        },
+        {
+          name: 'stMATIC',
+          address: '0x9A7c69A167160C507602ecB3Df4911e8E98e1279',
+          amount: process.env.STMATIC_TESTNET_RESTRICT || '1000000000',
         },
       ],
       ropsten: [
