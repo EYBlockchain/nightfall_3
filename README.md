@@ -90,7 +90,7 @@ this point.
 
 ### To end the application
 
-To stop the application, you can run `docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.ganache.yml -p 'nightfall_3' down -v` and it should exit cleanly.
+To stop the application, you can run `npm run nightfall-down` and it should exit cleanly.
 
 ## Testing
 
