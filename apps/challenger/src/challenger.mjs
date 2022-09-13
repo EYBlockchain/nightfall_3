@@ -1,7 +1,7 @@
 /**
 Module that runs up as a challenger
 */
-import logger from '../../../common-files/utils/logger.mjs';
+import logger from '../common-files/utils/logger.mjs';
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -15,7 +15,6 @@ export default async function startChallenger(nf3) {
   else throw new Error('Healthcheck failed');
   logger.info('Attempting to register challenger');
 
-  await nf3.registerChallenger();
   await nf3.startChallenger();
   logger.info('Listening for incoming events');
 }

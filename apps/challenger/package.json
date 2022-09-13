@@ -4,7 +4,7 @@
   "description": "A challenger for interacting with Nightfall",
   "main": "index.js",
   "scripts": {
-    "start": "export $(cat ../../nightfall-optimist/optimist.env | xargs)  && node --trace-warnings src/app.mjs",
+    "start": "node --trace-warnings src/app.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "daveroga",

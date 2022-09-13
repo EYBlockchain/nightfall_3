@@ -712,7 +712,6 @@ class Nf3 {
     return new Promise((resolve, reject) => {
       proposerQueue.push(async () => {
         try {
-          console.log('receipt');
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.proposersContractAddress,
