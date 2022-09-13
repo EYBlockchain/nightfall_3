@@ -1,8 +1,9 @@
 name: Check PR
 
 on:
-  pull_request:
-    branches: [master]
+  push:
+    branch:
+      - liju.jose/test-master-14-09-2022
 
 jobs:
   dependency-review:
