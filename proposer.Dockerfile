@@ -1,4 +1,4 @@
-FROM node:14.17
+FROM node:16.17
 
 WORKDIR /app
 COPY common-files common-files
