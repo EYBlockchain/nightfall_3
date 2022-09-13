@@ -46,6 +46,10 @@ export default async function generateProof(
     throw new Error('generate-proof proving key path file not found');
   }
 
+  if (!fs.existsSync(witnessPath)) {
+    throw new Error('generate-proof witness path file not found');
+  }
+
   if (codePath.endsWith('.zok')) {
     throw new Error("Expected the compiled code that didn't end in .code");
   }
