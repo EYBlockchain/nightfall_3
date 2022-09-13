@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unresolved */
 /**
 Module that runs up as a challenger
 */
