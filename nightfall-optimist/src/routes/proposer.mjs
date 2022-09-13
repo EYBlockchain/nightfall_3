@@ -57,8 +57,8 @@ router.post('/register', async (req, res, next) => {
     // when we get to here, either the proposer was already registered (txDataToSign === '')
     // or we're just about to register them. We may or may not be registed locally
     // with optimist though. Let's check and fix that if needed.
-    const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-    const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
+    let stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+    let currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
     if (!(await isRegisteredProposerAddressMine(address))) {
       logger.debug('Registering proposer locally');
       await setRegisteredProposerAddress(address, url); // save the registration address
@@ -69,8 +69,8 @@ router.post('/register', async (req, res, next) => {
         logger.warn(
           'Proposer was already registered on the blockchain but not with this Optimist instance - registering locally',
         );
-        const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-        const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
+        stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+        currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
         if (address === currentProposer.thisAddress) {
           proposer.isMe = true;
           await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
