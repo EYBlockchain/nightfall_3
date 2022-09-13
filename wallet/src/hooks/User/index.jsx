@@ -42,6 +42,7 @@ export const initialState = {
   chainSync: false,
   circuitSync: false,
   timberSync: false,
+  timberSync: false,
 };
 
 export const UserContext = React.createContext({
@@ -53,6 +54,32 @@ export const UserProvider = ({ children }) => {
   const [state, setState] = React.useState(initialState);
   const [isSyncComplete, setIsSyncComplete] = React.useState(false); // This is not really a sync;
   const [isSyncing, setSyncing] = React.useState(true);
+  const [client, setClient] = React.useState(null);
+  const [blockClient, setBlockClient] = React.useState(null);
+
+  const mqttConnect = async host => {
+    const currentClientId = await getClientId(0);
+    const options = {
+      clientId: currentClientId,
+      clean: false,
+      username: usernameMq,
+      password: pswMQ,
+      rejectUnauthorized: false,
+      reconnectPeriod: 1000,
+    };
+    setClient(mqtt.connect(host, options));
+
+    const blockOptions = {
+      clientId: `block_${currentClientId}`,
+      clean: true,
+      username: usernameMq,
+      password: pswMQ,
+      rejectUnauthorized: false,
+      reconnectPeriod: 1000,
+    };
+    setBlockClient(mqtt.connect(host, blockOptions));
+  };
+
   const [client, setClient] = React.useState(null);
   const [blockClient, setBlockClient] = React.useState(null);
 
@@ -175,6 +202,8 @@ export const UserProvider = ({ children }) => {
         compressedZkpPublicKey: zkpKeys[0].compressedZkpPublicKey,
       };
     });
+    await timberAndBlockSync(-1, -1, false);
+    setupMqtt();
     await timberAndBlockSync(-1, -1, false);
     setupMqtt();
   };
