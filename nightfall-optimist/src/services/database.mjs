@@ -491,17 +491,18 @@ export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
 // and is part of an L2 block
 export async function getL2TransactionByCommitment(
   commitmentHash,
-  inL2AndNotInL2 = false,
+  { isAlreadyInL2, isAlreadyInMempool },
   blockNumberL2OfTx,
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = inL2AndNotInL2
-    ? { commitments: commitmentHash }
-    : {
-        commitments: commitmentHash,
-        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
-      };
+  const query =
+    isAlreadyInL2 && isAlreadyInMempool
+      ? { commitments: commitmentHash }
+      : {
+          commitments: commitmentHash,
+          blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+        };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
@@ -516,17 +517,18 @@ export async function getL2MempoolTransactionByCommitment(commitmentHash) {
 // and is part of an L2 block
 export async function getL2TransactionByNullifier(
   nullifierHash,
-  inL2AndNotInL2 = false,
+  { isAlreadyInL2, isAlreadyInMempool },
   blockNumberL2OfTx,
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = inL2AndNotInL2
-    ? { nullifiers: nullifierHash }
-    : {
-        nullifiers: nullifierHash,
-        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
-      };
+  const query =
+    isAlreadyInL2 && isAlreadyInMempool
+      ? { nullifiers: nullifierHash }
+      : {
+          nullifiers: nullifierHash,
+          blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+        };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 

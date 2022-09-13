@@ -38,11 +38,11 @@ async function transactionSubmittedEventHandler(eventParams) {
     if (fromBlockProposer) {
       await saveTransaction({ ...transaction, blockNumberL2 });
       logger.info({ msg: 'Checking transaction validity...' });
-      await checkTransaction(transaction, true);
+      await checkTransaction(transaction, { isAlreadyInL2: true, isAlreadyInMempool: true });
       logger.info({ msg: 'Transaction checks passed' });
     } else {
       logger.info({ msg: 'Checking transaction validity...' });
-      await checkTransaction(transaction, true);
+      await checkTransaction(transaction, { isAlreadyInL2: true, isAlreadyInMempool: true });
       logger.info({ msg: 'Transaction checks passed' });
 
       // if transaction has duplicate commitment or nullifier

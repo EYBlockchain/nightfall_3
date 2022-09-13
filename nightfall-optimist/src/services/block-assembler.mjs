@@ -70,7 +70,7 @@ async function makeBlock(proposer, transactions) {
   logger.debug('Block Assembler - about to make a new block');
 
   // check transction before building block
-  await Promise.all(transactions.map(t => checkTransaction(t, true)));
+  await Promise.all(transactions.map(t => checkTransaction(t, { isAlreadyInL2: true })));
 
   // then we make new block objects until we run out of unprocessed transactions
   return Block.build({ proposer, transactions });

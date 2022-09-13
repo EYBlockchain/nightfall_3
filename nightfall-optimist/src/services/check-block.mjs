@@ -254,7 +254,11 @@ export async function checkBlock(block, transactions) {
   try {
     for (let i = 0; i < transactions.length; i++) {
       transaction = transactions[i];
-      await checkTransaction(transaction, false, { blockNumberL2: block.blockNumberL2 }); // eslint-disable-line no-await-in-loop
+      await checkTransaction(
+        transaction,
+        { isAlreadyInL2: true },
+        { blockNumberL2: block.blockNumberL2 },
+      ); // eslint-disable-line no-await-in-loop
     }
   } catch (err) {
     if (err.code === 0 || err.code === 1) {
