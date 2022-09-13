@@ -19,7 +19,6 @@ const {
   TIMBER_HEIGHT,
   CLIENT_ID_COLLECTION,
   HASH_TYPE,
-  CLIENT_ID_COLLECTION,
 } = global.config;
 
 // This needs to have better indexDB performance.
@@ -404,16 +403,6 @@ export async function setTransactionHashSiblingInfo(
     );
   }
   return null;
-}
-
-export async function storeClientId(clientId) {
-  const db = await connectDB();
-  return db.put(CLIENT_ID_COLLECTION, clientId, 0);
-}
-
-export async function getClientId(key) {
-  const db = await connectDB();
-  return db.get(CLIENT_ID_COLLECTION, key);
 }
 
 export async function storeClientId(clientId) {
