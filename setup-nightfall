@@ -20,5 +20,5 @@ docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml bui
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} optimist
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} worker
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} hosted-utils-api-server
-docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.adversary.yml build ${NO_CACHE_FLAG} adversary1
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.adversary.yml build ${NO_CACHE_FLAG} adversary
 docker-compose -f docker/docker-compose.apps.yml build ${NO_CACHE_FLAG} proposer
