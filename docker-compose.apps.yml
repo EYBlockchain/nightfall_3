@@ -8,7 +8,7 @@ services:
       context: .
     ports:
       # to use with postman and etc
-      - 8083:8080
+      - 8092:8092
     environment:
       BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
