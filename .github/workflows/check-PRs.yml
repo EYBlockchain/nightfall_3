@@ -353,12 +353,13 @@ jobs:
           ./start-apps
 
       - name: 'Check proposer liveliness'
-        uses: indiesdev/curl@v1.1
-        id: api
+
+        uses: Wandalen/wretry.action@v1.0.11
         with:
-          url: http://localhost:8092/healthcheck
-          method: 'GET'
-          log-response: true
+          command: |
+            curl -i http://localhost:8092/healthcheck
+          attempt_limit: 100
+          attempt_delay: 20000
 
       - name: Debug logs - after integration test run
         if: always()
