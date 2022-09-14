@@ -69,8 +69,6 @@ router.post('/register', async (req, res, next) => {
         logger.warn(
           'Proposer was already registered on the blockchain but not with this Optimist instance - registering locally',
         );
-        stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-        currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
         if (address === currentProposer.thisAddress) {
           proposer.isMe = true;
           await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
