@@ -1,0 +1,51 @@
+
+from "../../utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT;
+from "../../utils/calculations.zok" import sum;
+from "../../casts/u32_array_to_field.zok" import main as u32_array_to_field;
+from "../../casts/u8_array_to_field.zok" import main as u8_array_to_field;
+from "../Verifiers/verify_structure.zok" import main as verify_structure;
+from "../Verifiers/verify_commitments.zok" import main as verify_commitments;
+
+def deposit_generic<N,C>(\
+    field value,\
+    field fee,\
+	field transactionType,\
+	field tokenType,\
+	field[N] historicRootBlockNumberL2,\
+	u32[8] tokenId,\
+	field ercAddress,\
+	u32[8] recipientAddress,\
+	field[C] commitments,\
+	field[N] nullifiers,\
+	field[2] compressedSecrets,\
+    field[N] roots,\
+    field maticAddress,\
+    private field salt,\
+    private Point recipientPublicKey\
+) -> bool {
+    
+    //Verify public transaction structure
+    assert(verify_structure::<N,C,0>(\
+        value,\
+        fee,\
+	    transactionType,\
+	    tokenType,\
+        historicRootBlockNumberL2,\
+	    tokenId,\
+	    ercAddress,\
+	    recipientAddress,\
+	    commitments,\
+	    nullifiers,\
+	    compressedSecrets\
+    ));
+
+    // pack the top four bytes of the token id into the ercAddress field (address only
+	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+    field idRemainder = u32_array_to_field(tokenId[1..8]); 
+    field packedErcAddress = ercAddress + u32_array_to_field([tokenId[0]]) * SHIFT;
+    //Verify new Commmitments
+    assert(verify_commitments::<1,C>(packedErcAddress, idRemainder, [commitments[0]],\
+    [value], [salt], [recipientPublicKey], maticAddress));
+        
+    return true;
+}

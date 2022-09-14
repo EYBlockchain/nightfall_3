@@ -1,0 +1,48 @@
+from "../../utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT;
+from "../Stubs/nullifiers_stub.zok" import main as nullifier_stub;
+from "../Stubs/commitments_stub.zok" import main as commitment_stub;
+from "../Stubs/encryption_stub.zok" import main as encryption_stub;
+from "../../casts/u8_array_to_field.zok" import main as u8_array_to_field;
+
+
+def transfer_generic_stub<N,C>(\
+    field value,\
+    field fee,\
+	field transactionType,\
+	field tokenType,\
+	field[N] historicRootBlockNumberL2,\
+	u32[8] tokenId,\
+	field ercAddress,\
+	u32[8] recipientAddress,\
+	field[C] commitments,\
+	field[N] nullifiers,\
+	field[2] compressedSecrets,\
+    field[N] roots,\
+    field maticAddress,\
+    private u8[N][31] oldCommitmentsValue,\
+ 	private field[N] oldCommitmentsSalt,\
+    private field[N] rootKey,\
+    private field[N][32] paths,\
+	private field[N] orders,\
+    private u8[C][31] newCommitmentsValue,\
+ 	private field[C] newCommitmentsSalt,\
+    private Point[C] recipientPublicKey,\
+    private u32[8] ephemeralKey,\
+    private field ercAddressTransfer,\
+    private u32[8] idTransfer\
+) -> bool {
+    
+    field[N] nullifiersValue = u8_array_to_field(oldCommitmentsValue);
+    field[C] commitmentsValue = u8_array_to_field(newCommitmentsValue);
+
+    assert(nullifier_stub::<N>(\
+        roots, nullifiersValue, oldCommitmentsSalt,\
+        rootKey, paths, orders));
+
+    assert(commitment_stub::<C>(\
+        commitmentsValue, newCommitmentsSalt, recipientPublicKey));
+
+    assert(encryption_stub(ephemeralKey, ercAddressTransfer, idTransfer));
+
+    return true;
+}

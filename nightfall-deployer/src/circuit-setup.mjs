@@ -128,10 +128,17 @@ async function setupCircuits() {
       if (config.USE_STUBS) {
         tx = keyRegistry.methods.registerVerificationKey(
           vkArray,
-          config.VK_IDS[folderpath.slice(0, -5)],
+          config.VK_IDS[folderpath.slice(0, -5)].numberNullifiers,
+          config.VK_IDS[folderpath.slice(0, -5)].numberCommitments,
+          config.VK_IDS[folderpath.slice(0, -5)].txType,
         );
       } else {
-        tx = keyRegistry.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]);
+        tx = keyRegistry.methods.registerVerificationKey(
+          vkArray,
+          config.VK_IDS[folderpath].numberNullifiers,
+          config.VK_IDS[folderpath].numberCommitments,
+          config.VK_IDS[folderpath].txType,
+        );
       }
 
       // when deploying on infura - do serial tx execution to avoid nonce issue

@@ -1,27 +1,35 @@
-from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT;
-from "./common/generic_circuit/Stubs/nullifiers_stub.zok" import main as nullifier_stub;
-from "./common/generic_circuit/Stubs/commitments_stub.zok" import main as commitment_stub;
-from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field;
+from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments;
+from "./common/generic_circuit/Generics/withdraw_generic_stub.zok" import withdraw_generic_stub;
 
 
 def main(\
-    PublicTransaction tx,\
+    PublicTransaction<4,2> tx,\
     field[4] roots,\
     field maticAddress,\
-    private Nullifiers<4> nullifiers,\
-    private Commitments<2> commitments\
+    private Nullifiers<4> nullifiersInfo,\
+    private Commitments<2> commitmentsInfo\
 ) {
-    
-    field[4] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value);
-    field[2] commitmentsValue = u8_array_to_field(commitments.newCommitments.value);
-
-
-    assert(nullifier_stub::<4>(\
-        roots, nullifiersValue, nullifiers.oldCommitments.salt,\
-        nullifiers.rootKey, nullifiers.paths, nullifiers.orders));
-
-    assert(commitment_stub::<2>(\
-        commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey));
-
-    return;
+    assert(withdraw_generic_stub::<4,2>(\
+        tx.value,\
+        tx.fee,\
+	    tx.transactionType,\
+	    tx.tokenType,\
+        tx.historicRootBlockNumberL2,\
+	    tx.tokenId,\
+	    tx.ercAddress,\
+	    tx.recipientAddress,\
+	    tx.commitments,\
+	    tx.nullifiers,\
+	    tx.compressedSecrets,\
+        roots,\
+        maticAddress,\
+        nullifiersInfo.oldCommitments.value,\
+        nullifiersInfo.oldCommitments.salt,\
+        nullifiersInfo.rootKey,\
+        nullifiersInfo.paths,\
+        nullifiersInfo.orders,\
+        commitmentsInfo.newCommitments.value,\
+        commitmentsInfo.newCommitments.salt,\
+        commitmentsInfo.recipientPublicKey\
+        ));
 }

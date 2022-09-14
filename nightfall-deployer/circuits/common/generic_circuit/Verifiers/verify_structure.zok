@@ -5,17 +5,17 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8;
 /*
 * Given a Public tx, check that the structure and all the public parameters are valid
 */
-def main<TxType>(\
+def main<N,C,TxType>(\
     field value,\
     field fee,\
 	field transactionType,\
 	field tokenType,\
+    field[N] historicRootBlockNumberL2,\
 	u32[8] tokenId,\
 	field ercAddress,\
 	u32[8] recipientAddress,\
-	field[3] commitments,\
-	field[4] nullifiers,\
-	field[4] historicRootBlockNumberL2,\
+	field[C] commitments,\
+	field[N] nullifiers,\
 	field[2] compressedSecrets\
 ) -> bool {
 
@@ -43,26 +43,17 @@ def main<TxType>(\
         ||  (tokenType == 1 && value == 0)\
         ||  (tokenType == 2 && value != 0)));
     
-    //Check commitments
-    assert((TxType == 0 && commitments[0] != 0 && commitments[1] == 0 && commitments[2] == 0) ||\
-        (TxType == 1 && commitments[0] != 0) || (TxType == 2 && commitments[2] == 0));
     
     //Check that there are not duplicate commitments in the same transaction
-    for u32 i in 0..3 {
-        for u32 j in (i+1)..3 {
+    for u32 i in 0..C {
+        for u32 j in (i+1)..C {
             assert(commitments[j] == 0 || commitments[i] != commitments[j]);
         }
     }
 
-    //Check nullifiers
-    assert(\
-        (TxType == 0 && nullifiers[0] == 0 &&  nullifiers[1] == 0 && nullifiers[2] == 0 && nullifiers[3] == 0) || \
-        (TxType != 0 && nullifiers[0] != 0)\
-    );
-
     //Check that there are not duplicate nullifiers in the same transaction
-    for u32 i in 0..4 {
-        for u32 j in (i+1)..4 {
+    for u32 i in 0..N {
+        for u32 j in (i+1)..N {
             assert(nullifiers[j] == 0 || nullifiers[i] != nullifiers[j]);
         }
     }

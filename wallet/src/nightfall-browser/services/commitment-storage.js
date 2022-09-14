@@ -600,6 +600,7 @@ async function verifyEnoughCommitments(
   value,
   ercAddressFee,
   fee,
+  maxNumberNullifiers,
 ) {
   const connection = await connectDB();
   const db = connection.db(COMMITMENTS_DB);
@@ -635,10 +636,10 @@ async function verifyEnoughCommitments(
 
     fc = commitmentsFee.length; // Store the number of fee commitments
 
-    // At most, we can use 3 commitments to pay for the fee. However, it is possible that
-    // the user has less than 3 matic commitments. Therefore, the maximum number of commitments
-    // the user will be able to use is the minimum between 3 and the number of fee commitments (fc)
-    const maxPossibleCommitmentsFee = Math.min(fc, 3);
+    // At most, we can use maxNumberNullifiers - 1 commitments to pay for the fee. However, it is possible that
+    // the user has less than maxNumberNullifiers - 1 matic commitments. Therefore, the maximum number of commitments
+    // the user will be able to use is the minimum between maxNumberNullifiers - 1 and the number of fee commitments (fc)
+    const maxPossibleCommitmentsFee = Math.min(fc, maxNumberNullifiers - 1);
 
     console.log('maxPossibleCommitments', maxPossibleCommitmentsFee);
 
@@ -686,12 +687,11 @@ async function verifyEnoughCommitments(
   const c = commitments.length; // Store the number of commitments
   let minC = 0;
 
-  // At most, we can use (4 - number of fee commitments needed) commitments to pay for the
+  // At most, we can use (maxNumberNullifiers - number of fee commitments needed) commitments to pay for the
   // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
   // Therefore, the maximum number of commitments the user will be able to use is the minimum between
-  // 4 - minFc and the number of commitments (c)
-  const maxPossibleCommitments = Math.min(c, 4 - minFc);
-
+  // maxNumberNullifiers - minFc and the number of commitments (c)
+  const maxPossibleCommitments = Math.min(c, maxNumberNullifiers - minFc);
   let j = 1;
   let sumHighestCommitments = 0n;
   // We try to find the minimum number of commitments whose sum is higher than the value sent.
@@ -773,11 +773,11 @@ function findSubsetNCommitments(N, commitments, value) {
   // Since all commitments has a positive value, if target value is smaller than zero return
   if (value.bigInt <= 0n) return [];
 
-  // We are only interested in subsets of 3 in which all the commitments are
+  // We are only interested in subsets of maxNumberNullifiers - 1 in which all the commitments are
   // smaller than the target value
   const commitmentsFiltered = commitments.filter(s => s.preimage.value.bigInt < value.bigInt);
 
-  // If there isn't any valid subset of 3 in which all values are smaller, return
+  // If there isn't any valid subset of maxNumberNullifiers - 1 in which all values are smaller, return
   if (commitmentsFiltered.length < N) return [];
 
   if (N === 2) {
@@ -833,6 +833,7 @@ async function findUsableCommitments(
   ercAddressFee,
   _value,
   _fee,
+  maxNumberNullifiers,
 ) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const fee = generalise(_fee); // sometimes this is sent as a BigInt.
@@ -844,6 +845,7 @@ async function findUsableCommitments(
     value,
     ercAddressFee,
     fee,
+    maxNumberNullifiers,
   );
 
   if (!commitmentsVerification) return null;
@@ -854,10 +856,10 @@ async function findUsableCommitments(
 
   // Get the "best" subset of each possible size to then decide which one is better overall
   // From the calculations performed in "verifyEnoughCommitments" we know that at least
-  // minC commitments are required. On the other hand, we can use a maximum of 4 commitments
+  // minC commitments are required. On the other hand, we can use a maximum of maxNumberNullifiers commitments
   // but we have to take into account that some spots needs to be used for the fee and that
   // maybe the user does not have as much commitments
-  for (let i = minC; i <= Math.min(commitments.length, 4 - minFc); ++i) {
+  for (let i = minC; i <= Math.min(commitments.length, maxNumberNullifiers - minFc); ++i) {
     const subset = findSubsetNCommitments(i, commitments, value);
     possibleSubsetsCommitments.unshift(subset);
   }
@@ -885,9 +887,13 @@ async function findUsableCommitments(
   if (fee.bigInt > 0n) {
     // Get the "best" subset of each possible size for the fee to then decide which one
     // is better overall. We know that at least we require minFc commitments.
-    // On the other hand, we can use a maximum of 4 commitments minus the spots already used
+    // On the other hand, we can use a maximum of maxNumberNullifiers commitments minus the spots already used
     // for the regular transfer. We also take into account that the user may not have as much commits
-    for (let i = minFc; i <= Math.min(commitmentsFee.length, 4 - oldCommitments.length); ++i) {
+    for (
+      let i = minFc;
+      i <= Math.min(commitmentsFee.length, maxNumberNullifiers - oldCommitments.length);
+      ++i
+    ) {
       const subset = findSubsetNCommitments(i, commitmentsFee, fee);
       possibleSubsetsCommitmentsFee.unshift(subset);
     }
@@ -929,9 +935,18 @@ export async function findUsableCommitmentsMutex(
   ercAddressFee,
   _value,
   _fee,
+  maxNumberNullifiers,
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, ercAddressFee, _value, _fee),
+    findUsableCommitments(
+      compressedZkpPublicKey,
+      ercAddress,
+      tokenId,
+      ercAddressFee,
+      _value,
+      _fee,
+      maxNumberNullifiers,
+    ),
   );
 }
 

@@ -33,8 +33,8 @@ library Utils {
 
     function compressG1(uint256 x, uint256 y) internal pure returns (uint256) {
         // compute whether y is odd or even and multiply by 2**255
-        uint256 parity =
-            0x8000000000000000000000000000000000000000000000000000000000000000 * (y % 2);
+        uint256 parity = 0x8000000000000000000000000000000000000000000000000000000000000000 *
+            (y % 2);
         // add the parity bit to the x cordinate (x,y are 254 bits long - the final
         // number is 256 bits to fit with an Ethereum word)
         return parity + x;
@@ -57,10 +57,11 @@ library Utils {
     }
 
     // counts the number of non-zero values (useful for counting real commitments and nullifiers)
-    function countNonZeroValues(bytes32[3] calldata vals) internal pure returns (uint256) {
+    function countNonZeroValues(bytes32[51] calldata vals) internal pure returns (uint256) {
         uint256 count;
-        if (vals[0] != ZERO) count++;
-        if (vals[1] != ZERO) count++;
+        for (uint256 i = 0; i < vals.length; ++i) {
+            if (vals[i] != ZERO) ++count;
+        }
         return count;
     }
 
@@ -86,9 +87,9 @@ library Utils {
         bytes32[] memory filtered = new bytes32[](countCommitments(ts));
         uint256 count;
         for (uint256 i = 0; i < ts.length; i++) {
-            if (ts[i].commitments[0] != ZERO) filtered[count++] = ts[i].commitments[0];
-            if (ts[i].commitments[1] != ZERO) filtered[count++] = ts[i].commitments[1];
-            if (ts[i].commitments[2] != ZERO) filtered[count++] = ts[i].commitments[2];
+            for (uint256 j = 0; j < ts[i].commitments.length; j++) {
+                if (ts[i].commitments[j] != ZERO) filtered[count++] = ts[i].commitments[j];
+            }
         }
         return filtered;
     }

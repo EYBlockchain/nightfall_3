@@ -85,7 +85,28 @@ module.exports = {
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 150,
   USE_STUBS: process.env.USE_STUBS === 'true',
-  VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
+  VK_IDS: {
+    deposit: {
+      txType: 0,
+      numberNullifiers: 0,
+      numberCommitments: 1,
+    },
+    transfer: {
+      txType: 1,
+      numberNullifiers: 4,
+      numberCommitments: 3,
+    },
+    withdraw: {
+      txType: 2,
+      numberNullifiers: 4,
+      numberCommitments: 2,
+    },
+  },
+  TRANSACTION: {
+    numberNullifiers: 50,
+    numberCommitments: 51,
+  },
+  // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
   BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
   // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal
@@ -438,12 +459,12 @@ module.exports = {
   SIGNATURES: {
     BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
     TRANSACTION:
-      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+      '(uint112,uint112,uint8,uint8,uint64[50],bytes32,bytes32,bytes32,bytes32[51],bytes32[50],bytes32[2],uint256[4])',
     PROPOSE_BLOCK: [
       '(uint48,address,bytes32,uint256,bytes32,bytes32)',
-      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])[]',
+      '(uint112,uint112,uint8,uint8,uint64[50],bytes32,bytes32,bytes32,bytes32[51],bytes32[50],bytes32[2],uint256[4])[]',
     ],
     SUBMIT_TRANSACTION:
-      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+      '(uint112,uint112,uint8,uint8,uint64[50],bytes32,bytes32,bytes32,bytes32[51],bytes32[50],bytes32[2],uint256[4])',
   },
 };

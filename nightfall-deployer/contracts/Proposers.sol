@@ -61,8 +61,9 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
             proposer.previousAddress = currentProposer.previousAddress; // proposer: (x,B,A)
             proposer.url = url;
             // pull global state
-            LinkedAddress memory proposersPrevious =
-                state.getProposer(currentProposer.previousAddress);
+            LinkedAddress memory proposersPrevious = state.getProposer(
+                currentProposer.previousAddress
+            );
             LinkedAddress memory proposersCurrent = state.getProposer(currentProposer.thisAddress);
             // updated the pulled state
             proposersPrevious.nextAddress = proposer.thisAddress; // X: (u,v,B)
@@ -108,7 +109,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
         );
         // Zero out the entry in the bond escrow
         state.setBondAccount(msg.sender, 0);
-        state.addPendingWithdrawal(msg.sender, bond.amount, 0);
+        state.addPendingWithdrawal(msg.sender, FeeTokens(bond.amount, 0));
     }
 
     // Proposers can change REST API URL

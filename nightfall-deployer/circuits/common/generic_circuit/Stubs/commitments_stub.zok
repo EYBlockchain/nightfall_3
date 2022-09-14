@@ -11,7 +11,11 @@ def main<NumCommitments>(\
         field s = newCommitmentValues[i] * sum([\
             newCommitmentSalts[i],...recipientPublicKey[i]\
         ]);
-        assert(s == s);
+
+        field t = newCommitmentValues[i] * sum([\
+            newCommitmentSalts[i],...recipientPublicKey[i]\
+        ]);
+        assert(s == t);
     }
 
     return true;

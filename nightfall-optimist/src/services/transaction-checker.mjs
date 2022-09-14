@@ -148,29 +148,23 @@ async function verifyProof(transaction) {
   const vkArray = await challengeInstance.methods
     .getVerificationKey(transaction.transactionType)
     .call();
+
+  const circuitInfo = await challengeInstance.methods
+    .getCircuitInfo(transaction.transactionType)
+    .call();
+
+  const { numberNullifiers, numberCommitments } = circuitInfo;
+
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
-  const historicRootFirst =
-    transaction.nullifiers[0] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[0])) ?? { root: ZERO };
-  const historicRootSecond =
-    transaction.nullifiers[1] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[1])) ?? { root: ZERO };
-
-  const historicRootThird =
-    transaction.nullifiers[2] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[2])) ?? {
-          root: ZERO,
-        };
-  const historicRootFourth =
-    transaction.nullifiers[3] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[3])) ?? {
-          root: ZERO,
-        };
+  const historicRoots = await Promise.all(
+    Array.from({ length: numberNullifiers }, () => 0).map((value, index) => {
+      if (transaction.nullifiers[index] === ZERO) return { root: ZERO };
+      return (
+        getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[index]) ?? { root: ZERO }
+      );
+    }),
+  );
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
@@ -182,17 +176,14 @@ async function verifyProof(transaction) {
       transaction.fee,
       transaction.transactionType,
       transaction.tokenType,
-      transaction.historicRootBlockNumberL2,
+      transaction.historicRootBlockNumberL2.slice(0, numberNullifiers),
       generalise(transaction.tokenId).limbs(32, 8),
       transaction.ercAddress,
       generalise(transaction.recipientAddress).limbs(32, 8),
-      transaction.commitments,
-      transaction.nullifiers,
+      transaction.commitments.slice(0, numberCommitments),
+      transaction.nullifiers.slice(0, numberNullifiers),
       transaction.compressedSecrets,
-      historicRootFirst.root,
-      historicRootSecond.root,
-      historicRootThird.root,
-      historicRootFourth.root,
+      historicRoots.map(h => h.root),
       maticAddress.toLowerCase(),
     ].flat(Infinity),
   ).all.hex(32);

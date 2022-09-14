@@ -30,7 +30,7 @@ import {
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { USE_STUBS } = global.config;
+const { USE_STUBS, VK_IDS, TRANSACTION } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 
@@ -79,6 +79,7 @@ async function transfer(transferParams, shieldContractAddress) {
       maticAddress,
       tokenId,
       rootKey,
+      maxNumberNullifiers: VK_IDS.transfer.numberNullifiers,
     });
 
     try {
@@ -110,6 +111,9 @@ async function transfer(transferParams, shieldContractAddress) {
         commitments: commitmentsInfo.newCommitments,
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
+        numberNullifiers: VK_IDS.transfer.numberNullifiers,
+        numberCommitments: VK_IDS.transfer.numberCommitments,
+        calculateHash: false,
       });
 
       const privateData = {
@@ -131,8 +135,10 @@ async function transfer(transferParams, shieldContractAddress) {
       const witnessInput = computeCircuitInputs(
         transaction,
         privateData,
-        [...commitmentsInfo.roots],
+        commitmentsInfo.roots,
         maticAddress,
+        VK_IDS.transfer.numberNullifiers,
+        VK_IDS.transfer.numberCommitments,
       );
 
       // call a zokrates worker to generate the proof
@@ -172,6 +178,8 @@ async function transfer(transferParams, shieldContractAddress) {
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
         proof,
+        numberNullifiers: TRANSACTION.numberNullifiers,
+        numberCommitments: TRANSACTION.numberCommitments,
       });
 
       const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);

@@ -20,7 +20,8 @@ import { clearPending, markNullified, storeCommitment } from './commitment-stora
 import getProposersUrl from './peers.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, VK_IDS, TRANSACTION } =
+  config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
@@ -60,6 +61,7 @@ async function transfer(transferParams) {
     maticAddress,
     tokenId,
     rootKey,
+    maxNumberNullifiers: VK_IDS.transfer.numberNullifiers,
   });
 
   try {
@@ -87,6 +89,9 @@ async function transfer(transferParams) {
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
+      numberNullifiers: VK_IDS.transfer.numberNullifiers,
+      numberCommitments: VK_IDS.transfer.numberCommitments,
+      calculateHash: false,
     });
 
     const privateData = {
@@ -108,8 +113,10 @@ async function transfer(transferParams) {
     const witness = computeCircuitInputs(
       transaction,
       privateData,
-      [...commitmentsInfo.roots],
+      commitmentsInfo.roots,
       maticAddress,
+      VK_IDS.transfer.numberNullifiers,
+      VK_IDS.transfer.numberCommitments,
     );
     logger.debug(`witness input is ${witness.join(' ')}`);
     // call a zokrates worker to generate the proof
@@ -136,6 +143,8 @@ async function transfer(transferParams) {
       nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
       proof,
+      numberNullifiers: TRANSACTION.numberNullifiers,
+      numberCommitments: TRANSACTION.numberCommitments,
     });
 
     logger.debug(

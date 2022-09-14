@@ -65,26 +65,25 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         // add up how much the proposer is owed.
 
         //Request fees
-        (uint256 feePaymentsEth, uint256 feePaymentsMatic) =
-            state.getFeeBookInfo(b.proposer, b.blockNumberL2);
-        feePaymentsEth += BLOCK_STAKE;
+        FeeTokens memory feePayments = state.getFeeBookInfo(b.proposer, b.blockNumberL2);
+        feePayments.feesEth += BLOCK_STAKE;
 
-        state.setFeeBookInfo(b.proposer, b.blockNumberL2, uint256(0), 0);
+        state.setFeeBookInfo(b.proposer, b.blockNumberL2, FeeTokens(0, 0));
 
-        if (feePaymentsEth > 0) {
-            (bool success, ) = payable(address(state)).call{value: feePaymentsEth}('');
+        if (feePayments.feesEth > 0) {
+            (bool success, ) = payable(address(state)).call{value: feePayments.feesEth}('');
             require(success, 'Transfer failed.');
         }
 
-        if (feePaymentsMatic > 0) {
+        if (feePayments.feesMatic > 0) {
             IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
                 address(this),
                 address(state),
-                feePaymentsMatic
+                feePayments.feesMatic
             );
         }
 
-        state.addPendingWithdrawal(msg.sender, feePaymentsEth, feePaymentsMatic);
+        state.addPendingWithdrawal(msg.sender, feePayments);
     }
 
     function onERC721Received(
@@ -165,10 +164,9 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         if (t.transactionType == TransactionTypes.WITHDRAW) {
             address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
             // check if an advancedWithdrawal has been paid, if so payout the new owner.
-            address recipientAddress =
-                advancedWithdrawals[transactionHash] == address(0)
-                    ? originalRecipientAddress
-                    : advancedWithdrawals[transactionHash];
+            address recipientAddress = advancedWithdrawals[transactionHash] == address(0)
+                ? originalRecipientAddress
+                : advancedWithdrawals[transactionHash];
             payOut(t, recipientAddress);
         }
     }
@@ -195,12 +193,12 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         // this might incentives sniping freshly finalised blocks by liquidity providers
         // this is risk-free as the block is finalised, the advancedFee should reflect a risk premium.
         address tokenAddress = address(uint160(uint256(withdrawTransaction.ercAddress)));
-        address originalRecipientAddress =
-            address(uint160(uint256(withdrawTransaction.recipientAddress)));
-        address currentOwner =
-            advancedWithdrawals[withdrawTransactionHash] == address(0)
-                ? originalRecipientAddress
-                : advancedWithdrawals[withdrawTransactionHash];
+        address originalRecipientAddress = address(
+            uint160(uint256(withdrawTransaction.recipientAddress))
+        );
+        address currentOwner = advancedWithdrawals[withdrawTransactionHash] == address(0)
+            ? originalRecipientAddress
+            : advancedWithdrawals[withdrawTransactionHash];
         uint256 advancedFee = advancedFeeWithdrawals[withdrawTransactionHash];
 
         // Send the token from the msg.sender to the receipient
@@ -210,7 +208,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
             // set new owner of transaction, settign fee to zero.
             advancedFeeWithdrawals[withdrawTransactionHash] = 0;
             advancedWithdrawals[withdrawTransactionHash] = msg.sender;
-            state.addPendingWithdrawal(msg.sender, advancedFee, 0);
+            state.addPendingWithdrawal(msg.sender, FeeTokens(advancedFee, 0));
             IERC20Upgradeable(tokenAddress).safeTransferFrom(
                 address(msg.sender),
                 currentOwner,
@@ -236,10 +234,9 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         // The withdrawal has not been withdrawn
         require(!withdrawn[withdrawTransactionHash], 'Cannot double withdraw');
         address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
-        address currentOwner =
-            advancedWithdrawals[withdrawTransactionHash] == address(0)
-                ? originalRecipientAddress
-                : advancedWithdrawals[withdrawTransactionHash];
+        address currentOwner = advancedWithdrawals[withdrawTransactionHash] == address(0)
+            ? originalRecipientAddress
+            : advancedWithdrawals[withdrawTransactionHash];
 
         // Only the owner of the withdraw can set the advanced withdrawal
         require(msg.sender == currentOwner, 'You are not the current owner of this withdrawal');

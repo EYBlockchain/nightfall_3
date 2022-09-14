@@ -18,8 +18,16 @@ import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, BN128_GROUP_ORDER } =
-  config;
+const {
+  ZOKRATES_WORKER_HOST,
+  PROVING_SCHEME,
+  BACKEND,
+  PROTOCOL,
+  USE_STUBS,
+  BN128_GROUP_ORDER,
+  TRANSACTION,
+  VK_IDS,
+} = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
@@ -49,11 +57,23 @@ async function deposit(items) {
     value,
     ercAddress,
     commitments: [commitment],
+    numberNullifiers: VK_IDS.deposit.numberNullifiers,
+    numberCommitments: VK_IDS.deposit.numberCommitments,
+    calculateHash: false,
   });
 
   const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
 
-  const witness = computeCircuitInputs(publicData, privateData, [0, 0, 0, 0], maticAddress);
+  console.log('NUMBER NULLIFIERS', VK_IDS.deposit.numberNullifiers);
+  console.log('NUMBER COMMITMENTS', VK_IDS.deposit.numberCommitments);
+  const witness = computeCircuitInputs(
+    publicData,
+    privateData,
+    [],
+    maticAddress,
+    VK_IDS.deposit.numberNullifiers,
+    VK_IDS.deposit.numberCommitments,
+  );
   logger.debug(`witness input is ${witness.join(' ')}`);
   // call a zokrates worker to generate the proof
   let folderpath = 'deposit';
@@ -79,6 +99,8 @@ async function deposit(items) {
     ercAddress,
     commitments: [commitment],
     proof,
+    numberNullifiers: TRANSACTION.numberNullifiers,
+    numberCommitments: TRANSACTION.numberCommitments,
   });
   logger.trace(
     `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,

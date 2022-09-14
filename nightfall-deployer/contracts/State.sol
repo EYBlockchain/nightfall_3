@@ -20,10 +20,10 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
 
     // global state variables
     BlockData[] public blockHashes; // array containing mainly blockHashes
-    mapping(address => uint256[2]) public pendingWithdrawals;
+    mapping(address => FeeTokens) public pendingWithdrawalsFees;
     mapping(address => LinkedAddress) public proposers;
     mapping(address => TimeLockedBond) public bondAccounts;
-    mapping(bytes32 => uint256[2]) public feeBook;
+    mapping(bytes32 => FeeTokens) public feeBook;
     mapping(bytes32 => bool) public claimedBlockStakes;
     LinkedAddress public currentProposer; // who can propose a new shield state
     uint256 public proposerStartBlock; // L1 block where currentProposer became current
@@ -49,7 +49,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         initialize();
     }
 
-    modifier onlyRegistered {
+    modifier onlyRegistered() {
         require(
             msg.sender == proposersAddress ||
                 msg.sender == challengesAddress ||
@@ -59,7 +59,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         _;
     }
 
-    modifier onlyCurrentProposer {
+    modifier onlyCurrentProposer() {
         // Modifier
         require(
             msg.sender == currentProposer.thisAddress,
@@ -95,24 +95,38 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length <= TRANSACTIONS_PER_BLOCK, 'The block has too many transactions');
 
-        uint256 feePaymentsEth = 0;
-        uint256 feePaymentsMatic = 0;
+        FeeTokens memory feePayments = FeeTokens(0, 0);
         for (uint256 i = 0; i < t.length; i++) {
             if (t[i].transactionType == TransactionTypes.DEPOSIT) {
-                feePaymentsEth += uint256(t[i].fee);
+                feePayments.feesEth += uint256(t[i].fee);
             } else {
-                feePaymentsMatic += uint256(t[i].fee);
+                feePayments.feesMatic += uint256(t[i].fee);
             }
         }
 
-        setFeeBookInfo(b.proposer, b.blockNumberL2, feePaymentsEth, feePaymentsMatic);
+        setFeeBookInfo(b.proposer, b.blockNumberL2, feePayments);
+
+        CircuitInfo memory circuitInfo = CircuitInfo(50, 51);
+
+        uint256 blockSlots = 6;
+        uint256 transactionSlots = 13 +
+            2 *
+            circuitInfo.numberNullifiers +
+            circuitInfo.numberCommitments;
 
         bytes32 blockHash;
         assembly {
             let blockPos := mload(0x40) // get empty memory location pointer
-            calldatacopy(blockPos, 4, add(mul(t.length, 0x300), 0x100)) // copy calldata into this location. 0x300 is 768 bytes of data for each transaction. 0x100 is 192 bytes of block data, 32 bytes for transactions array memory and size each. TODO skip this by passing parameters in memory. But inline assembly to destructure struct array is not straight forward
-            let transactionPos := add(blockPos, 0x100) // calculate memory location of transactions data copied
-            let transactionHashesPos := add(transactionPos, mul(t.length, 0x300)) // calculate memory location to store transaction hashes to be calculated
+            calldatacopy(
+                blockPos,
+                4,
+                add(mul(t.length, mul(0x20, transactionSlots)), add(0x40, mul(0x20, blockSlots)))
+            ) // copy calldata into this location. 0x300 is 768 bytes of data for each transaction. 0x100 is 192 bytes of block data, 32 bytes for transactions array memory and size each. TODO skip this by passing parameters in memory. But inline assembly to destructure struct array is not straight forward
+            let transactionPos := add(blockPos, add(0x40, mul(0x20, blockSlots))) // calculate memory location of transactions data copied
+            let transactionHashesPos := add(
+                transactionPos,
+                mul(t.length, mul(0x20, transactionSlots))
+            ) // calculate memory location to store transaction hashes to be calculated
             // calculate and store transaction hashes
             for {
                 let i := 0
@@ -121,7 +135,10 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             } {
                 mstore(
                     add(transactionHashesPos, mul(0x20, i)),
-                    keccak256(add(transactionPos, mul(0x300, i)), 0x300)
+                    keccak256(
+                        add(transactionPos, mul(mul(0x20, transactionSlots), i)),
+                        mul(0x20, transactionSlots)
+                    )
                 )
             }
             let transactionHashesRoot
@@ -164,7 +181,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
                 revert(0, 0)
             }
             // calculate block hash
-            blockHash := keccak256(blockPos, mul(6, 0x20))
+            blockHash := keccak256(blockPos, mul(blockSlots, 0x20))
         }
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain
@@ -213,21 +230,19 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     function getFeeBookInfo(address proposer, uint256 blockNumberL2)
         public
         view
-        returns (uint256, uint256)
+        returns (FeeTokens memory)
     {
         bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
-        return (feeBook[input][0], feeBook[input][1]);
+        return (feeBook[input]);
     }
 
     function setFeeBookInfo(
         address proposer,
         uint256 blockNumberL2,
-        uint256 feePaymentsEth,
-        uint256 feePaymentsMatic
+        FeeTokens memory feePayments
     ) public {
         bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
-        feeBook[input][0] = feePaymentsEth;
-        feeBook[input][1] = feePaymentsMatic;
+        feeBook[input] = feePayments;
     }
 
     function pushBlockData(BlockData calldata bd) public onlyRegistered {
@@ -262,26 +277,21 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         else return Config.ZERO;
     }
 
-    function addPendingWithdrawal(
-        address addr,
-        uint256 amountEth,
-        uint256 amountMatic
-    ) public onlyRegistered {
-        pendingWithdrawals[addr][0] += amountEth;
-        pendingWithdrawals[addr][1] += amountMatic;
+    function addPendingWithdrawal(address addr, FeeTokens memory amount) public onlyRegistered {
+        pendingWithdrawalsFees[addr].feesEth += amount.feesEth;
+        pendingWithdrawalsFees[addr].feesMatic += amount.feesMatic;
     }
 
     function withdraw() external nonReentrant whenNotPaused {
-        uint256 amountEth = pendingWithdrawals[msg.sender][0];
-        uint256 amountMatic = pendingWithdrawals[msg.sender][1];
+        uint256 amountEth = pendingWithdrawalsFees[msg.sender].feesEth;
+        uint256 amountMatic = pendingWithdrawalsFees[msg.sender].feesMatic;
 
-        pendingWithdrawals[msg.sender] = [0, 0];
+        pendingWithdrawalsFees[msg.sender] = FeeTokens(0, 0);
         if (amountEth > 0) {
             (bool success, ) = payable(msg.sender).call{value: amountEth}('');
             require(success, 'Transfer failed.');
         }
         if (amountMatic > 0) {
-            pendingWithdrawals[msg.sender][1] = 0;
             IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
                 address(this),
                 msg.sender,
@@ -365,7 +375,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         removeProposer(proposer);
         TimeLockedBond memory bond = bondAccounts[proposer];
         bondAccounts[proposer] = TimeLockedBond(0, 0);
-        pendingWithdrawals[challengerAddr][0] += bond.amount + numRemoved * BLOCK_STAKE;
+        pendingWithdrawalsFees[challengerAddr].feesEth += bond.amount + numRemoved * BLOCK_STAKE;
     }
 
     function updateBondAccountTime(address addr, uint256 time) public onlyRegistered {
