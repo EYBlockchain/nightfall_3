@@ -244,10 +244,18 @@ describe('Testing with an adversary', () => {
           value2,
           tokenId,
           nf3User.ethereumAddress,
+<<<<<<< HEAD
           0,
         );
         nWithdraws++;
         expectedBalance -= value2;
+=======
+          fee,
+        );
+        nWithdraws++;
+        expectedBalance -= value2;
+        expectedBalance -= fee;
+>>>>>>> feat: adding new bad transaction types to adversary
       } catch (err) {
         if (err.message.includes('No suitable commitments')) {
           // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -265,10 +273,18 @@ describe('Testing with an adversary', () => {
             value2,
             tokenId,
             nf3User.ethereumAddress,
+<<<<<<< HEAD
             0,
           );
           nWithdraws++;
           expectedBalance -= value2;
+=======
+            fee,
+          );
+          nWithdraws++;
+          expectedBalance -= value2;
+          expectedBalance -= fee;
+>>>>>>> feat: adding new bad transaction types to adversary
         }
       }
       for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {

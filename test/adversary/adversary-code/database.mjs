@@ -32,6 +32,41 @@ let error = process.env.BAD_TX_SEQUENCE
       'ValidTransaction',
     ];
 
+// let error = process.env.BAD_TX_SEQUENCE
+//   ? process.env.BAD_TX_SEQUENCE.split(',')
+//   : [
+//       'ValidTransaction',
+//       'ValidTransaction',
+//       'ValidTransaction',
+//       // 'IncorrectTreeRoot',
+//       // 'ValidTransaction',
+//       'IncorrectLeafCount',
+//       'ValidTransaction',
+//       'DuplicateCommitmentTransfer',
+//       'DuplicateCommitmentDeposit',
+//       // 'ValidTransaction',
+//       // 'DuplicateCommitmentDeposit',
+//       'ValidTransaction',
+//       'DuplicateNullifierTransfer',
+//       'ValidTransaction',
+//       'DuplicateNullifierWithdraw',
+//       'ValidTransaction',
+//       // 'IncorrectProofDeposit',
+//       // 'ValidTransaction',
+//       // 'IncorrectProofTransfer',
+//       // 'ValidTransaction',
+//       // 'IncorrectProofWithdraw',
+//       // 'ValidTransaction',
+//       // 'IncorrectPublicInputDepositCommitment',
+//       // 'ValidTransaction'
+//       // 'IncorrectPublicInputTransferCommitment',
+//       // 'ValidTransaction'
+//       // 'IncorrectPublicInputTransferNullifier',
+//       // 'ValidTransaction'
+//       // 'IncorrectPublicInputWithdrawNullifier',
+//       // 'ValidTransaction'
+//     ];
+
 let resetErrorIdx = false;
 let indexOffset = 0;
 
