@@ -11,7 +11,7 @@ RUN npm ci
 WORKDIR /app
 RUN apt-get update -y
 RUN apt-get install -y netcat-openbsd
-COPY apps/proposer/package*.json ./
+COPY apps/proposer/package.json ./
 COPY apps/proposer/src src
 COPY apps/proposer/docker-entrypoint.sh docker-entrypoint.sh
 COPY config config
