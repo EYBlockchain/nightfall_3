@@ -33,8 +33,8 @@ library Utils {
 
     function compressG1(uint256 x, uint256 y) internal pure returns (uint256) {
         // compute whether y is odd or even and multiply by 2**255
-        uint256 parity =
-            0x8000000000000000000000000000000000000000000000000000000000000000 * (y % 2);
+        uint256 parity = 0x8000000000000000000000000000000000000000000000000000000000000000 *
+            (y % 2);
         // add the parity bit to the x cordinate (x,y are 254 bits long - the final
         // number is 256 bits to fit with an Ethereum word)
         return parity + x;

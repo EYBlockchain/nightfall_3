@@ -87,6 +87,7 @@ export async function createChallenge(block, transactions, err) {
   switch (err.code) {
     // challenge incorrect leaf count
     case 0: {
+      logger.debug(`Challenging incorrect leaf count for block ${JSON.stringify(block, null, 2)}`);
       const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
       const priorBlockTransactions = await getTransactionsByTransactionHashes(
         priorBlockL2.transactionHashes,
@@ -104,7 +105,7 @@ export async function createChallenge(block, transactions, err) {
     }
     // Challenge wrong root
     case 1: {
-      logger.debug('Challenging incorrect root');
+      logger.debug(`Challenging incorrect root for block ${JSON.stringify(block, null, 2)}`);
       // Getting prior block for the current block
       const priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
       if (priorBlock === null)
@@ -142,14 +143,20 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate commitment
     case 2: {
+      logger.debug(`Challenging duplicate commitment for block ${JSON.stringify(block, null, 2)}`);
+      logger.debug(
+        `Challenging duplicate commitment for block transactions ${JSON.stringify(
+          transactions,
+          null,
+          2,
+        )}`,
+      );
       const {
         block1,
         transactions1,
         transaction1Index,
-        duplicateCommitment1Index,
-        block2,
-        transactions2,
         transaction2Index,
+        duplicateCommitment1Index,
         duplicateCommitment2Index,
       } = err.metadata;
       txDataToSign = await challengeContractInstance.methods
@@ -169,14 +176,20 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate nullifier
     case 3: {
+      logger.debug(`Challenging duplicate nullifier for block ${JSON.stringify(block, null, 2)}`);
+      logger.debug(
+        `Challenging duplicate nullifier for block transactions ${JSON.stringify(
+          transactions,
+          null,
+          2,
+        )}`,
+      );
       const {
         block1,
         transactions1,
         transaction1Index,
-        duplicateNullifier1Index,
-        block2,
-        transactions2,
         transaction2Index,
+        duplicateNullifier1Index,
         duplicateNullifier2Index,
       } = err.metadata;
       txDataToSign = await challengeContractInstance.methods
@@ -196,6 +209,14 @@ export async function createChallenge(block, transactions, err) {
     }
     // proof does not verify
     case 4: {
+      logger.debug(`Challenging proof verification for block ${JSON.stringify(block, null, 2)}`);
+      logger.debug(
+        `Challenging proof verification for block transactions ${JSON.stringify(
+          transactions,
+          null,
+          2,
+        )}`,
+      );
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
       const uncompressedProof = transactions[transactionIndex].proof;
@@ -207,11 +228,14 @@ export async function createChallenge(block, transactions, err) {
               historicTxs: [],
             };
           }
-          const historicBlock = Block.buildSolidityStruct(await getBlockByBlockNumberL2(b));
+          const historicBlock = await getBlockByBlockNumberL2(b);
           const historicTxs = await getTransactionsByTransactionHashes(
             historicBlock.transactionHashes,
           );
-          return { historicBlock, historicTxs };
+          return {
+            historicBlock: {},
+            historicTxs: [],
+          };
         }),
       );
 

@@ -38,6 +38,7 @@ async function rollbackEventHandler(data) {
 
   // Get all blocks that need to be deleted
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(blockNumberL2);
+  logger.info(`Rollback - rollback layer 2 block ${JSON.stringify(blocksToBeDeleted[0], null, 2)}`);
 
   const invalidTransactions = [];
   // For valid transactions that have made it to this point, we run them through our transaction checker for validity
@@ -48,7 +49,7 @@ async function rollbackEventHandler(data) {
     // eslint-disable-next-line no-await-in-loop
     const blockTransactions = (await getTransactionsByTransactionHashes(transactionHashesInBlock)) // TODO move this to getTransactionsByTransactionHashes by l2 block number because transaction hash is not unique and might not pull the right l2 block number
       .filter(t => t.transactionType !== '0');
-    logger.info(`blockTransctions: ${JSON.stringify(blockTransactions)}`);
+    logger.info(`Rollback - blockTransactions to check: ${JSON.stringify(blockTransactions)}`);
     for (let j = 0; j < blockTransactions.length; j++) {
       try {
         // eslint-disable-next-line no-await-in-loop
@@ -56,7 +57,7 @@ async function rollbackEventHandler(data) {
           blockNumberL2: blocksToBeDeleted[i].blockNumberL2,
         });
       } catch (error) {
-        logger.debug(`Invalid checkTransaction: ${blockTransactions[j].transactionHash}`);
+        logger.debug(`Rollback - Invalid transaction: ${blockTransactions[j].transactionHash}`);
         invalidTransactions.push(blockTransactions[j].transactionHash);
       }
     }
@@ -65,7 +66,7 @@ async function rollbackEventHandler(data) {
       checkDuplicateNullifiersWithinBlock(blocksToBeDeleted[i], blockTransactions);
     } catch (error) {
       const { transaction2: transaction } = error.metadata; // TODO pick transaction to delete based on which transaction pays more to proposer
-      logger.debug(`Invalid checkTransaction: ${transaction.transactionHash}`);
+      logger.debug(`Rollback - Invalid transaction: ${transaction.transactionHash}`);
       invalidTransactions.push(transaction.transactionHash);
     }
   }
@@ -77,7 +78,7 @@ async function rollbackEventHandler(data) {
       .flat(1),
   );
 
-  logger.debug(`Deleting transactions: ${invalidTransactions}`);
+  logger.debug(`Rollback - Deleting transactions: ${invalidTransactions}`);
   await deleteTransactionsByTransactionHashes(invalidTransactions);
 
   await dequeueEvent(2); // Remove an event from the stopQueue.
