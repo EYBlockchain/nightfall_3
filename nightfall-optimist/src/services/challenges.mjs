@@ -95,6 +95,7 @@ export async function createChallenge(block, transactions, err) {
   switch (err.code) {
     // challenge incorrect leaf count
     case 0: {
+      logger.debug(`Challenging incorrect leaf count for block ${JSON.stringify(block, null, 2)}`);
       const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
       txDataToSign = await challengeContractInstance.methods
         .challengeLeafCountCorrect(
@@ -108,7 +109,7 @@ export async function createChallenge(block, transactions, err) {
     }
     // Challenge wrong root
     case 1: {
-      logger.debug('Challenging incorrect root');
+      logger.debug(`Challenging incorrect leaf count for block ${JSON.stringify(block, null, 2)}`);
 
       const tree = await getTreeByRoot(block.root);
       // We need to pad our frontier as we don't store them with the trailing zeroes.
@@ -123,6 +124,14 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate commitment
     case 2: {
+      logger.debug(`Challenging duplicate commitment for block ${JSON.stringify(block, null, 2)}`);
+      logger.debug(
+        `Challenging duplicate commitment for block transactions ${JSON.stringify(
+          transactions,
+          null,
+          2,
+        )}`,
+      );
       const {
         block1,
         transaction1,
@@ -158,6 +167,14 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate nullifier
     case 3: {
+      logger.debug(`Challenging duplicate nullifier for block ${JSON.stringify(block, null, 2)}`);
+      logger.debug(
+        `Challenging duplicate nullifier for block transactions ${JSON.stringify(
+          transactions,
+          null,
+          2,
+        )}`,
+      );
       const {
         block1,
         transaction1,
@@ -193,6 +210,14 @@ export async function createChallenge(block, transactions, err) {
     }
     // proof does not verify
     case 4: {
+      logger.debug(`Challenging proof verification for block ${JSON.stringify(block, null, 2)}`);
+      logger.debug(
+        `Challenging proof verification for block transactions ${JSON.stringify(
+          transactions,
+          null,
+          2,
+        )}`,
+      );
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
       const uncompressedProof = transactions[transactionIndex].proof;
