@@ -57,8 +57,8 @@ router.post('/register', async (req, res, next) => {
     // when we get to here, either the proposer was already registered (txDataToSign === '')
     // or we're just about to register them. We may or may not be registed locally
     // with optimist though. Let's check and fix that if needed.
-    let stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-    let currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
+    const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+    const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
     if (!(await isRegisteredProposerAddressMine(address))) {
       logger.debug('Registering proposer locally');
       await setRegisteredProposerAddress(address, url); // save the registration address
