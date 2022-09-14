@@ -24,9 +24,6 @@ services:
       - type: bind
         source: ./apps/proposer/src
         target: /app/src
-      - type: bind
-        source: ./cli
-        target: /app/cli
 
 networks:
   nightfall_network:
