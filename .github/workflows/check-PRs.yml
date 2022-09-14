@@ -350,7 +350,7 @@ jobs:
 
       - name: Boot up the apps
         run: |
-          ./start-apps
+          ./start-apps &> test-proposer.log &disown
 
       - name: 'Check proposer liveliness'
 
