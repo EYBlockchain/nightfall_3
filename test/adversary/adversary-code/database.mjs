@@ -27,6 +27,7 @@ let error = process.env.BAD_TX_SEQUENCE
       'DuplicateNullifierWithdraw',
       // 'IncorrectProofWithdraw',
       // 'IncorrectPublicInputWithdrawNullifier',
+      // IncorrectHistoricRoot TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
       'ValidTransaction',
     ];
 
@@ -330,6 +331,8 @@ export async function getMostProfitableTransactions(number, errorIndex) {
       return incorrectPublicInput(number, '1', 'nullifier');
     case 'IncorrectPublicInputWithdrawNullifier':
       return incorrectPublicInput(number, '2', 'nullifier');
+    case 'IncorrectHistoricRoot':
+      return historicRootError(number);
     default: {
       const connection = await mongo.connection(MONGO_URL);
       const db = connection.db(OPTIMIST_DB);

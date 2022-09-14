@@ -155,8 +155,10 @@ export async function createChallenge(block, transactions, err) {
         block1,
         transactions1,
         transaction1Index,
-        transaction2Index,
         duplicateCommitment1Index,
+        block2,
+        transactions2,
+        transaction2Index,
         duplicateCommitment2Index,
       } = err.metadata;
       txDataToSign = await challengeContractInstance.methods
@@ -188,8 +190,10 @@ export async function createChallenge(block, transactions, err) {
         block1,
         transactions1,
         transaction1Index,
-        transaction2Index,
         duplicateNullifier1Index,
+        block2,
+        transactions2,
+        transaction2Index,
         duplicateNullifier2Index,
       } = err.metadata;
       txDataToSign = await challengeContractInstance.methods
@@ -233,8 +237,8 @@ export async function createChallenge(block, transactions, err) {
             historicBlock.transactionHashes,
           );
           return {
-            historicBlock: {},
-            historicTxs: [],
+            historicBlock: Block.buildSolidityStruct(historicBlock),
+            historicTxs,
           };
         }),
       );

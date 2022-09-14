@@ -240,13 +240,15 @@ contract Challenges is Stateful, Key_Registry, Config {
         checkCommit(msg.data);
         state.areBlockAndTransactionsReal(blockL2, transactions);
         require(
-          (
-            transactions[transactionIndex].historicRootBlockNumberL2[0] >= state.getNumberOfL2Blocks() ||
-            transactions[transactionIndex].historicRootBlockNumberL2[1] >= state.getNumberOfL2Blocks() ||
-            transactions[transactionIndex].historicRootBlockNumberL2[2] >= state.getNumberOfL2Blocks() ||
-            transactions[transactionIndex].historicRootBlockNumberL2[3] >= state.getNumberOfL2Blocks()
-          ),
-          'Historic roots are not greater than L2BlockNumber on chain'
+            (transactions[transactionIndex].historicRootBlockNumberL2[0] >=
+                state.getNumberOfL2Blocks() ||
+                transactions[transactionIndex].historicRootBlockNumberL2[1] >=
+                state.getNumberOfL2Blocks() ||
+                transactions[transactionIndex].historicRootBlockNumberL2[2] >=
+                state.getNumberOfL2Blocks() ||
+                transactions[transactionIndex].historicRootBlockNumberL2[3] >=
+                state.getNumberOfL2Blocks()),
+            'Historic roots are not greater than L2BlockNumber on chain'
         );
         challengeAccepted(blockL2);
     }

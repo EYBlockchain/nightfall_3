@@ -21,6 +21,7 @@ let error = process.env.BAD_BLOCK_SEQUENCE
       'DuplicateNullifierWithdraw', // needs atleast one non deposit transaction in a prior block
       // 'IncorrectProofWithdraw',
       // 'IncorrectPublicInputWithdrawNullifier',
+      // IncorrectHistoricRoot TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
       'ValidBlock',
     ];
 
