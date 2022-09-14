@@ -26,7 +26,7 @@ chai.use(chaiAsPromised);
 const { TRANSACTIONS_PER_BLOCK } = config;
 const { MINIMUM_STAKE } = config.TEST_OPTIONS;
 const TX_WAIT = 12000;
-const TEST_LENGTH = 6;
+const TEST_LENGTH = 2;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -159,6 +159,7 @@ describe('Testing with an adversary', () => {
       }, 5000);
       let nDeposits = 0;
       let nTransfers = 0;
+      let nWithdraws = 0;
 
       // we are creating a block of deposits with high values such that there is
       // enough balance for a lot of transfers with low value.
@@ -219,8 +220,54 @@ describe('Testing with an adversary', () => {
         console.log(`Completed ${i + 1} pings with expectedBalance ${expectedBalance}`);
       }
 
+      await waitForSufficientBalance(nf3User, value2);
+      try {
+        await nf3User.withdraw(
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.ethereumAddress,
+          fee,
+        );
+        nWithdraws++;
+        expectedBalance -= value2;
+        expectedBalance -= fee;
+      } catch (err) {
+        if (err.message.includes('No suitable commitments')) {
+          // if we get here, it's possible that a block we are waiting for has not been proposed yet
+          // let's wait 10x normal and then try again
+          console.log(
+            `No suitable commitments were found for transfer. I will wait ${
+              0.01 * TX_WAIT
+            } seconds and try one last time`,
+          );
+          await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
+          await nf3User.withdraw(
+            false,
+            ercAddress,
+            tokenType,
+            value2,
+            tokenId,
+            nf3User.ethereumAddress,
+            fee,
+          );
+          nWithdraws++;
+          expectedBalance -= value2;
+          expectedBalance -= fee;
+        }
+      }
+      for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
+        await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
+        nDeposits++;
+        expectedBalance += value2;
+      }
+
       // TODO:_ how can i check that queue 2 is empty
-      logger.debug(`N deposits: ${nDeposits} - N Transfers: ${nTransfers}`);
+      logger.debug(
+        `N deposits: ${nDeposits} - N Transfers: ${nTransfers} - N Withdraws: ${nWithdraws}`,
+      );
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
       await waitForSufficientBalance(nf3User, expectedBalance);
       const endBalance = await retrieveL2Balance(nf3User);
