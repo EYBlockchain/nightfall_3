@@ -101,6 +101,16 @@ module.exports = {
       numberNullifiers: 4,
       numberCommitments: 2,
     },
+    tokenise: {
+      txType: 3,
+      numberNullifiers: 0,
+      numberCommitments: 1,
+    },
+    manufacture: {
+      txType: 4,
+      numberNullifiers: 2,
+      numberCommitments: 3,
+    },
   },
   TRANSACTION: {
     numberNullifiers: 50,

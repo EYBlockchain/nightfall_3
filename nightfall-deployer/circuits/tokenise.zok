@@ -1,0 +1,48 @@
+
+
+from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT;
+from "./common/utils/calculations.zok" import sum;
+from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field;
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field;
+from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure;
+from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments;
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256;
+
+def main(\
+    PublicTransaction<0,1> tx,\
+    field[0] roots,\
+    field maticAddress,\
+    private u8[31] value,\
+    private field salt,\
+    private Point recipientPublicKey,\
+    private u32[8] tokenId,\
+    private field ercAddress\
+)-> () {
+    
+    //Verify public transaction structure
+    // assert(verify_structure::<3>(\
+    //     tx.value,\
+    //     tx.fee,\
+	//     tx.transactionType,\
+	//     tx.tokenType,\
+	//     tx.tokenId,\
+	//     tx.ercAddress,\
+	//     tx.recipientAddress,\
+	//     tx.commitments,\
+	//     tx.nullifiers,\
+	//     tx.historicRootBlockNumberL2,\
+	//     tx.compressedSecrets\
+    // ));
+
+    // pack the top four bytes of the token id into the ercAddress field (address only
+	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+    bool[256] ercAddressBits = field_to_bool_256(ercAddress);
+    assert(ercAddressBits[2..4] == [true; 2]);
+    field idRemainder = u32_array_to_field(tx.tokenId[1..8]);
+    field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT;
+    //Verify new Commmitments
+    assert(verify_commitments::<1,1>(packedErcAddress, idRemainder, [tx.commitments[0]],\
+    u8_array_to_field([value]), [salt], [recipientPublicKey], maticAddress));
+
+    return;
+}

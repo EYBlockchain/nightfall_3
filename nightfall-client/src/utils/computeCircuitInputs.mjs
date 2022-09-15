@@ -104,6 +104,74 @@ const computePrivateInputsDeposit = (salt, recipientPublicKeys) => {
   ].flat(Infinity);
 };
 
+const computePrivateInputsTokenise = (value, salt, recipientPublicKeys, tokenId, ercAddress) => {
+  return [
+    value.limbs(8, 31),
+    salt.field(BN128_GROUP_ORDER),
+    recipientPublicKeys.map(rcp => [
+      rcp[0].field(BN128_GROUP_ORDER),
+      rcp[1].field(BN128_GROUP_ORDER),
+    ]),
+    tokenId.limbs(32, 8),
+    ercAddress.field(BN128_GROUP_ORDER),
+  ].flat(Infinity);
+};
+
+export const computeTokeniseCircuitInputs = (
+  txObject,
+  privateData,
+  roots = [],
+  maticAddress,
+  numberNullifiers,
+) => {
+  const publicWitness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
+  const { value, salt, recipientPublicKeys, tokenId, ercAddress } = generalise(privateData);
+  return [
+    ...publicWitness,
+    ...computePrivateInputsTokenise(value, salt, recipientPublicKeys, tokenId, ercAddress),
+  ];
+};
+
+export const computeManufactureCircuitInputs = (
+  txObject,
+  privateData,
+  roots = [],
+  maticAddress,
+  numberNullifiers,
+  numberCommitments,
+  tokenIds,
+  ercAddresses,
+) => {
+  const publicWitness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
+  const {
+    oldCommitmentPreimage,
+    paths,
+    orders,
+    rootKey,
+    newCommitmentPreimage,
+    recipientPublicKeys,
+  } = generalise(privateData);
+
+  const witness = [
+    ...publicWitness,
+    ...computePrivateInputsNullifiers(
+      oldCommitmentPreimage,
+      paths,
+      orders,
+      rootKey,
+      numberNullifiers,
+    ),
+    ...computePrivateInputsCommitments(
+      newCommitmentPreimage,
+      recipientPublicKeys,
+      numberCommitments,
+    ),
+    ...tokenIds.map(tID => tID.limbs(32, 8)),
+    ...ercAddresses.map(addr => addr.limbs(32, 8)),
+  ];
+  return witness;
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export const computeCircuitInputs = (
   txObject,

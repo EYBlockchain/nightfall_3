@@ -48,3 +48,9 @@ struct Transfer {
     field ercAddressTransfer;
     u32[8] idTransfer;
 }
+
+struct BillOfMaterials<PartCount> {
+	field[PartCount] partQty; 
+	field[PartCount] partNumber;
+	field outputPartNumber;
+}

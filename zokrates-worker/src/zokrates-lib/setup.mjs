@@ -29,7 +29,7 @@ export default async function setup(
   options = {},
 ) {
   const { maxReturn = 10000000, verbose = false } = options;
-
+  console.log('CodePath', codePath);
   if (!fs.existsSync(codePath)) {
     throw new Error('Setup input file(s) not found');
   }

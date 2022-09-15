@@ -33,6 +33,7 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
     await exportKeys(`${outputPath}/${circuitDir}`, `${circuitName}`);
   } else {
     logger.info('Setup...');
+    logger.info(`${outputPath}/${circuitDir}/${circuitName}_out`);
     await setup(
       `${outputPath}/${circuitDir}/${circuitName}_out`,
       `${outputPath}/${circuitDir}`,
