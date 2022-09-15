@@ -8,52 +8,84 @@ import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract, getContractAddress } from 'common-files/utils/contract.mjs';
 
-async function setupCircuits() {
+async function setupContracts() {
   const stateInstance = await waitForContract('State');
   logger.debug(`address of State contract is ${stateInstance.options.address}`);
+
+  const simpleMultiSigAddress = (await waitForContract('SimpleMultiSig')).options.address;
+  const shieldContractInstance = await waitForContract('Shield');
+  const stateContractInstance = await waitForContract('State');
+  const proposerContractInstance = await waitForContract('Proposers');
+  const challengesContractInstance = await waitForContract('Challenges');
+
+  logger.debug(`transfering ownership of contracts to simpleMultiSigAddress ${simpleMultiSigAddress}`);
 
   // when deploying on infura
   // do serial registration to predict nonce
   // or, if we have the owner's private key, sign with that, rather than use an unlocked account
   if (config.ETH_PRIVATE_KEY) {
     await Web3.submitRawTransaction(
-      (await waitForContract('Proposers')).methods
+      proposerContractInstance.methods
         .setStateContract(stateInstance.options.address)
         .encodeABI(),
-      await getContractAddress('Proposers'),
+      proposerContractInstance.options.address,
     );
     await Web3.submitRawTransaction(
-      (await waitForContract('Shield')).methods
+      shieldContractInstance.methods
         .setStateContract(stateInstance.options.address)
         .encodeABI(),
-      await getContractAddress('Shield'),
+      shieldContractInstance.options.address,
+    );
+    await Web3.submitRawTransaction(
+      challengesContractInstance.methods
+        .setStateContract(stateInstance.options.address)
+        .encodeABI(),
+      challengesContractInstance.options.address,
+    );
+
+    // our last action as the deployer is to hand off our onlyOwner powers to the
+    // multisig contract
+    await Web3.submitRawTransaction(
+      shieldContractInstance.methods
+        .transferOwnership(simpleMultiSigAddress)
+        .encodeABI(),
+      shieldContractInstance.options.address,
+    );
+    await Web3.submitRawTransaction(
+      stateContractInstance.methods
+        .transferOwnership(simpleMultiSigAddress)
+        .encodeABI(),
+      stateContractInstance.options.address,
+    );
+    await Web3.submitRawTransaction(
+      proposerContractInstance.methods
+        .transferOwnership(simpleMultiSigAddress)
+        .encodeABI(),
+      proposerContractInstance.options.address,
     );
     return Web3.submitRawTransaction(
-      (await waitForContract('Challenges')).methods
-        .setStateContract(stateInstance.options.address)
+      challengesContractInstance.methods
+        .transferOwnership(simpleMultiSigAddress)
         .encodeABI(),
-      await getContractAddress('Challenges'),
+      challengesContractInstance.options.address,
     );
   }
+
   // the following code runs the registrations in parallel
   await Promise.all([
-    (await waitForContract('Proposers')).methods
+    proposerContractInstance.methods
       .setStateContract(stateInstance.options.address)
       .send(),
-    (await waitForContract('Shield')).methods
+    shieldContractInstance.methods
       .setStateContract(stateInstance.options.address)
       .send(),
-    (await waitForContract('Challenges')).methods
+    challengesContractInstance.methods
       .setStateContract(stateInstance.options.address)
       .send(),
   ]);
+
   // our last action as the deployer is to hand off our onlyOwner powers to the
   // multisig contract
-  const simpleMultiSigAddress = (await waitForContract('SimpleMultiSig')).options.address;
-  const shieldContractInstance = await waitForContract('Shield');
-  const stateContractInstance = await waitForContract('State');
-  const proposerContractInstance = await waitForContract('Proposers');
-  const challengesContractInstance = await waitForContract('Challenges');
   return Promise.all([
     shieldContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
     stateContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
@@ -62,4 +94,4 @@ async function setupCircuits() {
   ]);
 }
 
-export default setupCircuits;
+export default setupContracts;
