@@ -11,3 +11,5 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml build optimist
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml build worker
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml build hosted-utils-api-server
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.adversary.yml build adversary1
+
+docker-compose -f docker-compose.apps.yml build proposer
