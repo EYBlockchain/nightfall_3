@@ -93,7 +93,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         require(BLOCK_STAKE <= msg.value, 'The stake payment is incorrect');
         require(b.proposer == msg.sender, 'The proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
-        require(t.length < 33, 'The block has too many transactions');
+        require(t.length <= TRANSACTIONS_PER_BLOCK, 'The block has too many transactions');
 
         uint256 feePaymentsEth = 0;
         uint256 feePaymentsMatic = 0;
@@ -126,8 +126,17 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             }
             let transactionHashesRoot
             // calculate and store transaction hashes root
+            let height := 1
             for {
-                let i := 5
+
+            } lt(exp(2, height), t.length) {
+
+            } {
+                height := add(height, 1)
+            }
+
+            for {
+                let i := height
             } gt(i, 0) {
                 i := sub(i, 1)
             } {
@@ -328,7 +337,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         Block calldata b,
         Transaction calldata t,
         uint256 index,
-        bytes32[6] calldata siblingPath
+        bytes32[] calldata siblingPath
     ) public view {
         bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');

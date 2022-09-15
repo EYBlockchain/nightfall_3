@@ -69,6 +69,29 @@ const tokensList = {
         },
       },
     },
+    {
+      chainId: 5,
+      name: 'Staked MATIC',
+      symbol: 'stMATIC',
+      decimals: 18,
+      address: '0x9A7c69A167160C507602ecB3Df4911e8E98e1279',
+      logoURI: 'https://wallet-asset.matic.network/img/tokens/matic.svg',
+      tags: ['pos', 'erc20'],
+      id: 'stmatic',
+      restrictions: {
+        withdraw: '1000000000',
+        deposit: '250000000',
+      },
+      extensions: {
+        parentAddress: '0x3E46BEFDA7112d8954b923ea6bd9f07c2e615e10',
+        project: {
+          name: 'Staked MATIC',
+          summary: '-',
+          contact: '-',
+          website: 'https://docs.polygon.lido.fi/',
+        },
+      },
+    },
     // {
     //   chainId: 5,
     //   name: 'Tether USD',

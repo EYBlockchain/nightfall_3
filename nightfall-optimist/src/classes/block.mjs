@@ -7,7 +7,7 @@ import constants from 'common-files/constants/index.mjs';
 import { getLatestBlockInfo, getTreeByBlockNumberL2 } from '../services/database.mjs';
 import { buildBlockSolidityStruct, calcBlockHash } from '../services/block-utils.mjs';
 
-const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
 const { ZERO } = constants;
 
 /**
@@ -162,12 +162,17 @@ class Block {
 
   static calcTransactionHashesRoot(transactions) {
     const transactionHashes = transactions.map(t => t.transactionHash);
-    const timber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT);
+    let height = 1;
+    while (2 ** height < transactionHashes.length) {
+      ++height;
+    }
+
+    const timber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
     const updatedTimber = Timber.statelessUpdate(
       timber,
       transactionHashes,
       TXHASH_TREE_HASH_TYPE,
-      TXHASH_TREE_HEIGHT,
+      height,
     );
     return updatedTimber.root;
   }

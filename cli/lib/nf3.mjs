@@ -459,6 +459,7 @@ class Nf3 {
       rootKey: this.zkpKeys.rootKey,
       fee,
     });
+
     if (res.data.error && res.data.error === 'No suitable commitments') {
       throw new Error('No suitable commitments');
     }
@@ -711,6 +712,7 @@ class Nf3 {
     return new Promise((resolve, reject) => {
       proposerQueue.push(async () => {
         try {
+          console.log('receipt');
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.proposersContractAddress,

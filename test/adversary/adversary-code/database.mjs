@@ -21,6 +21,8 @@ let error = process.env.BAD_TX_SEQUENCE
       'ValidTransaction',
       'DuplicateNullifier',
       'ValidTransaction',
+      'HistoricRootError',
+      'ValidTransaction',
       // 'IncorrectProof',
       // 'ValidTransaction',
     ];
@@ -158,6 +160,29 @@ const incorrectProof = async number => {
   return null;
 };
 
+const historicRootError = async number => {
+  logger.debug('Creating Block with Historic Root Error', number);
+  try {
+    const connection = await mongo.connection(MONGO_URL);
+    const db = connection.db(OPTIMIST_DB);
+    const [incorrectHistoricRoot, ...transactions] = await db
+      .collection(TRANSACTIONS_COLLECTION)
+      .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+      .toArray();
+    incorrectHistoricRoot.historicRootBlockNumberL2 = [
+      (Math.floor(Math.random() * 100) + 10).toString(),
+      ...incorrectHistoricRoot.historicRootBlockNumberL2.slice(1),
+    ];
+    // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
+    incorrectHistoricRoot.transactionHash = Transaction.calcHash(incorrectHistoricRoot);
+    transactions.push(incorrectHistoricRoot);
+    return transactions;
+  } catch (err) {
+    logger.debug(err);
+  }
+  return null;
+};
+
 export const addTx = txType => {
   error = txType;
   resetErrorIdx = true;
@@ -175,7 +200,7 @@ export async function getMostProfitableTransactions(number, errorIndex) {
     indexOffset = errorIndex;
   }
   const badTxType = error[errorIndex - indexOffset];
-  logger.debug('Creating a transaction of type', badTxType);
+  logger.debug(`Creating a transaction of type ${badTxType}`);
   switch (badTxType) {
     case 'DuplicateCommitment':
       return duplicateCommitment(number);
@@ -183,6 +208,8 @@ export async function getMostProfitableTransactions(number, errorIndex) {
       return duplicateNullifier(number);
     case 'IncorrectProof':
       return incorrectProof(number);
+    case 'HistoricRootError':
+      return historicRootError(number);
     default: {
       const connection = await mongo.connection(MONGO_URL);
       const db = connection.db(OPTIMIST_DB);
