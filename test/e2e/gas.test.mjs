@@ -82,7 +82,7 @@ describe('Gas test', () => {
         tokenId,
         0,
       );
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
     });
@@ -97,7 +97,7 @@ describe('Gas test', () => {
         tokenId,
         0,
       );
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Deposit L1 average gas used was', averageL1GasCost(receipts));
     });
@@ -116,7 +116,7 @@ describe('Gas test', () => {
         nf3Users[0].zkpKeys.compressedZkpPublicKey,
         0,
       );
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log(
         'Single transfer L1 average gas used, if on-chain, was',
@@ -138,7 +138,7 @@ describe('Gas test', () => {
         nf3Users[0].zkpKeys.compressedZkpPublicKey,
         0,
       );
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log(
         'Double transfer L1 average gas used, if on-chain, was',
@@ -161,7 +161,7 @@ describe('Gas test', () => {
         0,
       );
       await nf3Users[0].makeBlockNow();
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Withdraw L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
     });

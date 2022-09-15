@@ -1,11 +1,7 @@
 version: '3.5'
 # Use this script for making nightfall_3 use stubs.
 services:
-    client1:
-      environment:
-        USE_STUBS: 'true' # make sure this flag is the same as in deployer service
-
-    client2:
+    client:
       environment:
         USE_STUBS: 'true' # make sure this flag is the same as in deployer service
 

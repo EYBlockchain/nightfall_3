@@ -3,12 +3,12 @@ An optimistic layer 2 Block class
 */
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
-import Web3 from 'common-files/utils/web3.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { getLatestBlockInfo, getTreeByBlockNumberL2 } from '../services/database.mjs';
+import { buildBlockSolidityStruct, calcBlockHash } from '../services/block-utils.mjs';
 
-const { TIMBER_HEIGHT, TXHASH_TREE_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
-const { ZERO, BLOCK_TYPES } = constants;
+const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const { ZERO } = constants;
 
 /**
 This Block class does not have the Block components that are computed on-chain.
@@ -162,45 +162,29 @@ class Block {
 
   static calcTransactionHashesRoot(transactions) {
     const transactionHashes = transactions.map(t => t.transactionHash);
-    const timber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, TXHASH_TREE_HEIGHT);
+    let height = 1;
+    while (2 ** height < transactionHashes.length) {
+      ++height;
+    }
+
+    const timber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
     const updatedTimber = Timber.statelessUpdate(
       timber,
       transactionHashes,
       TXHASH_TREE_HASH_TYPE,
-      TXHASH_TREE_HEIGHT,
+      height,
     );
     return updatedTimber.root;
   }
 
   static calcHash(block) {
-    const web3 = Web3.connection();
-    const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
-      block;
-    const blockArray = [
-      leafCount,
-      proposer,
-      root,
-      blockNumberL2,
-      previousBlockHash,
-      transactionHashesRoot,
-    ];
-    const encoded = web3.eth.abi.encodeParameters([BLOCK_TYPES], [blockArray]);
-    return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
+    return calcBlockHash(block);
   }
 
   // remove properties that do not get sent to the blockchain returning
   // a new object (don't mutate the original)
   static buildSolidityStruct(block) {
-    const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
-      block;
-    return {
-      leafCount: Number(leafCount),
-      proposer,
-      root,
-      blockNumberL2: Number(blockNumberL2),
-      previousBlockHash,
-      transactionHashesRoot,
-    };
+    return buildBlockSolidityStruct(block);
   }
 }
 

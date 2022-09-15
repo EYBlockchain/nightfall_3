@@ -53,5 +53,10 @@
   "devDependencies": {
     "mocha": "^10.0.0",
     "nodemon": "^2.0.19"
+  },
+  "overrides": {
+    "swarm-js": {
+      "got": "11.8.5"
+    }
   }
 }

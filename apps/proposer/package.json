@@ -4,7 +4,7 @@
   "description": "'makes a container with proposer functionality'",
   "main": "index.js",
   "scripts": {
-    "start": "export $(cat ../../nightfall-optimist/optimist.env | xargs)  && node --trace-warnings src/app.mjs",
+    "start": "node --trace-warnings src/app.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "westlad",
@@ -12,7 +12,7 @@
   "dependencies": {
     "async-mutex": "^0.3.2",
     "body-parser": "^1.19.2",
-    "common-files": "file:../../common-files",
+    "common-files": "file:../common-files",
     "config": "^3.3.1",
     "cors": "^2.8.5",
     "express": "^4.17.3",
@@ -22,5 +22,10 @@
     "reconnecting-websocket": "^4.4.0",
     "web3": "^1.7.5",
     "ws": "^8.2.3"
+  },
+  "overrides": {
+    "swarm-js": {
+      "got": "11.8.5"
+    }
   }
 }

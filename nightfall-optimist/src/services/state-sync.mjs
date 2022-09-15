@@ -1,8 +1,9 @@
 /* eslint-disable no-await-in-loop */
 
 import { getContractInstance } from 'common-files/utils/contract.mjs';
-import { pauseQueue, unpauseQueue } from 'common-files/utils/event-queue.mjs';
 import constants from 'common-files/constants/index.mjs';
+import { pauseQueue, unpauseQueue, queues, flushQueue } from 'common-files/utils/event-queue.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
@@ -46,7 +47,6 @@ const syncState = async (
     .sort((a, b) => a.blockNumber - b.blockNumber);
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
-    console.log('PAST EVENT', pastEvent);
     switch (pastEvent.event) {
       case 'NewCurrentProposer':
         await newCurrentProposerEventHandler(pastEvent, [proposer]);
@@ -107,10 +107,12 @@ export default async proposer => {
   if (lastBlockNumberL2 === -1) {
     unpauseQueue(0); // queues are started paused, therefore we need to unpause them before proceeding.
     unpauseQueue(1);
+    startMakingChallenges();
     return null; // The blockchain is empty
   }
   // pause the queues so we stop processing incoming events while we sync
   await Promise.all([pauseQueue(0), pauseQueue(1)]);
+  logger.info('Begining synchronisation with the blockchain');
   const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
   // const [fromBlock] = missingBlocks[0];
   const latestBlockLocally = (await getBlockByBlockNumberL2(lastBlockNumberL2)) ?? undefined;
@@ -121,10 +123,26 @@ export default async proposer => {
     for (let i = 0; i < missingBlocks.length; i++) {
       const [fromBlock, toBlock] = missingBlocks[i];
       // Sync the state inbetween these blocks
-
       await syncState(proposer, fromBlock, toBlock);
     }
+    // at this point, we have synchronised all the existing blocks. If there are no outstanding
+    // challenges (all rollbacks have completed) then we're done.  It's possible however that
+    // we had a bad block that was not rolled back. If this is the case then there will still be
+    // a challenge in the stop queue that was not removed by a rollback.
+    // If this is the case we'll run the stop queue to challenge the bad block.
     await startMakingChallenges();
+    if (queues[2].length === 0)
+      logger.info('After synchronisation, no challenges remain unresolved');
+    else {
+      logger.info(
+        `After synchronisation, there were ${queues[2].length} unresolved challenges.  Running them now.`,
+      );
+      // start queue[2] and await all the unresolved challenges being run
+      const p = flushQueue(2);
+      queues[2].start();
+      await p;
+      logger.debug('All challenges in the stop queue have now been made.');
+    }
   }
   const currentProposer = (await stateContractInstance.methods.currentProposer().call())
     .thisAddress;

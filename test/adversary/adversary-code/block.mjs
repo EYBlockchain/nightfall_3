@@ -7,18 +7,18 @@ let error = process.env.BAD_BLOCK_SEQUENCE
       'ValidBlock',
       'ValidBlock',
       'ValidBlock',
-      'IncorrectTreeRoot', // Needs two prior blocks
-      'ValidBlock',
+      // 'IncorrectTreeRoot', // Needs two prior blocks
+      // 'ValidBlock',
       'IncorrectLeafCount', //  Needs one prior block
       'ValidBlock',
-      'DuplicateTransaction', // needs atleast one transaction in a prior block
+      'DuplicateCommitment', // needs atleast one non withdraw transaction in a prior block
       'ValidBlock',
       'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
       'ValidBlock',
       'HistoricRootError',
       'ValidBlock',
-      'IncorrectProof',
-      'ValidBlock',
+      // 'IncorrectProof',
+      // 'ValidBlock',
     ];
 
 let resetErrorIdx = false;
@@ -69,7 +69,6 @@ export const createBadBlock = (block, errorIndex) => {
     case 'IncorrectLeafCount':
       return incorrectLeafCount(block);
     default:
-      logger.debug(`Creating a block of type ValidBlock`);
       return block;
   }
 };

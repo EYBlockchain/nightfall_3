@@ -93,7 +93,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         require(BLOCK_STAKE <= msg.value, 'The stake payment is incorrect');
         require(b.proposer == msg.sender, 'The proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
-        require(t.length < 33, 'The block has too many transactions');
+        require(t.length <= TRANSACTIONS_PER_BLOCK, 'The block has too many transactions');
 
         uint256 feePaymentsEth = 0;
         uint256 feePaymentsMatic = 0;
@@ -126,8 +126,17 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             }
             let transactionHashesRoot
             // calculate and store transaction hashes root
+            let height := 1
             for {
-                let i := 5
+
+            } lt(exp(2, height), t.length) {
+
+            } {
+                height := add(height, 1)
+            }
+
+            for {
+                let i := height
             } gt(i, 0) {
                 i := sub(i, 1)
             } {
@@ -181,7 +190,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         emit Rollback(blockNumberL2ToRollbackTo);
     }
 
-    function setProposer(address addr, LinkedAddress memory proposer) public onlyRegistered {
+    function setProposer(address addr, LinkedAddress calldata proposer) public onlyRegistered {
         proposers[addr] = proposer;
     }
 
@@ -221,7 +230,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         feeBook[input][1] = feePaymentsMatic;
     }
 
-    function pushBlockData(BlockData memory bd) public onlyRegistered {
+    function pushBlockData(BlockData calldata bd) public onlyRegistered {
         blockHashes.push(bd);
     }
 
@@ -302,33 +311,33 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         emit NewCurrentProposer(currentProposer.thisAddress);
     }
 
-    function updateProposer(address proposer, string memory url) public onlyRegistered {
+    function updateProposer(address proposer, string calldata url) public onlyRegistered {
         proposers[proposer].url = url;
     }
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function areBlockAndTransactionsReal(Block memory b, Transaction[] memory ts)
+    function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts)
         public
         view
         returns (bytes32)
     {
         bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
-        bytes32 tranasactionHashesRoot = Utils.hashTransactionHashes(ts);
+        bytes32 transactionHashesRoot = Utils.hashTransactionHashes(ts);
         require(
-            b.transactionHashesRoot == tranasactionHashesRoot,
+            b.transactionHashesRoot == transactionHashesRoot,
             'Some of these transactions are not in this block'
         );
         return blockHash;
     }
 
     function areBlockAndTransactionReal(
-        Block memory b,
-        Transaction memory t,
+        Block calldata b,
+        Transaction calldata t,
         uint256 index,
-        bytes32[6] memory siblingPath
+        bytes32[] calldata siblingPath
     ) public view {
         bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');

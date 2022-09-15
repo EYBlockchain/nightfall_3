@@ -8,15 +8,15 @@ library Utils {
     bytes32 public constant ZERO = bytes32(0);
     uint256 constant TRANSACTIONS_BATCH_SIZE = 6; // TODO Change this from 2 to an appropriate value to control stack too deep error
 
-    function hashTransaction(Structures.Transaction memory t) internal pure returns (bytes32) {
+    function hashTransaction(Structures.Transaction calldata t) internal pure returns (bytes32) {
         return keccak256(abi.encode(t));
     }
 
-    function hashBlock(Structures.Block memory b) internal pure returns (bytes32) {
+    function hashBlock(Structures.Block calldata b) internal pure returns (bytes32) {
         return keccak256(abi.encode(b));
     }
 
-    function hashTransactionHashes(Structures.Transaction[] memory ts)
+    function hashTransactionHashes(Structures.Transaction[] calldata ts)
         public
         pure
         returns (bytes32)
@@ -57,7 +57,7 @@ library Utils {
     }
 
     // counts the number of non-zero values (useful for counting real commitments and nullifiers)
-    function countNonZeroValues(bytes32[3] memory vals) internal pure returns (uint256) {
+    function countNonZeroValues(bytes32[3] calldata vals) internal pure returns (uint256) {
         uint256 count;
         if (vals[0] != ZERO) count++;
         if (vals[1] != ZERO) count++;
@@ -65,7 +65,11 @@ library Utils {
     }
 
     // counts the number of non-zero commitments in a block containing the ts transactions)
-    function countCommitments(Structures.Transaction[] memory ts) internal pure returns (uint256) {
+    function countCommitments(Structures.Transaction[] calldata ts)
+        internal
+        pure
+        returns (uint256)
+    {
         uint256 count;
         for (uint256 i = 0; i < ts.length; i++) {
             count += countNonZeroValues(ts[i].commitments);
@@ -74,7 +78,7 @@ library Utils {
     }
 
     // filters the non-zero commitments in a block containing the ts transactions)
-    function filterCommitments(Structures.Transaction[] memory ts)
+    function filterCommitments(Structures.Transaction[] calldata ts)
         internal
         pure
         returns (bytes32[] memory)
@@ -95,7 +99,8 @@ library Utils {
         Structures.Transaction calldata ts,
         uint256[4] memory roots,
         address maticAddress
-    ) internal pure returns (uint256[] memory inputs) {
+    ) internal pure returns (uint256[] memory) {
+        uint256[] memory inputs = new uint256[](39);
         inputs[0] = uint256(ts.value);
         inputs[1] = uint256(ts.fee);
         inputs[2] = uint256(ts.transactionType);
@@ -135,6 +140,7 @@ library Utils {
         inputs[36] = uint256(roots[2]);
         inputs[37] = uint256(roots[3]);
         inputs[38] = uint256(uint160(maticAddress));
+        return inputs;
     }
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {
@@ -149,8 +155,16 @@ library Utils {
             } {
                 mstore(add(transactionHashesPos, mul(0x20, i)), mload(add(leavesPos, mul(0x20, i))))
             }
+            let height := 1
             for {
-                let i := 5
+
+            } lt(exp(2, height), length) {
+
+            } {
+                height := add(height, 1)
+            }
+            for {
+                let i := height
             } gt(i, 0) {
                 i := sub(i, 1)
             } {
@@ -174,11 +188,11 @@ library Utils {
     }
 
     function checkPath(
-        bytes32[6] memory siblingPath,
+        bytes32[] calldata siblingPath,
         uint256 leafIndex,
         bytes32 node
     ) public pure returns (bool) {
-        for (uint256 i = 5; i > 0; i--) {
+        for (uint256 i = siblingPath.length - 1; i > 0; i--) {
             if (leafIndex % 2 == 0) {
                 node = keccak256(abi.encodePacked(node, siblingPath[i]));
             } else {

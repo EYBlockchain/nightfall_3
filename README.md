@@ -25,7 +25,7 @@ not having access to enough memory. We also recommend allocating at least 4 core
 are running in a virtual linux environment (e.g. on a Mac).
 
 You will need a local copy of `node` and `npm` to run the tests and `git` to clone the repository.
-We have tested with versions 14.15.1 and 6.14.13 of `node` and `npm`, respectively.
+We have tested with versions 16.17.0 and 8.15.0 of `node` and `npm`, respectively.
 
 The application will run happily on a MacBook pro and most Linux implementations but Windows isn't
 supported. The code is in the process of being combined into a monorepo, so there may be a few code
@@ -196,13 +196,13 @@ SDK API is documented in `./doc/lib/Nf3.html` and is provided by the NF_3 class 
 
 ## Apps
 
-Nightfall_3 provides some reference applications (which make use of the SDK) so that you can exercise its features. To
-use it:
+Nightfall_3 provides some reference applications (which make use of the SDK) so that you can
+exercise its features. To use it:
 
 - run up nightfall_3 as described above and wait for the deployment to complete;
 - in the `apps` folder there are small applications like `proposer` or `challenger` you can run with
-  `npm start`. For example, `proposer` will start a small application running which will sign block
-  proposal transactions;
+  `./start-apps`. For example, `proposer` will start a small application running which will sign
+  block proposal transactions;
 
 ## Limitations
 

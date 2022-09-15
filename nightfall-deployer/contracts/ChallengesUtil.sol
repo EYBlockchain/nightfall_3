@@ -7,16 +7,9 @@ import './MerkleTree_Stateless.sol';
 import './Structures.sol';
 
 library ChallengesUtil {
-    bytes32 public constant ZERO =
-        0x0000000000000000000000000000000000000000000000000000000000000000;
-    uint256 public constant MAX31 = 2**249 - 1;
-    uint256 public constant MAX20 = 2**161 - 1;
-    uint256 public constant BN128_GROUP_ORDER =
-        21888242871839275222246405745257275088548364400416034343698204186575808495617;
-
     function libChallengeLeafCountCorrect(
-        Structures.Block memory priorBlockL2,
-        Structures.Transaction[] memory priorBlockTransactions,
+        Structures.Block calldata priorBlockL2,
+        Structures.Transaction[] calldata priorBlockTransactions,
         uint256 leafCount
     ) public pure {
         uint256 expectedLeafCount = priorBlockL2.leafCount +
@@ -25,11 +18,11 @@ library ChallengesUtil {
     }
 
     function libChallengeNewRootCorrect(
-        Structures.Block memory priorBlockL2, // the block immediately prior to this one
-        Structures.Transaction[] memory priorBlockTransactions, // the transactions in the prior block
+        Structures.Block calldata priorBlockL2, // the block immediately prior to this one
+        Structures.Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
         bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
-        Structures.Block memory blockL2,
-        Structures.Transaction[] memory transactions
+        Structures.Block calldata blockL2,
+        Structures.Transaction[] calldata transactions
     ) public pure {
         // next check the sibling path is valid and get the Frontier
         bytes32 root;
@@ -83,20 +76,29 @@ library ChallengesUtil {
         );
     }
 
+    function libChallengeCommitment(
+        Structures.Transaction calldata tx1,
+        uint256 commitmentIndex1,
+        Structures.Transaction calldata tx2,
+        uint256 commitmentIndex2
+    ) public pure {
+        require(
+            tx1.commitments[commitmentIndex1] != 0 &&
+                tx1.commitments[commitmentIndex1] == tx2.commitments[commitmentIndex2],
+            'Not matching commitments'
+        );
+    }
+
     function libChallengeNullifier(
-        Structures.Transaction memory tx1,
+        Structures.Transaction calldata tx1,
         uint256 nullifierIndex1,
-        Structures.Transaction memory tx2,
+        Structures.Transaction calldata tx2,
         uint256 nullifierIndex2
     ) public pure {
         require(
-            tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
+            tx1.nullifiers[nullifierIndex1] != 0 &&
+                tx1.nullifiers[nullifierIndex1] == tx2.nullifiers[nullifierIndex2],
             'Not matching nullifiers'
-        );
-
-        require(
-            Utils.hashTransaction(tx1) != Utils.hashTransaction(tx2),
-            'Transactions need to be different'
         );
     }
 }

@@ -66,16 +66,16 @@ export class Web3Client {
         for (const topic of log.topics) {
           switch (topic) {
             case topicEventMapping.BlockProposed:
-              queue.push('blockProposed');
+              queue.push({ eventName: 'blockProposed', log });
               break;
             case topicEventMapping.TransactionSubmitted:
-              queue.push('TransactionSubmitted');
+              queue.push({ eventName: 'TransactionSubmitted', log });
               break;
             case topicEventMapping.NewCurrentProposer:
-              queue.push('NewCurrentProposer');
+              queue.push({ eventName: 'NewCurrentProposer', log });
               break;
             default:
-              queue.push('Challenge');
+              queue.push({ eventName: 'Challenge', log });
               break;
           }
         }
@@ -142,7 +142,7 @@ export class Web3Client {
       receipt = await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
       // the confirmations Promivent doesn't seem to terminate in Ganache, so we'll
       // just count 12 blocks before returning. TODO this won't handle a chain reorg.
-      console.log('waiting for twelve confirmations of transaction');
+      // console.log('waiting for twelve confirmations of transaction');
       const startBlock = await this.web3.eth.getBlock('latest');
       await new Promise(resolve => {
         const id = setInterval(async () => {
@@ -153,7 +153,7 @@ export class Web3Client {
           }
         }, 1000);
       });
-      console.log('transaction confirmed');
+      // console.log('transaction confirmed');
     } finally {
       this.isSubmitTxLocked = false;
     }
@@ -221,14 +221,14 @@ export class Web3Client {
       if (timeout === 0) throw new Error('Timeout in waitForEvent');
     }
 
-    while (eventLogs[0] !== expectedEvents[0]) {
+    while (eventLogs[0]?.eventName !== expectedEvents[0]) {
       await waitForTimeout(3000);
     }
 
-    expect(eventLogs[0]).to.equal(expectedEvents[0]);
-
+    expect(eventLogs[0].eventName).to.equal(expectedEvents[0]);
+    const eventsSeen = [];
     for (let i = 0; i < length; i++) {
-      eventLogs.shift();
+      eventsSeen.push(eventLogs.shift());
     }
 
     const blockHeaders = [];
@@ -241,7 +241,7 @@ export class Web3Client {
 
     // Have to wait here as client block proposal takes longer now
     await waitForTimeout(3000);
-    return eventLogs;
+    return { eventLogs, eventsSeen };
   }
 }
 
@@ -429,13 +429,15 @@ export const withdrawNTransactions = async (
   function to retrieve balance of user because getLayer2Balances returns
   balances of all users
 */
-export const retrieveL2Balance = async client => {
+export const retrieveL2Balance = async (client, ercAddress) => {
   const balances = await client.getLayer2Balances();
   // if there are no balances
   if (Object.values(balances).length === 0) {
     return 0;
   }
-  const { balance } = Object.values(balances)[0][0];
+  const { balance } = ercAddress
+    ? Object.values(balances[ercAddress])[0]
+    : Object.values(balances)[0][0];
   return balance;
 };
 
@@ -452,11 +454,10 @@ export const registerProposerOnNoProposer = async proposer => {
   function to wait for sufficient balance by waiting for pending transaction
   to be proposed
 */
-export const waitForSufficientBalance = (client, value) => {
+export const waitForSufficientBalance = (client, value, ercAddress) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
-      const balance = await retrieveL2Balance(client);
-      logger.debug(` Balance needed ${value}. Current balance ${balance}.`);
+      const balance = await retrieveL2Balance(client, ercAddress);
       if (balance < value) {
         await waitForTimeout(10000);
         isSufficientBalance();
@@ -482,4 +483,15 @@ export const waitForNoPendingCommitments = client => {
     }
     pendingCommitments();
   });
+};
+
+/**
+  function to count pending commitments
+*/
+export const pendingCommitmentCount = async client => {
+  const pendingDeposit = await client.getLayer2PendingDepositBalances(undefined, true);
+  const pendingSpent = await client.getLayer2PendingSpentBalances(undefined, true);
+  const pendingCommitments = Object.keys(pendingDeposit).length + Object.keys(pendingSpent).length;
+
+  return pendingCommitments;
 };

@@ -24,7 +24,6 @@ async function approve(
 ) {
   const abi = getAbi(tokenType);
   const ercContract = new provider.eth.Contract(abi, ercAddress);
-
   switch (tokenType) {
     case TOKEN_TYPE.ERC20: {
       const allowance = await ercContract.methods.allowance(ownerAddress, spenderAddress).call();

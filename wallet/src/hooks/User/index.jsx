@@ -177,8 +177,6 @@ export const UserProvider = ({ children }) => {
     });
     await timberAndBlockSync(-1, -1, false);
     setupMqtt();
-    await timberAndBlockSync(-1, -1, false);
-    setupMqtt();
   };
 
   const syncState = async () => {

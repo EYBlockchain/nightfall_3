@@ -16,10 +16,8 @@ const {
   OPTIMIST_DB,
   TRANSACTIONS_COLLECTION,
   PROPOSER_COLLECTION,
-  CHALLENGER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   INVALID_BLOCKS_COLLECTION,
-  NULLIFIER_COLLECTION,
   COMMIT_COLLECTION,
   TIMBER_COLLECTION,
   TIMBER_HEIGHT,
@@ -47,43 +45,6 @@ export async function getCommit(commitHash) {
   if (commit)
     await db.collection(COMMIT_COLLECTION).updateOne(query, { $set: { retrieved: true } });
   return commit;
-}
-
-/**
-function to store addresses that are used to sign challenge transactions.  This
-is done so that we can check that a challenge commit is from us and hasn't been
-front-run (because that would change the origin address of the commit to that of
-the front-runner).
-*/
-export async function addChallengerAddress(address) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  logger.debug(`Saving challenger address ${address}`);
-  const data = { challenger: address };
-  return db.collection(CHALLENGER_COLLECTION).insertOne(data);
-}
-
-/**
-function to remove addresses that are used to sign challenge transactions. This
-is needed in the case of a key compromise, or if we simply no longer wish to use
-the address.
-*/
-export async function removeChallengerAddress(address) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  logger.debug(`Removing challenger address ${address}`);
-  const data = { challenger: address };
-  return db.collection(CHALLENGER_COLLECTION).deleteOne(data);
-}
-
-/**
-Function to tell us if an address used to commit to a challenge belongs to us
-*/
-export async function isChallengerAddressMine(address) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const metadata = await db.collection(CHALLENGER_COLLECTION).findOne({ challenger: address });
-  return metadata !== null;
 }
 
 /**
@@ -134,23 +95,23 @@ export async function getBlockByTransactionHashL1(transactionHashL1) {
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
-export async function numberOfBlockWithTransactionHash(transactionHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHashes: transactionHash };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).countDocuments(query);
-}
+// export async function numberOfBlockWithTransactionHash(transactionHash) {
+//   const connection = await mongo.connection(MONGO_URL);
+//   const db = connection.db(OPTIMIST_DB);
+//   const query = { transactionHashes: transactionHash };
+//   return db.collection(SUBMITTED_BLOCKS_COLLECTION).countDocuments(query);
+// }
 
-/**
-function to get a block by blockHash, if you know the hash of the block. This
-is useful for rolling back Timber.
-*/
-export async function getBlockByBlockHash(blockHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockHash };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
-}
+// /**
+// function to get a block by blockHash, if you know the hash of the block. This
+// is useful for rolling back Timber.
+// */
+// export async function getBlockByBlockHash(blockHash) {
+//   const connection = await mongo.connection(MONGO_URL);
+//   const db = connection.db(OPTIMIST_DB);
+//   const query = { blockHash };
+//   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+// }
 
 /**
 function to get a block by root, if you know the root of the block. This
@@ -209,7 +170,28 @@ export async function findBlocksFromBlockNumberL2(blockNumberL2) {
   const query = { blockNumberL2: { $gte: Number(blockNumberL2) } };
   return db
     .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find(query, { sort: { blockNumberL2: 1 } })
+    .find(query, { sort: { blockNumberL2: -1 } })
+    .toArray();
+}
+
+// function that sets the Block's L1 blocknumber to null
+// to indicate that it's back in the L1 mempool (and will probably be re-mined
+// and given a new L1 transactionHash)
+export async function clearBlockNumberL1ForBlock(transactionHashL1) {
+  logger.debug(`clearing layer 1 blockNumber for L2 block with L1 hash ${transactionHashL1}`);
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { transactionHashL1 };
+  const update = { $set: { blockNumber: null } };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update);
+}
+
+export async function getBlocks() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db
+    .collection(SUBMITTED_BLOCKS_COLLECTION)
+    .find({}, { sort: { blockNumber: 1 } })
     .toArray();
 }
 
@@ -348,6 +330,30 @@ export async function removeTransactionsFromMemPool(
 }
 
 /**
+Function to remove a set of commitments from the layer 2 mempool once they've
+been processed into an L2 block
+*/
+export async function removeCommitmentsFromMemPool(commitments) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { commitments: { $in: commitments } };
+  const update = { $set: { mempool: false } };
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
+}
+
+/**
+Function to remove a set of nullifiers from the layer 2 mempool once they've
+been processed into an L2 block
+*/
+export async function removeNullifiersFromMemPool(nullifiers) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { nullifiers: { $in: nullifiers } };
+  const update = { $set: { mempool: false } };
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
+}
+
+/**
 How many transactions are waiting to be processed into a block?
 */
 export async function numberOfUnprocessedTransactions() {
@@ -385,17 +391,6 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   return transactions;
 }
 
-// function that sets the Block's L1 blocknumber to null
-// to indicate that it's back in the L1 mempool (and will probably be re-mined
-// and given a new L1 transactionHash)
-export async function clearBlockNumberL1ForBlock(transactionHashL1) {
-  logger.debug(`clearing layer 1 blockNumber for L2 block with L1 hash ${transactionHashL1}`);
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHashL1 };
-  const update = { $set: { blockNumber: null } };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update);
-}
 /*
 For added safety we only delete mempool: true, we should never be deleting
 transactions from our local db that have been spent.
@@ -420,74 +415,40 @@ export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
   return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update);
 }
 
-export async function saveNullifiers(nullifiers, blockNumber) {
+// function to return a transaction that holds a commitment with a specific commitment hash
+// and is part of an L2 block
+export async function getL2TransactionByCommitment(
+  commitmentHash,
+  inL2AndNotInL2 = false,
+  blockNumberL2OfTx,
+) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const indexNullifiers = nullifiers.map(n => {
-    return {
-      hash: n,
-      blockHash: null,
-      blockNumber,
-    };
-  });
-  return db.collection(NULLIFIER_COLLECTION).insertMany(indexNullifiers);
+  const query = inL2AndNotInL2
+    ? { commitments: commitmentHash }
+    : {
+        commitments: commitmentHash,
+        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+      };
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
-export async function retrieveNullifiers() {
+// function to return a transaction that holds a commitment with a specific commitment hash
+// and is part of an L2 block
+export async function getL2TransactionByNullifier(
+  nullifierHash,
+  inL2AndNotInL2 = false,
+  blockNumberL2OfTx,
+) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(NULLIFIER_COLLECTION).find({}).toArray();
-}
-
-export async function stampNullifiers(nullifiers, blockHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  // we don't want hashes that already have a blockhash set
-  const query = { hash: { $in: nullifiers }, blockHash: { $eq: null } };
-  const update = { $set: { blockHash } };
-  return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
-}
-
-export async function retrieveMinedNullifiers() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  return db
-    .collection(NULLIFIER_COLLECTION)
-    .find({ blockHash: { $ne: null } })
-    .toArray();
-}
-
-export async function resetNullifiers(blockHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockHash };
-  const update = { $set: { blockHash: null } };
-  return db.collection(NULLIFIER_COLLECTION).updateMany(query, update);
-}
-
-// delete nullifiers by nullifier value
-export async function deleteNullifiers(hashes) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { hash: { $in: hashes } };
-  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
-}
-
-// delete all the nullifiers in this block
-export async function deleteNullifiersForBlock(blockHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockHash };
-  return db.collection(NULLIFIER_COLLECTION).deleteMany(query);
-}
-
-export async function getBlocks() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  return db
-    .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find({}, { sort: { blockNumber: 1 } })
-    .toArray();
+  const query = inL2AndNotInL2
+    ? { nullifiers: nullifierHash }
+    : {
+        nullifiers: nullifierHash,
+        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+      };
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
 // This function is useful in resetting transacations that have been marked out of the mempool because

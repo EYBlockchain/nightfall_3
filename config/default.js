@@ -32,11 +32,8 @@ module.exports = {
   TRANSACTIONS_COLLECTION: 'transactions',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   INVALID_BLOCKS_COLLECTION: 'invalid_blocks',
-  NULLIFIER_COLLECTION: 'nullifiers',
   COMMIT_COLLECTION: 'commits',
-  WALLETS_COLLECTION: 'wallets',
   COMMITMENTS_COLLECTION: 'commitments',
-  PEERS_COLLECTION: 'peers',
   TIMBER_COLLECTION: 'timber',
   CIRCUIT_COLLECTION: 'circuit_storage',
   CIRCUIT_HASH_COLLECTION: 'circuit_hash_storage',
@@ -44,10 +41,8 @@ module.exports = {
   CLIENT_ID_COLLECTION: 'client_id',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   EXCLUDE_DIRS: 'common',
-  PROOF_QUEUE: 'generate-proof',
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
-  TXHASH_TREE_HEIGHT: 5,
   CONFIRMATION_POLL_TIME: 1000,
   CONFIRMATIONS: 12,
   DEFAULT_ACCOUNT_NUM: 10,
@@ -67,11 +62,11 @@ module.exports = {
     APPROVERS: process.env.MULTISIG_APPROVERS
       ? process.env.MULTISG_APPROVERS.split(',')
       : [
-          '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
-          '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-          '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-          '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
-        ],
+        '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
+        '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+        '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+        '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+      ],
   },
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
@@ -90,7 +85,7 @@ module.exports = {
       // Keep keepalive interval small so that socket doesn't die
       keepaliveInterval: 1500,
     },
-    timeout: 3600000,
+    timeout: 0,
     reconnect: {
       auto: true,
       delay: 5000, // ms
@@ -103,7 +98,7 @@ module.exports = {
   CURVE: process.env.CURVE || 'bn128',
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 150,
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
@@ -128,9 +123,6 @@ module.exports = {
     MONTA: BigInt(168698),
     MONTB: BigInt(1),
   },
-  ELLIGATOR2: {
-    U: BigInt(5), // non square in Fp
-  },
   MPC: {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
@@ -151,9 +143,9 @@ module.exports = {
     ropsten: {
       name: 'Ropsten',
       chainId: 3,
-      clientApiUrl: 'https://client1.testnet.nightfall3.com',
-      optimistApiUrl: 'https://optimist1.testnet.nightfall3.com',
-      optimistWsUrl: 'wss://optimist1-ws.testnet.nightfall3.com',
+      clientApiUrl: 'https://client.testnet.nightfall3.com',
+      optimistApiUrl: 'https://optimist.testnet.nightfall3.com',
+      optimistWsUrl: 'wss://optimist-ws.testnet.nightfall3.com',
       web3WsUrl: `${process.env.ROPSTEN_NODE}`,
     },
     rinkeby: {
@@ -186,16 +178,25 @@ module.exports = {
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
           ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
           : process.env.BLOCKCHAIN_WS_HOST
-          ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
-          : 'ws://localhost:8546',
+            ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+            : 'ws://localhost:8546',
+      PROPOSER_KEY:
+        process.env.ETH_PRIVATE_KEY ||
+        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
     },
     aws: {
       name: 'AWS',
-      clientApiUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
-      optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
-      optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
-      proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
-      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+      chainId: 1337,
+      clientApiUrl: 'http://localhost:8080',
+      optimistApiUrl: 'https://optimist-api.staging.polygon-nightfall.technology',
+      optimistWsUrl: 'wss://optimist-ws.staging.polygon-nightfall.technology',
+      proposerBaseUrl: 'https://proposer.staging.polygon-nightfall.technology',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      web3WsUrl: 'wss://web3-ws.staging.polygon-nightfall.technology',
+      PROPOSER_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+      PROPOSER_MNEMONIC:
+        'high return hold whale promote payment hat panel reduce oyster ramp mouse',
     },
   },
   TEST_OPTIONS: {
@@ -296,7 +297,7 @@ module.exports = {
         process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
     },
     tokens: {
-      blockchain1: [
+      blockchain: [
         {
           name: 'ERC20Mock',
           address: '0x9b7bD670D87C3Dd5C808ba627c75ba7E88aD066f',
@@ -405,6 +406,11 @@ module.exports = {
           address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
           amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
         },
+        {
+          name: 'stMATIC',
+          address: '0x9A7c69A167160C507602ecB3Df4911e8E98e1279',
+          amount: process.env.STMATIC_TESTNET_RESTRICT || '1000000000',
+        },
       ],
       ropsten: [
         {
@@ -445,6 +451,17 @@ module.exports = {
   // assumption is if LOCAL_PROPOSER is true, wallet UI app
   // is running in local machine
   isLocalRun: process.env.LOCAL_PROPOSER === 'true',
+  SIGNATURES: {
+    BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+    TRANSACTION:
+      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+    PROPOSE_BLOCK: [
+      '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])[]',
+    ],
+    SUBMIT_TRANSACTION:
+      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+  },
 
   // AMAZONMQ
   usernameMq: process.env.USERNAME_MQ,

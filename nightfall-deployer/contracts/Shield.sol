@@ -33,7 +33,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         Pausable.initialize();
     }
 
-    function submitTransaction(Transaction memory t) external payable nonReentrant whenNotPaused {
+    function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
 
@@ -44,7 +44,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     }
 
     // function to enable a proposer to get paid for proposing a block
-    function requestBlockPayment(Block memory b) external {
+    function requestBlockPayment(Block calldata b) external {
         bytes32 blockHash = Utils.hashBlock(b);
 
         BlockData memory blockData = state.getBlockData(b.blockNumberL2);
@@ -113,10 +113,10 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
   @param index - the index of the transaction that locates it in the array of Transactions in Block b
   */
     function isValidWithdrawal(
-        Block memory b,
-        Transaction memory t,
+        Block calldata b,
+        Transaction calldata t,
         uint256 index,
-        bytes32[6] memory siblingPath
+        bytes32[] calldata siblingPath
     ) external view returns (bool) {
         // check this block is a real one, in the queue, not something made up.
         state.areBlockAndTransactionReal(b, t, index, siblingPath);
@@ -149,7 +149,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         Block calldata b,
         Transaction calldata t,
         uint256 index,
-        bytes32[6] memory siblingPath
+        bytes32[] calldata siblingPath
     ) external {
         // check this block is a real one, in the queue, not something made up and that the transaction exists in the block
         state.areBlockAndTransactionReal(b, t, index, siblingPath);
@@ -176,7 +176,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     // TODO does this need to be constrained to blocks within the challenge window
     // Currently this can pose as a non-interactive way for transactors to get their withdrawals
     // Instead of calling finaliseWithdrawal (a pull op), advanceWithdrawal will send them the funds (push op) for a fee.
-    function advanceWithdrawal(Transaction memory withdrawTransaction) external {
+    function advanceWithdrawal(Transaction calldata withdrawTransaction) external {
         bytes32 withdrawTransactionHash = Utils.hashTransaction(withdrawTransaction);
 
         // if no fee is set, then the withdrawal is not tagged as advanceable - else someone could just steal withdrawals
@@ -221,10 +221,10 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
 
     // TODO Is there a better way to set this fee, e.g. at the point of making a transaction.
     function setAdvanceWithdrawalFee(
-        Block memory b,
-        Transaction memory t,
+        Block calldata b,
+        Transaction calldata t,
         uint256 index,
-        bytes32[6] memory siblingPath
+        bytes32[] calldata siblingPath
     ) external payable nonReentrant {
         // The transaction is a withdrawal transaction
         require(t.transactionType == TransactionTypes.WITHDRAW, 'Can only advance withdrawals');
@@ -249,7 +249,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         emit InstantWithdrawalRequested(withdrawTransactionHash, msg.sender, msg.value);
     }
 
-    function payOut(Transaction memory t, address recipientAddress) internal whenNotPaused {
+    function payOut(Transaction calldata t, address recipientAddress) internal whenNotPaused {
         // Now pay out the value of the commitment
         address addr = address(uint160(uint256(t.ercAddress)));
 
@@ -282,7 +282,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         }
     }
 
-    function payIn(Transaction memory t) internal {
+    function payIn(Transaction calldata t) internal {
         // check the address fits in 160 bits. This is so we can't overflow the circuit
         uint256 addrNum = uint256(t.ercAddress);
         require(

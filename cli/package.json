@@ -34,6 +34,11 @@
     "babel-plugin-module-extension": "^0.1.3",
     "pino-pretty": "^8.1.0"
   },
+  "overrides": {
+    "swarm-js": {
+      "got": "11.8.5"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/EYBlockchain/nightfall_3.git"
