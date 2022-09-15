@@ -75,7 +75,6 @@ router.post('/register', async (req, res, next) => {
         }
       }
     }
-
     res.json({ txDataToSign });
   } catch (err) {
     logger.error(err);
