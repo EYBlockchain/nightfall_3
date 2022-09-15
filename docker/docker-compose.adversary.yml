@@ -41,5 +41,3 @@ services:
       BAD_BLOCK_SEQUENCE: ${BAD_BLOCK_SEQUENCE}
       BAD_TX_SEQUENCE: ${BAD_TX_SEQUENCE}
     command: ['npm', 'run', 'dev']
-
-

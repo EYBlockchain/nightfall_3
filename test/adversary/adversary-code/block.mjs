@@ -69,7 +69,6 @@ export const createBadBlock = (block, errorIndex) => {
     case 'IncorrectLeafCount':
       return incorrectLeafCount(block);
     default:
-      logger.debug(`Creating a block of type ValidBlock`);
       return block;
   }
 };

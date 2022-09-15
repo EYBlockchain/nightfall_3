@@ -217,7 +217,6 @@ export async function getMostProfitableTransactions(number, errorIndex) {
     case 'HistoricRootError':
       return historicRootError(number);
     default: {
-      logger.debug(`Creating a transaction of type ValidBlock`);
       const connection = await mongo.connection(MONGO_URL);
       const db = connection.db(OPTIMIST_DB);
       return db

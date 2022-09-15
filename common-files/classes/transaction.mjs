@@ -4,10 +4,10 @@
 /**
 An optimistic Transaction class
 */
+import config from 'config';
 import gen from 'general-number';
 import Web3 from 'web3';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
-import constants from '../constants/index.mjs';
 
 const { generalise } = gen;
 
