@@ -28,6 +28,7 @@ module.exports = {
   EXCLUDE_DIRS: 'common',
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
+  TXHASH_TREE_HEIGHT: 5,
   CONFIRMATION_POLL_TIME: 1000,
   CONFIRMATIONS: 12,
   DEFAULT_ACCOUNT_NUM: 10,
@@ -35,7 +36,7 @@ module.exports = {
   TXHASH_TREE_HASH_TYPE: 'keccak256',
   STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
-  ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
+  ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || true,
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   PROTOCOL: 'http://', // connect to zokrates microservice like this
@@ -45,7 +46,7 @@ module.exports = {
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
     APPROVERS: process.env.MULTISIG_APPROVERS
-      ? process.env.MULTISG_APPROVERS.split(',')
+      ? process.env.MULTISIG_APPROVERS.split(',')
       : [
           '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
           '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
@@ -83,7 +84,7 @@ module.exports = {
   CURVE: process.env.CURVE || 'bn128',
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 150,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
@@ -166,22 +167,24 @@ module.exports = {
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
       PROPOSER_KEY:
-        process.env.ETH_PRIVATE_KEY ||
+        process.env.BOOT_PROPOSER_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
+      CHALLENGER_KEY:
+        process.env.BOOT_CHALLENGER_KEY ||
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
     },
     aws: {
       name: 'AWS',
       chainId: 1337,
-      clientApiUrl: 'http://localhost:8080',
-      optimistApiUrl: 'https://optimist-api.staging.polygon-nightfall.technology',
-      optimistWsUrl: 'wss://optimist-ws.staging.polygon-nightfall.technology',
-      proposerBaseUrl: 'https://proposer.staging.polygon-nightfall.technology',
-      adversarialOptimistApiUrl: 'http://localhost:8088',
-      adversarialOptimistWsUrl: 'ws://localhost:8089',
-      web3WsUrl: 'wss://web3-ws.staging.polygon-nightfall.technology',
-      PROPOSER_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
-      PROPOSER_MNEMONIC:
-        'high return hold whale promote payment hat panel reduce oyster ramp mouse',
+      clientApiUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
+      optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
+      optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
+      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+      adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
+      adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
   },
   TEST_OPTIONS: {
