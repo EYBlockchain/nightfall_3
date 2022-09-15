@@ -1,5 +1,6 @@
 /* ignore unused exports */
 /* eslint no-shadow: "off" */
+/* eslint import/no-unresolved: "off" */
 
 import express from 'express';
 import config from 'config';
