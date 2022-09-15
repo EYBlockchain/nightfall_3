@@ -47,7 +47,13 @@
     "web3-bzz": {
       "got": "11.8.5"
     },
+    "swarm-js": {
+      "got": "11.8.5"
+    },
     "yargs": {
+      "yargs-parser": "5.0.1"
+    },
+    "solc": {
       "yargs-parser": "5.0.1"
     }
   }
