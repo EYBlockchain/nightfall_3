@@ -122,11 +122,14 @@ async function blockProposedEventHandler(data) {
       // This message will not be printed because event dequeuing does not run the job.
       // This is fine as we are just using it to stop running.
       increaseBlockInvalidCounter();
+      let timeBlockL2 = await getTimeByBlock(transactionHashL1);
+      timeBlockL2 = new Date(timeBlockL2 * 1000);
       saveInvalidBlock({
         invalidCode: err.code,
         invalidMessage: err.message,
         blockNumber: currentBlockCount,
         transactionHashL1,
+        timeBlockL2,
         ...block,
       });
       const txDataToSign = await createChallenge(block, transactions, err);
