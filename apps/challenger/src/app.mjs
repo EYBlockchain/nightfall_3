@@ -33,7 +33,6 @@ app.use(
 );
 
 app.get('/healthcheck', (req, res) => res.sendStatus(200));
-if (!CHALLENGER_PORT) throw new Error('Please specify a challenger port');
 
 app.listen(CHALLENGER_PORT);
 
