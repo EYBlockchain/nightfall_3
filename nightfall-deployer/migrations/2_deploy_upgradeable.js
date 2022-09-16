@@ -81,4 +81,5 @@ module.exports = async function (deployer) {
   for (const whitelistManager of WHITELIST_MANAGERS) {
     await shield.createWhitelistManager(whitelistManager.groupId, whitelistManager.address);
   }
+  if (process.env.WHITELISTING='enable') await shield.setWhitelisting(true);
 };
