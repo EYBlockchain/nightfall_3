@@ -10,7 +10,15 @@ import deposit from '../services/deposit.mjs';
 const router = express.Router();
 
 router.post('/', async (req, res, next) => {
-  logger.debug(`deposit endpoint received POST ${JSON.stringify(req.body, null, 2)}`);
+  const filteredReq = JSON.stringify(
+    {
+      ...req.body,
+      nullifierKey: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    },
+    null,
+    2,
+  );
+  logger.debug(`deposit endpoint received POST ${filteredReq}`);
   try {
     const { rawTransaction: txDataToSign, transaction } = await deposit(req.body);
     logger.debug('returning raw transaction');
