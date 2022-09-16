@@ -278,7 +278,7 @@ class Nf3 {
       gas,
       gasPrice,
     };
-
+    // logger.debug(`submitting tx, ${JSON.stringify(tx, null, 2)}`);
     if (this.ethereumSigningKey) {
       const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
       const promiseTest = new Promise((resolve, reject) => {
@@ -1246,6 +1246,40 @@ class Nf3 {
   */
   getNetworkId() {
     return this.web3.eth.net.getId();
+  }
+
+  /**
+   Adds a user to a whitelist (only works of the calling address is that of a Whitelist Manager)
+  */
+  async addUserToWhitelist(groupId, address) {
+    const res = await axios.post(`${this.clientBaseUrl}/whitelist/add`, {
+      address,
+    });
+    const txDataToSign = res.data;
+    return this.submitTransaction(txDataToSign);
+  }
+
+  /**
+   Removes a user from a whitelist (only works of the calling address is that of a Whitelist Manager)
+  */
+  async removeUserFromWhitelist(address) {
+    const res = await axios.post(`${this.clientBaseUrl}/whitelist/remove`, {
+      address,
+    });
+    const txDataToSign = res.data;
+    return this.submitTransaction(txDataToSign);
+  }
+
+  /**
+   checks if a user is whitelisted
+  */
+  async isWhitelisted(address) {
+    const res = await axios.get(`${this.clientBaseUrl}/whitelist/check`, {
+      params: {
+        address,
+      },
+    });
+    return res.data.isWhitelisted;
   }
 }
 
