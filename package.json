@@ -23,7 +23,8 @@
     "test-optimist-sync": "npx hardhat test --no-compile --bail test/optimist-resync.test.mjs",
     "test-adversary": "CHALLENGE_TYPE=${CHALLENGE_TYPE} npx hardhat test --no-compile --bail test/adversary.test.mjs",
     "test-all-adversary": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount IncorrectTreeRoot IncorrectLeafCount; do CHALLENGE_TYPE=${CHALLENGE_TYPE} npm run test-adversary; sleep 5; done",
-    "test-general-stuff": "npx hardhat test --bail --no-compile test/kem-dem.test.mjs test/timber.test.mjs"
+    "test-general-stuff": "npx hardhat test --bail --no-compile test/kem-dem.test.mjs test/timber.test.mjs",
+    "test-kyc":  "LOG_LEVEL=silent mocha --timeout 0 --bail --exit test/kyc.test.mjs"
   },
   "repository": {
     "type": "git",
