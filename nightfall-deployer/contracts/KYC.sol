@@ -14,7 +14,7 @@ contract KYC is Initializable, Ownable {
     // no effect other than wasting gas.
 
     function initialize() override virtual public initializer {
-        whitelisting = true;
+        whitelisting = false;
         Ownable.initialize();
     }
 
