@@ -1,0 +1,1245 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "BlockProposed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "commitHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "CommittedToChallenge",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "version",
+        "type": "uint8"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "withdrawTransactionHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "paidBy",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "InstantWithdrawalRequested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "NewBootChallengerSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "addr",
+        "type": "address"
+      }
+    ],
+    "name": "NewBootProposerSet",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "proposer",
+        "type": "address"
+      }
+    ],
+    "name": "NewCurrentProposer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "leafIndex",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "leafValue",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "root",
+        "type": "bytes32"
+      }
+    ],
+    "name": "NewLeaf",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "minLeafIndex",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32[]",
+        "name": "leafValues",
+        "type": "bytes32[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "root",
+        "type": "bytes32"
+      }
+    ],
+    "name": "NewLeaves",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Paused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "blockNumberL2",
+        "type": "uint256"
+      }
+    ],
+    "name": "Rollback",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "ercAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ShieldBalanceTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [],
+    "name": "TransactionSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Unpaused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "enum Structures.TransactionTypes",
+        "name": "txType",
+        "type": "uint8"
+      }
+    ],
+    "name": "VkChanged",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "_owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "advancedFeeWithdrawals",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "advancedWithdrawals",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getBootChallenger",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getBootProposer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getMaticAddress",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddr",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "transactionType",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRestriction",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "enum Structures.TransactionTypes",
+        "name": "txType",
+        "type": "uint8"
+      }
+    ],
+    "name": "getVerificationKey",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "_vk",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "enum Structures.TransactionTypes",
+        "name": "_txType",
+        "type": "uint8"
+      }
+    ],
+    "name": "registerVerificationKey",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddr",
+        "type": "address"
+      }
+    ],
+    "name": "removeRestriction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "challenger",
+        "type": "address"
+      }
+    ],
+    "name": "setBootChallenger",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "proposer",
+        "type": "address"
+      }
+    ],
+    "name": "setBootProposer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_maticAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setMaticAddress",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "tokenAddr",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "depositAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "withdrawAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "setRestriction",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address payable",
+        "name": "stateAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setStateContract",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "state",
+    "outputs": [
+      {
+        "internalType": "contract State",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unpause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "enum Structures.TransactionTypes",
+        "name": "",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "vks",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "withdrawn",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint112",
+            "name": "value",
+            "type": "uint112"
+          },
+          {
+            "internalType": "uint112",
+            "name": "fee",
+            "type": "uint112"
+          },
+          {
+            "internalType": "enum Structures.TransactionTypes",
+            "name": "transactionType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "enum Structures.TokenType",
+            "name": "tokenType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint64[4]",
+            "name": "historicRootBlockNumberL2",
+            "type": "uint64[4]"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "tokenId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "ercAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "recipientAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32[3]",
+            "name": "commitments",
+            "type": "bytes32[3]"
+          },
+          {
+            "internalType": "bytes32[4]",
+            "name": "nullifiers",
+            "type": "bytes32[4]"
+          },
+          {
+            "internalType": "bytes32[2]",
+            "name": "compressedSecrets",
+            "type": "bytes32[2]"
+          },
+          {
+            "internalType": "uint256[4]",
+            "name": "proof",
+            "type": "uint256[4]"
+          }
+        ],
+        "internalType": "struct Structures.Transaction",
+        "name": "t",
+        "type": "tuple"
+      }
+    ],
+    "name": "submitTransaction",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint48",
+            "name": "leafCount",
+            "type": "uint48"
+          },
+          {
+            "internalType": "address",
+            "name": "proposer",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "root",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "blockNumberL2",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "previousBlockHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionHashesRoot",
+            "type": "bytes32"
+          }
+        ],
+        "internalType": "struct Structures.Block",
+        "name": "b",
+        "type": "tuple"
+      }
+    ],
+    "name": "requestBlockPayment",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_from",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "name": "onERC721Received",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_operator",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_from",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_value",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "onERC1155Received",
+    "outputs": [
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint48",
+            "name": "leafCount",
+            "type": "uint48"
+          },
+          {
+            "internalType": "address",
+            "name": "proposer",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "root",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "blockNumberL2",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "previousBlockHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionHashesRoot",
+            "type": "bytes32"
+          }
+        ],
+        "internalType": "struct Structures.Block",
+        "name": "b",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint112",
+            "name": "value",
+            "type": "uint112"
+          },
+          {
+            "internalType": "uint112",
+            "name": "fee",
+            "type": "uint112"
+          },
+          {
+            "internalType": "enum Structures.TransactionTypes",
+            "name": "transactionType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "enum Structures.TokenType",
+            "name": "tokenType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint64[4]",
+            "name": "historicRootBlockNumberL2",
+            "type": "uint64[4]"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "tokenId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "ercAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "recipientAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32[3]",
+            "name": "commitments",
+            "type": "bytes32[3]"
+          },
+          {
+            "internalType": "bytes32[4]",
+            "name": "nullifiers",
+            "type": "bytes32[4]"
+          },
+          {
+            "internalType": "bytes32[2]",
+            "name": "compressedSecrets",
+            "type": "bytes32[2]"
+          },
+          {
+            "internalType": "uint256[4]",
+            "name": "proof",
+            "type": "uint256[4]"
+          }
+        ],
+        "internalType": "struct Structures.Transaction",
+        "name": "t",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "siblingPath",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "isValidWithdrawal",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint48",
+            "name": "leafCount",
+            "type": "uint48"
+          },
+          {
+            "internalType": "address",
+            "name": "proposer",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "root",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "blockNumberL2",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "previousBlockHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionHashesRoot",
+            "type": "bytes32"
+          }
+        ],
+        "internalType": "struct Structures.Block",
+        "name": "b",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint112",
+            "name": "value",
+            "type": "uint112"
+          },
+          {
+            "internalType": "uint112",
+            "name": "fee",
+            "type": "uint112"
+          },
+          {
+            "internalType": "enum Structures.TransactionTypes",
+            "name": "transactionType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "enum Structures.TokenType",
+            "name": "tokenType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint64[4]",
+            "name": "historicRootBlockNumberL2",
+            "type": "uint64[4]"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "tokenId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "ercAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "recipientAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32[3]",
+            "name": "commitments",
+            "type": "bytes32[3]"
+          },
+          {
+            "internalType": "bytes32[4]",
+            "name": "nullifiers",
+            "type": "bytes32[4]"
+          },
+          {
+            "internalType": "bytes32[2]",
+            "name": "compressedSecrets",
+            "type": "bytes32[2]"
+          },
+          {
+            "internalType": "uint256[4]",
+            "name": "proof",
+            "type": "uint256[4]"
+          }
+        ],
+        "internalType": "struct Structures.Transaction",
+        "name": "t",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "siblingPath",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "finaliseWithdrawal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint112",
+            "name": "value",
+            "type": "uint112"
+          },
+          {
+            "internalType": "uint112",
+            "name": "fee",
+            "type": "uint112"
+          },
+          {
+            "internalType": "enum Structures.TransactionTypes",
+            "name": "transactionType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "enum Structures.TokenType",
+            "name": "tokenType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint64[4]",
+            "name": "historicRootBlockNumberL2",
+            "type": "uint64[4]"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "tokenId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "ercAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "recipientAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32[3]",
+            "name": "commitments",
+            "type": "bytes32[3]"
+          },
+          {
+            "internalType": "bytes32[4]",
+            "name": "nullifiers",
+            "type": "bytes32[4]"
+          },
+          {
+            "internalType": "bytes32[2]",
+            "name": "compressedSecrets",
+            "type": "bytes32[2]"
+          },
+          {
+            "internalType": "uint256[4]",
+            "name": "proof",
+            "type": "uint256[4]"
+          }
+        ],
+        "internalType": "struct Structures.Transaction",
+        "name": "withdrawTransaction",
+        "type": "tuple"
+      }
+    ],
+    "name": "advanceWithdrawal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint48",
+            "name": "leafCount",
+            "type": "uint48"
+          },
+          {
+            "internalType": "address",
+            "name": "proposer",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "root",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "blockNumberL2",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "previousBlockHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "transactionHashesRoot",
+            "type": "bytes32"
+          }
+        ],
+        "internalType": "struct Structures.Block",
+        "name": "b",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint112",
+            "name": "value",
+            "type": "uint112"
+          },
+          {
+            "internalType": "uint112",
+            "name": "fee",
+            "type": "uint112"
+          },
+          {
+            "internalType": "enum Structures.TransactionTypes",
+            "name": "transactionType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "enum Structures.TokenType",
+            "name": "tokenType",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint64[4]",
+            "name": "historicRootBlockNumberL2",
+            "type": "uint64[4]"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "tokenId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "ercAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "recipientAddress",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32[3]",
+            "name": "commitments",
+            "type": "bytes32[3]"
+          },
+          {
+            "internalType": "bytes32[4]",
+            "name": "nullifiers",
+            "type": "bytes32[4]"
+          },
+          {
+            "internalType": "bytes32[2]",
+            "name": "compressedSecrets",
+            "type": "bytes32[2]"
+          },
+          {
+            "internalType": "uint256[4]",
+            "name": "proof",
+            "type": "uint256[4]"
+          }
+        ],
+        "internalType": "struct Structures.Transaction",
+        "name": "t",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "siblingPath",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "setAdvanceWithdrawalFee",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+]
