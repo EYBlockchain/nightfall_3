@@ -9,13 +9,18 @@ module.exports = {
     'func-names': 'off',
     'no-sparse-arrays': 'off',
   },
-  parser: 'babel-eslint', // Uses babel-eslint transforms.
+  parser: '@babel/eslint-parser',
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
     },
     ecmaVersion: 2018, // Allows for the parsing of modern ECMAScript features
     sourceType: 'module', // Allows for the use of imports
+    babelOptions: {
+      plugins: ['@babel/plugin-syntax-import-assertions'],
+      babelrc: false,
+      configFile: false,
+    },
   },
   settings: {
     'import/resolver': {
