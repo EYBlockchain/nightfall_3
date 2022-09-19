@@ -26,20 +26,30 @@ async function setupContracts() {
   // do serial registration to predict nonce
   // or, if we have the owner's private key, sign with that, rather than use an unlocked account
   if (config.ETH_PRIVATE_KEY) {
-    await Web3.submitRawTransaction(
-      proposerContractInstance.methods.setStateContract(stateInstance.options.address).encodeABI(),
-      proposerContractInstance.options.address,
-    );
-    await Web3.submitRawTransaction(
-      shieldContractInstance.methods.setStateContract(stateInstance.options.address).encodeABI(),
-      shieldContractInstance.options.address,
-    );
-    await Web3.submitRawTransaction(
-      challengesContractInstance.methods
-        .setStateContract(stateInstance.options.address)
-        .encodeABI(),
-      challengesContractInstance.options.address,
-    );
+    try {
+      await Web3.submitRawTransaction(
+        proposerContractInstance.methods
+          .setStateContract(stateInstance.options.address)
+          .encodeABI(),
+        proposerContractInstance.options.address,
+      );
+      await Web3.submitRawTransaction(
+        shieldContractInstance.methods.setStateContract(stateInstance.options.address).encodeABI(),
+        shieldContractInstance.options.address,
+      );
+      await Web3.submitRawTransaction(
+        challengesContractInstance.methods
+          .setStateContract(stateInstance.options.address)
+          .encodeABI(),
+        challengesContractInstance.options.address,
+      );
+    } catch (err) {
+      if (err.message.includes('Transaction has been reverted by the EVM'))
+        logger.warn(
+          'Writing contract addresses to the State contract failed. This is probably because they are aready set. Did you already run deployer?',
+        );
+      else throw new Error(err);
+    }
 
     // our last action as the deployer is to hand off our onlyOwner powers to the
     // multisig contract
@@ -61,12 +71,20 @@ async function setupContracts() {
     );
   }
 
-  // the following code runs the registrations in parallel
-  await Promise.all([
-    proposerContractInstance.methods.setStateContract(stateInstance.options.address).send(),
-    shieldContractInstance.methods.setStateContract(stateInstance.options.address).send(),
-    challengesContractInstance.methods.setStateContract(stateInstance.options.address).send(),
-  ]);
+  try {
+    // the following code runs the registrations in parallel
+    await Promise.all([
+      proposerContractInstance.methods.setStateContract(stateInstance.options.address).send(),
+      shieldContractInstance.methods.setStateContract(stateInstance.options.address).send(),
+      challengesContractInstance.methods.setStateContract(stateInstance.options.address).send(),
+    ]);
+  } catch (err) {
+    if (err.message.includes('Transaction has been reverted by the EVM'))
+      logger.warn(
+        'Writing contract addresses to the State contract failed. This is probably because they are aready set. Did you already run deployer?',
+      );
+    else throw new Error(err);
+  }
 
   // our last action as the deployer is to hand off our onlyOwner powers to the
   // multisig contract
