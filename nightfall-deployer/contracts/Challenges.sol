@@ -248,23 +248,29 @@ contract Challenges is Stateful, Key_Registry, Config {
         challengeAccepted(transactionBlock.blockL2);
     }
 
-    function challengeHistoricRoot(
-        Block calldata blockL2,
-        Transaction[] calldata transactions,
-        uint256 transactionIndex
-    ) external onlyBootChallenger {
+    function challengeHistoricRoot(TransactionBlock calldata transactionBlock)
+        external
+        onlyBootChallenger
+    {
         checkCommit(msg.data);
-        state.areBlockAndTransactionsReal(blockL2, transactions);
-        require(
-          (
-            transactions[transactionIndex].historicRootBlockNumberL2[0] >= state.getNumberOfL2Blocks() ||
-            transactions[transactionIndex].historicRootBlockNumberL2[1] >= state.getNumberOfL2Blocks() ||
-            transactions[transactionIndex].historicRootBlockNumberL2[2] >= state.getNumberOfL2Blocks() ||
-            transactions[transactionIndex].historicRootBlockNumberL2[3] >= state.getNumberOfL2Blocks()
-          ),
-          'Historic roots are not greater than L2BlockNumber on chain'
+        state.areBlockAndTransactionReal(
+            transactionBlock.blockL2,
+            transactionBlock.transaction,
+            transactionBlock.transactionIndex,
+            transactionBlock.transactionSiblingPath
         );
-        challengeAccepted(blockL2);
+        require(
+            (transactionBlock.transaction.historicRootBlockNumberL2[0] >=
+                state.getNumberOfL2Blocks() ||
+                transactionBlock.transaction.historicRootBlockNumberL2[1] >=
+                state.getNumberOfL2Blocks() ||
+                transactionBlock.transaction.historicRootBlockNumberL2[2] >=
+                state.getNumberOfL2Blocks() ||
+                transactionBlock.transaction.historicRootBlockNumberL2[3] >=
+                state.getNumberOfL2Blocks()),
+            'Historic roots are not greater than L2BlockNumber on chain'
+        );
+        challengeAccepted(transactionBlock.blockL2);
     }
 
     // This gets called when a challenge succeeds

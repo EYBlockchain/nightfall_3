@@ -250,13 +250,17 @@ export async function createChallenge(block, transactions, err) {
       break;
     }
     case 5: {
-      const { transactionHashIndex } = err.metadata;
+      const { transactionHashIndex: transactionIndex } = err.metadata;
+      const transactionSiblingPath = await getTransactionHashSiblingInfo(
+        transactions[transactionIndex].transactionHash,
+      );
       txDataToSign = await challengeContractInstance.methods
-        .challengeHistoricRoot(
-          Block.buildSolidityStruct(block),
-          transactions.map(t => Transaction.buildSolidityStruct(t)),
-          transactionHashIndex,
-        )
+        .challengeHistoricRoot({
+          blockL2: Block.buildSolidityStruct(block),
+          transaction: Transaction.buildSolidityStruct(transactions[transactionIndex]),
+          transactionIndex,
+          transactionSiblingPath,
+        })
         .encodeABI();
       break;
     }
