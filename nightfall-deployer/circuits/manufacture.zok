@@ -3,14 +3,17 @@ from "signatures/verifyEddsa.zok" import main as verifyEdDSA;
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8;
 from "utils/casts/u32_to_bits.zok" import main as u32_to_bits;
 from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field;
-from "./common/generic_circuit/Verifiers/verify_nullifiers.zok" import main as verify_nullifiers;
+from "./common/generic_circuit/Verifiers/verify_nullifiers_id_var.zok" import main as verify_nullifiers;
 from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field;
 from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure;
-from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments;
+from "./common/generic_circuit/Verifiers/verify_commitments_id_var.zok" import main as verify_commitments;
+from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256;
+from "utils/pack/u32/pack.zok" import main as packField;
 
 const u32 NUM_NULLIFIERS = 3;
 const u32 NUM_COMMITMENTS = 4;
-
+const u32 MAX_PART_INPUTS = NUM_NULLIFIERS;
+// 33 + 3 +1 + 198 + 136 + 24 + 3 + 1 + 8 + 1
 def main(\
     PublicTransaction<NUM_NULLIFIERS,NUM_COMMITMENTS> tx,\
     field[NUM_NULLIFIERS] roots,\
@@ -18,70 +21,108 @@ def main(\
     private Nullifiers<NUM_NULLIFIERS> nullifiers,\
     private Commitments<NUM_COMMITMENTS> commitments,\
     private u32[NUM_NULLIFIERS][8] tokenIds,\
-    private u32[NUM_NULLIFIERS][8] ercAddress,\
-    private u32 recipeIndex\
+    private field[NUM_NULLIFIERS] ercAddress,\
+    private u32 recipeIndex,\
+    private u32[8] outputTokenId,\
+    private field outputErcAddress\
 ) -> () {
 
-    BillOfMaterials<NUM_NULLIFIERS>[2] bomList = [
-        // BillOfMaterials {
-        //     partQty: [ ...[1,2,3], ...[0; 7]],
-        //     partNumber: [ ...[5,6,7], ...[0;7]],
-        //     outputPartNumber: 1,
-        // },
-        // BillOfMaterials {
-        //     partQty: [ ...[1,2,3], ...[0; 7]],
-        //     partNumber: [ ...[5,6,7], ...[0;7]],
-        //     outputPartNumber: 1,
-        // }
+    BillOfMaterials<MAX_PART_INPUTS>[2] bomList = [
         BillOfMaterials {
-            partQty: [ ...[60], ...[0; NUM_NULLIFIERS - 1]],
-            partNumber: [ ...[5], ...[0; NUM_NULLIFIERS - 1]],
-            outputPartNumber: 12,
+            partQty: [ ...[30], ...[0; MAX_PART_INPUTS - 1]],
+            partNumber: [ ...[1], ...[0; MAX_PART_INPUTS - 1]],
+            outputPartNumber: 99,
         },
         BillOfMaterials {
-            partQty: [ ...[60], ...[0; NUM_NULLIFIERS - 1]],
-            partNumber: [ ...[5], ...[0; NUM_NULLIFIERS - 1]],
-            outputPartNumber: 12,
+            partQty: [ ...[1], ...[0; MAX_PART_INPUTS - 1]],
+            partNumber: [ ...[2], ...[0; MAX_PART_INPUTS - 1]],
+            outputPartNumber: 98,
         }
     ];
 
-    BillOfMaterials<NUM_NULLIFIERS> bom = bomList[recipeIndex];
+    // assert(verify_structure::<NUM_NULLIFIERS,NUM_COMMITMENTS,1>(\
+    //     tx.value,\
+    //     tx.fee,\
+	//     tx.transactionType,\
+	//     tx.tokenType,\
+    //     tx.historicRootBlockNumberL2,\
+	//     tx.tokenId,\
+	//     tx.ercAddress,\
+	//     tx.recipientAddress,\
+	//     tx.commitments,\
+	//     tx.nullifiers,\
+	//     tx.compressedSecrets\
+    // ));
+
+    BillOfMaterials<MAX_PART_INPUTS> bom = bomList[recipeIndex];
 
     field[NUM_NULLIFIERS] nullifiersValue = u8_array_to_field(nullifiers.oldCommitments.value);
     field[NUM_COMMITMENTS] commitmentsValue = u8_array_to_field(commitments.newCommitments.value);
 
+    assert(NUM_NULLIFIERS + 1 == NUM_COMMITMENTS);
+
+    field[NUM_NULLIFIERS] mut idRemainders = [0; NUM_NULLIFIERS];
+    field[NUM_NULLIFIERS] mut packedErcAddresses = [0; NUM_NULLIFIERS];
+
     for u32 i in 0..NUM_NULLIFIERS {
 
-        u32[2] batchNumber = tokenIds[i][0..2];
-        u32[2] partNumber = ercAddress[i][0..2];
-        u32[2] docNumber = ercAddress[i][2..4];
-        u32[2] topSig = ercAddress[i][5..7];
-        assert(u32_to_bits(ercAddress[i][7])[0..8] == [...[false,false], ...[true; 6]]);
+        u32[2] partNumber = field_to_u32_8(ercAddress[i])[6..8];
+        bool[256] ercAddressBits = field_to_bool_256(ercAddress[i]);
+        bool bitCheck = if (ercAddress[i] == 0) { true } else {ercAddressBits[2..4] == [true; 2]};
+        assert(bitCheck);
 
+        // Check the part number matches
+        bool partNumberCheck = if(bom.partQty[i] != 0 ) {\
+            bom.partNumber[i] == packField(partNumber)\
+        } else {true};
 
-        u32[8] sig = [...topSig, ...tokenIds[i][2..8]];
-        // Check partQty
+        // Check Part Qty is sufficient
+  
         bool partQtyCheck = if(bom.partQty[i] != 0 ) {\
-            bom.partQty[i] > commitmentsValue[i]\
+            bom.partQty[i] >= commitmentsValue[i]\
         } else {true};
 
         assert(partQtyCheck);
+        // assert(bom.outputPartNumber == packField(partNumber));
 
-        bool partNumberCheck = if(bom.partQty[i] != 0 ) {\
-            bom.partNumber[i] == u32_array_to_field(partNumber)\
-        } else {true};
+        field changeQty = commitmentsValue[i+1] - bom.partQty[i];
 
-        field idRemainder = u32_array_to_field(tokenIds[i][1..8]);
-        field packedErcAddress = u32_array_to_field(ercAddress[i]) + u32_array_to_field([tokenIds[i][0]]) * SHIFT;
+        idRemainders[i] = u32_array_to_field(tokenIds[i][1..8]);
+        packedErcAddresses[i] = ercAddress[i] + u32_array_to_field([tokenIds[i][0]]) * SHIFT;
 
-        Point firstInputZkpPublicKeys = verify_nullifiers::<1,NUM_NULLIFIERS>(packedErcAddress, idRemainder,\
-        tx.nullifiers, roots, nullifiersValue, nullifiers.oldCommitments.salt,\
-        nullifiers.rootKey, nullifiers.paths, nullifiers.orders, maticAddress);
+        // log("roots {}", roots[i]);
+        // log("paths {}", nullifiers.paths[i]);
+        // Point firstInputZkpPublicKeys = verify_nullifiers::<1,1>(packedErcAddress, idRemainder,\
+        // [tx.nullifiers[i]], [roots[i]], [nullifiersValue[i]], [nullifiers.oldCommitments.salt[i]],\
+        // [nullifiers.rootKey[i]], [nullifiers.paths[i]], [nullifiers.orders[i]], maticAddress);
 
-        assert(verify_commitments::<1,NUM_COMMITMENTS>(packedErcAddress, idRemainder, tx.commitments,\
-        commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey,\
-        maticAddress));
-
+        // bool v = verify_commitments::<1,1>(packedErcAddress, idRemainder, [tx.commitments[i+1]],\
+        // [commitmentsValue[i+1]], [commitments.newCommitments.salt[i+1]], [commitments.recipientPublicKey[i+1]],\
+        // maticAddress);
+        // log("in loop verify {}", v);
+        // assert(v);
     }
+
+    Point firstInputZkpPublicKeys = verify_nullifiers::<1,3>(packedErcAddresses, idRemainders,\
+    tx.nullifiers, roots, nullifiersValue, nullifiers.oldCommitments.salt,\
+    nullifiers.rootKey, nullifiers.paths, nullifiers.orders, maticAddress);
+
+    bool[256] outputErcAddressBits = field_to_bool_256(outputErcAddress);
+    assert(outputErcAddressBits[2..4] == [true; 2]);
+    bool[256] outputPartNumberBool = field_to_bool_256(bom.outputPartNumber);
+    assert(outputErcAddressBits[192..256] == outputPartNumberBool[192..256]); // Do field equality
+
+    field idRemainder = u32_array_to_field(outputTokenId[1..8]);
+    field packedErcAddress = outputErcAddress + u32_array_to_field([outputTokenId[0]]) * SHIFT;
+
+    
+    assert(verify_commitments::<1,4>([packedErcAddress,...packedErcAddresses], [idRemainder, ...idRemainders], tx.commitments,\
+    commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey,\
+    maticAddress));
+    
+    // assert(verify_commitments::<1,1>(packedErcAddress, idRemainder, [tx.commitments[0]],\
+    // [1], [commitments.newCommitments.salt[0]], [commitments.recipientPublicKey[0]],\
+    // maticAddress));       
+
     return;
 }

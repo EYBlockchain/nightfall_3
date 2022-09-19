@@ -12,26 +12,50 @@ import logger from 'common-files/utils/logger.mjs';
 import { edwardsCompress } from 'common-files/utils/curve-maths/curves.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
-import { Transaction } from '../classes/index.mjs';
+import mongo from 'common-files/utils/mongo.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import { Commitment, Nullifier, Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
-import { clearPending, markNullified, storeCommitment } from './commitment-storage.mjs';
+import {
+  clearPending,
+  getSiblingInfo,
+  markNullified,
+  storeCommitment,
+} from './commitment-storage.mjs';
 import getProposersUrl from './peers.mjs';
-import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, VK_IDS, TRANSACTION } =
-  config;
+const {
+  ZOKRATES_WORKER_HOST,
+  PROVING_SCHEME,
+  BACKEND,
+  PROTOCOL,
+  USE_STUBS,
+  VK_IDS,
+  TRANSACTION,
+  COMMITMENTS_COLLECTION,
+  COMMITMENTS_DB,
+  MONGO_URL,
+  BN128_GROUP_ORDER,
+} = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
 const NEXT_N_PROPOSERS = 3;
 
+const getCommitmentByHash = async hash => {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitment = await db.collection(COMMITMENTS_COLLECTION).findOne({ _id: hash.hex(32) });
+  return commitment;
+};
+
 async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
-  const { ercAddress, tokenId, recipientData, rootKey, fee } = generalise(items);
+  const { commitmentsToUse, recipientData, rootKey, fee } = generalise(items);
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),
@@ -44,40 +68,63 @@ async function transfer(transferParams) {
   const maticAddress = generalise(
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
-
-  logger.debug(
-    `The erc address of the token transferred is the following: ${ercAddress
-      .hex(32)
-      .toLowerCase()}`,
-  );
+  const { nullifierKey, zkpPublicKey } = new ZkpKeys(rootKey);
 
   logger.debug(`The erc address of the fee is the following: ${maticAddress.hex(32)}`);
-  const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
-  const commitmentsInfo = await getCommitmentInfo({
-    totalValueToSend,
-    fee,
-    recipientZkpPublicKeysArray: recipientZkpPublicKeys,
-    ercAddress,
-    maticAddress,
-    tokenId,
-    rootKey,
-    maxNumberNullifiers: VK_IDS.transfer.numberNullifiers,
+  const useCommitmentsDB = await Promise.all(commitmentsToUse.map(c => getCommitmentByHash(c))); // CHeck ordering
+  const useCommitments = useCommitmentsDB.map(c => new Commitment(c.preimage));
+  // const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
+  const commitmentTreeInfo = await Promise.all(useCommitments.map(c => getSiblingInfo(c)));
+  const localSiblingPaths = commitmentTreeInfo.map(l => {
+    const path = l.siblingPath.path.map(p => p.value);
+    return generalise([l.root].concat(path.reverse()));
   });
+  const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
+  const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
+  const roots = commitmentTreeInfo.map(l => l.root);
+  const salt = await randValueLT(BN128_GROUP_ORDER);
+  const outputCommitments = useCommitments.map(
+    c =>
+      new Commitment({
+        ercAddress: c.preimage.ercAddress,
+        tokenId: c.preimage.tokenId,
+        value: c.preimage.value,
+        zkpPublicKey: recipientZkpPublicKeys[0],
+        salt,
+      }),
+  );
+  const commitmentsInfo = {
+    oldCommitments: useCommitments,
+    nullifiers: useCommitments.map(commitment => new Nullifier(commitment, nullifierKey)),
+    newCommitments: outputCommitments,
+    localSiblingPaths,
+    leafIndices,
+    blockNumberL2s,
+    roots,
+    salts: [salt],
+  };
 
   try {
     // KEM-DEM encryption
+    logger.debug('KEM_DEMING');
+
     const [ePrivate, ePublic] = await genEphemeralKeys();
-    const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
+    const [unpackedTokenID, packedErc] = packSecrets(
+      useCommitments[0].preimage.tokenId,
+      useCommitments[0].preimage.ercAddress,
+      0,
+      2,
+    );
     const compressedSecrets = encrypt(generalise(ePrivate), generalise(recipientZkpPublicKeys[0]), [
       packedErc.bigInt,
       unpackedTokenID.bigInt,
-      values[0].bigInt,
+      generalise(useCommitments[0].preimage.value).bigInt,
       commitmentsInfo.salts[0].bigInt,
     ]);
 
     // Compress the public key as it will be put on-chain
     const compressedEPub = edwardsCompress(ePublic);
-
+    logger.debug('COMPRESSED EPUB');
     // now we have everything we need to create a Witness and compute a proof
     const transaction = new Transaction({
       fee,
@@ -105,8 +152,8 @@ async function transfer(transferParams) {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      ercAddress,
-      tokenId,
+      ercAddress: useCommitments[0].preimage.ercAddress,
+      tokenId: useCommitments[0].preimage.tokenId,
       ephemeralKey: ePrivate,
     };
 
@@ -155,7 +202,7 @@ async function transfer(transferParams) {
       )} offchain ${offchain}`,
     );
 
-    const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+    const { compressedZkpPublicKey } = new ZkpKeys(rootKey);
 
     // Store new commitments that are ours.
     const storeNewCommitments = commitmentsInfo.newCommitments
@@ -180,7 +227,7 @@ async function transfer(transferParams) {
             `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
           );
           return axios.post(
-            `${peerList[address]}/proposer/offchain-transaction`,
+            `http://optimist:80/proposer/offchain-transaction`,
             { transaction: optimisticTransferTransaction },
             { timeout: 3600000 },
           );

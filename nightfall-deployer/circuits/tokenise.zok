@@ -38,8 +38,8 @@ def main(\
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
     bool[256] ercAddressBits = field_to_bool_256(ercAddress);
     assert(ercAddressBits[2..4] == [true; 2]);
-    field idRemainder = u32_array_to_field(tx.tokenId[1..8]);
-    field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT;
+    field idRemainder = u32_array_to_field(tokenId[1..8]);
+    field packedErcAddress = ercAddress + u32_array_to_field([tokenId[0]]) * SHIFT;
     //Verify new Commmitments
     assert(verify_commitments::<1,1>(packedErcAddress, idRemainder, [tx.commitments[0]],\
     u8_array_to_field([value]), [salt], [recipientPublicKey], maticAddress));

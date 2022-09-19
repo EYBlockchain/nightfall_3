@@ -139,8 +139,6 @@ export const computeManufactureCircuitInputs = (
   maticAddress,
   numberNullifiers,
   numberCommitments,
-  tokenIds,
-  ercAddresses,
 ) => {
   const publicWitness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
   const {
@@ -150,8 +148,12 @@ export const computeManufactureCircuitInputs = (
     rootKey,
     newCommitmentPreimage,
     recipientPublicKeys,
+    tokenIds,
+    ercAddresses,
+    recipeIndex,
+    outputTokenId,
+    outputErcAddress,
   } = generalise(privateData);
-
   const witness = [
     ...publicWitness,
     ...computePrivateInputsNullifiers(
@@ -166,9 +168,12 @@ export const computeManufactureCircuitInputs = (
       recipientPublicKeys,
       numberCommitments,
     ),
-    ...tokenIds.map(tID => tID.limbs(32, 8)),
-    ...ercAddresses.map(addr => addr.limbs(32, 8)),
-  ];
+    ...padArray(tokenIds, 0, numberNullifiers).map(tID => tID.limbs(32, 8)),
+    ...padArray(ercAddresses, 0, numberNullifiers).map(addr => addr.field(BN128_GROUP_ORDER)),
+    recipeIndex.decimal,
+    outputTokenId.limbs(32, 8),
+    outputErcAddress.field(BN128_GROUP_ORDER),
+  ].flat(Infinity);
   return witness;
 };
 

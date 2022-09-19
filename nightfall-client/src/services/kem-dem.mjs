@@ -39,7 +39,7 @@ const packSecrets = (from, to, topMostFromBytesIndex, topMostToBytesIndex) => {
     throw new Error('This function packs u32[8], indices must be < 8');
   const fromLimbs = from.limbs(32, 8);
   const toLimbs = to.limbs(32, 8);
-  if (toLimbs[0] !== '0') throw new Error('Cannot pack since top bits non-zero');
+  // if (toLimbs[0] !== '0') throw new Error('Cannot pack since top bits non-zero');
 
   if (topMostToBytesIndex + 1 === toLimbs.length)
     throw new Error('Pack To Array is zero, need to specify to address');

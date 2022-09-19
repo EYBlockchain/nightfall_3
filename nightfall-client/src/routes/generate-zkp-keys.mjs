@@ -12,6 +12,7 @@ router.post('/', async (req, res, next) => {
   logger.debug(`generate keys endpoint received POST`);
   try {
     const { mnemonic, addressIndex } = req.body;
+    console.log('Mnemonic', mnemonic);
     const keys = await ZkpKeys.generateZkpKeysFromMnemonic(mnemonic, addressIndex);
     logger.debug('returning zkp keys generated');
     res.json(keys);

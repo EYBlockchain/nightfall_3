@@ -5,8 +5,8 @@ from "../../utils/structures.zok" import Point;
 * Verify that all commitments are correct
 */
 def main<MinCommitments, MaxCommitments>(\
-    field packedErcAddress,\
-    field idRemainder,\
+    field[MaxCommitments] packedErcAddress,\
+    field[MaxCommitments] idRemainder,\
     field[MaxCommitments] commitmentHashes,\
     private field[MaxCommitments] newCommitmentValues,\
     private field[MaxCommitments] newCommitmentSalts,\
@@ -30,8 +30,8 @@ def main<MinCommitments, MaxCommitments>(\
         // uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
         
         field calculatedCommitmentHash = poseidon([\
-                packedErcAddress,\
-                idRemainder,\
+                packedErcAddress[i],\
+                idRemainder[i],\
                 newCommitmentValues[i],\
                 ...recipientPublicKey[i],\
                 newCommitmentSalts[i]\

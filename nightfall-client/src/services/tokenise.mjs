@@ -9,6 +9,7 @@ import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeTokeniseCircuitInputs } from '../utils/computeCircuitInputs.mjs';
+import getProposersUrl from './peers.mjs';
 
 const {
   ZOKRATES_WORKER_HOST,
@@ -44,9 +45,9 @@ async function tokenise(items) {
     fee,
     transactionType: 3,
     tokenType: items.tokenType,
-    tokenId,
-    value,
-    ercAddress,
+    // tokenId,
+    // value,
+    // ercAddress,
     commitments: [commitment],
     numberNullifiers: VK_IDS.tokenise.numberNullifiers,
     numberCommitments: VK_IDS.tokenise.numberCommitments,
@@ -84,9 +85,9 @@ async function tokenise(items) {
     fee,
     transactionType: 3,
     tokenType: items.tokenType,
-    tokenId,
-    value,
-    ercAddress,
+    // tokenId,
+    // value,
+    // ercAddress,
     commitments: [commitment],
     proof,
     numberNullifiers: TRANSACTION.numberNullifiers,
@@ -97,6 +98,20 @@ async function tokenise(items) {
   );
   // and then we can create an unsigned blockchain transaction
   try {
+    const peerList = await getProposersUrl(3);
+    logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
+    await Promise.all(
+      Object.keys(peerList).map(async address => {
+        logger.debug(
+          `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
+        );
+        return axios.post(
+          `http://optimist:80/proposer/offchain-transaction`,
+          { transaction: optimisticTokeniseTransaction },
+          { timeout: 3600000 },
+        );
+      }),
+    );
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(optimisticTokeniseTransaction))
       .encodeABI();

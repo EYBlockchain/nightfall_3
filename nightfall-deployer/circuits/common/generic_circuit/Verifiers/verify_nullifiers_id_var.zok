@@ -9,8 +9,8 @@ from "../../merkle-tree/path-check.zok" import main as pathCheck;
 * Verify that all the nullifiers are correct
 */
 def main<MinNullifiers, MaxNullifiers>(\
-    field packedErcAddress,\
-    field idRemainder,\
+    field[MaxNullifiers] packedErcAddress,\
+    field[MaxNullifiers] idRemainder,\
     field[MaxNullifiers] nullifierHashes,\
     field[MaxNullifiers] roots,\
     private field[MaxNullifiers] oldCommitmentValues,\
@@ -49,8 +49,8 @@ def main<MinNullifiers, MaxNullifiers>(\
         */
 
         field calculatedOldCommitmentHash = poseidon([\
-            packedErcAddress,\
-            idRemainder,\
+            packedErcAddress[i],\
+            idRemainder[i],\
             oldCommitmentValues[i],\
             ...zkpPublicKeys,\
             oldCommitmentSalts[i]\
