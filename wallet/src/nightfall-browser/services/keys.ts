@@ -16,7 +16,7 @@ export const zkpPrivateKeys: any = [];
 export const nullifierKeys: any = [];
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-const { BABYJUBJUB, BN128_GROUP_ORDER } = global.config;
+const { BABYJUBJUB, BN128_GROUP_ORDER } = global.nightfallConstants;
 
 export class ZkpKeys {
   rootKey;
