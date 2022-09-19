@@ -17,7 +17,7 @@ WORKDIR /app/cli
 RUN npm ci
 
 WORKDIR /app
-COPY apps/proposer/package*.json ./
+COPY apps/proposer/package.json ./
 COPY apps/proposer/src src
 COPY apps/proposer/docker-entrypoint.sh docker-entrypoint.sh
 COPY config config

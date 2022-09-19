@@ -20,14 +20,12 @@ const txPerBlock =
 
 const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
 
-const TEST_LENGTH = 2;
+const TEST_LENGTH = 4;
 /**
 Does the preliminary setup and starts listening on the websocket
 */
 export default async function localTest(IS_TEST_RUNNER) {
   logger.info('Starting local test...');
-  logger.debug('ENVV', environment);
-
   const tokenType = 'ERC20';
   const value = 1;
   const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
@@ -109,18 +107,18 @@ export default async function localTest(IS_TEST_RUNNER) {
     if (endBalance - startBalance === txPerBlock * value + value * TEST_LENGTH && IS_TEST_RUNNER) {
       logger.info('Test passed');
       logger.info(
-        'Balance of User (txPerBlock*value (txPerBlock*1) + value received) ',
-        endBalance - startBalance,
+        `Balance of User (txPerBlock*value (txPerBlock*1) + value received) : 
+        ${endBalance - startBalance}`,
       );
-      logger.info('Amount sent to other User', value * TEST_LENGTH);
+      logger.info(`Amount sent to other User: ${value * TEST_LENGTH}`);
       nf3.close();
       process.exit(0);
     } else {
       logger.info(
-        IS_TEST_RUNNER,
-        'The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting',
-        endBalance - startBalance,
-        txPerBlock * value + value * TEST_LENGTH,
+        `The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting:
+        Current Transacted Balance is: ${endBalance - startBalance} - Expecting: ${
+          txPerBlock * value + value * TEST_LENGTH
+        }`,
       );
       await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
       loop++;

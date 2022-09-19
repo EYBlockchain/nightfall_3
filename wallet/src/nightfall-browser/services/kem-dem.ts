@@ -3,7 +3,7 @@ import { scalarMult } from '../../common-files/utils/curve-maths/curves';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import poseidon from '../../common-files/utils/crypto/poseidon/poseidon';
 
-const { BABYJUBJUB, BN128_GROUP_ORDER } = global.config;
+const { BABYJUBJUB, BN128_GROUP_ORDER } = global.nightfallConstants;
 const { generalise, stitchLimbs } = gen;
 // DOMAIN_KEM = field(SHA256('nightfall-kem'))
 const DOMAIN_KEM = 21033365405711675223813179268586447041622169155539365736392974498519442361181n;

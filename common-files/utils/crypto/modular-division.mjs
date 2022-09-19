@@ -1,9 +1,8 @@
 // modular division
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import { mulMod, addMod } from './number-theory.mjs';
+import constants from '../../constants/index.mjs';
 
-const { BN128_PRIME_FIELD } = config;
+const { BN128_PRIME_FIELD } = constants;
 
 // function for extended Euclidean Algorithm
 // (used to find modular inverse.

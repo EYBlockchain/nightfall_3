@@ -11,7 +11,7 @@ import Fq2 from '../../classes/fq2';
 import Proof from '../../classes/proof';
 import { modDivide } from '../crypto/modular-division';
 
-const { BN128_PRIME_FIELD, BN128_GROUP_ORDER, BABYJUBJUB } = global.config;
+const { BN128_PRIME_FIELD, BN128_GROUP_ORDER, BABYJUBJUB } = global.nightfallConstants;
 
 const one = BigInt(1);
 const { JUBJUBE, JUBJUBC, JUBJUBD, JUBJUBA } = BABYJUBJUB;

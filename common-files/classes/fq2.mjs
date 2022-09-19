@@ -3,11 +3,10 @@ Class representing a complex modular number.  In particular, this is useful
 for dealing with f_q^2 field elements in the alt BN128 curve.
 */
 
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import { modDivide, complexDivMod } from '../utils/crypto/modular-division.mjs';
+import constants from '../constants/index.mjs';
 
-const { BN128_PRIME_FIELD } = config;
+const { BN128_PRIME_FIELD } = constants;
 
 class Fq2 {
   m = BN128_PRIME_FIELD;

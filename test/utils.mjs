@@ -458,6 +458,7 @@ export const waitForSufficientBalance = (client, value, ercAddress) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
       const balance = await retrieveL2Balance(client, ercAddress);
+      logger.debug(` Balance needed ${value}. Current balance ${balance}.`);
       if (balance < value) {
         await waitForTimeout(10000);
         isSufficientBalance();

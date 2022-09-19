@@ -6,7 +6,7 @@ for dealing with f_q^2 field elements in the alt BN128 curve.
 */
 import { modDivide, complexDivMod } from '../utils/crypto/modular-division';
 
-const { BN128_PRIME_FIELD } = global.config;
+const { BN128_PRIME_FIELD } = global.nightfallConstants;
 
 class Fq2 {
   m = BN128_PRIME_FIELD;
