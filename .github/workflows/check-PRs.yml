@@ -178,58 +178,58 @@ jobs:
           name: optimist-sync-test-logs
           path: ./optimist-sync-test.log
 
-  adversary-test:
-    runs-on: ubuntu-20.04
-    env:
-      TRANSACTIONS_PER_BLOCK: 32
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16.17.0'
-
-      - name: Build adversary
-        run: npm run build-adversary
-
-      - name: Start Containers with geth
-        run: |
-          ./setup-nightfall
-          ./geth-standalone -s
-          sleep 300
-          ./start-nightfall -l -d -a &> adversary-test.log &disown
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: debug logs - after container startup
-        if: always()
-        run: cat adversary-test.log
-
-      - name: Run integration test
-        run: |
-          VERBOSE=true npm run test-adversary
-
-      - name: debug logs - after integration test run
-        if: always()
-        run: cat adversary-test.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: |
-          docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ganache.yml -f docker-compose.adversary.yml down -v
-          ./geth-standalone -d
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: adversary-test-logs
-          path: ./adversary-test.log
+#  adversary-test:
+#    runs-on: ubuntu-20.04
+#    env:
+#      TRANSACTIONS_PER_BLOCK: 32
+#    steps:
+#      - uses: actions/checkout@v3
+#      - uses: actions/setup-node@v1
+#        with:
+#          node-version: '16.17.0'
+#
+#      - name: Build adversary
+#        run: npm run build-adversary
+#
+#      - name: Start Containers with geth
+#        run: |
+#          ./setup-nightfall
+#          ./geth-standalone -s
+#          sleep 300
+#          ./start-nightfall -l -d -a &> adversary-test.log &disown
+#
+#      - name: Wait for images to be ready
+#        uses: Wandalen/wretry.action@v1.0.11
+#        with:
+#          command: |
+#            docker wait nightfall_3_deployer_1
+#          attempt_limit: 100
+#          attempt_delay: 20000
+#
+#      - name: debug logs - after container startup
+#        if: always()
+#        run: cat adversary-test.log
+#
+#      - name: Run integration test
+#        run: |
+#          VERBOSE=true npm run test-adversary
+#
+#      - name: debug logs - after integration test run
+#        if: always()
+#        run: cat adversary-test.log
+#
+#      - name: If integration test failed, shutdown the Containers
+#        if: failure()
+#        run: |
+#          docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ganache.yml -f docker-compose.adversary.yml down -v
+#          ./geth-standalone -d
+#
+#      - name: If integration test failed, upload logs files as artifacts
+#        if: failure()
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: adversary-test-logs
+#          path: ./adversary-test.log
 
   ping-pong-test:
     runs-on: ubuntu-20.04
