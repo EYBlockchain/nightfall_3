@@ -20,4 +20,4 @@ docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml bui
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build worker ${NO_CACHE_FLAG}
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build hosted-utils-api-server ${NO_CACHE_FLAG}
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.adversary.yml build adversary1 ${NO_CACHE_FLAG}
-docker-compose -f docker-compose.apps.yml build proposer
+docker-compose -f docker/docker-compose.apps.yml build proposer
