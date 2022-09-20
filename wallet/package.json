@@ -162,5 +162,13 @@
   },
   "eslintConfig": {
     "extends": "react-app"
+  },
+  "overrides": {
+    "swarm-js": {
+      "got": "12.1.0"
+    },
+    "web3-bzz": {
+      "got": "12.1.0"
+    }
   }
 }
