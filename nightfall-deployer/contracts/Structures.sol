@@ -89,7 +89,7 @@ contract Structures {
         address maticAddress;
     }
 
-    struct TransactionBlock {
+    struct TransactionInfoBlock {
         Block blockL2;
         Transaction transaction;
         uint256 transactionIndex;
