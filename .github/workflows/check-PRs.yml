@@ -11,7 +11,7 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v1.0.2
+        uses: actions/dependency-review-action@v2.1.0
 
   eslint-check:
     runs-on: ubuntu-20.04
