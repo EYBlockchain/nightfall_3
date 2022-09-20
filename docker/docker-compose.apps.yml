@@ -4,8 +4,8 @@ services:
 
   proposer:
     build:
-      dockerfile: proposer.Dockerfile
-      context: .
+      dockerfile: docker/proposer.Dockerfile
+      context: ..
     ports:
       # to use with postman and etc
       - 8092:8092
@@ -22,7 +22,7 @@ services:
       - nightfall_network
     volumes:
       - type: bind
-        source: ./apps/proposer/src
+        source: ../apps/proposer/src
         target: /app/src
 
 networks:

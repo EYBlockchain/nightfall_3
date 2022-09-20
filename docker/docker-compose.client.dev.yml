@@ -8,13 +8,13 @@ services:
       context: .
     volumes:
       - type: bind
-        source: ./nightfall-client/src
+        source: ../nightfall-client/src
         target: /app/src
       - type: bind
-        source: ./common-files
+        source: ../common-files
         target: /common-files
       - type: bind
-        source: ./config/default.js
+        source: ../config/default.js
         target: /app/config/default.js
 
   worker:
@@ -23,13 +23,13 @@ services:
       context: .
     volumes:
       - type: bind
-        source: ./nightfall-deployer/circuits
+        source: ../nightfall-deployer/circuits
         target: /app/circuits/
       - type: bind
-        source: ./zokrates-worker/src
+        source: ../zokrates-worker/src
         target: /app/src/
       - type: bind
-        source: ./config/default.js
+        source: ../config/default.js
         target: /app/config/default.js
     ports:
       # to use with postman and etc
