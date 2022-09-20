@@ -132,9 +132,12 @@ export const getCommitmentInfo = async txInfo => {
     const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
     const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
     const roots = commitmentTreeInfo.map(l => l.root);
-    logger.info(
-      `Constructing transaction with blockNumberL2s ${blockNumberL2s} and roots ${roots}`,
-    );
+
+    logger.info({
+      message: 'Constructing transfer transaction with blockNumberL2s and roots',
+      blockNumberL2s, 
+      roots,
+    });
 
     return {
       oldCommitments: spentCommitments,
@@ -147,7 +150,7 @@ export const getCommitmentInfo = async txInfo => {
       salts,
     };
   } catch (err) {
-    logger.error('Error', err);
+    logger.error(err);
     await Promise.all(spentCommitments.map(o => clearPending(o)));
     throw err;
   }

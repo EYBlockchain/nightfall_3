@@ -58,7 +58,7 @@ function poseidonHash(_inputs) {
     state = sbox(state, f, p, r);
     state = mix(state, m);
   }
-  // console.log('MATRIX', m);
+
   return generalise(state[0]);
 }
 

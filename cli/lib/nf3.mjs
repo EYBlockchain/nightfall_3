@@ -78,8 +78,6 @@ class Nf3 {
 
   BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
 
-  // nonce = 0;
-
   latestWithdrawHash;
 
   mnemonic = {};
@@ -414,7 +412,6 @@ class Nf3 {
           );
           resolve(receipt);
         } catch (err) {
-          // logger.error('Deposit transaction failed');
           reject(err);
         }
       });
@@ -650,11 +647,9 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('Liquidity provider websocket connection opened');
       connection.send('instant');
     };
@@ -900,7 +895,6 @@ class Nf3 {
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('Proposer websocket connection opened');
       connection.send('blocks');
     };
@@ -964,11 +958,9 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          // logger.debug('sent challenge websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('Challenge websocket received pong'));
       logger.debug('Challenge websocket connection opened');
       connection.send('challenge');
     };
@@ -1127,27 +1119,9 @@ class Nf3 {
     return res.data.commitments;
   }
 
-  // /**
-  //   Set a Web3 Provider URL
-  //   */
-  // async setWeb3Provider() {
-  //   this.web3 = new Web3(this.web3WsUrl);
-  //   this.web3.eth.transactionBlockTimeout = 200;
-  //   this.web3.eth.transactionConfirmationBlocks = 12;
-  //   if (typeof window !== 'undefined') {
-  //     if (window.ethereum && this.ethereumSigningKey === '') {
-  //       this.web3 = new Web3(window.ethereum);
-  //       await window.ethereum.request({ method: 'eth_requestAccounts' });
-  //     } else {
-  //       // Metamask not available
-  //       throw new Error('No Web3 provider found');
-  //     }
-  //   }
-  // }
-
   /**
-Set a Web3 Provider URL
-*/
+   * Set a Web3 Provider URL
+   */
   async setWeb3Provider() {
     // initialization of web3 provider has been taken from common-files/utils/web3.mjs
     //  Target is to mainain web3 socker alive

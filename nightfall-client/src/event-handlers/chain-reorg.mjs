@@ -1,13 +1,13 @@
 /**
-@module chain-reorg.mjs
-@desc This module contains functions for handling updates to the layer 2 state as
-the result of a layer 1 chain reorganisation.
-*/
+ * @module chain-reorg.mjs
+ * @desc This module contains functions for handling updates to the layer 2 state as
+ * the result of a layer 1 chain reorganisation.
+ */
 
 /**
-function to update the state of a commitment following the removal of a
-BlockProposed event.
-*/
+ * function to update the state of a commitment following the removal of a
+ * BlockProposed event.
+ */
 import logger from 'common-files/utils/logger.mjs';
 import {
   getCommitmentsByTransactionHashL1,
@@ -22,31 +22,49 @@ import {
 
 async function removeBlockProposedEventHandler(eventObject) {
   logger.info('Received block proposed removal event');
-  // We'll deal with the commitments first:
-  // let's get the L1 transactionHash that created the block, we can use this
-  // to pull the commitments and nullifiers in the block from the L2 database
+
+  /*
+   We'll deal with the commitments first:
+   let's get the L1 transactionHash that created the block, we can use this
+   to pull the commitments and nullifiers in the block from the L2 database
+   */
   const { transactionHash } = eventObject;
   const commitmentsAddedInBlock = await getCommitmentsByTransactionHashL1(transactionHash);
   const commitmentsNullifiedInBlock = await getNullifiedByTransactionHashL1(transactionHash);
-  // logger.debug(
-  //  `Found these commitments in the db ${JSON.stringify(commitmentsAddedInBlock, null, 2)}`,
-  // );
-  // now we have these commitments, we need to reset their properties according to the
-  // instructions in doc/chain-reorgs.md.
+
+  /*
+   now we have these commitments, we need to reset their properties according to the
+   instructions in doc/chain-reorgs.md.
+   */
   await Promise.all([
     ...commitmentsAddedInBlock.map(c => updateCommitment(c, { isOnChain: -1 })),
     ...commitmentsNullifiedInBlock.map(c => updateCommitment(c, { isNullifiedOnChain: -1 })),
   ]);
-  // Then the the blocks we have stored and the commitment tree:
-  // we need to remove the state associated with this event from the Timber class
-  // so find out which L2 block has been removed by this event removal.
-  logger.debug(`Looking for block with transactionHash, ${transactionHash}`);
+
+  /*
+   Then the the blocks we have stored and the commitment tree:
+   we need to remove the state associated with this event from the Timber class
+   so find out which L2 block has been removed by this event removal.
+   */
+   logger.debug({
+    message: 'Looking for block with transactionHash', 
+    transactionHash
+  });
+
   const block = await getBlockByTransactionHashL1(transactionHash);
-  // now we can clear the L1 blocknumber to indicate that the L2 block is no longer
-  // on chain (if it's a block that we have saved)
+
+  /*
+   now we can clear the L1 blocknumber to indicate that the L2 block is no longer
+   on chain (if it's a block that we have saved)
+   */
   if (block) await clearBlockNumberL1ForBlock(transactionHash);
+
   // then we delete the Timber record associated with this block
-  logger.debug(`Deleting tree with proposeBlock transactionHash ${transactionHash}`);
+  logger.debug({
+    message: 'Deleting tree with proposeBlock transactionHash',
+    transactionHash
+  });
+
   return deleteTreeByTransactionHashL1(transactionHash);
 }
 

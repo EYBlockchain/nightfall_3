@@ -135,7 +135,12 @@ export async function setBootChallenger(
     newChallengerPrivateKey,
     true,
   ).address;
-  console.log('BOOT CHALLENGER', newChallenger);
+
+  logger.info({
+    message: 'Boot challenger',
+    newChallenger
+  });
+
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   const data = shieldContractInstance.methods.setBootChallenger(newChallenger).encodeABI();
   return Promise.all([

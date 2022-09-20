@@ -1,8 +1,8 @@
 /**
-@module index.mjs
-Code for performing administrator functions.  This code is designed to be run in an
-ephemeral container, that performs the admin task.
-*/
+ * @module index.mjs
+ * Code for performing administrator functions.  This code is designed to be run in an
+ * ephemeral container, that performs the admin task.
+ */
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { initUI } from './ui/menu.mjs';
@@ -19,8 +19,8 @@ async function main() {
   initUI();
   // start getting transaction information
   const signed = await start();
-  console.log('******* Signed Transaction *******');
-  console.log(signed);
+  logger.info('******* Signed Transaction *******');
+  logger.info(signed);
   process.kill(process.pid, 'SIGTERM');
 }
 

@@ -6,7 +6,9 @@ const readJsonFile = filePath => {
     const file = fs.readFileSync(filePath);
     return JSON.parse(file);
   }
-  logger.debug('Unable to locate file: ', filePath);
+
+  logger.debug({ message: 'Unable to locate file: ', filePath });
+
   return null;
 };
 

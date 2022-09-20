@@ -8,8 +8,8 @@ const { RESTRICTIONS, WEB3_OPTIONS, MULTISIG } = config;
 const { SIGNATURE_THRESHOLD } = MULTISIG;
 const MULTISIG_CONSTANTS = {};
 /**
-Read the names of tokens from the config
-*/
+ * Read the names of tokens from the config
+ */
 export function getTokenNames() {
   const tokenNames = [];
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
@@ -30,8 +30,10 @@ async function sendTransaction(unsignedTransaction, signingKey, contractAddress)
   return web3.eth.sendSignedTransaction(signed.rawTransaction);
 }
 
-// This function saves a signed transaction and will return the array of so-far signed
-// transactions
+/**
+ * This function saves a signed transaction and will return the array of so-far signed
+ * transactions
+ */
 export async function addSignedTransaction(signed) {
   // save the signed transaction until we meet the signature threshold, only if it's actually signed
   if (signed.r) {
@@ -39,12 +41,18 @@ export async function addSignedTransaction(signed) {
       await saveSigned(signed);
     } catch (err) {
       if (err.message.includes('duplicate key'))
-        console.log('You have already signed this message - no action taken');
-      else throw new Error(err);
+        logger.info('You have already signed this message - no action taken');
+      else 
+        throw new Error(err);
     }
   }
   const numberOfSignatures = await checkThreshold(signed.messageHash);
-  logger.info(`Number of signatures for this transaction is ${numberOfSignatures}`);
+
+  logger.info({
+    message: 'Number of signatures for this transaction',
+    total: numberOfSignatures
+  });
+
   if (numberOfSignatures === SIGNATURE_THRESHOLD) logger.info(`Signature threshold reached`);
   const signedArray = (await getSigned(signed.messageHash)).sort((a, b) => {
     const x = BigInt(a.by);
@@ -54,8 +62,10 @@ export async function addSignedTransaction(signed) {
   return signedArray;
 }
 
-// This function creates the multisig message hash, which is signed (approved) by the key-holders.
-// It's worth looking at the multisig contract to see where this all comes from.
+/**
+ * This function creates the multisig message hash, which is signed (approved) by the key-holders.
+ * It's worth looking at the multisig contract to see where this all comes from.
+ */
 async function createMultiSigMessageHash(destination, value, data, _nonce, executor, gasLimit) {
   const { domainSeparator, txTypeHash, multiSigInstance, txInputHashABI } = MULTISIG_CONSTANTS;
   let nonce = _nonce;

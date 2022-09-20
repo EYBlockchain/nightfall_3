@@ -66,7 +66,6 @@ export async function getLatestTree() {
     timberObj.hashType,
     timberObj.height,
   );
-  // const t = new Timber(timberObj);
   return t;
 }
 
@@ -180,11 +179,18 @@ export async function getBlockByTransactionHashL1(transactionHashL1) {
   const query = { transactionHashL1 };
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
-// function that sets the Block's L1 blocknumber to null
-// to indicate that it's back in the L1 mempool (and will probably be re-mined
-// and given a new L1 transactionHash)
+
+/**
+ * Function that sets the Block's L1 blocknumber to null
+ * to indicate that it's back in the L1 mempool (and will probably be re-mined
+ * and given a new L1 transactionHash)
+ */
 export async function clearBlockNumberL1ForBlock(transactionHashL1) {
-  logger.debug(`clearing layer 1 blockNumber for L2 block with L1 hash ${transactionHashL1}`);
+  logger.debug({
+    message: 'Clearing layer 1 blockNumber for L2 block with L1 hash', 
+    transactionHashL1
+  });
+
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { transactionHashL1 };

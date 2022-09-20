@@ -13,12 +13,14 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
 
   fs.mkdirSync(`${outputPath}/${circuitDir}`, { recursive: true });
 
-  logger.info(
-    `${circuitsPath}/${filepath}`,
-    `${outputPath}/${circuitDir}`,
-    `${circuitName}_out`,
-    curve,
-  );
+  logger.info({
+    message: "Compiling circuits...",
+    filepath,
+    circuitsPath: `${circuitsPath}/${filepath}`,
+    outputPath: `${outputPath}/${circuitDir}`,
+    circuitName: `${circuitName}_out`,
+    curve
+  });
 
   logger.info('Compile...');
   await compile(
@@ -29,7 +31,7 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
   );
 
   if (process.env.MPC) {
-    logger.info('Export keys...');
+    logger.info('Exporting keys...');
     await exportKeys(`${outputPath}/${circuitDir}`, `${circuitName}`);
   } else {
     logger.info('Setup...');
@@ -45,6 +47,7 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
 
   const vk = await extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
 
-  logger.info(`Complete ${filepath}`);
+  logger.info('Key generation completed');
+
   return { vk, filepath };
 }

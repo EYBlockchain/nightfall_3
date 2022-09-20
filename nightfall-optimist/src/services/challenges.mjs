@@ -28,6 +28,7 @@ export function startMakingChallenges() {
   logger.info(`Challenges ON`);
   makeChallenges = true;
 }
+
 export function stopMakingChallenges() {
   logger.info(`Challenges OFF`);
   makeChallenges = false;
@@ -44,25 +45,26 @@ export async function commitToChallenge(txDataToSign) {
   const commitToSign = await challengeContractInstance.methods
     .commitToChallenge(commitHash)
     .encodeABI();
+
   await saveCommit(commitHash, txDataToSign);
+
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects
   let tryCount = 0;
   while (!ws || ws.readyState !== WebSocket.OPEN) {
     await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-    logger.warn(
-      `Websocket to challenger is closed for commit.  Waiting for challenger to reconnect`,
-    );
+
+    logger.warn('Websocket to challenger is closed for commit.  Waiting for challenger to reconnect');
+
     if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
   }
+
   ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
-  logger.debug(
-    `raw transaction for committing to challenge has been sent to be signed and submitted ${JSON.stringify(
-      commitToSign,
-      null,
-      2,
-    )}`,
-  );
+
+  logger.debug({
+    message: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
+    rawTransaction: JSON.stringify(commitToSign, null, 2)
+  });
 }
 
 export async function revealChallenge(txDataToSign, sender) {
@@ -72,10 +74,11 @@ export async function revealChallenge(txDataToSign, sender) {
   let tryCount = 0;
   while (!ws || ws.readyState !== WebSocket.OPEN) {
     await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-    logger.warn(
-      `Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect`,
-    );
+
+    logger.warn('Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect');
+
     if (tryCount++ > 100) throw new Error(`Websocket to $challenger has failed`);
+
   }
   ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
 }

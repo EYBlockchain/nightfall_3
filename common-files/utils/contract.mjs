@@ -18,7 +18,6 @@ export const contractPath = contractName => {
 export async function getContractInterface(contractName) {
   const path = contractPath(contractName);
   const contractInterface = JSON.parse(fs.readFileSync(path, 'utf8'));
-  // logger.trace('\ncontractInterface:', contractInterface);
   return contractInterface;
 }
 
@@ -37,7 +36,12 @@ export async function getContractInstance(contractName, deployedAddress) {
   // grab a 'from' account if one isn't set
   if (!options.from) {
     const accounts = await web3.eth.getAccounts();
-    logger.debug('blockchain accounts are: ', accounts);
+
+    logger.debug({
+      message: 'blockchain accounts', 
+      accounts
+    });
+
     [options.from] = accounts;
   }
   const contractInterface = await getContractInterface(contractName);
@@ -49,7 +53,6 @@ export async function getContractInstance(contractName, deployedAddress) {
   const contractInstance = deployedAddress
     ? new web3.eth.Contract(contractInterface.abi, deployedAddress, options)
     : new web3.eth.Contract(contractInterface.abi, options);
-  // logger.trace('\ncontractInstance:', contractInstance);
 
   return contractInstance;
 }
@@ -76,10 +79,11 @@ export async function deploy(contractName, constructorParams, { from, gas, passw
       throw new Error(err);
     })
     .then(deployedContractInstance => {
-      // logger.trace('deployed contract instance:', deployedContractInstance);
-      logger.info(
-        `${contractName} contract deployed at address ${deployedContractInstance.options.address}`,
-      ); // instance with the new contract address
+      logger.info({
+        message: 'Contract deployed',
+        contractName,
+        address: deployedContractInstance.options.address,
+      }); // instance with the new contract address
 
       return deployedContractInstance.options.address;
     });
@@ -106,10 +110,16 @@ export async function waitForContract(contractName) {
     } catch (err) {
       error = err;
       errorCount++;
-      logger.warn(`Unable to get a ${contractName} contract instance will try again in 3 seconds`);
+
+      logger.warn({
+        message: 'Unable to get contract instance, retrying in 3 secs',
+        contractName
+      });
+
       await new Promise(resolve => setTimeout(() => resolve(), 3000)); // eslint-disable-line no-await-in-loop
     }
   }
   if (error) throw error;
+
   return instance;
 }

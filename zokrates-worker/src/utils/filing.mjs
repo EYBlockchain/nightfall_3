@@ -14,13 +14,15 @@ const readJsonFile = filePath => {
     const file = fs.readFileSync(filePath);
     return JSON.parse(file);
   }
-  logger.warn('Unable to locate file: ', filePath);
+
+  logger.warn({ message: 'Unable to locate file', filePath });
+
   return null;
 };
 
 /**
-Strip the 'raw' field from the vk data
-*/
+ * Strip the 'raw' field from the vk data
+ */
 const stripRawData = vk => {
   const { alpha, beta, gamma, delta, gamma_abc } = vk;
   return { alpha, beta, gamma, delta, gamma_abc };
@@ -57,9 +59,7 @@ export const deleteFile = async filePath => {
       recursive: true,
     },
     err => {
-      if (err) {
-        return console.error(err);
-      }
+      logger.error({ message: 'Error trying to delete file', filePath, errorMessage: err.message });
       return null;
     },
   );

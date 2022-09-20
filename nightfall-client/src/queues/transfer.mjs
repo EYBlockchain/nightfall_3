@@ -11,10 +11,13 @@ export default function receiveMessage() {
     };
 
     try {
-      logger.debug(`transfer queue handler ${message.content.toString()}`);
+      logger.debug(`Transfer queue handler ${message.content.toString()}`);
+
       const txDataToSign = await transfer(JSON.parse(message.content.toString()));
-      logger.debug('returning raw transaction');
-      logger.trace(` raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+      logger.debug({
+        message: 'Returning raw transaction',
+        rawTransaction: JSON.stringify(txDataToSign, null, 2)
+      });
 
       response.data = { txDataToSign };
     } catch (err) {
