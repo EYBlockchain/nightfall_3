@@ -70,25 +70,6 @@ export async function getLatestTree() {
   return t;
 }
 
-export async function getTreeByRoot(treeRoot) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const { root, frontier, leafCount } = (await db
-    .collection(TIMBER_COLLECTION)
-    .findOne({ root: treeRoot })) ?? { root: 0, frontier: [], leafCount: 0 };
-  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
-  return t;
-}
-
-export async function getTreeByBlockNumberL2(blockNumberL2) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const { root, frontier, leafCount } =
-    (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
-  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
-  return t;
-}
-
 export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -243,21 +224,6 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
-export async function getTransactionByCommitment(commitmentHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  // We should not delete from a spent mempool
-  const query = { commitments: commitmentHash };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-}
-
-export async function getTransactionByNullifier(nullifierHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  // We should not delete from a spent mempool
-  const query = { nullifiers: nullifierHash };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-}
 export async function getTransactionByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
