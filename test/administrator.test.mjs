@@ -8,6 +8,7 @@ import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../cli/lib/nf3.mjs';
 import contractABIs from './contracts.mjs';
+import { MultiSig } from './multisig/multisig.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -15,7 +16,7 @@ chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
 
 const getContractInstance = async (contractName, nf3) => {
   const abi = contractABIs[contractName];
@@ -30,6 +31,8 @@ describe(`Testing Administrator`, () => {
   let proposersContractInstance;
   let shieldContractInstance;
   let challengesContractInstance;
+  let multisigContractInstance;
+  let multisig;
 
   before(async () => {
     nf3User = new Nf3(signingKeys.user1, environment);
@@ -40,8 +43,21 @@ describe(`Testing Administrator`, () => {
     proposersContractInstance = await getContractInstance('Proposers', nf3User);
     shieldContractInstance = await getContractInstance('Shield', nf3User);
     challengesContractInstance = await getContractInstance('Challenges', nf3User);
+    multisigContractInstance = await getContractInstance('SimpleMultiSig', nf3User);
 
     if (!(await nf3User.healthcheck('client'))) throw new Error('Healthcheck failed');
+    multisig = new MultiSig(
+      nf3User.web3,
+      {
+        state: stateContractInstance,
+        proposers: proposersContractInstance,
+        shield: shieldContractInstance,
+        challenges: challengesContractInstance,
+        multisig: multisigContractInstance,
+      },
+      2,
+      await nf3User.web3.eth.getChainId(),
+    );
   });
 
   describe(`Basic tests`, () => {
@@ -50,21 +66,33 @@ describe(`Testing Administrator`, () => {
       const ownerShield = await shieldContractInstance.methods.owner().call();
       const ownerProposers = await proposersContractInstance.methods.owner().call();
       const ownerChallenges = await challengesContractInstance.methods.owner().call();
-      const multisigAddress = await nf3User.getContractAddress('SimpleMultiSig');
+      const multisigAddress = multisigContractInstance.options.address;
 
-      if (ownerState.toUpperCase() !== multisigAddress.toUpperCase()) this.skip();
-      // console.log(ownerState, multisigAddress);
       expect(ownerState.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
       expect(ownerShield.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
       expect(ownerProposers.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
       expect(ownerChallenges.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
     });
 
-    /* it('Be able to transfer ownership of contracts from multisig to a specific one', async () => {
+    it('Be able to transfer ownership of contracts from multisig to a specific one', async () => {
       // TODO: calls to multisig to change contracts ownership. Now you can do it manually through nightfall-administrator
+      await multisig.transferOwnership(
+        signingKeys.user1,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContractInstance.methods.nonce().call(),
+      );
+      const approved = await multisig.transferOwnership(
+        signingKeys.user1,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContractInstance.methods.nonce().call(),
+      );
+
+      await multisig.executeMultiSigTransactions(approved, signingKeys.user1);
       const owner = await stateContractInstance.methods.owner().call();
       expect(owner.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
-    }); */
+    });
 
     it('Set boot proposer', async () => {
       await shieldContractInstance.methods
@@ -157,6 +185,33 @@ describe(`Testing Administrator`, () => {
 
       expect(paused1).to.be.equal(true);
       expect(paused2).to.be.equal(false);
+    });
+
+    it('Restore multisig', async () => {
+      const multisigAddress = multisigContractInstance.options.address;
+      await Promise.all([
+        shieldContractInstance.methods
+          .transferOwnership(multisigAddress)
+          .send({ from: nf3User.ethereumAddress }),
+        stateContractInstance.methods
+          .transferOwnership(multisigAddress)
+          .send({ from: nf3User.ethereumAddress }),
+        proposersContractInstance.methods
+          .transferOwnership(multisigAddress)
+          .send({ from: nf3User.ethereumAddress }),
+        challengesContractInstance.methods
+          .transferOwnership(multisigAddress)
+          .send({ from: nf3User.ethereumAddress }),
+      ]);
+
+      const ownerState = await stateContractInstance.methods.owner().call();
+      const ownerShield = await shieldContractInstance.methods.owner().call();
+      const ownerProposers = await proposersContractInstance.methods.owner().call();
+      const ownerChallenges = await challengesContractInstance.methods.owner().call();
+      expect(ownerState.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
+      expect(ownerShield.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
+      expect(ownerProposers.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
+      expect(ownerChallenges.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
     });
   });
 
