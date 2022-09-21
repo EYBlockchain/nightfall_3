@@ -16,6 +16,8 @@ const web3 = Web3.connection();
 
 const fsPromises = fs.promises;
 
+const { USE_STUBS } = config;
+
 /**
 This function will ping the Zokrates service until it is up before attempting
 to use it. This is because the deployer must start before Zokrates as it needs
@@ -68,7 +70,7 @@ async function setupCircuits() {
   // first, we need to find the circuits we're going to do the setup on
   const circuitsToSetup = await (
     await walk(config.CIRCUITS_HOME)
-  ).filter(c => (config.USE_STUBS ? c.includes('_stub') : !c.includes('_stub')));
+  ).filter(c => (USE_STUBS ? c.includes('_stub') : !c.includes('_stub')));
   // then we'll get all of the vks (some may not exist but we'll handle that in
   // a moments). We'll grab promises and then resolve them after the loop.
   const resp = [];
@@ -123,32 +125,27 @@ async function setupCircuits() {
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
       const folderpath = circuit.slice(0, -4); // remove the .zok extension
 
-      let call;
-      if (config.USE_STUBS) {
-        call = keyRegistry.methods
-          .registerVerificationKey(vkArray, config.VK_IDS[folderpath.slice(0, -5)])
-          .encodeABI();
-      } else {
-        call = keyRegistry.methods
-          .registerVerificationKey(vkArray, config.VK_IDS[folderpath])
-          .encodeABI();
-      }
+      const call = keyRegistry.methods.registerVerificationKey(
+        vkArray,
+        config.VK_IDS[USE_STUBS ? folderpath.slice(0, -5) : folderpath],
+      );
 
-      // when deploying on infura - do serial tx execution to avoid nonce issue
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
-      // if (config.ETH_PRIVATE_KEY) {
-      const tx = {
-        from: process.env.FROM_ADDRESS,
-        to: keyRegistry.options.address,
-        data: call,
-        // value: fee,
-        gas: config.WEB3_OPTIONS.gas,
-        gasPrice: 20000000000,
-      };
+      if (config.ETH_PRIVATE_KEY) {
+        const tx = {
+          from: process.env.FROM_ADDRESS,
+          to: keyRegistry.options.address,
+          data: call.encodeABI(),
+          // value: fee,
+          gas: config.WEB3_OPTIONS.gas,
+          gasPrice: 20000000000,
+        };
 
-      const signed = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
-
-      await web3.eth.sendSignedTransaction(signed.rawTransaction);
+        const signed = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
+        await web3.eth.sendSignedTransaction(signed.rawTransaction);
+      } else {
+        call.send();
+      }
     } catch (err) {
       logger.error(err);
       throw new Error(err);

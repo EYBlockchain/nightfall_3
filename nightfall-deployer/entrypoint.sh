@@ -11,7 +11,7 @@ npx truffle compile --all
 
 if [ -z "${UPGRADE}" ]; then
   echo 'Deploying contracts'
-  npx truffle migrate --to 3 --network=${ETH_NETWORK} --verbose-rpc
+  npx truffle migrate --to 3 --network=${ETH_NETWORK}
 else
   echo 'Upgrading contracts'
   npx truffle migrate -f 4 --network=${ETH_NETWORK} --skip-dry-run

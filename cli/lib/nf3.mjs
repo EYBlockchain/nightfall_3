@@ -224,7 +224,7 @@ class Nf3 {
   async estimateGas(contractAddress, unsignedTransaction) {
     let gasLimit;
     try {
-      const res = await axios.post('http://localhost:10002', {
+      const res = await axios.post(this.web3WsUrl, {
         method: 'eth_estimateGas',
         params: [
           {
@@ -305,37 +305,6 @@ class Nf3 {
           });
       });
       return promiseTest;
-
-      // try {
-      //   console.log(
-      //     JSON.stringify({
-      //       method: 'eth_sendRawTransaction',
-      //       params: [signed.rawTransaction],
-      //     }),
-      //   );
-      //   // const res = await axios.post('http://localhost:10002', {
-      //   //   method: 'eth_sendRawTransaction',
-      //   //   params: [signed.rawTransaction],
-      //   // });
-      //   // console.log(res);
-      //   // const hash = await axios.post('http://localhost:10002', {
-      //   //   method: 'eth_getTransactionByHash',
-      //   //   params: [res.data.result],
-      //   // });
-
-      //   // console.log(hash);
-      // } catch (err) {
-      //   console.log(err);
-      // }
-      // this.web3.eth
-      //   .sendSignedTransaction(signed.rawTransaction)
-      //   // .once('sent', payload => console.log(payload))
-      //   .once('transactionHash', hash => {
-      //     console.log(`Transaction ${hash} has been received.`);
-      //     // this.web3.getTransa
-      //     // resolve(hash);
-      //   })
-      //   .on('error', error => console.log(error));
     }
     return this.web3.eth.sendTransaction(tx);
   }

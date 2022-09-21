@@ -7,9 +7,9 @@ import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
 
-const web3 = Web3.connection();
-
 async function setupContracts() {
+  const web3 = Web3.connection();
+
   const stateInstance = await waitForContract('State');
   console.log(`address of State contract is ${stateInstance.options.address}`);
 
@@ -23,70 +23,45 @@ async function setupContracts() {
   const proposers = await waitForContract('Proposers');
   const shield = await waitForContract('Shield');
   const challenges = await waitForContract('Challenges');
-  const state = await waitForContract('State');
 
-  // when deploying on infura
-  // do serial registration to predict nonce
-  // or, if we have the owner's private key, sign with that, rather than use an unlocked account
-  let data;
-  let signed;
-  if (config.ETH_PRIVATE_KEY) {
-    data = proposers.methods.setStateContract(stateInstance.options.address).encodeABI();
-    tx.data = data;
-    signed = await web3.eth.accounts.signTransaction(
-      { ...tx, to: proposers.options.address },
-      config.ETH_PRIVATE_KEY,
-    );
-    await web3.eth.sendSignedTransaction(signed.rawTransaction);
-
-    data = shield.methods.setStateContract(stateInstance.options.address).encodeABI();
-    tx.data = data;
-    signed = await web3.eth.accounts.signTransaction(
-      { ...tx, to: shield.options.address },
-      config.ETH_PRIVATE_KEY,
-    );
-    await web3.eth.sendSignedTransaction(signed.rawTransaction);
-
-    data = challenges.methods.setStateContract(stateInstance.options.address).encodeABI();
-    tx.data = data;
-    signed = await web3.eth.accounts.signTransaction(
-      { ...tx, to: challenges.options.address },
-      config.ETH_PRIVATE_KEY,
-    );
-    await web3.eth.sendSignedTransaction(signed.rawTransaction);
-  }
-
-  // our last action as the deployer is to hand off our onlyOwner powers to the
-  // multisig contract
   const simpleMultiSigAddress = (await waitForContract('SimpleMultiSig')).options.address;
 
-  data = shield.methods.transferOwnership(simpleMultiSigAddress).encodeABI();
-  tx.data = data;
-  signed = await web3.eth.accounts.signTransaction(
-    { ...tx, to: shield.options.address },
-    config.ETH_PRIVATE_KEY,
-  );
+  const contracts = {
+    proposers,
+    shield,
+    challenges,
+  };
 
-  data = state.methods.transferOwnership(simpleMultiSigAddress).encodeABI();
-  tx.data = data;
-  signed = await web3.eth.accounts.signTransaction(
-    { ...tx, to: state.options.address },
-    config.ETH_PRIVATE_KEY,
-  );
+  for await (const contractName of ['proposers', 'shield', 'challenges']) {
+    console.log(contractName);
 
-  data = proposers.methods.transferOwnership(simpleMultiSigAddress).encodeABI();
-  tx.data = data;
-  signed = await web3.eth.accounts.signTransaction(
-    { ...tx, to: proposers.options.address },
-    config.ETH_PRIVATE_KEY,
-  );
+    const setStateContract = contracts[contractName].methods.setStateContract(
+      stateInstance.options.address,
+    );
 
-  data = challenges.methods.transferOwnership(simpleMultiSigAddress).encodeABI();
-  tx.data = data;
-  signed = await web3.eth.accounts.signTransaction(
-    { ...tx, to: challenges.options.address },
-    config.ETH_PRIVATE_KEY,
-  );
+    const transferOwnership =
+      contracts[contractName].methods.transferOwnership(simpleMultiSigAddress);
+
+    if (!config.ETH_PRIVATE_KEY) {
+      setStateContract.send();
+      transferOwnership.send();
+    } else {
+      tx.data = setStateContract.encodeABI();
+      let signed = await web3.eth.accounts.signTransaction(
+        { ...tx, to: contracts[contractName].options.address },
+        config.ETH_PRIVATE_KEY,
+      );
+      await web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+      tx.data = transferOwnership.encodeABI();
+      signed = await web3.eth.accounts.signTransaction(
+        { ...tx, to: contracts[contractName].options.address },
+        config.ETH_PRIVATE_KEY,
+      );
+      await web3.eth.sendSignedTransaction(signed.rawTransaction);
+    }
+  }
+  Web3.disconnect();
 }
 
 export default setupContracts;

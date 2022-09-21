@@ -7,7 +7,7 @@ import config from 'config';
 import { generalise } from 'general-number';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
-import { expectTransaction, Web3Client, depositNTransactions } from '../../utils.mjs';
+import { expectTransaction, Web3Client } from '../../utils.mjs';
 import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -39,7 +39,6 @@ let stateAddress;
 const eventLogs = [];
 let availableTokenIds;
 
-<<<<<<< HEAD
 const emptyL2 = async () => {
   let count = await nf3Users[0].unprocessedTransactionCount();
 
@@ -51,61 +50,6 @@ const emptyL2 = async () => {
 
   await nf3Users[0].makeBlockNow();
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-=======
-/*
-  This function tries to zero the number of unprocessed transactions in the optimist node
-  that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
-  L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
-  of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
-*/
-const emptyL2 = async nf3Instance => {
-  let count = await nf3Instance.unprocessedTransactionCount();
-  while (count !== 0) {
-    if (count % txPerBlock) {
-      await depositNTransactions(
-        nf3Instance,
-        count % txPerBlock ? count % txPerBlock : txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
-
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    } else {
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    }
-
-    count = await nf3Instance.unprocessedTransactionCount();
-  }
-
-<<<<<<< HEAD
-  // await depositNTransactions(
-  //   nf3Instance,
-  //   txPerBlock,
-  //   erc20Address,
-  //   tokenType,
-  //   transferValue,
-  //   tokenId,
-  //   fee,
-  // );
-  await nf3Proposer1.makeBlockNow();
-
-  // eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
->>>>>>> 7e3f8cfc (feat: tokens test working)
-=======
-  await depositNTransactions(
-    nf3Instance,
-    txPerBlock,
-    erc20Address,
-    tokenType,
-    transferValue,
-    tokenId,
-    fee,
-  );
-  eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
->>>>>>> 71992ec9 (feat: tokens test working)
 };
 
 describe('ERC1155 tests', () => {
@@ -152,42 +96,6 @@ describe('ERC1155 tests', () => {
         )?.balance || 0;
 
       // We create enough transactions to fill blocks full of deposits.
-      let res = await nf3Users[0].deposit(
-        erc1155Address,
-        tokenTypeERC1155,
-        transferValue,
-        availableTokenIds[0],
-        fee,
-      );
-      expectTransaction(res);
-
-      res = await nf3Users[0].deposit(
-        erc1155Address,
-        tokenTypeERC1155,
-        transferValue,
-        availableTokenIds[1],
-        fee,
-      );
-      expectTransaction(res);
-      // Wait until we see the right number of blocks appear
-      eventLogs = await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-
-      await emptyL2(nf3Users[0]);
-      balances = await nf3Users[0].getLayer2Balances();
-
-      const balanceAfter = [
-        balances[erc1155Address]?.find(e => e.tokenId === 0).balance,
-        balances[erc1155Address]?.find(e => e.tokenId === 1).balance,
-      ];
-
-      expect(balanceAfter[0] - balanceBefore[0]).to.be.equal(transferValue);
-      expect(balanceAfter[1] - balanceBefore[1]).to.be.equal(transferValue);
-    });
-
-    it('should deposit some ERC1155 crypto into a ZKP commitment and make a block with a single transaction', async function () {
-      // We create enough transactions to fill blocks full of deposits.
-      const res0 = await nf3Proposer1.makeBlockNow();
-      expect(res0.data).to.be.equal('Making short block');
       const res = await nf3Users[0].deposit(
         erc1155Address,
         tokenTypeERC1155,
