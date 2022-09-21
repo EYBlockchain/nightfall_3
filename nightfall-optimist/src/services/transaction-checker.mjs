@@ -198,7 +198,7 @@ async function verifyProof(transaction) {
   ).all.hex(32);
 
   const res = await verify({
-    vk: new VerificationKey(vkArray),
+    vk: new VerificationKey(vkArray, CURVE, PROVING_SCHEME),
     proof: new Proof(transaction.proof),
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
