@@ -726,25 +726,6 @@ class Nf3 {
   }
 
   /**
-    Registers a proposer locally with the Optimist instance only.  This will cause
-    Optimist to make blocks when this proposer is current but these will revert if
-    the proposer isn't registered on the blockchain too.  This method is useful only
-    if the proposer is already registered on the blockchain (has paid their bond) and
-    for some reason the Optimist instance does not know about them, e.g. a new instance
-    has been created. The method 'registerProposer' will both register the proposer
-    with the blockchain and register locally with the optimist instance. So, if
-    that method has been used successfully, there is no need to also call this method
-    @method
-    @async
-    @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
-    */
-  async registerProposerLocally() {
-    return axios.post(`${this.optimistBaseUrl}/proposer/registerlocally`, {
-      address: this.ethereumAddress,
-    });
-  }
-
-  /**
     De-registers an existing proposer.
     It will use the address of the Ethereum Signing key that is holds to de-register
     the proposer.
