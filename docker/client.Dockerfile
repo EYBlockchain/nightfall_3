@@ -1,4 +1,4 @@
-FROM mongo:focal
+FROM mongo:4.4.1-bionic
 
 # install node
 RUN apt-get update

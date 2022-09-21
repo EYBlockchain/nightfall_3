@@ -17,7 +17,6 @@ const web3 = Web3.connection();
 const fsPromises = fs.promises;
 
 const { USE_STUBS } = config;
-
 /**
 This function will ping the Zokrates service until it is up before attempting
 to use it. This is because the deployer must start before Zokrates as it needs
@@ -138,7 +137,6 @@ async function setupCircuits() {
           from: process.env.FROM_ADDRESS,
           to: keyRegistry.options.address,
           data: call.encodeABI(),
-          // value: fee,
           gas: config.WEB3_OPTIONS.gas,
           gasPrice: 20000000000,
         };

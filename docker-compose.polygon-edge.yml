@@ -12,8 +12,6 @@ services:
 
   deployer:
     environment:
-      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
-      # startup routines will wait for a blockchain client to be reachable on this network
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 10002
       BLOCKCHAIN_PATH: /ws

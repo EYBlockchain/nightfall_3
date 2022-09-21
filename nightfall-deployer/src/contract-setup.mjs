@@ -6,12 +6,13 @@ address of the contract that holds global state (State.sol)
 import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
+import logger from 'general-number/logger';
 
 async function setupContracts() {
   const web3 = Web3.connection();
 
   const stateInstance = await waitForContract('State');
-  console.log(`address of State contract is ${stateInstance.options.address}`);
+  logger.debug(`address of State contract is ${stateInstance.options.address}`);
 
   const tx = {
     from: process.env.FROM_ADDRESS,
@@ -61,7 +62,6 @@ async function setupContracts() {
       await web3.eth.sendSignedTransaction(signed.rawTransaction);
     }
   }
-  Web3.disconnect();
 }
 
 export default setupContracts;
