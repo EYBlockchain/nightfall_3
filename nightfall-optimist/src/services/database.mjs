@@ -479,7 +479,8 @@ export async function resetUnsuccessfulBlockProposedTransactions() {
 export async function getMempoolTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TRANSACTIONS_COLLECTION).find().toArray();
+  const query = { mempool: true }; // Transactions in the mempool
+  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
 }
 
 /**

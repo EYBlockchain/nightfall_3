@@ -78,7 +78,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: npm run nightfall-down
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -123,7 +123,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: npm run nightfall-down
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -138,7 +138,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
         with:
-          node-version: '14.17.0'
+          node-version: '16.17.0'
 
       - name: Start Containers
         run: |
@@ -159,8 +159,6 @@ jobs:
 
       - name: Run optimist sync test
         run: |
-          npm ci
-          docker wait nightfall_3_deployer_1
           npm run test-optimist-sync
 
       - name: Debug logs - after optimist sync test run
@@ -169,7 +167,7 @@ jobs:
 
       - name: If optimist sync test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: npm run nightfall-down
 
       - name: If optimist sync test failed, upload logs files as artifacts
         if: failure()
@@ -221,7 +219,7 @@ jobs:
 #      - name: If integration test failed, shutdown the Containers
 #        if: failure()
 #        run: |
-#          docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.ganache.yml -f docker-compose.adversary.yml down -v
+#          npm run nightfall-down
 #          ./geth-standalone -d
 #
 #      - name: If integration test failed, upload logs files as artifacts
@@ -264,7 +262,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: npm run nightfall-down
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -311,7 +309,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: npm run nightfall-down
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -367,9 +365,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run:
-          docker-compose -f docker-compose.yml -f docker-compose.ganache.yml -f
-          docker-compose.apps.yml down -v
+        run: npm run nightfall-down
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()

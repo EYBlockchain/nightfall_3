@@ -1,23 +1,25 @@
-from "hashes/poseidon/poseidon.zok" import main as poseidon
-import "utils/pack/bool/unpack128.zok" as unpack128
+from "hashes/poseidon/poseidon.zok" import main as poseidon;
+import "utils/pack/bool/unpack128.zok" as unpack128;
 
-def orderFields(bool order, field pathNode, field siblingNode)->(field[2]):
-	field right = if order then pathNode else siblingNode fi
-	field left = if order then siblingNode else pathNode fi
-	return [left, right]
+def orderFields(bool order, field pathNode, field siblingNode)->field[2]{
+	field right = if order { pathNode } else { siblingNode };
+	field left = if order { siblingNode } else { pathNode };
+	return [left, right];
+}
 
 // Merkle Tree root calculation given:
 //  Path - sibling path up the tree
 //  Order - LeafIndex, decomposed to binary for calculation up the tree
 //  Hash - input commitment (leafValue)
 
-def main(field[33] siblingPath, field order, field hash)->(bool):
+def main(field[33] siblingPath, field order, field mut hash)->bool{
 
-  bool[128] orderBits = unpack128(order)
+  bool[128] orderBits = unpack128(order);
 
-  for u32 i in 0..32 do
-    u32 j = 32-i // since we have 33 path elts but we don't include the root
-    u32 k = 127-i // since order is unpacked to 128 bits
-    hash = poseidon(orderFields(orderBits[k], hash, siblingPath[j]))
-  endfor
-  return hash == siblingPath[0]
+  for u32 i in 0..32 {
+    u32 j = 32-i; // since we have 33 path elts but we don't include the root
+    u32 k = 127-i; // since order is unpacked to 128 bits
+    hash = poseidon(orderFields(orderBits[k], hash, siblingPath[j]));
+  }
+  return hash == siblingPath[0];
+}

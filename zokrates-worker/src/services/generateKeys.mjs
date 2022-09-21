@@ -15,14 +15,12 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
 
   logger.info({
     msg: 'Compiling circuits...',
-    filepath,
     circuitsPath: `${circuitsPath}/${filepath}`,
     outputPath: `${outputPath}/${circuitDir}`,
-    circuitName: `${circuitName}_out`,
+    circuitName: `${circuitName}`,
     curve,
   });
 
-  logger.info('Compile...');
   await compile(
     `${circuitsPath}/${filepath}`,
     `${outputPath}/${circuitDir}`,
