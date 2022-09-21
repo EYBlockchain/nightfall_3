@@ -63,7 +63,7 @@ export default async ({
     ({ proof, inputs: publicInputs } = await getProofFromFile(`${folderpath}/${proofJsonFile}`));
 
     logger.debug({ 
-      message: 'Responding with proof and inputs',
+      msg: 'Responding with proof and inputs',
       proof: JSON.stringify(proof, null, 2),
       publicInputs
     });

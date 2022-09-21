@@ -9,12 +9,12 @@ const router = express.Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    logger.debug({ message: 'Received request to /vk', query: req.query });
+    logger.debug({ msg: 'Received request to /vk', query: req.query });
 
     const { folderpath } = req.query;
     const vk = getVerificationKeyByCircuitPath(folderpath);
 
-    logger.debug({ message: 'Returning vk', vk });
+    logger.debug({ msg: 'Returning vk', vk });
 
     return res.send({ vk });
   } catch (err) {

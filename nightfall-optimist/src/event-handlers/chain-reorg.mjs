@@ -76,7 +76,7 @@ export async function removeBlockProposedEventHandler(eventObject) {
   // then we delete the Timber record associated with this block
   const res = await deleteTreeByBlockNumberL2(block.blockNumberL2);
 
-  logger.debug({ message: 'Deleted tree with block number', blockNumberL2: block.blockNumberL2, res });
+  logger.debug({ msg: 'Deleted tree with block number', blockNumberL2: block.blockNumberL2, res });
 
   /*
    we also need to remove any nullifiers that were added by this block, because
@@ -95,7 +95,7 @@ export async function removeNewCurrentProposerEventHandler(data, args) {
   const { proposer: currentProposer } = data.returnValues;
   const [proposer] = args;
   try {
-    logger.info({ message: 'Proposer Removal Handler', currentProposer });
+    logger.info({ msg: 'Proposer Removal Handler', currentProposer });
 
     /*
      the chain re-org will have reverted the proposer so we need to update our
@@ -110,7 +110,7 @@ export async function removeNewCurrentProposerEventHandler(data, args) {
   } catch (err) {
     // handle errors
     logger.error(err);
-    throw new Error(err); // pass error handling up the call stack
+    throw err; // pass error handling up the call stack
   }
 }
 

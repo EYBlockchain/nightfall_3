@@ -12,7 +12,7 @@ export const advanceWithdrawal = async transaction => {
       .advanceWithdrawal(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
 
-    logger.info({ message: 'Transaction data to sign', txDataToSign });
+    logger.info({ msg: 'Transaction data to sign', txDataToSign });
 
     return { txDataToSign };
   } catch (error) {

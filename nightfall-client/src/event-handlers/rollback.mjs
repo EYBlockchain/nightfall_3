@@ -23,7 +23,7 @@ async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
 
   logger.info({
-    message: 'Received Rollback event, with layer 2 block number', 
+    msg: 'Received Rollback event, with layer 2 block number', 
     blockNumberL2
   });
 
@@ -45,13 +45,13 @@ async function rollbackEventHandler(data) {
    */
   const { result } = await clearNullified(Number(blockNumberL2));
   logger.debug({
-    message: 'Rollback removed nullfiers',
+    msg: 'Rollback removed nullfiers',
     total: result.nModified
   });
 
   const cResult = await clearOnChain(Number(blockNumberL2));
   logger.debug({
-    message: 'Rollback moved commitments off-chain',
+    msg: 'Rollback moved commitments off-chain',
     total: cResult.result.nModified
   });
 

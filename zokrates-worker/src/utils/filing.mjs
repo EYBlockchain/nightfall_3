@@ -15,7 +15,7 @@ const readJsonFile = filePath => {
     return JSON.parse(file);
   }
 
-  logger.warn({ message: 'Unable to locate file', filePath });
+  logger.warn({ msg: 'Unable to locate file', filePath });
 
   return null;
 };
@@ -59,7 +59,7 @@ export const deleteFile = async filePath => {
       recursive: true,
     },
     err => {
-      logger.error({ message: 'Error trying to delete file', filePath, errorMessage: err.message });
+      logger.error({ msg: 'Error trying to delete file', filePath, errorMessage: err.message });
       return null;
     },
   );

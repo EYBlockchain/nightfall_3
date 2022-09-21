@@ -14,7 +14,7 @@ router.get('/:contract', async (req, res, next) => {
   try {
     const address = await getContractAddress(contract);
 
-    logger.debug({ message: 'Returning contract address', address });
+    logger.debug({ msg: 'Returning contract address', address });
 
     res.json({ address });
   } catch (err) {

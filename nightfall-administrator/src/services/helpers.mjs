@@ -49,7 +49,7 @@ export async function addSignedTransaction(signed) {
   const numberOfSignatures = await checkThreshold(signed.messageHash);
 
   logger.info({
-    message: 'Number of signatures for this transaction',
+    msg: 'Number of signatures for this transaction',
     total: numberOfSignatures
   });
 

@@ -72,15 +72,6 @@ export async function countNullifiers(nullifiers) {
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
 
-// // function to get count of transaction hashes. Used to decide if we should store
-// // incoming blocks or transactions.
-// export async function countTransactionHashes(transactionHashes) {
-//   const connection = await mongo.connection(MONGO_URL);
-//   const query = { transactionHash: { $in: transactionHashes } };
-//   const db = connection.db(COMMITMENTS_DB);
-//   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
-// }
-
 // function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
 export async function countWithdrawTransactionHashes(transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
@@ -212,7 +203,6 @@ export async function clearNullified(blockNumberL2) {
 // as above, but removes isOnChain for deposit commitments
 export async function clearOnChain(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  // const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
   // Clear all onchains
   const query = { isOnChain: { $gte: Number(blockNumberL2) } };
   const update = {

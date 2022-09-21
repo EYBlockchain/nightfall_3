@@ -95,7 +95,7 @@ export async function conditionalMakeBlock(proposer) {
         the current proposer. In this case, this proposer's transactions will still be mined but
         the transactions will fail and proposer will lose gas fees
       */
-      logger.debug({ message: 'Block Assembler will create blocks at once', numberOfProposableL2Blocks });
+      logger.debug({ msg: 'Block Assembler will create blocks at once', numberOfProposableL2Blocks });
 
       for (let i = 0; i < numberOfProposableL2Blocks; i++) {
         // work out if this is a normal size block or a short one
@@ -107,7 +107,7 @@ export async function conditionalMakeBlock(proposer) {
           numberOfTransactionsInBlock,
         );
         
-        logger.info({ message: 'Block Assembler - New Block created', block: JSON.stringify(block, null, 2) });
+        logger.info({ msg: 'Block Assembler - New Block created', block: JSON.stringify(block, null, 2) });
 
         // propose this block to the Shield contract here
         const unsignedProposeBlockTransaction = await (
@@ -145,7 +145,7 @@ export async function conditionalMakeBlock(proposer) {
           logger.debug('Send unsigned block-assembler transactions to ws client');
         } else if (ws) {
           increaseProposerBlockNotSent();
-          logger.debug({ message: 'Block not sent', socketState: ws.readyState });
+          logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
         } else {
           increaseProposerBlockNotSent();
           logger.debug('Block not sent. Uinitialized socket');

@@ -38,7 +38,7 @@ async function withdraw(withdrawParams) {
   );
 
   logger.debug({
-    message: 'Withdraw ERC Token and Fee addresses',
+    msg: 'Withdraw ERC Token and Fee addresses',
     ercAddress: ercAddress.hex(32).toLowerCase(),
     maticAddress: maticAddress.hex(32)
   });
@@ -92,7 +92,7 @@ async function withdraw(withdrawParams) {
     );
 
     logger.debug({ 
-      message: 'Witness input is',
+      msg: 'Witness input is',
       witness: witness.join(' ')
     });
 
@@ -107,7 +107,7 @@ async function withdraw(withdrawParams) {
     });
 
     logger.trace({
-      message: 'Received response from generate-proof',
+      msg: 'Received response from generate-proof',
       response: JSON.stringify(res.data, null, 2)
     });
 

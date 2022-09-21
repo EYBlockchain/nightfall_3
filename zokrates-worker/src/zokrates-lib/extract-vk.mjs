@@ -7,7 +7,7 @@ const readJsonFile = filePath => {
     return JSON.parse(file);
   }
 
-  logger.debug({ message: 'Unable to locate file: ', filePath });
+  logger.debug({ msg: 'Unable to locate file: ', filePath });
 
   return null;
 };

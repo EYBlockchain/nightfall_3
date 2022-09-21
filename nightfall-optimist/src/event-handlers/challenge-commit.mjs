@@ -6,7 +6,7 @@ async function committedToChallengeEventHandler(data) {
   const { commitHash, sender } = data.returnValues;
 
   logger.debug({
-    message: 'Received commmitted to challenge event', commitHash, sender
+    msg: 'Received commmitted to challenge event', commitHash, sender
   });
 
   logger.info('A challenge commitment has been mined');

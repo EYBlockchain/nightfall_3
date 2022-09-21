@@ -3,7 +3,7 @@ import { notifyInstantWithdrawalRequest } from '../services/instant-withdrawal.m
 
 async function instantWithdrawalRequestedEventHandler(data) {
   logger.debug({
-    message: 'Instant withdrawal request', data: JSON.stringify(data.returnValues, null, 2)
+    msg: 'Instant withdrawal request', data: JSON.stringify(data.returnValues, null, 2)
   });
 
   const { withdrawTransactionHash, paidBy, amount } = data.returnValues;

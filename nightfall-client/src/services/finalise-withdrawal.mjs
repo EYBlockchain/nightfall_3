@@ -49,6 +49,6 @@ export async function finaliseWithdrawal(transactionHash) {
     // store the commitment on successful computation of the transaction
     return { rawTransaction };
   } catch (err) {
-    throw new Error(err); // let the caller handle the error
+    throw err; // let the caller handle the error
   }
 }

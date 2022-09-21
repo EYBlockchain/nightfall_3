@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post('/', async (req, res, next) => {
   try {
-    logger.debug({ message: 'Received request to /verify', reqBody: req.body });
+    logger.debug({ msg: 'Received request to /verify', reqBody: req.body });
 
     const { vk, proof, provingScheme, backend, curve, inputs } = req.body;
     // sometimes the public inputs are already included in the proof
@@ -15,7 +15,7 @@ router.post('/', async (req, res, next) => {
     else combinedProof = proof;
     const verifies = await verify(vk, combinedProof, provingScheme, backend, curve);
 
-    logger.debug({ message: 'Verify returned', verifies });
+    logger.debug({ msg: 'Verify returned', verifies });
 
     return res.send({ verifies });
   } catch (err) {

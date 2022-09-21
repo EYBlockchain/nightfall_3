@@ -13,7 +13,7 @@ export default function receiveMessage() {
     try {
       const txDataToSign = await withdraw(JSON.parse(message.content.toString()));
       logger.debug({
-        message: 'Returning raw transaction',
+        msg: 'Returning raw transaction',
         rawTransaction: JSON.stringify(txDataToSign, null, 2)
       });
 

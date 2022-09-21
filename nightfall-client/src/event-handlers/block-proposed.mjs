@@ -36,7 +36,7 @@ async function blockProposedEventHandler(data, syncing) {
   const { transactions, block } = await getProposeBlockCalldata(data);
 
   logger.info({
-    message: 'Received Block Proposed event with Layer 2 Block Number and Tx Hash',
+    msg: 'Received Block Proposed event with Layer 2 Block Number and Tx Hash',
     blockNumberL2: block.blockNumberL2, 
     transactionHashL1,
   });
@@ -135,7 +135,7 @@ async function blockProposedEventHandler(data, syncing) {
   }
 
   logger.debug({ 
-    message: 'Saved tree for L2 block', 
+    msg: 'Saved tree for L2 block', 
     blockNumberL2: block.blockNumberL2
   });
 

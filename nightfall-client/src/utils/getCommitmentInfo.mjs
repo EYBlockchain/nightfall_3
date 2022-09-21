@@ -134,7 +134,7 @@ export const getCommitmentInfo = async txInfo => {
     const roots = commitmentTreeInfo.map(l => l.root);
 
     logger.info({
-      message: 'Constructing transfer transaction with blockNumberL2s and roots',
+      msg: 'Constructing transfer transaction with blockNumberL2s and roots',
       blockNumberL2s, 
       roots,
     });

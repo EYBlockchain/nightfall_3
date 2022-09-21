@@ -62,7 +62,7 @@ export async function commitToChallenge(txDataToSign) {
   ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
 
   logger.debug({
-    message: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
+    msg: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
     rawTransaction: JSON.stringify(commitToSign, null, 2)
   });
 }

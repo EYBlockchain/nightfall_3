@@ -36,7 +36,7 @@ async function checkAlreadyInBlock(_transaction) {
   transaction.mempool = false; // we don't want to put it in another block or we'll get a duplicate transaction challenge
 
   logger.debug({
-    message: 'Transaction has been re-mined but is already in a block - mempool set to false',
+    msg: 'Transaction has been re-mined but is already in a block - mempool set to false',
     transactionHash: transaction.transactionHash
   });
 
@@ -60,7 +60,7 @@ async function transactionSubmittedEventHandler(eventParams) {
   }
 
   logger.info({
-    message: 'Transaction Handler - New transaction received.', 
+    msg: 'Transaction Handler - New transaction received.', 
     transaction: JSON.stringify(transaction, null, 2)
   });
 

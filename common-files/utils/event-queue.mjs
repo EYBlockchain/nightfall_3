@@ -74,7 +74,7 @@ function pauseQueue(priority) {
         queues[priority].autostart = false;
         queues[priority].stop();
 
-        logger.info({ message: 'Queue has been paused', priority });
+        logger.info({ msg: 'Queue has been paused', priority });
 
         resolve();
       });
@@ -95,7 +95,7 @@ function unpauseQueue(priority) {
  * multiple times before you go ahead and process it.
  */
 function waitForConfirmation(eventObject) {
-  logger.debug({ message: 'Confirming event', event: eventObject.event });
+  logger.debug({ msg: 'Confirming event', event: eventObject.event });
 
   const { transactionHash, blockNumber } = eventObject;
   return new Promise((resolve, reject) => {
@@ -122,7 +122,7 @@ function waitForConfirmation(eventObject) {
         clearInterval(id);
 
         logger.debug({ 
-          message: 'Event has been confirmed',
+          msg: 'Event has been confirmed',
           event: eventObject.event, 
           total: currentBlock.number - blockNumber
         });
@@ -164,7 +164,7 @@ async function queueManager(eventObject, eventArgs) {
   const priority = eventHandlers.priority[eventObject.event];
 
   logger.info({
-    message: 'Queueing event', 
+    msg: 'Queueing event', 
     event: eventObject.event, 
     transactionHash: eventObject.transactionHash,
     priority
@@ -183,7 +183,7 @@ async function queueManager(eventObject, eventArgs) {
   // the queue shouldn't get too long if we're keeping up with the blockchain.
   if (queues[priority].length > MAX_QUEUE) {
     logger.warn({ 
-      message: 'The event queue has more events than the max configured',
+      msg: 'The event queue has more events than the max configured',
       maxConfigured: MAX_QUEUE,
       totalEventsQueued: queues[priority].length
     });

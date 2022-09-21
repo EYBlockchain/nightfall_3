@@ -40,18 +40,15 @@ export async function finaliseWithdrawal(transactionHash, shieldContractAddress)
     SHIELD_CONTRACT_NAME,
     shieldContractAddress,
   );
-  try {
-    const rawTransaction = await shieldContractInstance.methods
-      .finaliseWithdrawal(
-        buildSolidityStruct(block),
-        Transaction.buildSolidityStruct(transactions[index]),
-        index,
-        siblingPath,
-      )
-      .encodeABI();
-    // store the commitment on successful computation of the transaction
-    return { rawTransaction };
-  } catch (err) {
-    throw new Error(err); // let the caller handle the error
-  }
+
+  const rawTransaction = await shieldContractInstance.methods
+    .finaliseWithdrawal(
+      buildSolidityStruct(block),
+      Transaction.buildSolidityStruct(transactions[index]),
+      index,
+      siblingPath,
+    )
+    .encodeABI();
+  // store the commitment on successful computation of the transaction
+  return { rawTransaction };
 }

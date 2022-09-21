@@ -33,7 +33,7 @@ async function deposit(items) {
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
 
   logger.debug({
-    message: 'Hash of new commitment', 
+    msg: 'Hash of new commitment', 
     hash: commitment.hash.hex()
   });
 
@@ -58,7 +58,7 @@ async function deposit(items) {
 
   const witness = computeCircuitInputs(publicData, privateData, [0, 0, 0, 0], maticAddress);
   logger.debug({
-    message: 'witness input is', 
+    msg: 'witness input is', 
     witness: witness.join(' ')
   });
 
@@ -73,7 +73,7 @@ async function deposit(items) {
   });
 
   logger.trace({
-    message: 'Received response from generete-proof', 
+    msg: 'Received response from generete-proof', 
     response: JSON.stringify(res.data, null, 2)
   });
 

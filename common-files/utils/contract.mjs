@@ -38,7 +38,7 @@ export async function getContractInstance(contractName, deployedAddress) {
     const accounts = await web3.eth.getAccounts();
 
     logger.debug({
-      message: 'blockchain accounts', 
+      msg: 'blockchain accounts', 
       accounts
     });
 
@@ -80,7 +80,7 @@ export async function deploy(contractName, constructorParams, { from, gas, passw
     })
     .then(deployedContractInstance => {
       logger.info({
-        message: 'Contract deployed',
+        msg: 'Contract deployed',
         contractName,
         address: deployedContractInstance.options.address,
       }); // instance with the new contract address
@@ -112,7 +112,7 @@ export async function waitForContract(contractName) {
       errorCount++;
 
       logger.warn({
-        message: 'Unable to get contract instance, retrying in 3 secs',
+        msg: 'Unable to get contract instance, retrying in 3 secs',
         contractName
       });
 

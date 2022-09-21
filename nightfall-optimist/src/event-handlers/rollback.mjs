@@ -25,7 +25,7 @@ import { signalRollbackCompleted } from '../services/block-assembler.mjs';
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
 
-  logger.info({ message: 'Received Rollback event', blockNumberL2 });
+  logger.info({ msg: 'Received Rollback event', blockNumberL2 });
 
   // reset the Block class cached values.
   Block.rollback();
@@ -62,7 +62,7 @@ async function rollbackEventHandler(data) {
         });
       } catch (error) {
         logger.error({
-          message: `Invalid checkTransaction: ${blockTransactions[j].transactionHash}`,
+          msg: `Invalid checkTransaction: ${blockTransactions[j].transactionHash}`,
           error
         });
 

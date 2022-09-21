@@ -31,14 +31,13 @@ function setupWebsocketEvents(ws, socketName) {
     ws.ping();
     // set up a timeout - will close the websocket, which will trigger a reconnect
     timeoutID = setTimeout(() => {
-      logger.warn({ message: 'Timed out waiting for ping response', socketName });
+      logger.warn({ msg: 'Timed out waiting for ping response', socketName });
       ws.terminate();
     }, 2 * WEBSOCKET_PING_TIME);
   }, WEBSOCKET_PING_TIME);
 
   // check we received a pong in time (clears the timer set by the pinger)
   ws.on('pong', () => {
-    // logger.debug(`Got pong from ${socketName} websocket`);
     clearTimeout(timeoutID);
   });
   ws.on('error', () => {
@@ -78,7 +77,7 @@ export async function waitForContract(contractName) {
       error = err;
       errorCount++;
 
-      logger.warn({ message: 'Unable to get a contract instance will try again in 3 secs', contractName });
+      logger.warn({ msg: 'Unable to get a contract instance will try again in 3 secs', contractName });
 
       await new Promise(resolve => setTimeout(() => resolve(), 3000));
     }

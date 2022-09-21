@@ -12,7 +12,7 @@ async function newCurrentProposerEventHandler(data, args) {
   const { proposer: currentProposer } = data.returnValues;
   const [proposer] = args;
   try {
-    logger.info({ message: 'Proposer Handler', currentProposer });
+    logger.info({ msg: 'Proposer Handler', currentProposer });
 
     /*
      remember the current proposer.  We don't store it in the DB as it's an

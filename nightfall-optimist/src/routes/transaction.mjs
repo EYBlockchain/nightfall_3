@@ -11,7 +11,7 @@ router.post('/advanceWithdrawal', async (req, res, next) => {
 
     const withdrawTransaction = await getTransactionByTransactionHash(transactionHash);
 
-    logger.info({ message: 'Performing advanceWithdraw', transactionHash, withdrawTransaction });
+    logger.info({ msg: 'Performing advanceWithdraw', transactionHash, withdrawTransaction });
 
     const result = await advanceWithdrawal(withdrawTransaction);
     res.json(result);

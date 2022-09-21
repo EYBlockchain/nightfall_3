@@ -33,7 +33,7 @@ export const syncState = async (
   toBlock = 'latest',
   eventFilter = 'allEvents',
 ) => {
-  logger.info({ message: 'SyncState parameters', fromBlock, toBlock, eventFilter });
+  logger.info({ msg: 'SyncState parameters', fromBlock, toBlock, eventFilter });
 
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // Rollback, BlockProposed
 

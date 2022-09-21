@@ -97,7 +97,7 @@ async function setupCircuits() {
       // we don't have an existing vk so let's generate one
       try {
         logger.info({
-          message: 'No existing verification key. Fear not, I will make a new one: calling generate keys', 
+          msg: 'No existing verification key. Fear not, I will make a new one: calling generate keys', 
           circuit
         });
 
@@ -116,7 +116,7 @@ async function setupCircuits() {
       }
     } else { 
       logger.info({
-        message: 'Verification key exists: trusted setup skipped',
+        msg: 'Verification key exists: trusted setup skipped',
         circuit
       });
     }

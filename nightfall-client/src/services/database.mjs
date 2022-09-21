@@ -187,7 +187,7 @@ export async function getBlockByTransactionHashL1(transactionHashL1) {
  */
 export async function clearBlockNumberL1ForBlock(transactionHashL1) {
   logger.debug({
-    message: 'Clearing layer 1 blockNumber for L2 block with L1 hash', 
+    msg: 'Clearing layer 1 blockNumber for L2 block with L1 hash', 
     transactionHashL1
   });
 

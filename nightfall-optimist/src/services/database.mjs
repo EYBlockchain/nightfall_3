@@ -31,7 +31,7 @@ export async function saveCommit(commitHash, txDataToSign) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
 
-  logger.debug({ message: 'Saving commit hash', commitHash });
+  logger.debug({ msg: 'Saving commit hash', commitHash });
 
   return db.collection(COMMIT_COLLECTION).insertOne({ commitHash, txDataToSign });
 }
@@ -66,7 +66,7 @@ export async function saveBlock(_block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
 
-  logger.debug({ message: 'Saving block', block: JSON.stringify(block, null, 2) });
+  logger.debug({ msg: 'Saving block', block: JSON.stringify(block, null, 2) });
 
   /* there are three possibilities here:
    1) We're just saving a block for the first time.  This is fine
@@ -196,7 +196,7 @@ export async function saveInvalidBlock(_block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
 
-  logger.debug({ message: 'Saving invalid block', block: JSON.stringify(block, null, 2) });
+  logger.debug({ msg: 'Saving invalid block', block: JSON.stringify(block, null, 2) });
 
   const query = { blockHash: block.blockHash };
   const update = { $set: block };
@@ -214,7 +214,7 @@ export async function setRegisteredProposerAddress(address, url) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
 
-  logger.debug({ message: 'Saving proposer address', address });
+  logger.debug({ msg: 'Saving proposer address', address });
 
   const data = { _id: address };
   const update = { $set: { url } };
@@ -230,7 +230,7 @@ export async function isRegisteredProposerAddressMine(address) {
   const db = connection.db(OPTIMIST_DB);
   const metadata = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
 
-  logger.debug({ message: 'Found registered proposer', proposer: JSON.stringify(metadata, null, 2) });
+  logger.debug({ msg: 'Found registered proposer', proposer: JSON.stringify(metadata, null, 2) });
 
   return metadata;
 }
@@ -246,7 +246,7 @@ export async function deleteRegisteredProposerAddress(address) {
   if (foundProposer) {
     await db.collection(PROPOSER_COLLECTION).deleteOne(query);
 
-    logger.debug({ message: 'Deleted registered proposer', address });
+    logger.debug({ msg: 'Deleted registered proposer', address });
   }
 }
 
@@ -278,7 +278,7 @@ export async function saveTransaction(_transaction) {
   };
 
   logger.debug({
-    message: 'Saving transaction with layer 1 block number',
+    msg: 'Saving transaction with layer 1 block number',
     transactionHash: _transaction.transactionHash,
     blockNumber: _transaction.blockNumber
   });
@@ -418,7 +418,7 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
  * and given a new L1 transactionHash)
  */
 export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
-  logger.debug({ message: 'Clearing layer 1 blockNumber for L2 transaction with L1 hash', transactionHashL1 });
+  logger.debug({ msg: 'Clearing layer 1 blockNumber for L2 transaction with L1 hash', transactionHashL1 });
 
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);

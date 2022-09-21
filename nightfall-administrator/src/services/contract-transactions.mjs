@@ -137,7 +137,7 @@ export async function setBootChallenger(
   ).address;
 
   logger.info({
-    message: 'Boot challenger',
+    msg: 'Boot challenger',
     newChallenger
   });
 

@@ -45,7 +45,7 @@ async function start() {
         const [deposit, withdraw] = await getTokenRestrictions(tokenName);
 
         logger.info({
-          message: 'Token restrictions are',
+          msg: 'Token restrictions are',
           deposit,
           withdraw
         });
@@ -135,13 +135,13 @@ async function start() {
         nonce = await multiSigInstance.methods.nonce().call();
       }
       logger.info({
-        message: 'get nonce',
+        msg: 'get nonce',
         nonce
       });
 
     } catch (err) {
       logger.error({
-        message: 'Could not get nonce. Are you connected to the blockchain?',
+        msg: 'Could not get nonce. Are you connected to the blockchain?',
         err
       });
     }

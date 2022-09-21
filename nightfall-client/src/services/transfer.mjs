@@ -45,7 +45,7 @@ async function transfer(transferParams) {
   );
 
   logger.debug({
-    message: 'Transfer ERC Token & Fee addresses',
+    msg: 'Transfer ERC Token & Fee addresses',
     ercAddress: ercAddress.hex(32).toLowerCase(),
     maticAddress: maticAddress.hex(32)
   });
@@ -112,7 +112,7 @@ async function transfer(transferParams) {
     );
 
     logger.debug({
-      message: 'witness input is', 
+      msg: 'witness input is', 
       witness: witness.join(' ')
     });
 
@@ -127,7 +127,7 @@ async function transfer(transferParams) {
     });
 
     logger.trace({
-      message: 'Received response from generete-proof', 
+      msg: 'Received response from generete-proof', 
       response: JSON.stringify(res.data, null, 2)
     });
 
@@ -148,7 +148,7 @@ async function transfer(transferParams) {
     });
 
     logger.debug({
-      message: 'Client made transaction',
+      msg: 'Client made transaction',
       transaction: JSON.stringify(
         optimisticTransferTransaction,
         null,
