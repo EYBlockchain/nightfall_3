@@ -8,7 +8,7 @@ router.post('/', async (req, res, next) => {
   try {
     logger.debug({
       msg: 'Received request to /verify',
-      reqBody: req.body
+      reqBody: req.body,
     });
 
     const { vk, proof, backend, inputs } = req.body;
@@ -20,7 +20,7 @@ router.post('/', async (req, res, next) => {
 
     logger.debug({
       msg: 'Verify returned',
-      verifies
+      verifies,
     });
 
     return res.send({ verifies });
