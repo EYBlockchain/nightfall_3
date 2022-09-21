@@ -110,8 +110,8 @@ router.post('/update', async (req, res, next) => {
 router.get('/current-proposer', async (req, res, next) => {
   logger.debug(`list proposals endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
   try {
-    const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const { thisAddress: currentProposer } = await proposersContractInstance.methods
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const { thisAddress: currentProposer } = await stateContractInstance.methods
       .currentProposer()
       .call();
 
@@ -166,8 +166,8 @@ router.post('/de-register', async (req, res, next) => {
 router.post('/withdrawBond', async (req, res, next) => {
   logger.debug(`withdrawBond endpoint received GET`);
   try {
-    const stateContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await stateContractInstance.methods.withdrawBond().encodeABI();
+    const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const txDataToSign = await proposerContractInstance.methods.withdrawBond().encodeABI();
     res.json({ txDataToSign });
   } catch (error) {
     logger.error(error);
