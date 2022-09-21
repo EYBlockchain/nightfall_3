@@ -201,14 +201,14 @@ export class MultiSig {
 
   async executeMultiSigTransactions(approved, executor) {
     for (const approval of approved) {
-      console.log('Executing multisig transaction');
+      logger.info('Executing multisig transaction');
       // eslint-disable-next-line no-await-in-loop
       await this.executeMultiSigTransaction(approval.slice(0, this.SIGNATURE_THRESHOLD), executor);
     }
   }
 
   transferOwnership(newOwnerPrivateKey, signingKey, executorAddress, nonce) {
-    console.log('NONCE:', nonce);
+    logger.info(`transferOwnership: nonce is ${nonce}`);
     const newOwner = this.web3.eth.accounts.privateKeyToAccount(newOwnerPrivateKey, true).address;
     return Promise.all(
       this.contractInstancesOwnables.map(async (ownable, i) => {
