@@ -11,7 +11,12 @@ def main(\
         u32_8_to_field(ephemeralKey),\
         u32_8_to_field(idTransfer)\
     ]);
-    assert(s == s);
+
+    field t = ercAddressTransfer * sum([\
+        u32_8_to_field(ephemeralKey),\
+        u32_8_to_field(idTransfer)\
+    ]);
+    assert(s == t);
 
     return true;
 }

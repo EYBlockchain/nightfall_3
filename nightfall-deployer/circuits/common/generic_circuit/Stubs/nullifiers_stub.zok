@@ -14,7 +14,12 @@ def main<NumNullifiers>(\
             rootKey[i], oldCommitmentValues[i],\
             oldCommitmentSalts[i],...paths[i], orders[i]\
         ]);
-        assert(s == s);
+
+        field t = nullifierRoots[i] * sum([\
+            rootKey[i], oldCommitmentValues[i],\
+            oldCommitmentSalts[i],...paths[i], orders[i]\
+        ]);
+        assert(s == t);
     }
 
     return true;
