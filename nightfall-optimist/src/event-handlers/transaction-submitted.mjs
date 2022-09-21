@@ -69,8 +69,7 @@ async function transactionSubmittedEventHandler(eventParams) {
     await checkTransaction(transaction, true);
 
     logger.info('Transaction checks passed');
-
-    saveTransaction({ ...transaction }); // then we need to save it
+    await saveTransaction({ ...transaction }); // then we need to save it
   } catch (err) {
     if (err instanceof TransactionError) {
       logger.warn(
@@ -80,7 +79,7 @@ async function transactionSubmittedEventHandler(eventParams) {
       logger.error(err);
     }
 
-    if (fromBlockProposer) saveTransaction({ ...transaction }); // then we need to save it
+    if (fromBlockProposer) await saveTransaction({ ...transaction }); // then we need to save it
   }
 }
 
