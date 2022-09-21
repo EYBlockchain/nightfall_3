@@ -13,10 +13,12 @@ function pairArray(a) {
 }
 
 class VerificationKey {
-  constructor(vkArray) {
+  constructor(vkArray, curve, scheme) {
     if (!Array.isArray(vkArray)) throw new Error('The input must be an array');
     if (vkArray.length % 2 !== 0)
       throw new Error('The verification array must have an even length');
+    this.scheme = scheme;
+    this.curve = curve;
     this.alpha = generalise(vkArray.slice(0, 2)).all.hex(32);
     this.beta = generalise([vkArray.slice(2, 4), vkArray.slice(4, 6)]).all.hex(32);
     this.gamma = generalise([vkArray.slice(6, 8), vkArray.slice(8, 10)]).all.hex(32);
