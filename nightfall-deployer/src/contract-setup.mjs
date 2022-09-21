@@ -34,8 +34,6 @@ async function setupContracts() {
   };
 
   for await (const contractName of ['proposers', 'shield', 'challenges']) {
-    console.log(contractName);
-
     const setStateContract = contracts[contractName].methods.setStateContract(
       stateInstance.options.address,
     );

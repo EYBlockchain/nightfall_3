@@ -138,7 +138,7 @@ async function setupCircuits() {
           to: keyRegistry.options.address,
           data: call.encodeABI(),
           gas: config.WEB3_OPTIONS.gas,
-          gasPrice: 20000000000,
+          gasPrice: config.WEB3_OPTIONS.gasPrice,
         };
 
         const signed = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
