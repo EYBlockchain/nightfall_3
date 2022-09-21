@@ -6,7 +6,7 @@ address of the contract that holds global state (State.sol)
 import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
-import logger from 'general-number/logger';
+import logger from 'common-files/utils/logger.mjs';
 
 async function setupContracts() {
   const web3 = Web3.connection();
