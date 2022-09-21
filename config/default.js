@@ -5,20 +5,6 @@ function configureAWSBucket() {
   return `${bucket}-${mode}`;
 }
 
-function parseCircuitFilesPath() {
-  let circuits = ['deposit', 'withdraw', 'single_transfer', 'double_transfer'];
-  if (process.env.USE_STUBS === 'true') circuits = circuits.map(circuit => `${circuit}_stub`);
-  const parsedPath = {};
-  for (const circuit of circuits) {
-    parsedPath[circuit] = {
-      abi: `circuits/${circuit}/artifacts/${circuit}-abi.json`,
-      program: `circuits/${circuit}/artifacts/${circuit}-program`,
-      pk: `circuits/${circuit}/keypair/${circuit}_pk.key`,
-    };
-  }
-  return parsedPath;
-}
-
 /* eslint-disable no-extend-native */
 BigInt.prototype.toJSON = function () {
   return `${this.toString()} BigInt`;
@@ -443,7 +429,6 @@ module.exports = {
 
   AWS: {
     s3Bucket: configureAWSBucket(),
-    circuitFiles: parseCircuitFilesPath(),
   },
 
   utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,

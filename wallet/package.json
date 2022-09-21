@@ -38,7 +38,7 @@
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.21.5",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "eslint-webpack-plugin": "^3.1.1",
+    "eslint-webpack-plugin": "^2.7.0",
     "ethereumjs-wallet": "^1.0.2",
     "file-loader": "6.1.1",
     "font-awesome": "4.7.0",
@@ -150,7 +150,7 @@
     "mocha": "^9.2.2",
     "react-error-overlay": "6.0.9",
     "react-scripts": "4.0.3",
-    "react-test-renderer": "^18.1.0",
+    "react-test-renderer": "^17.0.2",
     "single-spa-react": "^4.6.1",
     "ts-node": "^10.7.0"
   },
@@ -167,7 +167,10 @@
   },
   "overrides": {
     "swarm-js": {
-      "got": "11.8.5"
+      "got": "12.1.0"
+    },
+    "web3-bzz": {
+      "got": "12.1.0"
     }
   }
 }
