@@ -1,4 +1,5 @@
 /* ignore unused exports */
+/* eslint-disable import/first, import/no-unresolved, import/order */
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
@@ -34,9 +35,9 @@ let error = process.env.BAD_TX_SEQUENCE
 let resetErrorIdx = false;
 let indexOffset = 0;
 
-// eslint-disable-next-line import/first, import/no-unresolved
-import { Transaction } from '../classes/index.mjs';
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import { Transaction } from '../classes/index.mjs';
+
 const { BN128_GROUP_ORDER } = config;
 
 // Duplicate Commitment -> { mempool: false, transactionType: [0,1] } -> overwrite with a duplicate spent commitment
