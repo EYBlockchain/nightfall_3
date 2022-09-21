@@ -46,9 +46,6 @@ library MerkleTree_Stateless {
 
     // event Output(bytes32[2] input, bytes32[1] output, uint prevNodeIndex, uint nodeIndex); // for debugging only
 
-    uint256 constant treeHeight = 32; //change back to 32 after testing
-    uint256 constant treeWidth = 2**treeHeight; // 2 ** treeHeight
-
     /*
     Whilst ordinarily, we'd work solely with bytes32, we need to truncate nodeValues up the tree. Therefore, we need to declare certain variables with lower byte-lengths:
     LEAF_HASHLENGTH = 32 bytes;
@@ -60,134 +57,201 @@ library MerkleTree_Stateless {
     // bytes27 zero = 0x000000000000000000000000000000000000000000000000000000;
 
     /**
-    @notice Get the index of the frontier (or 'storage slot') into which we will next store a nodeValue (based on the leafIndex currently being inserted). See the top-level README for a detailed explanation.
-    @return slot uint - the index of the frontier (or 'storage slot') into which we will next store a nodeValue
+    @notice Insert multiple leaves into the Merkle Tree, and then update the root, The user must update and persistently stored the new frontier.
+    @param _frontier - the current Frontier value
+    @param _lastLeafIndex - the index of the last leave inserted
     */
-    function getFrontierSlot(uint256 leafIndex) public pure returns (uint256 slot) {
-        slot = 0;
-        if (leafIndex % 2 == 1) {
-            uint256 exp1 = 1;
-            uint256 pow1 = 2;
-            uint256 pow2 = pow1 << 1;
-            while (slot == 0) {
-                if ((leafIndex + 1 - pow1) % pow2 == 0) {
-                    slot = exp1;
-                } else {
-                    pow1 = pow2;
-                    pow2 = pow2 << 1;
-                    exp1++;
+    function calculateRoot(
+        bytes32[33] memory _frontier,
+        uint256 _lastLeafIndex
+    )
+        public 
+        returns (bytes32 root)
+    {
+
+        address addr = address(Poseidon);
+        bytes4 sig = bytes4(keccak256("poseidon(uint256,uint256)")); //Function signature
+
+        uint256 nodeValue = 0;
+        uint256 nodeIndex = 0;
+
+        uint256 slot = 0;
+
+        assembly {
+
+            let x := mload(0x40)
+
+            function getFrontierSlot(index)-> slotFrontier {
+                slotFrontier := 0
+                if eq(mod(index, 2),1) {
+                    let exp1 := 1
+                    let pow1 := 2
+                    for { } eq(slotFrontier, 0) { } {
+                        switch eq(mod(sub(add(index, 1), pow1), shl(1, pow1)),0)
+                        case true {
+                            slotFrontier:= exp1
+                        }
+                        case false {
+                            pow1 := shl(1, pow1)
+                            exp1 := add(exp1, 1)
+                        }
+                    }
                 }
             }
+
+            slot := getFrontierSlot(_lastLeafIndex)
+            nodeValue := mload(add(_frontier, mul(0x20, sub(slot, 1))))
+
+            // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
+            for { let level := add(slot, 1)} lt(level, 33) { level := add(level, 1) } {
+                switch eq(mod(nodeIndex, 2),0)
+                case true {
+                    mstore(x, sig)
+                    mstore(add(x, 0x04), mload(add(_frontier, mul(0x20, sub(level, 1)))))
+                    mstore(add(x,0x24), nodeValue)
+
+
+                    pop(call(      // poseidon hash of concatenation of each node
+                        gas(), // 5k gas
+                        addr, // To addr
+                        0,    // No value
+                        x,    // Inputs are stored at location x
+                        0x44, // Inputs are 68 bytes long
+                        x,  // Store output over input (saves space)
+                        0x20)) // Outputs are 32 bytes long
+                    
+                    nodeValue := mload(x)
+                    nodeIndex := div(sub(nodeIndex, 1), 2) // move one row up the tree
+                }
+                case false {
+                    mstore(x, sig)
+                    mstore(add(x, 0x04), nodeValue)
+                    mstore(add(x,0x24), 0)
+
+                    pop(call(      // poseidon hash of concatenation of each node
+                        gas(), // 5k gas
+                        addr, // To addr
+                        0,    // No value
+                        x,    // Inputs are stored at location x
+                        0x44, // Inputs are 68 bytes long
+                        x,    // Store output over input (saves space)
+                        0x20)) // Outputs are 32 bytes long
+
+                    nodeValue := mload(x)
+                    nodeIndex := div(nodeIndex, 2) // move one row up the tree
+                }
+            }
+
+            root := nodeValue
         }
+
+        root = bytes32(root);  
+
+        return (root); //the root of the tree
     }
 
-    /**
-    @notice Insert multiple leaves into the Merkle Tree, and then update the root, The user must update and persistently stored the new frontier.
-    @param leafValues - the values of the leaves being inserted.
-    @param _frontier - the current Frontier value
-    @return root bytes32[] - the root of the merkle tree, after all the inserts.
-    */
-    function insertLeaves(
-        bytes32[] memory leafValues,
+    function updateFrontier(
+        bytes32[] calldata leafValues,
         bytes32[33] memory _frontier,
-        uint256 _leafCount
+        uint256 _leafCountBefore
     )
-        public
-        pure
-        returns (
-            bytes32 root,
-            bytes32[33] memory,
-            uint256
-        )
+        public 
+        returns (bytes32[33] memory)
     {
-        uint256 numberOfLeaves = leafValues.length;
 
         // check that space exists in the tree:
-        require(treeWidth > _leafCount, 'There is no space left in the tree.');
-        if (numberOfLeaves > treeWidth - _leafCount) {
-            uint256 numberOfExcessLeaves = numberOfLeaves - (treeWidth - _leafCount);
-            // remove the excess leaves, because we only want to emit those we've added as an event:
-            for (uint256 xs = 0; xs < numberOfExcessLeaves; xs++) {
-                /*
-                  CAUTION!!! This attempts to succinctly achieve leafValues.pop() on a **memory** dynamic array. Not thoroughly tested!
-                  Credit: https://ethereum.stackexchange.com/a/51897/45916
-                */
+        require(2**32 > _leafCountBefore, "There is no space left in the tree.");
+        uint256 numberOfLeaves = leafValues.length > 2**32 - _leafCountBefore 
+            ? 2**32 - _leafCountBefore 
+            : leafValues.length;
 
-                assembly {
-                    mstore(leafValues, sub(mload(leafValues), 1))
+        address addr = address(Poseidon);
+        bytes4 sig = bytes4(keccak256("poseidon(uint256,uint256)")); //Function signature
+
+        uint256 nodeValue = 0;
+        uint256 nodeIndex = 0;
+
+        uint256 slot = 0;
+
+        assembly {
+
+            let x := mload(0x40)
+
+            function getFrontierSlot(index)-> slotFrontier {
+                slotFrontier := 0
+                if eq(mod(index, 2),1) {
+                    let exp1 := 1
+                    let pow1 := 2
+                    for { } eq(slotFrontier, 0) { } {
+                        switch eq(mod(sub(add(index, 1), pow1), shl(1, pow1)),0)
+                        case true {
+                            slotFrontier:= exp1
+                        }
+                        case false {
+                            pow1 := shl(1, pow1)
+                            exp1 := add(exp1, 1)
+                        }
+                    }
                 }
             }
-            numberOfLeaves = treeWidth - _leafCount;
-        }
+          
+            for { let index := 0 } lt(index, numberOfLeaves) { index := add(index, 1) } {
 
-        uint256 slot;
-        uint256 nodeIndex;
-        uint256 prevNodeIndex;
-        uint256 nodeValue;
+                nodeValue := calldataload(add(add(0x4, calldataload(0x04)), mul(0x20, add(index, 1))))
+                nodeIndex := add(add(index, _leafCountBefore), sub(exp(2,32), 1)) // convert the index to a nodeIndex
+                
+                slot := getFrontierSlot(add(index, _leafCountBefore)) // determine at which level we will next need to store a nodeValue
 
-        uint256 output; // the output of the hash
+                switch eq(slot, 0)
+                case true {
+                    mstore(_frontier, nodeValue) // update Frontier
+                } 
+                case false {
+                    // hash up to the level whose nodeValue we'll store in the frontier slot:
+                    for { let level := 0 } lt(level, slot) { level := add(level, 1) } {
+                        switch eq(mod(nodeIndex, 2),0)
+                        case true {
+                            // even nodeIndex
+                            mstore(x, sig)
+                            mstore(add(x, 0x04), mload(add(_frontier, mul(0x20, level))))
+                            mstore(add(x,0x24), nodeValue)
 
-        // consider each new leaf in turn, from left to right:
-        for (uint256 leafIndex = _leafCount; leafIndex < _leafCount + numberOfLeaves; leafIndex++) {
-            nodeValue = uint256(leafValues[leafIndex - _leafCount]);
-            nodeIndex = leafIndex + treeWidth - 1; // convert the leafIndex to a nodeIndex
+                            pop(call(      //This is the critical change (Pop the top stack value)
+                                gas(), // 5k gas
+                                addr, // To addr
+                                0,    // No value
+                                x,    // Inputs are stored at location x
+                                0x44, // Inputs are 68 bytes long
+                                x,  // Store output over input (saves space)
+                                0x20)) // Outputs are 32 bytes long
+                            
+                            nodeValue := mload(x)
+                            nodeIndex := div(sub(nodeIndex, 1), 2) // move one row up the tree
+                        }
+                        case false {
+                            // odd nodeIndex
+                            mstore(x, sig)
+                            mstore(add(x,0x04), nodeValue)
+                            mstore(add(x,0x24), 0)
 
-            slot = getFrontierSlot(leafIndex); // determine at which level we will next need to store a nodeValue
+                            pop(call(      // poseidon hash of concatenation of each node
+                                gas(), // 5k gas
+                                addr, // To addr
+                                0,    // No value
+                                x,    // Inputs are stored at location x
+                                0x44, // Inputs are 68 bytes long
+                                x,    // Store output over input (saves space)
+                                0x20)) // Outputs are 32 bytes long
 
-            if (slot == 0) {
-                _frontier[slot] = bytes32(nodeValue); // update Frontier
-                continue;
-            }
-
-            // hash up to the level whose nodeValue we'll store in the frontier slot:
-            for (uint256 level = 1; level <= slot; level++) {
-                if (nodeIndex % 2 == 0) {
-                    // even nodeIndex
-                    output = Poseidon.poseidon(uint256(_frontier[level - 1]), nodeValue); // poseidon hash of concatenation of each node
-
-                    nodeValue = output; // the parentValue, but will become the nodeValue of the next level
-                    prevNodeIndex = nodeIndex;
-                    nodeIndex = (nodeIndex - 1) / 2; // move one row up the tree
-                    // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
-                } else {
-                    // odd nodeIndex
-                    output = Poseidon.poseidon(nodeValue, 0); // poseidon hash of concatenation of each node
-
-                    nodeValue = output; // the parentValue, but will become the nodeValue of the next level
-                    prevNodeIndex = nodeIndex;
-                    nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
-                    // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
+                            nodeValue := mload(x)
+                            nodeIndex := div(nodeIndex, 2) // move one row up the tree
+                        }
+                    }
+                    mstore(add(_frontier, mul(0x20, slot)), nodeValue) // update frontier
                 }
             }
-            _frontier[slot] = bytes32(nodeValue); // update frontier
         }
 
-        // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-        for (uint256 level = slot + 1; level <= treeHeight; level++) {
-            if (nodeIndex % 2 == 0) {
-                // even nodeIndex
-                output = Poseidon.poseidon(uint256(_frontier[level - 1]), nodeValue); // poseidon hash of concatenation of each node
-
-                nodeValue = output; // the parentValue, but will become the nodeValue of the next level
-                prevNodeIndex = nodeIndex;
-                nodeIndex = (nodeIndex - 1) / 2; // the parentIndex, but will become the nodeIndex of the next level
-                // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
-            } else {
-                // odd nodeIndex
-                output = Poseidon.poseidon(nodeValue, 0); // poseidon hash of concatenation of each node
-
-                nodeValue = output; // the parentValue, but will become the nodeValue of the next level
-                prevNodeIndex = nodeIndex;
-                nodeIndex = nodeIndex / 2; // the parentIndex, but will become the nodeIndex of the next level
-                // emit Output(input, output, prevNodeIndex, nodeIndex); // for debugging only
-            }
-        }
-
-        root = bytes32(nodeValue);
-
-        //emit NewLeaves(_leafCount, leafValues, root); // this event is what the merkle-tree microservice's filter will listen for.
-
-        _leafCount += numberOfLeaves; // the incrememnting of leafCount costs us 20k for the first leaf, and 5k thereafter
-        return (root, _frontier, _leafCount); //the root of the tree
+        return _frontier; //the root of the tree
     }
 }

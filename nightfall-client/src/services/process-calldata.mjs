@@ -19,14 +19,23 @@ async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root, blockNumberL2, previousBlockHash, transactionHashesRoot] =
-    blockData;
+  const [
+    leafCount,
+    proposer,
+    root,
+    blockNumberL2,
+    previousBlockHash,
+    frontierHash,
+    transactionHashesRoot,
+  ] = blockData;
+
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
     blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
+    frontierHash,
     transactionHashesRoot,
   };
   const transactions = transactionsData.map(t => {
