@@ -1,8 +1,13 @@
 {
-  "name": "cli",
-  "version": "1.0.0",
+  "name": "@polygon-nightfall/cli",
+  "version": "0.0.1",
   "description": "A command line interface for Nightfall_3",
   "main": "build/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "cli"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "babel lib -d build"
@@ -38,10 +43,6 @@
     "swarm-js": {
       "got": "11.8.5"
     }
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/EYBlockchain/nightfall_3.git"
   },
   "keywords": [
     "cli",

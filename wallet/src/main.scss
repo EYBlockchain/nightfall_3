@@ -1,5 +1,5 @@
 @import '~bootstrap/dist/css/bootstrap.min.css';
-@import "~bootstrap/scss/bootstrap";
+@import '~bootstrap/scss/bootstrap';
 @import 'font-awesome/css/font-awesome.min.css';
 @import 'bootstrap-social/bootstrap-social.css';
 
@@ -45,4 +45,4 @@
 @import '../src/components/Transactions/withdraw.scss';
 
 // For the toast
-@import '../node_modules/react-toastify/dist/ReactToastify.css';
+@import 'react-toastify/dist/ReactToastify.css';

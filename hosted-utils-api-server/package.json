@@ -1,8 +1,13 @@
 {
-  "name": "hosted-utils-api-server",
-  "version": "1.0.0",
+  "name": "@polygon-nightfall/hosted-utils-api-server",
+  "version": "0.0.1",
   "description": "",
   "main": "src/index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "hosted-utils-api-server"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.mjs"

@@ -1,8 +1,13 @@
 {
-  "name": "synchronizer",
-  "version": "1.0.0",
+  "name": "@polygon-nightfall/synchronizer",
+  "version": "0.0.1",
   "description": "Exposes several endpoints related to the optimist information",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "apps/synchronizer"
+  },
   "scripts": {
     "start": "export $(cat ../../nightfall-optimist/optimist.env | xargs)  && node --trace-warnings src/app.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"

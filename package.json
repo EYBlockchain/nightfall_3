@@ -1,5 +1,5 @@
 {
-  "name": "nightfall_3",
+  "name": "@polygon-nightfall/mono",
   "version": "0.0.1",
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
@@ -27,14 +27,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EYBlockchain/optimistic-nightfall.git"
+    "url": "https://github.com/EYBlockchain/nightfall_3.git"
   },
   "author": "duncan.westland@uk.ey.com",
   "license": "CC0-1.0",
   "bugs": {
-    "url": "https://github.com/EYBlockchain/optimistic-nightfall/issues"
+    "url": "https://github.com/EYBlockchain/nightfall_3/issues"
   },
-  "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme",
+  "homepage": "https://github.com/EYBlockchain/nightfall_3#readme",
   "engines": {
     "node": ">=16.17 <17",
     "npm": ">=8.15 <9"
@@ -85,7 +85,6 @@
     "hardhat-gas-reporter": "^1.0.9",
     "husky": "^6.0.0",
     "jsdoc": "^3.6.10",
-    "minimist": "^1.2.6",
     "mocha": "^10.0.0",
     "mongodb": "^4.7.0",
     "prettier": "^2.2.1",
@@ -101,18 +100,25 @@
     "web3": "^1.7.5",
     "ws": "^7.5.0"
   },
-  "dependencies": {
-    "async-mutex": "^0.3.2",
-    "docker-compose": "^0.23.13",
-    "general-number": "^1.0.1",
-    "pino": "^8.3.1",
-    "pino-pretty": "^8.1.0",
-    "typescript": "^4.6.2"
-  },
   "overrides": {
     "got": "11.8.5",
     "yargs-parser": "5.0.1",
     "colors": "$colors",
     "hardhat": "$hardhat"
-  }
+  },
+  "workspaces": [
+    "./apps/challenger",
+    "./apps/proposer",
+    "./apps/synchronizer",
+    "./cli",
+    "./common-files",
+    "./config",
+    "./hosted-utils-api-server",
+    "./nightfall-administrator",
+    "./nightfall-client",
+    "./nightfall-deployer",
+    "./nightfall-optimist",
+    "./wallet",
+    "./zokrates-worker"
+  ]
 }

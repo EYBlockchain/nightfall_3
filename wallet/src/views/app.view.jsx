@@ -10,7 +10,7 @@ import TransactionPage from './transactionPage/index.jsx';
 import Web3 from '../common-files/utils/web3';
 import Bridge from './bridge/index.jsx';
 import { AccountProvider } from '../hooks/Account/index.tsx';
-import '../../node_modules/react-toastify/dist/ReactToastify.css';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function App() {
   // eslint-disable-next-line no-unused-vars

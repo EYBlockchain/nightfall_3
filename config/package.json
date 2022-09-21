@@ -1,0 +1,12 @@
+{
+  "name": "@polygon-nightfall/config",
+  "version": "0.0.1",
+  "description": "nightfall_3 config",
+  "main": "index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "config"
+  },
+  "license": "CC0-1.0"
+}

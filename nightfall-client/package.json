@@ -1,17 +1,18 @@
 {
-  "name": "nightfall-client",
-  "version": "1.9.0",
+  "name": "@polygon-nightfall/client",
+  "version": "0.0.1",
   "description": "A client for interacting with Nightfall",
   "main": "src/index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "nightfall-client"
+  },
   "scripts": {
     "prestart": "./pre-start-script.sh",
     "predev": "./pre-start-script.sh",
     "start": "node src/index.mjs",
     "dev": "nodemon src/index.mjs"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/EYBlockchain/nightfall-client.git"
   },
   "keywords": [
     "Nightfall",

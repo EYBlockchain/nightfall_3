@@ -1,12 +1,19 @@
 {
-  "name": "common-files",
-  "version": "1.0.0",
+  "name": "@polygon-nightfall/common-files",
+  "version": "0.0.1",
+  "description": "nightfall_3 common files",
+  "main": "index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "common-files"
+  },
   "scripts": {
     "test": "NODE_CONFIG_DIR=../config mocha --timeout 0 --bail --exit test/*.mjs"
   },
   "author": "“Liju <“liju.jose@gds.ey.com”>",
   "license": "CC0-1.0",
-  "description": "nightfall_3 common files",
+
   "dependencies": {
     "axios": "^0.21.4",
     "config": "^3.3.7",

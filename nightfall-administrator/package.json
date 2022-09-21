@@ -1,15 +1,16 @@
 {
-  "name": "nightfall-administrator",
-  "version": "1.0.0",
+  "name": "@polygon-nightfall/administrator",
+  "version": "0.0.1",
   "description": "Carries out smart-contract administrator functions",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "nightfall-administrator"
+  },
   "scripts": {
     "test": "test",
     "start": "node --trace-warnings src/index.mjs"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/EYBlockchain/nightfall_3.git"
   },
   "keywords": [
     "Nightfall_3",

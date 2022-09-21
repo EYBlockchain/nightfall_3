@@ -1,10 +1,13 @@
 {
-  "name": "@eyblockchain/zokrates-worker",
+  "name": "@polygon-nightfall/zokrates-worker",
+  "version": "0.0.1",
   "description": "ZoKrates worker",
-  "repository": "https://github.com/EYBlockchain/zokrates-worker.git",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "zokrates-worker"
+  },
   "license": "CC0-1.0",
-  "version": "0.0.0-semantically-released",
-  "private": true,
   "scripts": {
     "start": "node ./src/index.mjs",
     "dev": "nodemon ./src/index.mjs --ignore '**/*.params' --ignore '**/abi.json' --ignore '**/mpc_params/**' --ignore '**/*_out'",

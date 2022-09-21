@@ -1,15 +1,16 @@
 {
-  "name": "nightfall-deployer",
-  "version": "1.6.2",
+  "name": "@polygon-nightfall/deployer",
+  "version": "0.0.1",
   "description": "deploys fundamental smart contracts and circuits for Nightfall",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "nightfall-deployer"
+  },
   "scripts": {
     "prestart": "./pre-start-script.sh",
     "start": "node src/index.mjs"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/EYBlockchain/nightfall-deployer.git"
   },
   "keywords": [
     "Midnight"

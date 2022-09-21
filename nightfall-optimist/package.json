@@ -1,17 +1,18 @@
 {
-  "name": "nightfall-optimist",
-  "version": "0.1.0",
+  "name": "@polygon-nightfall/optimist",
+  "version": "0.0.1",
   "description": "A container for optimistic proposals and challenges",
   "main": "index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "nightfall-optimist"
+  },
   "scripts": {
     "prestart": "./pre-start-script.sh",
     "predev": "./pre-start-script.sh",
     "start": "node src/index.mjs",
     "dev": "nodemon src/index.mjs"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/EYBlockchain/nightfall-optimist.git"
   },
   "keywords": [
     "Nightfall",

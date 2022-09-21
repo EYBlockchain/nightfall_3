@@ -1,8 +1,13 @@
 {
-  "name": "nightfall-challenger",
-  "version": "1.0.0",
+  "name": "@polygon-nightfall/challenger",
+  "version": "0.0.1",
   "description": "A challenger for interacting with Nightfall",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "apps/challenger"
+  },
   "scripts": {
     "start": "node --trace-warnings src/app.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"

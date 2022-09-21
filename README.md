@@ -28,8 +28,7 @@ You will need a local copy of `node` and `npm` to run the tests and `git` to clo
 We have tested with versions 16.17.0 and 8.15.0 of `node` and `npm`, respectively.
 
 The application will run happily on a MacBook pro and most Linux implementations but Windows isn't
-supported. The code is in the process of being combined into a monorepo, so there may be a few code
-repetitions. We'll get to those soon but they don't affect functionality.
+supported.
 
 ### To setup the application
 
@@ -233,3 +232,45 @@ work of developing ZKP circuits.
 
 We hope that we have credited everyone who contributed significantly to this project but please let
 us know if we have missed you out and we'll add you here!
+
+## Packages
+
+- `@polygon-nightfall/challenger`
+- `@polygon-nightfall/proposer`
+- `@polygon-nightfall/synchronizer`
+- `@polygon-nightfall/cli`
+- `@polygon-nightfall/common-files`
+- `@polygon-nightfall/config`
+- `@polygon-nightfall/hosted-utils-api-server`
+- `@polygon-nightfall/administrator`
+- `@polygon-nightfall/client`
+- `@polygon-nightfall/deployer`
+- `@polygon-nightfall/optimist`
+- `@polygon-nightfall/wallet`
+- `@polygon-nightfall/zokrates-worker`
+
+## Working with npm worskapces
+
+### Installing package in a workspace
+
+```
+npm install ${PACKAGE_NAME} -w ${WORKSPACE_NAME}
+```
+
+### Run script in a workspace
+
+```
+npm run ${SCRIPT_NAME} --workspace=${WORKSPACE_NAME}
+```
+
+### Run script in multiple workspaces
+
+```
+npm run ${SCRIPT_NAME} --workspace=${WORKSPACE_NAME_1} --workspace=${WORKSPACE_NAME_2}
+```
+
+### Run script in all workspaces
+
+```
+npm run ${SCRIPT_NAME} --workspaces --if-present
+```

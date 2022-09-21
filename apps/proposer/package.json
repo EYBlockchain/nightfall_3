@@ -1,8 +1,13 @@
 {
-  "name": "proposer",
-  "version": "1.0.0",
+  "name": "@polygon-nightfall/proposer",
+  "version": "0.0.1",
   "description": "'makes a container with proposer functionality'",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/EYBlockchain/nightfall_3.git",
+    "directory": "apps/proposer"
+  },
   "scripts": {
     "start": "node --trace-warnings src/app.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
