@@ -1,15 +1,10 @@
 /* ignore unused exports */
-import config from 'config';
 import { ecsign } from 'ethereumjs-util';
 import logger from 'common-files/utils/logger.mjs';
-
-const { WEB3_OPTIONS } = config;
 
 // eslint-disable-next-line import/prefer-default-export
 export class MultiSig {
   transactions = [];
-
-  contractInstancesOwnables = [];
 
   MULTISIG_CONSTANTS = {};
 
@@ -17,7 +12,9 @@ export class MultiSig {
 
   web3;
 
-  constructor(web3Provider, contractInstances, signatureThreshold, chainId) {
+  gas;
+
+  constructor(web3Provider, multiSigContractInstance, signatureThreshold, chainId, gasLimit) {
     // constants used to create a mutlisig data structure
     const EIP712DOMAINTYPE_HASH =
       '0xd87cd6ef79d4e2b95e15ce8abf732db51ec771f1ca2edccf22a46c729ac56472';
@@ -35,17 +32,13 @@ export class MultiSig {
       NAME_HASH,
       VERSION_HASH,
       chainId,
-      contractInstances.multisig.options.address,
+      multiSigContractInstance.options.address,
       SALT,
     ];
-    this.contractInstancesOwnables.push(
-      contractInstances.shield,
-      contractInstances.state,
-      contractInstances.proposers,
-      contractInstances.challenges,
-    );
+
     this.SIGNATURE_THRESHOLD = signatureThreshold;
     this.web3 = web3Provider;
+    this.gas = gasLimit;
     const domainSeparatorEncoded = this.web3.eth.abi.encodeParameters(
       domainSeparatorABI,
       domainSeparator,
@@ -56,7 +49,7 @@ export class MultiSig {
     });
     this.MULTISIG_CONSTANTS.domainSeparator = DOMAIN_SEPARATOR;
     this.MULTISIG_CONSTANTS.txTypeHash = TXTYPE_HASH;
-    this.MULTISIG_CONSTANTS.multiSigInstance = contractInstances.multisig;
+    this.MULTISIG_CONSTANTS.multiSigInstance = multiSigContractInstance;
     this.MULTISIG_CONSTANTS.txInputHashABI = [
       'bytes32',
       'address',
@@ -73,7 +66,7 @@ export class MultiSig {
       from: this.web3.eth.accounts.privateKeyToAccount(signingKey).address,
       to: contractAddress,
       data: unsignedTransaction,
-      gas: WEB3_OPTIONS.gas,
+      gas: this.gas,
       gasPrice: await this.web3.eth.getGasPrice(),
     };
     const signed = await this.web3.eth.accounts.signTransaction(tx, signingKey);
@@ -162,7 +155,7 @@ export class MultiSig {
       unsignedTransactionData,
       nonce, // eslint-disable-line no-param-reassign
       executorAddress,
-      WEB3_OPTIONS.gas,
+      this.gas,
     );
     if (!signingKey) return this.addSignedTransaction({ messageHash }); // if no signing key is given, don't create a new signed transaction
     const { r, s, v } = ecsign(
@@ -193,7 +186,7 @@ export class MultiSig {
         0,
         signedArray[0].data,
         this.web3.eth.accounts.privateKeyToAccount(executor).address,
-        WEB3_OPTIONS.gas,
+        this.gas,
       )
       .encodeABI();
     return this.sendTransaction(multiSigTransaction, executor, multiSigInstance.options.address);
@@ -205,23 +198,5 @@ export class MultiSig {
       // eslint-disable-next-line no-await-in-loop
       await this.executeMultiSigTransaction(approval.slice(0, this.SIGNATURE_THRESHOLD), executor);
     }
-  }
-
-  transferOwnership(newOwnerPrivateKey, signingKey, executorAddress, nonce) {
-    logger.info(`transferOwnership: nonce is ${nonce}`);
-    const newOwner = this.web3.eth.accounts.privateKeyToAccount(newOwnerPrivateKey, true).address;
-    return Promise.all(
-      this.contractInstancesOwnables.map(async (ownable, i) => {
-        const contractInstance = ownable;
-        const data = contractInstance.methods.transferOwnership(newOwner).encodeABI();
-        return this.addMultiSigSignature(
-          data,
-          signingKey,
-          contractInstance.options.address,
-          executorAddress,
-          nonce + i,
-        );
-      }),
-    );
   }
 }
