@@ -1,8 +1,8 @@
-import config from 'config';
 import gen from 'general-number';
+import constants from 'common-files/constants/index.mjs';
 
 const { generalise } = gen;
-const { BN128_GROUP_ORDER } = config;
+const { BN128_GROUP_ORDER } = constants;
 
 const NULL_COMMITMENT = {
   value: 0,

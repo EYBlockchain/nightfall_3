@@ -156,12 +156,12 @@ module.exports = function (webpackEnv) {
 
   const config = require('../../config/default');
   const constants = require('../../common-files/constants/constants.json');
-
+  const bigIntContants = require('../../common-files/constants/bigInts.js');
   return {
     mode: isEnvProduction ? 'production' : isEnvDevelopment && 'development',
     externals: {
       config: JSON.stringify(config),
-      nightfallConstants: JSON.stringify(constants),
+      nightfallConstants: JSON.stringify({ ...constants, ...bigIntContants }),
     },
     // Stop compilation early in production
     bail: isEnvProduction,

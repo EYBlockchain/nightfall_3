@@ -7,6 +7,7 @@ import { addMultiSigSignature } from './helpers.mjs';
 const { RESTRICTIONS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const pausables = ['State', 'Shield'];
+const ownables = ['State', 'Shield', 'Proposers', 'Challenges'];
 
 /**
 This function sets the restriction data that the Shield contract is currently using
@@ -95,8 +96,8 @@ export function unpauseContracts(signingKey, executorAddress, nonce) {
 export function transferOwnership(newOwnerPrivateKey, signingKey, executorAddress, nonce) {
   const newOwner = web3.eth.accounts.privateKeyToAccount(newOwnerPrivateKey, true).address;
   return Promise.all(
-    pausables.map(async (pausable, i) => {
-      const contractInstance = await waitForContract(pausable);
+    ownables.map(async (ownable, i) => {
+      const contractInstance = await waitForContract(ownable);
       const data = contractInstance.methods.transferOwnership(newOwner).encodeABI();
       return addMultiSigSignature(
         data,

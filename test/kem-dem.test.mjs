@@ -1,13 +1,13 @@
-import config from 'config';
 import chai from 'chai';
 import fc from 'fast-check';
 import { generalise } from 'general-number';
 import { scalarMult } from 'common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { encrypt, decrypt, packSecrets } from '../nightfall-client/src/services/kem-dem.mjs';
 
 const { expect } = chai;
 
-const { BN128_GROUP_ORDER, BABYJUBJUB } = config;
+const { BN128_GROUP_ORDER, BABYJUBJUB } = constants;
 
 describe('KEM-DEM Tests', () => {
   describe('Check encryption and decryption', () => {

@@ -42,8 +42,13 @@ describe('Optimist synchronisation tests', () => {
   let blockProposeEmitter;
   let challengeEmitter;
   const options = {
-    config: ['docker-compose.yml', 'docker-compose.dev.yml', 'docker-compose.ganache.yml'],
+    config: [
+      'docker/docker-compose.yml',
+      'docker/docker-compose.dev.yml',
+      'docker/docker-compose.ganache.yml',
+    ],
     log: process.env.LOG_LEVEL !== 'silent',
+    composeOptions: [['-p "nightfall_3"']],
   };
 
   before(async () => {

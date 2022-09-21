@@ -4,8 +4,6 @@ const Verifier = artifacts.require('Verifier.sol');
 const Shield = artifacts.require('Shield.sol');
 const MerkleTree_Stateless = artifacts.require('MerkleTree_Stateless.sol');
 const Poseidon = artifacts.require('Poseidon.sol');
-const Structures = artifacts.require('Structures.sol');
-const Config = artifacts.require('Config.sol');
 const Utils = artifacts.require('Utils.sol');
 const ChallengesUtil = artifacts.require('ChallengesUtil.sol');
 const Proposers = artifacts.require('Proposers.sol');
@@ -54,7 +52,7 @@ module.exports = async function (deployer) {
   const proposers = await Proposers.deployed();
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
-  const state = await State.deployed();
+  await State.deployed();
   const { bootProposer, bootChallenger } = addresses;
   await proposers.setBootProposer(bootProposer);
   await challengers.setBootChallenger(bootChallenger);

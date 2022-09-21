@@ -5,15 +5,14 @@ module for manupulating elliptic curve points for an alt-bn128 curve. This
 is the curve that Ethereum currently has pairing precompiles for. All the
 return values are BigInts (or arrays of BigInts).
 */
-// eslint-disable-next-line import/no-extraneous-dependencies
-import config from 'config';
 import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
 import { mulMod, addMod, squareRootModPrime } from '../crypto/number-theory.mjs';
 import Fq2 from '../../classes/fq2.mjs';
 import Proof from '../../classes/proof.mjs';
 import { modDivide } from '../crypto/modular-division.mjs';
+import constants from '../../constants/index.mjs';
 
-const { BN128_PRIME_FIELD, BN128_GROUP_ORDER, BABYJUBJUB } = config;
+const { BN128_PRIME_FIELD, BN128_GROUP_ORDER, BABYJUBJUB } = constants;
 
 const one = BigInt(1);
 const { JUBJUBE, JUBJUBC, JUBJUBD, JUBJUBA } = BABYJUBJUB;

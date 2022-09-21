@@ -3,7 +3,7 @@ import gen, { GeneralNumber } from 'general-number';
 const { generalise } = gen;
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-const { BN128_GROUP_ORDER } = global.config;
+const { BN128_GROUP_ORDER } = global.nightfallConstants;
 const NULL_COMMITMENT = {
   value: 0,
   salt: 0,

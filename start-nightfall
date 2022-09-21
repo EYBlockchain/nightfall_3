@@ -24,19 +24,19 @@ fi
 rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
-      -g  | --ganache )             FILE="-f docker-compose.yml -f docker-compose.ganache.yml";
+      -g  | --ganache )             FILE="-f docker/docker-compose.yml -f docker/docker-compose.ganache.yml";
                                     ;;
-      -l  | --localhost )           FILE="-f docker-compose.yml -f docker-compose.host.docker.internal.yml"
+      -l  | --localhost )           FILE="-f docker/docker-compose.yml -f docker/docker-compose.host.docker.internal.yml"
                                     ;;
-      -r  | --ropsten )              FILE="-f docker-compose.yml -f docker-compose.ropsten.yml"
+      -r  | --ropsten )              FILE="-f docker/docker-compose.yml -f docker/docker-compose.ropsten.yml"
                                     ;;
       -h  | --help )                usage
                                     ;;
-      -s  | --stubs )               STUBS="-f docker-compose.stubs.yml"
+      -s  | --stubs )               STUBS="-f docker/docker-compose.stubs.yml"
                                     ;;
-      -d  | --dev )                 DEV="-f docker-compose.dev.yml"
+      -d  | --dev )                 DEV="-f docker/docker-compose.dev.yml"
                                     ;;
-      -a  | --adversary)            ADVERSARY="-f docker-compose.adversary.yml"
+      -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
                                     ;;
       -mpc)                         export MPC="true"
                                     ;;
@@ -51,9 +51,9 @@ if [ -z "$FILE" ]; then
   exit 1
 fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose $FILE $STUBS $DEV $ADVERSARY down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+trap "docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker-compose.yml $FILE $STUBS $DEV $ADVERSARY down --remove-orphans
+docker-compose -f docker/docker-compose.yml $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
@@ -90,6 +90,6 @@ DIR=./common-files/node_modules
 if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
-#docker-compose -f docker-compose.yml $FILE up -d deployer
-docker-compose $FILE $STUBS $DEV $ADVERSARY up -d --remove-orphans
-docker-compose $FILE $STUBS $DEV $ADVERSARY logs -f
+
+docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans
+docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY logs -f
