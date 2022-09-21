@@ -18,7 +18,7 @@ async function setupContracts() {
     from: process.env.FROM_ADDRESS,
     // value: fee,
     gas: config.WEB3_OPTIONS.gas,
-    gasPrice: 20000000000,
+    gasPrice: config.WEB3_OPTIONS.gasPrice,
   };
 
   const proposers = await waitForContract('Proposers');

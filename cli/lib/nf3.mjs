@@ -222,6 +222,7 @@ class Nf3 {
   async estimateGas(contractAddress, unsignedTransaction) {
     let gasLimit;
     try {
+      // Workaround to estimateGas call not working properly on Polygon Edge nodes
       const res = await axios.post(this.web3WsUrl, {
         method: 'eth_estimateGas',
         params: [
