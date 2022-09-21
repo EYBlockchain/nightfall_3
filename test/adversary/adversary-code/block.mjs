@@ -9,19 +9,19 @@ let error = process.env.BAD_BLOCK_SEQUENCE
       'ValidBlock',
       // 'IncorrectTreeRoot', // Needs two prior blocks
       // 'IncorrectLeafCount', //  Needs one prior block
-      // 'DuplicateCommitmentTransfer', // needs atleast one non withdraw transaction in a prior block
-      // 'DuplicateCommitmentDeposit',
-      // 'DuplicateNullifierTransfer', // needs atleast one non deposit transaction in a prior block
-      // 'IncorrectProofDeposit',
-      // 'IncorrectProofTransfer',
-      // 'IncorrectPublicInputDepositCommitment',
-      // 'IncorrectPublicInputTransferCommitment',
-      // 'IncorrectPublicInputTransferNullifier',
-      // 'ValidBlock',
+      'DuplicateCommitmentTransfer', // needs atleast one non withdraw transaction in a prior block
+      'DuplicateCommitmentDeposit',
+      'DuplicateNullifierTransfer', // needs atleast one non deposit transaction in a prior block
+      'IncorrectProofDeposit',
+      'IncorrectProofTransfer',
+      'IncorrectPublicInputDepositCommitment',
+      'IncorrectPublicInputTransferCommitment',
+      'IncorrectPublicInputTransferNullifier',
+      'ValidBlock',
       'DuplicateNullifierWithdraw', // needs atleast one non deposit transaction in a prior block
-      // 'IncorrectProofWithdraw',
-      // 'IncorrectPublicInputWithdrawNullifier',
-      // IncorrectHistoricRoot TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
+      'IncorrectProofWithdraw',
+      'IncorrectPublicInputWithdrawNullifier',
+      'IncorrectHistoricRoot', // TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
       'ValidBlock',
     ];
 
