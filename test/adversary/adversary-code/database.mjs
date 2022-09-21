@@ -72,6 +72,8 @@ let indexOffset = 0;
 
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { Transaction } from '../classes/index.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+const { BN128_GROUP_ORDER } = config;
 
 const { BN128_GROUP_ORDER } = constants;
 
