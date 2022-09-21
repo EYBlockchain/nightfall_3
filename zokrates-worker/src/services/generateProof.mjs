@@ -62,12 +62,11 @@ export default async ({
     );
     ({ proof, inputs: publicInputs } = await getProofFromFile(`${folderpath}/${proofJsonFile}`));
 
-    logger.debug({ 
+    logger.debug({
       msg: 'Responding with proof and inputs',
       proof: JSON.stringify(proof, null, 2),
-      publicInputs
+      publicInputs,
     });
-  
   } finally {
     try {
       await unlink(`${outputPath}/${folderpath}/${witnessFile}`);

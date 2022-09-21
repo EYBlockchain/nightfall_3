@@ -123,10 +123,11 @@ export const initialClientSync = async () => {
   logger.info(`firstSeenBlockNumber: ${firstSeenBlockNumber}`);
 
   // fistSeenBlockNumber can be infinity if the commitmentBlockNumbers array is empty
-  if (firstSeenBlockNumber === Infinity) 
+  if (firstSeenBlockNumber === Infinity) {
     await syncState(STATE_GENESIS_BLOCK);
-  else 
+  } else {
     await syncState(firstSeenBlockNumber);
+  }
 
   unpauseQueue(0); // the queues are paused to start with, so get them going once we are synced
   unpauseQueue(1);

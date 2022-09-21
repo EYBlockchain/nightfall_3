@@ -64,7 +64,6 @@ async function walk(dir) {
  * This calls the /generateKeys endpoint on a zokrates microservice container to do the setup.
  */
 async function setupCircuits() {
-
   // do all the trusted setups needed first, we need to find the circuits we're going to do the setup on
   const circuitsToSetup = await (
     await walk(config.CIRCUITS_HOME)
@@ -97,8 +96,8 @@ async function setupCircuits() {
       // we don't have an existing vk so let's generate one
       try {
         logger.info({
-          msg: 'No existing verification key. Fear not, I will make a new one: calling generate keys', 
-          circuit
+          msg: 'No existing verification key. Fear not, I will make a new one: calling generate keys',
+          circuit,
         });
 
         const res2 = await axios.post(
@@ -114,10 +113,10 @@ async function setupCircuits() {
       } catch (err) {
         logger.error(err);
       }
-    } else { 
+    } else {
       logger.info({
         msg: 'Verification key exists: trusted setup skipped',
-        circuit
+        circuit,
       });
     }
   }

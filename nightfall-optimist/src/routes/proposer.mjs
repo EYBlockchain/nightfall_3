@@ -104,7 +104,10 @@ router.post('/update', async (req, res, next) => {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.updateProposer(url).encodeABI();
 
-    logger.debug({ msg: 'Returning raw transaction', rawTransaction: JSON.stringify(txDataToSign, null, 2) });
+    logger.debug({
+      msg: 'Returning raw transaction',
+      rawTransaction: JSON.stringify(txDataToSign, null, 2),
+    });
 
     res.json({ txDataToSign });
     setRegisteredProposerAddress(address, url); // save the registration address and URL
@@ -126,7 +129,10 @@ router.get('/current-proposer', async (req, res, next) => {
       .currentProposer()
       .call();
 
-    logger.debug({ msg: 'Returning current proposer', currentProposer: JSON.stringify(currentProposer, null, 2) });
+    logger.debug({
+      msg: 'Returning current proposer',
+      currentProposer: JSON.stringify(currentProposer, null, 2),
+    });
 
     res.json({ currentProposer });
   } catch (err) {
@@ -165,7 +171,10 @@ router.post('/de-register', async (req, res, next) => {
 
     await deleteRegisteredProposerAddress(address);
 
-    logger.debug({ msg: 'Returning raw transaction', rawTransaction: JSON.stringify(txDataToSign, null, 2) });
+    logger.debug({
+      msg: 'Returning raw transaction',
+      rawTransaction: JSON.stringify(txDataToSign, null, 2),
+    });
 
     res.json({ txDataToSign });
   } catch (err) {
@@ -200,7 +209,10 @@ router.get('/withdraw', async (req, res, next) => {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
 
-    logger.debug({ msg: 'Returning raw transaction', rawTransaction: JSON.stringify(txDataToSign, null, 2) });
+    logger.debug({
+      msg: 'Returning raw transaction',
+      rawTransaction: JSON.stringify(txDataToSign, null, 2),
+    });
 
     res.json({ txDataToSign });
   } catch (err) {
@@ -224,7 +236,10 @@ router.post('/payment', async (req, res, next) => {
       .requestBlockPayment(block)
       .encodeABI();
 
-    logger.debug({ msg: 'Returning raw transaction', rawTransaction: JSON.stringify(txDataToSign, null, 2) });
+    logger.debug({
+      msg: 'Returning raw transaction',
+      rawTransaction: JSON.stringify(txDataToSign, null, 2),
+    });
 
     res.json({ txDataToSign });
   } catch (err) {
@@ -260,15 +275,21 @@ router.post('/propose', async (req, res, next) => {
       latestTree,
     });
 
-    logger.debug({ msg: 'New block assembled', block: JSON.stringify(block, null, 2) });
+    logger.debug({
+      msg: 'New block assembled',
+      block: JSON.stringify(block, null, 2),
+    });
 
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     const txDataToSign = await stateContractInstance.methods
       .proposeBlock(block, transactions)
       .encodeABI();
 
-    logger.debug({ msg: 'Returning raw transaction', rawTransaction: JSON.stringify(txDataToSign, null, 2) });
-    
+    logger.debug({
+      msg: 'Returning raw transaction',
+      rawTransaction: JSON.stringify(txDataToSign, null, 2),
+    });
+
     res.json({ txDataToSign, block, transactions });
   } catch (err) {
     logger.error(err);
@@ -292,7 +313,10 @@ router.get('/change', async (req, res, next) => {
       .changeCurrentProposer()
       .encodeABI();
 
-    logger.debug({ msg: 'Returning raw transaction data', rawTransaction: JSON.stringify(txDataToSign, null, 2) });
+    logger.debug({
+      msg: 'Returning raw transaction data',
+      rawTransaction: JSON.stringify(txDataToSign, null, 2),
+    });
 
     res.json({ txDataToSign });
   } catch (err) {
@@ -365,7 +389,10 @@ router.post('/encode', async (req, res, next) => {
     };
     newBlock.blockHash = await Block.calcHash(newBlock, newTransactions);
 
-    logger.debug({ msg: 'New block encoded for test', newBlock: JSON.stringify(newBlock, null, 2) });
+    logger.debug({
+      msg: 'New block encoded for test',
+      newBlock: JSON.stringify(newBlock, null, 2),
+    });
 
     const txDataToSign = await stateContractInstance.methods
       .proposeBlock(
@@ -374,7 +401,10 @@ router.post('/encode', async (req, res, next) => {
       )
       .encodeABI();
 
-      logger.debug({ msg: 'Returning raw transaction', rawTransaction: JSON.stringify(txDataToSign, null, 2) });
+    logger.debug({
+      msg: 'Returning raw transaction',
+      rawTransaction: JSON.stringify(txDataToSign, null, 2),
+    });
 
     res.json({ txDataToSign, block: newBlock, transactions: newTransactions });
   } catch (err) {
@@ -405,7 +435,7 @@ router.post('/offchain-transaction', async (req, res) => {
           ...transaction,
           fee: Number(fee),
         });
-        
+
         res.sendStatus(200);
         break;
       }

@@ -47,7 +47,7 @@ async function start() {
         logger.info({
           msg: 'Token restrictions are',
           deposit,
-          withdraw
+          withdraw,
         });
 
         break;
@@ -130,19 +130,19 @@ async function start() {
   }
   if (workflow === 'get nonce') {
     try {
-      if (!nonce) {
+      let nonceTmp = nonce;
+      if (!nonceTmp) {
         const multiSigInstance = await waitForContract('SimpleMultiSig');
-        nonce = await multiSigInstance.methods.nonce().call();
+        nonceTmp = await multiSigInstance.methods.nonce().call();
       }
       logger.info({
         msg: 'get nonce',
-        nonce
+        nonceTmp,
       });
-
     } catch (err) {
       logger.error({
         msg: 'Could not get nonce. Are you connected to the blockchain?',
-        err
+        err,
       });
     }
   }

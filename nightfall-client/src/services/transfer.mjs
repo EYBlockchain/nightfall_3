@@ -47,7 +47,7 @@ async function transfer(transferParams) {
   logger.debug({
     msg: 'Transfer ERC Token & Fee addresses',
     ercAddress: ercAddress.hex(32).toLowerCase(),
-    maticAddress: maticAddress.hex(32)
+    maticAddress: maticAddress.hex(32),
   });
 
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
@@ -112,8 +112,8 @@ async function transfer(transferParams) {
     );
 
     logger.debug({
-      msg: 'witness input is', 
-      witness: witness.join(' ')
+      msg: 'witness input is',
+      witness: witness.join(' '),
     });
 
     // call a zokrates worker to generate the proof
@@ -127,8 +127,8 @@ async function transfer(transferParams) {
     });
 
     logger.trace({
-      msg: 'Received response from generete-proof', 
-      response: JSON.stringify(res.data, null, 2)
+      msg: 'Received response from generete-proof',
+      response: JSON.stringify(res.data, null, 2),
     });
 
     const { proof } = res.data;
@@ -149,11 +149,7 @@ async function transfer(transferParams) {
 
     logger.debug({
       msg: 'Client made transaction',
-      transaction: JSON.stringify(
-        optimisticTransferTransaction,
-        null,
-        2,
-      ),
+      transaction: JSON.stringify(optimisticTransferTransaction, null, 2),
       offchain,
     });
 

@@ -121,10 +121,10 @@ function waitForConfirmation(eventObject) {
       if (confirmedBlocks >= CONFIRMATIONS) {
         clearInterval(id);
 
-        logger.debug({ 
+        logger.debug({
           msg: 'Event has been confirmed',
-          event: eventObject.event, 
-          total: currentBlock.number - blockNumber
+          event: eventObject.event,
+          total: currentBlock.number - blockNumber,
         });
 
         resolve(eventObject);
@@ -164,10 +164,10 @@ async function queueManager(eventObject, eventArgs) {
   const priority = eventHandlers.priority[eventObject.event];
 
   logger.info({
-    msg: 'Queueing event', 
-    event: eventObject.event, 
+    msg: 'Queueing event',
+    event: eventObject.event,
     transactionHash: eventObject.transactionHash,
-    priority
+    priority,
   });
 
   queues[priority].push(async () => {
@@ -182,10 +182,10 @@ async function queueManager(eventObject, eventArgs) {
 
   // the queue shouldn't get too long if we're keeping up with the blockchain.
   if (queues[priority].length > MAX_QUEUE) {
-    logger.warn({ 
+    logger.warn({
       msg: 'The event queue has more events than the max configured',
       maxConfigured: MAX_QUEUE,
-      totalEventsQueued: queues[priority].length
+      totalEventsQueued: queues[priority].length,
     });
   }
 }

@@ -33,8 +33,8 @@ async function deposit(items) {
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
 
   logger.debug({
-    msg: 'Hash of new commitment', 
-    hash: commitment.hash.hex()
+    msg: 'Hash of new commitment',
+    hash: commitment.hash.hex(),
   });
 
   // now we can compute a Witness so that we can generate the proof
@@ -58,8 +58,8 @@ async function deposit(items) {
 
   const witness = computeCircuitInputs(publicData, privateData, [0, 0, 0, 0], maticAddress);
   logger.debug({
-    msg: 'witness input is', 
-    witness: witness.join(' ')
+    msg: 'witness input is',
+    witness: witness.join(' '),
   });
 
   // call a zokrates worker to generate the proof
@@ -73,8 +73,8 @@ async function deposit(items) {
   });
 
   logger.trace({
-    msg: 'Received response from generete-proof', 
-    response: JSON.stringify(res.data, null, 2)
+    msg: 'Received response from generete-proof',
+    response: JSON.stringify(res.data, null, 2),
   });
 
   const { proof } = res.data;
@@ -94,7 +94,7 @@ async function deposit(items) {
   });
 
   logger.trace({
-    optimisticDepositTransaction: JSON.stringify(optimisticDepositTransaction, null, 2)
+    optimisticDepositTransaction: JSON.stringify(optimisticDepositTransaction, null, 2),
   });
 
   // and then we can create an unsigned blockchain transaction
@@ -107,7 +107,7 @@ async function deposit(items) {
     storeCommitment(commitment, nullifierKey);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {
-    logger.error(error);
+    logger.error(err);
     throw err; // let the caller handle the error
   }
 }

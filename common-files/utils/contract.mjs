@@ -38,8 +38,8 @@ export async function getContractInstance(contractName, deployedAddress) {
     const accounts = await web3.eth.getAccounts();
 
     logger.debug({
-      msg: 'blockchain accounts', 
-      accounts
+      msg: 'blockchain accounts',
+      accounts,
     });
 
     [options.from] = accounts;
@@ -113,7 +113,7 @@ export async function waitForContract(contractName) {
 
       logger.warn({
         msg: 'Unable to get contract instance, retrying in 3 secs',
-        contractName
+        contractName,
       });
 
       await new Promise(resolve => setTimeout(() => resolve(), 3000)); // eslint-disable-line no-await-in-loop

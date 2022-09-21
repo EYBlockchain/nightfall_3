@@ -135,7 +135,7 @@ export const getCommitmentInfo = async txInfo => {
 
     logger.info({
       msg: 'Constructing transfer transaction with blockNumberL2s and roots',
-      blockNumberL2s, 
+      blockNumberL2s,
       roots,
     });
 

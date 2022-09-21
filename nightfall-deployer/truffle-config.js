@@ -39,7 +39,7 @@ module.exports = {
     // You should run a client (like ganache-cli, geth or parity) in a separate terminal
     // tab if you use this network and you must also set the `host`, `port` and `network_id`
     // options below to some value.
-    
+
     blockchain: {
       url: 'ws://blockchain:8546',
       network_id: 1337, // Any network (default: none)
@@ -117,8 +117,7 @@ module.exports = {
   },
 
   // Set default mocha options here, use special reporters etc.
-  mocha: {
-  },
+  mocha: {},
 
   // Configure your compilers
   compilers: {

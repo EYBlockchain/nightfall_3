@@ -46,9 +46,9 @@ async function removeBlockProposedEventHandler(eventObject) {
    we need to remove the state associated with this event from the Timber class
    so find out which L2 block has been removed by this event removal.
    */
-   logger.debug({
-    msg: 'Looking for block with transactionHash', 
-    transactionHash
+  logger.debug({
+    msg: 'Looking for block with transactionHash',
+    transactionHash,
   });
 
   const block = await getBlockByTransactionHashL1(transactionHash);
@@ -62,7 +62,7 @@ async function removeBlockProposedEventHandler(eventObject) {
   // then we delete the Timber record associated with this block
   logger.debug({
     msg: 'Deleting tree with proposeBlock transactionHash',
-    transactionHash
+    transactionHash,
   });
 
   return deleteTreeByTransactionHashL1(transactionHash);

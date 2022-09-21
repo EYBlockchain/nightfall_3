@@ -40,17 +40,18 @@ export async function addSignedTransaction(signed) {
     try {
       await saveSigned(signed);
     } catch (err) {
-      if (err.message.includes('duplicate key'))
+      if (err.message.includes('duplicate key')) {
         logger.info('You have already signed this message - no action taken');
-      else 
-        throw new Error(err);
+      } else {
+        throw err;
+      }
     }
   }
   const numberOfSignatures = await checkThreshold(signed.messageHash);
 
   logger.info({
     msg: 'Number of signatures for this transaction',
-    total: numberOfSignatures
+    total: numberOfSignatures,
   });
 
   if (numberOfSignatures === SIGNATURE_THRESHOLD) logger.info(`Signature threshold reached`);

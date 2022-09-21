@@ -280,7 +280,7 @@ export async function saveTransaction(_transaction) {
   logger.debug({
     msg: 'Saving transaction with layer 1 block number',
     transactionHash: _transaction.transactionHash,
-    blockNumber: _transaction.blockNumber
+    blockNumber: _transaction.blockNumber,
   });
 
   /*
@@ -418,7 +418,10 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
  * and given a new L1 transactionHash)
  */
 export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
-  logger.debug({ msg: 'Clearing layer 1 blockNumber for L2 transaction with L1 hash', transactionHashL1 });
+  logger.debug({
+    msg: 'Clearing layer 1 blockNumber for L2 transaction with L1 hash',
+    transactionHashL1,
+  });
 
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);

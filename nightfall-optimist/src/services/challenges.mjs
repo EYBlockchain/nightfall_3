@@ -54,7 +54,9 @@ export async function commitToChallenge(txDataToSign) {
   while (!ws || ws.readyState !== WebSocket.OPEN) {
     await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
 
-    logger.warn('Websocket to challenger is closed for commit.  Waiting for challenger to reconnect');
+    logger.warn(
+      'Websocket to challenger is closed for commit.  Waiting for challenger to reconnect',
+    );
 
     if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
   }
@@ -63,7 +65,7 @@ export async function commitToChallenge(txDataToSign) {
 
   logger.debug({
     msg: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
-    rawTransaction: JSON.stringify(commitToSign, null, 2)
+    rawTransaction: JSON.stringify(commitToSign, null, 2),
   });
 }
 
@@ -75,10 +77,13 @@ export async function revealChallenge(txDataToSign, sender) {
   while (!ws || ws.readyState !== WebSocket.OPEN) {
     await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
 
-    logger.warn('Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect');
+    logger.warn(
+      'Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect',
+    );
 
-    if (tryCount++ > 100) throw new Error(`Websocket to $challenger has failed`);
-
+    if (tryCount++ > 100) {
+      throw new Error(`Websocket to $challenger has failed`);
+    }
   }
   ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
 }

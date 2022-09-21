@@ -95,7 +95,10 @@ export async function conditionalMakeBlock(proposer) {
         the current proposer. In this case, this proposer's transactions will still be mined but
         the transactions will fail and proposer will lose gas fees
       */
-      logger.debug({ msg: 'Block Assembler will create blocks at once', numberOfProposableL2Blocks });
+      logger.debug({
+        msg: 'Block Assembler will create blocks at once',
+        numberOfProposableL2Blocks,
+      });
 
       for (let i = 0; i < numberOfProposableL2Blocks; i++) {
         // work out if this is a normal size block or a short one
@@ -106,8 +109,11 @@ export async function conditionalMakeBlock(proposer) {
           proposer.address,
           numberOfTransactionsInBlock,
         );
-        
-        logger.info({ msg: 'Block Assembler - New Block created', block: JSON.stringify(block, null, 2) });
+
+        logger.info({
+          msg: 'Block Assembler - New Block created',
+          block: JSON.stringify(block, null, 2),
+        });
 
         // propose this block to the Shield contract here
         const unsignedProposeBlockTransaction = await (

@@ -14,12 +14,12 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
   fs.mkdirSync(`${outputPath}/${circuitDir}`, { recursive: true });
 
   logger.info({
-    msg: "Compiling circuits...",
+    msg: 'Compiling circuits...',
     filepath,
     circuitsPath: `${circuitsPath}/${filepath}`,
     outputPath: `${outputPath}/${circuitDir}`,
     circuitName: `${circuitName}_out`,
-    curve
+    curve,
   });
 
   logger.info('Compile...');

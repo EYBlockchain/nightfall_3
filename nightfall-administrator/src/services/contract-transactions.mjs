@@ -138,7 +138,7 @@ export async function setBootChallenger(
 
   logger.info({
     msg: 'Boot challenger',
-    newChallenger
+    newChallenger,
   });
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);

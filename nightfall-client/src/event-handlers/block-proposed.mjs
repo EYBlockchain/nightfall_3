@@ -37,7 +37,7 @@ async function blockProposedEventHandler(data, syncing) {
 
   logger.info({
     msg: 'Received Block Proposed event with Layer 2 Block Number and Tx Hash',
-    blockNumberL2: block.blockNumberL2, 
+    blockNumberL2: block.blockNumberL2,
     transactionHashL1,
   });
 
@@ -134,9 +134,9 @@ async function blockProposedEventHandler(data, syncing) {
     if (!syncing || !err.message.includes('duplicate key')) throw err;
   }
 
-  logger.debug({ 
-    msg: 'Saved tree for L2 block', 
-    blockNumberL2: block.blockNumberL2
+  logger.debug({
+    msg: 'Saved tree for L2 block',
+    blockNumberL2: block.blockNumberL2,
   });
 
   await Promise.all(

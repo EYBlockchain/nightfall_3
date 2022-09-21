@@ -40,7 +40,7 @@ async function withdraw(withdrawParams) {
   logger.debug({
     msg: 'Withdraw ERC Token and Fee addresses',
     ercAddress: ercAddress.hex(32).toLowerCase(),
-    maticAddress: maticAddress.hex(32)
+    maticAddress: maticAddress.hex(32),
   });
 
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
@@ -91,9 +91,9 @@ async function withdraw(withdrawParams) {
       maticAddress,
     );
 
-    logger.debug({ 
+    logger.debug({
       msg: 'Witness input is',
-      witness: witness.join(' ')
+      witness: witness.join(' '),
     });
 
     // call a zokrates worker to generate the proof
@@ -108,7 +108,7 @@ async function withdraw(withdrawParams) {
 
     logger.trace({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2)
+      response: JSON.stringify(res.data, null, 2),
     });
 
     const { proof } = res.data;

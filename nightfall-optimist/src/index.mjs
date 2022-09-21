@@ -49,7 +49,7 @@ const main = async () => {
      This helps in the case that we restart client and we are the current proposer.
     */
     await enqueueEvent(() => logger.info('Start Queue'), 0);
-    
+
     // try to sync any missing blockchain state (event queues will be paused until this finishes)
     initialBlockSync(proposer);
     app.listen(80);

@@ -37,7 +37,7 @@ async function checkAlreadyInBlock(_transaction) {
 
   logger.debug({
     msg: 'Transaction has been re-mined but is already in a block - mempool set to false',
-    transactionHash: transaction.transactionHash
+    transactionHash: transaction.transactionHash,
   });
 
   return transaction; // but it's otherwise ok
@@ -60,8 +60,8 @@ async function transactionSubmittedEventHandler(eventParams) {
   }
 
   logger.info({
-    msg: 'Transaction Handler - New transaction received.', 
-    transaction: JSON.stringify(transaction, null, 2)
+    msg: 'Transaction Handler - New transaction received.',
+    transaction: JSON.stringify(transaction, null, 2),
   });
 
   try {

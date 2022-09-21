@@ -51,7 +51,7 @@ async function rollbackEventHandler(data) {
       .filter(t => t.transactionType !== '0');
 
     logger.info({
-      blockTransactions: JSON.stringify(blockTransactions)
+      blockTransactions: JSON.stringify(blockTransactions),
     });
 
     for (let j = 0; j < blockTransactions.length; j++) {
@@ -63,7 +63,7 @@ async function rollbackEventHandler(data) {
       } catch (error) {
         logger.error({
           msg: `Invalid checkTransaction: ${blockTransactions[j].transactionHash}`,
-          error
+          error,
         });
 
         invalidTransactions.push(blockTransactions[j].transactionHash);

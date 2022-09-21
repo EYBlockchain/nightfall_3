@@ -67,8 +67,9 @@ export async function waitForContract(contractName) {
       error = undefined;
       const address = await getContractAddress(contractName);
 
-      if (address === undefined) 
+      if (address === undefined) {
         throw new Error(`${contractName} contract address was undefined`);
+      }
 
       instance = getContractInstance(contractName, address);
 
@@ -77,7 +78,10 @@ export async function waitForContract(contractName) {
       error = err;
       errorCount++;
 
-      logger.warn({ msg: 'Unable to get a contract instance will try again in 3 secs', contractName });
+      logger.warn({
+        msg: 'Unable to get a contract instance will try again in 3 secs',
+        contractName,
+      });
 
       await new Promise(resolve => setTimeout(() => resolve(), 3000));
     }

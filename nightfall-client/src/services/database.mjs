@@ -187,8 +187,8 @@ export async function getBlockByTransactionHashL1(transactionHashL1) {
  */
 export async function clearBlockNumberL1ForBlock(transactionHashL1) {
   logger.debug({
-    msg: 'Clearing layer 1 blockNumber for L2 block with L1 hash', 
-    transactionHashL1
+    msg: 'Clearing layer 1 blockNumber for L2 block with L1 hash',
+    transactionHashL1,
   });
 
   const connection = await mongo.connection(MONGO_URL);
