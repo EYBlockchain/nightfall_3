@@ -3,7 +3,7 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import Timber from 'common-files/classes/timber.mjs';
 import getTimeByBlock from 'common-files/utils/block-info.mjs';
-import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import { enqueueEvent, queues } from 'common-files/utils/event-queue.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { checkBlock } from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
@@ -112,7 +112,16 @@ async function blockProposedEventHandler(data) {
     // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.
     // we'll check the block and issue a challenge if appropriate
-    await checkBlock(block, transactions);
+    // we should not check the block if the stop queue is not empty because
+    // it signals that there is a bad block which will get challenged eventually
+    // meanwhile any new L2 blocks received if turned out to be bad blocks will
+    // raise a commit to challenge and reveal challenge which is bound to fail because
+    // a rollback from previous wrong block would have removed this anyway.
+    // Instead, what happens now is that any good/bad blocks on top of the first bad block
+    // will get saved and eventually all these blocks will be removed as part of the rollback
+    // of the first bad block
+    console.log('HERE queues[2].length', queues[2].length);
+    if (queues[2].length === 0) await checkBlock(block, transactions);
     logger.info('Block Checker - Block was valid');
   } catch (err) {
     if (err instanceof BlockError) {
@@ -139,6 +148,7 @@ async function blockProposedEventHandler(data) {
       // have the actual challenge to support syncing
       logger.debug('enqueuing event to stop queue');
       await enqueueEvent(commitToChallenge, 2, txDataToSign);
+      console.log('HERE queues[2].length in catch', queues[2].length);
       await commitToChallenge(txDataToSign);
     } else {
       logger.error(err.stack);
