@@ -56,14 +56,14 @@ async function transactionSubmittedEventHandler(eventParams) {
     transaction = await checkAlreadyInBlock(transaction);
     await checkTransaction(transaction, true);
     logger.info('Transaction checks passed');
-    saveTransaction({ ...transaction }); // then we need to save it
+    await saveTransaction({ ...transaction }); // then we need to save it
   } catch (err) {
     if (err instanceof TransactionError)
       logger.warn(
         `The transaction check failed with error: ${err.message}. The transaction has been ignored`,
       );
     else logger.error(err.stack);
-    if (fromBlockProposer) saveTransaction({ ...transaction }); // then we need to save it
+    if (fromBlockProposer) await saveTransaction({ ...transaction }); // then we need to save it
   }
 }
 

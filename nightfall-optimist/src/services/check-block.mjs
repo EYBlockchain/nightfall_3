@@ -59,11 +59,7 @@ export function checkDuplicateCommitmentsWithinBlock(block, transactions) {
   const blockCommitments = transactions.map(transaction => transaction.commitments).flat(Infinity);
   blockCommitments.forEach((blockCommitment, index) => {
     const lastIndex = blockCommitments.lastIndexOf(blockCommitment);
-    if (
-      blockCommitment !== ZERO &&
-      // blockCommitments.indexOf(blockCommitment) !== blockCommitments.lastIndexOf(blockCommitment)
-      index !== lastIndex
-    ) {
+    if (blockCommitment !== ZERO && index !== lastIndex) {
       throw new BlockError(
         `The block check failed due to duplicate commitments in different transactions of the same block`,
         2,
@@ -87,11 +83,7 @@ export function checkDuplicateNullifiersWithinBlock(block, transactions) {
   const blockNullifiers = transactions.map(transaction => transaction.nullifiers).flat(Infinity);
   blockNullifiers.forEach((blockNullifier, index) => {
     const lastIndex = blockNullifiers.lastIndexOf(blockNullifier);
-    if (
-      blockNullifier !== ZERO &&
-      // blockNullifiers.indexOf(blockNullifier) !== blockNullifiers.lastIndexOf(blockNullifier)
-      index !== lastIndex
-    ) {
+    if (blockNullifier !== ZERO && index !== lastIndex) {
       throw new BlockError(
         `The block check failed due to duplicate nullifiers in different transactions of the same block`,
         3,

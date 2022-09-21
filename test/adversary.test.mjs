@@ -25,7 +25,7 @@ chai.use(chaiAsPromised);
 
 const { TRANSACTIONS_PER_BLOCK } = config;
 const TX_WAIT = 12000;
-const TEST_LENGTH = 2;
+const TEST_LENGTH = 3;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -228,11 +228,10 @@ describe('Testing with an adversary', () => {
           value2,
           tokenId,
           nf3User.ethereumAddress,
-          fee,
+          0,
         );
         nWithdraws++;
         expectedBalance -= value2;
-        expectedBalance -= fee;
       } catch (err) {
         if (err.message.includes('No suitable commitments')) {
           // if we get here, it's possible that a block we are waiting for has not been proposed yet
@@ -250,11 +249,10 @@ describe('Testing with an adversary', () => {
             value2,
             tokenId,
             nf3User.ethereumAddress,
-            fee,
+            0,
           );
           nWithdraws++;
           expectedBalance -= value2;
-          expectedBalance -= fee;
         }
       }
       for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {

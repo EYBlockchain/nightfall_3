@@ -38,7 +38,7 @@ async function rollbackEventHandler(data) {
 
   // Get all blocks that need to be deleted
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(blockNumberL2);
-  logger.info(`Rollback - rollback layer 2 block ${JSON.stringify(blocksToBeDeleted[0], null, 2)}`);
+  logger.info(`Rollback - rollback layer 2 blocks ${JSON.stringify(blocksToBeDeleted, null, 2)}`);
 
   const invalidTransactions = [];
   // For valid transactions that have made it to this point, we run them through our transaction checker for validity
@@ -47,8 +47,7 @@ async function rollbackEventHandler(data) {
     const transactionHashesInBlock = blocksToBeDeleted[i].transactionHashes.flat(Infinity);
     // Use the transaction hashes to grab the actual transactions filtering out deposits - In Order.
     // eslint-disable-next-line no-await-in-loop
-    const blockTransactions = (await getTransactionsByTransactionHashes(transactionHashesInBlock)) // TODO move this to getTransactionsByTransactionHashes by l2 block number because transaction hash is not unique and might not pull the right l2 block number
-      .filter(t => t.transactionType !== '0');
+    const blockTransactions = await getTransactionsByTransactionHashes(transactionHashesInBlock); // TODO move this to getTransactionsByTransactionHashes by l2 block number because transaction hash is not unique and might not pull the right l2 block number
     logger.info(`Rollback - blockTransactions to check: ${JSON.stringify(blockTransactions)}`);
     for (let j = 0; j < blockTransactions.length; j++) {
       try {
