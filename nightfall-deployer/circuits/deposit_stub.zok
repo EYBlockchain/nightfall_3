@@ -10,6 +10,13 @@ struct TokenId {
 	field remainder
 }
 
+type Point = field[2]
+
+struct TokenId {
+	field top4Bytes
+	field remainder
+}
+
 def main(\
     PublicTransaction tx,\
     field[4] roots,\
