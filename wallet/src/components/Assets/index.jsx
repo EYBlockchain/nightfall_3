@@ -177,6 +177,7 @@ export default function Assets({ tokenList }) {
               <RiQrCodeLine />
               <span>Receive</span>
             </button>
+            {/* eslint-disable-next-line */}
             <button type="button" icon-name="navbar/send" onClick={() => setShowSendModal(true)}>
               <FiSend />
               <span>Send</span>
