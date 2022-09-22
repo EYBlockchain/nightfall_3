@@ -8,7 +8,7 @@ import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import contractABIs from './contracts.mjs';
-import { ContractMultiSig } from './contract-transactions.mjs';
+import { NightfallMultiSig } from './nightfall-multisig.mjs';
 
 const { WEB3_OPTIONS } = config;
 const { expect } = chai;
@@ -47,7 +47,7 @@ describe(`Testing Administrator`, () => {
     multisigContractInstance = await getContractInstance('SimpleMultiSig', nf3User);
 
     if (!(await nf3User.healthcheck('client'))) throw new Error('Healthcheck failed');
-    contractMultiSig = new ContractMultiSig(
+    contractMultiSig = new NightfallMultiSig(
       nf3User.web3,
       {
         state: stateContractInstance,
