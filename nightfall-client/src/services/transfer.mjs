@@ -90,7 +90,7 @@ async function transfer(transferParams) {
     });
 
     const privateData = {
-      rootKey: [rootKey, rootKey, rootKey, rootKey],
+      rootKey,
       oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),

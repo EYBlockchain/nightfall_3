@@ -9,6 +9,7 @@ def main(\
     PublicTransaction tx,\
     field[4] roots,\
     field maticAddress,\
+    private field rootKey,\
     private Nullifiers<4> nullifiers,\
     private Commitments<3> commitments,\
     private Transfer transfer\
@@ -19,7 +20,7 @@ def main(\
 
     assert(nullifier_stub::<4>(\
         roots, nullifiersValue, nullifiers.oldCommitments.salt,\
-        nullifiers.rootKey, nullifiers.paths, nullifiers.orders));
+        nullifiers.paths, nullifiers.orders, rootKey));
 
     assert(commitment_stub::<3>(\
         commitmentsValue, commitments.newCommitments.salt, commitments.recipientPublicKey));
