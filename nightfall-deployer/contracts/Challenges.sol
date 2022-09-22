@@ -111,10 +111,12 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction2.transactionSiblingPath
         );
 
-        require(
-            transaction1.blockL2.blockNumberL2 != transaction2.blockL2.blockNumberL2,
-            'Cannot be the same block'
-        );
+        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+            require(
+                transaction1.transactionIndex != transaction2.transactionIndex,
+                'Cannot be the same transactionIndex'
+            );
+        }
 
         ChallengesUtil.libChallengeCommitment(
             transaction1.transaction,
@@ -159,10 +161,12 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction2.transactionSiblingPath
         );
 
-        require(
-            transaction1.blockL2.blockNumberL2 != transaction2.blockL2.blockNumberL2,
-            'Cannot be the same block'
-        );
+        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+            require(
+                transaction1.transactionIndex != transaction2.transactionIndex,
+                'Cannot be the same transactionIndex'
+            );
+        }
 
         ChallengesUtil.libChallengeNullifier(
             transaction1.transaction,
@@ -198,44 +202,18 @@ contract Challenges is Stateful, Key_Registry, Config {
             super.getMaticAddress()
         );
 
-        if (uint256(transaction.transaction.nullifiers[0]) != 0) {
-            state.isBlockReal(blockL2ContainingHistoricRoot[0]);
-            require(
-                transaction.transaction.historicRootBlockNumberL2[0] ==
-                    blockL2ContainingHistoricRoot[0].blockNumberL2,
-                'Incorrect historic root block'
-            );
-            extraPublicInputs.roots[0] = uint256(blockL2ContainingHistoricRoot[0].root);
-        }
+        for (uint256 i = 0; i < 4; ++i) {
+            if (uint256(transaction.transaction.nullifiers[i]) != 0) {
+                state.isBlockReal(blockL2ContainingHistoricRoot[i]);
 
-        if (uint256(transaction.transaction.nullifiers[1]) != 0) {
-            state.isBlockReal(blockL2ContainingHistoricRoot[1]);
-            require(
-                transaction.transaction.historicRootBlockNumberL2[1] ==
-                    blockL2ContainingHistoricRoot[1].blockNumberL2,
-                'Incorrect historic root block'
-            );
-            extraPublicInputs.roots[1] = uint256(blockL2ContainingHistoricRoot[1].root);
-        }
+                require(
+                    transaction.transaction.historicRootBlockNumberL2[i] ==
+                        blockL2ContainingHistoricRoot[i].blockNumberL2,
+                    'Incorrect historic root block'
+                );
 
-        if (uint256(transaction.transaction.nullifiers[2]) != 0) {
-            state.isBlockReal(blockL2ContainingHistoricRoot[2]);
-            require(
-                transaction.transaction.historicRootBlockNumberL2[2] ==
-                    blockL2ContainingHistoricRoot[2].blockNumberL2,
-                'Incorrect historic root block'
-            );
-            extraPublicInputs.roots[2] = uint256(blockL2ContainingHistoricRoot[2].root);
-        }
-
-        if (uint256(transaction.transaction.nullifiers[3]) != 0) {
-            state.isBlockReal(blockL2ContainingHistoricRoot[3]);
-            require(
-                transaction.transaction.historicRootBlockNumberL2[3] ==
-                    blockL2ContainingHistoricRoot[3].blockNumberL2,
-                'Incorrect historic root block'
-            );
-            extraPublicInputs.roots[3] = uint256(blockL2ContainingHistoricRoot[3].root);
+                extraPublicInputs.roots[i] = uint256(blockL2ContainingHistoricRoot[i].root);
+            }
         }
 
         // now we need to check that the proof is correct
@@ -248,7 +226,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         challengeAccepted(transaction.blockL2);
     }
 
-    function challengeHistoricRoot(TransactionInfoBlock calldata transaction)
+    function challengeHistoricRootBlockNumber(TransactionInfoBlock calldata transaction)
         external
         onlyBootChallenger
     {
@@ -259,17 +237,15 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction.transactionIndex,
             transaction.transactionSiblingPath
         );
-        require(
-            (transaction.transaction.historicRootBlockNumberL2[0] >= state.getNumberOfL2Blocks() ||
-                transaction.transaction.historicRootBlockNumberL2[1] >=
-                state.getNumberOfL2Blocks() ||
-                transaction.transaction.historicRootBlockNumberL2[2] >=
-                state.getNumberOfL2Blocks() ||
-                transaction.transaction.historicRootBlockNumberL2[3] >=
-                state.getNumberOfL2Blocks()),
-            'Historic roots are not greater than L2BlockNumber on chain'
-        );
-        challengeAccepted(transaction.blockL2);
+        for (uint256 i = 0; i < 4; ++i) {
+            if (
+                transaction.transaction.historicRootBlockNumberL2[i] >= state.getNumberOfL2Blocks()
+            ) {
+                challengeAccepted(transaction.blockL2);
+            }
+        }
+
+        require(false, 'Historic roots are not greater than L2BlockNumber on chain');
     }
 
     // This gets called when a challenge succeeds
