@@ -13,7 +13,18 @@ import ValidationError from './validation-error.mjs';
 import NotFoundError from './not-found-error.mjs';
 import logger from './logger.mjs';
 import correlator from './correlation-id.mjs';
-import isDev from './utils.mjs';
+import { isDev, obfuscate } from './utils.mjs';
+
+/**
+ * Default obfuscation's rules.
+ */
+const OBFUSCATION_SETTINGS = {
+  '.*key(s)?|.*password.*|.*secret.*': 'ALL',
+};
+
+const doObfuscation = object => {
+  return obfuscate(object, OBFUSCATION_SETTINGS);
+};
 
 const finished = promisify(stream.finished);
 
@@ -102,10 +113,10 @@ const requestLogger = (req, res, next) => {
       method: req.method,
       url: req.url,
       originalUrl: req.originalUrl,
-      headers: req.headers,
-      query: req.query,
-      params: req.params,
-      body: req.body,
+      headers: doObfuscation(req.headers),
+      query: doObfuscation(req.query),
+      params: doObfuscation(req.params),
+      body: doObfuscation(req.body),
     },
   });
 
@@ -147,8 +158,8 @@ const logResponseData = (res, jsonData) => {
     message: 'Response info',
     response: {
       status: res.statusCode,
-      data: jsonData,
-      headers: res.getHeaders(),
+      data: doObfuscation(jsonData),
+      headers: doObfuscation(res.getHeaders()),
     },
   });
 };

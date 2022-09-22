@@ -7,7 +7,6 @@ import config from 'config';
 import { setupHttpDefaults } from 'common-files/utils/httputils.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import startChallenger from './challenger.mjs';
-import Nf3 from '../cli/lib/nf3.mjs';
 
 const CHALLENGER_PORT = process.env.CHALLENGER_PORT || 8192;
 
