@@ -133,12 +133,10 @@ export class MultiSig {
 
   // This function creates the multisig message hash, which is signed (approved) by the key-holders.
   // It's worth looking at the multisig contract to see where this all comes from.
-  async createMultiSigMessageHash(destination, value, data, _nonce, executor, gasLimit) {
-    const { domainSeparator, txTypeHash, multiSigInstance, txInputHashABI } =
-      this.MULTISIG_CONSTANTS;
-    let nonce = _nonce;
+  async createMultiSigMessageHash(destination, value, data, nonce, executor, gasLimit) {
+    const { domainSeparator, txTypeHash, txInputHashABI } = this.MULTISIG_CONSTANTS;
     // get the current multisig nonce if it's not provided (requires blockchain connection)
-    if (!_nonce) nonce = await multiSigInstance.methods.nonce().call();
+    if (!Number.isInteger(nonce)) throw new Error(`Nonce is not an integer: ${nonce}`);
     // compute the hashes to sign over note, sometimes we want a keccak hash over encoded parameter
     // and sometimes over encodedPacked parameters. Hence the two slightly different approaches used.
     const dataHash = this.web3.utils.soliditySha3({ t: 'bytes', v: data });
