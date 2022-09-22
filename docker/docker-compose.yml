@@ -68,6 +68,7 @@ services:
       BLOCKCHAIN_PORT: 8546
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
+      WHITELISTING: ${WHITELISTING}
 
   hosted-utils-api-server:
     build:
