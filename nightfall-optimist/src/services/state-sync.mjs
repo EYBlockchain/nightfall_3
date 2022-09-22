@@ -76,10 +76,10 @@ const checkBlocks = async () => {
     // Existing blocks found stored locally
     let expectedLeafCount = 0;
     // Loop through all our blocks to find any gaps in our internal block data
-    for (let i = 0; i < blocks.length - 1; i++) {
+    for (let i = 0; i < blocks.length; i++) {
       // If the leafCount of the next block stored internally does not match what we expect the leaf count to be
       // it means we may have a gap in our blockData
-      expectedLeafCount += blocks[i + 1].nCommitments;
+      expectedLeafCount += blocks[i].nCommitments;
       if (blocks[i].leafCount !== expectedLeafCount) {
         // if we are in the first iteration it means we have a problem with our internal data
         // let's just restart the sync from earliest,

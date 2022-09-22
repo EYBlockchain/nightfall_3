@@ -67,6 +67,7 @@ async function checkBlockRoot(block) {
 
 // check if there are duplicate commitments in different transactions of the same block
 export async function checkDuplicateCommitmentsWithinBlock(block, transactions) {
+  // Create an array containing all the commitments different than zero in a block and also the transaction index in which belongs to
   const blockCommitments = transactions
     .map(transaction => transaction.commitments)
     .flat(Infinity)
@@ -75,26 +76,30 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
       return { transactionIndex: i, commitment: c };
     });
 
-  let lastIndexDuplicated = 0;
-  let indexDuplicated = 0;
+  let index1 = 0;
+  let index2 = 0;
   for (let index = 0; index < blockCommitments.length; ++index) {
+    // The idea here is to check if all commitments in a block are unique. To do so, we get the last index of each commitment
+    // and if it doesn't match with the current loop index means that there is more than one instance.
     const lastIndex = blockCommitments
       .map(c => c.commitment)
       .lastIndexOf(blockCommitments[index].commitment);
 
     if (index !== lastIndex) {
-      indexDuplicated = index;
-      lastIndexDuplicated = lastIndex;
+      index1 = index;
+      index2 = lastIndex;
       break;
     }
   }
 
-  if (lastIndexDuplicated !== 0) {
-    const transaction1Index = blockCommitments[indexDuplicated].transactionIndex;
+  // If index2 is different than zero means that the loop above was exited due to a duplicated commitment.
+  // Note that we cannot check the first index (index1) since it is possible that it was pointing to the first element of the array (so index1 can be 0)
+  if (index2 !== 0) {
+    const transaction1Index = blockCommitments[index1].transactionIndex;
     const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
     const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
 
-    const transaction2Index = blockCommitments[lastIndexDuplicated].transactionIndex;
+    const transaction2Index = blockCommitments[index2].transactionIndex;
     const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
     const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
 
@@ -107,14 +112,14 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
         transaction1Index,
         siblingPath1,
         duplicateCommitment1Index: transactions[transaction1Index].commitments.find(
-          c => c === blockCommitments[indexDuplicated].commitment,
+          c => c === blockCommitments[index1].commitment,
         ),
         block2: block,
         transaction2: transactions[transaction2Index],
         transaction2Index,
         siblingPath2,
         duplicateCommitment2Index: transactions[transaction2Index].commitments.find(
-          c => c === blockCommitments[indexDuplicated].commitment,
+          c => c === blockCommitments[index1].commitment,
         ),
       },
     );
@@ -123,6 +128,7 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
 
 // check if there are duplicate nullifiers in different transactions of the same block
 export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
+  // Create an array containing all the nullifiers different than zero in a block and also the transaction index in which belongs to
   const blockNullifiers = transactions
     .map(transaction => transaction.nullifiers)
     .flat(Infinity)
@@ -131,26 +137,30 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
       return { transactionIndex: i, nullifier: n };
     });
 
-  let lastIndexDuplicated = 0;
-  let indexDuplicated = 0;
+  let index1 = 0;
+  let index2 = 0;
   for (let index = 0; index < blockNullifiers.length; ++index) {
+    // The idea here is to check if all nullifiers in a block are unique. To do so, we get the last index of each nullifier
+    // and if it doesn't match with the current loop index means that there is more than one instance.
     const lastIndex = blockNullifiers
       .map(n => n.nullifier)
       .lastIndexOf(blockNullifiers[index].nullifier);
 
     if (index !== lastIndex) {
-      indexDuplicated = index;
-      lastIndexDuplicated = lastIndex;
+      index1 = index;
+      index2 = lastIndex;
       break;
     }
   }
 
-  if (lastIndexDuplicated !== 0) {
-    const transaction1Index = blockNullifiers[indexDuplicated].transactionIndex;
+  // If index2 is different than zero means that the loop above was exited due to a duplicated nullifier.
+  // Note that we cannot check the first index (index1) since it is possible that it was pointing to the first element of the array (so index1 can be 0)
+  if (index2 !== 0) {
+    const transaction1Index = blockNullifiers[index1].transactionIndex;
     const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
     const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
 
-    const transaction2Index = blockNullifiers[lastIndexDuplicated].transactionIndex;
+    const transaction2Index = blockNullifiers[index2].transactionIndex;
     const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
     const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
 
@@ -163,14 +173,14 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
         transaction1Index,
         siblingPath1,
         duplicateNullifier1Index: transactions[transaction1Index].nullifiers.find(
-          n => n === blockNullifiers[indexDuplicated].nullifier,
+          n => n === blockNullifiers[index1].nullifier,
         ),
         block2: block,
         transaction2: transactions[transaction2Index],
         transaction2Index,
         siblingPath2,
         duplicateNullifier2Index: transactions[transaction2Index].nullifiers.find(
-          n => n === blockNullifiers[indexDuplicated].nullifier,
+          n => n === blockNullifiers[index1].nullifier,
         ),
       },
     );

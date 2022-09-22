@@ -23,12 +23,9 @@ contract Challenges is Stateful, Key_Registry, Config {
         Config.initialize();
     }
 
-    /**
+  /**
   Check that the block correctly updates the leafCount.  Note that the leafCount
-  is actually the value BEFORE the commitments are added to the Merkle tree.
-  Thus we need the prior block so that we can check it because the value should
-  be the prior block leafcount plus the number of non-zero commitments in the
-  prior block.
+  is actually the value AFTER the commitments are added to the Merkle tree.
   */
     function challengeLeafCountCorrect(
         Block calldata priorBlockL2, // the block immediately prior to this one

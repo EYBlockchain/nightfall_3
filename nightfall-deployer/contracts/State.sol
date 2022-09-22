@@ -49,7 +49,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         initialize();
     }
 
-    modifier onlyRegistered {
+    modifier onlyRegistered() {
         require(
             msg.sender == proposersAddress ||
                 msg.sender == challengesAddress ||
@@ -59,7 +59,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         _;
     }
 
-    modifier onlyCurrentProposer {
+    modifier onlyCurrentProposer() {
         // Modifier
         require(
             msg.sender == currentProposer.thisAddress,
@@ -317,7 +317,8 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
-    // block).
+    // block). It also checks that the transactions sent as a calldata are all contained
+    //in the block by performing its hash and comparing it to the value stored in the block
     function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts)
         public
         view
@@ -333,6 +334,9 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return blockHash;
     }
 
+    // Checks if a block is actually referenced in the queue of blocks waiting
+    // to go into the Shield state (stops someone challenging with a non-existent
+    // block).
     function isBlockReal(Block calldata b) public view returns (bytes32) {
         bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
@@ -340,6 +344,9 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return blockHash;
     }
 
+    // Checks if a block is actually referenced in the queue of blocks waiting
+    // to go into the Shield state (stops someone challenging with a non-existent
+    // block). It also checks if a transaction is contained in a block using its sibling path
     function areBlockAndTransactionReal(
         Block calldata b,
         Transaction calldata t,
