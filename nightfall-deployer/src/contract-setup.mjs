@@ -9,50 +9,31 @@ import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 
 async function setupContracts() {
-  const stateInstance = await getContractInstance('State');
-  logger.debug(`address of State contract is ${stateInstance.options.address}`);
+  const stateInstanceAddress = (await getContractInstance('State')).options.address;
+  const simpleMultiSigAddress = (await getContractInstance('SimpleMultiSig')).options.address;
+  logger.debug(`address of State contract is ${stateInstanceAddress}`);
 
-  // const proposersInstance = await getContractInstance('Proposers');
-  // const shieldInstance = await getContractInstance('Shield');
-  // const challengesInstance = await getContractInstance('Challenges');
-
-  const [proposersInstance, shieldInstance, challengesInstance] = await Promise.all([
+  const contracts = await Promise.all([
     await getContractInstance('Proposers'),
     await getContractInstance('Shield'),
     await getContractInstance('Challenges'),
   ]);
 
-  const simpleMultiSigAddress = (await getContractInstance('SimpleMultiSig')).options.address;
+  await Promise.all(
+    contracts.map(async contract => {
+      const setStateContract = contract.methods.setStateContract(stateInstanceAddress);
+      const transferOwnership = contract.methods.transferOwnership(simpleMultiSigAddress);
 
-  const contracts = {
-    proposersInstance,
-    shieldInstance,
-    challengesInstance,
-  };
+      if (!config.ETH_PRIVATE_KEY) {
+        setStateContract.send();
+        transferOwnership.send();
+      } else {
+        await Web3.submitRawTransaction(setStateContract.encodeABI(), contract.options.address);
 
-  for await (const contractName of Object.keys(contracts)) {
-    const setStateContract = contracts[contractName].methods.setStateContract(
-      stateInstance.options.address,
-    );
-
-    const transferOwnership =
-      contracts[contractName].methods.transferOwnership(simpleMultiSigAddress);
-
-    if (!config.ETH_PRIVATE_KEY) {
-      setStateContract.send();
-      transferOwnership.send();
-    } else {
-      await Web3.submitRawTransaction(
-        setStateContract.encodeABI(),
-        contracts[contractName].options.address,
-      );
-
-      await Web3.submitRawTransaction(
-        transferOwnership.encodeABI(),
-        contracts[contractName].options.address,
-      );
-    }
-  }
+        await Web3.submitRawTransaction(transferOwnership.encodeABI(), contract.options.address);
+      }
+    }),
+  );
 }
 
 export default setupContracts;
