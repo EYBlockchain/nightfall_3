@@ -31,6 +31,7 @@ export class NightfallMultiSig {
     this.contractsOwnables.forEach(contract =>
       contractInstancesResult.push(this.contractInstances[contract]),
     );
+    return contractInstancesResult;
   }
 
   contractInstancesPausables() {
@@ -38,6 +39,7 @@ export class NightfallMultiSig {
     this.contractsPausables.forEach(contract =>
       contractInstancesResult.push(this.contractInstances[contract]),
     );
+    return contractInstancesResult;
   }
 
   /**
