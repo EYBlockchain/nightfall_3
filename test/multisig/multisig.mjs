@@ -4,8 +4,6 @@ import logger from 'common-files/utils/logger.mjs';
 
 // eslint-disable-next-line import/prefer-default-export
 export class MultiSig {
-  transactions = [];
-
   MULTISIG_CONSTANTS = {};
 
   SIGNATURE_THRESHOLD = 2;
@@ -89,41 +87,44 @@ export class MultiSig {
   /**
   Function to save a signed transaction, ready for the multisig
   */
-  async saveSigned(signed) {
-    this.transactions.push({ _id: signed.messageHash.concat(signed.by.slice(2)), ...signed });
+  // eslint-disable-next-line class-methods-use-this
+  async saveSigned(signed, transactions) {
+    transactions.push({ _id: signed.messageHash.concat(signed.by.slice(2)), ...signed });
   }
 
   /**
   Function to get the signatures
   */
-  async getSigned(messageHash) {
-    return this.transactions.filter(t => t.messageHash === messageHash);
+  // eslint-disable-next-line class-methods-use-this
+  async getSigned(messageHash, transactions) {
+    return transactions.filter(t => t.messageHash === messageHash);
   }
 
   /**
   Function to check that there are enough transactions to send some signed data
   */
-  async checkThreshold(messageHash) {
-    return this.transactions.filter(t => t.messageHash === messageHash).length;
+  // eslint-disable-next-line class-methods-use-this
+  async checkThreshold(messageHash, transactions) {
+    return transactions.filter(t => t.messageHash === messageHash).length;
   }
 
   // This function saves a signed transaction and will return the array of so-far signed
   // transactions
-  async addSignedTransaction(signed) {
+  async addSignedTransaction(signed, transactions) {
     // save the signed transaction until we meet the signature threshold, only if it's actually signed
     if (signed.r) {
       try {
-        await this.saveSigned(signed);
+        await this.saveSigned(signed, transactions);
       } catch (err) {
         if (err.message.includes('duplicate key'))
           console.log('You have already signed this message - no action taken');
         else throw new Error(err);
       }
     }
-    const numberOfSignatures = await this.checkThreshold(signed.messageHash);
+    const numberOfSignatures = await this.checkThreshold(signed.messageHash, transactions);
     logger.info(`Number of signatures for this transaction is ${numberOfSignatures}`);
     if (numberOfSignatures === this.SIGNATURE_THRESHOLD) logger.info(`Signature threshold reached`);
-    const signedArray = (await this.getSigned(signed.messageHash)).sort((a, b) => {
+    const signedArray = (await this.getSigned(signed.messageHash, transactions)).sort((a, b) => {
       const x = BigInt(a.by);
       const y = BigInt(b.by);
       return x < y ? -1 : x > y ? 1 : 0; // eslint-disable-line no-nested-ternary
@@ -158,6 +159,7 @@ export class MultiSig {
     contractAddress,
     executorAddress,
     nonce,
+    transactions,
   ) {
     // compute a signature over the unsigned transaction data
     const messageHash = await this.createMultiSigMessageHash(
@@ -168,7 +170,7 @@ export class MultiSig {
       executorAddress,
       this.gas,
     );
-    if (!signingKey) return this.addSignedTransaction({ messageHash }); // if no signing key is given, don't create a new signed transaction
+    if (!signingKey) return this.addSignedTransaction({ messageHash }, transactions); // if no signing key is given, don't create a new signed transaction
     const { r, s, v } = ecsign(
       Buffer.from(messageHash.slice(2), 'hex'),
       Buffer.from(signingKey.slice(2), 'hex'),
@@ -182,7 +184,7 @@ export class MultiSig {
       contractAddress,
       data: unsignedTransactionData,
     };
-    return this.addSignedTransaction(signed);
+    return this.addSignedTransaction(signed, transactions);
   }
 
   async executeMultiSigTransaction(signedArray, executor) {

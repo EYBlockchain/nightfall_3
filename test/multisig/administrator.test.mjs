@@ -18,6 +18,8 @@ chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
+const amount1 = 10;
+const amount2 = 100;
 
 const getContractInstance = async (contractName, nf3) => {
   const abi = contractABIs[contractName];
@@ -77,19 +79,20 @@ describe(`Testing Administrator`, () => {
     });
 
     it('Set boot proposer with the multisig', async () => {
-      await contractMultiSig.setBootProposer(
+      const transactions = await contractMultiSig.setBootProposer(
         signingKeys.user1,
         signingKeys.user1,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        [],
       );
       const approved = await contractMultiSig.setBootProposer(
         signingKeys.user1,
         signingKeys.user2,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        transactions,
       );
-
       await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
       const bootProposer = await shieldContractInstance.methods.getBootProposer().call();
 
@@ -97,17 +100,19 @@ describe(`Testing Administrator`, () => {
     });
 
     it('Set boot challenger with the multisig', async () => {
-      await contractMultiSig.setBootChallenger(
+      const transactions = await contractMultiSig.setBootChallenger(
         signingKeys.user1,
         signingKeys.user1,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        [],
       );
       const approved = await contractMultiSig.setBootChallenger(
         signingKeys.user1,
         signingKeys.user2,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        transactions,
       );
 
       await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
@@ -117,21 +122,23 @@ describe(`Testing Administrator`, () => {
     });
 
     it('Set restriction with the multisig', async () => {
-      await contractMultiSig.setTokenRestrictions(
+      const transactions = await contractMultiSig.setTokenRestrictions(
         nf3User.ethereumAddress, // simulate a token address
-        10,
-        100,
+        amount1,
+        amount2,
         signingKeys.user1,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        [],
       );
       const approved = await contractMultiSig.setTokenRestrictions(
         nf3User.ethereumAddress, // simulate a token address
-        10,
-        100,
+        amount1,
+        amount2,
         signingKeys.user2,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        transactions,
       );
 
       await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
@@ -142,22 +149,24 @@ describe(`Testing Administrator`, () => {
         .getRestriction(nf3User.ethereumAddress, 1)
         .call();
 
-      expect(Number(restrictionDeposit)).to.be.equal(10);
-      expect(Number(restrictionWithdraw)).to.be.equal(100);
+      expect(Number(restrictionDeposit)).to.be.equal(amount1);
+      expect(Number(restrictionWithdraw)).to.be.equal(amount2);
     });
 
     it('Remove restriction with the multisig', async () => {
-      await contractMultiSig.removeTokenRestrictions(
+      const transactions = await contractMultiSig.removeTokenRestrictions(
         nf3User.ethereumAddress, // simulate a token address
         signingKeys.user1,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        [],
       );
       const approved = await contractMultiSig.removeTokenRestrictions(
         nf3User.ethereumAddress, // simulate a token address
         signingKeys.user2,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        transactions,
       );
 
       await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
@@ -173,17 +182,19 @@ describe(`Testing Administrator`, () => {
     });
 
     it('Set MATIC address with the multisig', async () => {
-      await contractMultiSig.setMaticAddress(
+      const transactions = await contractMultiSig.setMaticAddress(
         addresses.user1,
         signingKeys.user1,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        [],
       );
       const approved = await contractMultiSig.setMaticAddress(
         addresses.user1,
         signingKeys.user2,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        transactions,
       );
 
       await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
@@ -194,15 +205,17 @@ describe(`Testing Administrator`, () => {
 
     it('Pause contracts with the multisig', async () => {
       const paused1 = await stateContractInstance.methods.paused().call();
-      await contractMultiSig.pauseContracts(
+      const transactions = await contractMultiSig.pauseContracts(
         signingKeys.user1,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        [],
       );
       const approved = await contractMultiSig.pauseContracts(
         signingKeys.user2,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        transactions,
       );
 
       await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
@@ -215,15 +228,17 @@ describe(`Testing Administrator`, () => {
 
     it('Unpause contracts with the multisig', async () => {
       const paused1 = await stateContractInstance.methods.paused().call();
-      await contractMultiSig.unpauseContracts(
+      const transactions = await contractMultiSig.unpauseContracts(
         signingKeys.user1,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        [],
       );
       const approved = await contractMultiSig.unpauseContracts(
         signingKeys.user2,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        transactions,
       );
 
       await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
@@ -235,17 +250,19 @@ describe(`Testing Administrator`, () => {
     });
 
     it('Be able to transfer ownership of contracts from multisig to a specific one', async () => {
-      await contractMultiSig.transferOwnership(
+      const transactions = await contractMultiSig.transferOwnership(
         signingKeys.user1,
         signingKeys.user1,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        [],
       );
       const approved = await contractMultiSig.transferOwnership(
         signingKeys.user1,
         signingKeys.user2,
         addresses.user1,
         await multisigContractInstance.methods.nonce().call(),
+        transactions,
       );
 
       await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
@@ -273,7 +290,7 @@ describe(`Testing Administrator`, () => {
 
     it('Set restriction without multisig', async () => {
       await shieldContractInstance.methods
-        .setRestriction(nf3User.ethereumAddress, 10, 100)
+        .setRestriction(nf3User.ethereumAddress, amount1, amount2)
         .send({ from: nf3User.ethereumAddress });
       const restrictionDeposit = await shieldContractInstance.methods
         .getRestriction(nf3User.ethereumAddress, 0)
@@ -282,8 +299,8 @@ describe(`Testing Administrator`, () => {
         .getRestriction(nf3User.ethereumAddress, 1)
         .call();
 
-      expect(Number(restrictionDeposit)).to.be.equal(10);
-      expect(Number(restrictionWithdraw)).to.be.equal(100);
+      expect(Number(restrictionDeposit)).to.be.equal(amount1);
+      expect(Number(restrictionWithdraw)).to.be.equal(amount2);
     });
 
     it('Remove restriction without multisig', async () => {

@@ -45,7 +45,7 @@ export class NightfallMultiSig {
   /**
   This function transfers the ownership of the contracts that are ownable
   */
-  async transferOwnership(newOwnerPrivateKey, signingKey, executorAddress, _nonce) {
+  async transferOwnership(newOwnerPrivateKey, signingKey, executorAddress, _nonce, transactions) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
@@ -60,6 +60,7 @@ export class NightfallMultiSig {
           contractInstance.options.address,
           executorAddress,
           nonce + i,
+          transactions.flat(),
         );
       }),
     );
@@ -75,6 +76,7 @@ export class NightfallMultiSig {
     signingKey,
     executorAddress,
     _nonce,
+    transactions,
   ) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
@@ -89,6 +91,7 @@ export class NightfallMultiSig {
         this.contractInstances.shield.options.address,
         executorAddress,
         nonce,
+        transactions.flat(),
       ),
     ]);
   }
@@ -96,7 +99,7 @@ export class NightfallMultiSig {
   /**
   This function removes the restriction data that the Shield contract is currently using
   */
-  async removeTokenRestrictions(tokenAddress, signingKey, executorAddress, _nonce) {
+  async removeTokenRestrictions(tokenAddress, signingKey, executorAddress, _nonce, transactions) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
@@ -108,6 +111,7 @@ export class NightfallMultiSig {
         this.contractInstances.shield.options.address,
         executorAddress,
         nonce,
+        transactions.flat(),
       ),
     ]);
   }
@@ -115,7 +119,7 @@ export class NightfallMultiSig {
   /**
   This function pauses contracts that are pausable
   */
-  async pauseContracts(signingKey, executorAddress, _nonce) {
+  async pauseContracts(signingKey, executorAddress, _nonce, transactions) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
@@ -130,6 +134,7 @@ export class NightfallMultiSig {
           contractInstance.options.address,
           executorAddress,
           nonce + i,
+          transactions.flat(),
         );
       }),
     );
@@ -138,7 +143,7 @@ export class NightfallMultiSig {
   /**
   This function unpauses contracts that are pausable
   */
-  async unpauseContracts(signingKey, executorAddress, _nonce) {
+  async unpauseContracts(signingKey, executorAddress, _nonce, transactions) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
@@ -153,6 +158,7 @@ export class NightfallMultiSig {
           contractInstance.options.address,
           executorAddress,
           nonce + i,
+          transactions.flat(),
         );
       }),
     );
@@ -161,7 +167,7 @@ export class NightfallMultiSig {
   /**
   This function sets the boot proposer
   */
-  async setBootProposer(newProposerPrivateKey, signingKey, executorAddress, _nonce) {
+  async setBootProposer(newProposerPrivateKey, signingKey, executorAddress, _nonce, transactions) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
@@ -178,6 +184,7 @@ export class NightfallMultiSig {
         shieldContractInstance.options.address,
         executorAddress,
         nonce,
+        transactions.flat(),
       ),
     ]);
   }
@@ -185,7 +192,13 @@ export class NightfallMultiSig {
   /**
   This function sets the boot challenger
   */
-  async setBootChallenger(newChallengerPrivateKey, signingKey, executorAddress, _nonce) {
+  async setBootChallenger(
+    newChallengerPrivateKey,
+    signingKey,
+    executorAddress,
+    _nonce,
+    transactions,
+  ) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
@@ -202,6 +215,7 @@ export class NightfallMultiSig {
         shieldContractInstance.options.address,
         executorAddress,
         nonce,
+        transactions.flat(),
       ),
     ]);
   }
@@ -209,7 +223,7 @@ export class NightfallMultiSig {
   /**
   This function sets the Matic address
   */
-  async setMaticAddress(newMaticAddress, signingKey, executorAddress, _nonce) {
+  async setMaticAddress(newMaticAddress, signingKey, executorAddress, _nonce, transactions) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
@@ -222,6 +236,7 @@ export class NightfallMultiSig {
         shieldContractInstance.options.address,
         executorAddress,
         nonce,
+        transactions.flat(),
       ),
     ]);
   }
