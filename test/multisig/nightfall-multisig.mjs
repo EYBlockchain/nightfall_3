@@ -45,8 +45,10 @@ export class NightfallMultiSig {
   /**
   This function transfers the ownership of the contracts that are ownable
   */
-  transferOwnership(newOwnerPrivateKey, signingKey, executorAddress, nonce) {
-    logger.info(`transferOwnership: nonce is ${nonce}`);
+  async transferOwnership(newOwnerPrivateKey, signingKey, executorAddress, _nonce) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
     const newOwner = this.web3.eth.accounts.privateKeyToAccount(newOwnerPrivateKey, true).address;
     return Promise.all(
       this.contractInstancesOwnables().map(async (ownable, i) => {
@@ -72,8 +74,11 @@ export class NightfallMultiSig {
     withdrawRestriction,
     signingKey,
     executorAddress,
-    nonce,
+    _nonce,
   ) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
     const data = this.contractInstances.shield.methods
       .setRestriction(tokenAddress, depositRestriction, withdrawRestriction)
       .encodeABI();
@@ -91,7 +96,10 @@ export class NightfallMultiSig {
   /**
   This function removes the restriction data that the Shield contract is currently using
   */
-  async removeTokenRestrictions(tokenAddress, signingKey, executorAddress, nonce) {
+  async removeTokenRestrictions(tokenAddress, signingKey, executorAddress, _nonce) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
     const data = this.contractInstances.shield.methods.removeRestriction(tokenAddress).encodeABI();
     return Promise.all([
       this.multiSig.addMultiSigSignature(
@@ -107,7 +115,10 @@ export class NightfallMultiSig {
   /**
   This function pauses contracts that are pausable
   */
-  pauseContracts(signingKey, executorAddress, nonce) {
+  async pauseContracts(signingKey, executorAddress, _nonce) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
     logger.info('All pausable contracts being paused');
     return Promise.all(
       this.contractInstancesPausables().map(async (pausable, i) => {
@@ -127,7 +138,10 @@ export class NightfallMultiSig {
   /**
   This function unpauses contracts that are pausable
   */
-  unpauseContracts(signingKey, executorAddress, nonce) {
+  async unpauseContracts(signingKey, executorAddress, _nonce) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
     logger.info('All pausable contracts being unpaused');
     return Promise.all(
       this.contractInstancesPausables().map(async (pausable, i) => {
@@ -147,7 +161,10 @@ export class NightfallMultiSig {
   /**
   This function sets the boot proposer
   */
-  async setBootProposer(newProposerPrivateKey, signingKey, executorAddress, nonce) {
+  async setBootProposer(newProposerPrivateKey, signingKey, executorAddress, _nonce) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
     const newProposer = this.web3.eth.accounts.privateKeyToAccount(
       newProposerPrivateKey,
       true,
@@ -168,7 +185,10 @@ export class NightfallMultiSig {
   /**
   This function sets the boot challenger
   */
-  async setBootChallenger(newChallengerPrivateKey, signingKey, executorAddress, nonce) {
+  async setBootChallenger(newChallengerPrivateKey, signingKey, executorAddress, _nonce) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
     const newChallenger = this.web3.eth.accounts.privateKeyToAccount(
       newChallengerPrivateKey,
       true,
@@ -189,7 +209,10 @@ export class NightfallMultiSig {
   /**
   This function sets the Matic address
   */
-  async setMaticAddress(newMaticAddress, signingKey, executorAddress, nonce) {
+  async setMaticAddress(newMaticAddress, signingKey, executorAddress, _nonce) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
     const shieldContractInstance = this.contractInstances.shield;
     const data = shieldContractInstance.methods.setMaticAddress(newMaticAddress).encodeABI();
     return Promise.all([

@@ -61,6 +61,19 @@ export class MultiSig {
     ];
   }
 
+  /**
+   Read the nonce from the multisig contract
+  */
+  async getMultiSigNonce() {
+    const { multiSigInstance } = this.MULTISIG_CONSTANTS;
+    if (!multiSigInstance) throw new Error('No multisig instance');
+    const nonce = await multiSigInstance.methods.nonce().call();
+    return Number(nonce);
+  }
+
+  /**
+  Function to send signed transaction
+  */
   async sendTransaction(unsignedTransaction, signingKey, contractAddress) {
     const tx = {
       from: this.web3.eth.accounts.privateKeyToAccount(signingKey).address,
@@ -192,6 +205,9 @@ export class MultiSig {
     return this.sendTransaction(multiSigTransaction, executor, multiSigInstance.options.address);
   }
 
+  /**
+   * Execute multisig transaction
+   */
   async executeMultiSigTransactions(approved, executor) {
     for (const approval of approved) {
       logger.info('Executing multisig transaction');

@@ -76,6 +76,46 @@ describe(`Testing Administrator`, () => {
       expect(ownerChallenges.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
     });
 
+    it('Set boot proposer with the multisig', async () => {
+      await contractMultiSig.setBootProposer(
+        signingKeys.user1,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContractInstance.methods.nonce().call(),
+      );
+      const approved = await contractMultiSig.setBootProposer(
+        signingKeys.user1,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContractInstance.methods.nonce().call(),
+      );
+
+      await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+      const bootProposer = await shieldContractInstance.methods.getBootProposer().call();
+
+      expect(bootProposer.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
+    });
+
+    it('Set boot challenger with the multisig', async () => {
+      await contractMultiSig.setBootChallenger(
+        signingKeys.user1,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContractInstance.methods.nonce().call(),
+      );
+      const approved = await contractMultiSig.setBootChallenger(
+        signingKeys.user1,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContractInstance.methods.nonce().call(),
+      );
+
+      await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+      const bootChallenger = await shieldContractInstance.methods.getBootChallenger().call();
+
+      expect(bootChallenger.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
+    });
+
     it('Set restriction with the multisig', async () => {
       await contractMultiSig.setTokenRestrictions(
         nf3User.ethereumAddress, // simulate a token address
@@ -132,46 +172,6 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(0);
     });
 
-    it('Set boot proposer with the multisig', async () => {
-      await contractMultiSig.setBootProposer(
-        signingKeys.user1,
-        signingKeys.user1,
-        addresses.user1,
-        await multisigContractInstance.methods.nonce().call(),
-      );
-      const approved = await contractMultiSig.setBootProposer(
-        signingKeys.user1,
-        signingKeys.user2,
-        addresses.user1,
-        await multisigContractInstance.methods.nonce().call(),
-      );
-
-      await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const bootProposer = await shieldContractInstance.methods.getBootProposer().call();
-
-      expect(bootProposer.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
-    });
-
-    it('Set boot challenger with the multisig', async () => {
-      await contractMultiSig.setBootChallenger(
-        signingKeys.user1,
-        signingKeys.user1,
-        addresses.user1,
-        await multisigContractInstance.methods.nonce().call(),
-      );
-      const approved = await contractMultiSig.setBootChallenger(
-        signingKeys.user1,
-        signingKeys.user2,
-        addresses.user1,
-        await multisigContractInstance.methods.nonce().call(),
-      );
-
-      await contractMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const bootChallenger = await shieldContractInstance.methods.getBootChallenger().call();
-
-      expect(bootChallenger.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
-    });
-
     it('Set MATIC address with the multisig', async () => {
       await contractMultiSig.setMaticAddress(
         addresses.user1,
@@ -191,7 +191,8 @@ describe(`Testing Administrator`, () => {
 
       expect(maticAddress.toUpperCase()).to.be.equal(addresses.user1.toUpperCase());
     });
-    /* it('Pause contracts with the multisig', async () => {
+
+    it('Pause contracts with the multisig', async () => {
       const paused1 = await stateContractInstance.methods.paused().call();
       await contractMultiSig.pauseContracts(
         signingKeys.user1,
@@ -232,7 +233,7 @@ describe(`Testing Administrator`, () => {
       expect(paused1).to.be.equal(true);
       expect(paused2).to.be.equal(false);
     });
-  
+
     it('Be able to transfer ownership of contracts from multisig to a specific one', async () => {
       await contractMultiSig.transferOwnership(
         signingKeys.user1,
@@ -252,7 +253,7 @@ describe(`Testing Administrator`, () => {
       expect(owner.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
     });
 
-    it('Set boot proposer', async () => {
+    it('Set boot proposer without multisig', async () => {
       await shieldContractInstance.methods
         .setBootProposer(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
@@ -261,7 +262,7 @@ describe(`Testing Administrator`, () => {
       expect(bootProposer.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
     });
 
-    it('Set boot challenger', async () => {
+    it('Set boot challenger without multisig', async () => {
       await shieldContractInstance.methods
         .setBootChallenger(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
@@ -270,7 +271,7 @@ describe(`Testing Administrator`, () => {
       expect(bootChallenger.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
     });
 
-    it('Set restriction', async () => {
+    it('Set restriction without multisig', async () => {
       await shieldContractInstance.methods
         .setRestriction(nf3User.ethereumAddress, 10, 100)
         .send({ from: nf3User.ethereumAddress });
@@ -285,7 +286,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(100);
     });
 
-    it('Remove restriction', async () => {
+    it('Remove restriction without multisig', async () => {
       await shieldContractInstance.methods
         .removeRestriction(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
@@ -300,7 +301,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(0);
     });
 
-    it('Set MATIC address', async () => {
+    it('Set MATIC address without multisig', async () => {
       await shieldContractInstance.methods
         .setMaticAddress(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
@@ -309,7 +310,7 @@ describe(`Testing Administrator`, () => {
       expect(maticAddress.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
     });
 
-    it('Pause State contract', async () => {
+    it('Pause State contract without multisig', async () => {
       const paused1 = await stateContractInstance.methods.paused().call();
       await stateContractInstance.methods.pause().send({ from: nf3User.ethereumAddress });
       const paused2 = await stateContractInstance.methods.paused().call();
@@ -318,7 +319,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(true);
     });
 
-    it('Unpause State contract', async () => {
+    it('Unpause State contract without multisig', async () => {
       const paused1 = await stateContractInstance.methods.paused().call();
       await stateContractInstance.methods.unpause().send({ from: nf3User.ethereumAddress });
       const paused2 = await stateContractInstance.methods.paused().call();
@@ -327,7 +328,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(false);
     });
 
-    it('Pause Shield contract', async () => {
+    it('Pause Shield contract without multisig', async () => {
       const paused1 = await shieldContractInstance.methods.paused().call();
       await shieldContractInstance.methods.pause().send({ from: nf3User.ethereumAddress });
       const paused2 = await shieldContractInstance.methods.paused().call();
@@ -336,7 +337,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(true);
     });
 
-    it('Unpause Shield contract', async () => {
+    it('Unpause Shield contract without multisig', async () => {
       const paused1 = await shieldContractInstance.methods.paused().call();
       await shieldContractInstance.methods.unpause().send({ from: nf3User.ethereumAddress });
       const paused2 = await shieldContractInstance.methods.paused().call();
@@ -371,7 +372,6 @@ describe(`Testing Administrator`, () => {
       expect(ownerProposers.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
       expect(ownerChallenges.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
     });
-    */
   });
 
   after(async () => {
