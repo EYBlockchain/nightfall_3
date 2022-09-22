@@ -9,8 +9,6 @@ import { waitForContract } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 
 async function setupContracts() {
-  const web3 = Web3.connection();
-
   const stateInstance = await waitForContract('State');
   logger.debug(`address of State contract is ${stateInstance.options.address}`);
 
