@@ -132,6 +132,8 @@ async function setupCircuits() {
       );
 
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
+      // on networks like Edge, there's no account management so we need to encodeABI()
+      // since methods like send() don't work
       if (config.ETH_PRIVATE_KEY) {
         const tx = {
           from: process.env.FROM_ADDRESS,
