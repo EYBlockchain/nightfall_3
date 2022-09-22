@@ -6,19 +6,22 @@ import {
 } from '../services/database.mjs';
 
 /**
-This handler runs whenever a BlockProposed event is emitted by the blockchain
-*/
-
+ * This handler runs whenever a BlockProposed event is emitted by the blockchain
+ */
 async function newCurrentProposerEventHandler(data, args) {
   const { proposer: currentProposer } = data.returnValues;
   const [proposer] = args;
   try {
-    logger.info(`Proposer Handler - Current proposer is ${currentProposer}`);
-    // remember the current proposer.  We don't store it in the DB as it's an
-    // ephemeral thing. Instead, we have an object to remember it. The
-    // object is instantiated at the 'main()' level, so will stay in scope even
-    // when this handler exits.
+    logger.info({ msg: 'Proposer Handler', currentProposer });
+
+    /*
+     remember the current proposer.  We don't store it in the DB as it's an
+     ephemeral thing. Instead, we have an object to remember it. The
+     object is instantiated at the 'main()' level, so will stay in scope even
+     when this handler exits.
+     */
     proposer.address = currentProposer;
+
     // were we the last proposer?
     const weWereLastProposer = proposer.isMe;
 
@@ -28,6 +31,7 @@ async function newCurrentProposerEventHandler(data, args) {
       Block.rollback();
       await resetUnsuccessfulBlockProposedTransactions();
     }
+
     // !! converts this to a "is not null" check - i.e. false if is null
     // are we the next proposer?
     proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));

@@ -1,8 +1,8 @@
 /**
- This module contains the logic needed create a zkp deposit, i.e. to pay
- a token to the Shield contract and have it create a zkp commitment for the
- same value. It is agnostic to whether we are dealing with an ERC20 or ERC721
- (or ERC1155).
+ * This module contains the logic needed create a zkp deposit, i.e. to pay
+ * a token to the Shield contract and have it create a zkp commitment for the
+ * same value. It is agnostic to whether we are dealing with an ERC20 or ERC721
+ * (or ERC1155).
  * @module deposit.mjs
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
@@ -24,16 +24,20 @@ const { generalise } = gen;
 
 async function deposit(items) {
   logger.info('Creating a deposit transaction');
-  // before we do anything else, long hex strings should be generalised to make
-  // subsequent manipulations easier
+
+  // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
   const { ercAddress, tokenId, value, compressedZkpPublicKey, nullifierKey, fee } =
     generalise(items);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const salt = await randValueLT(BN128_GROUP_ORDER);
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
-  logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
-  // now we can compute a Witness so that we can generate the proof
 
+  logger.debug({
+    msg: 'Hash of new commitment',
+    hash: commitment.hash.hex(),
+  });
+
+  // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
   const maticAddress = generalise(
@@ -53,7 +57,11 @@ async function deposit(items) {
   const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
 
   const witness = computeCircuitInputs(publicData, privateData, [0, 0, 0, 0], maticAddress);
-  logger.debug(`witness input is ${witness.join(' ')}`);
+  logger.debug({
+    msg: 'witness input is',
+    witness: witness.join(' '),
+  });
+
   // call a zokrates worker to generate the proof
   let folderpath = 'deposit';
   if (USE_STUBS) folderpath = `${folderpath}_stub`;
@@ -63,7 +71,12 @@ async function deposit(items) {
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
   });
-  logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
+
+  logger.trace({
+    msg: 'Received response from generete-proof',
+    response: JSON.stringify(res.data, null, 2),
+  });
+
   const { proof } = res.data;
   // and work out the ABI encoded data that the caller should sign and send to the shield contract
   // first, get the contract instance
@@ -79,9 +92,11 @@ async function deposit(items) {
     commitments: [commitment],
     proof,
   });
-  logger.trace(
-    `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
-  );
+
+  logger.trace({
+    optimisticDepositTransaction: JSON.stringify(optimisticDepositTransaction, null, 2),
+  });
+
   // and then we can create an unsigned blockchain transaction
   try {
     const rawTransaction = await shieldContractInstance.methods
@@ -92,7 +107,8 @@ async function deposit(items) {
     storeCommitment(commitment, nullifierKey);
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {
-    throw new Error(err); // let the caller handle the error
+    logger.error(err);
+    throw err; // let the caller handle the error
   }
 }
 

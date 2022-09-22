@@ -9,21 +9,30 @@ import { getBlockByBlockNumberL2, getTreeByLeafCount } from './database.mjs';
 
 const { ZERO } = constants;
 
-// Check that the leafCount is correct
-// we do this first because subsequent checks are reliant on the leafCount
-// being correct!
-// We need to get hold of the prior block to do this because the leafCount
-// is derrived from data in that block.
+/**
+ * Check that the leafCount is correct
+ * we do this first because subsequent checks are reliant on the leafCount
+ * being correct!
+ * We need to get hold of the prior block to do this because the leafCount
+ * is derrived from data in that block.
+ */
 async function checkLeafCount(block) {
   logger.debug(`Checking block with leafCount ${block.leafCount}`);
+
   if (block.blockNumberL2 > 0) {
     const priorBlock = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
-    if (priorBlock === null) logger.warn('Could not find prior block while checking leaf count');
-    if (priorBlock.leafCount + priorBlock.nCommitments !== block.leafCount)
+
+    if (priorBlock === null) {
+      logger.warn('Could not find prior block while checking leaf count');
+    }
+
+    if (priorBlock.leafCount + priorBlock.nCommitments !== block.leafCount) {
       throw new BlockError('The leaf count in the block is not correct', 0);
-  } else if (block.leafCount !== 0)
+    }
+  } else if (block.leafCount !== 0) {
     // this throws if it's the first block and leafCount!=0, which is impossible
     throw new BlockError('The leaf count in the block is not correct', 0);
+  }
 }
 
 // There's a bit of an issue here though.  It's possible that our block didn't
@@ -47,11 +56,13 @@ async function checkBlockRoot(block) {
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
   }
-  if (history.root !== block.root)
+
+  if (history.root !== block.root) {
     throw new BlockError(
       `The block's root (${block.root}) cannot be reconstructed from the commitment hashes in the transactions in this block and the historic Frontier held by Timber for this root`,
       1,
     );
+  }
 }
 
 // check if there are duplicate commitments in different transactions of the same block
@@ -111,12 +122,12 @@ export function checkDuplicateNullifiersWithinBlock(block, transactions) {
 }
 
 /**
-Checks the block's properties.  It will return the first inconsistency it finds
-@param {object} block - the block being checked
-@param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
-TODO - nullifiers
-*/
-
+ * Checks the block's properties.  It will return the first inconsistency it finds
+ * @param {object} block - the block being checked
+ * @param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
+ *
+ * TODO - nullifiers
+ */
 export async function checkBlock(block, transactions) {
   await checkLeafCount(block);
   // now we have to check the commitment root.
@@ -125,6 +136,7 @@ export async function checkBlock(block, transactions) {
   await checkBlockRoot(block);
   await checkDuplicateCommitmentsWithinBlock(block, transactions);
   await checkDuplicateNullifiersWithinBlock(block, transactions);
+
   // check if the transactions are valid - transaction type, public input hash and proof verification are all checked
   for (let i = 0; i < transactions.length; i++) {
     try {

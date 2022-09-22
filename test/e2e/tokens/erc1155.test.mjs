@@ -275,7 +275,7 @@ describe('ERC1155 tests', () => {
         expect(afterBalanceERC1155 - beforeBalanceERC1155).to.be.equal(-transferValue);
         expect(afterBalanceERC20 - beforeBalanceERC20).to.be.equal(-fee);
       } else {
-        console.log('Not using a time-jump capable test client so this test is skipped');
+        logger.info('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
     });

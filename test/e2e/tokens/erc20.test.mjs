@@ -252,7 +252,7 @@ describe('ERC20 tests', () => {
         const endBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
         expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
       } else {
-        console.log('Not using a time-jump capable test client so this test is skipped');
+        logger.info('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
     });
@@ -384,8 +384,6 @@ describe('ERC20 tests', () => {
         maxWithdrawValue.find(e => e.address.toLowerCase() === erc20Address)?.amount ||
         erc20default;
       maxERC20DepositValue = Math.floor(maxERC20WithdrawValue / 4);
-      // console.log('Max ERC20 Deposit Value', maxERC20DepositValue);
-      // console.log('Max ERC20 Withdraw Value', maxERC20WithdrawValue);
     });
 
     it('should restrict deposits', async () => {

@@ -28,15 +28,19 @@ const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
 const { ZERO } = constants;
 
 /**
-This handler runs whenever a BlockProposed event is emitted by the blockchain
-*/
+ * This handler runs whenever a BlockProposed event is emitted by the blockchain
+ */
 async function blockProposedEventHandler(data, syncing) {
   // zkpPrivateKey will be used to decrypt secrets whilst nullifierKey will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block } = await getProposeBlockCalldata(data);
-  logger.info(
-    `Received Block Proposed event with layer 2 block number ${block.blockNumberL2} and tx hash ${transactionHashL1}`,
-  );
+
+  logger.info({
+    msg: 'Received Block Proposed event with Layer 2 Block Number and Tx Hash',
+    blockNumberL2: block.blockNumberL2,
+    transactionHashL1,
+  });
+
   const latestTree = await getLatestTree();
   const blockCommitments = transactions
     .map(t => t.commitments.filter(c => c !== ZERO))
@@ -130,7 +134,11 @@ async function blockProposedEventHandler(data, syncing) {
     if (!syncing || !err.message.includes('duplicate key')) throw err;
   }
 
-  logger.debug(`Saved tree for L2 block ${block.blockNumberL2}`);
+  logger.debug({
+    msg: 'Saved tree for L2 block',
+    blockNumberL2: block.blockNumberL2,
+  });
+
   await Promise.all(
     // eslint-disable-next-line consistent-return
     blockCommitments.map(async (c, i) => {

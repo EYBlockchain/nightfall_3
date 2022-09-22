@@ -78,8 +78,6 @@ class Nf3 {
 
   BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
 
-  // nonce = 0;
-
   latestWithdrawHash;
 
   mnemonic = {};
@@ -152,8 +150,6 @@ class Nf3 {
   async setEthereumSigningKey(key) {
     this.ethereumSigningKey = key;
     this.ethereumAddress = await this.getAccounts();
-    // clear the nonce as we're using a fresh account
-    // this.nonce = 0;
   }
 
   /**
@@ -249,11 +245,9 @@ class Nf3 {
       const res = (await axios.get(GAS_ESTIMATE_ENDPOINT)).data.result;
       proposedGasPrice = Number(res?.ProposeGasPrice) * 10 ** 9;
     } catch (error) {
-      // logger.warn('Gas Estimation Failed, using previous block gasPrice');
       try {
         proposedGasPrice = Number(await this.web3.eth.getGasPrice());
       } catch (err) {
-        // logger.warn('Failed to get previous block gasprice.  Falling back to default');
         proposedGasPrice = GAS_PRICE;
       }
     }
@@ -276,11 +270,6 @@ class Nf3 {
     const gasPrice = await this.estimateGasPrice();
     // Estimate the gasLimit
     const gas = await this.estimateGas(contractAddress, unsignedTransaction);
-    // logger.debug(
-    //  `Transaction gasPrice was set at ${Math.ceil(
-    //    gasPrice / 10 ** 9,
-    //  )} GWei, gas limit was set at ${gas}`,
-    // );
     const tx = {
       from: this.ethereumAddress,
       to: contractAddress,
@@ -296,7 +285,6 @@ class Nf3 {
         this.web3.eth
           .sendSignedTransaction(signed.rawTransaction)
           .once('receipt', receipt => {
-            // logger.debug(`Transaction ${receipt.transactionHash} has been received.`);
             resolve(receipt);
           })
           .on('error', err => {
@@ -421,7 +409,6 @@ class Nf3 {
           );
           resolve(receipt);
         } catch (err) {
-          // logger.error('Deposit transaction failed');
           reject(err);
         }
       });
@@ -657,11 +644,9 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('Liquidity provider websocket connection opened');
       connection.send('instant');
     };
@@ -903,11 +888,9 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          // logger.debug('sent websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('websocket received pong'));
       logger.debug('Proposer websocket connection opened');
       connection.send('blocks');
     };
@@ -971,11 +954,9 @@ class Nf3 {
       this.intervalIDs.push(
         setInterval(() => {
           connection._ws.ping();
-          // logger.debug('sent challenge websocket ping');
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
-      // connection._ws.on('pong', () => logger.debug('Challenge websocket received pong'));
       logger.debug('Challenge websocket connection opened');
       connection.send('challenge');
     };
@@ -1134,27 +1115,9 @@ class Nf3 {
     return res.data.commitments;
   }
 
-  // /**
-  //   Set a Web3 Provider URL
-  //   */
-  // async setWeb3Provider() {
-  //   this.web3 = new Web3(this.web3WsUrl);
-  //   this.web3.eth.transactionBlockTimeout = 200;
-  //   this.web3.eth.transactionConfirmationBlocks = 12;
-  //   if (typeof window !== 'undefined') {
-  //     if (window.ethereum && this.ethereumSigningKey === '') {
-  //       this.web3 = new Web3(window.ethereum);
-  //       await window.ethereum.request({ method: 'eth_requestAccounts' });
-  //     } else {
-  //       // Metamask not available
-  //       throw new Error('No Web3 provider found');
-  //     }
-  //   }
-  // }
-
   /**
-Set a Web3 Provider URL
-*/
+   * Set a Web3 Provider URL
+   */
   async setWeb3Provider() {
     // initialization of web3 provider has been taken from common-files/utils/web3.mjs
     //  Target is to mainain web3 socker alive
