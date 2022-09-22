@@ -18,7 +18,6 @@ export async function getMultiSigNonce() {
   return Number(nonce);
 }
 
-
 /**
 Read the names of tokens from the config
 */
