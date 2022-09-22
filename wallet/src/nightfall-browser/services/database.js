@@ -184,15 +184,6 @@ export async function getLatestTimber() {
   return timberObjArr;
 }
 
-export async function getTreeByRoot(treeRoot) {
-  const db = await connectDB();
-  const vals = await db.getAll(TIMBER_COLLECTION);
-  const { root, frontier, leafCount } = vals.filter(v => v.root === treeRoot);
-  if (!root) return new Timber(0, [], 0, undefined, HASH_TYPE, TIMBER_HEIGHT);
-  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
-  return t;
-}
-
 export async function getTreeByBlockNumberL2(blockNumberL2) {
   const db = await connectDB();
   if (blockNumberL2 < 0) return new Timber(0, [], 0, undefined, HASH_TYPE, TIMBER_HEIGHT);
@@ -338,17 +329,6 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
   return Promise.all(toDelete.map(i => db.delete(TRANSACTIONS_COLLECTION, res[i]._id)));
 }
 
-export async function getTransactionByCommitment(commitmentHash) {
-  const db = await connectDB();
-  const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(r => r.commitments.includes(commitmentHash));
-}
-
-export async function getTransactionByNullifier(nullifierHash) {
-  const db = await connectDB();
-  const res = await db.getAll(TRANSACTIONS_COLLECTION);
-  return res.filter(r => r.nullifiers.includes(nullifierHash));
-}
 export async function getTransactionByTransactionHash(transactionHash) {
   const db = await connectDB();
   return db.get(TRANSACTIONS_COLLECTION, transactionHash);
