@@ -5,18 +5,24 @@ address of the contract that holds global state (State.sol)
 
 import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
-import { waitForContract } from 'common-files/utils/contract.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 
 async function setupContracts() {
-  const stateInstance = await waitForContract('State');
+  const stateInstance = await getContractInstance('State');
   logger.debug(`address of State contract is ${stateInstance.options.address}`);
 
-  const proposersInstance = await waitForContract('Proposers');
-  const shieldInstance = await waitForContract('Shield');
-  const challengesInstance = await waitForContract('Challenges');
+  // const proposersInstance = await getContractInstance('Proposers');
+  // const shieldInstance = await getContractInstance('Shield');
+  // const challengesInstance = await getContractInstance('Challenges');
 
-  const simpleMultiSigAddress = (await waitForContract('SimpleMultiSig')).options.address;
+  const [proposersInstance, shieldInstance, challengesInstance] = await Promise.all([
+    await getContractInstance('Proposers'),
+    await getContractInstance('Shield'),
+    await getContractInstance('Challenges'),
+  ]);
+
+  const simpleMultiSigAddress = (await getContractInstance('SimpleMultiSig')).options.address;
 
   const contracts = {
     proposersInstance,
