@@ -31,8 +31,6 @@ async function start() {
     tokenName,
     depositRestriction,
     withdrawRestriction,
-    pause,
-    unpause,
     newEthereumSigningKey,
     executorAddress,
     nonce,
@@ -69,13 +67,10 @@ async function start() {
         break;
       }
       case 'Unpause contracts': {
-        if (!unpause) break;
-        console.log('CALLING unpauseContracts');
         approved = await unpauseContracts(ethereumSigningKey, executorAddress, nonce);
         break;
       }
       case 'Pause contracts': {
-        if (!pause) break;
         approved = await pauseContracts(ethereumSigningKey, executorAddress, nonce);
         break;
       }
