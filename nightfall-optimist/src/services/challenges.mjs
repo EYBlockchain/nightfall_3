@@ -255,7 +255,7 @@ export async function createChallenge(block, transactions, err) {
         transactions[transactionIndex].transactionHash,
       );
       txDataToSign = await challengeContractInstance.methods
-        .challengeHistoricRoot({
+        .challengeHistoricRootBlockNumber({
           blockL2: Block.buildSolidityStruct(block),
           transaction: Transaction.buildSolidityStruct(transactions[transactionIndex]),
           transactionIndex,
