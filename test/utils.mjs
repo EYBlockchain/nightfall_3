@@ -203,7 +203,8 @@ export class Web3Client {
     }
     if (counter < 0) {
       throw new Error(
-        `No events found with in ${retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
+        `No events found with in ${
+          retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
         }retries of ${WAIT}ms wait`,
       );
     }

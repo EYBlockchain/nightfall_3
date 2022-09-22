@@ -10,22 +10,22 @@ const { ZERO } = constants;
 let error = process.env.BAD_TX_SEQUENCE
   ? process.env.BAD_TX_SEQUENCE.split(',')
   : [
-    'ValidTransaction',
-    'ValidTransaction',
-    'ValidTransaction',
-    // 'IncorrectTreeRoot',
-    // 'ValidTransaction',
-    'IncorrectLeafCount',
-    'ValidTransaction',
-    'DuplicateCommitment',
-    'ValidTransaction',
-    'DuplicateNullifier',
-    'ValidTransaction',
-    'HistoricRootError',
-    'ValidTransaction',
-    // 'IncorrectProof',
-    // 'ValidTransaction',
-  ];
+      'ValidTransaction',
+      'ValidTransaction',
+      'ValidTransaction',
+      // 'IncorrectTreeRoot',
+      // 'ValidTransaction',
+      'IncorrectLeafCount',
+      'ValidTransaction',
+      'DuplicateCommitment',
+      'ValidTransaction',
+      'DuplicateNullifier',
+      'ValidTransaction',
+      'HistoricRootError',
+      'ValidTransaction',
+      // 'IncorrectProof',
+      // 'ValidTransaction',
+    ];
 
 let resetErrorIdx = false;
 let indexOffset = 0;
@@ -181,12 +181,6 @@ const historicRootError = async number => {
     logger.debug(err);
   }
   return null;
-};
-
-export const addTx = txType => {
-  error = txType;
-  resetErrorIdx = true;
-  logger.debug(`Received new Tx types to generate ${error}`);
 };
 
 export const addTx = txType => {

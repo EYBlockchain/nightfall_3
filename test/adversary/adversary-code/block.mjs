@@ -4,22 +4,22 @@ import logger from 'common-files/utils/logger.mjs';
 let error = process.env.BAD_BLOCK_SEQUENCE
   ? process.env.BAD_BLOCK_SEQUENCE.split(',')
   : [
-    'ValidBlock',
-    'ValidBlock',
-    'ValidBlock',
-    // 'IncorrectTreeRoot', // Needs two prior blocks
-    // 'ValidBlock',
-    'IncorrectLeafCount', //  Needs one prior block
-    'ValidBlock',
-    'DuplicateCommitment', // needs atleast one non withdraw transaction in a prior block
-    'ValidBlock',
-    'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
-    'ValidBlock',
-    'HistoricRootError',
-    'ValidBlock',
-    // 'IncorrectProof',
-    // 'ValidBlock',
-  ];
+      'ValidBlock',
+      'ValidBlock',
+      'ValidBlock',
+      // 'IncorrectTreeRoot', // Needs two prior blocks
+      // 'ValidBlock',
+      'IncorrectLeafCount', //  Needs one prior block
+      'ValidBlock',
+      'DuplicateCommitment', // needs atleast one non withdraw transaction in a prior block
+      'ValidBlock',
+      'DuplicateNullifier', // needs atleast one non deposit transaction in a prior block
+      'ValidBlock',
+      'HistoricRootError',
+      'ValidBlock',
+      // 'IncorrectProof',
+      // 'ValidBlock',
+    ];
 
 let resetErrorIdx = false;
 let indexOffset = 0;

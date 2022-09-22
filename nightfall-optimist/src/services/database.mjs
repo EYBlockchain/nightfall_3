@@ -177,41 +177,6 @@ export async function getBlocks() {
     .toArray();
 }
 
-// function that sets the Block's L1 blocknumber to null
-// to indicate that it's back in the L1 mempool (and will probably be re-mined
-// and given a new L1 transactionHash)
-export async function clearBlockNumberL1ForBlock(transactionHashL1) {
-  logger.debug(`clearing layer 1 blockNumber for L2 block with L1 hash ${transactionHashL1}`);
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHashL1 };
-  const update = { $set: { blockNumber: null } };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update);
-}
-
-export async function getBlocks() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  return db
-    .collection(SUBMITTED_BLOCKS_COLLECTION)
-    .find({}, { sort: { blockNumber: 1 } })
-    .toArray();
-}
-
-/**
-function to save an invalid block, so that we can later search the invalid block
-and the type of invalid block.
-*/
-export async function saveInvalidBlock(_block) {
-  const block = { _id: _block.blockHash, ..._block };
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  logger.debug(`saving invalid block ${JSON.stringify(block, null, 2)}`);
-  const query = { blockHash: block.blockHash };
-  const update = { $set: block };
-  return db.collection(INVALID_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
-}
-
 /**
 function to save an invalid block, so that we can later search the invalid block
 and the type of invalid block.
@@ -444,9 +409,9 @@ export async function getL2TransactionByCommitment(
   const query = inL2AndNotInL2
     ? { commitments: commitmentHash }
     : {
-      commitments: commitmentHash,
-      blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
-    };
+        commitments: commitmentHash,
+        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+      };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
@@ -462,9 +427,9 @@ export async function getL2TransactionByNullifier(
   const query = inL2AndNotInL2
     ? { nullifiers: nullifierHash }
     : {
-      nullifiers: nullifierHash,
-      blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
-    };
+        nullifiers: nullifierHash,
+        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+      };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 

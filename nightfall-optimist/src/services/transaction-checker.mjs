@@ -64,14 +64,14 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blo
           0,
           inL2AndNotInL2 === false
             ? {
-              duplicateCommitment1Index: index,
-              block2: blockWithOrgCommitment,
-              transactions2: orgBlockTransactions,
-              transaction2Index: blockWithOrgCommitment.transactionHashes.indexOf(
-                txWithOrgCommitment.transactionHash,
-              ),
-              duplicateCommitment2Index: txWithOrgCommitment.commitments.indexOf(commitment),
-            }
+                duplicateCommitment1Index: index,
+                block2: blockWithOrgCommitment,
+                transactions2: orgBlockTransactions,
+                transaction2Index: blockWithOrgCommitment.transactionHashes.indexOf(
+                  txWithOrgCommitment.transactionHash,
+                ),
+                duplicateCommitment2Index: txWithOrgCommitment.commitments.indexOf(commitment),
+              }
             : undefined,
         );
       }
@@ -115,14 +115,14 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, bloc
           1,
           inL2AndNotInL2 === false
             ? {
-              duplicateNullifier1Index: index,
-              block2: blockWithOrgNullifier,
-              transactions2: orgBlockTransactions,
-              transaction2Index: blockWithOrgNullifier.transactionHashes.indexOf(
-                txWithOrgNullifier.transactionHash,
-              ),
-              duplicateNullifier2Index: txWithOrgNullifier.nullifiers.indexOf(nullifier),
-            }
+                duplicateNullifier1Index: index,
+                block2: blockWithOrgNullifier,
+                transactions2: orgBlockTransactions,
+                transaction2Index: blockWithOrgNullifier.transactionHashes.indexOf(
+                  txWithOrgNullifier.transactionHash,
+                ),
+                duplicateNullifier2Index: txWithOrgNullifier.nullifiers.indexOf(nullifier),
+              }
             : undefined,
         );
       }
@@ -163,14 +163,14 @@ async function verifyProof(transaction) {
     transaction.nullifiers[2] === ZERO
       ? { root: ZERO }
       : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[2])) ?? {
-        root: ZERO,
-      };
+          root: ZERO,
+        };
   const historicRootFourth =
     transaction.nullifiers[3] === ZERO
       ? { root: ZERO }
       : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[3])) ?? {
-        root: ZERO,
-      };
+          root: ZERO,
+        };
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
