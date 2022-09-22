@@ -14,26 +14,19 @@ async function setupContracts() {
   const stateInstance = await waitForContract('State');
   logger.debug(`address of State contract is ${stateInstance.options.address}`);
 
-  const tx = {
-    from: process.env.FROM_ADDRESS,
-    // value: fee,
-    gas: config.WEB3_OPTIONS.gas,
-    gasPrice: config.WEB3_OPTIONS.gasPrice,
-  };
-
-  const proposers = await waitForContract('Proposers');
-  const shield = await waitForContract('Shield');
-  const challenges = await waitForContract('Challenges');
+  const proposersInstance = await waitForContract('Proposers');
+  const shieldInstance = await waitForContract('Shield');
+  const challengesInstance = await waitForContract('Challenges');
 
   const simpleMultiSigAddress = (await waitForContract('SimpleMultiSig')).options.address;
 
   const contracts = {
-    proposers,
-    shield,
-    challenges,
+    proposersInstance,
+    shieldInstance,
+    challengesInstance,
   };
 
-  for await (const contractName of ['proposers', 'shield', 'challenges']) {
+  for await (const contractName of Object.keys(contracts)) {
     const setStateContract = contracts[contractName].methods.setStateContract(
       stateInstance.options.address,
     );
@@ -45,19 +38,15 @@ async function setupContracts() {
       setStateContract.send();
       transferOwnership.send();
     } else {
-      tx.data = setStateContract.encodeABI();
-      let signed = await web3.eth.accounts.signTransaction(
-        { ...tx, to: contracts[contractName].options.address },
-        config.ETH_PRIVATE_KEY,
+      await Web3.submitRawTransaction(
+        setStateContract.encodeABI(),
+        contracts[contractName].options.address,
       );
-      await web3.eth.sendSignedTransaction(signed.rawTransaction);
 
-      tx.data = transferOwnership.encodeABI();
-      signed = await web3.eth.accounts.signTransaction(
-        { ...tx, to: contracts[contractName].options.address },
-        config.ETH_PRIVATE_KEY,
+      await Web3.submitRawTransaction(
+        transferOwnership.encodeABI(),
+        contracts[contractName].options.address,
       );
-      await web3.eth.sendSignedTransaction(signed.rawTransaction);
     }
   }
 }
