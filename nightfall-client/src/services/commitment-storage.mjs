@@ -203,7 +203,6 @@ export async function clearNullified(blockNumberL2) {
 // as above, but removes isOnChain for deposit commitments
 export async function clearOnChain(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  // const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
   // Clear all onchains
   const query = { isOnChain: { $gte: Number(blockNumberL2) } };
   const update = {

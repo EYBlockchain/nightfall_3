@@ -255,7 +255,7 @@ describe('ERC721 tests', () => {
             (balancesBefore[erc20Address]?.[0].balance || 0),
         ).to.be.equal(-fee);
       } else {
-        console.log('Not using a time-jump capable test client so this test is skipped');
+        logger.info('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
     });
