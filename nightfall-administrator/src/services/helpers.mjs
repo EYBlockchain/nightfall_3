@@ -82,7 +82,6 @@ async function createMultiSigMessageHash(destination, value, data, nonce, execut
   const { domainSeparator, txTypeHash, txInputHashABI } = MULTISIG_CONSTANTS;
   // get the current multisig nonce if it's not provided (requires blockchain connection)
   if (!Number.isInteger(nonce)) throw new Error(`Nonce is not an integer: ${nonce}`);
-  console.log('*!GOT nonce', nonce, nonce + 1);
   // compute the hashes to sign over note, sometimes we want a keccak hash over encoded parameter
   // and sometimes over encodedPacked parameters. Hence the two slightly different approaches used.
   const dataHash = web3.utils.soliditySha3({ t: 'bytes', v: data });

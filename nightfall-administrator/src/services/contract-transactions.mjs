@@ -65,7 +65,6 @@ export async function pauseContracts(signingKey, executorAddress, _nonce) {
   logger.info('All pausable contracts being paused');
   let nonce = _nonce;
   if (!Number.isInteger(nonce)) nonce = await getMultiSigNonce();
-  console.log('*!NONCE', nonce);
   return Promise.all(
     pausables.map(async (pausable, i) => {
       const contractInstance = await waitForContract(pausable);
@@ -85,7 +84,6 @@ export async function unpauseContracts(signingKey, executorAddress, _nonce) {
   logger.info('All pausable contracts being unpaused');
   let nonce = _nonce;
   if (!Number.isInteger(nonce)) nonce = await getMultiSigNonce();
-  console.log('*!NONCE', nonce);
   return Promise.all(
     pausables.map(async (pausable, i) => {
       const contractInstance = await waitForContract(pausable);
