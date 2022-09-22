@@ -1,14 +1,7 @@
-FROM mongo:focal
+FROM node:16.17
 
-# install node
 RUN apt-get update -y
-# TEMPORARY WORKAROUND FOR ISSUE https://github.com/nodesource/distributions/issues/1266
-RUN apt-get install -y ca-certificates
-RUN apt-get install -y curl
-RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
-RUN apt-get install -y nodejs gcc g++ make
 RUN apt-get install -y netcat
-RUN apt-get install -y netcat-openbsd
 
 ENTRYPOINT ["/app/admin/docker-entrypoint.sh"]
 
@@ -23,7 +16,6 @@ WORKDIR /app/cli
 RUN npm ci
 
 WORKDIR /app/admin
-RUN mkdir /app/admin/mongodb
 COPY config/default.js config/default.js
 COPY nightfall-administrator/src src
 COPY nightfall-administrator/docker-entrypoint.sh nightfall-administrator/package*.json nightfall-administrator/admin ./
