@@ -3,11 +3,6 @@
   "version": "0.0.1",
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
-  "babel": {
-    "plugins": [
-      "@babel/plugin-syntax-import-assertions"
-    ]
-  },
   "scripts": {
     "lint": "eslint . --ext js,mjs,jsx,ts,tsx && find-unused-exports",
     "prepare": "husky install",

@@ -7,7 +7,6 @@ import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import contractABIs from './contracts.mjs';
 import { NightfallMultiSig } from './nightfall-multisig.mjs';
 
 const { WEB3_OPTIONS } = config;
@@ -22,7 +21,7 @@ const amount1 = 10;
 const amount2 = 100;
 
 const getContractInstance = async (contractName, nf3) => {
-  const abi = contractABIs[contractName];
+  const abi = nf3.getContractAbi(contractName);
   const contractAddress = await nf3.getContractAddress(contractName);
   const contractInstance = new nf3.web3.eth.Contract(abi, contractAddress);
   return contractInstance;
