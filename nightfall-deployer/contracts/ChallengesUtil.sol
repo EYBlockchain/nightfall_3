@@ -8,12 +8,11 @@ import './Structures.sol';
 
 library ChallengesUtil {
     function libChallengeLeafCountCorrect(
-        Structures.Block calldata priorBlockL2,
-        Structures.Transaction[] calldata priorBlockTransactions,
-        uint256 leafCount
+        uint256 priorLeafCount,
+        uint256 leafCount,
+        Structures.Transaction[] calldata transactions
     ) public pure {
-        uint256 expectedLeafCount = priorBlockL2.leafCount +
-            Utils.countCommitments(priorBlockTransactions);
+        uint256 expectedLeafCount = priorLeafCount + Utils.countCommitments(transactions);
         require(expectedLeafCount != leafCount, 'The leafCount is actually correct');
     }
 
@@ -30,11 +29,10 @@ library ChallengesUtil {
         (root, _frontier, ) = MerkleTree_Stateless.insertLeaves(
             Utils.filterCommitments(priorBlockTransactions),
             frontierPriorBlock,
-            priorBlockL2.leafCount
+            priorBlockL2.leafCount - Utils.filterCommitments(priorBlockTransactions).length
         );
         require(root == priorBlockL2.root, 'The sibling path is invalid');
-        uint256 commitmentIndex = priorBlockL2.leafCount +
-            Utils.filterCommitments(priorBlockTransactions).length;
+        uint256 commitmentIndex = priorBlockL2.leafCount;
         // At last, we can check if the root itself is correct!
         (root, , ) = MerkleTree_Stateless.insertLeaves(
             Utils.filterCommitments(transactions),
@@ -51,16 +49,16 @@ library ChallengesUtil {
         uint256[] memory vk
     ) internal {
         libCheckCompressedProof(transaction.proof, proof);
-        // TODO convert from uint[8] to uint[] - make unnecessary.
         uint256[] memory proof1 = new uint256[](proof.length);
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[] memory publicInputs = Utils.getPublicInputs(
-            transaction,
-            extraPublicInputs.roots,
-            extraPublicInputs.maticAddress
-        );
+        uint256[] memory publicInputs =
+            Utils.getPublicInputs(
+                transaction,
+                extraPublicInputs.roots,
+                extraPublicInputs.maticAddress
+            );
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 

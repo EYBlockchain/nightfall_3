@@ -558,3 +558,36 @@ export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   await new Promise(resolve => setTimeout(() => resolve(), 1000));
   return db.collection(TIMBER_COLLECTION).deleteMany({ blockNumberL2: { $gte: blockNumberL2 } });
 }
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionHashSiblingInfo(
+  transactionHash,
+  transactionHashSiblingPath,
+  transactionHashLeafIndex,
+  transactionHashesRoot,
+) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { transactionHash };
+  const update = {
+    $set: { transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot },
+  };
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(TIMBER_COLLECTION).updateMany(query, update);
+}
+
+// function to get the path of the transaction hash leaf in transaction hash timber
+export async function getTransactionHashSiblingInfo(transactionHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(TIMBER_COLLECTION).findOne(
+    { transactionHash },
+    {
+      projection: {
+        transactionHashSiblingPath: 1,
+        transactionHashLeafIndex: 1,
+        transactionHashesRoot: 1,
+        isOnChain: 1,
+      },
+    },
+  );
+}
