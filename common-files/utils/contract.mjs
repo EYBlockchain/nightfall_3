@@ -31,6 +31,15 @@ export async function getContractAddress(contractName) {
   return deployedAddress;
 }
 
+export async function getContractAbi(contractName) {
+  let abi;
+  const contractInterface = await getContractInterface(contractName);
+  if (contractInterface) {
+    abi = contractInterface.abi;
+  }
+  return abi;
+}
+
 // returns a web3 contract instance
 export async function getContractInstance(contractName, deployedAddress) {
   // grab a 'from' account if one isn't set
