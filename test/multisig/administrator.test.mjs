@@ -21,7 +21,7 @@ const amount1 = 10;
 const amount2 = 100;
 
 const getContractInstance = async (contractName, nf3) => {
-  const abi = nf3.getContractAbi(contractName);
+  const abi = await nf3.getContractAbi(contractName);
   const contractAddress = await nf3.getContractAddress(contractName);
   const contractInstance = new nf3.web3.eth.Contract(abi, contractAddress);
   return contractInstance;
@@ -37,11 +37,14 @@ describe(`Testing Administrator`, () => {
   let contractMultiSig;
 
   before(async () => {
+    console.log('1');
     nf3User = new Nf3(signingKeys.user1, environment);
 
     await nf3User.init(mnemonics.user1);
+    console.log('2');
 
     stateContractInstance = await getContractInstance('State', nf3User);
+    console.log('3');
     proposersContractInstance = await getContractInstance('Proposers', nf3User);
     shieldContractInstance = await getContractInstance('Shield', nf3User);
     challengesContractInstance = await getContractInstance('Challenges', nf3User);
