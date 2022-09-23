@@ -290,12 +290,6 @@ router.get('/mempool', async (req, res, next) => {
   }
 });
 
-/**
- * Function to Propose a state update block
- * Provides the tx data that the user will need to call the blockchain client
- * @deprecated This is now an automated process (no need to manually propose),
- * however it is used in tests - DO NOT REMOVE
- */
 router.post('/encode', async (req, res, next) => {
   logger.debug({ msg: '/encode endpoint', payload: JSON.stringify(req.body, null, 2) });
 
