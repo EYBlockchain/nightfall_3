@@ -9,8 +9,6 @@ fi
 # wait until there's a zokrates worker host up
 while ! nc -z ${ZOKRATES_WORKER_HOST} 80; do sleep 3; done
 
-echo ${RABBITMQ_HOST:7} 
-
 # wait until there's a rabbitmq server up
 if [ $ENABLE_QUEUE == "1" ]
 then
