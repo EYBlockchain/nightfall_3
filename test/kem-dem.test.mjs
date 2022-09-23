@@ -40,10 +40,8 @@ describe('KEM-DEM Tests', () => {
           fc.bigInt({ min: 0n, max: 2n ** 160n - 1n }),
           (a, b) => {
             const [unpackedA, packedB] = packSecrets(generalise(a), generalise(b), 0, 2);
-            // console.log('a / b', a, b);
-            // console.log('unpackedA / packedB', unpackedA, packedB);
             const [originalB, originalA] = packSecrets(packedB, unpackedA, 2, 0);
-            // console.log('originalA / originalB', originalA, originalB);
+
             expect(originalA.bigInt).to.equal(a);
             expect(originalB.bigInt).to.equal(b);
           },

@@ -15,17 +15,6 @@ export const zkpPrivateKeys = [];
 export const nullifierKeys = [];
 const { BABYJUBJUB, BN128_GROUP_ORDER } = constants;
 
-// 128 bits is 12 words; 256 bits is 24 words
-// // Returns a promise
-// function (entropyBits) {
-//   return generateMnemonic(entropyBits);
-// }
-//
-// // generate seed from mnemonic
-// function (mnemonic) {
-//   return mnemonicToSeedSync(mnemonic);
-// }
-
 export class ZkpKeys {
   rootKey;
 
