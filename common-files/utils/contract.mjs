@@ -24,7 +24,7 @@ export async function getContractInterface(contractName) {
 export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
-  const networkId = await web3.eth.net.getId();
+  const networkId = await web3.eth.getChainId();
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
     deployedAddress = contractInterface.networks[networkId].address;
   }
@@ -105,7 +105,7 @@ export async function waitForContract(contractName) {
       error = undefined;
       const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
       if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
-      instance = getContractInstance(contractName, address);
+      instance = await getContractInstance(contractName, address); // eslint-disable-line no-await-in-loop
       return instance;
     } catch (err) {
       error = err;
