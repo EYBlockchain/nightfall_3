@@ -79,6 +79,7 @@ const checkBlocks = async () => {
     for (let i = 0; i < blocks.length; i++) {
       // If the leafCount of the next block stored internally does not match what we expect the leaf count to be
       // it means we may have a gap in our blockData
+      expectedLeafCount += blocks[i].nCommitments;
       if (blocks[i].leafCount !== expectedLeafCount) {
         // if we are in the first iteration it means we have a problem with our internal data
         // let's just restart the sync from earliest,
@@ -90,7 +91,6 @@ const checkBlocks = async () => {
         // reset so we can find more
         expectedLeafCount = blocks[i].leafCount;
       }
-      expectedLeafCount += blocks[i].nCommitments;
     }
     if (gapArray.length > 0) return gapArray; // We found some missing blocks
     const fromBlock = blocks[blocks.length - 1].blockNumber + 1;

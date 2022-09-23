@@ -398,7 +398,7 @@ describe('ERC20 tests', () => {
       }
     });
 
-    it('should restrict withdrawals', async () => {
+    it('should restrict withdrawals', async function () {
       const nodeInfo = await web3Client.getInfo();
       if (nodeInfo.includes('TestRPC')) {
         try {

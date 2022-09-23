@@ -10,10 +10,13 @@ import fs from 'fs';
 import path from 'path';
 import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import { waitForContract, getContractAddress } from 'common-files/utils/contract.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
+
+const web3 = Web3.connection();
 
 const fsPromises = fs.promises;
 
+const { USE_STUBS } = config;
 /**
  * This function will ping the Zokrates service until it is up before attempting
  * to use it. This is because the deployer must start before Zokrates as it needs
@@ -67,12 +70,9 @@ async function setupCircuits() {
   // do all the trusted setups needed first, we need to find the circuits we're going to do the setup on
   const circuitsToSetup = await (
     await walk(config.CIRCUITS_HOME)
-  ).filter(c => (config.USE_STUBS ? c.includes('_stub') : !c.includes('_stub')));
-
-  /*
-   then we'll get all of the vks (some may not exist but we'll handle that in
-   a moments). We'll grab promises and then resolve them after the loop.
-   */
+  ).filter(c => (USE_STUBS ? c.includes('_stub') : !c.includes('_stub')));
+  // then we'll get all of the vks (some may not exist but we'll handle that in
+  // a moments). We'll grab promises and then resolve them after the loop.
   const resp = [];
 
   for (const circuit of circuitsToSetup) {
@@ -122,7 +122,6 @@ async function setupCircuits() {
   }
 
   const keyRegistry = await waitForContract('Challenges');
-  const keyRegistryAddress = await getContractAddress('Challenges');
 
   // we should register the vk now
   for (let i = 0; i < vks.length; i++) {
@@ -137,24 +136,27 @@ async function setupCircuits() {
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
       const folderpath = circuit.slice(0, -4); // remove the .zok extension
 
-      let tx;
-      if (config.USE_STUBS) {
-        tx = keyRegistry.methods.registerVerificationKey(
-          vkArray,
-          config.VK_IDS[folderpath.slice(0, -5)],
-        );
-      } else {
-        tx = keyRegistry.methods.registerVerificationKey(vkArray, config.VK_IDS[folderpath]);
-      }
+      const call = keyRegistry.methods.registerVerificationKey(
+        vkArray,
+        config.VK_IDS[USE_STUBS ? folderpath.slice(0, -5) : folderpath],
+      );
 
-      /*
-       when deploying on infura - do serial tx execution to avoid nonce issue
-       when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
-       */
+      // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
+      // on networks like Edge, there's no account management so we need to encodeABI()
+      // since methods like send() don't work
       if (config.ETH_PRIVATE_KEY) {
-        await Web3.submitRawTransaction(await tx.encodeABI(), keyRegistryAddress);
+        const tx = {
+          from: process.env.FROM_ADDRESS,
+          to: keyRegistry.options.address,
+          data: call.encodeABI(),
+          gas: config.WEB3_OPTIONS.gas,
+          gasPrice: config.WEB3_OPTIONS.gasPrice,
+        };
+
+        const signed = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
+        await web3.eth.sendSignedTransaction(signed.rawTransaction);
       } else {
-        await tx.send();
+        call.send();
       }
     } catch (err) {
       logger.error(err);
