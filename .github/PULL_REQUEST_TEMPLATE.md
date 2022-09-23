@@ -2,7 +2,7 @@
 
 ## Does this close any currently open issues?
 
-## Any relevant logs, error output, etc?
+## What commands can I run to test the change? 
 
 ## Any other comments?
 
