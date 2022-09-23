@@ -47,7 +47,7 @@ describe('Optimist synchronisation tests', () => {
       'docker/docker-compose.dev.yml',
       'docker/docker-compose.ganache.yml',
     ],
-    log: process.env.LOG_LEVEL !== 'silent',
+    log: process.env.LOG_LEVEL || 'silent',
     composeOptions: [['-p "nightfall_3"']],
   };
 
@@ -142,6 +142,7 @@ describe('Optimist synchronisation tests', () => {
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
+    
     it('Resync optimist after making an un-resolved bad block', async function () {
       // We create enough good transactions to fill a block full of deposits.
       logger.debug(`      Sending ${txPerBlock} deposits...`);
