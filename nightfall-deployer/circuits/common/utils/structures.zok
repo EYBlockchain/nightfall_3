@@ -33,7 +33,6 @@ struct PublicTransaction {
 
 struct Nullifiers<N> {
 	CommitmentPreimage<N> oldCommitments;
-    field[N] rootKey;
     field[N][32] paths;
 	field[N] orders;
 }

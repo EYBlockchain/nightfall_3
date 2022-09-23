@@ -31,7 +31,7 @@ module.exports = {
   TXHASH_TREE_HASH_TYPE: 'keccak256',
   STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
-  ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || true,
+  ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   PROTOCOL: 'http://', // connect to zokrates microservice like this
@@ -51,7 +51,9 @@ module.exports = {
   },
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
-    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
+      process.env.BLOCKCHAIN_PATH || ''
+    }`,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   WEB3_OPTIONS: {
@@ -135,7 +137,9 @@ module.exports = {
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
-          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
+              process.env.BLOCKCHAIN_PATH || ''
+            }`
           : process.env.BLOCKCHAIN_WS_HOST
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
@@ -158,6 +162,25 @@ module.exports = {
       adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
       CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+    },
+    polygonEdge: {
+      name: 'Polygon Edge',
+      chainId: 100,
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      web3WsUrl: `ws://localhost:10002/ws`,
     },
   },
   TEST_OPTIONS: {
@@ -262,6 +285,28 @@ module.exports = {
         {
           name: 'ERC20Mock',
           address: '0x9b7bD670D87C3Dd5C808ba627c75ba7E88aD066f',
+          amount: '100000000000',
+        },
+        {
+          name: 'Test-Eth',
+          address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0x07865c6e87b9f70255377e024ace6630c1eaa37f',
+          amount: '1000000000000',
+        },
+      ],
+      edge: [
+        {
+          name: 'ERC20Mock',
+          address: '0x7578E001dCF334F48a87dA44e30C7ab3b517a5B8',
           amount: '100000000000',
         },
         {

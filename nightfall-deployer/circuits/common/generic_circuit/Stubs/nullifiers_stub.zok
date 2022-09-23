@@ -4,19 +4,19 @@ def main<NumNullifiers>(\
     field[NumNullifiers] nullifierRoots,\
     private field[NumNullifiers] oldCommitmentValues,\
     private field[NumNullifiers] oldCommitmentSalts,\
-    private field[NumNullifiers] rootKey,\
     private field[NumNullifiers][32] paths,\
-	private field[NumNullifiers] orders\
+	private field[NumNullifiers] orders,\
+    private field rootKey\
 )-> bool {
     
     for u32 i in 0..NumNullifiers {
         field s = nullifierRoots[i] * sum([\
-            rootKey[i], oldCommitmentValues[i],\
+            rootKey, oldCommitmentValues[i],\
             oldCommitmentSalts[i],...paths[i], orders[i]\
         ]);
 
         field t = nullifierRoots[i] * sum([\
-            rootKey[i], oldCommitmentValues[i],\
+            rootKey, oldCommitmentValues[i],\
             oldCommitmentSalts[i],...paths[i], orders[i]\
         ]);
         assert(s == t);

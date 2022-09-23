@@ -208,7 +208,6 @@ export class Web3Client {
         }retries of ${WAIT}ms wait`,
       );
     }
-    // console.log('Events found');
     return events;
   }
 

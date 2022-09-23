@@ -1,9 +1,9 @@
 /**
-Each time the Shield contract removes a block from the blockHash linked-list,
-as a result of a rollback, this event gets fired.  We can use it to remove the
-same blocks from our local database record and to reset cached Frontier and
-leafCount values in the Block class
-*/
+ * Each time the Shield contract removes a block from the blockHash linked-list,
+ * as a result of a rollback, this event gets fired.  We can use it to remove the
+ * same blocks from our local database record and to reset cached Frontier and
+ * leafCount values in the Block class
+ */
 import logger from 'common-files/utils/logger.mjs';
 import { dequeueEvent, enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import {
@@ -24,7 +24,9 @@ import { signalRollbackCompleted } from '../services/block-assembler.mjs';
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
-  logger.info(`Received Rollback event, with layer 2 block number ${blockNumberL2}`);
+
+  logger.info({ msg: 'Received Rollback event', blockNumberL2 });
+
   // reset the Block class cached values.
   Block.rollback();
   await deleteTreeByBlockNumberL2(Number(blockNumberL2));
@@ -35,7 +37,6 @@ async function rollbackEventHandler(data) {
   1) Remove the block data from our database from the blockNumberL2 provided in the Rollback Event
   2) Return transactions to the mempool and delete those that may have become invalid as a result of the Rollback.
   */
-
   // Get all blocks that need to be deleted
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(blockNumberL2);
 
@@ -48,7 +49,11 @@ async function rollbackEventHandler(data) {
     // eslint-disable-next-line no-await-in-loop
     const blockTransactions = (await getTransactionsByTransactionHashes(transactionHashesInBlock)) // TODO move this to getTransactionsByTransactionHashes by l2 block number because transaction hash is not unique and might not pull the right l2 block number
       .filter(t => t.transactionType !== '0');
-    logger.info(`blockTransctions: ${JSON.stringify(blockTransactions)}`);
+
+    logger.info({
+      blockTransactions: JSON.stringify(blockTransactions),
+    });
+
     for (let j = 0; j < blockTransactions.length; j++) {
       try {
         // eslint-disable-next-line no-await-in-loop
@@ -56,7 +61,11 @@ async function rollbackEventHandler(data) {
           blockNumberL2: blocksToBeDeleted[i].blockNumberL2,
         });
       } catch (error) {
-        logger.debug(`Invalid checkTransaction: ${blockTransactions[j].transactionHash}`);
+        logger.error({
+          msg: `Invalid checkTransaction: ${blockTransactions[j].transactionHash}`,
+          error,
+        });
+
         invalidTransactions.push(blockTransactions[j].transactionHash);
       }
     }
