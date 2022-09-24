@@ -259,11 +259,11 @@ export async function setRegisteredProposerAddress(address, url) {
 export async function isRegisteredProposerAddressMine(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const metadata = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
+  const proposer = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
 
-  logger.debug({ msg: 'Found registered proposer', proposer: metadata });
+  logger.debug({ msg: 'Found registered proposer', proposer });
 
-  return metadata;
+  return proposer;
 }
 
 /**
@@ -279,6 +279,13 @@ export async function deleteRegisteredProposerAddress(address) {
 
     logger.debug({ msg: 'Deleted registered proposer', address });
   }
+}
+
+// get all register proposer
+export async function getAllRegisteredProposersCount() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(PROPOSER_COLLECTION).count();
 }
 
 /**
@@ -603,14 +610,14 @@ export async function setTransactionHashSiblingInfo(
     $set: { transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot },
   };
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TIMBER_COLLECTION).updateMany(query, update);
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update, { upsert: true });
 }
 
 // function to get the path of the transaction hash leaf in transaction hash timber
 export async function getTransactionHashSiblingInfo(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TIMBER_COLLECTION).findOne(
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(
     { transactionHash },
     {
       projection: {

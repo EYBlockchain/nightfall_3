@@ -35,10 +35,10 @@ let error = process.env.BAD_TX_SEQUENCE
 let resetErrorIdx = false;
 let indexOffset = 0;
 
-import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import { Transaction } from '../classes/index.mjs';
 
-const { BN128_GROUP_ORDER } = config;
+const { BN128_GROUP_ORDER } = constants;
 
 // Duplicate Commitment -> { mempool: false, transactionType: [0,1] } -> overwrite with a duplicate spent commitment
 // Duplicate Nullifier -> { mempool: false, transactionType: [1,2] } -> overwrite with a duplicate spent nullifier
@@ -65,9 +65,10 @@ const duplicateCommitment = async (number, transactionType) => {
         .toArray();
     }
     const { commitments: spentCommitments } = spentTransaction[0];
-    logger.debug(
-      `Transaction before modification ${JSON.stringify(unspentTransaction[0], null, 2)}`,
-    );
+    logger.debug({
+      msg: 'Transaction before modification',
+      transaction: unspentTransaction[0],
+    });
     logger.debug(`transactionType for transaction to be modified ${transactionType}`);
     const { commitments: unspentCommitments, ...unspentRes } = unspentTransaction[0];
     const modifiedTransaction = {
@@ -86,7 +87,10 @@ const duplicateCommitment = async (number, transactionType) => {
 
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
-    logger.debug(`Transfer after modification ${JSON.stringify(modifiedTransaction, null, 2)}`);
+    logger.debug({
+      msg: 'Transfer after modification',
+      transaction: modifiedTransaction,
+    });
 
     modifiedTransactions = transactions.slice(0, number - 1);
     modifiedTransactions.push(modifiedTransaction);
@@ -200,7 +204,13 @@ const incorrectPublicInput = async (number, transactionType, publicInputType) =>
       )
       .toArray();
 
-    logger.debug(`Transaction before modification ${{ commitments, nullifiers, ...rest }}`);
+    logger.debug(
+      `Transaction before modification ${JSON.stringify(
+        { commitments, nullifiers, ...rest },
+        null,
+        2,
+      )}`,
+    );
 
     let incorrectPublicInputTx;
     switch (publicInputType) {

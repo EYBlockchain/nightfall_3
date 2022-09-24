@@ -49,7 +49,7 @@ export async function signalRollbackCompleted(data) {
   while (!ws || ws.readyState !== WebSocket.OPEN) {
     await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
     logger.warn(
-      `Websocket to proposer is closed for rollback complete.  Waiting for challenger to reconnect`,
+      `Websocket to proposer is closed for rollback complete.  Waiting for proposer to reconnect`,
     );
     if (tryCount++ > 100) throw new Error(`Websocket to proposer has failed`);
   }

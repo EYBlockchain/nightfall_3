@@ -82,8 +82,8 @@ describe('Testing with an adversary', () => {
 
     nf3Challenger = new Nf3(ethereumSigningKeyChallenger, {
       ...others,
-      optimistApiUrl: adversarialOptimistApiUrl,
-      optimistWsUrl: adversarialOptimistWsUrl,
+      optimistApiUrl,
+      optimistWsUrl,
     });
 
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy

@@ -114,7 +114,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      IS_CHALLENGER: ${IS_CHALLENGER:-false}
+      IS_CHALLENGER: ${IS_CHALLENGER:-true}
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
 
@@ -137,7 +137,7 @@ services:
     volumes:
       - type: volume
         source: mongodb
-        target: /data/db 
+        target: /data/db
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
@@ -158,9 +158,9 @@ services:
       MPC: ${MPC}
 
 volumes:
-  mongodb:  
-  proving_files: 
-  build: 
+  mongodb:
+  proving_files:
+  build:
 networks:
   nightfall_network:
     driver: bridge
