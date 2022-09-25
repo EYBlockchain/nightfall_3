@@ -22,7 +22,9 @@
     "test-optimist-sync": "LOG_LEVEL=silent mocha --timeout 0 --bail --exit test/optimist-resync.test.mjs",
     "test-adversary": "CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs",
     "test-all-adversary": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount IncorrectTreeRoot IncorrectLeafCount; do CHALLENGE_TYPE=${CHALLENGE_TYPE} mocha --timeout 0 --bail --exit test/adversary.test.mjs; sleep 5; done",
-    "test-general-stuff": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/kem-dem.test.mjs test/timber.test.mjs"
+    "test-general-stuff": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/kem-dem.test.mjs test/timber.test.mjs",
+    
+    "populate-optimistDb": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/populate.optimistDb.test.mjs"
   },
   "repository": {
     "type": "git",
