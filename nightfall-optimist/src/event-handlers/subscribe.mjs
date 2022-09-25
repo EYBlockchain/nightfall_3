@@ -19,11 +19,11 @@ const { RETRIES, WEBSOCKET_PORT, WEBSOCKET_PING_TIME } = config;
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 /**
-Function that does some standardised setting up of a websocket's events.
-It logs open, close and error events, sets up a ping and logs the pong. It will
-close the socket on pong failure.  The user is expected to handle the reconnect.
-It does not set up the onmessage event because this tends to be case-specific.
-*/
+ * Function that does some standardised setting up of a websocket's events.
+ * It logs open, close and error events, sets up a ping and logs the pong. It will
+ * close the socket on pong failure.  The user is expected to handle the reconnect.
+ * It does not set up the onmessage event because this tends to be case-specific.
+ */
 function setupWebsocketEvents(ws, socketName) {
   let timeoutID;
   // setup a pinger to ping the websocket correspondent
@@ -31,13 +31,13 @@ function setupWebsocketEvents(ws, socketName) {
     ws.ping();
     // set up a timeout - will close the websocket, which will trigger a reconnect
     timeoutID = setTimeout(() => {
-      logger.warn(`Timed out waiting for ping response from ${socketName}`);
+      logger.warn({ msg: 'Timed out waiting for ping response', socketName });
       ws.terminate();
     }, 2 * WEBSOCKET_PING_TIME);
   }, WEBSOCKET_PING_TIME);
+
   // check we received a pong in time (clears the timer set by the pinger)
   ws.on('pong', () => {
-    // logger.debug(`Got pong from ${socketName} websocket`);
     clearTimeout(timeoutID);
   });
   ws.on('error', () => {
@@ -66,13 +66,23 @@ export async function waitForContract(contractName) {
     try {
       error = undefined;
       const address = await getContractAddress(contractName);
-      if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
+
+      if (address === undefined) {
+        throw new Error(`${contractName} contract address was undefined`);
+      }
+
       instance = getContractInstance(contractName, address);
+
       return instance;
     } catch (err) {
       error = err;
       errorCount++;
-      logger.warn(`Unable to get a ${contractName} contract instance will try again in 3 seconds`);
+
+      logger.warn({
+        msg: 'Unable to get a contract instance will try again in 3 secs',
+        contractName,
+      });
+
       await new Promise(resolve => setTimeout(() => resolve(), 3000));
     }
   }
@@ -145,7 +155,8 @@ export async function subscribeToProposedBlockWebSocketConnection(callback, ...a
     ws.on('message', message => {
       try {
         if (JSON.parse(message).type === 'sync') {
-          logger.info(`SUBSCRIBING TO PROPOSEDBLOCK`);
+          logger.info(`Subscribing to ProposedBlock`);
+
           setupWebsocketEvents(ws, 'publisher');
           callback(ws, args);
         }

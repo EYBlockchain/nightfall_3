@@ -67,7 +67,7 @@ module.exports = function (deployer, _, accounts) {
         accounts[0],
         addresses.user1,
         [0, 1, 2, 3, 4],
-        [100000, 200000, 2, 50, 80000],
+        [100000, 200000, 10, 50, 80000],
         [],
       );
     }

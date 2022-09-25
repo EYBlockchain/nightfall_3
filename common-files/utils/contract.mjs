@@ -18,18 +18,26 @@ export const contractPath = contractName => {
 export async function getContractInterface(contractName) {
   const path = contractPath(contractName);
   const contractInterface = JSON.parse(fs.readFileSync(path, 'utf8'));
-  // logger.trace('\ncontractInterface:', contractInterface);
   return contractInterface;
 }
 
 export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
-  const networkId = await web3.eth.net.getId();
+  const networkId = await web3.eth.getChainId();
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
     deployedAddress = contractInterface.networks[networkId].address;
   }
   return deployedAddress;
+}
+
+export async function getContractAbi(contractName) {
+  let abi;
+  const contractInterface = await getContractInterface(contractName);
+  if (contractInterface) {
+    abi = contractInterface.abi;
+  }
+  return abi;
 }
 
 // returns a web3 contract instance
@@ -37,7 +45,12 @@ export async function getContractInstance(contractName, deployedAddress) {
   // grab a 'from' account if one isn't set
   if (!options.from) {
     const accounts = await web3.eth.getAccounts();
-    logger.debug('blockchain accounts are: ', accounts);
+
+    logger.debug({
+      msg: 'blockchain accounts',
+      accounts,
+    });
+
     [options.from] = accounts;
   }
   const contractInterface = await getContractInterface(contractName);
@@ -49,7 +62,6 @@ export async function getContractInstance(contractName, deployedAddress) {
   const contractInstance = deployedAddress
     ? new web3.eth.Contract(contractInterface.abi, deployedAddress, options)
     : new web3.eth.Contract(contractInterface.abi, options);
-  // logger.trace('\ncontractInstance:', contractInstance);
 
   return contractInstance;
 }
@@ -76,10 +88,11 @@ export async function deploy(contractName, constructorParams, { from, gas, passw
       throw new Error(err);
     })
     .then(deployedContractInstance => {
-      // logger.trace('deployed contract instance:', deployedContractInstance);
-      logger.info(
-        `${contractName} contract deployed at address ${deployedContractInstance.options.address}`,
-      ); // instance with the new contract address
+      logger.info({
+        msg: 'Contract deployed',
+        contractName,
+        address: deployedContractInstance.options.address,
+      }); // instance with the new contract address
 
       return deployedContractInstance.options.address;
     });
@@ -101,15 +114,21 @@ export async function waitForContract(contractName) {
       error = undefined;
       const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
       if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
-      instance = getContractInstance(contractName, address);
+      instance = await getContractInstance(contractName, address); // eslint-disable-line no-await-in-loop
       return instance;
     } catch (err) {
       error = err;
       errorCount++;
-      logger.warn(`Unable to get a ${contractName} contract instance will try again in 3 seconds`);
+
+      logger.warn({
+        msg: 'Unable to get contract instance, retrying in 3 secs',
+        contractName,
+      });
+
       await new Promise(resolve => setTimeout(() => resolve(), 3000)); // eslint-disable-line no-await-in-loop
     }
   }
   if (error) throw error;
+
   return instance;
 }

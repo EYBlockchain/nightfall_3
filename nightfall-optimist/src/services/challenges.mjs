@@ -10,6 +10,7 @@ import {
   getTransactionsByTransactionHashes,
   getBlockByBlockNumberL2,
   getTreeByRoot,
+  getTransactionHashSiblingInfo,
 } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
@@ -28,6 +29,7 @@ export function startMakingChallenges() {
   logger.info(`Challenges ON`);
   makeChallenges = true;
 }
+
 export function stopMakingChallenges() {
   logger.info(`Challenges OFF`);
   makeChallenges = false;
@@ -44,25 +46,28 @@ export async function commitToChallenge(txDataToSign) {
   const commitToSign = await challengeContractInstance.methods
     .commitToChallenge(commitHash)
     .encodeABI();
+
   await saveCommit(commitHash, txDataToSign);
+
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects
   let tryCount = 0;
   while (!ws || ws.readyState !== WebSocket.OPEN) {
     await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+
     logger.warn(
-      `Websocket to challenger is closed for commit.  Waiting for challenger to reconnect`,
+      'Websocket to challenger is closed for commit.  Waiting for challenger to reconnect',
     );
+
     if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
   }
+
   ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
-  logger.debug(
-    `raw transaction for committing to challenge has been sent to be signed and submitted ${JSON.stringify(
-      commitToSign,
-      null,
-      2,
-    )}`,
-  );
+
+  logger.debug({
+    msg: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
+    rawTransaction: JSON.stringify(commitToSign, null, 2),
+  });
 }
 
 export async function revealChallenge(txDataToSign, sender) {
@@ -72,10 +77,14 @@ export async function revealChallenge(txDataToSign, sender) {
   let tryCount = 0;
   while (!ws || ws.readyState !== WebSocket.OPEN) {
     await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+
     logger.warn(
-      `Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect`,
+      'Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect',
     );
-    if (tryCount++ > 100) throw new Error(`Websocket to $challenger has failed`);
+
+    if (tryCount++ > 100) {
+      throw new Error(`Websocket to $challenger has failed`);
+    }
   }
   ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
 }
@@ -88,13 +97,9 @@ export async function createChallenge(block, transactions, err) {
     // challenge incorrect leaf count
     case 0: {
       const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
-      const priorBlockTransactions = await getTransactionsByTransactionHashes(
-        priorBlockL2.transactionHashes,
-      );
       txDataToSign = await challengeContractInstance.methods
         .challengeLeafCountCorrect(
           Block.buildSolidityStruct(priorBlockL2), // the block immediately prior to this one
-          priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)), // the transactions in the prior block
           Block.buildSolidityStruct(block),
           transactions.map(t => Transaction.buildSolidityStruct(t)),
           salt,
@@ -144,22 +149,30 @@ export async function createChallenge(block, transactions, err) {
     case 2: {
       const {
         block1,
-        transactions1,
+        transaction1,
         transaction1Index,
+        siblingPath1,
         duplicateCommitment1Index,
         block2,
-        transactions2,
+        transaction2,
         transaction2Index,
+        siblingPath2,
         duplicateCommitment2Index,
       } = err.metadata;
       txDataToSign = await challengeContractInstance.methods
         .challengeCommitment(
-          Block.buildSolidityStruct(block1),
-          Block.buildSolidityStruct(block2),
-          transactions1.map(t => Transaction.buildSolidityStruct(t)),
-          transactions2.map(t => Transaction.buildSolidityStruct(t)),
-          transaction1Index,
-          transaction2Index,
+          {
+            blockL2: Block.buildSolidityStruct(block1),
+            transaction: Transaction.buildSolidityStruct(transaction1),
+            transactionIndex: transaction1Index,
+            transactionSiblingPath: siblingPath1,
+          },
+          {
+            blockL2: Block.buildSolidityStruct(block2),
+            transaction: Transaction.buildSolidityStruct(transaction2),
+            transactionIndex: transaction2Index,
+            transactionSiblingPath: siblingPath2,
+          },
           duplicateCommitment1Index,
           duplicateCommitment2Index,
           salt,
@@ -171,22 +184,30 @@ export async function createChallenge(block, transactions, err) {
     case 3: {
       const {
         block1,
-        transactions1,
+        transaction1,
         transaction1Index,
+        siblingPath1,
         duplicateNullifier1Index,
         block2,
-        transactions2,
+        transaction2,
         transaction2Index,
+        siblingPath2,
         duplicateNullifier2Index,
       } = err.metadata;
       txDataToSign = await challengeContractInstance.methods
         .challengeNullifier(
-          Block.buildSolidityStruct(block1),
-          Block.buildSolidityStruct(block2),
-          transactions1.map(t => Transaction.buildSolidityStruct(t)),
-          transactions2.map(t => Transaction.buildSolidityStruct(t)),
-          transaction1Index,
-          transaction2Index,
+          {
+            blockL2: Block.buildSolidityStruct(block1),
+            transaction: Transaction.buildSolidityStruct(transaction1),
+            transactionIndex: transaction1Index,
+            transactionSiblingPath: siblingPath1,
+          },
+          {
+            blockL2: Block.buildSolidityStruct(block2),
+            transaction: Transaction.buildSolidityStruct(transaction2),
+            transactionIndex: transaction2Index,
+            transactionSiblingPath: siblingPath2,
+          },
           duplicateNullifier1Index,
           duplicateNullifier2Index,
           salt,
@@ -199,39 +220,29 @@ export async function createChallenge(block, transactions, err) {
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
       const uncompressedProof = transactions[transactionIndex].proof;
-      const [historicInput1, historicInput2, historicInput3, historicInput4] = await Promise.all(
+      const [historicBlock1, historicBlock2, historicBlock3, historicBlock4] = await Promise.all(
         transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
           if (transactions[transactionIndex].nullifiers[i] === 0) {
-            return {
-              historicBlock: {},
-              historicTxs: [],
-            };
+            return {};
           }
-          const historicBlock = Block.buildSolidityStruct(await getBlockByBlockNumberL2(b));
-          const historicTxs = await getTransactionsByTransactionHashes(
-            historicBlock.transactionHashes,
-          );
-          return { historicBlock, historicTxs };
+          const historicBlock = await getBlockByBlockNumberL2(b);
+          return Block.buildSolidityStruct(historicBlock);
         }),
+      );
+
+      const transactionSiblingPath = await getTransactionHashSiblingInfo(
+        transactions[transactionIndex].transactionHash,
       );
 
       txDataToSign = await challengeContractInstance.methods
         .challengeProofVerification(
-          Block.buildSolidityStruct(block),
-          transactions.map(t => Transaction.buildSolidityStruct(t)),
-          transactionIndex,
-          [
-            historicInput1.historicBlock,
-            historicInput2.historicBlock,
-            historicInput3.historicBlock,
-            historicInput4.historicBlock,
-          ],
-          [
-            historicInput1.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicInput2.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicInput3.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-            historicInput4.historicTxs.map(t => Transaction.buildSolidityStruct(t)),
-          ],
+          {
+            blockL2: Block.buildSolidityStruct(block),
+            transaction: Transaction.buildSolidityStruct(transactions[transactionIndex]),
+            transactionIndex,
+            transactionSiblingPath,
+          },
+          [historicBlock1, historicBlock2, historicBlock3, historicBlock4],
           uncompressedProof,
           salt,
         )
@@ -239,13 +250,17 @@ export async function createChallenge(block, transactions, err) {
       break;
     }
     case 5: {
-      const { transactionHashIndex } = err.metadata;
+      const { transactionHashIndex: transactionIndex } = err.metadata;
+      const transactionSiblingPath = await getTransactionHashSiblingInfo(
+        transactions[transactionIndex].transactionHash,
+      );
       txDataToSign = await challengeContractInstance.methods
-        .challengeHistoricRoot(
-          Block.buildSolidityStruct(block),
-          transactions.map(t => Transaction.buildSolidityStruct(t)),
-          transactionHashIndex,
-        )
+        .challengeHistoricRootBlockNumber({
+          blockL2: Block.buildSolidityStruct(block),
+          transaction: Transaction.buildSolidityStruct(transactions[transactionIndex]),
+          transactionIndex,
+          transactionSiblingPath,
+        })
         .encodeABI();
       break;
     }

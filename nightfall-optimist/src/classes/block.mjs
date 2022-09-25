@@ -4,7 +4,11 @@ An optimistic layer 2 Block class
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import constants from 'common-files/constants/index.mjs';
-import { getLatestBlockInfo, getTreeByBlockNumberL2 } from '../services/database.mjs';
+import {
+  getLatestBlockInfo,
+  getTreeByBlockNumberL2,
+  setTransactionHashSiblingInfo,
+} from '../services/database.mjs';
 import { buildBlockSolidityStruct, calcBlockHash } from '../services/block-utils.mjs';
 
 const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
@@ -123,10 +127,10 @@ class Block {
     const blockHash = this.calcHash({
       proposer,
       root: updatedTimber.root,
-      leafCount: timber.leafCount,
+      leafCount: updatedTimber.leafCount,
       blockNumberL2,
       previousBlockHash,
-      transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
+      transactionHashesRoot: await this.calcTransactionHashesRoot(transactions),
     });
     this.localPreviousBlockHash = blockHash;
     // note that the transactionHashes array is not part of the on-chain block
@@ -135,8 +139,8 @@ class Block {
     return new Block({
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
-      transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
-      leafCount: timber.leafCount,
+      transactionHashesRoot: await this.calcTransactionHashesRoot(transactions),
+      leafCount: updatedTimber.leafCount,
       root: updatedTimber.root,
       blockHash,
       nCommitments,
@@ -160,7 +164,7 @@ class Block {
     return this.calcHash(block) === block.blockHash;
   }
 
-  static calcTransactionHashesRoot(transactions) {
+  static async calcTransactionHashesRoot(transactions) {
     const transactionHashes = transactions.map(t => t.transactionHash);
     let height = 1;
     while (2 ** height < transactionHashes.length) {
@@ -174,6 +178,26 @@ class Block {
       TXHASH_TREE_HASH_TYPE,
       height,
     );
+
+    await Promise.all(
+      // eslint-disable-next-line consistent-return
+      transactionHashes.map(async (t, i) => {
+        const siblingPath = Timber.statelessSiblingPath(
+          timber,
+          transactionHashes,
+          i,
+          TXHASH_TREE_HASH_TYPE,
+          height,
+        );
+        return setTransactionHashSiblingInfo(
+          t,
+          siblingPath,
+          timber.leafCount + i,
+          updatedTimber.root,
+        );
+      }),
+    );
+
     return updatedTimber.root;
   }
 
