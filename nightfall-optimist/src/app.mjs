@@ -8,6 +8,7 @@ import {
   challenger,
   transaction,
   getContractAddress,
+  getContractAbi,
   debug,
 } from './routes/index.mjs';
 
@@ -19,7 +20,8 @@ setupHttpDefaults(app, app => {
   app.use('/challenger', challenger);
   app.use('/transaction', transaction);
   app.use('/contract-address', getContractAddress);
+  app.use('/contract-abi', getContractAbi);
   app.use('/debug', debug);
-});
+}, true, false);
 
 export default app;

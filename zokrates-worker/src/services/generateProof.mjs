@@ -43,7 +43,7 @@ export default async ({
   opts.fileName = proofFileName || `${proofJsonFile}`;
 
   try {
-    logger.info('Compute witness...');
+    logger.debug('Compute witness...');
     await computeWitness(
       `${outputPath}/${folderpath}/${circuitName}_out`,
       `${outputPath}/${folderpath}/`,
@@ -51,7 +51,7 @@ export default async ({
       inputs,
     );
 
-    logger.info('Generate proof...');
+    logger.debug('Generate proof...');
     await generateProof(
       `${outputPath}/${folderpath}/${circuitName}_pk.key`,
       `${outputPath}/${folderpath}/${circuitName}_out`,
@@ -62,10 +62,11 @@ export default async ({
     );
     ({ proof, inputs: publicInputs } = await getProofFromFile(`${folderpath}/${proofJsonFile}`));
 
-    logger.info(`Complete`);
-    logger.debug(`Responding with proof and inputs:`);
-    logger.debug(`${JSON.stringify(proof, null, 2)}`);
-    logger.debug(publicInputs);
+    logger.debug({
+      msg: 'Responding with proof and inputs',
+      proof: JSON.stringify(proof, null, 2),
+      publicInputs,
+    });
   } finally {
     try {
       await unlink(`${outputPath}/${folderpath}/${witnessFile}`);

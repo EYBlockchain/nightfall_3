@@ -5,6 +5,7 @@ import { setupHttpDefaults } from 'common-files/utils/httputils.mjs';
 import {
   deposit,
   getContractAddress,
+  getContractAbi,
   transfer,
   withdraw,
   finaliseWithdrawal,
@@ -22,6 +23,7 @@ setupHttpDefaults(
   app => {
     app.use('/deposit', deposit);
     app.use('/contract-address', getContractAddress);
+    app.use('/contract-abi', getContractAbi);
     app.use('/transfer', transfer);
     app.use('/withdraw', withdraw);
     app.use('/finalise-withdrawal', finaliseWithdrawal);

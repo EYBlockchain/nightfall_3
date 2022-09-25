@@ -1,5 +1,8 @@
 module.exports = {
-  SYNCHRONIZER_PORT: process.env.SYNCHRONIZER_PORT || 8092,
+  SIGNING_KEY:
+    process.env.SIGNING_KEY || '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+  PROPOSER_HOST: process.env.PROPOSER_HOST || 'localhost',
+  PROPOSER_PORT: process.env.PROPOSER_PORT || 8092,
   CLIENT_HOST: process.env.CLIENT_HOST || 'localhost',
   CLIENT_PORT: process.env.CLIENT_PORT || 8080,
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'localhost',

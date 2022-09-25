@@ -1,8 +1,8 @@
 /**
-Functions for storing blockchain data that the optimist application needs to
-remember wholesale because otherwise it would have to be constructed in real-
-time from blockchain events.
-*/
+ * Functions for storing blockchain data that the optimist application needs to
+ * remember wholesale because otherwise it would have to be constructed in real-
+ * time from blockchain events.
+ */
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
@@ -25,18 +25,21 @@ const {
 } = config;
 
 /**
-Function to save a commit, used in a challenge commit-reveal process
-*/
+ * Function to save a commit, used in a challenge commit-reveal process
+ */
 export async function saveCommit(commitHash, txDataToSign) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  logger.debug(`saving commit hash ${commitHash}`);
+
+  logger.debug({ msg: 'Saving commit hash', commitHash });
+
   return db.collection(COMMIT_COLLECTION).insertOne({ commitHash, txDataToSign });
 }
+
 /**
-Function to retrieve a commit, by commitHash, it also returns the 'retrieved'
-which will be true if the commitment hash has already been retrieved
-*/
+ * Function to retrieve a commit, by commitHash, it also returns the 'retrieved'
+ * which will be true if the commitment hash has already been retrieved
+ */
 export async function getCommit(commitHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -48,30 +51,37 @@ export async function getCommit(commitHash) {
 }
 
 /**
-function to save a block, so that we can later search the block, for example to
-find which block a transaction went into. Note, we'll save all blocks, that get
-posted to the blockchain, not just ours.
-*/
+ * Function to save a block, so that we can later search the block, for example to
+ * find which block a transaction went into. Note, we'll save all blocks, that get
+ * posted to the blockchain, not just ours.
+ */
 export async function saveBlock(_block) {
   const block = { _id: _block.blockHash, ..._block };
   if (!block.transactionHashL1)
     throw new Error('Layer 2 blocks must be saved with a valid Layer 1 transactionHash');
+
   if (!block.blockNumber)
     throw new Error('Layer 2 blocks must be saved with a valid Layer 1 block number');
+
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  logger.debug(`saving block ${JSON.stringify(block, null, 2)}`);
-  // there are three possibilities here:
-  // 1) We're just saving a block for the first time.  This is fine
-  // 2) We're trying to save a replayed block.  This will correctly fail because the _id will be duplicated
-  // 3) We're trying to save a block that we've seen before but it was re-mined due to a chain reorg. In
-  //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
+
+  logger.debug({ msg: 'Saving block', block: JSON.stringify(block, null, 2) });
+
+  /* there are three possibilities here:
+   1) We're just saving a block for the first time.  This is fine
+   2) We're trying to save a replayed block.  This will correctly fail because the _id will be duplicated
+   3) We're trying to save a block that we've seen before but it was re-mined due to a chain reorg. In
+      this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
+  */
   const query = { blockHash: block.blockHash };
   const update = { $set: block };
   const existing = await db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
+
   if (!existing || !existing.blockNumber) {
     return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
   }
+
   throw new Error('Attempted to replay existing layer 2 block');
 }
 
@@ -178,50 +188,56 @@ export async function getBlocks() {
 }
 
 /**
-function to save an invalid block, so that we can later search the invalid block
-and the type of invalid block.
-*/
+ * Function to save an invalid block, so that we can later search the invalid block
+ * and the type of invalid block.
+ */
 export async function saveInvalidBlock(_block) {
   const block = { _id: _block.blockHash, ..._block };
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  logger.debug(`saving invalid block ${JSON.stringify(block, null, 2)}`);
+
+  logger.debug({ msg: 'Saving invalid block', block: JSON.stringify(block, null, 2) });
+
   const query = { blockHash: block.blockHash };
   const update = { $set: block };
   return db.collection(INVALID_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
 }
 
 /**
-function to store addresses and URL of proposers that are registered through this
-app. These are needed because the app needs to know when one of them is the
-current (active) proposer, at which point it will automatically start to
-assemble blocks on behalf of the proposer. It listens for the NewCurrentProposer
-event to determine who is the current proposer.
-*/
+ * Function to store addresses and URL of proposers that are registered through this
+ * app. These are needed because the app needs to know when one of them is the
+ * current (active) proposer, at which point it will automatically start to
+ * assemble blocks on behalf of the proposer. It listens for the NewCurrentProposer
+ * event to determine who is the current proposer.
+ */
 export async function setRegisteredProposerAddress(address, url) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  logger.debug(`Saving proposer address ${address}`);
+
+  logger.debug({ msg: 'Saving proposer address', address });
+
   const data = { _id: address };
   const update = { $set: { url } };
   return db.collection(PROPOSER_COLLECTION).updateOne(data, update, { upsert: true });
 }
 
 /**
-Function to check if the current proposer (as signalled by the NewCurrentProposer blockchain event) is registered through this application, and
-thus it should start assembling blocks of transactions.
-*/
+ * Function to check if the current proposer (as signalled by the NewCurrentProposer blockchain event) is registered through this application, and
+ * thus it should start assembling blocks of transactions.
+ */
 export async function isRegisteredProposerAddressMine(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const metadata = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
-  logger.trace(`found registered proposer ${JSON.stringify(metadata, null, 2)}`);
+
+  logger.debug({ msg: 'Found registered proposer', proposer: JSON.stringify(metadata, null, 2) });
+
   return metadata;
 }
 
 /**
-  Remove proposer from dB
-*/
+ * Remove proposer from dB
+ */
 export async function deleteRegisteredProposerAddress(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -229,8 +245,9 @@ export async function deleteRegisteredProposerAddress(address) {
   const foundProposer = !!(await db.collection(PROPOSER_COLLECTION).findOne(query));
   if (foundProposer) {
     await db.collection(PROPOSER_COLLECTION).deleteOne(query);
+
+    logger.debug({ msg: 'Deleted registered proposer', address });
   }
-  logger.trace(`deleted registered proposer`);
 }
 
 /**
@@ -259,25 +276,35 @@ export async function saveTransaction(_transaction) {
     mempool,
     blockNumberL2,
   };
-  logger.debug(
-    `saving transaction ${transaction.transactionHash}, with layer 1 block number ${_transaction.blockNumber}`,
-  );
-  // there are three possibilities here:
-  // 1) We're just saving a transaction for the first time.  This is fine
-  // 2) We're trying to save a replayed transaction.  This will correctly fail because the _id will be duplicated
-  // 3) We're trying to save a transaction that we've seen before but it was re-mined due to a chain reorg. In
-  //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
+
+  logger.debug({
+    msg: 'Saving transaction with layer 1 block number',
+    transactionHash: _transaction.transactionHash,
+    blockNumber: _transaction.blockNumber,
+  });
+
+  /*
+   there are three possibilities here:
+   1) We're just saving a transaction for the first time.  This is fine
+   2) We're trying to save a replayed transaction.  This will correctly fail because the _id will be duplicated
+   3) We're trying to save a transaction that we've seen before but it was re-mined due to a chain reorg. In
+      this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
+  */
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHash: transaction.transactionHash };
   const update = { $set: transaction };
   const existing = await db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+
   if (!existing)
     return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+
   if (!existing.blockNumber) {
     logger.info('Saving re-mined transaction resulting from chain reorganisation');
+
     return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
   }
+
   throw new Error('Attempted to replay existing transaction');
 }
 
@@ -385,11 +412,17 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
-// function that sets the Transactions's L1 blocknumber to null
-// to indicate that it's back in the L1 mempool (and will probably be re-mined
-// and given a new L1 transactionHash)
+/**
+ * Function that sets the Transactions's L1 blocknumber to null
+ * to indicate that it's back in the L1 mempool (and will probably be re-mined
+ * and given a new L1 transactionHash)
+ */
 export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
-  logger.debug(`clearing layer 1 blockNumber for L2 transaction with L1 hash ${transactionHashL1}`);
+  logger.debug({
+    msg: 'Clearing layer 1 blockNumber for L2 transaction with L1 hash',
+    transactionHashL1,
+  });
+
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { transactionHashL1 };
@@ -524,4 +557,37 @@ export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   await db.collection(TIMBER_COLLECTION).updateOne({ blockNumberL2 }, { $set: { rollback: true } });
   await new Promise(resolve => setTimeout(() => resolve(), 1000));
   return db.collection(TIMBER_COLLECTION).deleteMany({ blockNumberL2: { $gte: blockNumberL2 } });
+}
+
+// function to set the path of the transaction hash leaf in transaction hash timber
+export async function setTransactionHashSiblingInfo(
+  transactionHash,
+  transactionHashSiblingPath,
+  transactionHashLeafIndex,
+  transactionHashesRoot,
+) {
+  const connection = await mongo.connection(MONGO_URL);
+  const query = { transactionHash };
+  const update = {
+    $set: { transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot },
+  };
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(TIMBER_COLLECTION).updateMany(query, update);
+}
+
+// function to get the path of the transaction hash leaf in transaction hash timber
+export async function getTransactionHashSiblingInfo(transactionHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(TIMBER_COLLECTION).findOne(
+    { transactionHash },
+    {
+      projection: {
+        transactionHashSiblingPath: 1,
+        transactionHashLeafIndex: 1,
+        transactionHashesRoot: 1,
+        isOnChain: 1,
+      },
+    },
+  );
 }

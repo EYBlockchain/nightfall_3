@@ -12,8 +12,10 @@ export default function receiveMessage() {
 
     try {
       const txDataToSign = await deposit(JSON.parse(message.content.toString()));
-      logger.debug('returning raw transaction');
-      logger.trace(` raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
+      logger.debug({
+        msg: 'Returning raw transaction',
+        rawTransaction: JSON.stringify(txDataToSign, null, 2),
+      });
 
       response.data = { txDataToSign };
     } catch (err) {

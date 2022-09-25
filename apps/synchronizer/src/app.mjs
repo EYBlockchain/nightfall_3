@@ -27,7 +27,7 @@ const environment = {
     : `ws://${config.OPTIMIST_HOST}:${config.OPTIMIST_WS_PORT}`,
   web3WsUrl: `${BLOCKCHAIN_URL}`
     ? `${BLOCKCHAIN_URL}`
-    : `ws://${config.BLOCKCHAIN_WS_HOST}:${config.BLOCKCHAIN_PORT}`,
+    : `ws://${config.BLOCKCHAIN_WS_HOST}:${config.BLOCKCHAIN_PORT}${config.BLOCKCHAIN_PATH}`,
 };
 
 const app = express();

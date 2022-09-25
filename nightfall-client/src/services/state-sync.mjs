@@ -33,7 +33,8 @@ export const syncState = async (
   toBlock = 'latest',
   eventFilter = 'allEvents',
 ) => {
-  console.log('From block', fromBlock);
+  logger.info({ msg: 'SyncState parameters', fromBlock, toBlock, eventFilter });
+
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // Rollback, BlockProposed
 
   const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
@@ -114,12 +115,20 @@ export const initialClientSync = async () => {
   await checkContractsABI();
   const allCommitments = await genGetCommitments();
   const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
+
   logger.info(`commitmentBlockNumbers: ${commitmentBlockNumbers}`);
+
   const firstSeenBlockNumber = Math.min(...commitmentBlockNumbers);
+
   logger.info(`firstSeenBlockNumber: ${firstSeenBlockNumber}`);
+
   // fistSeenBlockNumber can be infinity if the commitmentBlockNumbers array is empty
-  if (firstSeenBlockNumber === Infinity) await syncState(STATE_GENESIS_BLOCK);
-  else await syncState(firstSeenBlockNumber);
+  if (firstSeenBlockNumber === Infinity) {
+    await syncState(STATE_GENESIS_BLOCK);
+  } else {
+    await syncState(firstSeenBlockNumber);
+  }
+
   unpauseQueue(0); // the queues are paused to start with, so get them going once we are synced
   unpauseQueue(1);
 };

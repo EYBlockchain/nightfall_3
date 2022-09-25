@@ -36,19 +36,15 @@ export async function finaliseWithdrawal(transactionHash) {
   );
 
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-  try {
-    const rawTransaction = await shieldContractInstance.methods
-      .finaliseWithdrawal(
-        buildSolidityStruct(block),
-        Transaction.buildSolidityStruct(transactions[index]),
-        index,
-        siblingPath,
-      )
-      .encodeABI();
+  const rawTransaction = await shieldContractInstance.methods
+    .finaliseWithdrawal(
+      buildSolidityStruct(block),
+      Transaction.buildSolidityStruct(transactions[index]),
+      index,
+      siblingPath,
+    )
+    .encodeABI();
 
-    // store the commitment on successful computation of the transaction
-    return { rawTransaction };
-  } catch (err) {
-    throw new Error(err); // let the caller handle the error
-  }
+  // store the commitment on successful computation of the transaction
+  return { rawTransaction };
 }

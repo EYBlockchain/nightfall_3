@@ -4,96 +4,36 @@ address of the contract that holds global state (State.sol)
 */
 
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import { waitForContract } from 'common-files/utils/contract.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
 async function setupContracts() {
-  const stateInstance = await waitForContract('State');
-  logger.debug(`address of State contract is ${stateInstance.options.address}`);
+  const stateInstanceAddress = (await getContractInstance('State')).options.address;
+  const simpleMultiSigAddress = (await getContractInstance('SimpleMultiSig')).options.address;
+  logger.debug(`address of State contract is ${stateInstanceAddress}`);
 
-  const simpleMultiSigAddress = (await waitForContract('SimpleMultiSig')).options.address;
-  const shieldContractInstance = await waitForContract('Shield');
-  const stateContractInstance = await waitForContract('State');
-  const proposerContractInstance = await waitForContract('Proposers');
-  const challengesContractInstance = await waitForContract('Challenges');
-
-  logger.debug(
-    `transfering ownership of contracts to simpleMultiSigAddress ${simpleMultiSigAddress}`,
-  );
-
-  // when deploying on infura
-  // do serial registration to predict nonce
-  // or, if we have the owner's private key, sign with that, rather than use an unlocked account
-  if (config.ETH_PRIVATE_KEY) {
-    try {
-      await Web3.submitRawTransaction(
-        proposerContractInstance.methods
-          .setStateContract(stateInstance.options.address)
-          .encodeABI(),
-        proposerContractInstance.options.address,
-      );
-      await Web3.submitRawTransaction(
-        shieldContractInstance.methods.setStateContract(stateInstance.options.address).encodeABI(),
-        shieldContractInstance.options.address,
-      );
-      await Web3.submitRawTransaction(
-        challengesContractInstance.methods
-          .setStateContract(stateInstance.options.address)
-          .encodeABI(),
-        challengesContractInstance.options.address,
-      );
-    } catch (err) {
-      if (err.message.includes('Transaction has been reverted by the EVM'))
-        logger.warn(
-          'Writing contract addresses to the State contract failed. This is probably because they are aready set. Did you already run deployer?',
-        );
-      else throw new Error(err);
-    }
-
-    // our last action as the deployer is to hand off our onlyOwner powers to the
-    // multisig contract
-    await Web3.submitRawTransaction(
-      shieldContractInstance.methods.transferOwnership(simpleMultiSigAddress).encodeABI(),
-      shieldContractInstance.options.address,
-    );
-    await Web3.submitRawTransaction(
-      stateContractInstance.methods.transferOwnership(simpleMultiSigAddress).encodeABI(),
-      stateContractInstance.options.address,
-    );
-    await Web3.submitRawTransaction(
-      proposerContractInstance.methods.transferOwnership(simpleMultiSigAddress).encodeABI(),
-      proposerContractInstance.options.address,
-    );
-    return Web3.submitRawTransaction(
-      challengesContractInstance.methods.transferOwnership(simpleMultiSigAddress).encodeABI(),
-      challengesContractInstance.options.address,
-    );
-  }
-
-  try {
-    // the following code runs the registrations in parallel
-    await Promise.all([
-      proposerContractInstance.methods.setStateContract(stateInstance.options.address).send(),
-      shieldContractInstance.methods.setStateContract(stateInstance.options.address).send(),
-      challengesContractInstance.methods.setStateContract(stateInstance.options.address).send(),
-    ]);
-  } catch (err) {
-    if (err.message.includes('Transaction has been reverted by the EVM'))
-      logger.warn(
-        'Writing contract addresses to the State contract failed. This is probably because they are aready set. Did you already run deployer?',
-      );
-    else throw new Error(err);
-  }
-
-  // our last action as the deployer is to hand off our onlyOwner powers to the
-  // multisig contract
-  return Promise.all([
-    shieldContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
-    stateContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
-    proposerContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
-    challengesContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
+  const contracts = await Promise.all([
+    await getContractInstance('Proposers'),
+    await getContractInstance('Shield'),
+    await getContractInstance('Challenges'),
   ]);
+
+  await Promise.all(
+    contracts.map(async contract => {
+      const setStateContract = contract.methods.setStateContract(stateInstanceAddress);
+      const transferOwnership = contract.methods.transferOwnership(simpleMultiSigAddress);
+
+      if (!config.ETH_PRIVATE_KEY) {
+        setStateContract.send();
+        transferOwnership.send();
+      } else {
+        await Web3.submitRawTransaction(setStateContract.encodeABI(), contract.options.address);
+
+        await Web3.submitRawTransaction(transferOwnership.encodeABI(), contract.options.address);
+      }
+    }),
+  );
 }
 
 export default setupContracts;
