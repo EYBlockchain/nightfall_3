@@ -7,4 +7,3 @@ wallet/cli/*
 test/adversary/nightfall-adversary/*
 /**/*.d.ts
 **/build/*
-wallet/
