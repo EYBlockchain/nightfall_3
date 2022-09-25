@@ -103,7 +103,7 @@ describe('Optimist synchronisation tests', () => {
       try {
         mongoConn = await mongo.connection('mongodb://localhost:27017');
 
-        while(!await mongoConn.db('optimist_data').dropDatabase()) {
+        while (!(await mongoConn.db('optimist_data').dropDatabase())) {
           logger.debug(`Retrying dropping MongoDB`);
           await waitForTimeout(2000);
         }
@@ -170,7 +170,7 @@ describe('Optimist synchronisation tests', () => {
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
-    
+
     it('Resync optimist after making an un-resolved bad block', async function () {
       // We create enough good transactions to fill a block full of deposits.
       logger.debug(`      Sending ${txPerBlock} deposits...`);
