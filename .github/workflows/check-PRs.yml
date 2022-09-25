@@ -138,8 +138,6 @@ jobs:
 
   optimist-sync-test:
     runs-on: ubuntu-18.04
-    env:
-      CONFIRMATIONS: 1
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
