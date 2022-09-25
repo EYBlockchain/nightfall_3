@@ -14,14 +14,19 @@ import {
 
 const app = express();
 
-setupHttpDefaults(app, app => {
-  app.use('/proposer', proposer);
-  app.use('/block', block);
-  app.use('/challenger', challenger);
-  app.use('/transaction', transaction);
-  app.use('/contract-address', getContractAddress);
-  app.use('/contract-abi', getContractAbi);
-  app.use('/debug', debug);
-}, true, false);
+setupHttpDefaults(
+  app,
+  app => {
+    app.use('/proposer', proposer);
+    app.use('/block', block);
+    app.use('/challenger', challenger);
+    app.use('/transaction', transaction);
+    app.use('/contract-address', getContractAddress);
+    app.use('/contract-abi', getContractAbi);
+    app.use('/debug', debug);
+  },
+  true,
+  false,
+);
 
 export default app;
