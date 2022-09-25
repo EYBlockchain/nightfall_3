@@ -45,6 +45,8 @@ jobs:
 
   circuits-test:
     runs-on: ubuntu-20.04
+    env:
+      CONFIRMATIONS: 1
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -89,6 +91,8 @@ jobs:
 
   ganache-test:
     runs-on: ubuntu-20.04
+    env:
+      CONFIRMATIONS: 1
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -134,6 +138,8 @@ jobs:
 
   optimist-sync-test:
     runs-on: ubuntu-18.04
+    env:
+      CONFIRMATIONS: 1
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
@@ -180,6 +186,7 @@ jobs:
 #    runs-on: ubuntu-20.04
 #    env:
 #      TRANSACTIONS_PER_BLOCK: 32
+#      CONFIRMATIONS: 1
 #    steps:
 #      - uses: actions/checkout@v3
 #      - uses: actions/setup-node@v1
@@ -274,6 +281,8 @@ jobs:
   test-gas:
     name: check gas for 32 transactions per block
     runs-on: ubuntu-20.04
+    env:
+      CONFIRMATIONS: 1
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
