@@ -23,7 +23,7 @@ export const obfuscate = (object, obfuscationSettings) => {
   if (
     isDev() ||
     !object ||
-    typeof object !== 'object' ||
+    typeof object !== 'object' && typeof object !== 'string' ||
     !obfuscationSettings ||
     typeof obfuscationSettings !== 'object' ||
     Array.isArray(obfuscationSettings) ||
@@ -32,6 +32,54 @@ export const obfuscate = (object, obfuscationSettings) => {
     return object;
   }
 
+  if(typeof object === 'object') {
+    return obfuscateObject(object, obfuscationSettings);
+  } 
+
+  return obfuscateQueryString(object, obfuscationSettings);
+};
+
+const obfuscateQueryString = (object, obfuscationSettings) => {
+  let indexOfStartQueryString;
+  if((indexOfStartQueryString = object.indexOf('?')) == -1 || indexOfStartQueryString + 1 >= object.length) { // not a query string
+    return object;
+  }
+  const keyValueArray = object.substring(indexOfStartQueryString + 1).split('&');
+
+  if(keyValueArray.length == 0) {
+    return object;
+  }
+  const obfuscationKeys = Object.keys(obfuscationSettings);
+  let objectToReturn = object.substring(0, indexOfStartQueryString + 1);
+  let value;
+
+  keyValueArray.forEach((item, index) => {
+    const keyValueInfo = item.split('=');
+    let obfuscationApplied = false;
+
+    if(keyValueInfo.length == 2 && keyValueInfo[1]) {
+      for (let i = 0; i < obfuscationKeys.length; i++) {
+        const obfuscationKey = obfuscationKeys[i];
+
+        if (new RegExp(obfuscationKey).test(keyValueInfo[0].toLowerCase())) {
+          value = obfuscateValue(keyValueInfo[1], obfuscationSettings, obfuscationKey);
+          obfuscationApplied = true;
+          break;
+        }
+      }
+    }
+
+    if(obfuscationApplied) {
+      item = item.replace(keyValueInfo[1], value);
+    }
+
+    objectToReturn += (index > 0 ? '&' : '') + item;
+  });
+
+  return objectToReturn;
+};
+
+const obfuscateObject = (object, obfuscationSettings) => {
   const obfuscatedObject = {};
   const objectKeys = Object.keys(object);
   const obfuscationKeys = Object.keys(obfuscationSettings);

@@ -111,8 +111,8 @@ const requestLogger = (req, res, next) => {
     message: 'Request info',
     request: {
       method: req.method,
-      url: req.url,
-      originalUrl: req.originalUrl,
+      url: doObfuscation(req.url),
+      originalUrl: doObfuscation(req.originalUrl),
       headers: doObfuscation(req.headers),
       query: doObfuscation(req.query),
       params: doObfuscation(req.params),
