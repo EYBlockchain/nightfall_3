@@ -305,10 +305,8 @@ router.get('/change', async (req, res, next) => {
   logger.debug({ msg: '/change endpoint', payload: JSON.stringify(req.body, null, 2) });
 
   try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods
-      .changeCurrentProposer()
-      .encodeABI();
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
 
     logger.debug({
       msg: 'Returning raw transaction data',

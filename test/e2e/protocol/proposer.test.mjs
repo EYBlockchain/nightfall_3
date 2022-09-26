@@ -5,7 +5,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 // import logger from '../../../common-files/utils/logger.mjs';
-import { Web3Client, expectTransaction } from '../../utils.mjs';
+import { Web3Client, expectTransaction, pendingCommitmentCount } from '../../utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -41,167 +41,48 @@ const nf3User = new Nf3(signingKeys.user1, environment);
 const web3Client = new Web3Client();
 let web3;
 
-const miniStateABI = [
-  {
-    inputs: [{ internalType: 'address', name: 'addr', type: 'address' }],
-    name: 'getStakeAccount',
-    outputs: [
-      {
-        components: [
-          {
-            internalType: 'uint256',
-            name: 'amount',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'challengeLocked',
-            type: 'uint256',
-          },
-          {
-            internalType: 'uint256',
-            name: 'time',
-            type: 'uint256',
-          },
-        ],
-        internalType: 'struct Structures.TimeLockedStake',
-        name: '',
-        type: 'tuple',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'getCurrentProposer',
-    outputs: [
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'thisAddress',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'previousAddress',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'nextAddress',
-            type: 'address',
-          },
-          {
-            internalType: 'string',
-            name: 'url',
-            type: 'string',
-          },
-        ],
-        internalType: 'struct Structures.LinkedAddress',
-        name: '',
-        type: 'tuple',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [],
-    name: 'currentSprint',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'addr',
-        type: 'address',
-      },
-    ],
-    name: 'getProposer',
-    outputs: [
-      {
-        components: [
-          {
-            internalType: 'address',
-            name: 'thisAddress',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'previousAddress',
-            type: 'address',
-          },
-          {
-            internalType: 'address',
-            name: 'nextAddress',
-            type: 'address',
-          },
-          {
-            internalType: 'string',
-            name: 'url',
-            type: 'string',
-          },
-        ],
-        internalType: 'struct Structures.LinkedAddress',
-        name: '',
-        type: 'tuple',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-];
-
+let stateABI;
 let stateAddress;
 const eventLogs = [];
 let erc20Address;
 
 const getStakeAccount = async ethAccount => {
-  const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
+  const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   const stakeAccount = await stateContractInstance.methods.getStakeAccount(ethAccount).call();
   return stakeAccount;
 };
 
 const getCurrentProposer = async () => {
-  const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
+  const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
   return currentProposer;
 };
 
 const getProposer = async proposerAddress => {
-  const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
+  const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   const currentProposer = await stateContractInstance.methods.getProposer(proposerAddress).call();
   return currentProposer;
 };
 
 const getCurrentSprint = async () => {
-  const stateContractInstance = new web3.eth.Contract(miniStateABI, stateAddress);
+  const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   const currentSprint = await stateContractInstance.methods.currentSprint().call();
   return currentSprint;
 };
 
 const emptyL2 = async () => {
-  let count = await nf3User.unprocessedTransactionCount();
-
+  await new Promise(resolve => setTimeout(resolve, 6000));
+  let count = await pendingCommitmentCount(nf3User);
   while (count !== 0) {
     await nf3User.makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    count = await nf3User.unprocessedTransactionCount();
+    try {
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      count = await pendingCommitmentCount(nf3User);
+    } catch (err) {
+      break;
+    }
   }
-
-  await nf3User.makeBlockNow();
-  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  await new Promise(resolve => setTimeout(resolve, 6000));
 };
 
 describe('Basic Proposer tests', () => {
@@ -214,7 +95,7 @@ describe('Basic Proposer tests', () => {
     await thirdProposer.init(mnemonics.proposer);
 
     stateAddress = await bootProposer.getContractAddress('State');
-
+    stateABI = await nf3User.getContractAbi('State');
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
@@ -340,7 +221,6 @@ describe('Basic Proposer tests', () => {
     }
 
     await emptyL2();
-    await new Promise(resolve => setTimeout(resolve, 10000));
 
     const afterZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
