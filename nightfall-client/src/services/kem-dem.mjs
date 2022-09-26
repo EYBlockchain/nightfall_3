@@ -10,6 +10,7 @@ const DOMAIN_KEM = 2103336540571167522381317926858644704162216915553936573639297
 // DOMAIN_KEM = field(SHA256('nightfall-dem'))
 const DOMAIN_DEM = 1241463701002173366467794894814691939898321302682516549591039420117995599097n;
 
+const BABYJUBJUB_GROUP_ORDER = BABYJUBJUB.JUBJUBE / BABYJUBJUB.JUBJUBC;
 /**
 This function is like splice but replaces the element in index and returns a new array
 @function immutableSplice
@@ -39,10 +40,8 @@ const packSecrets = (from, to, topMostFromBytesIndex, topMostToBytesIndex) => {
     throw new Error('This function packs u32[8], indices must be < 8');
   const fromLimbs = from.limbs(32, 8);
   const toLimbs = to.limbs(32, 8);
-  if (toLimbs[0] !== '0') throw new Error('Cannot pack since top bits non-zero');
+  if (toLimbs[topMostToBytesIndex] !== '0') throw new Error('Cannot pack since top bits non-zero');
 
-  if (topMostToBytesIndex + 1 === toLimbs.length)
-    throw new Error('Pack To Array is zero, need to specify to address');
   const topMostBytes = fromLimbs[topMostFromBytesIndex];
 
   const unpackedFrom = immutableSplice(fromLimbs, topMostFromBytesIndex, '0');
@@ -56,7 +55,7 @@ This function generates the ephemeral key pair used in the kem-dem
 @returns {Promise<Array<GeneralNumber, Array<BigInt>>>} The private and public key pair
 */
 const genEphemeralKeys = async () => {
-  const privateKey = await randValueLT(BN128_GROUP_ORDER);
+  const privateKey = await randValueLT(BABYJUBJUB_GROUP_ORDER);
   const publicKey = scalarMult(privateKey.bigInt, BABYJUBJUB.GENERATOR);
   return [privateKey, publicKey];
 };
