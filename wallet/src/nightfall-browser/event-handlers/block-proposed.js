@@ -32,7 +32,12 @@ const { ZERO } = global.nightfallConstants;
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
-async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
+async function blockProposedEventHandler(
+  data,
+  zkpPrivateKeys,
+  nullifierKeys,
+  isProposedBlock = true,
+) {
   console.log(`Received Block Proposed event: ${JSON.stringify(data)}`);
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block, blockTimestamp } = data;
@@ -135,7 +140,7 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
     HASH_TYPE,
     TIMBER_HEIGHT,
   );
-  await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
+  if (isProposedBlock) await saveTree(data.blockNumber, block.blockNumberL2, updatedTimber);
 
   await Promise.all(
     // eslint-disable-next-line consistent-return
