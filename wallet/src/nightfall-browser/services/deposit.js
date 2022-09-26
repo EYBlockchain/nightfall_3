@@ -13,14 +13,13 @@ import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
 import computeCircuitInputs from '@Nightfall/utils/compute-witness';
-import confirmBlock from './confirm-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
+import { checkIndexDBForCircuit, getStoreCircuit } from './database';
 
 const { USE_STUBS } = global.config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.nightfallConstants;
@@ -51,11 +50,6 @@ async function deposit(items, shieldContractAddress) {
     getStoreCircuit(`${circuitName}-program`),
     getStoreCircuit(`${circuitName}-pk`),
   ]);
-
-  const lastTree = await getLatestTree();
-  const lastBlockNumber = await getMaxBlock();
-
-  await confirmBlock(lastBlockNumber, lastTree);
 
   const abi = abiData.data;
   const program = programData.data;

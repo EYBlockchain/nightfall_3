@@ -17,6 +17,7 @@ const {
   CIRCUIT_COLLECTION,
   CIRCUIT_HASH_COLLECTION,
   TIMBER_HEIGHT,
+  CLIENT_ID_COLLECTION,
   HASH_TYPE,
 } = global.config;
 
@@ -32,9 +33,18 @@ const connectDB = async () => {
       newDb.createObjectStore(KEYS_COLLECTION);
       newDb.createObjectStore(CIRCUIT_COLLECTION);
       newDb.createObjectStore(CIRCUIT_HASH_COLLECTION);
+      newDb.createObjectStore(CLIENT_ID_COLLECTION);
     },
   });
 };
+
+export async function createClientidCollection() {
+  return openDB(COMMITMENTS_DB, 1, {
+    upgrade(newDb) {
+      newDb.createObjectStore(CLIENT_ID_COLLECTION);
+    },
+  });
+}
 
 /*
  * function stores circuit data and hash
@@ -160,6 +170,18 @@ export async function getLatestTree() {
     timberObj.height,
   );
   return t;
+}
+
+export async function getLatestTimber() {
+  const db = await connectDB();
+  const keys = await db.getAllKeys(TIMBER_COLLECTION);
+  const maxKey = Math.max(...keys);
+  const timberObjArr = await db.get(TIMBER_COLLECTION, maxKey);
+  if (timberObjArr) {
+    timberObjArr.blockNumber = timberObjArr._id;
+    delete timberObjArr._id;
+  }
+  return timberObjArr;
 }
 
 export async function getTreeByBlockNumberL2(blockNumberL2) {
@@ -361,4 +383,14 @@ export async function setTransactionHashSiblingInfo(
     );
   }
   return null;
+}
+
+export async function storeClientId(clientId) {
+  const db = await connectDB();
+  return db.put(CLIENT_ID_COLLECTION, clientId, 0);
+}
+
+export async function getClientId(key) {
+  const db = await connectDB();
+  return db.get(CLIENT_ID_COLLECTION, key);
 }
