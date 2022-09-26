@@ -1,0 +1,39 @@
+name: New feature
+about: File new feature
+title: '[Feature]: '
+labels: ['Feature']
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the feature
+      placeholder: Implement X for Nightfall
+    validations:
+      required: true
+
+  - type: textarea
+    id: expectation
+    attributes:
+      label: Expectation
+      description: What is the expected result?
+      placeholder: After implementation of X, Y should happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to test
+      description: Describe how can this feature be tested
+      placeholder: To test that Y happened, a Z test is proposed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: priority-detail
+    attributes:
+      label: Additional comments
+      description: If relevant
+      placeholder:
+        I think that feature X should have high priority because if Y doesn't happen, then...

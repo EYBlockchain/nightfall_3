@@ -1,0 +1,51 @@
+name: Bug Report
+about: File a bug report
+title: '[Bug]: '
+labels: ['Bug']
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the bug
+      placeholder: When starting Nightfall, Y happens
+    validations:
+      required: true
+
+  - type: textarea
+    id: expectation
+    attributes:
+      label: Expectation
+      description: What did you expect to happen?
+      placeholder: I expected that instead of Y, Z happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Describe how can we reproduce this bug
+      placeholder: Start Nightfall, run X, verify that Y happens
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: If applicable, what browsers are you seeing the problem on?
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Safari
+        - Microsoft Edge
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description:
+        Please copy and paste any relevant log output. This will be automatically formatted into
+        code, so no need for backticks.
+      render: shell
