@@ -25,7 +25,7 @@ export async function randValueLT(bigIntValue) {
     // eslint-disable-next-line no-await-in-loop
     genVal = await rand(minimumBytes);
     counter++;
-  } while (genVal.bigInt >= bigIntValue || counter === MAX_ATTEMPTS);
+  } while (genVal.bigInt >= bigIntValue || genVal.bigInt === 0 || counter === MAX_ATTEMPTS);
   if (counter === MAX_ATTEMPTS) throw new Error("Couldn't make a number below target value");
   return genVal;
 }
