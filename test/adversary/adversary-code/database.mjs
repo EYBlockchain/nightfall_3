@@ -200,7 +200,13 @@ const incorrectPublicInput = async (number, transactionType, publicInputType) =>
       )
       .toArray();
 
-    logger.debug(`Transaction before modification ${JSON.stringify({ commitments, nullifiers, ...rest }, null, 2)}`);
+    logger.debug(
+      `Transaction before modification ${JSON.stringify(
+        { commitments, nullifiers, ...rest },
+        null,
+        2,
+      )}`,
+    );
 
     let incorrectPublicInputTx;
     switch (publicInputType) {
