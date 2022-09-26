@@ -1,5 +1,5 @@
 ---
-name: Bug report
+name: Bug
 about: Create a bug report
 title: "[BUG]"
 labels: ''
