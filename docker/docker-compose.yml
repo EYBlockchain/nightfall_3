@@ -6,6 +6,8 @@ services:
     image: ghcr.io/eyblockchain/nightfall3-administrator:latest
     networks:
       - nightfall_network
+    depends_on:
+      - mongodb
     volumes:
       - type: volume
         source: build
@@ -15,6 +17,7 @@ services:
       BLOCKCHAIN_PORT: 8546
       LOG_LEVEL: error
       ETH_NETWORK: blockchain
+      MONGO_URL: mongodb://mongodb:27017
 
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -22,18 +25,15 @@ services:
       - type: volume
         source: build
         target: /app/build
-      - type: volume
-        source: mongodb
-        target: /app/mongodb
     networks:
       - nightfall_network
     ports:
-      - 27017:27017
       - 8080:80
     depends_on:
       - deployer
       - worker
       - rabbitmq
+      - mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -46,6 +46,7 @@ services:
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: optimist
       OPTIMIST_PORT: 80
+      MONGO_URL: mongodb://mongodb:27017
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
 
@@ -82,6 +83,8 @@ services:
 
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
+    depends_on:
+      - mongodb
     networks:
       - nightfall_network
     ports:
@@ -96,6 +99,7 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
+      MONGO_URL: mongodb://mongodb:27017
       HASH_TYPE: poseidon
       LOG_LEVEL: debug
       IS_CHALLENGER: 'false'
@@ -109,6 +113,19 @@ services:
       - '5672:5672'
     networks:
       - nightfall_network
+
+  mongodb:
+    image: mongo:4.4.1-bionic
+    hostname: mongodb
+    ports:
+      - 27017:27017
+    networks:
+      - nightfall_network
+    command: --quiet
+    volumes:
+      - type: volume
+        source: mongodb
+        target: /data/db 
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
