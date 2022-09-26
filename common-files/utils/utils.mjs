@@ -1,5 +1,6 @@
 /* eslint no-use-before-define: "off" */
 /* eslint no-else-return: "off" */
+/* eslint no-cond-assign: "off" */
 
 export const isDev = () => process.env.NODE_ENV !== 'production';
 
@@ -23,7 +24,7 @@ export const obfuscate = (object, obfuscationSettings) => {
   if (
     isDev() ||
     !object ||
-    typeof object !== 'object' && typeof object !== 'string' ||
+    (typeof object !== 'object' && typeof object !== 'string') ||
     !obfuscationSettings ||
     typeof obfuscationSettings !== 'object' ||
     Array.isArray(obfuscationSettings) ||
@@ -32,21 +33,24 @@ export const obfuscate = (object, obfuscationSettings) => {
     return object;
   }
 
-  if(typeof object === 'object') {
+  if (typeof object === 'object') {
     return obfuscateObject(object, obfuscationSettings);
-  } 
+  }
 
   return obfuscateQueryString(object, obfuscationSettings);
 };
 
 const obfuscateQueryString = (object, obfuscationSettings) => {
   let indexOfStartQueryString;
-  if((indexOfStartQueryString = object.indexOf('?')) == -1 || indexOfStartQueryString + 1 >= object.length) { // not a query string
+  if (
+    (indexOfStartQueryString = object.indexOf('?')) === -1 ||
+    indexOfStartQueryString + 1 >= object.length
+  ) {
     return object;
   }
   const keyValueArray = object.substring(indexOfStartQueryString + 1).split('&');
 
-  if(keyValueArray.length == 0) {
+  if (keyValueArray.length === 0) {
     return object;
   }
   const obfuscationKeys = Object.keys(obfuscationSettings);
@@ -57,7 +61,7 @@ const obfuscateQueryString = (object, obfuscationSettings) => {
     const keyValueInfo = item.split('=');
     let obfuscationApplied = false;
 
-    if(keyValueInfo.length == 2 && keyValueInfo[1]) {
+    if (keyValueInfo.length === 2 && keyValueInfo[1]) {
       for (let i = 0; i < obfuscationKeys.length; i++) {
         const obfuscationKey = obfuscationKeys[i];
 
@@ -69,7 +73,7 @@ const obfuscateQueryString = (object, obfuscationSettings) => {
       }
     }
 
-    if(obfuscationApplied) {
+    if (obfuscationApplied) {
       item = item.replace(keyValueInfo[1], value);
     }
 

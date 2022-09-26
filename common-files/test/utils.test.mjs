@@ -56,7 +56,9 @@ describe('Utils tests', function () {
     more_one_key: () => {},
   };
 
-  this.beforeEach(() => process.env.NODE_ENV = 'production');
+  this.beforeEach(() => {
+    process.env.NODE_ENV = 'production';
+  });
 
   it('Should obfuscate the object successfuly', () => {
     const result = obfuscate(OBJECT_TO_OBFUSCATE, OBFUSCATION_SETTINGS_TEST);
@@ -144,20 +146,26 @@ describe('Utils tests', function () {
   });
 
   it("Shouldn't obfuscate because the string doesn't have a query string - #1", () => {
-    const result = obfuscate("http://localhost", OBFUSCATION_SETTINGS_TEST);
+    const result = obfuscate('http://localhost', OBFUSCATION_SETTINGS_TEST);
 
-    assert.equal(result, "http://localhost");
+    assert.equal(result, 'http://localhost');
   });
 
   it("Shouldn't obfuscate because the string doesn't have a query string - #1", () => {
-    const result = obfuscate("http://localhost?", OBFUSCATION_SETTINGS_TEST);
+    const result = obfuscate('http://localhost?', OBFUSCATION_SETTINGS_TEST);
 
-    assert.equal(result, "http://localhost?");
+    assert.equal(result, 'http://localhost?');
   });
 
-  it("Should obfuscate the query string successfully", () => {
-    const result = obfuscate("http://localhost?xpto=blablabla&public_key=0x4789FD18D5d71982045d85d5218493fD69F55AC4&priv_key=0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d&secret=xpto01234567&name=&&nop", OBFUSCATION_SETTINGS_TEST);
+  it('Should obfuscate the query string successfully', () => {
+    const result = obfuscate(
+      'http://localhost?xpto=blablabla&public_key=0x4789FD18D5d71982045d85d5218493fD69F55AC4&priv_key=0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d&secret=xpto01234567&name=&&nop',
+      OBFUSCATION_SETTINGS_TEST,
+    );
 
-    assert.equal(result, "http://localhost?xpto=blablabla&public_key=0x4789FD18D5d71982045*********************&priv_key=******************************************************************&secret=************&name=&&nop");
+    assert.equal(
+      result,
+      'http://localhost?xpto=blablabla&public_key=0x4789FD18D5d71982045*********************&priv_key=******************************************************************&secret=************&name=&&nop',
+    );
   });
 });
