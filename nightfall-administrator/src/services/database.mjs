@@ -1,6 +1,6 @@
 import mongo from '../../../common-files/utils/mongo.mjs';
 
-const MONGO_URL = 'mongodb://localhost:27017/';
+const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017';
 const DB = 'administration';
 const COLLECTION = 'signatures';
 
