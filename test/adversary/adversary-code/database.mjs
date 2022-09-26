@@ -38,7 +38,7 @@ let indexOffset = 0;
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { Transaction } from '../classes/index.mjs';
 
-const { BN128_GROUP_ORDER } = config;
+const { BN128_GROUP_ORDER } = constants;
 
 // Duplicate Commitment -> { mempool: false, transactionType: [0,1] } -> overwrite with a duplicate spent commitment
 // Duplicate Nullifier -> { mempool: false, transactionType: [1,2] } -> overwrite with a duplicate spent nullifier
@@ -200,7 +200,7 @@ const incorrectPublicInput = async (number, transactionType, publicInputType) =>
       )
       .toArray();
 
-    logger.debug(`Transaction before modification ${{ commitments, nullifiers, ...rest }}`);
+    logger.debug(`Transaction before modification ${JSON.stringify({ commitments, nullifiers, ...rest }, null, 2)}`);
 
     let incorrectPublicInputTx;
     switch (publicInputType) {
