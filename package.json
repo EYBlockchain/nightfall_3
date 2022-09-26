@@ -73,6 +73,9 @@
     "url-parse": "^1.5.9",
     "web3": "^1.7.5",
     "ws": "^7.5.0",
+    "express-fileupload": "^1.4.0",
+    "cls-hooked": "^4.2.2",
+    "uuid": "^8.3.2",
     "mongodb": "^4.7.0"
   },
   "dependencies": {
