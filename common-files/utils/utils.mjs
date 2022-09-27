@@ -5,13 +5,7 @@
 export const isDev = () => process.env.NODE_ENV !== 'production';
 
 export const isLocal = () => {
-  return (
-    process.env.NODE_ENV !== 'internal' &&
-    process.env.NODE_ENV !== 'staging' &&
-    process.env.NODE_ENV !== 'preprod' &&
-    process.env.NODE_ENV !== 'testnet' &&
-    process.env.NODE_ENV !== 'production'
-  );
+  return process.env.NODE_ENV === undefined || process.env.NODE_ENV === '' || process.env.NODE_ENV === 'local';
 };
 
 /**
@@ -32,7 +26,7 @@ export const isLocal = () => {
  */
 export const obfuscate = (object, obfuscationSettings) => {
   if (
-    isDev() ||
+    isLocal() ||
     !object ||
     (typeof object !== 'object' && typeof object !== 'string') ||
     !obfuscationSettings ||

@@ -119,8 +119,24 @@ describe('Utils tests', function () {
     assert.equal(result, '');
   });
 
-  it("Shouldn't obfuscate for the Dev environment", () => {
-    process.env.NODE_ENV = 'developer';
+  it("Shouldn't obfuscate for the local environment", () => {
+    process.env.NODE_ENV = 'local';
+
+    const result = obfuscate(OBJECT_TO_OBFUSCATE, OBFUSCATION_SETTINGS_TEST);
+
+    assert.equal(result, OBJECT_TO_OBFUSCATE);
+  });
+
+  it("Shouldn't obfuscate for when NODE_ENV is blank", () => {
+    process.env.NODE_ENV = '';
+
+    const result = obfuscate(OBJECT_TO_OBFUSCATE, OBFUSCATION_SETTINGS_TEST);
+
+    assert.equal(result, OBJECT_TO_OBFUSCATE);
+  });
+
+  it("Shouldn't obfuscate for when NODE_ENV is not set", () => {
+    delete process.env.NODE_ENV;
 
     const result = obfuscate(OBJECT_TO_OBFUSCATE, OBFUSCATION_SETTINGS_TEST);
 
@@ -157,7 +173,7 @@ describe('Utils tests', function () {
     assert.equal(result, 'http://localhost?');
   });
 
-  it('Should obfuscate the query string successfully', () => {
+  it('Should obfuscate the query string successfully #1', () => {
     const result = obfuscate(
       'http://localhost?xpto=blablabla&public_key=0x4789FD18D5d71982045d85d5218493fD69F55AC4&priv_key=0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d&secret=xpto01234567&name=&&nop',
       OBFUSCATION_SETTINGS_TEST,
@@ -166,6 +182,18 @@ describe('Utils tests', function () {
     assert.equal(
       result,
       'http://localhost?xpto=blablabla&public_key=0x4789FD18D5d71982045*********************&priv_key=******************************************************************&secret=************&name=&&nop',
+    );
+  });
+
+  it('Should obfuscate the query string successfully #2', () => {
+    const result = obfuscate(
+      '/commitment/balance?compressedZkpPublicKey=0x8b1cd14f2defec7928cc958e2dfbc86fbd3218e25a10807388a5db4b8fa4837e',
+      OBFUSCATION_SETTINGS_TEST,
+    );
+
+    assert.equal(
+      result,
+      '/commitment/balance?compressedZkpPublicKey=******************************************************************',
     );
   });
 });
