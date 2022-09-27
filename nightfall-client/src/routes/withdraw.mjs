@@ -2,7 +2,6 @@
 Route for transferring a crypto commitment.
 */
 import express from 'express';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import withdraw from '../services/withdraw.mjs';
 
 const router = express.Router();

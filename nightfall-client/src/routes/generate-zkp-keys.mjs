@@ -3,7 +3,6 @@ Route for transferring a crypto commitment.
 */
 
 import express from 'express';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { ZkpKeys } from '../services/keys.mjs';
 
 const router = express.Router();
