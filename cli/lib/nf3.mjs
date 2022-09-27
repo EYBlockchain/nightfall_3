@@ -923,29 +923,51 @@ class Nf3 {
       logger.debug('Proposer websocket connection opened');
       connection.send('blocks');
     };
+
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign, block, transactions, data } = msg;
+
       logger.debug(`Proposer received websocket message of type ${type}`);
+
       if (type === 'block') {
         proposerQueue.push(async () => {
           try {
+            logger.info('Submiting block');
+
             const receipt = await this.submitTransaction(
               txDataToSign,
               this.stateContractAddress,
               this.BLOCK_STAKE,
             );
+
             proposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
+            logger.error({
+              msg: 'Error while trying to submit a block', 
+              err
+            });
+
             // block proposed is reverted. Send transactions back to mempool
             proposeEmitter.emit('error', err, block, transactions);
-            await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+
+            try {
+              await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+            } catch (errorResetLocalBlock) {
+              logger.error({
+                msg: 'Error while trying to reset local block',
+                errorResetLocalBlock
+              });
+            }
           }
         });
       }
+
       if (type === 'rollback') proposeEmitter.emit('rollback', data);
+
       return null;
     };
+
     connection.onerror = () => logger.error('Proposer websocket connection error');
     connection.onclosed = () => logger.warn('Proposer websocket connection closed');
     // add this proposer to the list of peers that can accept direct transfers and withdraws
