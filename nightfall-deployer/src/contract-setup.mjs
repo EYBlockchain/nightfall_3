@@ -21,28 +21,31 @@ async function setupContracts() {
   const contractsOwnables = [proposersContract, shieldContract, challengesContract, stateContract];
 
   // set State
-  await Promise.all(
-    contractsState.map(async contract => {
-      const setStateContract = contract.methods.setStateContract(stateAddress);
-      if (!config.ETH_PRIVATE_KEY) {
-        await setStateContract.send();
-      } else {
-        await Web3.submitRawTransaction(setStateContract.encodeABI(), contract.options.address);
-      }
-    }),
-  );
+  // Need to call setStateContract 1 by 1 or transaction fails
+  for (var contractState of contractsState) {
+    const setStateContract = await contractState.methods.setStateContract(stateAddress);
+    if (!config.ETH_PRIVATE_KEY) {
+      await setStateContract.send();
+    } else {
+      await Web3.submitRawTransaction(setStateContract.encodeABI(), contractState.options.address);
+    }
+  }
 
   // transfer ownership
-  await Promise.all(
-    contractsOwnables.map(async contract => {
-      const transferOwnership = contract.methods.transferOwnership(simpleMultiSigAddress);
-      if (!config.ETH_PRIVATE_KEY) {
-        await transferOwnership.send();
-      } else {
-        await Web3.submitRawTransaction(transferOwnership.encodeABI(), contract.options.address);
-      }
-    }),
-  );
+  // Need to call transferOwnership 1 by 1 or transaction fails
+  for (var contractOwnable of contractsOwnables) {
+    const transferOwnership = await contractOwnable.methods.transferOwnership(
+      simpleMultiSigAddress,
+    );
+    if (!config.ETH_PRIVATE_KEY) {
+      await transferOwnership.send();
+    } else {
+      await Web3.submitRawTransaction(
+        transferOwnership.encodeABI(),
+        contractOwnable.options.address,
+      );
+    }
+  }
 }
 
 export default setupContracts;
