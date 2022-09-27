@@ -108,7 +108,7 @@ async function withdraw(withdrawParams) {
 
     logger.trace({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
@@ -147,7 +147,10 @@ async function withdraw(withdrawParams) {
       // dig up connection peers
       const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
 
-      logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
+      logger.debug({
+        msg: 'Peer List',
+        peerList,
+      });
 
       await Promise.all(
         Object.keys(peerList).map(async address => {

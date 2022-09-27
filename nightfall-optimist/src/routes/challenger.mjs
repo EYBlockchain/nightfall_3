@@ -9,7 +9,6 @@ import { startMakingChallenges, stopMakingChallenges } from '../services/challen
 const router = express.Router();
 
 router.post('/enable', async (req, res, next) => {
-  logger.debug('challenge endpoint received POST');
   try {
     const { enable } = req.body;
     const result =

@@ -64,7 +64,7 @@ export default async ({
 
     logger.debug({
       msg: 'Responding with proof and inputs',
-      proof: JSON.stringify(proof, null, 2),
+      proof,
       publicInputs,
     });
   } finally {

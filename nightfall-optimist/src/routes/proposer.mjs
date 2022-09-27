@@ -40,8 +40,6 @@ export function setProposer(p) {
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
 router.post('/register', async (req, res, next) => {
-  logger.debug({ msg: '/register endpoint', payload: JSON.stringify(req.body, null, 2) });
-
   try {
     const { address, url = '' } = req.body;
     const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
@@ -85,7 +83,6 @@ router.post('/register', async (req, res, next) => {
     }
     res.json({ txDataToSign });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -94,8 +91,6 @@ router.post('/register', async (req, res, next) => {
  * Function to update proposer's URL
  */
 router.post('/update', async (req, res, next) => {
-  logger.debug({ msg: '/update endpoint', payload: JSON.stringify(req.body, null, 2) });
-
   try {
     const { address, url = '' } = req.body;
     if (url === '') {
@@ -104,15 +99,9 @@ router.post('/update', async (req, res, next) => {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.updateProposer(url).encodeABI();
 
-    logger.debug({
-      msg: 'Returning raw transaction',
-      rawTransaction: JSON.stringify(txDataToSign, null, 2),
-    });
-
     res.json({ txDataToSign });
     setRegisteredProposerAddress(address, url); // save the registration address and URL
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -121,22 +110,14 @@ router.post('/update', async (req, res, next) => {
  * Returns the current proposer
  */
 router.get('/current-proposer', async (req, res, next) => {
-  logger.debug({ msg: 'X endpoint', payload: JSON.stringify(req.body, null, 2) });
-
   try {
     const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     const { thisAddress: currentProposer } = await proposersContractInstance.methods
       .currentProposer()
       .call();
 
-    logger.debug({
-      msg: 'Returning current proposer',
-      currentProposer: JSON.stringify(currentProposer, null, 2),
-    });
-
     res.json({ currentProposer });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -148,11 +129,8 @@ router.get('/proposers', async (req, res, next) => {
   try {
     const proposers = await getProposers();
 
-    logger.debug({ msg: 'Returning proposer list', length: proposers.length });
-
     res.json({ proposers });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -162,8 +140,6 @@ router.get('/proposers', async (req, res, next) => {
  * provides the tx data. The user has to call the blockchain client.
  */
 router.post('/de-register', async (req, res, next) => {
-  logger.debug({ msg: '/de-register endpoint', payload: JSON.stringify(req.body, null, 2) });
-
   try {
     const { address = '' } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
@@ -171,14 +147,8 @@ router.post('/de-register', async (req, res, next) => {
 
     await deleteRegisteredProposerAddress(address);
 
-    logger.debug({
-      msg: 'Returning raw transaction',
-      rawTransaction: JSON.stringify(txDataToSign, null, 2),
-    });
-
     res.json({ txDataToSign });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -192,7 +162,6 @@ router.post('/withdrawBond', async (req, res, next) => {
     const txDataToSign = await stateContractInstance.methods.withdrawBond().encodeABI();
     res.json({ txDataToSign });
   } catch (error) {
-    logger.error(error);
     next(error);
   }
 });
@@ -203,20 +172,12 @@ router.post('/withdrawBond', async (req, res, next) => {
  * provides the tx data, the user will need to call the blockchain client.
  */
 router.get('/withdraw', async (req, res, next) => {
-  logger.debug({ msg: '/withdraw endpoint', payload: JSON.stringify(req.body, null, 2) });
-
   try {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
 
-    logger.debug({
-      msg: 'Returning raw transaction',
-      rawTransaction: JSON.stringify(txDataToSign, null, 2),
-    });
-
     res.json({ txDataToSign });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -227,8 +188,6 @@ router.get('/withdraw', async (req, res, next) => {
  * withdrawal and then /withdraw needs to be called to recover the money.
  */
 router.post('/payment', async (req, res, next) => {
-  logger.debug({ msg: '/payment endpoint', payload: JSON.stringify(req.body, null, 2) });
-
   const { block } = req.body;
   try {
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
@@ -236,14 +195,8 @@ router.post('/payment', async (req, res, next) => {
       .requestBlockPayment(block)
       .encodeABI();
 
-    logger.debug({
-      msg: 'Returning raw transaction',
-      rawTransaction: JSON.stringify(txDataToSign, null, 2),
-    });
-
     res.json({ txDataToSign });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -255,7 +208,6 @@ router.post('/payment', async (req, res, next) => {
  * a block
  */
 router.post('/propose', async (req, res, next) => {
-  logger.debug({ msg: '/propose endpoint', payload: JSON.stringify(req.body, null, 2) });
   try {
     const { transactions, proposer: prop, currentLeafCount } = req.body;
     const latestBlockInfo = await getLatestBlockInfo();
@@ -277,7 +229,7 @@ router.post('/propose', async (req, res, next) => {
 
     logger.debug({
       msg: 'New block assembled',
-      block: JSON.stringify(block, null, 2),
+      block,
     });
 
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
@@ -285,14 +237,8 @@ router.post('/propose', async (req, res, next) => {
       .proposeBlock(block, transactions)
       .encodeABI();
 
-    logger.debug({
-      msg: 'Returning raw transaction',
-      rawTransaction: JSON.stringify(txDataToSign, null, 2),
-    });
-
     res.json({ txDataToSign, block, transactions });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -305,22 +251,14 @@ router.post('/propose', async (req, res, next) => {
  * computed by the app that calls this endpoint.
  */
 router.get('/change', async (req, res, next) => {
-  logger.debug({ msg: '/change endpoint', payload: JSON.stringify(req.body, null, 2) });
-
   try {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods
       .changeCurrentProposer()
       .encodeABI();
 
-    logger.debug({
-      msg: 'Returning raw transaction data',
-      rawTransaction: JSON.stringify(txDataToSign, null, 2),
-    });
-
     res.json({ txDataToSign });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -329,13 +267,10 @@ router.get('/change', async (req, res, next) => {
  * Function to get mempool of a connected proposer
  */
 router.get('/mempool', async (req, res, next) => {
-  logger.debug({ msg: '/mempool endpoint', payload: JSON.stringify(req.body, null, 2) });
-
   try {
     const mempool = await getMempoolTransactions();
     res.json({ result: mempool });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -347,8 +282,6 @@ router.get('/mempool', async (req, res, next) => {
  * a block
  */
 router.post('/encode', async (req, res, next) => {
-  logger.debug({ msg: '/encode endpoint', payload: JSON.stringify(req.body, null, 2) });
-
   try {
     const { transactions, block } = req.body;
 
@@ -398,7 +331,7 @@ router.post('/encode', async (req, res, next) => {
 
     logger.debug({
       msg: 'New block encoded for test',
-      newBlock: JSON.stringify(newBlock, null, 2),
+      newBlock,
     });
 
     const txDataToSign = await stateContractInstance.methods
@@ -408,14 +341,8 @@ router.post('/encode', async (req, res, next) => {
       )
       .encodeABI();
 
-    logger.debug({
-      msg: 'Returning raw transaction',
-      rawTransaction: JSON.stringify(txDataToSign, null, 2),
-    });
-
     res.json({ txDataToSign, block: newBlock, transactions: newTransactions });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });

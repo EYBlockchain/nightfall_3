@@ -61,7 +61,7 @@ async function transactionSubmittedEventHandler(eventParams) {
 
   logger.info({
     msg: 'Transaction Handler - New transaction received.',
-    transaction: JSON.stringify(transaction, null, 2),
+    transaction,
   });
 
   try {

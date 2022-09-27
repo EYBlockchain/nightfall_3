@@ -51,7 +51,7 @@ async function rollbackEventHandler(data) {
       .filter(t => t.transactionType !== '0');
 
     logger.info({
-      blockTransactions: JSON.stringify(blockTransactions),
+      blockTransactions,
     });
 
     for (let j = 0; j < blockTransactions.length; j++) {

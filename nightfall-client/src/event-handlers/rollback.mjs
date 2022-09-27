@@ -37,7 +37,7 @@ async function rollbackEventHandler(data) {
   // Deposit transactions should not be dropped because they are always valid even post-rollback.
   const nonDeposit = commitments.filter(c => c.isDeposited === false).map(c => c._id);
 
-  logger.debug({ nonDeposit: JSON.stringify(nonDeposit) });
+  logger.debug({ nonDeposit });
 
   /*
    Any commitments that have been nullified and are now no longer spent because
