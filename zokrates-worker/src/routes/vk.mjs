@@ -1,5 +1,4 @@
 import express from 'express';
-import logger from 'common-files/utils/logger.mjs';
 import { getVerificationKeyByCircuitPath } from '../utils/filing.mjs';
 
 const router = express.Router();

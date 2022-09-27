@@ -6,7 +6,6 @@ Some transactions are so simple that, we don't split out a separate service
 module but handle the entire request here.
 */
 import express from 'express';
-import logger from '../../common-files/utils/logger.mjs';
 
 const router = express.Router();
 
@@ -22,7 +21,7 @@ router.post('/offchain-transaction', async (req, res, next) => {
   try {
     await nf3.sendOffchainTransaction(transaction);
     res.sendStatus(200);
-  } catch(error) {
+  } catch (error) {
     next(error);
   }
 });
@@ -33,7 +32,7 @@ router.get('/mempool', async (req, res, next) => {
   try {
     const mempoolTransactions = await nf3.getMempoolTransactions();
     res.json({ mempoolTransactions });
-  } catch(error) {
+  } catch (error) {
     next(error);
   }
 });

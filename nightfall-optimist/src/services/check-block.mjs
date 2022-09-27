@@ -53,7 +53,7 @@ async function checkBlockRoot(block) {
       history = await getTreeByLeafCount(block.leafCount);
       logger.debug(`Block has commitments - retrieved history from Timber`);
       logger.trace({
-        msg: 'Timber history was', 
+        msg: 'Timber history was',
         history,
       });
 

@@ -4,7 +4,6 @@ This code assumes that the Shield contract already has approval to spend
 funds on a zkp deposit
 */
 import express from 'express';
-import logger from 'common-files/utils/logger.mjs';
 import deposit from '../services/deposit.mjs';
 
 const router = express.Router();

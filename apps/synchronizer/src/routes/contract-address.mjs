@@ -22,7 +22,7 @@ router.get('/:contract', async (req, res, next) => {
   try {
     const address = await nf3.getContractAddressOptimist(contract);
     res.json({ address });
-  } catch(error) {
+  } catch (error) {
     next(error);
   }
 });
