@@ -6,7 +6,9 @@ import mongo from 'common-files/utils/mongo.mjs';
 describe('Optimist DB polulation', () => {
 
   it('Running', async () => {
+    console.log('Connecting to MongoDB...');
     const mongoConn = await mongo.connection('mongodb://staging1:nightfall@docdb-staging1.cluster-crcawakfeyzl.eu-west-1.docdb.amazonaws.com:27017/?replicaSet=rs0&readPreference=primaryPreferred&retryWrites=false');
+    console.log('Connected!');
     const db = mongoConn.db('optimist_data');;
     const txCollection = db.collection('transactions');
     try {
