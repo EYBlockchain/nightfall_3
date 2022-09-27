@@ -3,7 +3,7 @@
 
 import config from 'config';
 import pino from 'pino';
-import { isDev } from './utils.mjs';
+import { isLocal } from './utils.mjs';
 import correlator from './correlation-id.mjs';
 
 const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss.l';
@@ -32,7 +32,7 @@ const getInstance = () => {
     },
   };
 
-  if (!isDev()) {
+  if (!isLocal()) {
     delete pinoOptions.transport;
   }
 
