@@ -896,8 +896,8 @@ class Nf3 {
             proposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
             logger.error({
-              msg: 'Error while trying to submit a block', 
-              err
+              msg: 'Error while trying to submit a block',
+              err,
             });
 
             // block proposed is reverted. Send transactions back to mempool
@@ -908,7 +908,7 @@ class Nf3 {
             } catch (errorResetLocalBlock) {
               logger.error({
                 msg: 'Error while trying to reset local block',
-                errorResetLocalBlock
+                errorResetLocalBlock,
               });
             }
           }
