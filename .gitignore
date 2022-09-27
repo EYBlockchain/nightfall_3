@@ -11,3 +11,8 @@ __pycache__
 test/adversary/nightfall-adversary
 wallet/tests/e2e/videos
 wallet/tests/e2e/screenshots
+
+cache/
+typechain-types/
+artifacts/
+.openzeppelin/
