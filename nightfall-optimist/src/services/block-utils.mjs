@@ -32,7 +32,7 @@ export function calcBlockHash(block) {
   const encoded = web3.eth.abi.encodeParameters([SIGNATURES.BLOCK], [blockArray]);
   return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
 }
-  º
+
 // remove properties that do not get sent to the blockchain returning
 // a new object (don't mutate the original)
 export function buildBlockSolidityStruct(block) {
