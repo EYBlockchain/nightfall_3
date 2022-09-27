@@ -26,7 +26,7 @@ export const isLocal = () => {
  */
 export const obfuscate = (object, obfuscationSettings) => {
   if (
-    isDev() ||
+    isLocal() ||
     !object ||
     (typeof object !== 'object' && typeof object !== 'string') ||
     !obfuscationSettings ||
