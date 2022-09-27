@@ -367,7 +367,7 @@ export async function getWalletPendingDepositBalance(compressedZkpPublicKey, erc
     }))
     .filter(
       e =>
-        e.value > 0 &&
+        e.value >= 0 &&
         (compressedZkpPublicKey === null || e.compressedZkpPublicKey === compressedZkpPublicKey) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
@@ -428,7 +428,7 @@ export async function getWalletPendingSpentBalance(compressedZkpPublicKey, ercLi
     }))
     .filter(
       e =>
-        e.value > 0 &&
+        e.value >= 0 &&
         (compressedZkpPublicKey === null || e.compressedZkpPublicKey === compressedZkpPublicKey) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
