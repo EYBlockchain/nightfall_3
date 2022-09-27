@@ -1,9 +1,11 @@
 /* ignore unused exports */
 /* eslint no-unused-vars: "off" */
 /* eslint no-param-reassign: "off" */
+/* eslint no-shadow: "off" */
 
 import axios from 'axios';
 import fs from 'fs';
+import config from 'config';
 import * as stream from 'stream';
 import { promisify } from 'util';
 import bodyParser from 'body-parser';
@@ -14,6 +16,8 @@ import NotFoundError from './not-found-error.mjs';
 import logger from './logger.mjs';
 import correlator from './correlation-id.mjs';
 import { isDev, obfuscate } from './utils.mjs';
+
+const { LOG_HTTP_PAYLOAD_ENABLED } = config;
 
 /**
  * Default obfuscation's rules.
@@ -106,7 +110,11 @@ const applyAxiosDefaults = () => {
  * environment variable in another moment to handle this).
  */
 const requestLogger = (req, res, next) => {
-  if (req.url === '/healthcheck' || !logger.isLevelEnabled('debug')) {
+  if (
+    req.url === '/healthcheck' ||
+    !logger.isLevelEnabled('debug') ||
+    LOG_HTTP_PAYLOAD_ENABLED !== true
+  ) {
     return next();
   }
 
@@ -180,7 +188,11 @@ const addInterceptorForResponseCompletion = res => {
  * Logs response information if the DEBUG log level is enabled.
  */
 const responseLogger = (req, res, next) => {
-  if (req.url === '/healthcheck' || !logger.isLevelEnabled('debug')) {
+  if (
+    req.url === '/healthcheck' ||
+    !logger.isLevelEnabled('debug') ||
+    LOG_HTTP_PAYLOAD_ENABLED !== true
+  ) {
     return next();
   }
 
