@@ -2,7 +2,7 @@
 /**
 Module that runs up as a challenger
 */
-import logger from '../common-files/utils/logger.mjs';
+import logger from '../../common-files/utils/logger.mjs';
 
 /**
 Does the preliminary setup and starts listening on the websocket

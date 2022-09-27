@@ -35,8 +35,7 @@ export const getCommitmentInfo = async txInfo => {
 
   const tokenIdArray = recipientZkpPublicKeysArray.map(() => tokenId);
 
-  const addedFee =
-    maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee.bigInt : 0n;
+  const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
 
   logger.debug(`Fee will be added as part of the transaction commitments: ${addedFee > 0n}`);
 

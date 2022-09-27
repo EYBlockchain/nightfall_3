@@ -17,7 +17,7 @@ prime and `G` is the generator.
 Alice generates a random ephemeral asymmetric key-pair $(x_e, Q_e)$:  
 $$ x_e \; \leftarrow\; \{0, 1\}^{256} \qquad Q_e \coloneqq x_eG $$
 
-These keys are only used once, and are unique to this transaction, giving us perfect forward secerecy.
+These keys are only used once, and are unique to this transaction.
 
 ### Encryption
 

@@ -40,7 +40,8 @@ async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const { ...items } = transferParams;
-  const { ercAddress, tokenId, recipientData, rootKey, fee = generalise(0) } = generalise(items);
+  const { tokenId, recipientData, rootKey, fee = generalise(0) } = generalise(items);
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),

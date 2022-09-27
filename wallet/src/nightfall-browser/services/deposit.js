@@ -31,8 +31,8 @@ async function deposit(items, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { ercAddress, tokenId, value, compressedZkpPublicKey, nullifierKey, fee } =
-    generalise(items);
+  const { tokenId, value, compressedZkpPublicKey, nullifierKey, fee } = generalise(items);
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
   const shieldContractInstance = await getContractInstance(

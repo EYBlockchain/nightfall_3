@@ -317,8 +317,14 @@ router.post('/encode', async (req, res, next) => {
       const leafValues = newTransactions
         .map(newTransaction => newTransaction.commitments.filter(c => c !== ZERO))
         .flat(Infinity);
-      const { root } = Timber.statelessUpdate(latestTree, leafValues, HASH_TYPE, TIMBER_HEIGHT);
+      const { root, frontierTimber } = Timber.statelessUpdate(
+        latestTree,
+        leafValues,
+        HASH_TYPE,
+        TIMBER_HEIGHT,
+      );
       block.root = root;
+      block.frontierHash = await Block.calcFrontierHash(frontierTimber);
     }
 
     const newBlock = {
@@ -329,6 +335,7 @@ router.post('/encode', async (req, res, next) => {
       nCommitments: block.nCommitments,
       blockNumberL2: block.blockNumberL2,
       previousBlockHash: block.previousBlockHash,
+      frontierHash: block.frontierHash,
       transactionHashesRoot: block.transactionHashesRoot,
     };
     newBlock.blockHash = await Block.calcHash(newBlock, newTransactions);
