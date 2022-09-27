@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 /**
 module to initialise the proposers, challenges and shield contracts with the
 address of the contract that holds global state (State.sol)
@@ -22,8 +23,8 @@ async function setupContracts() {
 
   // set State
   // Need to call setStateContract 1 by 1 or transaction fails
-  for (var contractState of contractsState) {
-    const setStateContract = await contractState.methods.setStateContract(stateAddress);
+  for (const contractState of contractsState) {
+    const setStateContract = contractState.methods.setStateContract(stateAddress);
     if (!config.ETH_PRIVATE_KEY) {
       await setStateContract.send();
     } else {
@@ -33,10 +34,8 @@ async function setupContracts() {
 
   // transfer ownership
   // Need to call transferOwnership 1 by 1 or transaction fails
-  for (var contractOwnable of contractsOwnables) {
-    const transferOwnership = await contractOwnable.methods.transferOwnership(
-      simpleMultiSigAddress,
-    );
+  for (const contractOwnable of contractsOwnables) {
+    const transferOwnership = contractOwnable.methods.transferOwnership(simpleMultiSigAddress);
     if (!config.ETH_PRIVATE_KEY) {
       await transferOwnership.send();
     } else {
