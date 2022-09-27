@@ -3,7 +3,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
-import Nf3 from '../../cli/lib/nf3.mjs';
+import Nf3 from '../cli/lib/nf3.mjs';
 import {
   depositNTransactions,
   transferNTransactions,
@@ -11,7 +11,7 @@ import {
   Web3Client,
   expectTransaction,
   waitForTimeout,
-} from '../utils.mjs';
+} from './utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
