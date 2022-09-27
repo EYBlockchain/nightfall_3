@@ -30,10 +30,12 @@ export async function storeCommitment(commitment, nullifierKey) {
   // spotting if the commitment spend is ever rolled back, which would mean the
   // commitment is once again available to spend
   const nullifierHash = new Nullifier(commitment, nullifierKey).hash.hex(32);
+  const preimage = commitment.preimage.all.hex(32);
+  preimage.ercAddress = preimage.ercAddress.toLowerCase();
   const data = {
     _id: commitment.hash.hex(32),
     compressedZkpPublicKey: commitment.compressedZkpPublicKey.hex(32),
-    preimage: commitment.preimage.all.hex(32),
+    preimage,
     isDeposited: commitment.isDeposited || false,
     isOnChain: Number(commitment.isOnChain) || -1,
     isPendingNullification: false, // will not be pending when stored

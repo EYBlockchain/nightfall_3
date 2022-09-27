@@ -151,7 +151,9 @@ async function verifyProof(transaction) {
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = await shieldContractInstance.methods.getMaticAddress().call();
+  const maticAddress = (
+    await shieldContractInstance.methods.getMaticAddress().call()
+  ).toLowerCase();
 
   const inputs = generalise(
     [
@@ -170,7 +172,7 @@ async function verifyProof(transaction) {
       historicRootSecond.root,
       historicRootThird.root,
       historicRootFourth.root,
-      maticAddress.toLowerCase(),
+      maticAddress,
     ].flat(Infinity),
   ).all.hex(32);
 
