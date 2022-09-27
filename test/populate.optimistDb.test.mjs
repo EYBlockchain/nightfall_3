@@ -6,9 +6,9 @@ import mongo from 'common-files/utils/mongo.mjs';
 describe('Optimist DB polulation', () => {
 
   it('Running', async () => {
-    const mongoConn = await mongo.connection('mongodb://localhost:27017');
+    const mongoConn = await mongo.connection('mongodb://staging1:nightfall@docdb-staging1.cluster-crcawakfeyzl.eu-west-1.docdb.amazonaws.com:27017/?replicaSet=rs0&readPreference=primaryPreferred&retryWrites=false');
     const db = mongoConn.db('optimist_data');;
-    const txCollection = db.collection('transaction');
+    const txCollection = db.collection('transactions');
     try {
       for(let i = 1; i <= 1_000_000; i++) {
         await txCollection.insertMany([
