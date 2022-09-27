@@ -89,5 +89,5 @@ module.exports = async function (deployer) {
   const maticAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
     token => token.name === 'MATIC',
   ).address;
-  await shield.setMaticAddress(maticAddress);
+  await shield.setMaticAddress(maticAddress.toLowerCase());
 };

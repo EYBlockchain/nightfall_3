@@ -42,10 +42,12 @@ const connectDB = async () => {
 
 // function to format a commitment for a mongo db and store it
 export async function storeCommitment(commitment, nullifierKey) {
+  const preimage = commitment.preimage.all.hex(32);
+  preimage.ercAddress = preimage.ercAddress.toLowerCase();
   const nullifierHash = new Nullifier(commitment, nullifierKey).hash.hex(32);
   const data = {
     _id: commitment.hash.hex(32),
-    preimage: commitment.preimage.all.hex(32),
+    preimage,
     compressedZkpPublicKey: commitment.compressedZkpPublicKey.hex(32),
     isDeposited: commitment.isDeposited || false,
     isOnChain: Number(commitment.isOnChain) || -1,
