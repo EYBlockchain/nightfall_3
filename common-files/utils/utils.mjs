@@ -4,6 +4,16 @@
 
 export const isDev = () => process.env.NODE_ENV !== 'production';
 
+export const isLocal = () => {
+  return (
+    process.env.NODE_ENV !== 'internal' &&
+    process.env.NODE_ENV !== 'staging' &&
+    process.env.NODE_ENV !== 'preprod' &&
+    process.env.NODE_ENV !== 'testnet' &&
+    process.env.NODE_ENV !== 'production'
+  );
+};
+
 /**
  * This method is intended to be used for obfuscating sensitive data, totally or partially. It uses the obfuscation
  * settings passed as parameter to perform the obfuscation.
