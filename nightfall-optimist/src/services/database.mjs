@@ -66,7 +66,7 @@ export async function saveBlock(_block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
 
-  logger.debug({ msg: 'Saving block', block: JSON.stringify(block, null, 2) });
+  logger.debug({ msg: 'Saving block', block });
 
   /* there are three possibilities here:
    1) We're just saving a block for the first time.  This is fine
@@ -214,7 +214,7 @@ export async function saveInvalidBlock(_block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
 
-  logger.debug({ msg: 'Saving invalid block', block: JSON.stringify(block, null, 2) });
+  logger.debug({ msg: 'Saving invalid block', block });
 
   const query = { blockHash: block.blockHash };
   const update = { $set: block };
@@ -261,7 +261,7 @@ export async function isRegisteredProposerAddressMine(address) {
   const db = connection.db(OPTIMIST_DB);
   const metadata = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
 
-  logger.debug({ msg: 'Found registered proposer', proposer: JSON.stringify(metadata, null, 2) });
+  logger.debug({ msg: 'Found registered proposer', proposer: metadata });
 
   return metadata;
 }

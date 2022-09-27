@@ -74,7 +74,7 @@ async function deposit(items) {
 
   logger.trace({
     msg: 'Received response from generete-proof',
-    response: JSON.stringify(res.data, null, 2),
+    response: res.data
   });
 
   const { proof } = res.data;
@@ -94,7 +94,7 @@ async function deposit(items) {
   });
 
   logger.trace({
-    optimisticDepositTransaction: JSON.stringify(optimisticDepositTransaction, null, 2),
+    optimisticDepositTransaction
   });
 
   // and then we can create an unsigned blockchain transaction

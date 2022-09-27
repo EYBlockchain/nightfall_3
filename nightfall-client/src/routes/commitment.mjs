@@ -20,7 +20,6 @@ import {
 const router = express.Router();
 
 router.get('/salt', async (req, res, next) => {
-  logger.debug('commitment/salt endpoint received GET');
   try {
     const { salt } = req.query;
     const commitment = await getCommitmentBySalt(salt);
@@ -28,13 +27,11 @@ router.get('/salt', async (req, res, next) => {
     else logger.debug(`No commitment found for salt ${salt}`);
     res.json({ commitment });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
 
 router.get('/balance', async (req, res, next) => {
-  logger.debug('commitment/balance endpoint received GET');
   try {
     const { compressedZkpPublicKey, ercList } = req.query;
     logger.debug(
@@ -45,13 +42,11 @@ router.get('/balance', async (req, res, next) => {
     else balance = await getWalletBalanceUnfiltered(compressedZkpPublicKey, ercList);
     res.json({ balance });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
 
 router.get('/pending-deposit', async (req, res, next) => {
-  logger.debug('commitment/pending-deposit endpoint received GET');
   try {
     const { compressedZkpPublicKey, ercList } = req.query;
     logger.debug(
@@ -60,13 +55,11 @@ router.get('/pending-deposit', async (req, res, next) => {
     const balance = await getWalletPendingDepositBalance(compressedZkpPublicKey, ercList);
     res.json({ balance });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
 
 router.get('/pending-spent', async (req, res, next) => {
-  logger.debug('commitment/pending-spent endpoint received GET');
   try {
     const { compressedZkpPublicKey, ercList } = req.query;
     logger.debug(
@@ -75,18 +68,15 @@ router.get('/pending-spent', async (req, res, next) => {
     const balance = await getWalletPendingSpentBalance(compressedZkpPublicKey, ercList);
     res.json({ balance });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
 
 router.get('/commitments', async (req, res, next) => {
-  logger.debug('commitment/commitments endpoint received GET');
   try {
     const commitments = await getWalletCommitments();
     res.json({ commitments });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -95,13 +85,11 @@ router.get('/commitments', async (req, res, next) => {
  * @description the endpoint that will save a list of commitments
  */
 router.post('/save', async (req, res, next) => {
-  logger.debug('commitment/save endpoint received POST');
   const listOfCommitments = req.body;
   try {
     const response = await insertCommitmentsAndResync(listOfCommitments);
     res.json(response);
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -115,14 +103,12 @@ router.post('/save', async (req, res, next) => {
  * @author luizoamorim
  */
 router.post('/compressedZkpPublicKeys', async (req, res, next) => {
-  logger.debug('commitment/compressedZkpPublicKeys endpoint received POST');
   const listOfCompressedZkpPublicKey = req.body;
   try {
     const commitmentsByListOfCompressedZkpPublicKey =
       await getCommitmentsByCompressedZkpPublicKeyList(listOfCompressedZkpPublicKey);
     res.json({ commitmentsByListOfCompressedZkpPublicKey });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -133,23 +119,19 @@ router.post('/compressedZkpPublicKeys', async (req, res, next) => {
  * @author luizoamorim
  */
 router.get('/', async (req, res, next) => {
-  logger.debug('commitment/ endpoint received GET');
   try {
     const allCommitments = await getCommitments();
     res.json({ allCommitments });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
 
 router.get('/withdraws', async (req, res, next) => {
-  logger.debug('commitment/withdraws endpoint received GET');
   try {
     const commitments = await getWithdrawCommitments();
     res.json({ commitments });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });

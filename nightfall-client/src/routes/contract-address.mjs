@@ -10,18 +10,15 @@ import { getContractAddress } from '@polygon-nightfall/common-files/utils/contra
 const router = express.Router();
 
 router.get('/:contract', async (req, res, next) => {
-  logger.debug('contract-address endpoint received GET');
   const { contract } = req.params;
   try {
     const address = await getContractAddress(contract);
-    logger.debug(`returning address ${address}`);
     if (address) {
       res.json({ address });
     } else {
       res.sendStatus(404);
     }
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
