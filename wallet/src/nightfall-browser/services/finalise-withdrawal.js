@@ -13,14 +13,22 @@ const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 // TODO move classes to their own folder so this is not needed (it's already a
 // static function in the Block class)
 export function buildSolidityStruct(block) {
-  const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
-    block;
+  const {
+    proposer,
+    root,
+    leafCount,
+    blockNumberL2,
+    previousBlockHash,
+    frontierHash,
+    transactionHashesRoot,
+  } = block;
   return {
     proposer,
     root,
     leafCount: Number(leafCount),
     blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
+    frontierHash,
     transactionHashesRoot,
   };
 }

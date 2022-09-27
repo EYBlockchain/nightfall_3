@@ -16,6 +16,10 @@ library Utils {
         return keccak256(abi.encode(b));
     }
 
+    function hashFrontier(bytes32[33] memory frontier) internal pure returns (bytes32) {
+        return keccak256(abi.encode(frontier));
+    }
+
     function hashTransactionHashes(Structures.Transaction[] calldata ts)
         public
         pure
@@ -33,8 +37,8 @@ library Utils {
 
     function compressG1(uint256 x, uint256 y) internal pure returns (uint256) {
         // compute whether y is odd or even and multiply by 2**255
-        uint256 parity =
-            0x8000000000000000000000000000000000000000000000000000000000000000 * (y % 2);
+        uint256 parity = 0x8000000000000000000000000000000000000000000000000000000000000000 *
+            (y % 2);
         // add the parity bit to the x cordinate (x,y are 254 bits long - the final
         // number is 256 bits to fit with an Ethereum word)
         return parity + x;

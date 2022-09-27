@@ -110,10 +110,11 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         bytes32 blockHash;
         assembly {
             let blockPos := mload(0x40) // get empty memory location pointer
-            calldatacopy(blockPos, 4, add(mul(t.length, 0x300), 0x100)) // copy calldata into this location. 0x300 is 768 bytes of data for each transaction. 0x100 is 192 bytes of block data, 32 bytes for transactions array memory and size each. TODO skip this by passing parameters in memory. But inline assembly to destructure struct array is not straight forward
-            let transactionPos := add(blockPos, 0x100) // calculate memory location of transactions data copied
-            let transactionHashesPos := add(transactionPos, mul(t.length, 0x300)) // calculate memory location to store transaction hashes to be calculated
-            // calculate and store transaction hashes
+            calldatacopy(blockPos, 0x04, mul(0x20, 7))
+            let transactionPos := add(mload(0x40), mul(0x20, 7))
+            calldatacopy(transactionPos, t.offset, mul(t.length, mul(0x20, 24))) // calculate memory location of transactions data copied
+            let transactionHashesPos := add(transactionPos, mul(t.length, mul(0x20, 24))) // calculate memory location to store transaction hashes to be calculated
+            //calculate and store transaction hashes
             for {
                 let i := 0
             } lt(i, t.length) {
@@ -160,11 +161,11 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
                 }
             }
             // check if the transaction hashes root calculated equal to the one passed as part of block data
-            if eq(eq(mload(add(blockPos, mul(5, 0x20))), transactionHashesRoot), 0) {
+            if eq(eq(mload(add(blockPos, mul(6, 0x20))), transactionHashesRoot), 0) {
                 revert(0, 0)
             }
-            // calculate block hash
-            blockHash := keccak256(blockPos, mul(6, 0x20))
+            //calculate block hash
+            blockHash := keccak256(blockPos, mul(7, 0x20))
         }
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain

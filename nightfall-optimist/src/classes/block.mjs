@@ -9,7 +9,11 @@ import {
   getTreeByBlockNumberL2,
   setTransactionHashSiblingInfo,
 } from '../services/database.mjs';
-import { buildBlockSolidityStruct, calcBlockHash } from '../services/block-utils.mjs';
+import {
+  buildBlockSolidityStruct,
+  calcBlockHash,
+  calculateFrontierHash,
+} from '../services/block-utils.mjs';
 
 const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
 const { ZERO } = constants;
@@ -40,6 +44,8 @@ class Block {
 
   previousBlockHash; // the block hash of the previous block (for re-assembling the chain after a reorg)
 
+  frontierHash;
+
   static localLeafCount = 0; // ensure this is less than Timber to start with
 
   static localBlockNumberL2 = 0;
@@ -62,6 +68,7 @@ class Block {
       nCommitments,
       blockNumberL2,
       previousBlockHash,
+      frontierHash,
     } = asyncParams;
     this.leafCount = leafCount;
     this.proposer = proposer;
@@ -72,6 +79,7 @@ class Block {
     this.nCommitments = nCommitments;
     this.blockNumberL2 = blockNumberL2;
     this.previousBlockHash = previousBlockHash;
+    this.frontierHash = frontierHash;
   }
 
   // computes the root and hash. We use a Builder pattern because it's very
@@ -131,6 +139,7 @@ class Block {
       blockNumberL2,
       previousBlockHash,
       transactionHashesRoot: await this.calcTransactionHashesRoot(transactions),
+      frontierHash: this.calcFrontierHash(updatedTimber.frontier),
     });
     this.localPreviousBlockHash = blockHash;
     // note that the transactionHashes array is not part of the on-chain block
@@ -146,6 +155,7 @@ class Block {
       nCommitments,
       blockNumberL2,
       previousBlockHash,
+      frontierHash: this.calcFrontierHash(updatedTimber.frontier),
     });
   }
 
@@ -203,6 +213,10 @@ class Block {
 
   static calcHash(block) {
     return calcBlockHash(block);
+  }
+
+  static calcFrontierHash(frontier) {
+    return calculateFrontierHash(frontier);
   }
 
   // remove properties that do not get sent to the blockchain returning

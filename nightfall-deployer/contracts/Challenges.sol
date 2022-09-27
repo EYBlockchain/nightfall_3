@@ -23,7 +23,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Config.initialize();
     }
 
-  /**
+    /**
   Check that the block correctly updates the leafCount.  Note that the leafCount
   is actually the value AFTER the commitments are added to the Merkle tree.
   */
@@ -50,6 +50,36 @@ contract Challenges is Stateful, Key_Registry, Config {
         challengeAccepted(blockL2);
     }
 
+    function challengeNewFrontierCorrect(
+        Block calldata priorBlockL2, // the block immediately prior to this one
+        bytes32[33] calldata frontierBeforeBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
+        Block calldata blockL2,
+        Transaction[] calldata transactions,
+        bytes32 salt
+    ) external onlyBootChallenger {
+        checkCommit(msg.data);
+        // check if the block hash is correct and the block hash exists for the block and prior block
+        state.isBlockReal(priorBlockL2);
+        state.areBlockAndTransactionsReal(blockL2, transactions);
+
+        require(
+            priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2,
+            'Blocks needs to be subsequent'
+        );
+
+        bytes32 frontierBeforeHash = keccak256(abi.encodePacked(frontierBeforeBlock));
+        require(frontierBeforeHash == priorBlockL2.frontierHash, 'Invalid prior block frontier');
+
+        // see if the challenge is valid
+        ChallengesUtil.libChallengeNewFrontierCorrect(
+            priorBlockL2,
+            frontierBeforeBlock,
+            blockL2,
+            transactions
+        );
+        challengeAccepted(blockL2);
+    }
+
     /**
   Checks that the new merkle tree root of a block is incorrect. This could be because the
   merkle tree that stores commitments has been incorrectly updated. To verify this, we first calculate
@@ -58,25 +88,20 @@ contract Challenges is Stateful, Key_Registry, Config {
   is compared to the root stored within the block.
   */
     function challengeNewRootCorrect(
-        Block calldata priorBlockL2, // the block immediately prior to this one
-        Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
-        bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
+        bytes32[33] calldata frontierAfterBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Block calldata blockL2,
-        Transaction[] calldata transactions,
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
-        // check if the block hash is correct and the block hash exists for the block and prior block
-        state.areBlockAndTransactionsReal(priorBlockL2, priorBlockTransactions);
-        state.areBlockAndTransactionsReal(blockL2, transactions);
+
+        // check that the current block hash is correct
+        state.isBlockReal(blockL2);
+
+        bytes32 frontierAfterHash = keccak256(abi.encodePacked(frontierAfterBlock));
+        require(frontierAfterHash == blockL2.frontierHash, 'Invalid prior block frontier');
+
         // see if the challenge is valid
-        ChallengesUtil.libChallengeNewRootCorrect(
-            priorBlockL2,
-            priorBlockTransactions,
-            frontierPriorBlock,
-            blockL2,
-            transactions
-        );
+        ChallengesUtil.libChallengeNewRootCorrect(frontierAfterBlock, blockL2);
         challengeAccepted(blockL2);
     }
 
