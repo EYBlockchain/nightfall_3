@@ -124,17 +124,6 @@ export async function getBlockByBlockHash(blockHash) {
 }
 
 /**
-function to get a block by blockHash, if you know the hash of the block. This
-is useful for rolling back Timber.
-*/
-export async function getBlockByBlockHash(blockHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { blockHash };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
-}
-
-/**
 function to get a block by root, if you know the root of the block. This
 is useful for nightfall-client to establish the layer block number containing
 a given (historic) root.
