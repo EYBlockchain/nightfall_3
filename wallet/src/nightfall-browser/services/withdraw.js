@@ -30,13 +30,14 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
   const {
-    ercAddress,
     tokenId,
     value,
     recipientAddress,
     rootKey,
     fee = generalise(0),
   } = generalise(withdrawParams);
+
+  const ercAddress = generalise(withdrawParams.ercAddress.toLowerCase());
 
   if (!(await checkIndexDBForCircuit(circuitName)))
     throw Error('Some circuit data are missing from IndexedDB');

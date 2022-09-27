@@ -29,8 +29,8 @@ async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
   const { offchain = false, ...items } = withdrawParams;
-  const { ercAddress, tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
-
+  const { tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
   const maticAddress = generalise(
@@ -39,7 +39,7 @@ async function withdraw(withdrawParams) {
 
   logger.debug({
     msg: 'Withdraw ERC Token and Fee addresses',
-    ercAddress: ercAddress.hex(32).toLowerCase(),
+    ercAddress: ercAddress.hex(32),
     maticAddress: maticAddress.hex(32),
   });
 

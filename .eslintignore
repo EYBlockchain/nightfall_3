@@ -1,4 +1,4 @@
-cd node_modules/*
+node_modules/*
 **/node_modules/*
 **/migrations/*
 **/doc/*
@@ -7,4 +7,4 @@ wallet/cli/*
 test/adversary/nightfall-adversary/*
 /**/*.d.ts
 **/build/*
-wallet
+hardhat.*

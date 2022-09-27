@@ -30,7 +30,8 @@ async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
-  const { ercAddress, tokenId, recipientData, rootKey, fee } = generalise(items);
+  const { tokenId, recipientData, rootKey, fee } = generalise(items);
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),
@@ -46,7 +47,7 @@ async function transfer(transferParams) {
 
   logger.debug({
     msg: 'Transfer ERC Token & Fee addresses',
-    ercAddress: ercAddress.hex(32).toLowerCase(),
+    ercAddress: ercAddress.hex(32),
     maticAddress: maticAddress.hex(32),
   });
 

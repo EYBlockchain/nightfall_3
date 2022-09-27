@@ -16,29 +16,31 @@ library ChallengesUtil {
         require(expectedLeafCount != leafCount, 'The leafCount is actually correct');
     }
 
-    function libChallengeNewRootCorrect(
+    function libChallengeNewFrontierCorrect(
         Structures.Block calldata priorBlockL2, // the block immediately prior to this one
-        Structures.Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
-        bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
+        bytes32[33] calldata frontierBeforeBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Structures.Block calldata blockL2,
         Structures.Transaction[] calldata transactions
-    ) public pure {
-        // next check the sibling path is valid and get the Frontier
-        bytes32 root;
+    ) public {
         bytes32[33] memory _frontier;
-        (root, _frontier, ) = MerkleTree_Stateless.insertLeaves(
-            Utils.filterCommitments(priorBlockTransactions),
-            frontierPriorBlock,
-            priorBlockL2.leafCount - Utils.filterCommitments(priorBlockTransactions).length
-        );
-        require(root == priorBlockL2.root, 'The sibling path is invalid');
-        uint256 commitmentIndex = priorBlockL2.leafCount;
-        // At last, we can check if the root itself is correct!
-        (root, , ) = MerkleTree_Stateless.insertLeaves(
+
+        _frontier = MerkleTree_Stateless.updateFrontier(
             Utils.filterCommitments(transactions),
-            _frontier,
-            commitmentIndex
+            frontierBeforeBlock,
+            blockL2.leafCount
         );
+
+        bytes32 frontierAfterHash = keccak256(abi.encodePacked(_frontier));
+        require(frontierAfterHash != blockL2.frontierHash, 'The frontier is actually fine');
+    }
+
+    function libChallengeNewRootCorrect(
+        bytes32[33] calldata frontierAfterBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
+        Structures.Block calldata blockL2
+    ) public {
+        uint256 commitmentIndex = blockL2.leafCount;
+        bytes32 root = MerkleTree_Stateless.calculateRoot(frontierAfterBlock, commitmentIndex);
+
         require(root != blockL2.root, 'The root is actually fine');
     }
 
@@ -53,12 +55,11 @@ library ChallengesUtil {
         for (uint256 i = 0; i < proof.length; i++) {
             proof1[i] = proof[i];
         }
-        uint256[] memory publicInputs =
-            Utils.getPublicInputs(
-                transaction,
-                extraPublicInputs.roots,
-                extraPublicInputs.maticAddress
-            );
+        uint256[] memory publicInputs = Utils.getPublicInputs(
+            transaction,
+            extraPublicInputs.roots,
+            extraPublicInputs.maticAddress
+        );
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }
 

@@ -7,7 +7,6 @@ import constants from 'common-files/constants/index.mjs';
 import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
 import {
   saveCommit,
-  getTransactionsByTransactionHashes,
   getBlockByBlockNumberL2,
   getTreeByRoot,
   getTransactionHashSiblingInfo,
@@ -110,38 +109,15 @@ export async function createChallenge(block, transactions, err) {
     // Challenge wrong root
     case 1: {
       logger.debug('Challenging incorrect root');
-      // Getting prior block for the current block
-      const priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
-      if (priorBlock === null)
-        throw new Error(
-          `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
-        );
-      // Retrieve last transaction from prior block using its transaction hash.
-      // Note that not all transactions in a block will have commitments. Loop until one is found
-      const priorBlockTransactions = await getTransactionsByTransactionHashes(
-        priorBlock.transactionHashes,
-      );
 
-      // We also need to grab the block 2 before the challenged block as it contains the frontier to
-      // calculate the root of the prior block.
-      const priorPriorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 2);
-      if (priorPriorBlock === null) priorPriorBlock.root = ZERO;
-
-      const priorPriorTree = await getTreeByRoot(priorPriorBlock.root);
+      const tree = await getTreeByRoot(block.root);
       // We need to pad our frontier as we don't store them with the trailing zeroes.
-      const frontierToValidatePreviousBlock = priorPriorTree.frontier.concat(
-        Array(TIMBER_HEIGHT - priorPriorTree.frontier.length + 1).fill(ZERO),
+      const frontierAfterBlock = tree.frontier.concat(
+        Array(TIMBER_HEIGHT - tree.frontier.length + 1).fill(ZERO),
       );
       // Create a challenge
       txDataToSign = await challengeContractInstance.methods
-        .challengeNewRootCorrect(
-          Block.buildSolidityStruct(priorBlock),
-          priorBlockTransactions.map(t => Transaction.buildSolidityStruct(t)),
-          frontierToValidatePreviousBlock,
-          Block.buildSolidityStruct(block),
-          transactions.map(t => Transaction.buildSolidityStruct(t)),
-          salt,
-        )
+        .challengeNewRootCorrect(frontierAfterBlock, Block.buildSolidityStruct(block), salt)
         .encodeABI();
       break;
     }
@@ -261,6 +237,33 @@ export async function createChallenge(block, transactions, err) {
           transactionIndex,
           transactionSiblingPath,
         })
+        .encodeABI();
+      break;
+    }
+    // frontier is incorrect
+    case 6: {
+      logger.debug('Challenging incorrect frontier');
+      // Getting prior block for the current block
+      const priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
+      if (priorBlock === null)
+        throw new Error(
+          `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
+        );
+
+      const priorTree = await getTreeByRoot(priorBlock.root);
+      // We need to pad our frontier as we don't store them with the trailing zeroes.
+      const frontierBeforeBlock = priorTree.frontier.concat(
+        Array(TIMBER_HEIGHT - priorTree.frontier.length + 1).fill(ZERO),
+      );
+      // Create a challenge
+      txDataToSign = await challengeContractInstance.methods
+        .challengeNewFrontierCorrect(
+          Block.buildSolidityStruct(priorBlock),
+          frontierBeforeBlock,
+          Block.buildSolidityStruct(block),
+          transactions.map(t => Transaction.buildSolidityStruct(t)),
+          salt,
+        )
         .encodeABI();
       break;
     }

@@ -8,8 +8,10 @@ import checkTransaction from './transaction-checker.mjs';
 import {
   getBlockByBlockNumberL2,
   getTransactionHashSiblingInfo,
+  getTreeByBlockNumberL2,
   getTreeByLeafCount,
 } from './database.mjs';
+import Block from '../classes/block.mjs';
 
 const { ZERO } = constants;
 
@@ -63,6 +65,16 @@ async function checkBlockRoot(block) {
       1,
     );
   }
+}
+
+async function checkFrontier(block) {
+  const tree = await getTreeByBlockNumberL2(block.blockNumberL2);
+  const frontierHash = await Block.calcFrontierHash(tree.frontier);
+  if (frontierHash !== block.frontierHash)
+    throw new BlockError(
+      `The block's frontier hash (${block.frontierHash}) does not match with the frontier corresponding to this block stored in Timber`,
+      6,
+    );
 }
 
 // check if there are duplicate commitments in different transactions of the same block
@@ -200,6 +212,7 @@ export async function checkBlock(block, transactions) {
   // For this we can make use of Timber with its optimistic extensions.
   await new Promise(resolve => setTimeout(resolve, 1000));
   await checkBlockRoot(block);
+  await checkFrontier(block);
   await checkDuplicateCommitmentsWithinBlock(block, transactions);
   await checkDuplicateNullifiersWithinBlock(block, transactions);
 

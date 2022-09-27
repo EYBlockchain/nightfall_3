@@ -3,21 +3,22 @@
 
 import config from 'config';
 import pino from 'pino';
-import isDev from './utils.mjs';
+import { isLocal } from './utils.mjs';
+import correlator from './correlation-id.mjs';
 
 const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss.l';
 
 const getInstance = () => {
   const pinoOptions = {
     level: config.LOG_LEVEL || 'info',
+    messageKey: 'message',
+    mixin() {
+      return { correlationId: correlator.getId() };
+    },
     formatters: {
       // echoes the level as the label instead of the number
       level(label, number) {
         return { level: label };
-      },
-      // removes the pid and hostname fields from the logs
-      bindings(bindings) {
-        return {};
       },
     },
     timestamp: () => `,"time": "${new Date(Date.now()).toISOString()}"`,
@@ -31,7 +32,7 @@ const getInstance = () => {
     },
   };
 
-  if (!isDev()) {
+  if (!isLocal()) {
     delete pinoOptions.transport;
   }
 

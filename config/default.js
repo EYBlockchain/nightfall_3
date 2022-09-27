@@ -81,7 +81,7 @@ module.exports = {
   CURVE: process.env.CURVE || 'bn128',
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 50,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 150,
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   MPC: {
@@ -457,11 +457,11 @@ module.exports = {
   // is running in local machine
   isLocalRun: process.env.LOCAL_PROPOSER === 'true',
   SIGNATURES: {
-    BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+    BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32, bytes32)',
     TRANSACTION:
       '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
     PROPOSE_BLOCK: [
-      '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+      '(uint48,address,bytes32,uint256,bytes32,bytes32,bytes32)',
       '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])[]',
     ],
     SUBMIT_TRANSACTION:
