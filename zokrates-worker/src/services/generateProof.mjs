@@ -3,20 +3,12 @@ import util from 'util';
 import crypto from 'crypto';
 import path from 'path';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { computeWitness, generateProof } from '../zokrates-lib/index.mjs';
-import { getProofFromFile } from '../utils/filing.mjs';
+import { computeWitness } from '../zokrates-lib/index.mjs';
+import * as snarkjs from 'snarkjs';
 
 const unlink = util.promisify(fs.unlink);
 
-export default async ({
-  folderpath,
-  inputs,
-  transactionInputs,
-  outputDirectoryPath,
-  proofFileName,
-  backend = 'bellman',
-  provingScheme = 'g16',
-}) => {
+export default async ({ folderpath, inputs, transactionInputs }) => {
   const outputPath = `./output`;
   let proof;
   let publicInputs;
@@ -37,11 +29,6 @@ export default async ({
     throw Error('proof.json file with same name exists');
   }
 
-  const opts = {};
-  opts.createFile = true;
-  opts.directory = outputDirectoryPath || `./output/${folderpath}`;
-  opts.fileName = proofFileName || `${proofJsonFile}`;
-
   try {
     logger.debug('Compute witness...');
     await computeWitness(
@@ -52,15 +39,13 @@ export default async ({
     );
 
     logger.debug('Generate proof...');
-    await generateProof(
-      `${outputPath}/${folderpath}/${circuitName}_pk.key`,
-      `${outputPath}/${folderpath}/${circuitName}_out`,
-      `${outputPath}/${folderpath}/${witnessFile}`,
-      provingScheme,
-      backend,
-      opts,
+    const prove = await snarkjs.groth16.prove(
+      `${outputPath}/${folderpath}/${circuitName}_pk.zkey`,
+      `${outputPath}/${folderpath}/${witnessFile}.wtns`,
     );
-    ({ proof, inputs: publicInputs } = await getProofFromFile(`${folderpath}/${proofJsonFile}`));
+
+    proof = prove.proof;
+    publicInputs = prove.publicSignals;
 
     logger.debug({
       msg: 'Responding with proof and inputs',

@@ -25,7 +25,6 @@ export default async function compile(
   if (!fs.existsSync(codePath)) {
     throw new Error('Compile input file(s) not found');
   }
-  const parsedOutputName = outputName; // TODO can have more checks here
   // TODO: Check if outputPath is directory, otherwise throw.
   const parsedOutputPath = outputPath.endsWith('/') ? outputPath : `${outputPath}/`;
   return new Promise((resolve, reject) => {
@@ -36,9 +35,11 @@ export default async function compile(
         '-i',
         codePath,
         '-o',
-        `${parsedOutputPath}${parsedOutputName}_out`,
+        `${parsedOutputPath}${outputName}_out`,
         '-s',
-        `${parsedOutputPath}${parsedOutputName}_abi.json`,
+        `${parsedOutputPath}${outputName}_abi.json`,
+        '-r',
+        `${parsedOutputPath}${outputName}.r1cs`,
         '--curve',
         curve,
       ],

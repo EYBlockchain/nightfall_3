@@ -2,28 +2,29 @@
 Class for constructing a verification key, if you have a flattened version of the key, such as the Shield contract consumes.
 @param {Array} vk - the flattened vk object's values
 */
-import gen from 'general-number';
-
-const { generalise } = gen;
 // helper function - outputs an array as an array of pairs
-function pairArray(a) {
+function pairArray(a, n = 2) {
   const b = [];
-  for (let i = 0; i < a.length; i += 2) b.push(a.slice(i, i + 2));
+  for (let i = 0; i < a.length; i += n) b.push(a.slice(i, i + n));
   return b;
 }
 
 class VerificationKey {
-  constructor(vkArray, curve, scheme) {
+  // eslint-disable-next-line no-unused-vars
+  constructor(vkArray, curve, scheme, nPublicInputs) {
     if (!Array.isArray(vkArray)) throw new Error('The input must be an array');
-    if (vkArray.length % 2 !== 0)
-      throw new Error('The verification array must have an even length');
-    this.scheme = scheme;
+    this.protocol = scheme;
     this.curve = curve;
-    this.alpha = generalise(vkArray.slice(0, 2)).all.hex(32);
-    this.beta = generalise([vkArray.slice(2, 4), vkArray.slice(4, 6)]).all.hex(32);
-    this.gamma = generalise([vkArray.slice(6, 8), vkArray.slice(8, 10)]).all.hex(32);
-    this.delta = generalise([vkArray.slice(10, 12), vkArray.slice(12, 14)]).all.hex(32);
-    this.gamma_abc = generalise(pairArray(vkArray.slice(14))).all.hex(32);
+    this.nPublic = nPublicInputs;
+    this.vk_alpha_1 = vkArray.slice(0, 3);
+    this.vk_beta_2 = pairArray(vkArray.slice(3, 9), 2);
+    this.vk_gamma_2 = pairArray(vkArray.slice(9, 15), 2);
+    this.vk_delta_2 = pairArray(vkArray.slice(15, 21), 2);
+    this.vk_alphabeta_12 = [
+      pairArray(vkArray.slice(21, 27), 2),
+      pairArray(vkArray.slice(27, 33), 2),
+    ];
+    this.IC = pairArray(vkArray.slice(33), 3);
   }
 }
 

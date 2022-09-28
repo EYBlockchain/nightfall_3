@@ -1,7 +1,7 @@
 {
   "name": "@eyblockchain/zokrates-worker",
   "description": "ZoKrates worker",
-  "repository": "https://github.com/EYBlockchain/zokrates-worker.git",
+  "repository": "",
   "license": "CC0-1.0",
   "version": "0.0.0-semantically-released",
   "private": true,
@@ -19,7 +19,9 @@
     "config": "^3.3.7",
     "cors": "2.8.5",
     "express": "^4.17.1",
+    "ffjavascript": "^0.2.56",
     "jsonfile": "^6.1.0",
+    "snarkjs": "^0.5.0",
     "tar": "^6.1.11",
     "web3": "^1.7.5"
   },
