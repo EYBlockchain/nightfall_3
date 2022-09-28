@@ -11,6 +11,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
+import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
 import computeCircuitInputs from '../utils/compute-witness';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
@@ -157,13 +158,15 @@ async function transfer(transferParams, shieldContractAddress) {
       };
       const keypair = { pk: new Uint8Array(pk) };
       console.log('Computing witness');
-      const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
+      const witnessInfo = zokratesProvider.computeWitness(artifacts, witnessInput, {
+        snarkjs: true,
+      });
+
       // generate proof
       console.log('Generating Proof');
-      let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+      const prove = await snarkjs.groth16.prove(keypair, witnessInfo.snarkjs.witness); // zkey, witness
+      const { proof } = prove;
       console.log('Proof Generated');
-      proof = [...proof.a, ...proof.b, ...proof.c];
-      proof = proof.flat(Infinity);
       // and work out the ABI encoded data that the caller should sign and send to the shield contract
       const optimisticTransferTransaction = new Transaction({
         fee,

@@ -7,6 +7,7 @@ An optimistic Transaction class
 import gen from 'general-number';
 import Web3 from '../utils/web3';
 import { compressProof } from '../utils/curve-maths/curves';
+import Proof from './proof.js';
 
 const { generalise } = gen;
 
@@ -83,7 +84,9 @@ class Transaction {
     let flatProof;
     let historicRootBlockNumberL2;
     if (proof === undefined) flatProof = [0, 0, 0, 0, 0, 0, 0, 0];
-    else flatProof = Object.values(proof).flat(Infinity);
+    else {
+      flatProof = Proof.flatProof(proof);
+    }
     if (_commitments === undefined || _commitments.length === 0)
       commitments = [{ hash: 0 }, { hash: 0 }, { hash: 0 }];
     else if (_commitments.length === 1) commitments = [..._commitments, { hash: 0 }, { hash: 0 }];
