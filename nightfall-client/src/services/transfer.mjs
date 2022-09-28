@@ -29,7 +29,7 @@ const NEXT_N_PROPOSERS = 3;
 async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = transferParams;
+  const { offchain = false, providedCommitments, ...items } = transferParams;
   const { tokenId, recipientData, rootKey, fee } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
@@ -61,6 +61,7 @@ async function transfer(transferParams) {
     tokenId,
     rootKey,
     maxNumberNullifiers: VK_IDS.transfer.numberNullifiers,
+    providedCommitments,
   });
 
   try {
