@@ -28,19 +28,19 @@
     "big-integer": "^1.6.48",
     "common-files": "file:../common-files",
     "config": "^3.3.1",
+    "express-fileupload": "^1.4.0",
     "hex-to-binary": "^1.0.1",
     "pino": "^8.3.1",
     "pino-pretty": "^8.1.0",
     "safe-buffer": "^5.2.1",
     "truffle": "^5.5.28",
-    "web3": "^1.7.5",
-    "cls-hooked": "^4.2.2",
     "uuid": "^8.3.2",
-    "express-fileupload": "^1.4.0"
+    "web3": "^1.7.5"
   },
   "devDependencies": {
     "@openzeppelin/truffle-upgrades": "^1.13.0",
     "@truffle/hdwallet-provider": "^2.0.10",
+    "cls-hooked": "^4.2.2",
     "truffle-contract-size": "^2.0.1"
   },
   "overrides": {

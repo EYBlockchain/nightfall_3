@@ -17,7 +17,9 @@ export const contractPath = contractName => {
 
 export async function getContractInterface(contractName) {
   const path = contractPath(contractName);
+  logger.debug(`looking for contract: ${contractName} at path ${path}`);
   const contractInterface = JSON.parse(fs.readFileSync(path, 'utf8'));
+  logger.debug(`found interface: ${contractInterface !== undefined}`);
   return contractInterface;
 }
 
@@ -25,6 +27,7 @@ export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
   const networkId = await web3.eth.getChainId();
+  logger.debug(`found network id: ${networkId}`);
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
     deployedAddress = contractInterface.networks[networkId].address;
   }

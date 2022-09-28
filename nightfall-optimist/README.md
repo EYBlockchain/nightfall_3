@@ -40,4 +40,4 @@ Alternatively, the optimist can connect to the sandbox environment provided by `
  In order to configure the optimist in one of these roles:
  1. Launch optimist with `./start-optimist.sh`
  2. Ensure `optimist.env` is configured.
- 3. Go to the folder including the role you need (`apss/proposer`) and launch `npm start`
+ 3. Go to the folder including the role you need (`apps/proposer`) and launch `npm start`

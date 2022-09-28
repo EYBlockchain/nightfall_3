@@ -162,14 +162,21 @@ async function main() {
 
     await erc20Mock.transfer(liquidityProviderAddress, 1000000000000);
     await erc1155Mock.safeBatchTransferFrom(
-      (await ethers.getSigners())[0].address,
+      (
+        await ethers.getSigners()
+      )[0].address,
       addresses.user1,
       [0, 1, 2, 3, 4],
       [100000, 200000, 10, 50, 80000],
       [],
     );
   }
+
   // TODO: contract setup scripts
+  [proposers, shield, challenges].forEach(contract => contract.setStateContract(state.address));
+  [proposers, shield, challenges, state].forEach(contract =>
+    contract.transferOwnership(simpleMultiSig.address),
+  );
   // TODO: support upgrades // port migration 4
 }
 

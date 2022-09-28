@@ -17,6 +17,12 @@ const config: HardhatUserConfig = {
     sources: './nightfall-deployer/contracts',
     tests: './test/e2e',
   },
+  networks: {
+    localhost: {
+      url: ' http://127.0.0.1:8546/',
+      chainId: 31337,
+    }
+  },
   mocha: {
     timeout: 0
   }
