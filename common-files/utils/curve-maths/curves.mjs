@@ -6,12 +6,14 @@ is the curve that Ethereum currently has pairing precompiles for. All the
 return values are BigInts (or arrays of BigInts).
 */
 import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
+import gen from 'general-number';
 import { mulMod, addMod, squareRootModPrime } from '../crypto/number-theory.mjs';
 import Fq2 from '../../classes/fq2.mjs';
-import Proof from '../../classes/proof.mjs';
 import { modDivide } from '../crypto/modular-division.mjs';
 import constants from '../../constants/index.mjs';
+import Proof from '../../classes/proof.mjs';
 
+const { generalise } = gen;
 const { BN128_PRIME_FIELD, BN128_GROUP_ORDER, BABYJUBJUB } = constants;
 
 const one = BigInt(1);
@@ -36,7 +38,7 @@ export function compressG1(point) {
   // string is 256 bits to fit with an Ethereum word)
   const compressedBinary = parity.concat(x.toString(2).padStart(255, '0'));
   const compressedBigInt = BigInt(`0b${compressedBinary}`);
-  return `0x${compressedBigInt.toString(16)}`;
+  return compressedBigInt;
 }
 
 /**
@@ -57,9 +59,19 @@ export function compressProof(_proof) {
   let proof;
   if (Array.isArray(_proof)) {
     if (_proof.length !== 8) throw new Error('Flat proof array should have length 8');
-    proof = new Proof(_proof);
-  } else proof = _proof;
-  const compressed = [compressG1(proof.a), compressG2(proof.b), compressG1(proof.c)];
+    proof = _proof;
+  } else {
+    proof = Proof.flatProof(_proof);
+  }
+  const compressed = [
+    compressG1([proof[0], proof[1]]),
+    compressG2([
+      [proof[2], proof[3]],
+      [proof[4], proof[5]],
+    ]),
+    compressG1([proof[6], proof[7]]),
+  ];
+
   return compressed.flat();
 }
 
@@ -76,7 +88,7 @@ export function decompressG1(xin) {
   const y2 = addMod([x3, 3n], BN128_PRIME_FIELD);
   let y = squareRootModPrime(y2, BN128_PRIME_FIELD);
   if (parity !== y.toString(2).slice(-1)) y = BN128_PRIME_FIELD - y;
-  return [`0x${x.toString(16).padStart(64, '0')}`, `0x${y.toString(16).padStart(64, '0')}`];
+  return generalise([x, y]).all.hex(32);
 }
 
 /**

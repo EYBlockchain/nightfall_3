@@ -24,6 +24,7 @@ module.exports = {
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
+  CIRCUIT_MINIMUM_PUBLIC_INPUTS: 24,
   CONFIRMATION_POLL_TIME: 1000,
   CONFIRMATIONS: 12,
   DEFAULT_ACCOUNT_NUM: 10,
@@ -76,7 +77,7 @@ module.exports = {
       onTimeout: false,
     },
   },
-  PROVING_SCHEME: process.env.PROVING_SCHEME || 'g16',
+  PROVING_SCHEME: process.env.PROVING_SCHEME || 'groth16',
   BACKEND: process.env.BACKEND || 'bellman',
   CURVE: process.env.CURVE || 'bn128',
 

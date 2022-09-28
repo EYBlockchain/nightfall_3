@@ -25,7 +25,6 @@ COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /app/stdlib
 COPY --from=builder /app/ZoKrates/target/release/zokrates /app/zokrates
 COPY ./zokrates-worker/package.json ./zokrates-worker/package-lock.json ./
 COPY ./zokrates-worker/src ./src
-COPY ./zokrates-worker/circuits ./circuits
 COPY ./zokrates-worker/start-script ./start-script
 COPY ./zokrates-worker/start-dev ./start-dev
 

@@ -43,7 +43,17 @@ export default async function computeWitness(
   return new Promise((resolve, reject) => {
     const zokrates = spawn(
       '/app/zokrates',
-      ['compute-witness', '-i', codePath, '-o', `${parsedOutputPath}${outputName}`, '-a', ...args],
+      [
+        'compute-witness',
+        '-i',
+        codePath,
+        '-o',
+        `${parsedOutputPath}${outputName}`,
+        '--circom-witness',
+        `${parsedOutputPath}${outputName}.wtns`,
+        '-a',
+        ...args,
+      ],
       {
         stdio: ['ignore', 'pipe', 'pipe'],
         env: {
