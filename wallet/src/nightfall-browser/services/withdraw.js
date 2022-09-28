@@ -9,6 +9,7 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
+import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
 import computeCircuitInputs from '../utils/compute-witness';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
@@ -121,11 +122,10 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     };
     const keypair = { pk: new Uint8Array(pk) };
     // computation
-    const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
+    const witnessInfo = zokratesProvider.computeWitness(artifacts, witnessInput, { snarkjs: true });
     // generate proof
-    let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
-    proof = [...proof.a, ...proof.b, ...proof.c];
-    proof = proof.flat(Infinity);
+    const prove = await snarkjs.groth16.prove(keypair, witnessInfo.snarkjs.witness); // zkey, witness
+    const { proof } = prove;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
 
     const optimisticWithdrawTransaction = new Transaction({
