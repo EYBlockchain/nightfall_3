@@ -3,7 +3,10 @@
 /* eslint import/no-unresolved: "off" */
 
 import express from 'express';
+import swaggerUi from 'swagger-ui-express';
 import config from 'config';
+import YAML from 'yaml';
+import fs from 'fs';
 import { setupHttpDefaults } from '../common-files/utils/httputils.mjs';
 import { proposer, contracts } from './routes/index.mjs';
 import startProposer from './proposer.mjs';
@@ -22,6 +25,11 @@ setupHttpDefaults(app, app => {
   app.use('/proposer', proposer);
   app.use('/contract-address', contracts);
 });
+
+app.use('/api-docs', swaggerUi.serve);
+
+const apiDocs = YAML.parse(fs.readFileSync('./src/swagger.yaml', 'utf8'));
+app.get('/api-docs', swaggerUi.setup(apiDocs));
 
 app.listen(PROPOSER_PORT);
 

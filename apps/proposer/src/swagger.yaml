@@ -1,0 +1,329 @@
+openapi: 3.0.0
+info:
+  title: Proposer API
+  description: >
+    yey
+  version: 0.0.1
+servers:
+  - url: http://localhost:8092
+    description: Localhost
+tags:
+  - name: service
+    description: Information about the service
+  - name: transaction
+    description: Transaction routes
+  - name: proposer
+    description: Stuff about this proposer
+  - name: block
+    description: Actions on blocks
+paths:
+  /healthcheck:
+    get:
+      tags:
+        - service
+      summary: Healthcheck
+      description: I think it's already built-in in httputils
+      responses:
+        '200': # status code
+          description: Should return a 200 if alive and well
+
+  /transaction:
+    get:
+      tags:
+        - transaction
+      summary: Returns a list of transactions in the mempool
+      description: Replaces unprocessedTransactionCount and getMempoolTransactions
+      responses:
+        '200': # status code
+          description: Returns the requested list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transaction'
+                type: array
+                items:
+                  type: string
+    post:
+      tags:
+        - transaction
+      summary: Receives an offchain transaction and sends it to the optimist
+      description: Replaces the existing endpoint for this
+      requestBody:
+        description: A transaction object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/transaction'
+              type: array
+              items:
+                type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request
+    delete:
+      tags:
+        - transaction
+      summary: Cancels a transaction
+      description: Not currently implemented
+      responses:
+        '200': # status code
+          description: OK
+
+  /transaction/estimate/gas:
+    post:
+      tags:
+        - transaction
+      summary: Estimates the gas needed for a transaction
+      description: Calls estimateGas which should be somewhere reusable (utils?)
+      requestBody:
+        description: A transaction object
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/transaction'
+              type: array
+              items:
+                type: string
+      responses:
+        '200': # status code
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: integer
+        '500':
+          description: Oh shit
+        '400':
+          description: Bad request
+
+  /transaction/estimate/gasPrice:
+    get:
+      tags:
+        - transaction
+      summary: Returns the estimated gas price
+      description: Calls estimateGasPrice which should be somewhere reusable (utils?)
+      responses:
+        '200': # status code
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /blocks/new:
+    post:
+      tags:
+        - block
+      summary: Forces the optimist to make a block
+      description: Replaces makeBlockNow
+      responses:
+        '200': # status code
+          description: OK
+
+  /proposer:
+    get:
+      tags:
+        - proposer
+      summary: Gets info about this proposer
+      description: Replaces
+      responses:
+        '200': # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+    post:
+      tags:
+        - proposer
+      summary: Registers this proposer
+      description: Replaces registerProposer
+      responses:
+        '200': # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+    put:
+      tags:
+        - proposer
+      summary: Updates info on this proposer
+      description: Replaces updateProposer
+      responses:
+        '200': # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+    delete:
+      tags:
+        - proposer
+      summary: Unregisters this proposer
+      description: Replaces deRegisterProposer
+      responses:
+        '200': # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /proposer/change:
+    put:
+      tags:
+        - proposer
+      summary: Attempts to change the current proposer
+      description: Replaces changeCurrentProposer
+      responses:
+        '200': # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /proposer/{id}:
+    get:
+      tags:
+        - proposer
+      summary: Gets a proposer with a given ID
+      description:
+        ID, URL, Address, whatever. If not defined, return current proposer. Replaces
+        getCurrentProposer
+      responses:
+        '200': # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /proposer/current:
+    get:
+      tags:
+        - proposer
+      summary: Gets the current proposer
+      description:
+        ID, URL, Address, whatever. If not defined, return current proposer. Replaces
+        getCurrentProposer
+      responses:
+        '200': # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+      #
+      #
+      #
+
+  /proposer/all:
+    get:
+      tags:
+        - proposer
+      summary: Gets all the proposers
+      description: Gets information about all proposers
+      responses:
+        '200': # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /proposer/bond:
+    post:
+      tags:
+        - proposer
+      summary: Withdraws the staked bond
+      description: It changes something so I believe it should be POST
+      responses:
+        '200': # status code
+          description: A JSON array of user names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+components:
+  schemas:
+    transaction:
+      type: array
+      items:
+        type: object
+        properties:
+          _id:
+            type: string
+          transactionHash:
+            type: string
+          blockNumber:
+            type: integer
+          blockNumberL2:
+            type: integer
+          commitments:
+            type: array
+            items:
+              type: string
+          compressedSecrets:
+            type: array
+            items:
+              type: string
+          ercAddress:
+            type: string
+          fee:
+            type: string
+          historicRootBlockNumberL2:
+            type: array
+            items:
+              type: string
+          mempool:
+            type: boolean
+            default: true
+          nullifiers:
+            type: array
+            items:
+              type: string
+          proof:
+            type: array
+            items:
+              type: string
+          recipientAddress:
+            type: string
+          tokenId:
+            type: string
+          tokenType:
+            type: string
+          transactionHashL1:
+            type: string
+          transactionType:
+            type: string
+          value:
+            type: string

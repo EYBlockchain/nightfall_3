@@ -101,3 +101,16 @@ services:
       # to use with postman and etc
       - 8091:80
     entrypoint: [ "npm", "run", "start" ]
+
+  proposer:
+    build:
+      dockerfile: docker/proposer.Dockerfile
+      context: ..
+    volumes:
+      - type: bind
+        source: ../apps/proposer/src
+        target: /app/src
+      - type: bind
+        source: ../apps/proposer/package.json
+        target: /app/package.json
+    entrypoint: [ "npm", "run", "dev" ]
