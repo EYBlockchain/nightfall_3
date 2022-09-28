@@ -52,8 +52,12 @@ async function blockProposedEventHandler(data) {
       }),
     );
   }
-  logger.info('Received BlockProposed event');
-  logger.debug(`With transactions ${transactions}`);
+
+  logger.debug({
+    msg: 'Received BlockProposed event',
+    transactions,
+  });
+
   try {
     // We get the L1 block time in order to save it in the database to have this information available
     let timeBlockL2 = await getTimeByBlock(transactionHashL1);
