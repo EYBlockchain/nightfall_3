@@ -6,11 +6,7 @@ export const isDev = () => process.env.NODE_ENV !== 'production';
 
 export const isLocal = () => {
   return (
-    process.env.NODE_ENV !== 'internal' &&
-    process.env.NODE_ENV !== 'staging' &&
-    process.env.NODE_ENV !== 'preprod' &&
-    process.env.NODE_ENV !== 'testnet' &&
-    process.env.NODE_ENV !== 'production'
+    process.env.ENVIRONMENT !== 'aws'
   );
 };
 
