@@ -5,9 +5,7 @@
 export const isDev = () => process.env.NODE_ENV !== 'production';
 
 export const isLocal = () => {
-  return (
-    process.env.ENVIRONMENT !== 'aws'
-  );
+  return process.env.ENVIRONMENT !== 'aws';
 };
 
 /**
