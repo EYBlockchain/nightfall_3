@@ -12,7 +12,7 @@ router.get('/', async (req, res, next) => {
     logger.debug({ msg: 'Received request to /vk', query: req.query });
 
     const { folderpath } = req.query;
-    const vk = getVerificationKeyByCircuitPath(folderpath);
+    const vk = await getVerificationKeyByCircuitPath(folderpath);
 
     logger.debug({ msg: 'Returning vk', vk });
 

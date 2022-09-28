@@ -13,6 +13,7 @@ import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
 import computeCircuitInputs from '@Nightfall/utils/compute-witness';
+import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
@@ -86,10 +87,11 @@ async function deposit(items, shieldContractAddress) {
 
     // computation
     console.log('Computing Witness');
-    const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
+    const witnessInfo = zokratesProvider.computeWitness(artifacts, witnessInput, { snarkjs: true });
     // generate proof
     console.log('Generate Proof');
-    const { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
+    const prove = await snarkjs.groth16.prove(keypair, witnessInfo.snarkjs.witness); // zkey, witness
+    const { proof } = prove;
     const shieldContractInstance = await getContractInstance(
       SHIELD_CONTRACT_NAME,
       shieldContractAddress,
