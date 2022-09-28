@@ -25,6 +25,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     mapping(address => TimeLockedBond) public bondAccounts;
     mapping(bytes32 => uint256[2]) public feeBook;
     mapping(bytes32 => bool) public claimedBlockStakes;
+    mapping(uint256 => bool) public isEscrowed; // Check if transaction commitment values has been escrowed (only for deposit)
     LinkedAddress public currentProposer; // who can propose a new shield state
     uint256 public proposerStartBlock; // L1 block where currentProposer became current
     // local state variables
@@ -108,36 +109,85 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         setFeeBookInfo(b.proposer, b.blockNumberL2, feePaymentsEth, feePaymentsMatic);
 
         bytes32 blockHash;
+
+        uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
+        uint256 transactionSlots = TRANSACTION_STRUCTURE_SLOTS; //Number of slots that the transaction structure has
+
+        //Get the signature for the function that checks if the transaction has been escrowed or not
+        bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(uint256)')); //Function signature
+
         assembly {
-            let blockPos := mload(0x40) // get empty memory location pointer
-            calldatacopy(blockPos, 0x04, mul(0x20, 7))
-            let transactionPos := add(mload(0x40), mul(0x20, 7))
-            calldatacopy(transactionPos, t.offset, mul(t.length, mul(0x20, 24))) // calculate memory location of transactions data copied
-            let transactionHashesPos := add(transactionPos, mul(t.length, mul(0x20, 24))) // calculate memory location to store transaction hashes to be calculated
-            //calculate and store transaction hashes
+            //Function that calculates the height of the Merkle Tree
+            function getTreeHeight(leaves) -> _height {
+                _height := 1
+                for {
+
+                } lt(exp(2, _height), leaves) {
+
+                } {
+                    _height := add(_height, 1)
+                }
+            }
+
+            let x := mload(0x40) //Gets the first free memory pointer
+            let blockPos := add(x, mul(0x20, 2)) //Save two slots of 32 bytes for calling external libraries
+            calldatacopy(blockPos, 0x04, mul(0x20, blockSlots)) //Copy the block structure into blockPos
+            let transactionHashesPos := add(blockPos, mul(0x20, blockSlots)) // calculate memory location of the transaction hashes
+            let transactionPos := add(
+                // calculate memory location of transactions
+                transactionHashesPos,
+                mul(0x20, exp(2, getTreeHeight(t.length)))
+            )
+
             for {
                 let i := 0
             } lt(i, t.length) {
                 i := add(i, 1)
             } {
+                // Copy the transaction into transactionPos
+                calldatacopy(
+                    transactionPos,
+                    add(t.offset, mul(mul(0x20, transactionSlots), i)),
+                    mul(0x20, transactionSlots)
+                )
+
+                // Calculate the hash of the transaction and store it in transactionHashesPos
                 mstore(
                     add(transactionHashesPos, mul(0x20, i)),
-                    keccak256(add(transactionPos, mul(0x300, i)), 0x300)
+                    keccak256(transactionPos, mul(0x20, transactionSlots))
                 )
+
+                // Get the transaction type
+                let transactionType := calldataload(
+                    add(t.offset, add(mul(mul(0x20, transactionSlots), i), mul(0x20, 2)))
+                )
+
+                // If the transactionType is zero (aka deposit), we need to check if the funds were escrowed
+                if iszero(transactionType) {
+                    mstore(x, checkTxEscrowedSignature) //Store the signature of the function in x
+                    mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
+                    pop(
+                        call(
+                            // Call getTransactionEscrowed function to see if funds has been deposited
+                            gas(),
+                            address(), //To addr
+                            0, //No value
+                            x, //Inputs are stored at location x
+                            0x24, //Inputs are 36 bytes long
+                            x, //Store output over input (saves space)
+                            0x20 //Outputs are 32 bytes long
+                        )
+                    )
+                    //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
+                    if iszero(mload(x)) {
+                        revert(0, 0)
+                    }
+                }
             }
-            let transactionHashesRoot
-            // calculate and store transaction hashes root
-            let height := 1
+
+            //Calculate the root of the transactions merkle tree
             for {
-
-            } lt(exp(2, height), t.length) {
-
-            } {
-                height := add(height, 1)
-            }
-
-            for {
-                let i := height
+                let i := getTreeHeight(t.length)
             } gt(i, 0) {
                 i := sub(i, 1)
             } {
@@ -149,23 +199,28 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
                     let left := mload(add(transactionHashesPos, mul(mul(0x20, j), 2)))
                     let right := mload(add(transactionHashesPos, add(mul(mul(0x20, j), 2), 0x20)))
                     if eq(and(iszero(left), iszero(right)), 1) {
-                        transactionHashesRoot := 0
-                    } // returns bool
+                        mstore(add(transactionHashesPos, mul(0x20, j)), 0)
+                    }
                     if eq(and(iszero(left), iszero(right)), 0) {
-                        transactionHashesRoot := keccak256(
-                            add(transactionHashesPos, mul(mul(0x20, j), 2)),
-                            0x40
+                        mstore(
+                            add(transactionHashesPos, mul(0x20, j)),
+                            keccak256(add(transactionHashesPos, mul(mul(0x20, j), 2)), 0x40)
                         )
-                    } // returns bool
-                    mstore(add(transactionHashesPos, mul(0x20, j)), transactionHashesRoot)
+                    }
                 }
             }
             // check if the transaction hashes root calculated equal to the one passed as part of block data
-            if eq(eq(mload(add(blockPos, mul(6, 0x20))), transactionHashesRoot), 0) {
+            if eq(
+                eq(
+                    mload(add(blockPos, mul(sub(blockSlots, 1), 0x20))),
+                    mload(transactionHashesPos)
+                ),
+                0
+            ) {
                 revert(0, 0)
             }
-            //calculate block hash
-            blockHash := keccak256(blockPos, mul(7, 0x20))
+            // calculate block hash
+            blockHash := keccak256(blockPos, mul(blockSlots, 0x20))
         }
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain
@@ -211,6 +266,14 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return currentProposer;
     }
 
+    function getTransactionEscrowed(uint256 transactionHash) public view returns (bool) {
+        return isEscrowed[transactionHash];
+    }
+
+    function setTransactionEscrowed(uint256 transactionHash, bool escrowed) public onlyRegistered {
+        isEscrowed[transactionHash] = escrowed;
+    }
+
     function getFeeBookInfo(address proposer, uint256 blockNumberL2)
         public
         view
@@ -225,7 +288,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         uint256 blockNumberL2,
         uint256 feePaymentsEth,
         uint256 feePaymentsMatic
-    ) public {
+    ) public onlyRegistered {
         bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
         feeBook[input][0] = feePaymentsEth;
         feeBook[input][1] = feePaymentsMatic;

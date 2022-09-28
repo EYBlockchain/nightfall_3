@@ -38,6 +38,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         emit TransactionSubmitted();
 
         if (t.transactionType == TransactionTypes.DEPOSIT) {
+            state.setTransactionEscrowed(uint256(Utils.hashTransaction(t)), true);
             require(uint256(t.fee) == msg.value);
             payIn(t);
         }
