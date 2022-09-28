@@ -65,12 +65,12 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     }
 
     modifier onlyProposer() {
-        require(msg.sender == proposersAddress, 'Only shield contract is authorized');
+        require(msg.sender == proposersAddress, 'Only proposer contract is authorized');
         _;
     }
 
     modifier onlyChallenger() {
-        require(msg.sender == challengesAddress, 'Only shield contract is authorized');
+        require(msg.sender == challengesAddress, 'Only challenger contract is authorized');
         _;
     }
 
