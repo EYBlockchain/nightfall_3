@@ -25,7 +25,6 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
     mapping(address => TimeLockedBond) public bondAccounts;
     mapping(bytes32 => uint256[2]) public feeBook;
     mapping(bytes32 => bool) public claimedBlockStakes;
-    mapping(uint256 => bool) public isEscrowed; // Check if transaction commitment values has been escrowed (only for deposit)
     LinkedAddress public currentProposer; // who can propose a new shield state
     uint256 public proposerStartBlock; // L1 block where currentProposer became current
     // local state variables
@@ -57,6 +56,21 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
                 msg.sender == shieldAddress,
             'This address is not authorised to call this function'
         );
+        _;
+    }
+
+    modifier onlyShield() {
+        require(msg.sender == shieldAddress, 'Only shield contract is authorized');
+        _;
+    }
+
+    modifier onlyProposer() {
+        require(msg.sender == proposersAddress, 'Only shield contract is authorized');
+        _;
+    }
+
+    modifier onlyChallenger() {
+        require(msg.sender == challengesAddress, 'Only shield contract is authorized');
         _;
     }
 
@@ -106,7 +120,9 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             }
         }
 
-        setFeeBookInfo(b.proposer, b.blockNumberL2, feePaymentsEth, feePaymentsMatic);
+        bytes32 input = keccak256(abi.encodePacked(b.proposer, b.blockNumberL2));
+        feeBook[input][0] = feePaymentsEth;
+        feeBook[input][1] = feePaymentsMatic;
 
         bytes32 blockHash;
 
@@ -114,7 +130,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         uint256 transactionSlots = TRANSACTION_STRUCTURE_SLOTS; //Number of slots that the transaction structure has
 
         //Get the signature for the function that checks if the transaction has been escrowed or not
-        bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(uint256)')); //Function signature
+        bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(bytes32)')); //Function signature
 
         assembly {
             //Function that calculates the height of the Merkle Tree
@@ -170,7 +186,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
                         call(
                             // Call getTransactionEscrowed function to see if funds has been deposited
                             gas(),
-                            address(), //To addr
+                            shieldAddress.slot, //To addr
                             0, //No value
                             x, //Inputs are stored at location x
                             0x24, //Inputs are 36 bytes long
@@ -246,7 +262,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         emit Rollback(blockNumberL2ToRollbackTo);
     }
 
-    function setProposer(address addr, LinkedAddress calldata proposer) public onlyRegistered {
+    function setProposer(address addr, LinkedAddress calldata proposer) public onlyProposer {
         proposers[addr] = proposer;
     }
 
@@ -254,24 +270,12 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return proposers[addr];
     }
 
-    function deleteProposer(address addr) public onlyRegistered {
-        delete proposers[addr];
-    }
-
-    function setCurrentProposer(address proposer) public onlyRegistered {
+    function setCurrentProposer(address proposer) public onlyProposer {
         currentProposer = proposers[proposer];
     }
 
     function getCurrentProposer() public view returns (LinkedAddress memory) {
         return currentProposer;
-    }
-
-    function getTransactionEscrowed(uint256 transactionHash) public view returns (bool) {
-        return isEscrowed[transactionHash];
-    }
-
-    function setTransactionEscrowed(uint256 transactionHash, bool escrowed) public onlyRegistered {
-        isEscrowed[transactionHash] = escrowed;
     }
 
     function getFeeBookInfo(address proposer, uint256 blockNumberL2)
@@ -283,22 +287,12 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return (feeBook[input][0], feeBook[input][1]);
     }
 
-    function setFeeBookInfo(
-        address proposer,
-        uint256 blockNumberL2,
-        uint256 feePaymentsEth,
-        uint256 feePaymentsMatic
-    ) public onlyRegistered {
+    function resetFeeBookInfo(address proposer, uint256 blockNumberL2) public onlyShield {
         bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
-        feeBook[input][0] = feePaymentsEth;
-        feeBook[input][1] = feePaymentsMatic;
+        delete feeBook[input];
     }
 
-    function pushBlockData(BlockData calldata bd) public onlyRegistered {
-        blockHashes.push(bd);
-    }
-
-    function popBlockData() public onlyRegistered returns (BlockData memory) {
+    function popBlockData() public onlyChallenger returns (BlockData memory) {
         // oddly .pop() doesn't return the 'popped' element
         BlockData memory popped = blockHashes[blockHashes.length - 1];
         blockHashes.pop();
@@ -309,21 +303,8 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return blockHashes[blockNumberL2];
     }
 
-    /*
-  return all of the block data as an array.  This lets us do off-chain
-  reverse lookups
-  */
-    function getAllBlockData() public view returns (BlockData[] memory) {
-        return blockHashes;
-    }
-
     function getNumberOfL2Blocks() public view returns (uint256) {
         return blockHashes.length;
-    }
-
-    function getLatestBlockHash() public view returns (bytes32) {
-        if (blockHashes.length != 0) return blockHashes[blockHashes.length - 1].blockHash;
-        else return Config.ZERO;
     }
 
     function addPendingWithdrawal(
@@ -354,7 +335,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         }
     }
 
-    function setProposerStartBlock(uint256 sb) public onlyRegistered {
+    function setProposerStartBlock(uint256 sb) public onlyProposer {
         proposerStartBlock = sb;
     }
 
@@ -362,7 +343,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return proposerStartBlock;
     }
 
-    function removeProposer(address proposer) public onlyRegistered {
+    function removeProposer(address proposer) public onlyProposer {
         address previousAddress = proposers[proposer].previousAddress;
         address nextAddress = proposers[proposer].nextAddress;
         delete proposers[proposer];
@@ -375,7 +356,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         emit NewCurrentProposer(currentProposer.thisAddress);
     }
 
-    function updateProposer(address proposer, string calldata url) public onlyRegistered {
+    function updateProposer(address proposer, string calldata url) public onlyProposer {
         proposers[proposer].url = url;
     }
 
@@ -427,7 +408,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         require(valid, 'Transaction does not exist in block');
     }
 
-    function setBondAccount(address addr, uint256 amount) public onlyRegistered {
+    function setBondAccount(address addr, uint256 amount) public onlyProposer {
         bondAccounts[addr] = TimeLockedBond(amount, 0);
     }
 
@@ -439,14 +420,14 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         address challengerAddr,
         address proposer,
         uint256 numRemoved
-    ) public onlyRegistered {
+    ) public onlyChallenger {
         removeProposer(proposer);
         TimeLockedBond memory bond = bondAccounts[proposer];
         bondAccounts[proposer] = TimeLockedBond(0, 0);
         pendingWithdrawals[challengerAddr][0] += bond.amount + numRemoved * BLOCK_STAKE;
     }
 
-    function updateBondAccountTime(address addr, uint256 time) public onlyRegistered {
+    function updateBondAccountTime(address addr, uint256 time) public onlyProposer {
         TimeLockedBond memory bond = bondAccounts[addr];
         bond.time = time;
         bondAccounts[addr] = bond;
