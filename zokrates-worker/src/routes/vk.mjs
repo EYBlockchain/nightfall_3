@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', async (req, res, next) => {
   try {
     const { folderpath } = req.query;
-    const vk = getVerificationKeyByCircuitPath(folderpath);
+    const vk = await getVerificationKeyByCircuitPath(folderpath);
 
     return res.send({ vk });
   } catch (err) {
