@@ -19,6 +19,7 @@
     "test-erc1155-tokens": "npx hardhat test --bail --no-compile --grep ERC1155",
     "test-erc20-cli": "npx hardhat test --no-compile --bail test/client/erc20.test.mjs ",
     "ping-pong": "npx hardhat test --bail --no-compile test/ping-pong/ping-pong.test.mjs",
+    "test-administrator": "npx hardhat test --bail --no-compile test/multisig/administrator.test.mjs ",
     "test-optimist-sync": "npx hardhat test --no-compile --bail test/optimist-resync.test.mjs",
     "test-adversary": "CHALLENGE_TYPE=${CHALLENGE_TYPE} npx hardhat test --no-compile --bail test/adversary.test.mjs",
     "test-all-adversary": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount IncorrectTreeRoot IncorrectLeafCount; do CHALLENGE_TYPE=${CHALLENGE_TYPE} npm run test-adversary; sleep 5; done",

@@ -7,6 +7,17 @@ import { checkThreshold, saveSigned, getSigned } from './database.mjs';
 const { RESTRICTIONS, WEB3_OPTIONS, MULTISIG } = config;
 const { SIGNATURE_THRESHOLD } = MULTISIG;
 const MULTISIG_CONSTANTS = {};
+
+/**
+ Read the nonce from the multisig contract
+ */
+export async function getMultiSigNonce() {
+  const { multiSigInstance } = MULTISIG_CONSTANTS;
+  if (!multiSigInstance) throw new Error('No multisig instance');
+  const nonce = await multiSigInstance.methods.nonce().call();
+  return Number(nonce);
+}
+
 /**
  * Read the names of tokens from the config
  */
@@ -67,11 +78,10 @@ export async function addSignedTransaction(signed) {
  * This function creates the multisig message hash, which is signed (approved) by the key-holders.
  * It's worth looking at the multisig contract to see where this all comes from.
  */
-async function createMultiSigMessageHash(destination, value, data, _nonce, executor, gasLimit) {
-  const { domainSeparator, txTypeHash, multiSigInstance, txInputHashABI } = MULTISIG_CONSTANTS;
-  let nonce = _nonce;
+async function createMultiSigMessageHash(destination, value, data, nonce, executor, gasLimit) {
+  const { domainSeparator, txTypeHash, txInputHashABI } = MULTISIG_CONSTANTS;
   // get the current multisig nonce if it's not provided (requires blockchain connection)
-  if (!_nonce) nonce = await multiSigInstance.methods.nonce().call();
+  if (!Number.isInteger(nonce)) throw new Error(`Nonce is not an integer: ${nonce}`);
   // compute the hashes to sign over note, sometimes we want a keccak hash over encoded parameter
   // and sometimes over encodedPacked parameters. Hence the two slightly different approaches used.
   const dataHash = web3.utils.soliditySha3({ t: 'bytes', v: data });
