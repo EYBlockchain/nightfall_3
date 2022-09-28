@@ -23,6 +23,10 @@ router.post('/', async (req, res, next) => {
     logger.trace(` raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     res.json({ txDataToSign, transaction });
   } catch (err) {
+    if (err.message.includes('invalid commitment hashes')) {
+      logger.info('Returning "invalid commitment hashes" error');
+      res.json({ error: err.message });
+    }
     logger.error(err);
     next(err);
   }
