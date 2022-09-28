@@ -11,6 +11,7 @@ import config from 'config';
 import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import * as snarkjs from 'snarkjs';
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import {
   getBlockByBlockNumberL2,
@@ -19,10 +20,9 @@ import {
   getTransactionHashSiblingInfo,
   getLatestBlockInfo,
 } from './database.mjs';
-import verify from './verify.mjs';
 
 const { generalise } = gen;
-const { PROVING_SCHEME, BACKEND, CURVE } = config;
+const { PROVING_SCHEME, CURVE, CIRCUIT_MINIMUM_PUBLIC_INPUTS } = config;
 const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
 async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
@@ -127,29 +127,18 @@ async function verifyProof(transaction) {
   const vkArray = await challengeInstance.methods
     .getVerificationKey(transaction.transactionType)
     .call();
+
+  const numberNullifiers = 4;
+  const numberCommitments = 3;
+
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
-  const historicRootFirst =
-    transaction.nullifiers[0] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[0])) ?? { root: ZERO };
-  const historicRootSecond =
-    transaction.nullifiers[1] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[1])) ?? { root: ZERO };
-
-  const historicRootThird =
-    transaction.nullifiers[2] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[2])) ?? {
-          root: ZERO,
-        };
-  const historicRootFourth =
-    transaction.nullifiers[3] === ZERO
-      ? { root: ZERO }
-      : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[3])) ?? {
-          root: ZERO,
-        };
+  const historicRoots = await Promise.all(
+    Array.from({ length: numberNullifiers }, () => 0).map((value, index) => {
+      if (transaction.nullifiers[index] === ZERO) return { root: ZERO };
+      return getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[index]) ?? { root: 0 };
+    }),
+  );
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
@@ -170,23 +159,20 @@ async function verifyProof(transaction) {
       transaction.commitments,
       transaction.nullifiers,
       transaction.compressedSecrets,
-      historicRootFirst.root,
-      historicRootSecond.root,
-      historicRootThird.root,
-      historicRootFourth.root,
+      historicRoots.map(h => h.root),
       maticAddress,
     ].flat(Infinity),
-  ).all.hex(32);
+  ).all.bigInt.map(inp => inp.toString());
 
-  const res = await verify({
-    vk: new VerificationKey(vkArray, CURVE, PROVING_SCHEME),
-    proof: new Proof(transaction.proof),
-    provingScheme: PROVING_SCHEME,
-    backend: BACKEND,
-    curve: CURVE,
-    inputs,
-  });
-  if (!res) throw new TransactionError('The proof did not verify', 2);
+  const nPublicInputs = CIRCUIT_MINIMUM_PUBLIC_INPUTS + 3 * numberNullifiers + numberCommitments;
+
+  const vk = new VerificationKey(vkArray, CURVE, PROVING_SCHEME, nPublicInputs);
+
+  const proof = new Proof(transaction.proof, CURVE, PROVING_SCHEME, inputs);
+
+  const verifies = await snarkjs.groth16.verify(vk, inputs, proof);
+
+  if (!verifies) throw new TransactionError('The proof did not verify', 2);
 }
 
 async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
