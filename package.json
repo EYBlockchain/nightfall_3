@@ -18,6 +18,7 @@
     "test-erc721-tokens": "npx hardhat test --bail --no-compile --grep ERC721",
     "test-erc1155-tokens": "npx hardhat test --bail --no-compile --grep ERC1155",
     "test-erc20-cli": "npx hardhat test --no-compile --bail test/client/erc20.test.mjs ",
+    "test-tps": "npx hardhat test --no-compile --bail test/tps/tps.test.mjs ",
     "ping-pong": "npx hardhat test --bail --no-compile test/ping-pong/ping-pong.test.mjs",
     "test-administrator": "npx hardhat test --bail --no-compile test/multisig/administrator.test.mjs ",
     "test-optimist-sync": "npx hardhat test --no-compile --bail test/optimist-resync.test.mjs",
