@@ -8,11 +8,7 @@ export default async function checkCircuitHash({ filepath, hash }) {
   const circuitNameWext = path.basename(filepath, '.zok'); // filename without '.zok'
 
   if (!fs.existsSync(filePath)) {
-    fs.writeFile(filePath, '[]', function (err) {
-      if (err) {
-        logger.error(err);
-      }
-    });
+    fs.writeFileSync(filePath, '[]');
   }
 
   const resultBuffer = fs.readFileSync(filePath);
@@ -38,11 +34,7 @@ export default async function checkCircuitHash({ filepath, hash }) {
   }
 
   if (differentHash) {
-    fs.writeFile(filePath, JSON.stringify(resultData), function (err) {
-      if (err) {
-        logger.error(err);
-      }
-    });
+    fs.writeFileSync(filePath, JSON.stringify(resultData))
   }
 
   return differentHash;
