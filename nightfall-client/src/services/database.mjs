@@ -66,26 +66,6 @@ export async function getLatestTree() {
     timberObj.hashType,
     timberObj.height,
   );
-  // const t = new Timber(timberObj);
-  return t;
-}
-
-export async function getTreeByRoot(treeRoot) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const { root, frontier, leafCount } = (await db
-    .collection(TIMBER_COLLECTION)
-    .findOne({ root: treeRoot })) ?? { root: 0, frontier: [], leafCount: 0 };
-  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
-  return t;
-}
-
-export async function getTreeByBlockNumberL2(blockNumberL2) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const { root, frontier, leafCount } =
-    (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
-  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
   return t;
 }
 
@@ -180,11 +160,18 @@ export async function getBlockByTransactionHashL1(transactionHashL1) {
   const query = { transactionHashL1 };
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
-// function that sets the Block's L1 blocknumber to null
-// to indicate that it's back in the L1 mempool (and will probably be re-mined
-// and given a new L1 transactionHash)
+
+/**
+ * Function that sets the Block's L1 blocknumber to null
+ * to indicate that it's back in the L1 mempool (and will probably be re-mined
+ * and given a new L1 transactionHash)
+ */
 export async function clearBlockNumberL1ForBlock(transactionHashL1) {
-  logger.debug(`clearing layer 1 blockNumber for L2 block with L1 hash ${transactionHashL1}`);
+  logger.debug({
+    msg: 'Clearing layer 1 blockNumber for L2 block with L1 hash',
+    transactionHashL1,
+  });
+
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { transactionHashL1 };
@@ -243,21 +230,6 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
-export async function getTransactionByCommitment(commitmentHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  // We should not delete from a spent mempool
-  const query = { commitments: commitmentHash };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-}
-
-export async function getTransactionByNullifier(nullifierHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  // We should not delete from a spent mempool
-  const query = { nullifiers: nullifierHash };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-}
 export async function getTransactionByTransactionHash(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);

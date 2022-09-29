@@ -10,7 +10,9 @@ import {
 import { ZkpKeys } from '../services/keys';
 
 const { generalise } = gen;
-const { BN128_GROUP_ORDER } = global.config;
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+const { BN128_GROUP_ORDER } = global.nightfallConstants;
 
 type CommitmentsInfo = {
   oldCommitments: any[];
@@ -50,8 +52,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
   const ercAddressArray = recipientZkpPublicKeysArray.map(() => ercAddress);
 
   const tokenIdArray = recipientZkpPublicKeysArray.map(() => tokenId);
-  const addedFee =
-    maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee : 0n;
+  const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee : 0n;
 
   const value = totalValueToSend + addedFee;
   const feeValue = fee - addedFee;

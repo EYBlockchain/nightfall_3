@@ -25,26 +25,57 @@ contract Challenges is Stateful, Key_Registry, Config {
 
     /**
   Check that the block correctly updates the leafCount.  Note that the leafCount
-  is actually the value BEFORE the commitments are added to the Merkle tree.
-  Thus we need the prior block so that we can check it because the value should
-  be the prior block leafcount plus the number of non-zero commitments in the
-  prior block.
+  is actually the value AFTER the commitments are added to the Merkle tree.
   */
     function challengeLeafCountCorrect(
         Block calldata priorBlockL2, // the block immediately prior to this one
-        Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
         Block calldata blockL2,
         Transaction[] calldata transactions,
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block. Also if the transactions are part of these block
-        state.areBlockAndTransactionsReal(priorBlockL2, priorBlockTransactions);
+        state.isBlockReal(priorBlockL2);
         state.areBlockAndTransactionsReal(blockL2, transactions);
+
+        require(
+            priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2,
+            'Blocks needs to be subsequent'
+        );
         ChallengesUtil.libChallengeLeafCountCorrect(
+            priorBlockL2.leafCount,
+            blockL2.leafCount,
+            transactions
+        );
+        challengeAccepted(blockL2);
+    }
+
+    function challengeNewFrontierCorrect(
+        Block calldata priorBlockL2, // the block immediately prior to this one
+        bytes32[33] calldata frontierBeforeBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
+        Block calldata blockL2,
+        Transaction[] calldata transactions,
+        bytes32 salt
+    ) external onlyBootChallenger {
+        checkCommit(msg.data);
+        // check if the block hash is correct and the block hash exists for the block and prior block
+        state.isBlockReal(priorBlockL2);
+        state.areBlockAndTransactionsReal(blockL2, transactions);
+
+        require(
+            priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2,
+            'Blocks needs to be subsequent'
+        );
+
+        bytes32 frontierBeforeHash = keccak256(abi.encodePacked(frontierBeforeBlock));
+        require(frontierBeforeHash == priorBlockL2.frontierHash, 'Invalid prior block frontier');
+
+        // see if the challenge is valid
+        ChallengesUtil.libChallengeNewFrontierCorrect(
             priorBlockL2,
-            priorBlockTransactions,
-            blockL2.leafCount
+            frontierBeforeBlock,
+            blockL2,
+            transactions
         );
         challengeAccepted(blockL2);
     }
@@ -57,25 +88,20 @@ contract Challenges is Stateful, Key_Registry, Config {
   is compared to the root stored within the block.
   */
     function challengeNewRootCorrect(
-        Block calldata priorBlockL2, // the block immediately prior to this one
-        Transaction[] calldata priorBlockTransactions, // the transactions in the prior block
-        bytes32[33] calldata frontierPriorBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
+        bytes32[33] calldata frontierAfterBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Block calldata blockL2,
-        Transaction[] calldata transactions,
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
-        // check if the block hash is correct and the block hash exists for the block and prior block
-        state.areBlockAndTransactionsReal(priorBlockL2, priorBlockTransactions);
-        state.areBlockAndTransactionsReal(blockL2, transactions);
+
+        // check that the current block hash is correct
+        state.isBlockReal(blockL2);
+
+        bytes32 frontierAfterHash = keccak256(abi.encodePacked(frontierAfterBlock));
+        require(frontierAfterHash == blockL2.frontierHash, 'Invalid prior block frontier');
+
         // see if the challenge is valid
-        ChallengesUtil.libChallengeNewRootCorrect(
-            priorBlockL2,
-            priorBlockTransactions,
-            frontierPriorBlock,
-            blockL2,
-            transactions
-        );
+        ChallengesUtil.libChallengeNewRootCorrect(frontierAfterBlock, blockL2);
         challengeAccepted(blockL2);
     }
 
@@ -85,34 +111,47 @@ contract Challenges is Stateful, Key_Registry, Config {
   (i.e. a trivial duplicate).
   */
     function challengeCommitment(
-        Block calldata block1,
-        Block calldata block2,
-        Transaction[] calldata transactions1,
-        Transaction[] calldata transactions2,
-        uint256 transaction1Index,
-        uint256 transaction2Index,
+        TransactionInfoBlock calldata transaction1,
+        TransactionInfoBlock calldata transaction2,
         uint256 commitment1Index,
         uint256 commitment2Index,
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
+
+        // first, check we have real, in-train, contiguous blocks
+        state.areBlockAndTransactionReal(
+            transaction1.blockL2,
+            transaction1.transaction,
+            transaction1.transactionIndex,
+            transaction1.transactionSiblingPath
+        );
+        state.areBlockAndTransactionReal(
+            transaction2.blockL2,
+            transaction2.transaction,
+            transaction2.transactionIndex,
+            transaction2.transactionSiblingPath
+        );
+
+        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+            require(
+                transaction1.transactionIndex != transaction2.transactionIndex,
+                'Cannot be the same transactionIndex'
+            );
+        }
+
         ChallengesUtil.libChallengeCommitment(
-            transactions1[transaction1Index],
+            transaction1.transaction,
             commitment1Index,
-            transactions2[transaction2Index],
+            transaction2.transaction,
             commitment2Index
         );
-        // If the duplicate exists in the same block, the index cannot be the same
-        if (block1.blockNumberL2 == block2.blockNumberL2)
-            require(transaction1Index != transaction2Index, 'Cannot be the same index');
-        // first, check we have real, in-train, contiguous blocks
-        state.areBlockAndTransactionsReal(block1, transactions1);
-        state.areBlockAndTransactionsReal(block2, transactions2);
+
         // Delete the latest block of the two
-        if (block1.blockNumberL2 > block2.blockNumberL2) {
-            challengeAccepted(block1);
+        if (transaction1.blockL2.blockNumberL2 > transaction2.blockL2.blockNumberL2) {
+            challengeAccepted(transaction1.blockL2);
         } else {
-            challengeAccepted(block2);
+            challengeAccepted(transaction2.blockL2);
         }
     }
 
@@ -122,133 +161,113 @@ contract Challenges is Stateful, Key_Registry, Config {
   (i.e. a trivial duplicate).
   */
     function challengeNullifier(
-        Block calldata block1,
-        Block calldata block2,
-        Transaction[] calldata transactions1,
-        Transaction[] calldata transactions2,
-        uint256 transaction1Index,
-        uint256 transaction2Index,
+        TransactionInfoBlock calldata transaction1,
+        TransactionInfoBlock calldata transaction2,
         uint256 nullifier1Index,
         uint256 nullifier2Index,
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
+
+        // first, check we have real, in-train, contiguous blocks
+        state.areBlockAndTransactionReal(
+            transaction1.blockL2,
+            transaction1.transaction,
+            transaction1.transactionIndex,
+            transaction1.transactionSiblingPath
+        );
+        state.areBlockAndTransactionReal(
+            transaction2.blockL2,
+            transaction2.transaction,
+            transaction2.transactionIndex,
+            transaction2.transactionSiblingPath
+        );
+
+        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+            require(
+                transaction1.transactionIndex != transaction2.transactionIndex,
+                'Cannot be the same transactionIndex'
+            );
+        }
+
         ChallengesUtil.libChallengeNullifier(
-            transactions1[transaction1Index],
+            transaction1.transaction,
             nullifier1Index,
-            transactions2[transaction2Index],
+            transaction2.transaction,
             nullifier2Index
         );
-        // If the duplicate exists in the same block, the index cannot be the same
-        if (block1.blockNumberL2 == block2.blockNumberL2)
-            require(transaction1Index != transaction2Index, 'Cannot be the same index');
-        // first, check we have real, in-train, contiguous blocks
-        state.areBlockAndTransactionsReal(block1, transactions1);
-        state.areBlockAndTransactionsReal(block2, transactions2);
+
         // Delete the latest block of the two
-        if (block1.blockNumberL2 > block2.blockNumberL2) {
-            challengeAccepted(block1);
+        if (transaction1.blockL2.blockNumberL2 > transaction2.blockL2.blockNumberL2) {
+            challengeAccepted(transaction1.blockL2);
         } else {
-            challengeAccepted(block2);
+            challengeAccepted(transaction2.blockL2);
         }
     }
 
     function challengeProofVerification(
-        Block calldata blockL2,
-        Transaction[] calldata transactions,
-        uint256 transactionIndex,
+        TransactionInfoBlock calldata transaction,
         Block[4] calldata blockL2ContainingHistoricRoot,
-        Transaction[][4] calldata transactionsOfblockL2ContainingHistoricRoot,
         uint256[8] memory uncompressedProof,
         bytes32 salt
     ) external onlyBootChallenger {
         checkCommit(msg.data);
-        state.areBlockAndTransactionsReal(blockL2, transactions);
+        state.areBlockAndTransactionReal(
+            transaction.blockL2,
+            transaction.transaction,
+            transaction.transactionIndex,
+            transaction.transactionSiblingPath
+        );
 
         PublicInputs memory extraPublicInputs = PublicInputs(
             [uint256(0), 0, 0, 0],
             super.getMaticAddress()
         );
 
-        if (uint256(transactions[transactionIndex].nullifiers[0]) != 0) {
-            state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRoot[0],
-                transactionsOfblockL2ContainingHistoricRoot[0]
-            );
-            require(
-                transactions[transactionIndex].historicRootBlockNumberL2[0] ==
-                    blockL2ContainingHistoricRoot[0].blockNumberL2,
-                'Incorrect historic root block'
-            );
-            extraPublicInputs.roots[0] = uint256(blockL2ContainingHistoricRoot[0].root);
-        }
+        for (uint256 i = 0; i < 4; ++i) {
+            if (uint256(transaction.transaction.nullifiers[i]) != 0) {
+                state.isBlockReal(blockL2ContainingHistoricRoot[i]);
 
-        if (uint256(transactions[transactionIndex].nullifiers[1]) != 0) {
-            state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRoot[1],
-                transactionsOfblockL2ContainingHistoricRoot[1]
-            );
-            require(
-                transactions[transactionIndex].historicRootBlockNumberL2[1] ==
-                    blockL2ContainingHistoricRoot[1].blockNumberL2,
-                'Incorrect historic root block'
-            );
-            extraPublicInputs.roots[1] = uint256(blockL2ContainingHistoricRoot[1].root);
-        }
+                require(
+                    transaction.transaction.historicRootBlockNumberL2[i] ==
+                        blockL2ContainingHistoricRoot[i].blockNumberL2,
+                    'Incorrect historic root block'
+                );
 
-        if (uint256(transactions[transactionIndex].nullifiers[2]) != 0) {
-            state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRoot[2],
-                transactionsOfblockL2ContainingHistoricRoot[2]
-            );
-            require(
-                transactions[transactionIndex].historicRootBlockNumberL2[2] ==
-                    blockL2ContainingHistoricRoot[2].blockNumberL2,
-                'Incorrect historic root block'
-            );
-            extraPublicInputs.roots[2] = uint256(blockL2ContainingHistoricRoot[2].root);
-        }
-
-        if (uint256(transactions[transactionIndex].nullifiers[3]) != 0) {
-            state.areBlockAndTransactionsReal(
-                blockL2ContainingHistoricRoot[3],
-                transactionsOfblockL2ContainingHistoricRoot[3]
-            );
-            require(
-                transactions[transactionIndex].historicRootBlockNumberL2[3] ==
-                    blockL2ContainingHistoricRoot[3].blockNumberL2,
-                'Incorrect historic root block'
-            );
-            extraPublicInputs.roots[3] = uint256(blockL2ContainingHistoricRoot[3].root);
+                extraPublicInputs.roots[i] = uint256(blockL2ContainingHistoricRoot[i].root);
+            }
         }
 
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
-            transactions[transactionIndex],
+            transaction.transaction,
             extraPublicInputs,
             uncompressedProof,
-            vks[transactions[transactionIndex].transactionType]
+            vks[transaction.transaction.transactionType]
         );
-        challengeAccepted(blockL2);
+        challengeAccepted(transaction.blockL2);
     }
 
-    function challengeHistoricRoot(
-        Block calldata blockL2,
-        Transaction[] calldata transactions,
-        uint256 transactionIndex
-    ) external onlyBootChallenger {
+    function challengeHistoricRootBlockNumber(TransactionInfoBlock calldata transaction)
+        external
+        onlyBootChallenger
+    {
         checkCommit(msg.data);
-        state.areBlockAndTransactionsReal(blockL2, transactions);
-        require(
-          (
-            transactions[transactionIndex].historicRootBlockNumberL2[0] >= state.getNumberOfL2Blocks() ||
-            transactions[transactionIndex].historicRootBlockNumberL2[1] >= state.getNumberOfL2Blocks() ||
-            transactions[transactionIndex].historicRootBlockNumberL2[2] >= state.getNumberOfL2Blocks() ||
-            transactions[transactionIndex].historicRootBlockNumberL2[3] >= state.getNumberOfL2Blocks()
-          ),
-          'Historic roots are not greater than L2BlockNumber on chain'
+        state.areBlockAndTransactionReal(
+            transaction.blockL2,
+            transaction.transaction,
+            transaction.transactionIndex,
+            transaction.transactionSiblingPath
         );
-        challengeAccepted(blockL2);
+        for (uint256 i = 0; i < 4; ++i) {
+            if (
+                transaction.transaction.historicRootBlockNumberL2[i] >= state.getNumberOfL2Blocks()
+            ) {
+                challengeAccepted(transaction.blockL2);
+            }
+        }
+
+        require(false, 'Historic roots are not greater than L2BlockNumber on chain');
     }
 
     // This gets called when a challenge succeeds

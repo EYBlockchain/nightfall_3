@@ -17,12 +17,12 @@ import {
   addSignedTransaction,
 } from '../services/helpers.mjs';
 import { web3, waitForContract } from '../../../common-files/utils/contract.mjs';
+import logger from '../../../common-files/utils/logger.mjs';
 
 const { MULTISIG } = config;
 const { SIGNATURE_THRESHOLD } = MULTISIG;
-/**
-UI control loop
-*/
+
+// UI control loop
 async function start() {
   let approved = []; // if we have enough signatures, the signed data is returned
   const {
@@ -31,8 +31,6 @@ async function start() {
     tokenName,
     depositRestriction,
     withdrawRestriction,
-    pause,
-    unpause,
     newEthereumSigningKey,
     executorAddress,
     nonce,
@@ -42,10 +40,14 @@ async function start() {
   if (workflow === 'create') {
     switch (task) {
       case 'Get token restrictions': {
-        console.log('Token restrictions are:');
         const [deposit, withdraw] = await getTokenRestrictions(tokenName);
-        console.log('deposit:', deposit);
-        console.log('withdraw:', withdraw);
+
+        logger.info({
+          msg: 'Token restrictions are',
+          deposit,
+          withdraw,
+        });
+
         break;
       }
       case 'Set token restrictions': {
@@ -69,13 +71,10 @@ async function start() {
         break;
       }
       case 'Unpause contracts': {
-        if (!unpause) break;
-        console.log('CALLING unpauseContracts');
         approved = await unpauseContracts(ethereumSigningKey, executorAddress, nonce);
         break;
       }
       case 'Pause contracts': {
-        if (!pause) break;
         approved = await pauseContracts(ethereumSigningKey, executorAddress, nonce);
         break;
       }
@@ -107,7 +106,7 @@ async function start() {
         break;
       }
       default: {
-        console.log('This option has not been implemented');
+        logger.info('This option has not been implemented');
       }
     }
   }
@@ -126,23 +125,34 @@ async function start() {
   }
   if (workflow === 'get nonce') {
     try {
-      if (!nonce) {
+      let nonceTmp = nonce;
+      if (!nonceTmp) {
         const multiSigInstance = await waitForContract('SimpleMultiSig');
-        console.log('Nonce is', await multiSigInstance.methods.nonce().call());
-      } else console.log('Nonce is', nonce);
+        nonceTmp = await multiSigInstance.methods.nonce().call();
+      }
+      logger.info({
+        msg: 'get nonce',
+        nonceTmp,
+      });
     } catch (err) {
-      console.log('Could not get nonce.  Are you connected to the blockchain?');
+      logger.error({
+        msg: 'Could not get nonce. Are you connected to the blockchain?',
+        err,
+      });
     }
   }
-  // execute the transaction if we have enough signatures, we need to ask an additional question
-  // to get the signing key
-  // Sometimes we sign more than on transaction at a time (for example if we wish to pause several
-  // contracts).  Hence 'approved' is an array of arrays (each element being the approvals for a given contract)
+
+  /*
+   execute the transaction if we have enough signatures, we need to ask an additional question
+   to get the signing key
+   Sometimes we sign more than on transaction at a time (for example if we wish to pause several
+   contracts).  Hence 'approved' is an array of arrays (each element being the approvals for a given contract)
+  */
   let executor;
   for (const approval of approved) {
     if (approval?.length === SIGNATURE_THRESHOLD) {
       if (!executor) executor = (await askQuestions(true)).executor; // get the executor private key if we don't have it
-      console.log('Executing multisig transaction');
+      logger.info('Executing multisig transaction');
       await executeMultiSigTransaction(approval.slice(0, SIGNATURE_THRESHOLD), executor);
     }
   }

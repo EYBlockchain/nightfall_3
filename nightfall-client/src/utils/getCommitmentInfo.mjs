@@ -1,7 +1,7 @@
 import gen from 'general-number';
-import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import constants from 'common-files/constants/index.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import {
   clearPending,
@@ -13,7 +13,7 @@ import { ZkpKeys } from '../services/keys.mjs';
 
 const { GN, generalise } = gen;
 
-const { BN128_GROUP_ORDER } = config;
+const { BN128_GROUP_ORDER } = constants;
 
 // eslint-disable-next-line import/prefer-default-export
 export const getCommitmentInfo = async txInfo => {
@@ -35,8 +35,7 @@ export const getCommitmentInfo = async txInfo => {
 
   const tokenIdArray = recipientZkpPublicKeysArray.map(() => tokenId);
 
-  const addedFee =
-    maticAddress.hex(32).toLowerCase() === ercAddress.hex(32).toLowerCase() ? fee.bigInt : 0n;
+  const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
 
   logger.debug(`Fee will be added as part of the transaction commitments: ${addedFee > 0n}`);
 
@@ -132,9 +131,12 @@ export const getCommitmentInfo = async txInfo => {
     const leafIndices = commitmentTreeInfo.map(l => l.leafIndex);
     const blockNumberL2s = commitmentTreeInfo.map(l => l.isOnChain);
     const roots = commitmentTreeInfo.map(l => l.root);
-    logger.info(
-      `Constructing transaction with blockNumberL2s ${blockNumberL2s} and roots ${roots}`,
-    );
+
+    logger.info({
+      msg: 'Constructing transfer transaction with blockNumberL2s and roots',
+      blockNumberL2s,
+      roots,
+    });
 
     return {
       oldCommitments: spentCommitments,
@@ -147,7 +149,7 @@ export const getCommitmentInfo = async txInfo => {
       salts,
     };
   } catch (err) {
-    logger.error('Error', err);
+    logger.error(err);
     await Promise.all(spentCommitments.map(o => clearPending(o)));
     throw err;
   }

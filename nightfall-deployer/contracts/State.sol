@@ -49,7 +49,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         initialize();
     }
 
-    modifier onlyRegistered {
+    modifier onlyRegistered() {
         require(
             msg.sender == proposersAddress ||
                 msg.sender == challengesAddress ||
@@ -59,7 +59,22 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         _;
     }
 
-    modifier onlyCurrentProposer {
+    modifier onlyShield() {
+        require(msg.sender == shieldAddress, 'Only shield contract is authorized');
+        _;
+    }
+
+    modifier onlyProposer() {
+        require(msg.sender == proposersAddress, 'Only proposer contract is authorized');
+        _;
+    }
+
+    modifier onlyChallenger() {
+        require(msg.sender == challengesAddress, 'Only challenger contract is authorized');
+        _;
+    }
+
+    modifier onlyCurrentProposer() {
         // Modifier
         require(
             msg.sender == currentProposer.thisAddress,
@@ -105,38 +120,90 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
             }
         }
 
-        setFeeBookInfo(b.proposer, b.blockNumberL2, feePaymentsEth, feePaymentsMatic);
+        bytes32 input = keccak256(abi.encodePacked(b.proposer, b.blockNumberL2));
+        feeBook[input][0] = feePaymentsEth;
+        feeBook[input][1] = feePaymentsMatic;
 
         bytes32 blockHash;
+
+        uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
+        uint256 transactionSlots = TRANSACTION_STRUCTURE_SLOTS; //Number of slots that the transaction structure has
+
+        //Get the signature for the function that checks if the transaction has been escrowed or not
+        bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(bytes32)')); //Function signature
+
         assembly {
-            let blockPos := mload(0x40) // get empty memory location pointer
-            calldatacopy(blockPos, 4, add(mul(t.length, 0x300), 0x100)) // copy calldata into this location. 0x300 is 768 bytes of data for each transaction. 0x100 is 192 bytes of block data, 32 bytes for transactions array memory and size each. TODO skip this by passing parameters in memory. But inline assembly to destructure struct array is not straight forward
-            let transactionPos := add(blockPos, 0x100) // calculate memory location of transactions data copied
-            let transactionHashesPos := add(transactionPos, mul(t.length, 0x300)) // calculate memory location to store transaction hashes to be calculated
-            // calculate and store transaction hashes
+            //Function that calculates the height of the Merkle Tree
+            function getTreeHeight(leaves) -> _height {
+                _height := 1
+                for {
+
+                } lt(exp(2, _height), leaves) {
+
+                } {
+                    _height := add(_height, 1)
+                }
+            }
+
+            let x := mload(0x40) //Gets the first free memory pointer
+            let blockPos := add(x, mul(0x20, 2)) //Save two slots of 32 bytes for calling external libraries
+            calldatacopy(blockPos, 0x04, mul(0x20, blockSlots)) //Copy the block structure into blockPos
+            let transactionHashesPos := add(blockPos, mul(0x20, blockSlots)) // calculate memory location of the transaction hashes
+            let transactionPos := add(
+                // calculate memory location of transactions
+                transactionHashesPos,
+                mul(0x20, exp(2, getTreeHeight(t.length)))
+            )
+
             for {
                 let i := 0
             } lt(i, t.length) {
                 i := add(i, 1)
             } {
+                // Copy the transaction into transactionPos
+                calldatacopy(
+                    transactionPos,
+                    add(t.offset, mul(mul(0x20, transactionSlots), i)),
+                    mul(0x20, transactionSlots)
+                )
+
+                // Calculate the hash of the transaction and store it in transactionHashesPos
                 mstore(
                     add(transactionHashesPos, mul(0x20, i)),
-                    keccak256(add(transactionPos, mul(0x300, i)), 0x300)
+                    keccak256(transactionPos, mul(0x20, transactionSlots))
                 )
+
+                // Get the transaction type
+                let transactionType := calldataload(
+                    add(t.offset, add(mul(mul(0x20, transactionSlots), i), mul(0x20, 2)))
+                )
+
+                // If the transactionType is zero (aka deposit), we need to check if the funds were escrowed
+                if iszero(transactionType) {
+                    mstore(x, checkTxEscrowedSignature) //Store the signature of the function in x
+                    mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
+                    pop(
+                        call(
+                            // Call getTransactionEscrowed function to see if funds has been deposited
+                            gas(),
+                            shieldAddress.slot, //To addr
+                            0, //No value
+                            x, //Inputs are stored at location x
+                            0x24, //Inputs are 36 bytes long
+                            x, //Store output over input (saves space)
+                            0x20 //Outputs are 32 bytes long
+                        )
+                    )
+                    //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
+                    if iszero(mload(x)) {
+                        revert(0, 0)
+                    }
+                }
             }
-            let transactionHashesRoot
-            // calculate and store transaction hashes root
-            let height := 1
+
+            //Calculate the root of the transactions merkle tree
             for {
-
-            } lt(exp(2, height), t.length) {
-
-            } {
-                height := add(height, 1)
-            }
-
-            for {
-                let i := height
+                let i := getTreeHeight(t.length)
             } gt(i, 0) {
                 i := sub(i, 1)
             } {
@@ -148,23 +215,28 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
                     let left := mload(add(transactionHashesPos, mul(mul(0x20, j), 2)))
                     let right := mload(add(transactionHashesPos, add(mul(mul(0x20, j), 2), 0x20)))
                     if eq(and(iszero(left), iszero(right)), 1) {
-                        transactionHashesRoot := 0
-                    } // returns bool
+                        mstore(add(transactionHashesPos, mul(0x20, j)), 0)
+                    }
                     if eq(and(iszero(left), iszero(right)), 0) {
-                        transactionHashesRoot := keccak256(
-                            add(transactionHashesPos, mul(mul(0x20, j), 2)),
-                            0x40
+                        mstore(
+                            add(transactionHashesPos, mul(0x20, j)),
+                            keccak256(add(transactionHashesPos, mul(mul(0x20, j), 2)), 0x40)
                         )
-                    } // returns bool
-                    mstore(add(transactionHashesPos, mul(0x20, j)), transactionHashesRoot)
+                    }
                 }
             }
             // check if the transaction hashes root calculated equal to the one passed as part of block data
-            if eq(eq(mload(add(blockPos, mul(5, 0x20))), transactionHashesRoot), 0) {
+            if eq(
+                eq(
+                    mload(add(blockPos, mul(sub(blockSlots, 1), 0x20))),
+                    mload(transactionHashesPos)
+                ),
+                0
+            ) {
                 revert(0, 0)
             }
             // calculate block hash
-            blockHash := keccak256(blockPos, mul(6, 0x20))
+            blockHash := keccak256(blockPos, mul(blockSlots, 0x20))
         }
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain
@@ -190,7 +262,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         emit Rollback(blockNumberL2ToRollbackTo);
     }
 
-    function setProposer(address addr, LinkedAddress calldata proposer) public onlyRegistered {
+    function setProposer(address addr, LinkedAddress calldata proposer) public onlyProposer {
         proposers[addr] = proposer;
     }
 
@@ -198,11 +270,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return proposers[addr];
     }
 
-    function deleteProposer(address addr) public onlyRegistered {
-        delete proposers[addr];
-    }
-
-    function setCurrentProposer(address proposer) public onlyRegistered {
+    function setCurrentProposer(address proposer) public onlyProposer {
         currentProposer = proposers[proposer];
     }
 
@@ -219,22 +287,12 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return (feeBook[input][0], feeBook[input][1]);
     }
 
-    function setFeeBookInfo(
-        address proposer,
-        uint256 blockNumberL2,
-        uint256 feePaymentsEth,
-        uint256 feePaymentsMatic
-    ) public {
+    function resetFeeBookInfo(address proposer, uint256 blockNumberL2) public onlyShield {
         bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
-        feeBook[input][0] = feePaymentsEth;
-        feeBook[input][1] = feePaymentsMatic;
+        delete feeBook[input];
     }
 
-    function pushBlockData(BlockData calldata bd) public onlyRegistered {
-        blockHashes.push(bd);
-    }
-
-    function popBlockData() public onlyRegistered returns (BlockData memory) {
+    function popBlockData() public onlyChallenger returns (BlockData memory) {
         // oddly .pop() doesn't return the 'popped' element
         BlockData memory popped = blockHashes[blockHashes.length - 1];
         blockHashes.pop();
@@ -245,21 +303,8 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return blockHashes[blockNumberL2];
     }
 
-    /*
-  return all of the block data as an array.  This lets us do off-chain
-  reverse lookups
-  */
-    function getAllBlockData() public view returns (BlockData[] memory) {
-        return blockHashes;
-    }
-
     function getNumberOfL2Blocks() public view returns (uint256) {
         return blockHashes.length;
-    }
-
-    function getLatestBlockHash() public view returns (bytes32) {
-        if (blockHashes.length != 0) return blockHashes[blockHashes.length - 1].blockHash;
-        else return Config.ZERO;
     }
 
     function addPendingWithdrawal(
@@ -290,7 +335,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         }
     }
 
-    function setProposerStartBlock(uint256 sb) public onlyRegistered {
+    function setProposerStartBlock(uint256 sb) public onlyProposer {
         proposerStartBlock = sb;
     }
 
@@ -311,13 +356,14 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         emit NewCurrentProposer(currentProposer.thisAddress);
     }
 
-    function updateProposer(address proposer, string calldata url) public onlyRegistered {
+    function updateProposer(address proposer, string calldata url) public onlyProposer {
         proposers[proposer].url = url;
     }
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
-    // block).
+    // block). It also checks that the transactions sent as a calldata are all contained
+    //in the block by performing its hash and comparing it to the value stored in the block
     function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts)
         public
         view
@@ -333,6 +379,19 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return blockHash;
     }
 
+    // Checks if a block is actually referenced in the queue of blocks waiting
+    // to go into the Shield state (stops someone challenging with a non-existent
+    // block).
+    function isBlockReal(Block calldata b) public view returns (bytes32) {
+        bytes32 blockHash = Utils.hashBlock(b);
+        require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
+
+        return blockHash;
+    }
+
+    // Checks if a block is actually referenced in the queue of blocks waiting
+    // to go into the Shield state (stops someone challenging with a non-existent
+    // block). It also checks if a transaction is contained in a block using its sibling path
     function areBlockAndTransactionReal(
         Block calldata b,
         Transaction calldata t,
@@ -349,7 +408,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         require(valid, 'Transaction does not exist in block');
     }
 
-    function setBondAccount(address addr, uint256 amount) public onlyRegistered {
+    function setBondAccount(address addr, uint256 amount) public onlyProposer {
         bondAccounts[addr] = TimeLockedBond(amount, 0);
     }
 
@@ -361,14 +420,14 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         address challengerAddr,
         address proposer,
         uint256 numRemoved
-    ) public onlyRegistered {
+    ) public onlyChallenger {
         removeProposer(proposer);
         TimeLockedBond memory bond = bondAccounts[proposer];
         bondAccounts[proposer] = TimeLockedBond(0, 0);
         pendingWithdrawals[challengerAddr][0] += bond.amount + numRemoved * BLOCK_STAKE;
     }
 
-    function updateBondAccountTime(address addr, uint256 time) public onlyRegistered {
+    function updateBondAccountTime(address addr, uint256 time) public onlyProposer {
         TimeLockedBond memory bond = bondAccounts[addr];
         bond.time = time;
         bondAccounts[addr] = bond;

@@ -6,5 +6,6 @@ module.exports = {
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 8081,
   OPTIMIST_WS_PORT: process.env.OPTIMIST_WS_PORT || 8082,
   BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'localhost',
+  BLOCKCHAIN_PATH: process.env.BLOCKCHAIN_PATH || '',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || 8546,
 };

@@ -72,12 +72,12 @@ const tokensList = {
     {
       chainId: 5,
       name: 'Staked MATIC',
-      symbol: 'stMATIC',
+      symbol: 'STMATIC',
       decimals: 18,
       address: '0x9A7c69A167160C507602ecB3Df4911e8E98e1279',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/matic.svg',
       tags: ['pos', 'erc20'],
-      id: 'stmatic',
+      id: 'lido-staked-matic',
       restrictions: {
         withdraw: '1000000000',
         deposit: '250000000',

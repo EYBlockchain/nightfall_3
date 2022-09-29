@@ -90,7 +90,7 @@ this point.
 
 ### To end the application
 
-To stop the application, you can run `docker-compose down` and it should exit cleanly.
+To stop the application, you can run `npm run nightfall-down` and it should exit cleanly.
 
 ## Testing
 
@@ -196,13 +196,13 @@ SDK API is documented in `./doc/lib/Nf3.html` and is provided by the NF_3 class 
 
 ## Apps
 
-Nightfall_3 provides some reference applications (which make use of the SDK) so that you can exercise its features. To
-use it:
+Nightfall_3 provides some reference applications (which make use of the SDK) so that you can
+exercise its features. To use it:
 
 - run up nightfall_3 as described above and wait for the deployment to complete;
 - in the `apps` folder there are small applications like `proposer` or `challenger` you can run with
-  `npm start`. For example, `proposer` will start a small application running which will sign block
-  proposal transactions;
+  `./start-apps`. For example, `proposer` will start a small application running which will sign
+  block proposal transactions;
 
 ## Limitations
 

@@ -33,7 +33,10 @@
     "pino-pretty": "^8.1.0",
     "safe-buffer": "^5.2.1",
     "truffle": "^5.5.28",
-    "web3": "^1.7.5"
+    "web3": "^1.7.5",
+    "cls-hooked": "^4.2.2",
+    "uuid": "^8.3.2",
+    "express-fileupload": "^1.4.0"
   },
   "devDependencies": {
     "@openzeppelin/truffle-upgrades": "^1.13.0",
@@ -44,7 +47,13 @@
     "web3-bzz": {
       "got": "11.8.5"
     },
+    "swarm-js": {
+      "got": "11.8.5"
+    },
     "yargs": {
+      "yargs-parser": "5.0.1"
+    },
+    "solc": {
       "yargs-parser": "5.0.1"
     }
   }

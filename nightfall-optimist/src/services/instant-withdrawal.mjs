@@ -11,7 +11,8 @@ export const advanceWithdrawal = async transaction => {
     const txDataToSign = await shieldContractInstance.methods
       .advanceWithdrawal(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
-    logger.info(`txDataToSign : ${txDataToSign}`);
+
+    logger.info({ msg: 'Transaction data to sign', txDataToSign });
 
     return { txDataToSign };
   } catch (error) {

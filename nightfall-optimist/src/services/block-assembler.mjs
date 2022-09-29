@@ -1,9 +1,9 @@
 /* eslint-disable no-await-in-loop */
 
 /**
-This module does all of the heaving lifting for a Proposer: It assembles blocks
-from posted transactions and proposes these blocks.
-*/
+ * This module does all of the heaving lifting for a Proposer: It assembles blocks
+ * from posted transactions and proposes these blocks.
+ */
 import WebSocket from 'ws';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
@@ -62,23 +62,24 @@ async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
   // we retrieve un-processed transactions from our local database, relying on
   // the transaction service to keep the database current
   const transactions = await getMostProfitableTransactions(number);
-  // then we make new block objects until we run out of unprocessed
-  // transactions
+  // then we make new block objects until we run out of unprocessed transactions
   const block = await Block.build({ proposer, transactions });
   return { block, transactions };
 }
 
 /**
-This function will make a block iff I am the proposer and there are enough
-transactions in the database to assembke a block from. It loops until told to
-stop making blocks. It is called from the 'main()' routine to start it, and
-should not be called from anywhere else because we only want one instance ever
-*/
+ * This function will make a block iff I am the proposer and there are enough
+ * transactions in the database to assembke a block from. It loops until told to
+ * stop making blocks. It is called from the 'main()' routine to start it, and
+ * should not be called from anywhere else because we only want one instance ever
+ */
 export async function conditionalMakeBlock(proposer) {
-  // if we are the current proposer, and there are enough transactions waiting
-  // to be processed, we can assemble a block and create a proposal
-  // transaction. If not, we must wait until either we have enough (hooray)
-  // or we're no-longer the proposer (boo).
+  /*
+    if we are the current proposer, and there are enough transactions waiting
+    to be processed, we can assemble a block and create a proposal
+    transaction. If not, we must wait until either we have enough (hooray)
+    or we're no-longer the proposer (boo).
+   */
   if (proposer.isMe) {
     const unprocessed = await numberOfUnprocessedTransactions();
     let numberOfProposableL2Blocks = Math.floor(unprocessed / TRANSACTIONS_PER_BLOCK);
@@ -89,10 +90,16 @@ export async function conditionalMakeBlock(proposer) {
 
     if (numberOfProposableL2Blocks >= 1) {
       // TODO set an upper limit to numberOfProposableL2Blocks because a proposer
-      // might not be able to submit a large number of blocks before the next proposer becomes
-      // the current proposer. In this case, this proposer's transactions will still be mined but
-      // the transactions will fail and proposer will lose gas fees
-      logger.debug(`Block Assembler will create ${numberOfProposableL2Blocks} blocks at once`);
+      /*
+        might not be able to submit a large number of blocks before the next proposer becomes
+        the current proposer. In this case, this proposer's transactions will still be mined but
+        the transactions will fail and proposer will lose gas fees
+      */
+      logger.debug({
+        msg: 'Block Assembler will create blocks at once',
+        numberOfProposableL2Blocks,
+      });
+
       for (let i = 0; i < numberOfProposableL2Blocks; i++) {
         // work out if this is a normal size block or a short one
         const numberOfTransactionsInBlock =
@@ -102,7 +109,12 @@ export async function conditionalMakeBlock(proposer) {
           proposer.address,
           numberOfTransactionsInBlock,
         );
-        logger.info(`Block Assembler - New Block created, ${JSON.stringify(block, null, 2)}`);
+
+        logger.info({
+          msg: 'Block Assembler - New Block created',
+          block: JSON.stringify(block, null, 2),
+        });
+
         // propose this block to the Shield contract here
         const unsignedProposeBlockTransaction = await (
           await waitForContract(STATE_CONTRACT_NAME)
@@ -112,12 +124,15 @@ export async function conditionalMakeBlock(proposer) {
             transactions.map(t => Transaction.buildSolidityStruct(t)),
           )
           .encodeABI();
+
         // check that the websocket exists (it should) and its readyState is OPEN
         // before sending Proposed block. If not wait until the proposer reconnects
         let tryCount = 0;
         while (!ws || ws.readyState !== WebSocket.OPEN) {
           await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+
           logger.warn(`Websocket to proposer is closed.  Waiting for proposer to reconnect`);
+
           increaseProposerWsClosed();
           if (tryCount++ > 100) {
             increaseProposerWsFailed();
@@ -136,10 +151,10 @@ export async function conditionalMakeBlock(proposer) {
           logger.debug('Send unsigned block-assembler transactions to ws client');
         } else if (ws) {
           increaseProposerBlockNotSent();
-          logger.debug('Block not sent. Socket state', ws.readyState);
+          logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
         } else {
           increaseProposerBlockNotSent();
-          logger.debug('Block not sent. uinitialized socket');
+          logger.debug('Block not sent. Uinitialized socket');
         }
         // remove the transactions from the mempool so we don't keep making new
         // blocks with them

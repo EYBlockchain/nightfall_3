@@ -22,8 +22,8 @@ import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
 
-const { BN128_GROUP_ORDER, USE_STUBS } = global.config;
-const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
+const { USE_STUBS } = global.config;
+const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.nightfallConstants;
 const { generalise } = gen;
 const circuitName = USE_STUBS ? 'deposit_stub' : 'deposit';
 
@@ -31,8 +31,8 @@ async function deposit(items, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { ercAddress, tokenId, value, compressedZkpPublicKey, nullifierKey, fee } =
-    generalise(items);
+  const { tokenId, value, compressedZkpPublicKey, nullifierKey, fee } = generalise(items);
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
   const shieldContractInstance = await getContractInstance(

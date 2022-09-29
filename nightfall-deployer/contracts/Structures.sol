@@ -6,9 +6,17 @@ Basic data structures for an optimistic rollup
 pragma solidity ^0.8.0;
 
 contract Structures {
-    enum TransactionTypes {DEPOSIT, TRANSFER, WITHDRAW}
+    enum TransactionTypes {
+        DEPOSIT,
+        TRANSFER,
+        WITHDRAW
+    }
 
-    enum TokenType {ERC20, ERC721, ERC1155}
+    enum TokenType {
+        ERC20,
+        ERC721,
+        ERC1155
+    }
 
     event Rollback(uint256 blockNumberL2);
 
@@ -54,11 +62,12 @@ contract Structures {
     }
 
     struct Block {
-        uint48 leafCount; // note this is defined to be the number of leaves BEFORE the commitments in this block are added
+        uint48 leafCount; // note this is defined to be the number of leaves AFTER the commitments in this block are added
         address proposer;
         bytes32 root; // the 'output' commmitment root after adding all commitments
         uint256 blockNumberL2;
         bytes32 previousBlockHash;
+        bytes32 frontierHash;
         bytes32 transactionHashesRoot;
     }
 
@@ -87,5 +96,12 @@ contract Structures {
     struct PublicInputs {
         uint256[4] roots;
         address maticAddress;
+    }
+
+    struct TransactionInfoBlock {
+        Block blockL2;
+        Transaction transaction;
+        uint256 transactionIndex;
+        bytes32[] transactionSiblingPath;
     }
 }

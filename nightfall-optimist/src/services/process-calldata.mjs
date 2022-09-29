@@ -22,14 +22,22 @@ export async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root, blockNumberL2, previousBlockHash, transactionHashesRoot] =
-    blockData;
+  const [
+    leafCount,
+    proposer,
+    root,
+    blockNumberL2,
+    previousBlockHash,
+    frontierHash,
+    transactionHashesRoot,
+  ] = blockData;
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
     blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
+    frontierHash,
     transactionHashesRoot,
   };
   const transactions = transactionsData.map(t => {
@@ -75,8 +83,6 @@ export async function getProposeBlockCalldata(eventData) {
     .map(t => t.commitments.filter(c => c !== ZERO))
     .flat(Infinity).length;
   block.transactionHashes = transactions.map(t => t.transactionHash);
-  // currentLeafCount holds the count of the next leaf to be added
-  // const currentLeafCount = Number(block.nCommitments) + Number(leafCount);
   return { block, transactions };
 }
 

@@ -1,65 +1,50 @@
+/* eslint-disable no-await-in-loop */
 /**
 module to initialise the proposers, challenges and shield contracts with the
 address of the contract that holds global state (State.sol)
 */
 
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
-import { waitForContract, getContractAddress } from 'common-files/utils/contract.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
-async function setupCircuits() {
-  const stateInstance = await waitForContract('State');
-  logger.debug(`address of State contract is ${stateInstance.options.address}`);
+async function setupContracts() {
+  const proposersContract = await getContractInstance('Proposers');
+  const shieldContract = await getContractInstance('Shield');
+  const challengesContract = await getContractInstance('Challenges');
+  const stateContract = await getContractInstance('State');
+  const stateAddress = stateContract.options.address;
+  const simpleMultiSigAddress = (await getContractInstance('SimpleMultiSig')).options.address;
+  logger.debug(`address of State contract is ${stateAddress}`);
 
-  // when deploying on infura
-  // do serial registration to predict nonce
-  // or, if we have the owner's private key, sign with that, rather than use an unlocked account
-  if (config.ETH_PRIVATE_KEY) {
-    await Web3.submitRawTransaction(
-      (await waitForContract('Proposers')).methods
-        .setStateContract(stateInstance.options.address)
-        .encodeABI(),
-      await getContractAddress('Proposers'),
-    );
-    await Web3.submitRawTransaction(
-      (await waitForContract('Shield')).methods
-        .setStateContract(stateInstance.options.address)
-        .encodeABI(),
-      await getContractAddress('Shield'),
-    );
-    return Web3.submitRawTransaction(
-      (await waitForContract('Challenges')).methods
-        .setStateContract(stateInstance.options.address)
-        .encodeABI(),
-      await getContractAddress('Challenges'),
-    );
+  const contractsState = [proposersContract, shieldContract, challengesContract];
+  const contractsOwnables = [proposersContract, shieldContract, challengesContract, stateContract];
+
+  // set State
+  // Need to call setStateContract 1 by 1 or transaction fails
+  for (const contractState of contractsState) {
+    const setStateContract = contractState.methods.setStateContract(stateAddress);
+    if (!config.ETH_PRIVATE_KEY) {
+      await setStateContract.send();
+    } else {
+      await Web3.submitRawTransaction(setStateContract.encodeABI(), contractState.options.address);
+    }
   }
-  // the following code runs the registrations in parallel
-  await Promise.all([
-    (await waitForContract('Proposers')).methods
-      .setStateContract(stateInstance.options.address)
-      .send(),
-    (await waitForContract('Shield')).methods
-      .setStateContract(stateInstance.options.address)
-      .send(),
-    (await waitForContract('Challenges')).methods
-      .setStateContract(stateInstance.options.address)
-      .send(),
-  ]);
-  // our last action as the deployer is to hand off our onlyOwner powers to the
-  // multisig contract
-  const simpleMultiSigAddress = (await waitForContract('SimpleMultiSig')).options.address;
-  const shieldContractInstance = await waitForContract('Shield');
-  const stateContractInstance = await waitForContract('State');
-  const proposerContractInstance = await waitForContract('Proposers');
-  const challengesContractInstance = await waitForContract('Challenges');
-  return Promise.all([
-    shieldContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
-    stateContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
-    proposerContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
-    challengesContractInstance.methods.transferOwnership(simpleMultiSigAddress).send(),
-  ]);
+
+  // transfer ownership
+  // Need to call transferOwnership 1 by 1 or transaction fails
+  for (const contractOwnable of contractsOwnables) {
+    const transferOwnership = contractOwnable.methods.transferOwnership(simpleMultiSigAddress);
+    if (!config.ETH_PRIVATE_KEY) {
+      await transferOwnership.send();
+    } else {
+      await Web3.submitRawTransaction(
+        transferOwnership.encodeABI(),
+        contractOwnable.options.address,
+      );
+    }
+  }
 }
 
-export default setupCircuits;
+export default setupContracts;

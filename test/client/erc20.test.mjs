@@ -36,9 +36,10 @@ describe('ERC20 tests', () => {
 
   before(async () => {
     logger.info('Environment', environment);
-    // console.log('ENV', environment);
+
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
+
     erc20Address = '0x499d11e0b6eac7c0593d8fb292dcbbf815fb29ae'; // MATIC
 
     stateAddress = await nf3Users[0].stateContractAddress;

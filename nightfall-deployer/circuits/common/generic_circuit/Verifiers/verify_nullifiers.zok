@@ -1,9 +1,6 @@
-from "ecc/babyjubjubParams" import BabyJubJubParams, main as curveParams
-from "ecc/edwardsScalarMult" import main as scalarMult
-from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256
-from "hashes/poseidon/poseidon.zok" import main as poseidon
-from "../../utils/structures.zok" import Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN
-from "../../merkle-tree/path-check.zok" import main as pathCheck
+from "hashes/poseidon/poseidon.zok" import main as poseidon;
+from "../../utils/structures.zok" import Point, PRIVATE_KEY_DOMAIN, NULLIFIER_KEY_DOMAIN;
+from "../../merkle-tree/path-check.zok" import main as pathCheck;
 
 /*
 * Verify that all the nullifiers are correct
@@ -15,29 +12,15 @@ def main<MinNullifiers, MaxNullifiers>(\
     field[MaxNullifiers] roots,\
     private field[MaxNullifiers] oldCommitmentValues,\
     private field[MaxNullifiers] oldCommitmentSalts,\
-    private field[MaxNullifiers] rootKey,\
     private field[MaxNullifiers][32] paths,\
 	private field[MaxNullifiers] orders,\
+    private field nullifierKeys,\
+    private Point zkpPublicKeys,\
     field maticAddress\
-) -> (Point):
-    // Get Curve Params
-    BabyJubJubParams context = curveParams()
-    Point g = [context.Gu, context.Gv]
-
-    //If the transaction contains change, the receiver of that change MUST be the same user that 
-    //created the transaction. In this field[2] we will store the zkpPublicKey of the sender in case
-    //we need it to check the change. 
-    Point firstInputZkpPublicKeys = [0,0]
-
+) -> bool {
+   
     //Check that all the nullifiers are valid. If NumNullifiers equals zero this loop will be ignored
-    for u32 i in 0..MaxNullifiers do
-        // Calculation of zkpPrivateKey and nullifierKey from rootKey
-        field zkpPrivateKeys = poseidon([rootKey[i], PRIVATE_KEY_DOMAIN])
-        field nullifierKeys = poseidon([rootKey[i], NULLIFIER_KEY_DOMAIN])
-
-        // Calculate zkpPublicKey
-        Point zkpPublicKeys = scalarMult(field_to_bool_256(zkpPrivateKeys), g, context)
-
+    for u32 i in 0..MaxNullifiers {
         /*
             Calculate the nullifier hash from the oldCommitment parameters
             We can check if nullifier is supposed to be null or non-null by the following
@@ -54,8 +37,8 @@ def main<MinNullifiers, MaxNullifiers>(\
             oldCommitmentValues[i],\
             ...zkpPublicKeys,\
             oldCommitmentSalts[i]\
-        ])
-        field nullifier = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) then poseidon([nullifierKeys, calculatedOldCommitmentHash]) else 0 fi
+        ]);
+        field nullifier = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) { poseidon([nullifierKeys, calculatedOldCommitmentHash]) } else { 0 };
 
         field calculatedOldCommitmentHashFee = poseidon([\
             maticAddress,\
@@ -63,22 +46,20 @@ def main<MinNullifiers, MaxNullifiers>(\
             oldCommitmentValues[i],\
             ...zkpPublicKeys,\
             oldCommitmentSalts[i]\
-        ])
+        ]);
 
-        field nullifierFee = if(oldCommitmentValues[i] != 0 || (i+1) != MinNullifiers) then poseidon([nullifierKeys, calculatedOldCommitmentHashFee]) else 0 fi
+        field nullifierFee = if(oldCommitmentValues[i] != 0 || (i+1) != MinNullifiers) { poseidon([nullifierKeys, calculatedOldCommitmentHashFee]) } else { 0 };
 
         //Check that the calculated nullifier matches with the one contained in the transaction
-        assert(nullifier == nullifierHashes[i] || nullifierFee == nullifierHashes[i])
+        assert(nullifier == nullifierHashes[i] || nullifierFee == nullifierHashes[i]);
 
-        field validCalculatedOldCommitmentHash = if (nullifier == nullifierHashes[i]) then\
-            calculatedOldCommitmentHash else calculatedOldCommitmentHashFee fi
+        field validCalculatedOldCommitmentHash = if (nullifier == nullifierHashes[i]) {\
+            calculatedOldCommitmentHash } else { calculatedOldCommitmentHashFee };
 
         //Check that the nullifier is contained in the tree
-        bool pathValidity = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) then pathCheck([roots[i], ...paths[i]], orders[i], validCalculatedOldCommitmentHash) else true fi
-        assert(pathValidity)
-
-        //Set the changeZkpPublicKeys if i = 0. Otherwise just set the same value
-        firstInputZkpPublicKeys = i == 0 ? zkpPublicKeys : firstInputZkpPublicKeys
-    endfor
+        bool pathValidity = if(oldCommitmentValues[i] != 0 || (i+1) == MinNullifiers) { pathCheck([roots[i], ...paths[i]], orders[i], validCalculatedOldCommitmentHash) } else { true };
+        assert(pathValidity);
+    }
     
-    return firstInputZkpPublicKeys
+    return true;
+}

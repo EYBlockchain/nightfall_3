@@ -114,18 +114,6 @@ export async function askQuestions(approved) {
       validate: input => Number.isInteger(Number(input)) && Number(input) > 0,
     },
     {
-      name: 'pause',
-      type: 'confirm',
-      message: 'Pause contracts?',
-      when: answers => answers.task === 'Pause contracts',
-    },
-    {
-      name: 'unpause',
-      type: 'confirm',
-      message: 'Unpause contracts?',
-      when: answers => answers.task === 'Unpause contracts',
-    },
-    {
       name: 'amount',
       type: 'input',
       message:

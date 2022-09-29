@@ -15,5 +15,7 @@ function parse(configs) {
   }
 }
 parse(config);
+parse(constants);
+
 global.config = config;
 global.nightfallConstants = constants;

@@ -1,8 +1,8 @@
-import config from 'config';
 import gen from 'general-number';
+import constants from 'common-files/constants/index.mjs';
 
 const { generalise } = gen;
-const { BN128_GROUP_ORDER } = config;
+const { BN128_GROUP_ORDER } = constants;
 
 const NULL_COMMITMENT = {
   value: 0,
@@ -51,12 +51,11 @@ const computePrivateInputsNullifiers = (oldCommitmentPreimage, paths, orders, ro
   const paddedOldCommitmentPreimage = padArray(oldCommitmentPreimage, NULL_COMMITMENT, 4);
   const paddedPaths = padArray(paths, new Array(32).fill(0), 4);
   const paddedOrders = padArray(orders, 0, 4);
-  const paddedRootKeys = padArray(rootKey, 0, 4);
 
   const privateInputsNullifiers = [
+    rootKey.field(BN128_GROUP_ORDER),
     paddedOldCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
     paddedOldCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
-    paddedRootKeys.map(r => r.field(BN128_GROUP_ORDER)),
     paddedPaths.map(ps => ps.map(p => p.field(BN128_GROUP_ORDER))),
     paddedOrders.map(m => m.field(BN128_GROUP_ORDER)),
   ].flat(Infinity);

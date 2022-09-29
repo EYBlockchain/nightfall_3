@@ -4,8 +4,16 @@ An optimistic layer 2 Block class
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import constants from 'common-files/constants/index.mjs';
-import { getLatestBlockInfo, getTreeByBlockNumberL2 } from '../services/database.mjs';
-import { buildBlockSolidityStruct, calcBlockHash } from '../services/block-utils.mjs';
+import {
+  getLatestBlockInfo,
+  getTreeByBlockNumberL2,
+  setTransactionHashSiblingInfo,
+} from '../services/database.mjs';
+import {
+  buildBlockSolidityStruct,
+  calcBlockHash,
+  calculateFrontierHash,
+} from '../services/block-utils.mjs';
 
 const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
 const { ZERO } = constants;
@@ -36,6 +44,8 @@ class Block {
 
   previousBlockHash; // the block hash of the previous block (for re-assembling the chain after a reorg)
 
+  frontierHash;
+
   static localLeafCount = 0; // ensure this is less than Timber to start with
 
   static localBlockNumberL2 = 0;
@@ -58,6 +68,7 @@ class Block {
       nCommitments,
       blockNumberL2,
       previousBlockHash,
+      frontierHash,
     } = asyncParams;
     this.leafCount = leafCount;
     this.proposer = proposer;
@@ -68,6 +79,7 @@ class Block {
     this.nCommitments = nCommitments;
     this.blockNumberL2 = blockNumberL2;
     this.previousBlockHash = previousBlockHash;
+    this.frontierHash = frontierHash;
   }
 
   // computes the root and hash. We use a Builder pattern because it's very
@@ -123,10 +135,11 @@ class Block {
     const blockHash = this.calcHash({
       proposer,
       root: updatedTimber.root,
-      leafCount: timber.leafCount,
+      leafCount: updatedTimber.leafCount,
       blockNumberL2,
       previousBlockHash,
-      transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
+      transactionHashesRoot: await this.calcTransactionHashesRoot(transactions),
+      frontierHash: this.calcFrontierHash(updatedTimber.frontier),
     });
     this.localPreviousBlockHash = blockHash;
     // note that the transactionHashes array is not part of the on-chain block
@@ -135,13 +148,14 @@ class Block {
     return new Block({
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
-      transactionHashesRoot: this.calcTransactionHashesRoot(transactions),
-      leafCount: timber.leafCount,
+      transactionHashesRoot: await this.calcTransactionHashesRoot(transactions),
+      leafCount: updatedTimber.leafCount,
       root: updatedTimber.root,
       blockHash,
       nCommitments,
       blockNumberL2,
       previousBlockHash,
+      frontierHash: this.calcFrontierHash(updatedTimber.frontier),
     });
   }
 
@@ -160,7 +174,7 @@ class Block {
     return this.calcHash(block) === block.blockHash;
   }
 
-  static calcTransactionHashesRoot(transactions) {
+  static async calcTransactionHashesRoot(transactions) {
     const transactionHashes = transactions.map(t => t.transactionHash);
     let height = 1;
     while (2 ** height < transactionHashes.length) {
@@ -174,11 +188,35 @@ class Block {
       TXHASH_TREE_HASH_TYPE,
       height,
     );
+
+    await Promise.all(
+      // eslint-disable-next-line consistent-return
+      transactionHashes.map(async (t, i) => {
+        const siblingPath = Timber.statelessSiblingPath(
+          timber,
+          transactionHashes,
+          i,
+          TXHASH_TREE_HASH_TYPE,
+          height,
+        );
+        return setTransactionHashSiblingInfo(
+          t,
+          siblingPath,
+          timber.leafCount + i,
+          updatedTimber.root,
+        );
+      }),
+    );
+
     return updatedTimber.root;
   }
 
   static calcHash(block) {
     return calcBlockHash(block);
+  }
+
+  static calcFrontierHash(frontier) {
+    return calculateFrontierHash(frontier);
   }
 
   // remove properties that do not get sent to the blockchain returning

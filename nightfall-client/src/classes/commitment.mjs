@@ -2,12 +2,12 @@
 A commitment class
 */
 import gen from 'general-number';
-import config from 'config';
 import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { ZkpKeys } from '../services/keys.mjs';
 
 const { generalise } = gen;
-const { BN128_GROUP_ORDER } = config;
+const { BN128_GROUP_ORDER } = constants;
 
 class Commitment {
   preimage;

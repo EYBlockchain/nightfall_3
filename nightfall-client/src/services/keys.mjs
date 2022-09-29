@@ -1,5 +1,4 @@
 import { GN, generalise } from 'general-number';
-import config from 'config';
 import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 import bip39Pkg from 'bip39';
 import pkg from 'ethereumjs-wallet';
@@ -8,23 +7,13 @@ import {
   edwardsCompress,
   edwardsDecompress,
 } from 'common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
 
 const { hdkey } = pkg;
 const { validateMnemonic, mnemonicToSeedSync } = bip39Pkg;
 export const zkpPrivateKeys = [];
 export const nullifierKeys = [];
-const { BABYJUBJUB, BN128_GROUP_ORDER } = config;
-
-// 128 bits is 12 words; 256 bits is 24 words
-// // Returns a promise
-// function (entropyBits) {
-//   return generateMnemonic(entropyBits);
-// }
-//
-// // generate seed from mnemonic
-// function (mnemonic) {
-//   return mnemonicToSeedSync(mnemonic);
-// }
+const { BABYJUBJUB, BN128_GROUP_ORDER } = constants;
 
 export class ZkpKeys {
   rootKey;

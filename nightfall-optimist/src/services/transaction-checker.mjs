@@ -16,7 +16,7 @@ import {
   getBlockByBlockNumberL2,
   getL2TransactionByCommitment,
   getL2TransactionByNullifier,
-  getTransactionsByTransactionHashes,
+  getTransactionHashSiblingInfo,
   getLatestBlockInfo,
 } from './database.mjs';
 import verify from './verify.mjs';
@@ -25,112 +25,89 @@ const { generalise } = gen;
 const { PROVING_SCHEME, BACKEND, CURVE } = config;
 const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
-async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, blockNumberL2OfTx) {
-  // check if there are duplicate commitments in the same transaction
-  transaction.commitments.forEach((commitment, index) => {
-    const lastIndex = transaction.commitments.lastIndexOf(commitment);
-    if (commitment !== ZERO && index !== lastIndex) {
-      throw new TransactionError(
-        `The transaction holds duplicate commitments with commitment hash ${commitment}`,
-        0,
-        {
-          transaction1: transaction,
-          duplicateCommitment1Index: index,
-          transaction2: transaction,
-          duplicateCommitment2Index: lastIndex,
-        },
-      );
-    }
-  });
-
+async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
+  // Note: There is no need to check the duplicate commitment in the same transaction since this is already checked in the circuit
   // check if any commitment in the transaction is already part of an L2 block
+
+  // Check if any transaction has a duplicated commitment
   for (const [index, commitment] of transaction.commitments.entries()) {
-    // transaction.commitments.forEach(async (commitment, index) => {
-    const txWithOrgCommitment = await getL2TransactionByCommitment(
-      commitment,
-      inL2AndNotInL2,
-      blockNumberL2OfTx,
-    );
-    if (commitment !== ZERO && txWithOrgCommitment !== null) {
-      const blockWithOrgCommitment = await getBlockByBlockNumberL2(
-        txWithOrgCommitment.blockNumberL2,
+    if (commitment !== ZERO) {
+      // Search if there is any transaction in L2 that already contains the commitment
+      const transactionL2 = await getL2TransactionByCommitment(
+        commitment,
+        inL2AndNotInL2,
+        txBlockNumberL2,
       );
-      if (blockWithOrgCommitment !== null) {
-        const orgBlockTransactions = await getTransactionsByTransactionHashes(
-          blockWithOrgCommitment.transactionHashes,
-        );
-        throw new TransactionError(
-          `The transaction has a duplicate commitment ${commitment}`,
-          0,
-          inL2AndNotInL2 === false
-            ? {
-                duplicateCommitment1Index: index,
-                block2: blockWithOrgCommitment,
-                transactions2: orgBlockTransactions,
-                transaction2Index: blockWithOrgCommitment.transactionHashes.indexOf(
-                  txWithOrgCommitment.transactionHash,
-                ),
-                duplicateCommitment2Index: txWithOrgCommitment.commitments.indexOf(commitment),
-              }
-            : undefined,
-        );
+
+      // If a transaction was found, means that the commitment is duplicated
+      if (transactionL2 !== null) {
+        // Get the number of the block in L2 containing the duplicated commitment
+        const blockL2 = await getBlockByBlockNumberL2(transactionL2.blockNumberL2);
+
+        if (blockL2 !== null) {
+          const siblingPath2 = await getTransactionHashSiblingInfo(transactionL2.transactionHash);
+          throw new TransactionError(
+            `The transaction has a duplicate commitment ${commitment}`,
+            0,
+            inL2AndNotInL2 === false
+              ? {
+                  duplicateCommitment1Index: index,
+                  block2: blockL2,
+                  transaction2: transactionL2,
+                  transaction2Index: blockL2.transactionHashes.indexOf(
+                    transactionL2.transactionHash,
+                  ),
+                  siblingPath2,
+                  duplicateCommitment2Index: transactionL2.commitments.indexOf(commitment),
+                }
+              : undefined,
+          );
+        }
       }
     }
   }
 }
 
-async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, blockNumberL2OfTx) {
-  // check if there are duplicate nullifiers in the same transaction
-  transaction.nullifiers.forEach((nullifier, index) => {
-    const lastIndex = transaction.nullifiers.lastIndexOf(nullifier);
-    if (nullifier !== ZERO && index !== lastIndex) {
-      throw new TransactionError(
-        `The transaction holds duplicate nullifiers with nullifier hash ${nullifier}`,
-        1,
-        {
-          transaction1: transaction,
-          duplicateNullifier1Index: index,
-          transaction2: transaction,
-          duplicateNullifier2Index: lastIndex,
-        },
-      );
-    }
-  });
-
+async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
+  // Note: There is no need to check the duplicate nullifiers in the same transaction since this is already checked in the circuit
   // check if any nullifier in the transction is already part of an L2 block
   for (const [index, nullifier] of transaction.nullifiers.entries()) {
-    const txWithOrgNullifier = await getL2TransactionByNullifier(
-      nullifier,
-      inL2AndNotInL2,
-      blockNumberL2OfTx,
-    );
-    if (nullifier !== ZERO && txWithOrgNullifier !== null) {
-      const blockWithOrgNullifier = await getBlockByBlockNumberL2(txWithOrgNullifier.blockNumberL2);
-      if (blockWithOrgNullifier !== null) {
-        const orgBlockTransactions = await getTransactionsByTransactionHashes(
-          blockWithOrgNullifier.transactionHashes,
-        );
-        throw new TransactionError(
-          `The transaction has a duplicate nullifier ${nullifier}`,
-          1,
-          inL2AndNotInL2 === false
-            ? {
-                duplicateNullifier1Index: index,
-                block2: blockWithOrgNullifier,
-                transactions2: orgBlockTransactions,
-                transaction2Index: blockWithOrgNullifier.transactionHashes.indexOf(
-                  txWithOrgNullifier.transactionHash,
-                ),
-                duplicateNullifier2Index: txWithOrgNullifier.nullifiers.indexOf(nullifier),
-              }
-            : undefined,
-        );
+    if (nullifier !== ZERO) {
+      // Search if there is any transaction in L2 that already contains the nullifier
+      const transactionL2 = await getL2TransactionByNullifier(
+        nullifier,
+        inL2AndNotInL2,
+        txBlockNumberL2,
+      );
+
+      // If a transaction was found, means that the nullifier is duplicated
+      if (transactionL2 !== null) {
+        const blockL2 = await getBlockByBlockNumberL2(transactionL2.blockNumberL2);
+        if (blockL2 !== null) {
+          const siblingPath2 = await getTransactionHashSiblingInfo(transactionL2.transactionHash);
+          throw new TransactionError(
+            `The transaction has a duplicate nullifier ${nullifier}`,
+            1,
+            inL2AndNotInL2 === false
+              ? {
+                  duplicateNullifier1Index: index,
+                  block2: blockL2,
+                  transaction2: transactionL2,
+                  transaction2Index: blockL2.transactionHashes.indexOf(
+                    transactionL2.transactionHash,
+                  ),
+                  siblingPath2,
+                  duplicateNullifier2Index: transactionL2.nullifiers.indexOf(nullifier),
+                }
+              : undefined,
+          );
+        }
       }
     }
   }
 }
 
-async function checkHistoricRootGreaterThanL2BlockNumberOnChain(transaction) {
+async function checkHistoricRootBlockNumber(transaction) {
   const { blockNumberL2: LatestL2BlockNumber } = await getLatestBlockInfo();
   transaction.historicRootBlockNumberL2.forEach(L2BlockNumber => {
     if (Number(L2BlockNumber) === 0 && LatestL2BlockNumber === -1) return;
@@ -174,7 +151,9 @@ async function verifyProof(transaction) {
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = await shieldContractInstance.methods.getMaticAddress().call();
+  const maticAddress = (
+    await shieldContractInstance.methods.getMaticAddress().call()
+  ).toLowerCase();
 
   const inputs = generalise(
     [
@@ -193,12 +172,12 @@ async function verifyProof(transaction) {
       historicRootSecond.root,
       historicRootThird.root,
       historicRootFourth.root,
-      maticAddress.toLowerCase(),
+      maticAddress,
     ].flat(Infinity),
   ).all.hex(32);
 
   const res = await verify({
-    vk: new VerificationKey(vkArray),
+    vk: new VerificationKey(vkArray, CURVE, PROVING_SCHEME),
     proof: new Proof(transaction.proof),
     provingScheme: PROVING_SCHEME,
     backend: BACKEND,
@@ -212,7 +191,7 @@ async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
   return Promise.all([
     checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
     checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumberL2),
-    checkHistoricRootGreaterThanL2BlockNumberOnChain(transaction),
+    checkHistoricRootBlockNumber(transaction),
     verifyProof(transaction),
   ]);
 }

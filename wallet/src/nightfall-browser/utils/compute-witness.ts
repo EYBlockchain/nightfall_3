@@ -3,7 +3,7 @@ import gen, { GeneralNumber } from 'general-number';
 const { generalise } = gen;
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-const { BN128_GROUP_ORDER } = global.config;
+const { BN128_GROUP_ORDER } = global.nightfallConstants;
 const NULL_COMMITMENT = {
   value: 0,
   salt: 0,
@@ -38,8 +38,8 @@ type CommitmentPreimage = {
 };
 
 type Nullifier = {
+  rootKey: string;
   oldCommitments: CommitmentPreimage;
-  rootKey: string[];
   paths: string[][];
   orders: string[];
 };
@@ -102,7 +102,7 @@ const computePrivateInputsNullifiers = (
   oldCommitmentPreimage: Record<string, GeneralNumber>[],
   paths: GeneralNumber[][],
   orders: GeneralNumber[],
-  rootKey: GeneralNumber[],
+  rootKey: GeneralNumber,
 ): Nullifier => {
   const paddedOldCommitmentPreimage: Record<string, GeneralNumber>[] = padArray(
     oldCommitmentPreimage,
@@ -111,14 +111,13 @@ const computePrivateInputsNullifiers = (
   );
   const paddedPaths: GeneralNumber[][] = padArray(paths, new Array(32).fill(0), 4);
   const paddedOrders: GeneralNumber[] = padArray(orders, 0, 4);
-  const paddedRootKeys: GeneralNumber[] = padArray(rootKey, 0, 4);
 
   return {
+    rootKey: rootKey.field(BN128_GROUP_ORDER),
     oldCommitments: {
       value: paddedOldCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
       salt: paddedOldCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
     },
-    rootKey: paddedRootKeys.map(r => r.field(BN128_GROUP_ORDER)),
     paths: paddedPaths.map(ps => ps.map(p => p.field(BN128_GROUP_ORDER))),
     orders: paddedOrders.map(m => m.field(BN128_GROUP_ORDER)),
   };

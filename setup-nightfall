@@ -3,11 +3,22 @@ set -e
 
 # Install node dependencies
 npm ci
-docker build -t ghcr.io/eyblockchain/local-zokrates:0.7.13 -f zokrates.Dockerfile .
+
+OS_ARCH=$(uname -m)
+NO_CACHE_FLAG=''
+
+# Workaround when building in a Mac
+if [ $OS_ARCH != "x86_64" ]; then
+  NO_CACHE_FLAG='--no-cache'
+fi
+
+docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-zokrates:0.8.2 -f docker/zokrates.Dockerfile .
 # containers built separately. A parallel build fails.
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml build administrator
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml build client
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml build optimist
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml build worker
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml build hosted-utils-api-server
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.adversary.yml build adversary1
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} deployer
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} administrator
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} client
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} optimist
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} worker
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} hosted-utils-api-server
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.adversary.yml build ${NO_CACHE_FLAG} adversary1
+docker-compose -f docker/docker-compose.apps.yml build ${NO_CACHE_FLAG} proposer

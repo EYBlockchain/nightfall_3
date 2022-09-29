@@ -9,6 +9,7 @@ import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
+import logger from '../../common-files/utils/logger.mjs';
 import Nf3 from '../lib/nf3.mjs';
 import { APPROVE_AMOUNT, TOKEN_TYPE } from '../lib/constants.mjs';
 import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
@@ -30,7 +31,7 @@ Does the preliminary setup and starts listening on the websocket
 */
 async function startProvider(testEnvironment) {
   clear();
-  console.log('Starting Liquidity Provider...');
+  logger.info('Starting Liquidity Provider...');
   if (typeof testEnvironment !== 'undefined') {
     setEnvironment(testEnvironment);
   } else {
@@ -39,7 +40,7 @@ async function startProvider(testEnvironment) {
   const nf3Env = getCurrentEnvironment().currentEnvironment;
   const nf3 = new Nf3(advanceWithdrawalEthereumSigningKey, nf3Env);
   await nf3.init(defaultMnemonic);
-  if (await nf3.healthcheck('optimist')) console.log('Healthcheck passed');
+  if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
   const erc20Address = await nf3.getContractAddress('ERC20Mock');
 
@@ -57,9 +58,9 @@ async function startProvider(testEnvironment) {
   const emitter = await nf3.getInstantWithdrawalRequestedEmitter();
   emitter.on('data', async (withdrawTransactionHash, paidBy, amount) => {
     await nf3.advanceInstantWithdrawal(withdrawTransactionHash);
-    console.log(`Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
+    logger.info(`Serviced instant-withdrawal request from ${paidBy}, with fee ${amount}`);
   });
-  console.log('Listening for incoming events');
+  logger.info('Listening for incoming events');
 }
 
 startProvider(environment);

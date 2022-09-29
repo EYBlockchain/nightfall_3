@@ -76,9 +76,10 @@ const checkBlocks = async () => {
     // Existing blocks found stored locally
     let expectedLeafCount = 0;
     // Loop through all our blocks to find any gaps in our internal block data
-    for (let i = 0; i < blocks.length; i++) {
+    for (let i = 0; i < blocks.length - 1; i++) {
       // If the leafCount of the next block stored internally does not match what we expect the leaf count to be
       // it means we may have a gap in our blockData
+      expectedLeafCount += blocks[i].nCommitments;
       if (blocks[i].leafCount !== expectedLeafCount) {
         // if we are in the first iteration it means we have a problem with our internal data
         // let's just restart the sync from earliest,
@@ -90,7 +91,6 @@ const checkBlocks = async () => {
         // reset so we can find more
         expectedLeafCount = blocks[i].leafCount;
       }
-      expectedLeafCount += blocks[i].nCommitments;
     }
     if (gapArray.length > 0) return gapArray; // We found some missing blocks
     const fromBlock = blocks[blocks.length - 1].blockNumber + 1;
@@ -112,10 +112,12 @@ export default async proposer => {
   }
   // pause the queues so we stop processing incoming events while we sync
   await Promise.all([pauseQueue(0), pauseQueue(1)]);
+
   logger.info('Begining synchronisation with the blockchain');
+
   const missingBlocks = await checkBlocks(); // Stores any gaps of missing blocks
-  // const [fromBlock] = missingBlocks[0];
   const latestBlockLocally = (await getBlockByBlockNumberL2(lastBlockNumberL2)) ?? undefined;
+
   if (!latestBlockLocally || missingBlocks[0] !== latestBlockLocally.blockNumber + 1) {
     // The latest block stored locally does not match the last on-chain block
     // or we have detected a gap in the L2 blockchain
@@ -125,11 +127,14 @@ export default async proposer => {
       // Sync the state inbetween these blocks
       await syncState(proposer, fromBlock, toBlock);
     }
-    // at this point, we have synchronised all the existing blocks. If there are no outstanding
-    // challenges (all rollbacks have completed) then we're done.  It's possible however that
-    // we had a bad block that was not rolled back. If this is the case then there will still be
-    // a challenge in the stop queue that was not removed by a rollback.
-    // If this is the case we'll run the stop queue to challenge the bad block.
+
+    /*
+     at this point, we have synchronised all the existing blocks. If there are no outstanding
+     challenges (all rollbacks have completed) then we're done.  It's possible however that
+     we had a bad block that was not rolled back. If this is the case then there will still be
+     a challenge in the stop queue that was not removed by a rollback.
+     If this is the case we'll run the stop queue to challenge the bad block.
+    */
     await startMakingChallenges();
     if (queues[2].length === 0)
       logger.info('After synchronisation, no challenges remain unresolved');
@@ -137,6 +142,7 @@ export default async proposer => {
       logger.info(
         `After synchronisation, there were ${queues[2].length} unresolved challenges.  Running them now.`,
       );
+
       // start queue[2] and await all the unresolved challenges being run
       const p = flushQueue(2);
       queues[2].start();
@@ -146,11 +152,14 @@ export default async proposer => {
   }
   const currentProposer = (await stateContractInstance.methods.currentProposer().call())
     .thisAddress;
-  if (currentProposer !== proposer.address)
+  if (currentProposer !== proposer.address) {
     await newCurrentProposerEventHandler({ returnValues: { proposer: currentProposer } }, [
       proposer,
     ]);
+  }
+
   unpauseQueue(0);
   unpauseQueue(1);
+
   return (await getLatestBlockInfo()).blockNumber;
 };

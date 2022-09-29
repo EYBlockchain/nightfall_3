@@ -30,10 +30,12 @@ export async function storeCommitment(commitment, nullifierKey) {
   // spotting if the commitment spend is ever rolled back, which would mean the
   // commitment is once again available to spend
   const nullifierHash = new Nullifier(commitment, nullifierKey).hash.hex(32);
+  const preimage = commitment.preimage.all.hex(32);
+  preimage.ercAddress = preimage.ercAddress.toLowerCase();
   const data = {
     _id: commitment.hash.hex(32),
     compressedZkpPublicKey: commitment.compressedZkpPublicKey.hex(32),
-    preimage: commitment.preimage.all.hex(32),
+    preimage,
     isDeposited: commitment.isDeposited || false,
     isOnChain: Number(commitment.isOnChain) || -1,
     isPendingNullification: false, // will not be pending when stored
@@ -71,15 +73,6 @@ export async function countNullifiers(nullifiers) {
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
-
-// // function to get count of transaction hashes. Used to decide if we should store
-// // incoming blocks or transactions.
-// export async function countTransactionHashes(transactionHashes) {
-//   const connection = await mongo.connection(MONGO_URL);
-//   const query = { transactionHash: { $in: transactionHashes } };
-//   const db = connection.db(COMMITMENTS_DB);
-//   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
-// }
 
 // function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
 export async function countWithdrawTransactionHashes(transactionHashes) {
@@ -212,7 +205,6 @@ export async function clearNullified(blockNumberL2) {
 // as above, but removes isOnChain for deposit commitments
 export async function clearOnChain(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  // const query = { isOnChain: { $gte: Number(blockNumberL2) }, isDeposited: true };
   // Clear all onchains
   const query = { isOnChain: { $gte: Number(blockNumberL2) } };
   const update = {
@@ -377,7 +369,7 @@ export async function getWalletPendingDepositBalance(compressedZkpPublicKey, erc
     }))
     .filter(
       e =>
-        e.value > 0 &&
+        e.value >= 0 &&
         (compressedZkpPublicKey === null || e.compressedZkpPublicKey === compressedZkpPublicKey) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )
@@ -438,7 +430,7 @@ export async function getWalletPendingSpentBalance(compressedZkpPublicKey, ercLi
     }))
     .filter(
       e =>
-        e.value > 0 &&
+        e.value >= 0 &&
         (compressedZkpPublicKey === null || e.compressedZkpPublicKey === compressedZkpPublicKey) &&
         (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
     )

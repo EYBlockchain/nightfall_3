@@ -3,7 +3,7 @@
 // modular division
 import { mulMod, addMod } from './number-theory';
 
-const { BN128_PRIME_FIELD } = global.config;
+const { BN128_PRIME_FIELD } = global.nightfallConstants;
 
 // function for extended Euclidean Algorithm
 // (used to find modular inverse.

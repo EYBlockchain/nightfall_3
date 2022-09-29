@@ -5,11 +5,6 @@ function configureAWSBucket() {
   return `${bucket}-${mode}`;
 }
 
-/* eslint-disable no-extend-native */
-BigInt.prototype.toJSON = function () {
-  return `${this.toString()} BigInt`;
-};
-
 module.exports = {
   COMMITMENTS_DB: 'nightfall_commitments',
   OPTIMIST_DB: 'optimist_data',
@@ -28,6 +23,7 @@ module.exports = {
   EXCLUDE_DIRS: 'common',
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
+  TXHASH_TREE_HEIGHT: 5,
   CONFIRMATION_POLL_TIME: 1000,
   CONFIRMATIONS: 12,
   DEFAULT_ACCOUNT_NUM: 10,
@@ -45,7 +41,7 @@ module.exports = {
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
     APPROVERS: process.env.MULTISIG_APPROVERS
-      ? process.env.MULTISG_APPROVERS.split(',')
+      ? process.env.MULTISIG_APPROVERS.split(',')
       : [
           '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
           '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
@@ -55,7 +51,9 @@ module.exports = {
   },
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
-    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`,
+    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
+      process.env.BLOCKCHAIN_PATH || ''
+    }`,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   WEB3_OPTIONS: {
@@ -86,28 +84,6 @@ module.exports = {
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 150,
   USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
-  BN128_GROUP_ORDER: 21888242871839275222246405745257275088548364400416034343698204186575808495617n,
-  BN128_PRIME_FIELD: 21888242871839275222246405745257275088696311157297823662689037894645226208583n,
-  // the various parameters needed to describe the Babyjubjub curve that we use for El-Gamal
-  // BABYJUBJUB
-  // Montgomery EC form is y^2 = x^3 + Ax^2 + Bx
-  // Montgomery EC form of BabyJubJub is y^2 = x^3 + 168698x^2 + x
-  // A = 168698 and B = 1
-  BABYJUBJUB: {
-    JUBJUBA: BigInt(168700),
-    JUBJUBD: BigInt(168696),
-    INFINITY: [BigInt(0), BigInt(1)],
-    GENERATOR: [
-      BigInt('16540640123574156134436876038791482806971768689494387082833631921987005038935'),
-      BigInt('20819045374670962167435360035096875258406992893633759881276124905556507972311'),
-    ],
-    JUBJUBE: BigInt(
-      '21888242871839275222246405745257275088614511777268538073601725287587578984328',
-    ),
-    JUBJUBC: BigInt(8),
-    MONTA: BigInt(168698),
-    MONTB: BigInt(1),
-  },
   MPC: {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
@@ -161,27 +137,50 @@ module.exports = {
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
-          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}`
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
+              process.env.BLOCKCHAIN_PATH || ''
+            }`
           : process.env.BLOCKCHAIN_WS_HOST
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
       PROPOSER_KEY:
-        process.env.ETH_PRIVATE_KEY ||
+        process.env.BOOT_PROPOSER_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
+      CHALLENGER_KEY:
+        process.env.BOOT_CHALLENGER_KEY ||
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
     },
     aws: {
       name: 'AWS',
       chainId: 1337,
-      clientApiUrl: 'http://localhost:8080',
-      optimistApiUrl: 'https://optimist-api.staging.polygon-nightfall.technology',
-      optimistWsUrl: 'wss://optimist-ws.staging.polygon-nightfall.technology',
-      proposerBaseUrl: 'https://proposer.staging.polygon-nightfall.technology',
+      clientApiUrl: `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`,
+      optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
+      optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
+      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+      adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
+      adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+    },
+    polygonEdge: {
+      name: 'Polygon Edge',
+      chainId: 100,
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
-      web3WsUrl: 'wss://web3-ws.staging.polygon-nightfall.technology',
-      PROPOSER_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
-      PROPOSER_MNEMONIC:
-        'high return hold whale promote payment hat panel reduce oyster ramp mouse',
+      web3WsUrl: `ws://localhost:10002/ws`,
     },
   },
   TEST_OPTIONS: {
@@ -286,6 +285,28 @@ module.exports = {
         {
           name: 'ERC20Mock',
           address: '0x9b7bD670D87C3Dd5C808ba627c75ba7E88aD066f',
+          amount: '100000000000',
+        },
+        {
+          name: 'Test-Eth',
+          address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+          amount: '10000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0x07865c6e87b9f70255377e024ace6630c1eaa37f',
+          amount: '1000000000000',
+        },
+      ],
+      edge: [
+        {
+          name: 'ERC20Mock',
+          address: '0x7578E001dCF334F48a87dA44e30C7ab3b517a5B8',
           amount: '100000000000',
         },
         {
@@ -436,11 +457,11 @@ module.exports = {
   // is running in local machine
   isLocalRun: process.env.LOCAL_PROPOSER === 'true',
   SIGNATURES: {
-    BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+    BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32, bytes32)',
     TRANSACTION:
       '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
     PROPOSE_BLOCK: [
-      '(uint48,address,bytes32,uint256,bytes32,bytes32)',
+      '(uint48,address,bytes32,uint256,bytes32,bytes32,bytes32)',
       '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])[]',
     ],
     SUBMIT_TRANSACTION:

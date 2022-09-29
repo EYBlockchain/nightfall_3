@@ -13,7 +13,7 @@ usage()
   echo "  -h or --help; prints this message"
 }
 
-FILE="docker-compose.standalone.geth.yml"
+FILE="docker/docker-compose.standalone.geth.yml"
 NAME="geth"
 
 # select a Geth or Ganache client

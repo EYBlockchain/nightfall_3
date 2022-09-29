@@ -1,7 +1,7 @@
 /**
-This module contains the logic needed create a zkp transfer, i.e. to nullify
-two input commitments and create two new output commitments to the same value.
-It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
+ * This module contains the logic needed create a zkp transfer, i.e. to nullify
+ * two input commitments and create two new output commitments to the same value.
+ * It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  * @module deposit.mjs
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
@@ -30,7 +30,8 @@ async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const { offchain = false, ...items } = transferParams;
-  const { ercAddress, tokenId, recipientData, rootKey, fee } = generalise(items);
+  const { tokenId, recipientData, rootKey, fee } = generalise(items);
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),
@@ -44,13 +45,12 @@ async function transfer(transferParams) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
-  logger.debug(
-    `The erc address of the token transferred is the following: ${ercAddress
-      .hex(32)
-      .toLowerCase()}`,
-  );
+  logger.debug({
+    msg: 'Transfer ERC Token & Fee addresses',
+    ercAddress: ercAddress.hex(32),
+    maticAddress: maticAddress.hex(32),
+  });
 
-  logger.debug(`The erc address of the fee is the following: ${maticAddress.hex(32)}`);
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend,
@@ -90,7 +90,7 @@ async function transfer(transferParams) {
     });
 
     const privateData = {
-      rootKey: [rootKey, rootKey, rootKey, rootKey],
+      rootKey,
       oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
@@ -111,7 +111,12 @@ async function transfer(transferParams) {
       [...commitmentsInfo.roots],
       maticAddress,
     );
-    logger.debug(`witness input is ${witness.join(' ')}`);
+
+    logger.debug({
+      msg: 'witness input is',
+      witness: witness.join(' '),
+    });
+
     // call a zokrates worker to generate the proof
     let folderpath = 'transfer';
     if (USE_STUBS) folderpath = 'transfer_stub';
@@ -121,7 +126,12 @@ async function transfer(transferParams) {
       provingScheme: PROVING_SCHEME,
       backend: BACKEND,
     });
-    logger.trace(`Received response ${JSON.stringify(res.data, null, 2)}`);
+
+    logger.trace({
+      msg: 'Received response from generete-proof',
+      response: JSON.stringify(res.data, null, 2),
+    });
+
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
 
@@ -138,13 +148,11 @@ async function transfer(transferParams) {
       proof,
     });
 
-    logger.debug(
-      `Client made transaction ${JSON.stringify(
-        optimisticTransferTransaction,
-        null,
-        2,
-      )} offchain ${offchain}`,
-    );
+    logger.debug({
+      msg: 'Client made transaction',
+      transaction: JSON.stringify(optimisticTransferTransaction, null, 2),
+      offchain,
+    });
 
     const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
