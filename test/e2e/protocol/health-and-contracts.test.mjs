@@ -20,21 +20,32 @@ let user;
 before(async () => {
   await nf3User1.init(mnemonics.user1);
   user = await UserFactory.create({
-    blockchainWsUrl: 'ws://localhost:8546',
-    clientApiUrl: 'http://localhost:8080',
+    blockchainWsUrl: environment.web3WsUrl,
+    clientApiUrl: environment.clientApiUrl,
     ethereumPrivateKey: signingKeys.user1,
   });
 });
 
 describe('Health and Contract Checks', () => {
-  it('should respond with "true" the health check', async function () {
+  it('new sdk should respond with "true" the health check', async function () {
     const statuses = await user.checkStatus();
     expect(statuses.isClientAlive).to.be.equal(true);
   });
 
-  it('should get the address of the shield contract', async function () {
+  it('new sdk should get the address of the shield contract', async function () {
     const contractAddress = user.shieldContractAddress;
     expect(contractAddress).to.be.a('string').and.to.include('0x');
+  });
+
+  // Original tests using `nf3`
+  it('should respond with "true" the health check', async function () {
+    const res = await nf3User1.healthcheck('client');
+    expect(res).to.be.equal(true);
+  });
+
+  it('should get the address of the shield contract', async function () {
+    const res = await nf3User1.getContractAddress('Shield');
+    expect(res).to.be.a('string').and.to.include('0x');
   });
 
   it('should get the address of the test ERC20 mock contract', async function () {
@@ -63,4 +74,5 @@ describe('Health and Contract Checks', () => {
 
 after(async () => {
   await nf3User1.close();
+  user.close();
 });
