@@ -82,8 +82,8 @@ describe('Testing with an adversary', () => {
 
     nf3Challenger = new Nf3(ethereumSigningKeyChallenger, {
       ...others,
-      optimistApiUrl: adversarialOptimistApiUrl,
-      optimistWsUrl: adversarialOptimistWsUrl,
+      optimistApiUrl,
+      optimistWsUrl,
     });
 
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
@@ -134,6 +134,11 @@ describe('Testing with an adversary', () => {
           `Challenge transaction to the blochain of type ${type} failed due to error: ${error} `,
         );
       });
+
+    // for now optimist containers at time for startup state-sync code logic
+    // starts challenger by calling startMakingChallenges() function
+    // that reason explicitly call stop challenge api for nf3AdversarialProposer
+    await nf3AdversarialProposer.challengeEnable(false);
 
     // Configure adversary bad block sequence
     if (process.env.CHALLENGE_TYPE !== '') {
