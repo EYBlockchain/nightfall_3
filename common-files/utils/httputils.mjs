@@ -9,8 +9,7 @@ import { promisify } from 'util';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
-import ValidationError from './validation-error.mjs';
-import NotFoundError from './not-found-error.mjs';
+import { NotFoundError, BadRequestError, InternalServerError } from './errors.mjs';
 import logger from './logger.mjs';
 import correlator from './correlation-id.mjs';
 import { isDev, obfuscate } from './utils.mjs';
@@ -53,17 +52,8 @@ const downloadFile = async (fileUrl, outputLocationPath) => {
 const errorHandler = (err, req, res, next) => {
   logger.error(err);
 
-  if (err instanceof NotFoundError) {
-    res.sendStatus(404);
-  } else if (err instanceof ValidationError) {
-    res.status(400).send(err.message);
-  } else {
-    const message = !isDev()
-      ? 'Sorry, something went wrong. Please, try again later!'
-      : err.message;
-
-    res.status(500).send(message);
-  }
+  if (!err.code) err = new InternalServerError('Internal Server Error');
+  res.status(err.code).send(err.message);
 };
 
 const HEADER_CORRELATION_ID = 'X-Correlation-Id';

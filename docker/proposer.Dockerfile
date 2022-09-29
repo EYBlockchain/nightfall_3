@@ -6,8 +6,6 @@ RUN apt-get install -y netcat-openbsd
 # websocket port 8080
 EXPOSE 8080
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
-
 WORKDIR /app
 COPY common-files common-files
 COPY cli cli
@@ -19,7 +17,6 @@ RUN npm ci
 WORKDIR /app
 COPY apps/proposer/package.json ./
 COPY apps/proposer/src src
-COPY apps/proposer/docker-entrypoint.sh docker-entrypoint.sh
 COPY config config
 
 RUN npm i

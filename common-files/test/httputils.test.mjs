@@ -8,8 +8,7 @@ import chaiHttp from 'chai-http';
 import axios from 'axios';
 import express from 'express';
 import { setupHttpDefaults } from '../utils/httputils.mjs';
-import NotFoundError from '../utils/not-found-error.mjs';
-import ValidationError from '../utils/validation-error.mjs';
+import { NotFoundError, BadRequestError } from '../utils/errors.mjs';
 
 chai.use(chaiHttp);
 chai.should();
@@ -31,7 +30,7 @@ describe('HTTP Utils tests', function () {
       const id = parseInt(req.params.id, 10);
       try {
         if (Number.isNaN(id)) {
-          throw new ValidationError("ID can't be lower than 1");
+          throw new BadRequestError("ID can't be lower than 1");
         }
 
         if (id < 1) {

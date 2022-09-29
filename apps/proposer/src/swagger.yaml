@@ -128,32 +128,56 @@ paths:
     get:
       tags:
         - proposer
-      summary: Gets info about this proposer
+      summary: Gets info about a proposer, or this proposer if no ID provided
       description: Replaces
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: integer
+          description: Numeric ID of the proposer to get
       responses:
         '200': # status code
-          description: A JSON array of user names
+          description: The address of the requested proposer
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                type: string
+        '400':
+          description: A BadRequest error object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequest'
+        '404':
+          description: A NotFound error object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFound'
 
     post:
       tags:
         - proposer
       summary: Registers this proposer
       description: Replaces registerProposer
+      requestBody:
+        description: The desired bond for this proposer
+        required: true
+        content:
+          application/json:
+            schema:
+              type: integer
+
       responses:
         '200': # status code
-          description: A JSON array of user names
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
+          description: OK
+        '500':
+          $ref: '#/components/schemas/InternalServerError'
+        '400':
+          $ref: '#/components/schemas/BadRequest'
+        '404':
+          $ref: '#/components/schemas/NotFound'
 
     put:
       tags:
@@ -162,13 +186,21 @@ paths:
       description: Replaces updateProposer
       responses:
         '200': # status code
-          description: A JSON array of user names
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
+          description: OK
+        '500':
+          $ref: '#/components/schemas/InternalServerError'
+        '400':
+          $ref: '#/components/schemas/BadRequest'
+        '404':
+          $ref: '#/components/schemas/NotFound'
+
+      requestBody:
+        description: The new URL for this proposer
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
 
     delete:
       tags:
@@ -177,13 +209,13 @@ paths:
       description: Replaces deRegisterProposer
       responses:
         '200': # status code
-          description: A JSON array of user names
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
+          description: OK
+        '500':
+          $ref: '#/components/schemas/InternalServerError'
+        '400':
+          $ref: '#/components/schemas/BadRequest'
+        '404':
+          $ref: '#/components/schemas/NotFound'
 
   /proposer/change:
     put:
@@ -193,53 +225,33 @@ paths:
       description: Replaces changeCurrentProposer
       responses:
         '200': # status code
-          description: A JSON array of user names
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-
-  /proposer/{id}:
-    get:
-      tags:
-        - proposer
-      summary: Gets a proposer with a given ID
-      description:
-        ID, URL, Address, whatever. If not defined, return current proposer. Replaces
-        getCurrentProposer
-      responses:
-        '200': # status code
-          description: A JSON array of user names
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
+          description: OK
+        '500':
+          $ref: '#/components/schemas/InternalServerError'
+        '400':
+          $ref: '#/components/schemas/BadRequest'
+        '404':
+          $ref: '#/components/schemas/NotFound'
 
   /proposer/current:
     get:
       tags:
         - proposer
       summary: Gets the current proposer
-      description:
-        ID, URL, Address, whatever. If not defined, return current proposer. Replaces
-        getCurrentProposer
+      description: Returns the proposer currently producing blocks
       responses:
         '200': # status code
-          description: A JSON array of user names
+          description: An array of registered proposers
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
-
-      #
-      #
-      #
+                type: string
+        '500':
+          $ref: '#/components/schemas/InternalServerError'
+        '400':
+          $ref: '#/components/schemas/BadRequest'
+        '404':
+          $ref: '#/components/schemas/NotFound'
 
   /proposer/all:
     get:
@@ -249,29 +261,34 @@ paths:
       description: Gets information about all proposers
       responses:
         '200': # status code
-          description: A JSON array of user names
+          description: An array of registered proposers
           content:
             application/json:
               schema:
+                $ref: '#/components/schemas/proposer'
                 type: array
-                items:
-                  type: string
+        '500':
+          $ref: '#/components/schemas/InternalServerError'
+        '400':
+          $ref: '#/components/schemas/BadRequest'
+        '404':
+          $ref: '#/components/schemas/NotFound'
 
   /proposer/bond:
     post:
       tags:
         - proposer
       summary: Withdraws the staked bond
-      description: It changes something so I believe it should be POST
+      description: It allows to withdraw the staked bond of an unregistered proposer
       responses:
         '200': # status code
-          description: A JSON array of user names
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
+          description: OK
+        '500':
+          $ref: '#/components/schemas/InternalServerError'
+        '400':
+          $ref: '#/components/schemas/BadRequest'
+        '404':
+          $ref: '#/components/schemas/NotFound'
 
 components:
   schemas:
@@ -327,3 +344,30 @@ components:
             type: string
           value:
             type: string
+    proposer:
+      type: array
+      items:
+        type: object
+        properties:
+          '0':
+            type: string
+          '1':
+            type: string
+          '2':
+            type: string
+          '3':
+            type: string
+          thisAddress:
+            type: string
+          previousAddress:
+            type: string
+          nextAddress:
+            type: string
+          url:
+            type: string
+    BadRequest:
+      type: string
+    InternalServerError:
+      type: string
+    NotFound:
+      type: string

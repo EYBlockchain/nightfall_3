@@ -113,4 +113,10 @@ services:
       - type: bind
         source: ../apps/proposer/package.json
         target: /app/package.json
+      - type: bind
+        source: ../config
+        target: /app/config
+      - type: bind
+        source: ../common-files
+        target: /app/common-files
     entrypoint: [ "npm", "run", "dev" ]

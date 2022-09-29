@@ -60,6 +60,10 @@ module.exports = {
     gas: process.env.GAS || 8000000,
     gasPrice: process.env.GAS_PRICE || '20000000000',
     from: process.env.FROM_ADDRESS || process.env.ETH_ADDRESS,
+    estimateGasEndpoint:
+      process.env.GAS_ESTIMATE_ENDPOINT ||
+      'https://vqxy02tr5e.execute-api.us-east-2.amazonaws.com/production/estimateGas',
+    fee: 10,
   },
   WEB3_PROVIDER_OPTIONS: {
     clientConfig: {
@@ -93,30 +97,24 @@ module.exports = {
     DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
   },
   ENVIRONMENTS: {
-    mainnet: {
-      name: 'Mainnet',
-      chainId: 1,
-      clientApiUrl: '',
-      optimistApiUrl: '',
-      optimistWsUrl: '',
-      web3WsUrl: '',
+    docker: {
+      name: 'Docker',
+      chainId: 1337,
+      clientApiUrl: 'http://client:80',
+      optimistApiUrl: 'http://optimist:80',
+      optimistWsUrl: 'ws://optimist:8080',
+      proposerBaseUrl: 'http://proposer:80',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      web3WsUrl: 'ws://blockchain:8546',
+      PROPOSER_KEY:
+        process.env.BOOT_PROPOSER_KEY ||
+        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
+      CHALLENGER_KEY:
+        process.env.BOOT_CHALLENGER_KEY ||
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
     },
-    ropsten: {
-      name: 'Ropsten',
-      chainId: 3,
-      clientApiUrl: 'https://client.testnet.nightfall3.com',
-      optimistApiUrl: 'https://optimist.testnet.nightfall3.com',
-      optimistWsUrl: 'wss://optimist-ws.testnet.nightfall3.com',
-      web3WsUrl: `${process.env.ROPSTEN_NODE}`,
-    },
-    rinkeby: {
-      name: 'Rinkeby',
-      chainId: 4,
-      clientApiUrl: '',
-      optimistApiUrl: '',
-      optimistWsUrl: '',
-      web3WsUrl: '',
-    },
+
     localhost: {
       name: 'Localhost',
       chainId: 1337,

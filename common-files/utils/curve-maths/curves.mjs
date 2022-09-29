@@ -5,7 +5,7 @@ module for manupulating elliptic curve points for an alt-bn128 curve. This
 is the curve that Ethereum currently has pairing precompiles for. All the
 return values are BigInts (or arrays of BigInts).
 */
-import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
+import utils from '../crypto/merkle-tree/utils.mjs';
 import { mulMod, addMod, squareRootModPrime } from '../crypto/number-theory.mjs';
 import Fq2 from '../../classes/fq2.mjs';
 import Proof from '../../classes/proof.mjs';
