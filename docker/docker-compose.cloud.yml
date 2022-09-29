@@ -1,0 +1,36 @@
+version: '3.5'
+services:
+  client:
+    environment:
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
+      BLOCKCHAIN_PORT: 8546
+      USE_EXTERNAL_NODE: 'true'
+      AUTOSTART_RETRIES: 600
+      FROM_ADDRESS: "0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0"
+      ETH_NETWORK: staging
+
+  deployer:
+    environment:
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
+      BLOCKCHAIN_PORT: 8546
+      USE_EXTERNAL_NODE: 'true'
+      FROM_ADDRESS: "0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0"
+      ETH_PRIVATE_KEY: "0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d"
+      ETH_NETWORK: staging
+      ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
+
+  optimist:
+    environment:
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
+      BLOCKCHAIN_PORT: 8546
+      USE_EXTERNAL_NODE: 'true'
+      AUTOSTART_RETRIES: 600
+      FROM_ADDRESS: "0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0"
+      ETH_NETWORK: staging
+
+  administrator:
+    environment:
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
+      BLOCKCHAIN_PORT: 8546
+      LOG_LEVEL: error
+      ETH_NETWORK: staging

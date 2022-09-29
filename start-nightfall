@@ -30,6 +30,12 @@ while [ -n "$1" ]; do
                                     ;;
       -r  | --ropsten )              FILE="-f docker/docker-compose.yml -f docker/docker-compose.ropsten.yml"
                                     ;;
+      -c  | --cloud )               FILE="-f docker/docker-compose.yml -f docker/docker-compose.cloud.yml"
+                                    if [ -z ${BLOCKCHAIN_WS_HOST} ]; then
+                                        echo "BLOCKCHAIN_WS_HOST not initialized";
+                                        exit 1;
+                                    fi
+                                    ;;
       -e  | --edge )                FILE="-f docker/docker-compose.yml -f docker/docker-compose.polygon-edge.yml"
                                     ;;
       -h  | --help )                usage
