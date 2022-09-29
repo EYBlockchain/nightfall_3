@@ -47,10 +47,10 @@ services:
       LOG_LEVEL: debug
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: blockchain
+      ETH_NETWORK: staging
       BLOCKCHAIN_URL: wss://web3-ws.staging.polygon-nightfall.technology
       BLOCKCHAIN_WS_HOST: web3-ws.staging.polygon-nightfall.technology
-      BLOCKCHAIN_PORT: 8546
+      BLOCKCHAIN_PORT: 80
       ZOKRATES_WORKER_HOST: worker
       USE_STUBS: 'false'
 

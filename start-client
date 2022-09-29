@@ -1,0 +1,3 @@
+
+docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml up -d --remove-orphans
+docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml logs -f

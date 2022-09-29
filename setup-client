@@ -1,0 +1,10 @@
+#! /bin/bash
+set -e
+
+# Install node dependencies
+npm ci
+
+docker build -t ghcr.io/eyblockchain/local-zokrates:0.8.2 -f docker/zokrates.Dockerfile .
+docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml build client
+docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml build deployer
+docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml build worker 

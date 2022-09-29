@@ -901,6 +901,8 @@ class Nf3 {
               this.BLOCK_STAKE,
             );
             proposeEmitter.emit('receipt', receipt, block, transactions);
+            
+            updateBlockInfo();
           } catch (err) {
             // block proposed is reverted. Send transactions back to mempool
             proposeEmitter.emit('error', err, block, transactions);

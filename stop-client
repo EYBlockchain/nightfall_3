@@ -1,0 +1,2 @@
+
+docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml down -v

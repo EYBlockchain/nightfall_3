@@ -15,6 +15,12 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
+// environment
+//   clientApiUrl: 'http://localhost:8080',
+//   optimistApiUrl: 'http://localhost:8081',
+//   optimistWsUrl: 'ws://localhost:8082',
+//   web3WsUrl: 'ws://localhost:8546',
+ 
 const nf3User = new Nf3(signingKeys.user1, environment);
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
