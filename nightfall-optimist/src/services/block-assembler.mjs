@@ -46,7 +46,7 @@ export async function signalRollbackCompleted(data) {
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending. If not wait until the challenger reconnects
   let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
+  while (ws && ws.readyState !== WebSocket.OPEN) {
     await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
     logger.warn(
       `Websocket to proposer is closed for rollback complete.  Waiting for proposer to reconnect`,
@@ -54,7 +54,7 @@ export async function signalRollbackCompleted(data) {
     if (tryCount++ > 100) throw new Error(`Websocket to proposer has failed`);
   }
   logger.debug('Rollback completed');
-  ws.send(JSON.stringify({ type: 'rollback', data }));
+  if (ws) ws.send(JSON.stringify({ type: 'rollback', data }));
 }
 
 async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
