@@ -43,6 +43,21 @@ jobs:
           npm ci
           npm run test
 
+  unit-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+      - name: Unit Tests
+        run: |
+          npm ci
+          cd common-files
+          npm ci
+          cd ../
+          npm run unit-test
+
   circuits-test:
     runs-on: ubuntu-20.04
     env:

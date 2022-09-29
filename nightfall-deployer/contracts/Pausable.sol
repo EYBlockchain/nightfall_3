@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 
 abstract contract Pausable is PausableUpgradeable, Ownable {
 
-  function initialize() public override(Ownable) virtual initializer {
+  function initialize() public override(Ownable) virtual onlyInitializing {
     Ownable.initialize();
     PausableUpgradeable.__Pausable_init();
   }
