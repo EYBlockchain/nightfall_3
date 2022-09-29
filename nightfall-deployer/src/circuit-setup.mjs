@@ -93,7 +93,7 @@ async function setupCircuits() {
   for (let i = 0; i < vks.length; i++) {
     const circuit = circuitsToSetup[i];
 
-    let hcircuit = crypto.createHash('md5').update(circuit).digest("hex");
+    const hcircuit = crypto.createHash('md5').update(circuit).digest('hex');
 
     const checkHash = await axios.post(
       `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/check-circuit-hash`,
