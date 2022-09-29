@@ -24,6 +24,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
+    mapping(bytes32 => bool) public isEscrowed; // Check if transaction commitment values has been escrowed (only for deposit)
 
     function initialize() public override(Stateful, Key_Registry, Config, Pausable) initializer {
         Stateful.initialize();
@@ -33,11 +34,16 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         Pausable.initialize();
     }
 
+    function getTransactionEscrowed(bytes32 transactionHash) public view returns (bool) {
+        return isEscrowed[transactionHash];
+    }
+
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
 
         if (t.transactionType == TransactionTypes.DEPOSIT) {
+            isEscrowed[Utils.hashTransaction(t)] = true;
             require(uint256(t.fee) == msg.value);
             payIn(t);
         }
@@ -69,7 +75,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
             state.getFeeBookInfo(b.proposer, b.blockNumberL2);
         feePaymentsEth += BLOCK_STAKE;
 
-        state.setFeeBookInfo(b.proposer, b.blockNumberL2, uint256(0), 0);
+        state.resetFeeBookInfo(b.proposer, b.blockNumberL2);
 
         if (feePaymentsEth > 0) {
             (bool success, ) = payable(address(state)).call{value: feePaymentsEth}('');
