@@ -11,6 +11,7 @@ import path from 'path';
 import logger from 'common-files/utils/logger.mjs';
 import Web3 from 'common-files/utils/web3.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
+import crypto from 'crypto';
 
 const web3 = Web3.connection();
 
@@ -92,8 +93,17 @@ async function setupCircuits() {
   for (let i = 0; i < vks.length; i++) {
     const circuit = circuitsToSetup[i];
 
-    if (!vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
-      // we don't have an existing vk so let's generate one
+    let hcircuit = crypto.createHash('md5').update(circuit).digest("hex");
+
+    const checkHash = await axios.post(
+      `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/check-circuit-hash`,
+      {
+        filepath: circuit,
+        hash: hcircuit,
+      },
+    );
+
+    if (checkHash.data) {
       try {
         logger.info({
           msg: 'No existing verification key. Fear not, I will make a new one: calling generate keys',

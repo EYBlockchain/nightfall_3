@@ -31,7 +31,6 @@ module.exports = {
   TXHASH_TREE_HASH_TYPE: 'keccak256',
   STATE_GENESIS_BLOCK: process.env.STATE_GENESIS_BLOCK,
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
-  ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   PROTOCOL: 'http://', // connect to zokrates microservice like this
