@@ -213,8 +213,10 @@ export class Web3Client {
 
   async waitForEvent(eventLogs, expectedEvents, count = 1) {
     const length = count !== 1 ? count : expectedEvents.length;
+    logger.debug(`waiting for length: ${length}`);
     let timeout = 100;
     while (eventLogs.length < length) {
+      logger.debug(eventLogs.length);
       await waitForTimeout(3000);
       timeout--;
       if (timeout === 0) throw new Error('Timeout in waitForEvent');
@@ -232,7 +234,7 @@ export class Web3Client {
 
     const blockHeaders = [];
 
-    await this.subscribeTo('newBlockHeaders', blockHeaders);
+    this.subscribeTo('newBlockHeaders', blockHeaders);
 
     while (blockHeaders.length < 12) {
       await waitForTimeout(3000);

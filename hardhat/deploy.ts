@@ -1,5 +1,6 @@
 import { ethers, upgrades, network } from 'hardhat';
 import { MULTISIG, RESTRICTIONS, TEST_OPTIONS, ETH_ADDRESS } from 'config';
+import fs from 'fs';
 
 async function main() {
   const Proposers = await ethers.getContractFactory('Proposers');
@@ -117,12 +118,23 @@ async function main() {
   // TODO: move mock token setup to seperate file
   // deployment of mock tokens can also depend on the network name
   // instead of a dedicated env variable
-  if (network.name !== 'hardhat') return;
+  if (network.name !== 'hardhat' && network.name !== 'localhost') return;
 
   const ERC20Mock = await ethers.getContractFactory('ERC20Mock');
   const erc20Mock = await ERC20Mock.deploy(1001010000000000);
   await erc20Mock.deployed();
   console.log(`ERC20Mock deployed to\t\t${erc20Mock.address}`);
+
+  const signers = await ethers.getSigners();
+  const { user1, user2, proposer1, proposer2, proposer3, challenger, liquidityProvider } = TEST_OPTIONS.addresses;
+  signers.forEach(async s => {
+    [ user1, user2, proposer1, proposer2, proposer3, challenger, liquidityProvider ].forEach(async address => {
+      await s.sendTransaction({
+        to: address,
+        value: ethers.utils.parseEther('100'),
+      });
+    });
+  });
 
   // fund users for ping-pong test
   const { addresses } = TEST_OPTIONS;
@@ -141,7 +153,7 @@ async function main() {
     restrictionAmount,
   );
 
-  if (!ETH_ADDRESS) {
+  //if (!ETH_ADDRESS) {
     // indicates we're running 2e2 tests that uses hardcoded addresses
     const liquidityProviderAddress = '0x4789FD18D5d71982045d85d5218493fD69F55AC4';
     await shield.setMaticAddress(erc20Mock.address);
@@ -170,13 +182,28 @@ async function main() {
       [100000, 200000, 10, 50, 80000],
       [],
     );
-  }
+  //}
 
-  // TODO: contract setup scripts
+  // write all addresses to the corresponding json artifact 
+  const contractNames = ['Proposers', 'Shield', 'Challenges', 'State', 'ERC20Mock', 'ERC721Mock', 'ERC1155Mock'];
+  const contracts = [proposers, shield, challenges, state, erc20Mock, erc721Mock, erc1155Mock];
+  contracts.forEach((contract, i) => {
+    const path = `artifacts/nightfall-deployer/contracts/${contractNames[i]}.sol/${contractNames[i]}.json`;
+    let artifact = JSON.parse(fs.readFileSync(path).toString());
+    const chainId = network.config.chainId!;
+    let networks: any = {};
+    networks[chainId] = { 'address': contract.address };
+    artifact['networks'] = networks;
+    console.log(artifact['networks']);
+    fs.writeFileSync(path, JSON.stringify(artifact));
+  });
+
+  // contract setup scripts
   [proposers, shield, challenges].forEach(contract => contract.setStateContract(state.address));
   [proposers, shield, challenges, state].forEach(contract =>
     contract.transferOwnership(simpleMultiSig.address),
   );
+
   // TODO: support upgrades // port migration 4
 }
 

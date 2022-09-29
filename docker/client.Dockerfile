@@ -10,6 +10,7 @@ ENTRYPOINT ["/app/docker-entrypoint.sh"]
 WORKDIR /
 COPY common-files common-files
 COPY config/default.js app/config/default.js
+COPY artifacts/nightfall-deployer/contracts /app/build/contracts
 
 WORKDIR /app
 

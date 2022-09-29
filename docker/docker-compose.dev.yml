@@ -34,6 +34,9 @@ services:
       - type: bind
         source: ../config/default.js
         target: /app/config/default.js
+      - type: bind
+        source: ../artifacts/nightfall-deployer/contracts/
+        target: /app/build/contracts/ 
 
   deployer:
     build:
@@ -79,6 +82,9 @@ services:
       - type: bind
         source: ../config/default.js
         target: /app/config/default.js
+      - type: bind
+        source: ../artifacts/nightfall-deployer/contracts/
+        target: /app/build/contracts/ 
 
   worker:
     build:

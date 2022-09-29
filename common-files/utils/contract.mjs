@@ -12,7 +12,7 @@ export const web3 = Web3.connection();
 const options = config.WEB3_OPTIONS;
 
 export const contractPath = contractName => {
-  return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;
+  return `${config.CONTRACT_ARTIFACTS}/${contractName}.sol/${contractName}.json`;
 };
 
 export async function getContractInterface(contractName) {
@@ -28,6 +28,8 @@ export async function getContractAddress(contractName) {
   const contractInterface = await getContractInterface(contractName);
   const networkId = await web3.eth.getChainId();
   logger.debug(`found network id: ${networkId}`);
+  logger.debug(`deployed on networks: ${JSON.stringify(contractInterface.networks)}`);
+  logger.debug(`address: ${contractInterface.networks[networkId].address}`);
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
     deployedAddress = contractInterface.networks[networkId].address;
   }

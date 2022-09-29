@@ -212,6 +212,7 @@ class Nf3 {
   @async
   */
   async makeBlockNow() {
+    logger.debug(`${this.optimistBaseUrl}/block/make-now`);
     return axios.get(`${this.optimistBaseUrl}/block/make-now`);
   }
 

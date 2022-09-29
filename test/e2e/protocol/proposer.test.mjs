@@ -66,7 +66,7 @@ describe('Basic Proposer tests', () => {
       expectTransaction(res);
     } catch (error) {
       expect(error.message).to.satisfy(message =>
-        message.includes('Transaction has been reverted by the EVM'),
+        message.includes('You are not the boot proposer'),
       );
     }
   });
@@ -110,9 +110,8 @@ describe('Basic Proposer tests', () => {
     }
     expect(error.message).to.satisfy(
       message =>
-        message.includes(
-          'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw your bond',
-        ) || message.includes('Transaction has been reverted by the EVM'),
+        message.includes('It is too soon to withdraw your bond') ||
+        message.includes('Transaction has been reverted by the EVM'),
     );
   });
 
@@ -128,7 +127,7 @@ describe('Basic Proposer tests', () => {
       } catch (err) {
         error = err;
       }
-      expect(error.message).to.include('Transaction has been reverted by the EVM');
+      expect(error.message).to.include('It is too soon to withdraw your bond');
     }
   });
 

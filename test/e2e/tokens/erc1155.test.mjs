@@ -41,15 +41,18 @@ let availableTokenIds;
 
 const emptyL2 = async () => {
   let count = await nf3Users[0].unprocessedTransactionCount();
+  logger.debug(`count: ${count}`);
 
   while (count !== 0) {
     await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    // await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     count = await nf3Users[0].unprocessedTransactionCount();
+    logger.debug(`L2 count: ${count}`);
   }
 
   await nf3Users[0].makeBlockNow();
-  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  logger.debug('made new block');
+  // await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 };
 
 describe('ERC1155 tests', () => {
@@ -57,6 +60,7 @@ describe('ERC1155 tests', () => {
     await nf3Proposer1.init(mnemonics.proposer);
     await nf3Proposer1.registerProposer();
 
+    logger.debug('registered proposer');
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
     newGasBlockEmitter.on('gascost', async gasUsed => {
@@ -69,6 +73,7 @@ describe('ERC1155 tests', () => {
     await nf3Users[1].init(mnemonics.user2);
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
     erc1155Address = await nf3Users[0].getContractAddress('ERC1155Mock');
+    logger.debug('initialized users');
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
@@ -80,10 +85,13 @@ describe('ERC1155 tests', () => {
     ).details;
 
     availableTokenIds = availableTokens.map(t => t.tokenId);
+    logger.debug('got available tokens');
 
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
+    logger.debug('deposited');
 
     await emptyL2();
+    logger.debug('emptied L2');
   });
 
   describe('Deposit', () => {
@@ -283,9 +291,9 @@ describe('ERC1155 tests', () => {
 
   after(async () => {
     await nf3Proposer1.deregisterProposer();
-    await nf3Proposer1.close();
-    await nf3Users[0].close();
-    await nf3Users[1].close();
-    await web3Client.closeWeb3();
+    nf3Proposer1.close();
+    nf3Users[0].close();
+    nf3Users[1].close();
+    web3Client.closeWeb3();
   });
 });
