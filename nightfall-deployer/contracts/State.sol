@@ -343,7 +343,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         return proposerStartBlock;
     }
 
-    function removeProposer(address proposer) public onlyProposer {
+    function removeProposer(address proposer) public onlyRegistered {
         address previousAddress = proposers[proposer].previousAddress;
         address nextAddress = proposers[proposer].nextAddress;
         delete proposers[proposer];
