@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: CC0-1.0
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import './Ownable.sol';
 
 pragma solidity ^0.8.0;
 
-contract KYC is Initializable, Ownable {
+contract KYC is Ownable {
    
     bool public whitelisting;
     mapping(address => uint256) public users;
@@ -13,7 +12,7 @@ contract KYC is Initializable, Ownable {
     // groupIds cannot be zero, although we don't specifcally chack for this because assigning a groupId of zero has
     // no effect other than wasting gas.
 
-    function initialize() override virtual public initializer {
+    function initialize() override virtual public onlyInitializing {
         whitelisting = false;
         Ownable.initialize();
     }
@@ -37,13 +36,17 @@ contract KYC is Initializable, Ownable {
         delete managers[_manager];
     }
 
-    function setWhitelisting(bool _whitelisting) external onlyOwner {
+    function enableWhitelisting(bool _whitelisting) external onlyOwner {
         whitelisting = _whitelisting;
     }
 
-    function isWhitelisted(address _user) public returns (bool) {
+    function isWhitelisted(address _user) public view returns (bool) {
         if (whitelisting == false ) return true; // whitelisting is turned off
         if (users[_user] != 0) return true;
         return false;
+    }
+
+    function isWhitelistManager(address _manager) public view returns (uint) {
+        return managers[_manager];
     }
 }

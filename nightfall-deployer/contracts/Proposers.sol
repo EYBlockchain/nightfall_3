@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: CC0
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 /*
 Contract to manage the creation and managment of Proposals

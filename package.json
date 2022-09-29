@@ -24,7 +24,9 @@
     "test-adversary": "CHALLENGE_TYPE=${CHALLENGE_TYPE} npx hardhat test --no-compile --bail test/adversary.test.mjs",
     "test-all-adversary": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount IncorrectTreeRoot IncorrectLeafCount; do CHALLENGE_TYPE=${CHALLENGE_TYPE} npm run test-adversary; sleep 5; done",
     "test-general-stuff": "npx hardhat test --bail --no-compile test/kem-dem.test.mjs test/timber.test.mjs",
-    "test-kyc":  "LOG_LEVEL=silent mocha --timeout 0 --bail --exit test/kyc.test.mjs"
+    "test-kyc": "LOG_LEVEL=silent npx hardhat test --timeout 0 --bail --exit test/kyc.test.mjs",
+    "unit-test": "npx hardhat test --bail test/unit/*",
+    "unit-test-kyc": "npx hardhat test --bail test/unit/kyc.unit.test.mjs"
   },
   "repository": {
     "type": "git",
@@ -53,6 +55,8 @@
     "@nomiclabs/hardhat-etherscan": "^3.1.0",
     "@nomiclabs/hardhat-truffle5": "^2.0.7",
     "@nomiclabs/hardhat-web3": "^2.0.0",
+    "@openzeppelin/contracts": "^4.7.3",
+    "@openzeppelin/contracts-upgradeable": "^4.8.0-rc.1",
     "@typechain/ethers-v5": "^10.1.0",
     "@typechain/hardhat": "^6.1.3",
     "@types/mocha": "^9.1.1",
@@ -83,6 +87,7 @@
     "find-unused-exports": "^2.0.0",
     "general-number": "^1.0.1",
     "hardhat": "^2.12.0-esm.0",
+    "hardhat-contract-sizer": "^2.6.1",
     "hardhat-gas-reporter": "^1.0.9",
     "husky": "^6.0.0",
     "jsdoc": "^3.6.10",
