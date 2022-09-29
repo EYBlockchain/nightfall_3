@@ -4,8 +4,8 @@ version: '3.5'
 services:
   client:
     build:
-      dockerfile: client.Dockerfile
-      context: .
+      dockerfile: docker/client.Dockerfile
+      context: ..
     volumes:
       - type: bind
         source: ../nightfall-client/src
@@ -19,9 +19,12 @@ services:
 
   worker:
     build:
-      dockerfile: worker.Dockerfile
-      context: .
+      dockerfile: docker/worker.Dockerfile
+      context: ..
     volumes:
+      - type: bind
+        source: ../common-files/test
+        target: /common-files/test
       - type: bind
         source: ../nightfall-deployer/circuits
         target: /app/circuits/
@@ -34,4 +37,4 @@ services:
     ports:
       # to use with postman and etc
       - 8091:80
-    entrypoint: ['npm', 'run', 'start']
+    entrypoint: [ "npm", "run", "start" ]

@@ -30,7 +30,10 @@ export async function waitForContract(contractName) {
     } catch (err) {
       error = err;
       errorCount++;
-      logger.warn(`Unable to get a ${contractName} contract instance will try again in 3 seconds`);
+      logger.warn({
+        msg: `Unable to get a ${contractName} contract instance will try again in 3 seconds`,
+        err
+      });
       await new Promise(resolve => setTimeout(() => resolve(), 3000));
     }
   }

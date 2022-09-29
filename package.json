@@ -24,7 +24,8 @@
     "test-all-adversary": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount IncorrectTreeRoot IncorrectLeafCount; do CHALLENGE_TYPE=${CHALLENGE_TYPE} npm run test-adversary; sleep 5; done",
     "test-general-stuff": "npx hardhat test --bail --no-compile test/kem-dem.test.mjs test/timber.test.mjs",
 
-    "populate-optimistDb": "LOG_LEVEL=debug mocha --timeout 0 --bail --exit test/populate.optimistDb.test.mjs"
+    "populate-optimistDb": "LOG_LEVEL=debug npx hardhat test --bail --no-compile test/populate.optimistDb.test.mjs",
+    "run-tps": "LOG_LEVEL=debug npx hardhat test --bail --no-compile test/tps.test.mjs"
   },
   "repository": {
     "type": "git",
