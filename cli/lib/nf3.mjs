@@ -352,19 +352,6 @@ class Nf3 {
   }
 
   /**
-    Returns the abi of a Nightfall_3 contract calling the client.
-    @method
-    @async
-    @param {string} contractName - the name of the smart contract in question. Possible
-    values are 'Shield', 'State', 'Proposers', 'Challengers'.
-    @returns {Promise} Resolves into the Ethereum abi of the contract
-    */
-  async getContractAbi(contractName) {
-    const res = await axios.get(`${this.clientBaseUrl}/contract-abi/${contractName}`);
-    return res.data.abi;
-  }
-
-  /**
     Returns the address of a Nightfall_3 contract calling the optimist.
     @method
     @async
