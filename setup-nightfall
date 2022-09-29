@@ -14,6 +14,7 @@ fi
 
 docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-zokrates:0.8.2 -f docker/zokrates.Dockerfile .
 # containers built separately. A parallel build fails.
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} deployer
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} administrator
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} client
 docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} optimist
