@@ -120,22 +120,19 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         stake.challengeLocked += BLOCK_STAKE;
         stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
 
-        uint256 feePaymentsEth = 0;
-        uint256 feePaymentsMatic = 0;
+        bytes32 input = keccak256(abi.encodePacked(b.proposer, b.blockNumberL2));
+        feeBook[input][0] = 0; // fee payments Eth
+        feeBook[input][1] = 0; // fee payments Matic
+
         for (uint256 i = 0; i < t.length; i++) {
             if (t[i].transactionType == TransactionTypes.DEPOSIT) {
-                feePaymentsEth += uint256(t[i].fee);
+                feeBook[input][0] += uint256(t[i].fee);
             } else {
-                feePaymentsMatic += uint256(t[i].fee);
+                feeBook[input][1] += uint256(t[i].fee);
             }
         }
 
-        bytes32 input = keccak256(abi.encodePacked(b.proposer, b.blockNumberL2));
-        feeBook[input][0] = feePaymentsEth;
-        feeBook[input][1] = feePaymentsMatic;
-
         bytes32 blockHash;
-
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
         uint256 transactionSlots = TRANSACTION_STRUCTURE_SLOTS; //Number of slots that the transaction structure has
 
