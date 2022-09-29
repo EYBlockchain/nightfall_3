@@ -18,7 +18,6 @@ import {
   deleteRegisteredProposerAddress,
   getMempoolTransactions,
   getLatestTree,
-  getLatestBlockInfo,
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -124,8 +123,8 @@ router.get('/current-proposer', async (req, res, next) => {
   logger.debug({ msg: 'X endpoint', payload: JSON.stringify(req.body, null, 2) });
 
   try {
-    const proposersContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const { thisAddress: currentProposer } = await proposersContractInstance.methods
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const { thisAddress: currentProposer } = await stateContractInstance.methods
       .currentProposer()
       .call();
 
@@ -188,8 +187,8 @@ router.post('/de-register', async (req, res, next) => {
  */
 router.post('/withdrawBond', async (req, res, next) => {
   try {
-    const stateContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await stateContractInstance.methods.withdrawBond().encodeABI();
+    const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const txDataToSign = await proposerContractInstance.methods.withdrawBond().encodeABI();
     res.json({ txDataToSign });
   } catch (error) {
     logger.error(error);
@@ -249,55 +248,6 @@ router.post('/payment', async (req, res, next) => {
 });
 
 /**
- * Function to Propose a state update block  This just
- * provides the tx data, the user will need to call the blockchain client
- * @deprecated - this is now an automated process - no need to manually propose
- * a block
- */
-router.post('/propose', async (req, res, next) => {
-  logger.debug({ msg: '/propose endpoint', payload: JSON.stringify(req.body, null, 2) });
-  try {
-    const { transactions, proposer: prop, currentLeafCount } = req.body;
-    const latestBlockInfo = await getLatestBlockInfo();
-    const latestTree = await getLatestTree();
-    /*
-      use the information we've been POSTED to assemble a block
-      we use a Builder pattern because an async constructor is bad form
-     */
-    const { block } = await Block.build({
-      transactions,
-      proposer: prop,
-      currentLeafCount,
-      latestBlockInfo: {
-        blockNumberL2: latestBlockInfo.blockNumberL2,
-        blockHash: latestBlockInfo.blockHash,
-      },
-      latestTree,
-    });
-
-    logger.debug({
-      msg: 'New block assembled',
-      block: JSON.stringify(block, null, 2),
-    });
-
-    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const txDataToSign = await stateContractInstance.methods
-      .proposeBlock(block, transactions)
-      .encodeABI();
-
-    logger.debug({
-      msg: 'Returning raw transaction',
-      rawTransaction: JSON.stringify(txDataToSign, null, 2),
-    });
-
-    res.json({ txDataToSign, block, transactions });
-  } catch (err) {
-    logger.error(err);
-    next(err);
-  }
-});
-
-/**
  * Function to change the current proposer (assuming their time has elapsed).
  * This just provides the tx data, the user will need to call the blockchain
  * client.  It is a convenience function, because the unsigned transaction is
@@ -340,12 +290,6 @@ router.get('/mempool', async (req, res, next) => {
   }
 });
 
-/**
- * Function to Propose a state update block  This just
- * provides the tx data, the user will need to call the blockchain client
- * @deprecated - this is now an automated process - no need to manually propose
- * a block
- */
 router.post('/encode', async (req, res, next) => {
   logger.debug({ msg: '/encode endpoint', payload: JSON.stringify(req.body, null, 2) });
 

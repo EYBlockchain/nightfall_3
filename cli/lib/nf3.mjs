@@ -339,6 +339,19 @@ class Nf3 {
   }
 
   /**
+    Returns the abi of a Nightfall_3 contract calling the client.
+    @method
+    @async
+    @param {string} contractName - the name of the smart contract in question. Possible
+    values are 'Shield', 'State', 'Proposers', 'Challengers'.
+    @returns {Promise} Resolves into the Ethereum abi of the contract
+    */
+  async getContractAbi(contractName) {
+    const res = await axios.get(`${this.clientBaseUrl}/contract-abi/${contractName}`);
+    return res.data.abi;
+  }
+
+  /**
     Returns the address of a Nightfall_3 contract calling the optimist.
     @method
     @async
@@ -714,25 +727,6 @@ class Nf3 {
           reject(err);
         }
       });
-    });
-  }
-
-  /**
-    Registers a proposer locally with the Optimist instance only.  This will cause
-    Optimist to make blocks when this proposer is current but these will revert if
-    the proposer isn't registered on the blockchain too.  This method is useful only
-    if the proposer is already registered on the blockchain (has paid their bond) and
-    for some reason the Optimist instance does not know about them, e.g. a new instance
-    has been created. The method 'registerProposer' will both register the proposer
-    with the blockchain and register locally with the optimist instance. So, if
-    that method has been used successfully, there is no need to also call this method
-    @method
-    @async
-    @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
-    */
-  async registerProposerLocally() {
-    return axios.post(`${this.optimistBaseUrl}/proposer/registerlocally`, {
-      address: this.ethereumAddress,
     });
   }
 
