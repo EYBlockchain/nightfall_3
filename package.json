@@ -26,7 +26,7 @@
     "test-general-stuff": "npx hardhat test --bail --no-compile test/kem-dem.test.mjs test/timber.test.mjs",
 
     "populate-optimistDb": "LOG_LEVEL=debug npx hardhat test --bail --no-compile test/populate.optimistDb.test.mjs",
-    "run-tps": "LOG_LEVEL=debug npx hardhat test --bail --no-compile test/tps.test.mjs"
+    "tps-test": "LOG_LEVEL=debug npx hardhat test --bail --no-compile test/tps.test.mjs"
   },
   "repository": {
     "type": "git",

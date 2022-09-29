@@ -17,36 +17,6 @@ services:
         source: ../config/default.js
         target: /app/config/default.js
 
-  deployer:
-    build:
-      dockerfile: docker/deployer.Dockerfile
-      context: ..
-    volumes:
-      - type: bind
-        source: ../nightfall-deployer/contracts
-        target: /app/contracts/
-      - type: bind
-        source: ../nightfall-deployer/circuits
-        target: /app/circuits/
-      - type: bind
-        source: ../nightfall-deployer/src
-        target: /app/src/
-      - type: bind
-        source: ../common-files
-        target: /common-files
-      - type: bind
-        source: ../config/default.js
-        target: /app/config/default.js
-      - type: bind
-        source: ../nightfall-deployer/migrations
-        target: /app/migrations
-      - type: bind
-        source: ../nightfall-deployer/truffle-config.js
-        target: /app/truffle-config.js
-      - type: bind
-        source: ../nightfall-deployer/entrypoint.sh
-        target: /app/entrypoint.sh
-
   worker:
     build:
       dockerfile: docker/worker.Dockerfile

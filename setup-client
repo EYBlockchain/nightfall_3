@@ -6,5 +6,10 @@ npm ci
 
 docker build -t ghcr.io/eyblockchain/local-zokrates:0.8.2 -f docker/zokrates.Dockerfile .
 docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml build client
-docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml build deployer
 docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml build worker 
+
+mkdir -p docker/volumes/build/contracts
+aws s3 cp --recursive s3://nightfallv3-proving-files/staging/build/contracts/ docker/volumes/build/contracts
+
+mkdir -p docker/volumes/proving_files
+aws s3 cp --recursive s3://nightfallv3-proving-files/staging/proving_files/ docker/volumes/proving_files

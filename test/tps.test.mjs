@@ -1,10 +1,17 @@
 /* eslint-disable no-await-in-loop */
 import config from 'config';
-import Nf3 from '../../cli/lib/nf3.mjs';
-import { pendingCommitmentCount, Web3Client } from '../utils.mjs';
-import logger from '../../common-files/utils/logger.mjs';
+import Nf3 from '../cli/lib/nf3.mjs';
+import { pendingCommitmentCount, Web3Client } from './utils.mjs';
+import logger from '../common-files/utils/logger.mjs';
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const WEB3_WS_URL = 'wss://web3-ws.staging.polygon-nightfall.technology';
+
+const environment = {
+  clientApiUrl: 'http://localhost:8080',
+  optimistApiUrl: 'https://optimist-api.staging.polygon-nightfall.technology',
+  optimistWsUrl: 'wss://https://optimist-ws.staging.polygon-nightfall.technology:8080',
+  web3WsUrl: WEB3_WS_URL,  
+}; // config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
   fee,
@@ -15,16 +22,10 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
-// environment
-//   clientApiUrl: 'http://localhost:8080',
-//   optimistApiUrl: 'http://localhost:8081',
-//   optimistWsUrl: 'ws://localhost:8082',
-//   web3WsUrl: 'ws://localhost:8546',
- 
 const nf3User = new Nf3(signingKeys.user1, environment);
-const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
+//const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
-const web3Client = new Web3Client();
+const web3Client = new Web3Client(WEB3_WS_URL);
 
 let erc20Address;
 let stateAddress;
@@ -50,13 +51,18 @@ const emptyL2 = async () => {
 
 describe('TPS test', () => {
   before(async () => {
-    await nf3Proposer.init(mnemonics.proposer);
+//    await nf3Proposer.init(mnemonics.proposer);
 
     await nf3User.init(mnemonics.user1);
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
 
     stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+
+    logger.info({
+      erc20Address,
+      stateAddress
+    });
   });
 
   describe('Deposits', () => {
@@ -69,6 +75,7 @@ describe('TPS test', () => {
     });
   });
 
+/*
   describe('Start proposer', () => {
     it(`should do blocks for ${totalTx} deposits`, async function () {
       let numTx = 0;
@@ -108,10 +115,11 @@ describe('TPS test', () => {
       expect(numTx).to.be.equal(totalTx);
     });
   });
-
+*/
   after(async () => {
-    await nf3Proposer.deregisterProposer();
-    await nf3Proposer.close();
+    logger.info('Closing connections');
+ //   await nf3Proposer.deregisterProposer();
+ //   await nf3Proposer.close();
     await nf3User.close();
     await web3Client.closeWeb3();
   });

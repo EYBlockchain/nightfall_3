@@ -6,9 +6,7 @@ services:
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
     volumes:
-      - type: volume
-        source: build
-        target: /app/build
+      - ./volumes/build:/app/build
     networks:
       - nightfall_network
     ports:
@@ -17,7 +15,6 @@ services:
       - worker
       - rabbitmq
       - mongodb
-      - deployer
     environment:
       LOG_LEVEL: trace
       USE_EXTERNAL_NODE: 'true'
@@ -34,25 +31,6 @@ services:
       MONGO_URL: mongodb://mongodb:27017
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
-
-  deployer:
-    image: ghcr.io/eyblockchain/nightfall3-deployer:latest
-    volumes:
-      - type: volume
-        source: build
-        target: /app/build/
-    networks:
-      - nightfall_network
-    environment:
-      LOG_LEVEL: debug
-      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
-      # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: staging
-      BLOCKCHAIN_URL: wss://web3-ws.staging.polygon-nightfall.technology
-      BLOCKCHAIN_WS_HOST: web3-ws.staging.polygon-nightfall.technology
-      BLOCKCHAIN_PORT: 80
-      ZOKRATES_WORKER_HOST: worker
-      USE_STUBS: 'false'
 
   rabbitmq:
     image: rabbitmq
@@ -77,12 +55,8 @@ services:
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
-    depends_on:
-      - deployer
     volumes:
-      - type: volume
-        source: proving_files
-        target: /app/output/
+      - ./volumes/proving_files:/app/output/
     networks:
       - nightfall_network
     environment:
@@ -90,9 +64,7 @@ services:
       MPC: ${MPC}
 
 volumes:
-  mongodb:  
-  proving_files: 
-  build: 
+  mongodb: 
 networks:
   nightfall_network:
     driver: bridge
