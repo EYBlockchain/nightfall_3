@@ -4,6 +4,7 @@ node_modules/*
 **/doc/*
 cli/build/*
 wallet/cli/*
+wallet/src/components/Assets/
 test/adversary/nightfall-adversary/*
 /**/*.d.ts
 **/build/*
