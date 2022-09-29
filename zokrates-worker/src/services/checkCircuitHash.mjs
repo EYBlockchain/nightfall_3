@@ -1,5 +1,4 @@
 import fs from 'fs';
-import logger from 'common-files/utils/logger.mjs';
 import path from 'path';
 
 export default async function checkCircuitHash({ filepath, hash }) {
@@ -34,7 +33,7 @@ export default async function checkCircuitHash({ filepath, hash }) {
   }
 
   if (differentHash) {
-    fs.writeFileSync(filePath, JSON.stringify(resultData))
+    fs.writeFileSync(filePath, JSON.stringify(resultData));
   }
 
   return differentHash;
