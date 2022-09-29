@@ -8,4 +8,4 @@ test/adversary/nightfall-adversary/*
 /**/*.d.ts
 **/build/*
 hardhat.*
-typchain-types/
+typechain-types/
