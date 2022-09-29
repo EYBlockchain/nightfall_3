@@ -98,6 +98,9 @@ services:
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: poseidon
       LOG_LEVEL: debug
+      # right now it doesn't matter what is IS_CHALLENGER flag's value is because
+      # optimist container state-sync code start challenges at time of startup
+      # by calling startMakingChallenges() function
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
@@ -126,9 +129,9 @@ services:
       MPC: ${MPC}
 
 volumes:
-  mongodb:  
-  proving_files: 
-  build: 
+  mongodb:
+  proving_files:
+  build:
 networks:
   nightfall_network:
     driver: bridge

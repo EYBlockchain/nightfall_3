@@ -8,9 +8,9 @@ async function committedToChallengeEventHandler(data) {
     `Received commmitted to challenge event, with hash ${commitHash} and sender ${sender}`,
   );
   logger.info('A challenge commitment has been mined');
-  const { txDataToSign, retrieved } = await getCommit(commitHash);
+  const commitData = await getCommit(commitHash);
   // We may not find the commitment. In this case, it's probably not ours so we take no action
-  if (txDataToSign === null) {
+  if (commitData === null) {
     logger.debug('Commit hash not found in database');
     return;
   }
@@ -18,6 +18,7 @@ async function committedToChallengeEventHandler(data) {
   // we have already revealed it - thus we don't reveal it again because that would
   // just waste gas.  This could happen if a chain reorg were to re-emit the
   // CommittedToChallenge event.
+  const { txDataToSign, retrieved } = commitData;
   if (!retrieved) revealChallenge(txDataToSign, sender);
 }
 
