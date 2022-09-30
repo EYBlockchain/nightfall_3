@@ -1,6 +1,6 @@
 {
-  "name": "common-files",
-  "version": "1.0.0",
+  "name": "@polygon-nightfall/common-files",
+  "version": "0.0.1",
   "scripts": {
     "test": "NODE_CONFIG_DIR=../config mocha --timeout 0 --bail --exit test/*.mjs"
   },
