@@ -31,8 +31,8 @@ while [ -n "$1" ]; do
       -r  | --ropsten )              FILE="-f docker/docker-compose.yml -f docker/docker-compose.ropsten.yml"
                                     ;;
       -c  | --cloud )               FILE="-f docker/docker-compose.yml -f docker/docker-compose.cloud.yml"
-                                    if [ -z ${BLOCKCHAIN_WS_HOST} ]; then
-                                        echo "BLOCKCHAIN_WS_HOST not initialized";
+                                    if [ -z "${SERVER_IP}" ]; then
+                                        echo "SERVER_IP not initialized";
                                         exit 1;
                                     fi
                                     ;;

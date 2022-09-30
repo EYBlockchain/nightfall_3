@@ -33,7 +33,6 @@ services:
       - deployer
       - worker
       - rabbitmq
-      - mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
@@ -83,8 +82,6 @@ services:
 
   optimist:
     image: ghcr.io/eyblockchain/nightfall3-optimist:latest
-    depends_on:
-      - mongodb
     networks:
       - nightfall_network
     ports:
