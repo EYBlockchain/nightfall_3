@@ -815,7 +815,7 @@ class Nf3 {
   }
 
   /**
-    Get all the list of existing proposers.
+    Get all the proposer pending payments.
     @method
     @async
     @returns {array} A promise that resolves to the Ethereum transaction receipt.
