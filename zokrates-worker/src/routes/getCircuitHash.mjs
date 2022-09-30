@@ -3,10 +3,11 @@ import getCircuitHash from '../services/getCircuitHash.mjs';
 
 const router = express.Router();
 
-router.post('/', async (req, res, next) => {
+router.get('/', async (req, res, next) => {
   req.setTimeout(3600000); // 1 hour
   try {
-    res.send(await getCircuitHash(req.body));
+    const { circuit } = req.query;
+    res.send(await getCircuitHash(circuit));
   } catch (err) {
     next(err);
   }

@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 
-export default async function getCircuitHash({ filepath }) {
+export default async function getCircuitHash(circuit) {
   const outputPath = `./output`;
   const filePath = `${outputPath}/circuithash.txt`;
-  const circuitNameWext = path.basename(filepath, '.zok'); // filename without '.zok'
+  const circuitNameWext = path.basename(circuit, '.zok'); // filename without '.zok'
   let returnedHash = 0;
 
   if (fs.existsSync(filePath)) {
