@@ -7,6 +7,8 @@ import generateKeys from './routes/generateKeys.mjs';
 import vk from './routes/vk.mjs';
 import loadCircuits from './routes/loadCircuits.mjs';
 import verify from './routes/verify.mjs';
+import checkCircuitHash from './routes/checkCircuitHash.mjs';
+import getCircuitHash from './routes/getCircuitHash.mjs';
 
 const app = express();
 
@@ -16,6 +18,8 @@ setupHttpDefaults(app, app => {
   app.use('/vk', vk);
   app.use('/load-circuits', loadCircuits);
   app.use('/verify', verify);
+  app.use('/check-circuit-hash', checkCircuitHash);
+  app.use('/get-circuit-hash', getCircuitHash);
 });
 
 export default app;
