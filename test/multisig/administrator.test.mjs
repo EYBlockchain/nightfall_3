@@ -77,6 +77,27 @@ describe(`Testing Administrator`, () => {
       expect(ownerChallenges.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
     });
 
+    it('Set minimum stake with the multisig', async () => {
+      const transactions = await nfMultiSig.setMinimumStake(
+        amount2,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        [],
+      );
+      const approved = await nfMultiSig.setMinimumStake(
+        amount2,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        transactions,
+      );
+      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+      const minimumStake = await shieldContract.methods.getMinimumStake().call();
+
+      expect(Number(minimumStake)).to.be.equal(amount2);
+    });
+
     it('Set boot proposer with the multisig', async () => {
       const transactions = await nfMultiSig.setBootProposer(
         signingKeys.user1,

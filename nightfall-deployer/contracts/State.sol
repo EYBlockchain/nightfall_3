@@ -111,12 +111,12 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
 
         TimeLockedStake memory stake = getStakeAccount(msg.sender);
-        require(BLOCK_STAKE <= msg.value, 'State: Stake payment is incorrect');
+        require(blockStake <= msg.value, 'State: Stake payment is incorrect');
         require(b.proposer == msg.sender, 'State: Proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
-        stake.amount -= BLOCK_STAKE;
-        stake.challengeLocked += BLOCK_STAKE;
+        stake.amount -= blockStake;
+        stake.challengeLocked += blockStake;
         stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
 
         bytes32 input = keccak256(abi.encodePacked(b.proposer, b.blockNumberL2));
@@ -464,10 +464,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         // Give reward to challenger from the stake locked for challenges
         stakeAccounts[proposer] = TimeLockedStake(
             stake.amount,
-            stake.challengeLocked - numRemoved * BLOCK_STAKE,
+            stake.challengeLocked - numRemoved * blockStake,
             0
         );
-        pendingWithdrawals[challengerAddr][0] += numRemoved * BLOCK_STAKE;
+        pendingWithdrawals[challengerAddr][0] += numRemoved * blockStake;
     }
 
     function updateStakeAccountTime(address addr, uint256 time) external onlyProposer {
@@ -492,7 +492,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
      */
     function changeCurrentProposer() public {
         require(
-            block.number - proposerStartBlock > ROTATE_PROPOSER_BLOCKS || proposerStartBlock == 0,
+            block.number - proposerStartBlock > rotateProposerBlocks || proposerStartBlock == 0,
             'State: Too soon to rotate proposer'
         );
 
@@ -505,7 +505,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             ProposerSet memory peer;
             uint256 totalEffectiveWeight = 0;
 
-            if (currentSprint == SPRINTS_IN_SPAN || proposerStartBlock == 0) {
+            if (currentSprint == sprintsInSpan || proposerStartBlock == 0) {
                 currentProposer = proposers[currentProposer.nextAddress]; // it could be removed
                 currentSprint = 0;
             }
@@ -543,7 +543,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
      * @dev Initialize a new span
      */
     function initializeSpan() internal {
-        fillSlots(); // 1) initialize slots based on the stake and VALUE_PER_SLOT
+        fillSlots(); // 1) initialize slots based on the stake and valuePerSlot
         shuffleSlots(); // 2) shuffle the slots
         spanProposerSet(); // 3) pop the proposer set from shuffled slots
     }
@@ -565,21 +565,21 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         // 2) assign slots based on the stake of the proposers
         if (numProposers == 1) {
             stake = getStakeAccount(p.thisAddress);
-            weight = stake.amount / VALUE_PER_SLOT;
+            weight = stake.amount / valuePerSlot;
             for (uint256 i = 0; i < weight; i++) {
                 slots.push(p.thisAddress);
             }
         } else {
             while (p.nextAddress != currentProposer.thisAddress) {
                 stake = getStakeAccount(p.thisAddress);
-                weight = stake.amount / VALUE_PER_SLOT;
+                weight = stake.amount / valuePerSlot;
                 for (uint256 i = 0; i < weight; i++) {
                     slots.push(p.thisAddress);
                 }
                 p = proposers[p.nextAddress];
             }
             stake = getStakeAccount(p.thisAddress);
-            weight = stake.amount / VALUE_PER_SLOT;
+            weight = stake.amount / valuePerSlot;
             for (uint256 i = 0; i < weight; i++) {
                 slots.push(p.thisAddress);
             }
@@ -611,7 +611,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         delete proposersSet;
 
         // add proposersSet
-        for (uint256 i = 0; i < PROPOSER_SET_COUNT; i++) {
+        for (uint256 i = 0; i < proposerSetCount; i++) {
             LinkedAddress memory p = proposers[slots[i]];
             if (p.inProposerSet == false) {
                 p.inProposerSet = true;
