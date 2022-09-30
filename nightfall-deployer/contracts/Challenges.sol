@@ -71,12 +71,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         require(frontierBeforeHash == priorBlockL2.frontierHash, 'Invalid prior block frontier');
 
         // see if the challenge is valid
-        ChallengesUtil.libChallengeNewFrontierCorrect(
-            priorBlockL2,
-            frontierBeforeBlock,
-            blockL2,
-            transactions
-        );
+        ChallengesUtil.libChallengeNewFrontierCorrect(frontierBeforeBlock, blockL2, transactions);
         challengeAccepted(blockL2);
     }
 
@@ -207,7 +202,7 @@ contract Challenges is Stateful, Key_Registry, Config {
 
     function challengeProofVerification(
         TransactionInfoBlock calldata transaction,
-        Block[4] calldata blockL2ContainingHistoricRoot,
+        Block[] calldata blockL2ContainingHistoricRoot,
         uint256[8] memory uncompressedProof,
         bytes32 salt
     ) external {
@@ -219,12 +214,18 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction.transactionSiblingPath
         );
 
+        require(
+            blockL2ContainingHistoricRoot.length ==
+                transaction.transaction.historicRootBlockNumberL2.length,
+            'Invalid number of blocks L2 containing historic root'
+        );
+
         PublicInputs memory extraPublicInputs = PublicInputs(
-            [uint256(0), 0, 0, 0],
+            new uint256[](transaction.transaction.historicRootBlockNumberL2.length),
             super.getMaticAddress()
         );
 
-        for (uint256 i = 0; i < 4; ++i) {
+        for (uint256 i = 0; i < transaction.transaction.nullifiers.length; ++i) {
             if (uint256(transaction.transaction.nullifiers[i]) != 0) {
                 state.isBlockReal(blockL2ContainingHistoricRoot[i]);
 
@@ -256,11 +257,13 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction.transactionIndex,
             transaction.transactionSiblingPath
         );
-        for (uint256 i = 0; i < 4; ++i) {
+
+        for (uint256 i = 0; i < transaction.transaction.historicRootBlockNumberL2.length; ++i) {
             if (
                 transaction.transaction.historicRootBlockNumberL2[i] >= state.getNumberOfL2Blocks()
             ) {
                 challengeAccepted(transaction.blockL2);
+                return;
             }
         }
 

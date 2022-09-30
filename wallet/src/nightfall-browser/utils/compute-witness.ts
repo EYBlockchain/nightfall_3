@@ -59,6 +59,7 @@ const computePublicInputs = (
   tx: PublicInputs,
   rootsOldCommitments: string[],
   maticAddress: string,
+  numberNullifiers: number,
 ) => {
   const transaction = generalise(tx);
   const publicInput = [];
@@ -79,7 +80,7 @@ const computePublicInputs = (
   };
 
   publicInput.push(publicTx);
-  const roots = padArray(generalise(rootsOldCommitments), 0, 4);
+  const roots = padArray(generalise(rootsOldCommitments), 0, numberNullifiers);
   publicInput.push(roots.map((r: any) => r.field(BN128_GROUP_ORDER)).flat());
   publicInput.push(generalise(maticAddress).field(BN128_GROUP_ORDER));
 
@@ -103,11 +104,12 @@ const computePrivateInputsNullifiers = (
   paths: GeneralNumber[][],
   orders: GeneralNumber[],
   rootKey: GeneralNumber,
+  numberNullifiers: number,
 ): Nullifier => {
   const paddedOldCommitmentPreimage: Record<string, GeneralNumber>[] = padArray(
     oldCommitmentPreimage,
     NULL_COMMITMENT,
-    4,
+    numberNullifiers,
   );
   const paddedPaths: GeneralNumber[][] = padArray(paths, new Array(32).fill(0), 4);
   const paddedOrders: GeneralNumber[] = padArray(orders, 0, 4);
@@ -126,18 +128,17 @@ const computePrivateInputsNullifiers = (
 const computePrivateInputsCommitments = (
   newCommitmentPreimage: Record<string, GeneralNumber>[],
   recipientPublicKeys: GeneralNumber[][],
-  isTransfer: boolean,
+  numberCommitments: number,
 ): Commitment => {
-  const padLength: number = isTransfer ? 3 : 2;
   const paddedNewCommitmentPreimage: Record<string, GeneralNumber>[] = padArray(
     newCommitmentPreimage,
     NULL_COMMITMENT,
-    padLength,
+    numberCommitments,
   );
   const paddedRecipientPublicKeys: GeneralNumber[][] = padArray(
     recipientPublicKeys,
     [0, 0],
-    padLength,
+    numberCommitments,
   );
   return {
     newCommitments: {
@@ -169,8 +170,10 @@ const computeCircuitInputs = (
   privateData: Record<string, any>,
   roots: string[],
   maticAddress: string,
+  numberNullifiers: number,
+  numberCommitments: number,
 ): any => {
-  const publicInputs = computePublicInputs(txObject, roots, maticAddress);
+  const publicInputs = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
   const {
     salt,
     oldCommitmentPreimage,
@@ -187,11 +190,20 @@ const computeCircuitInputs = (
   if (Number(txObject.transactionType) === 0) {
     witness = [...publicInputs, ...computePrivateInputsDeposit(salt, recipientPublicKeys)];
   } else {
-    const isTransfer = Number(txObject.transactionType) === 1;
     witness = [
       ...publicInputs,
-      computePrivateInputsNullifiers(oldCommitmentPreimage, paths, orders, rootKey),
-      computePrivateInputsCommitments(newCommitmentPreimage, recipientPublicKeys, isTransfer),
+      computePrivateInputsNullifiers(
+        oldCommitmentPreimage,
+        paths,
+        orders,
+        rootKey,
+        numberNullifiers,
+      ),
+      computePrivateInputsCommitments(
+        newCommitmentPreimage,
+        recipientPublicKeys,
+        numberCommitments,
+      ),
     ];
 
     if (Number(txObject.transactionType) === 1) {

@@ -4,13 +4,13 @@ Module to check that submitted Blocks and Transactions are valid
 import logger from 'common-files/utils/logger.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { BlockError, Transaction } from '../classes/index.mjs';
-import checkTransaction from './transaction-checker.mjs';
 import {
   getBlockByBlockNumberL2,
   getTransactionHashSiblingInfo,
   getTreeByBlockNumberL2,
   getTreeByLeafCount,
 } from './database.mjs';
+import checkTransaction from './transaction-checker.mjs';
 import Block from '../classes/block.mjs';
 
 const { ZERO } = constants;

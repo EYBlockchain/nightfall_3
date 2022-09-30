@@ -13,22 +13,20 @@ functionality is not really required - it's just a data availability aid.
 pragma solidity ^0.8.0;
 
 import './Utils.sol';
-import './Key_Registry.sol';
 import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
 import './KYC.sol';
 
-contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable, KYC {
+contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
     mapping(bytes32 => bool) public isEscrowed; // Check if transaction commitment values has been escrowed (only for deposit)
 
-    function initialize() public override(Stateful, Key_Registry, Config, Pausable, KYC) initializer {
+    function initialize() public override(Stateful, Config, Pausable, KYC) initializer {
         Stateful.initialize();
-        Key_Registry.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
@@ -72,24 +70,21 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         // add up how much the proposer is owed.
 
         //Request fees
-        (uint256 feePaymentsEth, uint256 feePaymentsMatic) = state.getFeeBookInfo(
-            b.proposer,
-            b.blockNumberL2
-        );
-        feePaymentsEth += blockStake;
+        FeeTokens memory feePayments = state.getFeeBookInfo(b.proposer, b.blockNumberL2);
+        feePayments.feesEth += blockStake;
 
         state.resetFeeBookInfo(b.proposer, b.blockNumberL2);
 
-        if (feePaymentsEth > 0) {
-            (bool success, ) = payable(address(state)).call{value: feePaymentsEth}('');
+        if (feePayments.feesEth > 0) {
+            (bool success, ) = payable(address(state)).call{value: feePayments.feesEth}('');
             require(success, 'Shield: Transfer failed.');
         }
 
-        if (feePaymentsMatic > 0) {
+        if (feePayments.feesMatic > 0) {
             IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
                 address(this),
                 address(state),
-                feePaymentsMatic
+                feePayments.feesMatic
             );
         }
 
@@ -99,7 +94,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         stake.challengeLocked -= blockStake;
         state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
 
-        state.addPendingWithdrawal(msg.sender, feePaymentsEth, feePaymentsMatic);
+        state.addPendingWithdrawal(msg.sender, feePayments.feesEth, feePayments.feesMatic);
     }
 
     /**
