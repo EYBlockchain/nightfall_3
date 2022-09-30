@@ -1,7 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import logger from 'common-files/utils/logger.mjs';
-import { compile, extractVk, exportKeys, setup } from '../zokrates-lib/index.mjs';
+import * as snarkjs from 'snarkjs';
+// import { getCurveFromName } from 'ffjavascript';
+import downloadFile from 'common-files/utils/httputils.mjs';
+import { compile, exportKeys } from '../zokrates-lib/index.mjs';
 
 export default async function generateKeys({ filepath, curve = 'bn128' }) {
   const outputPath = `./output`;
@@ -33,17 +36,30 @@ export default async function generateKeys({ filepath, curve = 'bn128' }) {
     await exportKeys(`${outputPath}/${circuitDir}`, `${circuitName}`);
   } else {
     logger.info('Setup...');
-    await setup(
-      `${outputPath}/${circuitDir}/${circuitName}_out`,
-      `${outputPath}/${circuitDir}`,
-      'g16',
-      'bellman',
-      `${circuitName}_vk`,
-      `${circuitName}_pk`,
+
+    const r1csInfo = await snarkjs.r1cs.info(`${outputPath}/${circuitDir}/${circuitName}.r1cs`);
+    const power = Math.ceil(Math.log2(r1csInfo.nConstraints));
+
+    // Download PowersOfTau from Hermez
+    if (!fs.existsSync(`${outputPath}/powersOfTau28_hez_final_${power}.ptau`)) {
+      logger.info(`Downloading powersOfTau with power ${power} from Hermez`);
+      await downloadFile(
+        `https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_${power}.ptau`,
+        `${outputPath}/powersOfTau28_hez_final_${power}.ptau`,
+      );
+    }
+
+    logger.info('Generating keys...');
+    await snarkjs.zKey.newZKey(
+      `${outputPath}/${circuitDir}/${circuitName}.r1cs`,
+      `${outputPath}/powersOfTau28_hez_final_${power}.ptau`,
+      `${outputPath}/${circuitDir}/${circuitName}_pk.zkey`,
     );
   }
 
-  const vk = await extractVk(`${outputPath}/${circuitDir}/${circuitName}_vk.key`);
+  const vk = await snarkjs.zKey.exportVerificationKey(
+    `${outputPath}/${circuitDir}/${circuitName}_pk.zkey`,
+  );
 
   logger.info('Key generation completed');
 

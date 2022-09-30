@@ -1,31 +1,26 @@
-/* eslint import/no-extraneous-dependencies: "off" */
-/* ignore unused exports */
-
-/**
-Class representing a G16 proof.  Depending on the local definition of 'proof',
-an object from this class may contain the public inputs as well as the a, b, c
-terms.  Verifier.sol expects the public inputs to be separate, zokrates verify
-expects them to be in the same object.  This class can accomodate either.
-@param proof - a flattened proof array (such as one might send to a shield contract.
-*/
 import gen from 'general-number';
 
 const { generalise } = gen;
 
 class Proof {
-  constructor(proof) {
-    this.a = generalise([proof[0], proof[1]]).all.hex(32);
-    this.b = generalise([
+  constructor(_proof, curve, scheme) {
+    const proof = generalise(_proof).all.bigInt.map(p => p.toString());
+    this.protocol = scheme;
+    this.curve = curve;
+    this.pi_a = [proof[0], proof[1], '1'];
+    this.pi_b = [
       [proof[2], proof[3]],
       [proof[4], proof[5]],
-    ]).all.hex(32);
-    this.c = generalise([proof[6], proof[7]]).all.hex(32);
+      ['1', '0'],
+    ];
+    this.pi_c = [proof[6], proof[7], '1'];
   }
 
-  // note -  a flattened proof, such as is used by verifier.sol does not contain
-  // any public inputs
-  get flattened() {
-    return [this.a, this.b, this.c].flat(Infinity);
+  static flatProof(proof) {
+    const flatArray = generalise(
+      [proof.pi_a.slice(0, 2), proof.pi_b.slice(0, 2), proof.pi_c.slice(0, 2)].flat(Infinity),
+    ).all.bigInt;
+    return flatArray;
   }
 }
 

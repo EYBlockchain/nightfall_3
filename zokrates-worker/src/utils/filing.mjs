@@ -3,39 +3,21 @@
 import fs from 'fs';
 import tar from 'tar';
 import path from 'path';
+import * as snarkjs from 'snarkjs';
 import logger from 'common-files/utils/logger.mjs';
 
 const outputPath = `/app/output`;
 
-const vkPath = circuitPath => `${outputPath}/${circuitPath}/${path.basename(circuitPath)}_vk.key`;
-
-const readJsonFile = filePath => {
-  if (fs.existsSync(filePath)) {
-    const file = fs.readFileSync(filePath);
-    return JSON.parse(file);
+export const getVerificationKeyByCircuitPath = async circuitPath => {
+  const vkPath = `${outputPath}/${circuitPath}/${path.basename(circuitPath)}_pk.zkey`;
+  if (fs.existsSync(vkPath)) {
+    const vk = await snarkjs.zKey.exportVerificationKey(vkPath);
+    return vk;
   }
 
-  logger.warn({ msg: 'Unable to locate file', filePath });
+  logger.warn({ msg: 'Unable to locate file', vkPath });
 
   return null;
-};
-
-/**
- * Strip the 'raw' field from the vk data
- */
-const stripRawData = vk => {
-  const { alpha, beta, gamma, delta, gamma_abc } = vk;
-  return { alpha, beta, gamma, delta, gamma_abc };
-};
-
-export const getVerificationKeyByCircuitPath = circuitPath => {
-  const vk = readJsonFile(vkPath(circuitPath));
-  const strippedVK = vk === null ? vk : stripRawData(vk);
-  return strippedVK;
-};
-
-export const getProofFromFile = filePath => {
-  return readJsonFile(`${outputPath}/${filePath}`);
 };
 
 export const untarFiles = async (filePath, fileName) => {
@@ -63,12 +45,6 @@ export const deleteFile = async filePath => {
       return null;
     },
   );
-};
-
-export const deleteSingleFile = fileName => {
-  fs.unlink(fileName, err => {
-    if (err) throw err;
-  });
 };
 
 export const getFilesRecursively = (dir, fileList = []) => {
