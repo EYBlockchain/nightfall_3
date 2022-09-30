@@ -82,5 +82,5 @@ module.exports = async function (deployer) {
     await shield.createWhitelistManager(whitelistManager.groupId, whitelistManager.address);
   }
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
-  if (process.env.WHITELISTING==='enable') await shield.setWhitelisting(true);
+  if (process.env.WHITELISTING==='enable') await shield.enableWhitelisting(true);
 };
