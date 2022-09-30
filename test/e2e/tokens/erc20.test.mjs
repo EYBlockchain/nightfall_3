@@ -28,6 +28,7 @@ const {
   mnemonics,
   signingKeys,
   restrictions: { erc20default },
+  MINIMUM_STAKE,
 } = config.TEST_OPTIONS;
 
 const {
@@ -72,7 +73,7 @@ describe('ERC20 tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist');
+    await nf3Proposer.registerProposer('http://optimist1', MINIMUM_STAKE);
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();

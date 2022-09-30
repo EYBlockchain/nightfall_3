@@ -24,6 +24,7 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const { TRANSACTIONS_PER_BLOCK } = config;
+const { MINIMUM_STAKE } = config.TEST_OPTIONS;
 const TX_WAIT = 12000;
 const TEST_LENGTH = 6;
 
@@ -90,7 +91,7 @@ describe('Testing with an adversary', () => {
     await nf3AdversarialProposer.init(mnemonicProposer);
     await nf3Challenger.init(mnemonicChallenger);
 
-    if (!(await nf3User.healthcheck('optimist'))) throw new Error('Healthcheck failed');
+    if (!(await nf3User.healthcheck('client'))) throw new Error('Healthcheck failed');
     if (!(await nf3AdversarialProposer.healthcheck('optimist')))
       throw new Error('Healthcheck failed');
     if (!(await nf3Challenger.healthcheck('optimist'))) throw new Error('Healthcheck failed');
@@ -100,7 +101,7 @@ describe('Testing with an adversary', () => {
     startBalance = await retrieveL2Balance(nf3User);
 
     // Proposer registration
-    await nf3AdversarialProposer.registerProposer();
+    await nf3AdversarialProposer.registerProposer('', MINIMUM_STAKE);
     // Proposer listening for incoming events
     const blockProposeEmitter = await nf3AdversarialProposer.startProposer();
     blockProposeEmitter

@@ -81,10 +81,13 @@ contract Structures {
         address previousAddress;
         address nextAddress;
         string url;
+        bool inProposerSet;
+        uint256 indexProposerSet;
     }
 
-    struct TimeLockedBond {
+    struct TimeLockedStake {
         uint256 amount; // The amount held
+        uint256 challengeLocked; // The amount locked by block proposed still in CHALLENGE_PERIOD and not claimed
         uint256 time; // The time the funds were locked from
     }
 
@@ -103,5 +106,15 @@ contract Structures {
         Transaction transaction;
         uint256 transactionIndex;
         bytes32[] transactionSiblingPath;
+    }
+
+    /**
+     * @dev Element of the proposer set for next span
+     */
+    struct ProposerSet {
+        address thisAddress;
+        uint256 weight;
+        int256 currentWeight;
+        uint256 effectiveWeight;
     }
 }
