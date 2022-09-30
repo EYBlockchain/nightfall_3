@@ -240,4 +240,146 @@ export class NightfallMultiSig {
       ),
     ]);
   }
+
+  /**
+  This function sets the Minimum stake for proposers
+  */
+  async setMinimumStake(newMinimumStake, signingKey, executorAddress, _nonce, transactions) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
+    const shieldContractInstance = this.contractInstances.shield;
+    const data = shieldContractInstance.methods.setMinimumStake(newMinimumStake).encodeABI();
+    return Promise.all([
+      this.multiSig.addMultiSigSignature(
+        data,
+        signingKey,
+        shieldContractInstance.options.address,
+        executorAddress,
+        nonce,
+        transactions.flat(),
+      ),
+    ]);
+  }
+
+  /**
+  This function sets the Block stake for proposers
+  */
+  async setBlockStake(newBlockStake, signingKey, executorAddress, _nonce, transactions) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
+    const shieldContractInstance = this.contractInstances.shield;
+    const data = shieldContractInstance.methods.setBlockStake(newBlockStake).encodeABI();
+    return Promise.all([
+      this.multiSig.addMultiSigSignature(
+        data,
+        signingKey,
+        shieldContractInstance.options.address,
+        executorAddress,
+        nonce,
+        transactions.flat(),
+      ),
+    ]);
+  }
+
+  /**
+  This function sets the rotate proposer blocks for current proposer
+  */
+  async setRotateProposerBlocks(
+    newRotateProposerBlocks,
+    signingKey,
+    executorAddress,
+    _nonce,
+    transactions,
+  ) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
+    const shieldContractInstance = this.contractInstances.shield;
+    const data = shieldContractInstance.methods
+      .setRotateProposerBlocks(newRotateProposerBlocks)
+      .encodeABI();
+    return Promise.all([
+      this.multiSig.addMultiSigSignature(
+        data,
+        signingKey,
+        shieldContractInstance.options.address,
+        executorAddress,
+        nonce,
+        transactions.flat(),
+      ),
+    ]);
+  }
+
+  /**
+  This function sets the value per slot for PoS
+  */
+  async setValuePerSlot(newValuePerSlot, signingKey, executorAddress, _nonce, transactions) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
+    const shieldContractInstance = this.contractInstances.shield;
+    const data = shieldContractInstance.methods.setValuePerSlot(newValuePerSlot).encodeABI();
+    return Promise.all([
+      this.multiSig.addMultiSigSignature(
+        data,
+        signingKey,
+        shieldContractInstance.options.address,
+        executorAddress,
+        nonce,
+        transactions.flat(),
+      ),
+    ]);
+  }
+
+  /**
+  This function sets the proposer set count for PoS
+  */
+  async setProposerSetCount(
+    newProposerSetCount,
+    signingKey,
+    executorAddress,
+    _nonce,
+    transactions,
+  ) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
+    const shieldContractInstance = this.contractInstances.shield;
+    const data = shieldContractInstance.methods
+      .setProposerSetCount(newProposerSetCount)
+      .encodeABI();
+    return Promise.all([
+      this.multiSig.addMultiSigSignature(
+        data,
+        signingKey,
+        shieldContractInstance.options.address,
+        executorAddress,
+        nonce,
+        transactions.flat(),
+      ),
+    ]);
+  }
+
+  /**
+  This function sets the sprints in a span for PoS
+  */
+  async setSprintsInSpan(newSprintsInSpan, signingKey, executorAddress, _nonce, transactions) {
+    let nonce = _nonce;
+    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
+
+    const shieldContractInstance = this.contractInstances.shield;
+    const data = shieldContractInstance.methods.setSprintsInSpan(newSprintsInSpan).encodeABI();
+    return Promise.all([
+      this.multiSig.addMultiSigSignature(
+        data,
+        signingKey,
+        shieldContractInstance.options.address,
+        executorAddress,
+        nonce,
+        transactions.flat(),
+      ),
+    ]);
+  }
 }
