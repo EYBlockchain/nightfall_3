@@ -775,24 +775,25 @@ function findSubsetNCommitments(N, commitments, value) {
 
   // We will fix a left pointer that will keep moving through the array
   // and then perform a search of two elements with the remaining elements of the array
-  for (let i = 0; i < commitmentsFiltered.length - (N - 1); ++i) {
+  for (let i = 0; i <= commitmentsFiltered.length - N; ++i) {
     // Calculate the target value for the two subset search by removing the value of
     // the commitment that is fixed
     const valueLeft = generalise(value.bigInt - commitmentsFiltered[i].preimage.value.bigInt);
 
     // Try to find a subset of two that matches using valueLeft as the target value
     const commitmentsSubset = findSubsetNCommitments(
-      N,
+      N - 1,
       commitmentsFiltered.slice(i + 1),
       valueLeft,
     );
 
     // It is possible that there are no possible solutions. Therefore, check first if it has find
     // a solution by checking that it is a non void array
-    if (commitmentsSubset.length === N) {
-      const sumSubsetCommitment =
-        commitmentsFiltered[i].preimage.value.bigInt +
-        commitmentsSubset.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n);
+    if (commitmentsSubset.length === N - 1) {
+      const sumSubsetCommitment = commitmentsSubset.reduce(
+        (acc, com) => acc + com.preimage.value.bigInt,
+        commitmentsFiltered[i].preimage.value.bigInt,
+      );
 
       // If an exact solution is found, return
       if (sumSubsetCommitment === value.bigInt)
