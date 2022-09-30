@@ -104,7 +104,7 @@ async function setupCircuits() {
       },
     );
 
-    if (checkHash.data) {
+    if (checkHash.data || config.ALWAYS_DO_TRUSTED_SETUP) {
       try {
         logger.info({
           msg: 'No existing verification key. Fear not, I will make a new one: calling generate keys',
