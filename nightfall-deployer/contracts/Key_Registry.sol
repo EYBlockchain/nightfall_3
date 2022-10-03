@@ -11,7 +11,7 @@ contract Key_Registry is Ownable, Structures {
 
   mapping(TransactionTypes => uint256[]) public vks;
 
-  function initialize() override virtual public initializer {
+  function initialize() override virtual public onlyInitializing {
     Ownable.initialize();
   }
   /**

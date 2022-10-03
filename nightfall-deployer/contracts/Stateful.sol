@@ -15,7 +15,7 @@ abstract contract Stateful is Initializable {
   address deployer;
   bool done;
 
-  function initialize() virtual public initializer {
+  function initialize() virtual public onlyInitializing {
     deployer = msg.sender;
     done = false;
   }

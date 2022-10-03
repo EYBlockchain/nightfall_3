@@ -23,7 +23,7 @@ contract Config is Ownable, Structures {
     address maticAddress;
     mapping(address => uint256[2]) erc20limit;
 
-    function initialize() public virtual override initializer {
+    function initialize() public virtual override onlyInitializing {
         Ownable.initialize();
     }
 

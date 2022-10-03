@@ -12,3 +12,6 @@ test/adversary/nightfall-adversary
 wallet/tests/e2e/videos
 wallet/tests/e2e/screenshots
 docker/volumes
+typechain-types/
+artifacts/
+cache/
