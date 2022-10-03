@@ -10,10 +10,11 @@ const Proposers = artifacts.require('Proposers.sol');
 const Challenges = artifacts.require('Challenges.sol');
 const State = artifacts.require('State.sol');
 const SimpleMultiSig = artifacts.require('SimpleMultiSig.sol');
+const KYC = artifacts.require('KYC.sol');
 
 const config = require('config');
 
-const { RESTRICTIONS, MULTISIG } = config;
+const { RESTRICTIONS, MULTISIG, WHITELIST_MANAGERS } = config;
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
@@ -71,10 +72,15 @@ module.exports = async function (deployer) {
       token.amount,
     );
   }
-
-  //set Matic Address
+  // set Matic Address
   const maticAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
     token => token.name === 'MATIC',
   ).address;
   await shield.setMaticAddress(maticAddress.toLowerCase());
+  // set initial whitelist managers
+  for (const whitelistManager of WHITELIST_MANAGERS) {
+    await shield.createWhitelistManager(whitelistManager.groupId, whitelistManager.address);
+  }
+  console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
+  if (process.env.WHITELISTING==='enable') await shield.enableWhitelisting(true);
 };

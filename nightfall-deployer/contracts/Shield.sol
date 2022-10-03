@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: CC0-1.0
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
@@ -18,20 +17,22 @@ import './Key_Registry.sol';
 import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
+import './KYC.sol';
 
-contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable {
+contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable, KYC {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
     mapping(bytes32 => bool) public isEscrowed; // Check if transaction commitment values has been escrowed (only for deposit)
 
-    function initialize() public override(Stateful, Key_Registry, Config, Pausable) initializer {
+    function initialize() public override(Stateful, Key_Registry, Config, Pausable, KYC) initializer {
         Stateful.initialize();
         Key_Registry.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
+        KYC.initialize();
     }
 
     function getTransactionEscrowed(bytes32 transactionHash) public view returns (bool) {
@@ -41,7 +42,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
-
+        require(isWhitelisted(msg.sender), 'You are not authorised to transact using Nightfall');
         if (t.transactionType == TransactionTypes.DEPOSIT) {
             isEscrowed[Utils.hashTransaction(t)] = true;
             require(uint256(t.fee) == msg.value);
@@ -203,6 +204,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
             address recipientAddress = advancedWithdrawals[transactionHash] == address(0)
                 ? originalRecipientAddress
                 : advancedWithdrawals[transactionHash];
+            require(isWhitelisted(msg.sender), 'You are not authorised to withdraw funds');
             payOut(t, recipientAddress);
         }
     }

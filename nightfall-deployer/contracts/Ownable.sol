@@ -30,7 +30,7 @@ contract Ownable is Initializable {
   /**
    * @dev The constructor sets the original owner of the contract to the sender account.
    */
-  function initialize() virtual public initializer {
+  function initialize() virtual public onlyInitializing {
     setOwner(msg.sender);
   }
 
