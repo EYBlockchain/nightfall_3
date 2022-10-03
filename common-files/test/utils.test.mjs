@@ -58,6 +58,7 @@ describe('Utils tests', function () {
 
   this.beforeEach(() => {
     process.env.NODE_ENV = 'production';
+    process.env.ENVIRONMENT = 'aws';
   });
 
   it('Should obfuscate the object successfuly', () => {
@@ -120,23 +121,23 @@ describe('Utils tests', function () {
   });
 
   it("Shouldn't obfuscate for the local environment", () => {
-    process.env.NODE_ENV = 'local';
+    process.env.ENVIRONMENT = 'local';
 
     const result = obfuscate(OBJECT_TO_OBFUSCATE, OBFUSCATION_SETTINGS_TEST);
 
     assert.equal(result, OBJECT_TO_OBFUSCATE);
   });
 
-  it("Shouldn't obfuscate for when NODE_ENV is blank", () => {
-    process.env.NODE_ENV = '';
+  it("Shouldn't obfuscate for when ENVIRONMENT is blank", () => {
+    process.env.ENVIRONMENT = '';
 
     const result = obfuscate(OBJECT_TO_OBFUSCATE, OBFUSCATION_SETTINGS_TEST);
 
     assert.equal(result, OBJECT_TO_OBFUSCATE);
   });
 
-  it("Shouldn't obfuscate for when NODE_ENV is not set", () => {
-    delete process.env.NODE_ENV;
+  it("Shouldn't obfuscate for when ENVIRONMENT is not set", () => {
+    delete process.env.ENVIRONMENT;
 
     const result = obfuscate(OBJECT_TO_OBFUSCATE, OBFUSCATION_SETTINGS_TEST);
 
@@ -167,7 +168,7 @@ describe('Utils tests', function () {
     assert.equal(result, 'http://localhost');
   });
 
-  it("Shouldn't obfuscate because the string doesn't have a query string - #1", () => {
+  it("Shouldn't obfuscate because the string doesn't have a query string - #2", () => {
     const result = obfuscate('http://localhost?', OBFUSCATION_SETTINGS_TEST);
 
     assert.equal(result, 'http://localhost?');
