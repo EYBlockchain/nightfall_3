@@ -470,7 +470,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         pendingWithdrawals[challengerAddr][0] += numRemoved * blockStake;
     }
 
-    function updateStakeAccountTime(address addr, uint256 time) external onlyProposer {
+    function updateStakeAccountTime(address addr, uint256 time) public onlyProposer {
         TimeLockedStake memory stake = stakeAccounts[addr];
         stake.time = time;
         stakeAccounts[addr] = stake;
