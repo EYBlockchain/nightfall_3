@@ -20,6 +20,10 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
      @dev register proposer with stake  
      */
     function registerProposer(string calldata url) external payable nonReentrant {
+        require(
+            state.getNumProposers() < maxProposers,
+            'Proposers: Max number of registered proposers'
+        );
         TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
         stake.amount += msg.value;
         require(minimumStake <= stake.amount, 'Proposers: Need minimumStake');
