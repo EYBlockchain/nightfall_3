@@ -62,12 +62,6 @@ describe('KYC tests', () => {
     }
   });
 
-  /*
-  beforeEach(async () => {
-    await nf3Users[0].deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
-    await emptyL2();
-  });
-  */
   describe('Deposits from a non-whitelisted then whitelisted account', () => {
     it('deposits from a non-whitelisted should revert', async function () {
       logger.debug('Remove user from whitelist, they probably already are');
