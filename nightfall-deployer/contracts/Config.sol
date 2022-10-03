@@ -18,6 +18,7 @@ contract Config is Ownable, Structures {
     uint256 valuePerSlot; // amount of value of a slot
     uint256 proposerSetCount; // number of slots to pop after shuffling slots that will build the proposer set
     uint256 sprintsInSpan; // number of sprints of a span
+    uint256 maxProposers; // maximum number of proposers for the PoS
 
     address bootProposer;
     address bootChallenger;
@@ -32,43 +33,65 @@ contract Config is Ownable, Structures {
         valuePerSlot = 10;
         proposerSetCount = 5;
         sprintsInSpan = 5;
+        maxProposers = 100;
     }
 
-    // restricting proposers
+    /**
+     * @dev Only boot proposer
+     */
     modifier onlyBootProposer() {
         require(msg.sender == bootProposer, 'You are not the boot proposer');
         _;
     }
 
-    function setBootProposer(address proposer) external onlyOwner {
-        bootProposer = proposer;
-        emit NewBootProposerSet(bootProposer);
-    }
-
-    function getBootProposer() external view returns (address) {
-        return bootProposer;
-    }
-
-    // restricting challengers
+    /**
+     * @dev Only boot challenger
+     */
     modifier onlyBootChallenger() {
         require(msg.sender == bootChallenger, 'You are not the boot challenger');
         _;
     }
 
+    /**
+     * @dev Set boot proposer address
+     */
+    function setBootProposer(address proposer) external onlyOwner {
+        bootProposer = proposer;
+        emit NewBootProposerSet(bootProposer);
+    }
+
+    /**
+     * @dev Get boot proposer address
+     */
+    function getBootProposer() external view returns (address) {
+        return bootProposer;
+    }
+
+    /**
+     * @dev Set boot challenger address
+     */
     function setBootChallenger(address challenger) external onlyOwner {
         bootChallenger = challenger;
         emit NewBootChallengerSet(bootChallenger);
     }
 
+    /**
+     * @dev Get boot challenger address
+     */
     function getBootChallenger() external view returns (address) {
         return bootChallenger;
     }
 
-    //Set payments address
+    /**
+     * @dev Set Matic address (fee token for proposers payment)
+     */
     function setMaticAddress(address _maticAddress) external onlyOwner {
         maticAddress = _maticAddress;
     }
 
+    /**
+     * @dev Get Matic address (fee token for proposers payment)
+     */
     function getMaticAddress() public view returns (address) {
         return maticAddress;
     }
@@ -85,6 +108,9 @@ contract Config is Ownable, Structures {
         return erc20limit[tokenAddr][transactionType];
     }
 
+    /**
+     * @dev Set token restriction
+     */
     function setRestriction(
         address tokenAddr,
         uint256 depositAmount,
@@ -94,6 +120,9 @@ contract Config is Ownable, Structures {
         erc20limit[tokenAddr][1] = withdrawAmount;
     }
 
+    /**
+     * @dev Remove token restriction
+     */
     function removeRestriction(address tokenAddr) external onlyOwner {
         delete erc20limit[tokenAddr][0];
         delete erc20limit[tokenAddr][1];
@@ -181,5 +210,19 @@ contract Config is Ownable, Structures {
      */
     function getRotateProposerBlocks() public view returns (uint256) {
         return rotateProposerBlocks;
+    }
+
+    /**
+     * @dev Set maximum number of proposers
+     */
+    function setMaxProposers(uint256 _maxProposers) external onlyOwner {
+        maxProposers = _maxProposers;
+    }
+
+    /**
+     * @dev Get maximum number of proposers
+     */
+    function getMaxProposers() public view returns (uint256) {
+        return maxProposers;
     }
 }
