@@ -239,7 +239,7 @@ router.get('/withdraw', async (req, res, next) => {
  * withdrawal and then /withdraw needs to be called to recover the money.
  */
 router.post('/payment', async (req, res, next) => {
-  const { block } = req.body;
+  const { blockHash } = req.body;
   try {
     const block = await getBlockByBlockHash(blockHash);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);

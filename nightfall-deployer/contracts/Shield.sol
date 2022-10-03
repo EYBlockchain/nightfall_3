@@ -38,6 +38,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         return isEscrowed[transactionHash];
     }
 
+    function getTransactionEscrowed(bytes32 transactionHash) public view returns (bool) {
+        return isEscrowed[transactionHash];
+    }
+
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();

@@ -16,14 +16,8 @@ contract Config is Ownable, Structures {
     uint256 blockStake;
     uint256 rotateProposerBlocks;
     uint256 valuePerSlot; // amount of value of a slot
-    uint256 proposerSetCount; // number of slots to pop after shuffling slots that will build the proposer set
     uint256 sprintsInSpan; // number of sprints of a span
     uint256 maxProposers; // maximum number of proposers for the PoS
-
-    address bootProposer;
-    address bootChallenger;
-    address maticAddress;
-    mapping(address => uint256[2]) erc20limit;
 
     function initialize() public virtual override onlyInitializing {
         Ownable.initialize();

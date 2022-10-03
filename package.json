@@ -92,6 +92,7 @@
     "jsdoc": "^3.6.10",
     "minimist": "^1.2.6",
     "mocha": "^10.0.0",
+    "nightfall-sdk": "^0.1.1",
     "mongodb": "^4.7.0",
     "nightfall-sdk": "^0.1.1",
     "prettier": "^2.2.1",
