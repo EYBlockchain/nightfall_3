@@ -18,6 +18,8 @@ import {
   deleteRegisteredProposerAddress,
   getMempoolTransactions,
   getLatestTree,
+  findBlocksByProposer,
+  getBlockByBlockHash,
 } from '../services/database.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
@@ -153,15 +155,60 @@ router.post('/de-register', async (req, res, next) => {
 });
 
 /**
- * Function to withdraw bond for a de-registered proposer
+ * Function to withdraw stake for a de-registered proposer
  */
-router.post('/withdrawBond', async (req, res, next) => {
+
+router.post('/withdrawStake', async (req, res, next) => {
+  logger.debug(`withdrawStake endpoint received GET`);
   try {
     const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposerContractInstance.methods.withdrawBond().encodeABI();
+    const txDataToSign = await proposerContractInstance.methods.withdrawStake().encodeABI();
     res.json({ txDataToSign });
   } catch (error) {
     next(error);
+  }
+});
+
+/**
+ * Function to get pending blocks payments for a proposer.
+ */
+router.get('/pending-payments', async (req, res, next) => {
+  logger.debug(`pending-payments endpoint received GET`);
+  const { proposerPayments = proposer } = req.query;
+  logger.debug(`requested pending payments for proposer ${proposer}`);
+
+  const pendingPayments = [];
+  // get blocks by proposer
+  try {
+    const blocks = await findBlocksByProposer(proposerPayments);
+    const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+
+    for (let i = 0; i < blocks.length; i++) {
+      let pending;
+      let challengePeriod = false;
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        pending = await shieldContractInstance.methods
+          .isBlockPaymentPending(blocks[i].blockHash, blocks[i].blockNumberL2)
+          .call();
+      } catch (e) {
+        if (e.message.includes('Too soon to get paid for this block')) {
+          challengePeriod = true;
+          pending = true;
+        } else {
+          pending = false;
+        }
+      }
+
+      if (pending) {
+        pendingPayments.push({ blockHash: blocks[i].blockHash, challengePeriod });
+      }
+    }
+    logger.debug('returning pending blocks payments');
+    res.json({ pendingPayments });
+  } catch (err) {
+    logger.error(err);
+    next(err);
   }
 });
 
@@ -187,8 +234,9 @@ router.get('/withdraw', async (req, res, next) => {
  * withdrawal and then /withdraw needs to be called to recover the money.
  */
 router.post('/payment', async (req, res, next) => {
-  const { block } = req.body;
+  const { blockHash } = req.body;
   try {
+    const block = await getBlockByBlockHash(blockHash);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
       .requestBlockPayment(block)
@@ -209,10 +257,8 @@ router.post('/payment', async (req, res, next) => {
  */
 router.get('/change', async (req, res, next) => {
   try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods
-      .changeCurrentProposer()
-      .encodeABI();
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
 
     res.json({ txDataToSign });
   } catch (err) {

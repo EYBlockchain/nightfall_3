@@ -6,12 +6,17 @@ import './Ownable.sol';
 import './Structures.sol';
 
 contract Config is Ownable, Structures {
-    uint256 constant REGISTRATION_BOND = 10 wei; // TODO owner can update
+    uint256 constant MINIMUM_STAKE = 100 wei; // TODO owner can update
     uint256 constant BLOCK_STAKE = 1 wei;
-    uint256 constant ROTATE_PROPOSER_BLOCKS = 4;
-    uint256 constant COOLING_OFF_PERIOD = 1 weeks;
+    uint256 constant ROTATE_PROPOSER_BLOCKS = 20;
+    uint256 constant CHALLENGE_PERIOD = 1 weeks;
     bytes32 constant ZERO = bytes32(0);
     uint256 constant TRANSACTIONS_PER_BLOCK = 32;
+    uint256 constant BLOCK_STRUCTURE_SLOTS = 7;
+    uint256 constant TRANSACTION_STRUCTURE_SLOTS = 24;
+    uint256 constant VALUE_PER_SLOT = 10; // amount of value of a slot
+    uint256 constant PROPOSER_SET_COUNT = 5; // number of slots to pop after shuffling slots that will build the proposer set
+    uint256 constant SPRINTS_IN_SPAN = 5; // number of sprints of a span
 
     address bootProposer;
     address bootChallenger;

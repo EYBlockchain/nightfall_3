@@ -25,6 +25,7 @@ const {
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
+  MINIMUM_STAKE,
 } = config.TEST_OPTIONS;
 
 const { PROPOSE_BLOCK } = config.SIGNATURES;
@@ -57,7 +58,7 @@ describe('Optimist synchronisation tests', () => {
     await nf3Proposer1.init(mnemonics.proposer);
     await nf3Challenger.init(mnemonics.challenger);
     // we must set the URL from the point of view of the client container
-    await nf3Proposer1.registerProposer('http://optimist');
+    await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
 
     // Proposer listening for incoming events
     blockProposeEmitter = await nf3Proposer1.startProposer();
@@ -148,7 +149,7 @@ describe('Optimist synchronisation tests', () => {
       await restartOptimist();
 
       // we need to remind optimist which proposer it's connected to
-      await nf3Proposer1.registerProposer('http://optimist');
+      await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
       // TODO - get optimist to do this automatically.
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a resync correctly occured
@@ -231,7 +232,7 @@ describe('Optimist synchronisation tests', () => {
       logger.debug('rollback complete event received');
       // the rollback will have removed us as proposer. We need to re-register because we
       // were the only proposer in town!
-      await nf3Proposer1.registerProposer('http://optimist');
+      await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a rollback correctly occured
       logger.debug(`      Sending ${txPerBlock} deposits...`);

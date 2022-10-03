@@ -24,6 +24,7 @@ const {
   tokenConfigs: { tokenTypeERC1155, tokenType, tokenId },
   mnemonics,
   signingKeys,
+  MINIMUM_STAKE,
 } = config.TEST_OPTIONS;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
@@ -55,7 +56,7 @@ const emptyL2 = async () => {
 describe('ERC1155 tests', () => {
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer();
+    await nf3Proposer1.registerProposer('', MINIMUM_STAKE);
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
