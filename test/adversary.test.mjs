@@ -99,14 +99,14 @@ describe('Testing with an adversary', () => {
     ercAddress = await nf3User.getContractAddress('ERC20Mock');
     startBalance = await retrieveL2Balance(nf3User);
 
-    // initiating proposed websocket connection for aptimist ran as challenger
+    // initiating proposed websocket connection for optimist ran as challenger
     // this bit of a code added as work-around to a bug in code
     // Bug is, when a optimist only spinned as challenger
     // after a rollback we queue a job called `signalRollbackCompleted`
     // inside in which we look for ws(websocket) of a propser continuously via
     // while loop since optimist container only has challenger this case never satisfies
-    // and 'Error(`Websocket to proposer has failed`)'is throw meanwhile blockProposeEventHandler
-    // job never get picked from queue.
+    // and 'Error(`Websocket to proposer has failed`)'is throw and optimist crash
+    // meanwhile blockProposeEventHandler job never get picked from queue.
     await nf3Challenger.startProposer();
 
     // Proposer registration
