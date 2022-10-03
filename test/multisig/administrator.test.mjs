@@ -77,7 +77,7 @@ describe(`Testing Administrator`, () => {
       expect(ownerChallenges.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
     });
 
-    it('Set minimum stake with the multisig', async () => {
+    it('Set minimum stake to register a proposer with the multisig', async () => {
       const transactions = await nfMultiSig.setMinimumStake(
         amount2,
         signingKeys.user1,
@@ -96,6 +96,111 @@ describe(`Testing Administrator`, () => {
       const minimumStake = await shieldContract.methods.getMinimumStake().call();
 
       expect(Number(minimumStake)).to.be.equal(amount2);
+    });
+
+    it('Set block stake for a proposer with the multisig', async () => {
+      const transactions = await nfMultiSig.setBlockStake(
+        amount2,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        [],
+      );
+      const approved = await nfMultiSig.setBlockStake(
+        amount2,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        transactions,
+      );
+      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+      const blockStake = await shieldContract.methods.getBlockStake().call();
+
+      expect(Number(blockStake)).to.be.equal(amount2);
+    });
+
+    it('Set rotate proposer blocks with the multisig', async () => {
+      const transactions = await nfMultiSig.setRotateProposerBlocks(
+        amount2,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        [],
+      );
+      const approved = await nfMultiSig.setRotateProposerBlocks(
+        amount2,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        transactions,
+      );
+      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+      const rotateProposerBlocks = await shieldContract.methods.getRotateProposerBlocks().call();
+
+      expect(Number(rotateProposerBlocks)).to.be.equal(amount2);
+    });
+
+    it('Set value per slot in PoS with the multisig', async () => {
+      const transactions = await nfMultiSig.setValuePerSlot(
+        amount1,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        [],
+      );
+      const approved = await nfMultiSig.setValuePerSlot(
+        amount1,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        transactions,
+      );
+      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+      const rotateProposerBlocks = await shieldContract.methods.getValuePerSlot().call();
+
+      expect(Number(rotateProposerBlocks)).to.be.equal(amount1);
+    });
+
+    it('Set proposer set count in PoS with the multisig', async () => {
+      const transactions = await nfMultiSig.setProposerSetCount(
+        amount1 / 2,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        [],
+      );
+      const approved = await nfMultiSig.setProposerSetCount(
+        amount1 / 2,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        transactions,
+      );
+      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+      const proposerSetCount = await shieldContract.methods.getProposerSetCount().call();
+
+      expect(Number(proposerSetCount)).to.be.equal(amount1 / 2);
+    });
+
+    it('Set sprints in span in PoS with the multisig', async () => {
+      const transactions = await nfMultiSig.setSprintsInSpan(
+        amount1 / 2,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        [],
+      );
+      const approved = await nfMultiSig.setSprintsInSpan(
+        amount1 / 2,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        transactions,
+      );
+      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+      const sprintsInSpan = await shieldContract.methods.getSprintsInSpan().call();
+
+      expect(Number(sprintsInSpan)).to.be.equal(amount1 / 2);
     });
 
     it('Set boot proposer with the multisig', async () => {
@@ -288,6 +393,54 @@ describe(`Testing Administrator`, () => {
       await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
       const owner = await stateContract.methods.owner().call();
       expect(owner.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
+    });
+
+    it('Set minimum stake to register a proposer without multisig', async () => {
+      await shieldContract.methods.setMinimumStake(amount2).send({ from: nf3User.ethereumAddress });
+      const minimumStake = await shieldContract.methods.getMinimumStake().call();
+
+      expect(Number(minimumStake)).to.be.equal(amount2);
+    });
+
+    it('Set block stake for a proposer without multisig', async () => {
+      await shieldContract.methods.setBlockStake(amount2).send({ from: nf3User.ethereumAddress });
+      const blockStake = await shieldContract.methods.getBlockStake().call();
+
+      expect(Number(blockStake)).to.be.equal(amount2);
+    });
+
+    it('Set rotate proposer blocks without multisig', async () => {
+      await shieldContract.methods
+        .setRotateProposerBlocks(amount2)
+        .send({ from: nf3User.ethereumAddress });
+      const rotateProposerBlocks = await shieldContract.methods.getRotateProposerBlocks().call();
+
+      expect(Number(rotateProposerBlocks)).to.be.equal(amount2);
+    });
+
+    it('Set value per slot in PoS without multisig', async () => {
+      await shieldContract.methods.setValuePerSlot(amount1).send({ from: nf3User.ethereumAddress });
+      const rotateProposerBlocks = await shieldContract.methods.getValuePerSlot().call();
+
+      expect(Number(rotateProposerBlocks)).to.be.equal(amount1);
+    });
+
+    it('Set proposer set count in PoS without multisig', async () => {
+      await shieldContract.methods
+        .setProposerSetCount(amount1 / 2)
+        .send({ from: nf3User.ethereumAddress });
+      const proposerSetCount = await shieldContract.methods.getProposerSetCount().call();
+
+      expect(Number(proposerSetCount)).to.be.equal(amount1 / 2);
+    });
+
+    it('Set sprints in span in PoS without multisig', async () => {
+      await shieldContract.methods
+        .setSprintsInSpan(amount1 / 2)
+        .send({ from: nf3User.ethereumAddress });
+      const sprintsInSpan = await shieldContract.methods.getSprintsInSpan().call();
+
+      expect(Number(sprintsInSpan)).to.be.equal(amount1 / 2);
     });
 
     it('Set boot proposer without multisig', async () => {
