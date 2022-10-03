@@ -496,6 +496,24 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             'State: Too soon to rotate proposer'
         );
 
+        // if maxProposers=1 only bootProposer as proposer
+        if (maxProposers == 1 && numProposers > 1) {
+            address selectedProposer = currentProposer.nextAddress;
+            while (selectedProposer != currentProposer.thisAddress) {
+                if (selectedProposer != bootProposer) {
+                    removeProposer(selectedProposer);
+                    // The selectedProposer has to wait a CHALLENGE_PERIOD from current block.timestamp
+                    updateStakeAccountTime(selectedProposer, block.timestamp);
+                }
+                selectedProposer = proposers[selectedProposer].nextAddress;
+            }
+            if (selectedProposer != bootProposer) {
+                removeProposer(selectedProposer);
+                // The selectedProposer has to wait a CHALLENGE_PERIOD from current block.timestamp
+                updateStakeAccountTime(selectedProposer, block.timestamp);
+            }
+        }
+
         address addressBestPeer;
 
         if (numProposers <= 1) {
