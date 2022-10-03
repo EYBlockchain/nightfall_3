@@ -164,9 +164,13 @@ const addInterceptorForJson = (res, next) => {
   };
 };
 
-const logResponseData = (res, jsonData) => {
+const logResponseData = (req, res, jsonData) => {
   logger.debug({
     message: 'Response info',
+    request: {
+      url: doObfuscation(req.url),
+      method: req.method,
+    },
     response: {
       status: res.statusCode,
       data: doObfuscation(jsonData),
@@ -178,9 +182,9 @@ const logResponseData = (res, jsonData) => {
 /**
  * Intercepts response completion then logs the response info.
  */
-const addInterceptorForResponseCompletion = res => {
+const addInterceptorForResponseCompletion = (req, res) => {
   res.on('finish', () => {
-    logResponseData(res, res.locals.jsonResponseData);
+    logResponseData(req, res, res.locals.jsonResponseData);
   });
 };
 
@@ -198,7 +202,7 @@ const responseLogger = (req, res, next) => {
 
   try {
     addInterceptorForJson(res, next);
-    addInterceptorForResponseCompletion(res);
+    addInterceptorForResponseCompletion(req, res);
     return next();
   } catch (error) {
     return next(error);
