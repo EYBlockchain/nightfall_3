@@ -1,5 +1,6 @@
 import gen from 'general-number';
 import constants from 'common-files/constants/index.mjs';
+import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
 
 const { generalise } = gen;
 const { BN128_GROUP_ORDER } = constants;
@@ -8,18 +9,9 @@ const NULL_COMMITMENT = {
   value: 0,
   salt: 0,
 };
-const padArray = (arr, padWith, n) => {
-  if (!Array.isArray(arr))
-    return generalise([arr, ...Array.from({ length: n - 1 }, () => padWith)]);
-  if (arr.length < n) {
-    const nullPadding = Array.from({ length: n - arr.length }, () => padWith);
-    return generalise(arr.concat(nullPadding));
-  }
-  return generalise(arr);
-};
 
 const computePublicInputs = (tx, rootsOldCommitments, maticAddress, numberNullifiers) => {
-  const roots = padArray(generalise(rootsOldCommitments), 0, numberNullifiers);
+  const roots = utils.padArray(generalise(rootsOldCommitments), 0, numberNullifiers);
 
   const transaction = generalise(tx);
   return [
@@ -54,13 +46,13 @@ const computePrivateInputsNullifiers = (
   rootKey,
   numberNullifiers,
 ) => {
-  const paddedOldCommitmentPreimage = padArray(
+  const paddedOldCommitmentPreimage = utils.padArray(
     oldCommitmentPreimage,
     NULL_COMMITMENT,
     numberNullifiers,
   );
-  const paddedPaths = padArray(paths, new Array(32).fill(0), numberNullifiers);
-  const paddedOrders = padArray(orders, 0, numberNullifiers);
+  const paddedPaths = utils.padArray(paths, new Array(32).fill(0), numberNullifiers);
+  const paddedOrders = utils.padArray(orders, 0, numberNullifiers);
 
   const privateInputsNullifiers = [
     rootKey.field(BN128_GROUP_ORDER),
@@ -77,12 +69,12 @@ const computePrivateInputsCommitments = (
   recipientPublicKeys,
   numberCommitments,
 ) => {
-  const paddedNewCommitmentPreimage = padArray(
+  const paddedNewCommitmentPreimage = utils.padArray(
     newCommitmentPreimage,
     NULL_COMMITMENT,
     numberCommitments,
   );
-  const paddedRecipientPublicKeys = padArray(recipientPublicKeys, [0, 0], numberCommitments);
+  const paddedRecipientPublicKeys = utils.padArray(recipientPublicKeys, [0, 0], numberCommitments);
   return [
     paddedNewCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
     paddedNewCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),

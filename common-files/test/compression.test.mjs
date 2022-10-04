@@ -7,6 +7,10 @@ import {
   compressProof,
   decompressProof,
 } from 'common-files/utils/curve-maths/curves.mjs';
+import gen from 'general-number';
+import Proof from '../classes/proof.mjs';
+
+const { generalise } = gen;
 
 const testProof = {
   pi_a: [
@@ -32,34 +36,34 @@ const testProof = {
 describe('Compression tests', () => {
   it('should compress and decompress G1 points, recovering the original', async () => {
     const [compressedG1a, compressedG1c] = await Promise.all([
-      compressG1(testProof.a),
-      compressG1(testProof.c),
+      compressG1(testProof.pi_a),
+      compressG1(testProof.pi_c),
     ]);
     const [decompressedG1a, decompressedG1c] = [
       decompressG1(compressedG1a),
       decompressG1(compressedG1c),
     ];
-    assert.deepStrictEqual(testProof.a, decompressedG1a);
-    assert.deepStrictEqual(testProof.c, decompressedG1c);
+    assert.deepStrictEqual(testProof.pi_a, decompressedG1a);
+    assert.deepStrictEqual(testProof.pi_c, decompressedG1c);
   });
 
   it('should compress and decompress a G2 point, recovering the original', async () => {
-    const compressedG2b = await Promise.all(compressG2(testProof.b));
+    const compressedG2b = await Promise.all(compressG2(testProof.pi_b));
     const decompressedG2b = decompressG2(compressedG2b);
-    assert.deepStrictEqual(testProof.b, decompressedG2b);
+    assert.deepStrictEqual(testProof.pi_b, decompressedG2b);
   });
 
   it('should compress and decompress a G16 proof object', async () => {
     const compressedProof = await compressProof(testProof);
     const decompressedProof = decompressProof(compressedProof);
-    const flatProof = [testProof.a, testProof.b, testProof.c].flat(2);
+    const flatProof = generalise(Proof.flatProof(testProof)).all.hex(32);
     assert.deepStrictEqual(flatProof, decompressedProof);
   });
 
   it('should compress and decompress a flattened G16 proof array', async () => {
     const compressedProof = await compressProof(Object.values(testProof).flat(Infinity));
     const decompressedProof = decompressProof(compressedProof);
-    const flatProof = [testProof.a, testProof.b, testProof.c].flat(2);
+    const flatProof = generalise(Proof.flatProof(testProof)).all.hex(32);
     assert.deepStrictEqual(flatProof, decompressedProof);
   });
 });

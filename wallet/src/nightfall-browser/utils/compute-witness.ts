@@ -1,3 +1,4 @@
+import utils from 'common-files/utils/crypto/merkle-tree/utils';
 import gen, { GeneralNumber } from 'general-number';
 
 const { generalise } = gen;
@@ -7,15 +8,6 @@ const { BN128_GROUP_ORDER } = global.nightfallConstants;
 const NULL_COMMITMENT = {
   value: 0,
   salt: 0,
-};
-const padArray = <T>(arr: T[], padWith: any, n: number): T[] => {
-  if (!Array.isArray(arr))
-    return generalise([arr, ...Array.from({ length: n - 1 }, () => padWith)]);
-  if (arr.length < n) {
-    const nullPadding = Array.from({ length: n - arr.length }, () => padWith);
-    return generalise(arr.concat(nullPadding));
-  }
-  return generalise(arr);
 };
 
 type PublicInputs = {
@@ -80,7 +72,7 @@ const computePublicInputs = (
   };
 
   publicInput.push(publicTx);
-  const roots = padArray(generalise(rootsOldCommitments), 0, numberNullifiers);
+  const roots = utils.padArray(generalise(rootsOldCommitments), 0, numberNullifiers);
   publicInput.push(roots.map((r: any) => r.field(BN128_GROUP_ORDER)).flat());
   publicInput.push(generalise(maticAddress).field(BN128_GROUP_ORDER));
 
@@ -106,13 +98,13 @@ const computePrivateInputsNullifiers = (
   rootKey: GeneralNumber,
   numberNullifiers: number,
 ): Nullifier => {
-  const paddedOldCommitmentPreimage: Record<string, GeneralNumber>[] = padArray(
+  const paddedOldCommitmentPreimage: Record<string, GeneralNumber>[] = utils.padArray(
     oldCommitmentPreimage,
     NULL_COMMITMENT,
     numberNullifiers,
   );
-  const paddedPaths: GeneralNumber[][] = padArray(paths, new Array(32).fill(0), 4);
-  const paddedOrders: GeneralNumber[] = padArray(orders, 0, 4);
+  const paddedPaths: GeneralNumber[][] = utils.padArray(paths, new Array(32).fill(0), 4);
+  const paddedOrders: GeneralNumber[] = utils.padArray(orders, 0, 4);
 
   return {
     rootKey: rootKey.field(BN128_GROUP_ORDER),
@@ -130,12 +122,12 @@ const computePrivateInputsCommitments = (
   recipientPublicKeys: GeneralNumber[][],
   numberCommitments: number,
 ): Commitment => {
-  const paddedNewCommitmentPreimage: Record<string, GeneralNumber>[] = padArray(
+  const paddedNewCommitmentPreimage: Record<string, GeneralNumber>[] = utils.padArray(
     newCommitmentPreimage,
     NULL_COMMITMENT,
     numberCommitments,
   );
-  const paddedRecipientPublicKeys: GeneralNumber[][] = padArray(
+  const paddedRecipientPublicKeys: GeneralNumber[][] = utils.padArray(
     recipientPublicKeys,
     [0, 0],
     numberCommitments,

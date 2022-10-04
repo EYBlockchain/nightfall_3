@@ -5,6 +5,7 @@
 An optimistic Transaction class
 */
 import gen from 'general-number';
+import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
 import Web3 from '../utils/web3';
 import { compressProof } from '../utils/curve-maths/curves';
 import Proof from './proof.js';
@@ -19,15 +20,6 @@ const arrayEquality = (as, bs) => {
     return as.every(a => bs.includes(a));
   }
   return false;
-};
-
-const padArray = (arr, padWith, n) => {
-  if (arr === undefined) return generalise([...Array.from({ length: n }, () => padWith)]);
-  if (arr.length < n) {
-    const nullPadding = generalise(Array.from({ length: n - arr.length }, () => padWith));
-    return arr.concat(nullPadding);
-  }
-  return arr;
 };
 
 // function to compute the keccak hash of a transaction
@@ -96,9 +88,9 @@ class Transaction {
       flatProof = Proof.flatProof(proof);
     }
 
-    const commitments = padArray(_commitments, { hash: 0 }, numberCommitments);
-    const nullifiers = padArray(_nullifiers, { hash: 0 }, numberNullifiers);
-    const historicRootBlockNumberL2 = padArray(_historicRoot, 0, numberNullifiers);
+    const commitments = utils.padArray(_commitments, { hash: 0 }, numberCommitments);
+    const nullifiers = utils.padArray(_nullifiers, { hash: 0 }, numberNullifiers);
+    const historicRootBlockNumberL2 = utils.padArray(_historicRoot, 0, numberNullifiers);
 
     if (_compressedSecrets === undefined || _compressedSecrets.length === 0)
       compressedSecrets = [0, 0];
