@@ -183,19 +183,14 @@ export class NightfallMultiSig {
   /**
   This function sets the boot proposer
   */
-  async setBootProposer(newProposerPrivateKey, signingKey, executorAddress, _nonce, transactions) {
+  async setBootProposer(newProposerAddress, signingKey, executorAddress, _nonce, transactions) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
-
-    const newProposer = this.web3.eth.accounts.privateKeyToAccount(
-      newProposerPrivateKey,
-      true,
-    ).address;
 
     return Promise.all(
       this.contractInstancesConfigurables().map(async (configurable, i) => {
         const contractInstance = configurable;
-        const data = contractInstance.methods.setBootProposer(newProposer).encodeABI();
+        const data = contractInstance.methods.setBootProposer(newProposerAddress).encodeABI();
         return this.multiSig.addMultiSigSignature(
           data,
           signingKey,
@@ -211,24 +206,14 @@ export class NightfallMultiSig {
   /**
   This function sets the boot challenger
   */
-  async setBootChallenger(
-    newChallengerPrivateKey,
-    signingKey,
-    executorAddress,
-    _nonce,
-    transactions,
-  ) {
+  async setBootChallenger(newChallengerAddress, signingKey, executorAddress, _nonce, transactions) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
-    const newChallenger = this.web3.eth.accounts.privateKeyToAccount(
-      newChallengerPrivateKey,
-      true,
-    ).address;
     return Promise.all(
       this.contractInstancesConfigurables().map(async (configurable, i) => {
         const contractInstance = configurable;
-        const data = contractInstance.methods.setBootChallenger(newChallenger).encodeABI();
+        const data = contractInstance.methods.setBootChallenger(newChallengerAddress).encodeABI();
         return this.multiSig.addMultiSigSignature(
           data,
           signingKey,

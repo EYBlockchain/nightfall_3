@@ -37,22 +37,6 @@ contract Config is Ownable, Structures {
     }
 
     /**
-     * @dev Only boot proposer
-     */
-    modifier onlyBootProposer() {
-        require(msg.sender == bootProposer, 'You are not the boot proposer');
-        _;
-    }
-
-    /**
-     * @dev Only boot challenger
-     */
-    modifier onlyBootChallenger() {
-        require(msg.sender == bootChallenger, 'You are not the boot challenger');
-        _;
-    }
-
-    /**
      * @dev Set boot proposer address
      */
     function setBootProposer(address proposer) external onlyOwner {
