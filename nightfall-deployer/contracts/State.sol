@@ -358,6 +358,15 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     }
 
     function removeProposer(address proposer) public onlyRegistered {
+        _removeProposer(proposer);
+        if (proposer == currentProposer.thisAddress) {
+            currentProposer = proposers[currentProposer.nextAddress]; // we need to refresh the current proposer before the change
+            proposerStartBlock = 0;
+            changeCurrentProposer();
+        }
+    }
+
+    function _removeProposer(address proposer) internal {
         address previousAddress = proposers[proposer].previousAddress;
         address nextAddress = proposers[proposer].nextAddress;
         delete proposers[proposer];
@@ -369,11 +378,6 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             nextAddress == currentProposer.thisAddress
         ) {
             currentProposer = proposers[currentProposer.thisAddress]; // we need to refresh the current proposer addresses
-        }
-        if (proposer == currentProposer.thisAddress) {
-            currentProposer = proposers[currentProposer.nextAddress]; // we need to refresh the current proposer before the change
-            proposerStartBlock = 0;
-            changeCurrentProposer();
         }
     }
 
@@ -471,6 +475,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     }
 
     function updateStakeAccountTime(address addr, uint256 time) public onlyProposer {
+        _updateStakeAccountTime(addr, time);
+    }
+
+    function _updateStakeAccountTime(address addr, uint256 time) internal {
         TimeLockedStake memory stake = stakeAccounts[addr];
         stake.time = time;
         stakeAccounts[addr] = stake;
@@ -492,25 +500,21 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
      */
     function changeCurrentProposer() public {
         require(
-            block.number - proposerStartBlock > rotateProposerBlocks || proposerStartBlock == 0,
+            block.number - proposerStartBlock > rotateProposerBlocks ||
+                proposerStartBlock == 0 ||
+                maxProposers == 1,
             'State: Too soon to rotate proposer'
         );
 
         // if maxProposers=1 only bootProposer as proposer
         if (maxProposers == 1 && numProposers > 1) {
+            currentProposer = proposers[bootProposer]; // the current proposer will be the boot proposer
             address selectedProposer = currentProposer.nextAddress;
-            while (selectedProposer != currentProposer.thisAddress) {
-                if (selectedProposer != bootProposer) {
-                    removeProposer(selectedProposer);
-                    // The selectedProposer has to wait a CHALLENGE_PERIOD from current block.timestamp
-                    updateStakeAccountTime(selectedProposer, block.timestamp);
-                }
-                selectedProposer = proposers[selectedProposer].nextAddress;
-            }
-            if (selectedProposer != bootProposer) {
-                removeProposer(selectedProposer);
+            while (numProposers > 1) {
+                _removeProposer(selectedProposer);
                 // The selectedProposer has to wait a CHALLENGE_PERIOD from current block.timestamp
-                updateStakeAccountTime(selectedProposer, block.timestamp);
+                _updateStakeAccountTime(selectedProposer, block.timestamp);
+                selectedProposer = currentProposer.nextAddress;
             }
         }
 

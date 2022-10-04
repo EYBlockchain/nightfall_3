@@ -280,14 +280,14 @@ describe(`Testing Administrator`, () => {
 
     it('Set boot proposer with the multisig', async () => {
       const transactions = await nfMultiSig.setBootProposer(
-        signingKeys.user1,
+        addresses.proposer1,
         signingKeys.user1,
         addresses.user1,
         await multisigContract.methods.nonce().call(),
         [],
       );
       const approved = await nfMultiSig.setBootProposer(
-        signingKeys.user1,
+        addresses.proposer1,
         signingKeys.user2,
         addresses.user1,
         await multisigContract.methods.nonce().call(),
@@ -296,19 +296,47 @@ describe(`Testing Administrator`, () => {
       await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
       const bootProposer = await shieldContract.methods.getBootProposer().call();
 
-      expect(bootProposer.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
+      expect(bootProposer.toUpperCase()).to.be.equal(addresses.proposer1.toUpperCase());
+    });
+
+    it(`Set maximum number of proposers ${value1} in PoS with the multisig and change to boot proposer`, async () => {
+      const transactions = await nfMultiSig.setMaxProposers(
+        value1,
+        signingKeys.user1,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        [],
+      );
+      const approved = await nfMultiSig.setMaxProposers(
+        value1,
+        signingKeys.user2,
+        addresses.user1,
+        await multisigContract.methods.nonce().call(),
+        transactions,
+      );
+      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+      const maxProposers = await stateContract.methods.getMaxProposers().call();
+
+      expect(Number(maxProposers)).to.be.equal(value1);
+
+      const numberProposers1 = await stateContract.methods.getNumProposers().call();
+      const res = await proposers[1].changeCurrentProposer();
+      expectTransaction(res);
+      const numberProposers2 = await stateContract.methods.getNumProposers().call();
+      expect(Number(numberProposers1)).to.be.equal(2);
+      expect(Number(numberProposers2)).to.be.equal(1);
     });
 
     it('Set boot challenger with the multisig', async () => {
       const transactions = await nfMultiSig.setBootChallenger(
-        signingKeys.user1,
+        addresses.challenger,
         signingKeys.user1,
         addresses.user1,
         await multisigContract.methods.nonce().call(),
         [],
       );
       const approved = await nfMultiSig.setBootChallenger(
-        signingKeys.user1,
+        addresses.challenger,
         signingKeys.user2,
         addresses.user1,
         await multisigContract.methods.nonce().call(),
@@ -318,7 +346,7 @@ describe(`Testing Administrator`, () => {
       await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
       const bootChallenger = await shieldContract.methods.getBootChallenger().call();
 
-      expect(bootChallenger.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
+      expect(bootChallenger.toUpperCase()).to.be.equal(addresses.challenger.toUpperCase());
     });
 
     it('Set restriction with the multisig', async () => {
@@ -527,11 +555,11 @@ describe(`Testing Administrator`, () => {
 
     it('Set boot proposer without multisig', async () => {
       await shieldContract.methods
-        .setBootProposer(nf3User.ethereumAddress)
+        .setBootProposer(addresses.proposer1)
         .send({ from: nf3User.ethereumAddress });
       const bootProposer = await shieldContract.methods.getBootProposer().call();
 
-      expect(bootProposer.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
+      expect(bootProposer.toUpperCase()).to.be.equal(addresses.proposer1.toUpperCase());
     });
 
     it('Set boot challenger without multisig', async () => {
@@ -650,7 +678,6 @@ describe(`Testing Administrator`, () => {
     nf3User.close();
     await proposers[0].deregisterProposer();
     proposers[0].close();
-    await proposers[1].deregisterProposer();
     proposers[1].close();
   });
 });
