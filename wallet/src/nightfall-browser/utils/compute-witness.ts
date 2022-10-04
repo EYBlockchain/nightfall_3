@@ -1,3 +1,4 @@
+import utils from 'common-files/utils/crypto/merkle-tree/utils';
 import gen, { GeneralNumber } from 'general-number';
 import utils from '../../common-files/utils/crypto/merkle-tree/utils';
 
