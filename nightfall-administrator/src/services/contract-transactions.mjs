@@ -10,6 +10,57 @@ const pausables = ['State', 'Shield'];
 const ownables = ['State', 'Shield', 'Proposers', 'Challenges'];
 
 /**
+ This function adds a whitelist manager
+ */
+export async function createWhitelistManager(groupId, address, signingKey, executorAddress, nonce) {
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+  const data = shieldContractInstance.methods.createWhitelistManager(groupId, address).encodeABI();
+  return Promise.all([
+    addMultiSigSignature(
+      data,
+      signingKey,
+      shieldContractInstance.options.address,
+      executorAddress,
+      nonce,
+    ),
+  ]);
+}
+
+/**
+ This function removes a whitelist manager
+ */
+export async function removeWhitelistManager(address, signingKey, executorAddress, nonce) {
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+  const data = shieldContractInstance.methods.removeWhitelistManager(address).encodeABI();
+  return Promise.all([
+    addMultiSigSignature(
+      data,
+      signingKey,
+      shieldContractInstance.options.address,
+      executorAddress,
+      nonce,
+    ),
+  ]);
+}
+
+/**
+ This function enables/disables whitelisting
+ */
+export async function enableWhitelisting(enable, signingKey, executorAddress, nonce) {
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+  const data = shieldContractInstance.methods.enableWhitelisting(enable).encodeABI();
+  return Promise.all([
+    addMultiSigSignature(
+      data,
+      signingKey,
+      shieldContractInstance.options.address,
+      executorAddress,
+      nonce,
+    ),
+  ]);
+}
+
+/**
 This function sets the restriction data that the Shield contract is currently using
 */
 export async function setTokenRestrictions(
