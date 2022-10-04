@@ -18,3 +18,10 @@ export async function getTokenRestrictions(tokenName) {
   }
   return Promise.all([depositRestrictions, withdrawRestrictions]);
 }
+/**
+ This function returns the group ID of the manager if the address given is a whitelist manager
+ */
+export async function isWhitelistManager(address) {
+  const shieldContractInstance = await waitForContract('Shield');
+  return shieldContractInstance.methods.isWhitelistManager(address).call();
+}

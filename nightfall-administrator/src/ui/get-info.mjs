@@ -10,6 +10,9 @@ import {
   transferOwnership,
   setBootProposer,
   setBootChallenger,
+  createWhitelistManager,
+  removeWhitelistManager,
+  enableWhitelisting,
 } from '../services/contract-transactions.mjs';
 import {
   executeMultiSigTransaction,
@@ -36,6 +39,8 @@ async function start() {
     nonce,
     signedTx,
     workflow,
+    managerAddress,
+    managerGroupId,
   } = await askQuestions(false);
   if (workflow === 'create') {
     switch (task) {
@@ -103,6 +108,33 @@ async function start() {
           executorAddress,
           nonce,
         );
+        break;
+      }
+      case 'Add whitelist manager': {
+        approved = await createWhitelistManager(
+          managerGroupId,
+          managerAddress,
+          ethereumSigningKey,
+          executorAddress,
+          nonce,
+        );
+        break;
+      }
+      case 'Remove whitelist manager': {
+        approved = await removeWhitelistManager(
+          managerAddress,
+          ethereumSigningKey,
+          executorAddress,
+          nonce,
+        );
+        break;
+      }
+      case 'Enable whitelisting': {
+        approved = await enableWhitelisting(true, ethereumSigningKey, executorAddress, nonce);
+        break;
+      }
+      case 'Disable whitelisting': {
+        approved = await enableWhitelisting(false, ethereumSigningKey, executorAddress, nonce);
         break;
       }
       default: {
