@@ -32,6 +32,7 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
+      MONGO_URL: mongodb://mongodb-adversary:27017
       HASH_TYPE: poseidon
       LOG_LEVEL: debug
       # right now it doesn't matter what is IS_CHALLENGER flag's value is because
@@ -47,3 +48,19 @@ services:
       BAD_BLOCK_SEQUENCE: ${BAD_BLOCK_SEQUENCE}
       BAD_TX_SEQUENCE: ${BAD_TX_SEQUENCE}
     command: ['npm', 'run', 'dev']
+
+  mongodb-adversary:
+    image: mongo:4.4.1-bionic
+    hostname: mongodb-adversary
+    # ports:
+    #   - 27018:27017
+    networks:
+      - nightfall_network
+    command: --quiet
+    volumes:
+      - type: volume
+        source: mongodb-adversary-db
+        target: /data/db
+
+volumes:
+  mongodb-adversary-db:
