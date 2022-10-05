@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import config from 'config';
 import { askQuestions } from './menu.mjs';
-import { getTokenRestrictions } from '../services/contract-calls.mjs';
+import { getTokenRestrictions, isWhitelistManager } from '../services/contract-calls.mjs';
 import {
   setTokenRestrictions,
   removeTokenRestrictions,
@@ -46,13 +46,7 @@ async function start() {
     switch (task) {
       case 'Get token restrictions': {
         const [deposit, withdraw] = await getTokenRestrictions(tokenName);
-
-        logger.info({
-          msg: 'Token restrictions are',
-          deposit,
-          withdraw,
-        });
-
+        console.log('Token restrictions are', deposit, withdraw);
         break;
       }
       case 'Set token restrictions': {
@@ -137,8 +131,14 @@ async function start() {
         approved = await enableWhitelisting(false, ethereumSigningKey, executorAddress, nonce);
         break;
       }
+      case 'Check if address is a whitelist manager': {
+        const groupId = await isWhitelistManager(managerAddress);
+        if (groupId) console.log('This address is a manager with group Id', groupId);
+        else console.log('This address is not a manager');
+        break;
+      }
       default: {
-        logger.info('This option has not been implemented');
+        logger.error('This option has not been implemented');
       }
     }
   }
