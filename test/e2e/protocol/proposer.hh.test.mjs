@@ -3,10 +3,7 @@ import hre from 'hardhat';
 import config from 'config';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import logger from 'common-files/utils/logger.mjs';
 import { Web3Client, expectTransaction } from '../../utils.mjs';
-
-const { ethers } = hre;
 
 const { ENVIRONMENTS, TEST_OPTIONS } = config;
 const { mnemonics, signingKeys } = TEST_OPTIONS;
@@ -35,7 +32,7 @@ describe('Basic Proposer tests', () => {
     await testProposer.init(mnemonics.proposer);
     // Proposer registration
     await bootProposer.registerProposer(testProposersUrl[0]);
-    const blockProposeEmitter = await bootProposer.startProposer();
+    await bootProposer.startProposer();
   }
 
   it('should fail to register a proposer other than the boot proposer', async () => {
@@ -93,7 +90,7 @@ describe('Basic Proposer tests', () => {
     }
     console.log(error.message);
     expect(error.message).to.satisfy(
-      message => 
+      message =>
         message.includes('It is too soon to withdraw your bond') ||
         message.includes('VM Exception while processing transaction'),
     );
