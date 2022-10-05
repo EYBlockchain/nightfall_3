@@ -69,7 +69,7 @@ async function transactionSubmittedEventHandler(eventParams) {
     // save transaction if not in block
     if (fromBlockProposer) {
       saveTransaction({ ...transaction });
-    } 
+    }
 
     await checkTransaction(transaction, true);
     logger.info('Transaction checks passed');
@@ -86,7 +86,6 @@ async function transactionSubmittedEventHandler(eventParams) {
     } else {
       logger.error(err);
     }
-
   }
 }
 
