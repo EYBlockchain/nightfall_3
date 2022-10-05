@@ -5,7 +5,7 @@
  */
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '../../common-files/utils/logger.mjs';
 import { initUI } from './ui/menu.mjs';
 import start from './ui/get-info.mjs';
 import { initMultiSig } from './services/helpers.mjs';
@@ -20,8 +20,8 @@ async function main() {
   initUI();
   // start getting transaction information
   const signed = await start();
-  logger.info('******* Signed Transaction *******');
-  logger.info(signed);
+  console.log('******* Signed Transaction *******');
+  console.log(signed);
   process.kill(process.pid, 'SIGTERM');
 }
 
