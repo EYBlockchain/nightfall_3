@@ -1,6 +1,5 @@
 import config from 'config';
 import { ecsign } from 'ethereumjs-util';
-import logger from '../../../common-files/utils/logger.mjs';
 import { waitForContract, web3 } from '../../../common-files/utils/contract.mjs';
 import { checkThreshold, saveSigned, getSigned } from './database.mjs';
 

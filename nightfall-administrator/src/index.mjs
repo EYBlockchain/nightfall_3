@@ -5,7 +5,6 @@
  */
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import logger from '../../common-files/utils/logger.mjs';
 import { initUI } from './ui/menu.mjs';
 import start from './ui/get-info.mjs';
 import { initMultiSig } from './services/helpers.mjs';
