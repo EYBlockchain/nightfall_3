@@ -45,4 +45,4 @@ async function setupContracts() {
   );
 }
 
-export default setupContracts;
+// export default setupContracts;

@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import hre from 'hardhat';
 import config from 'config';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import Nf3 from '../../../cli/lib/nf3.mjs';
