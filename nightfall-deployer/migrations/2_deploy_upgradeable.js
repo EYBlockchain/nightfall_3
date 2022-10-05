@@ -14,7 +14,6 @@ const SimpleMultiSig = artifacts.require('SimpleMultiSig.sol');
 const config = require('config');
 
 const { RESTRICTIONS, MULTISIG } = config;
-const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
 
@@ -49,13 +48,8 @@ module.exports = async function (deployer) {
     unsafeAllowLinkedLibraries: true,
   });
   // initialisation
-  const proposers = await Proposers.deployed();
-  const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
   await State.deployed();
-  const { bootProposer, bootChallenger } = addresses;
-  await proposers.setBootProposer(bootProposer);
-  await challengers.setBootChallenger(bootChallenger);
   // restrict transfer amounts
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
     if (token.name === 'ERC20Mock') continue; // ignore test tokens, they're already handled in the test_tokens migration

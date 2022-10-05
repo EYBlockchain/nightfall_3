@@ -2,6 +2,7 @@
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
+import axios from 'axios';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../cli/lib/nf3.mjs';
 import {
@@ -10,7 +11,9 @@ import {
   withdrawNTransactions,
   Web3Client,
   expectTransaction,
+  pendingCommitmentCount,
   waitForTimeout,
+  topicEventMapping,
 } from './utils.mjs';
 
 // so we can use require with mjs file
@@ -22,6 +25,7 @@ chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
+  fee,
   transferValue,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
@@ -32,61 +36,74 @@ const {
 const txPerBlock = process.env.TRANSACTIONS_PER_BLOCK || 32;
 const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
-const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
 
 let erc20Address;
 let stateAddress;
-let eventLogs = [];
+const eventLogs = [];
 
 const averageL1GasCost = receipts =>
   receipts.map(receipt => receipt.gasUsed).reduce((acc, el) => acc + el) / receipts.length;
 
+const emptyL2 = async () => {
+  await new Promise(resolve => setTimeout(resolve, 6000));
+  let count = await pendingCommitmentCount(nf3Users[0]);
+  while (count !== 0) {
+    await nf3Users[0].makeBlockNow();
+    try {
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      count = await pendingCommitmentCount(nf3Users[0]);
+    } catch (err) {
+      break;
+    }
+  }
+  await new Promise(resolve => setTimeout(resolve, 6000));
+};
+
 describe('Gas test', () => {
   let gasCost = 0;
-  before(async () => {
-    await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer('', MINIMUM_STAKE);
 
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('receipt', async receipt => {
-      const { gasUsed } = receipt;
-      console.log(
-        `Block proposal gas used was ${gasUsed}, gas used per transaction was ${
-          gasUsed / txPerBlock
-        }`,
-      );
-      gasCost = gasUsed;
+  before(async () => {
+    await axios.post('http://localhost:8092/proposer', {
+      bond: MINIMUM_STAKE,
+      url: 'http://proposer',
     });
+
+    web3Client
+      .getWeb3()
+      .eth.subscribe('logs')
+      .on('data', async log => {
+        if (log.topics.includes(topicEventMapping.BlockProposed)) {
+          const receipt = await web3Client.getWeb3().eth.getTransactionReceipt(log.transactionHash);
+          console.log('gas', receipt.gasUsed);
+          gasCost = receipt.gasUsed;
+        }
+      });
 
     await nf3Users[0].init(mnemonics.user1);
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+
+    await depositNTransactions(
+      nf3Users[0],
+      txPerBlock,
+      erc20Address,
+      tokenType,
+      transferValue,
+      tokenId,
+      0,
+    );
+    await emptyL2();
+  });
+
+  beforeEach(async () => {
+    await emptyL2();
   });
 
   describe('Deposits', () => {
-    // we need more deposits because we won't have enough input transactions until
-    // after this block is made, by which time it's too late.
-    // also,the first  block costs more due to one-off setup costs.
-    it('should make extra deposits so that we can double-transfer', async function () {
-      // We create enough transactions to fill blocks full of deposits.
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        0,
-      );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-
-      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
-    });
     it('should be a reasonable gas cost', async function () {
       // We create enough transactions to fill blocks full of deposits.
       const receipts = await depositNTransactions(
@@ -98,7 +115,8 @@ describe('Gas test', () => {
         tokenId,
         0,
       );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      await emptyL2();
+
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Deposit L1 average gas used was', averageL1GasCost(receipts));
     });
@@ -117,7 +135,8 @@ describe('Gas test', () => {
         nf3Users[0].zkpKeys.compressedZkpPublicKey,
         0,
       );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      await emptyL2();
+
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log(
         'Single transfer L1 average gas used, if on-chain, was',
@@ -139,7 +158,8 @@ describe('Gas test', () => {
         nf3Users[0].zkpKeys.compressedZkpPublicKey,
         0,
       );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      await emptyL2();
+
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log(
         'Double transfer L1 average gas used, if on-chain, was',
@@ -161,8 +181,8 @@ describe('Gas test', () => {
         nf3Users[0].ethereumAddress,
         0,
       );
-      await nf3Users[0].makeBlockNow();
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      await emptyL2();
+
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Withdraw L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
     });
@@ -174,9 +194,21 @@ describe('Gas test', () => {
       if (nodeInfo.includes('TestRPC')) {
         waitForTimeout(10000);
         const startBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
+        const rec = await nf3Users[0].withdraw(
+          false,
+          erc20Address,
+          tokenType,
+          Math.floor(transferValue / 2),
+          tokenId,
+          nf3Users[0].ethereumAddress,
+          fee,
+        );
+        expectTransaction(rec);
+
+        await emptyL2();
+
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-        await nf3Users[0].makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
         const commitments = await nf3Users[0].getPendingWithdraws();
         expect(
@@ -200,9 +232,6 @@ describe('Gas test', () => {
   });
 
   after(async () => {
-    await nf3Proposer1.deregisterProposer();
-    await nf3Proposer1.close();
-    await nf3Users[0].close();
-    await web3Client.closeWeb3();
+    await axios.delete('http://localhost:8092/proposer');
   });
 });

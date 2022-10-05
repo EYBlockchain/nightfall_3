@@ -106,6 +106,10 @@ export class Web3Client {
     return this.isSubmitTxLocked;
   }
 
+  async getBlockNumber() {
+    return this.web3.eth.getBlockNumber();
+  }
+
   async submitTransaction(unsignedTransaction, privateKey, shieldAddress, gasCount, value = 0) {
     while (this.isSubmitTxLocked) {
       await waitForTimeout(1000);

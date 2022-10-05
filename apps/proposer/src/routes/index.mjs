@@ -1,3 +1,4 @@
 import proposer from './proposer.mjs';
+import transaction from './transaction.mjs';
 
-export default proposer;
+export { proposer, transaction };

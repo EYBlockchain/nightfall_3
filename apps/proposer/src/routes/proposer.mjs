@@ -1,10 +1,5 @@
 /* eslint-disable import/no-unresolved */
 
-/**
-Routes for managing a proposer.
-Some transactions are so simple that, we don't split out a separate service
-module but handle the entire request here.
-*/
 import express from 'express';
 import {
   getCurrentProposer,
@@ -13,20 +8,40 @@ import {
   updateProposer,
   unregisterProposer,
   changeCurrentProposer,
-  withdrawBond,
+  withdrawStake,
 } from '../services/proposer.mjs';
+import { address } from '../classes/web3.mjs';
 
 const router = express.Router();
 
-/**
- * TODO this currently matches two paths (+ another one with the query) since there is some functionality
- * lacking on optimist itself, but we should have these three routes planned
- * */
-router.get(['/', '/current'], async (req, res, next) => {
+router.get(['/'], async (req, res, next) => {
   try {
-    const { id } = req.query;
+    const proposer = { address };
+    return res.json(proposer);
+  } catch (error) {
+    return next(error);
+  }
+});
 
-    const proposer = id ? await getCurrentProposer() : await getCurrentProposer();
+/**
+ * TODO please leave commented since this feature will be implemented at some point
+ * */
+// router.get('/:id', async (req, res, next) => {
+//   try {
+//     const { id } = req.query;
+
+//     const proposer = await getCurrentProposer();
+
+//     return res.json(proposer);
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
+
+router.get('/current', async (req, res, next) => {
+  try {
+    const proposer = await getCurrentProposer();
+
     return res.json(proposer);
   } catch (error) {
     return next(error);
@@ -35,8 +50,8 @@ router.get(['/', '/current'], async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { bond } = req.body;
-    await registerProposer(bond);
+    const { bond, url } = req.body;
+    await registerProposer(bond, url);
     return res.sendStatus(200);
   } catch (error) {
     return next(error);
@@ -80,9 +95,19 @@ router.put('/change', async (req, res, next) => {
   }
 });
 
-router.post('/bond', async (req, res, next) => {
+router.put('/stake', async (req, res, next) => {
   try {
-    await withdrawBond();
+    const { url, stake } = req.body;
+    await updateProposer(url, stake);
+    return res.sendStatus(200);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.delete('/stake', async (req, res, next) => {
+  try {
+    await withdrawStake();
     return res.sendStatus(200);
   } catch (error) {
     return next(error);

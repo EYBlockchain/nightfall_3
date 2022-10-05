@@ -47,9 +47,8 @@ paths:
       tags:
         - transaction
       summary: Receives an offchain transaction and sends it to the optimist
-      description: Replaces the existing endpoint for this
       requestBody:
-        description: A transaction object
+        description: An offchain transaction object
         required: true
         content:
           application/json:
@@ -71,48 +70,6 @@ paths:
       responses:
         '200': # status code
           description: OK
-
-  /transaction/estimate/gas:
-    post:
-      tags:
-        - transaction
-      summary: Estimates the gas needed for a transaction
-      description: Calls estimateGas which should be somewhere reusable (utils?)
-      requestBody:
-        description: A transaction object
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/transaction'
-              type: array
-              items:
-                type: string
-      responses:
-        '200': # status code
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: integer
-        '500':
-          description: Oh shit
-        '400':
-          description: Bad request
-
-  /transaction/estimate/gasPrice:
-    get:
-      tags:
-        - transaction
-      summary: Returns the estimated gas price
-      description: Calls estimateGasPrice which should be somewhere reusable (utils?)
-      responses:
-        '200': # status code
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: integer
 
   /blocks/new:
     post:

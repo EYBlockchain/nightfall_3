@@ -1,18 +1,15 @@
 import config from 'config';
+import axios from 'axios';
 import localTest from './index.mjs';
-import Nf3 from '../../cli/lib/nf3.mjs';
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-
-const { mnemonics, signingKeys, MINIMUM_STAKE } = config.TEST_OPTIONS;
-const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
+const { MINIMUM_STAKE } = config.TEST_OPTIONS;
 
 describe('Ping-pong tests', () => {
   before(async () => {
-    await nf3Proposer.init(mnemonics.proposer);
-    // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist', MINIMUM_STAKE);
-    await nf3Proposer.startProposer();
+    await axios.post('http://localhost:8092/proposer', {
+      bond: MINIMUM_STAKE,
+      url: 'http://proposer',
+    });
   });
 
   it('Runs ping-pong tests', async () => {
@@ -21,9 +18,6 @@ describe('Ping-pong tests', () => {
   });
 
   after(async () => {
-    if (process.env.ENVIRONMENT !== 'aws') {
-      await nf3Proposer.deregisterProposer();
-      await nf3Proposer.close();
-    }
+    await axios.delete('http://localhost:8092/proposer');
   });
 });

@@ -4,6 +4,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import axios from 'axios';
 import { generalise } from 'general-number';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import logger from '../../../common-files/utils/logger.mjs';
@@ -19,7 +20,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const {
   fee,
-  txPerBlock,
   transferValue,
   tokenConfigs: { tokenTypeERC1155, tokenType, tokenId },
   mnemonics,
@@ -28,7 +28,6 @@ const {
 } = config.TEST_OPTIONS;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
-const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
 
@@ -55,15 +54,10 @@ const emptyL2 = async () => {
 
 describe('ERC1155 tests', () => {
   before(async () => {
-    await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer('', MINIMUM_STAKE);
-
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
+    // we must set the URL from the point of view of the client container
+    await axios.post('http://localhost:8092/proposer', {
+      bond: MINIMUM_STAKE,
+      url: 'http://proposer',
     });
 
     await nf3Users[0].init(mnemonics.user1);
@@ -283,8 +277,7 @@ describe('ERC1155 tests', () => {
   });
 
   after(async () => {
-    await nf3Proposer1.deregisterProposer();
-    await nf3Proposer1.close();
+    await axios.delete('http://localhost:8092/proposer');
     await nf3Users[0].close();
     await nf3Users[1].close();
     await web3Client.closeWeb3();

@@ -2,7 +2,7 @@ version: '3.5'
 # Use this script for making nightfall_3 use stubs.
 services:
 
-  proposer:
+  proposer1:
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
@@ -11,6 +11,24 @@ services:
       - 8092:80
     environment:
       ENVIRONMENT: docker
+      PROPOSER_KEY: "0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d"
+    networks:
+      - nightfall_network
+    volumes:
+      - type: bind
+        source: ../apps/proposer/src
+        target: /app/src
+
+  proposer2:
+    build:
+      dockerfile: docker/proposer.Dockerfile
+      context: ..
+    ports:
+      # to use with postman and etc
+      - 8093:80
+    environment:
+      ENVIRONMENT: docker
+      PROPOSER_KEY: "0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb"
     networks:
       - nightfall_network
     volumes:

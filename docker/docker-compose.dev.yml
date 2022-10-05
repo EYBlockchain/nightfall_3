@@ -102,7 +102,26 @@ services:
       - 8091:80
     entrypoint: [ "npm", "run", "start" ]
 
-  proposer:
+  proposer1:
+    build:
+      dockerfile: docker/proposer.Dockerfile
+      context: ..
+    volumes:
+      - type: bind
+        source: ../apps/proposer/src
+        target: /app/src
+      - type: bind
+        source: ../apps/proposer/package.json
+        target: /app/package.json
+      - type: bind
+        source: ../config
+        target: /app/config
+      - type: bind
+        source: ../common-files
+        target: /app/common-files
+    entrypoint: [ "npm", "run", "dev" ]
+
+  proposer2:
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..

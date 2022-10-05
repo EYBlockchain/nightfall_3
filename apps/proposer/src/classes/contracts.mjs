@@ -20,4 +20,4 @@ const contractsInstance = new ContractsFactory();
  * TODO constants
  *
  */
-export const contracts = await contractsInstance.init(['Proposers']);
+export const contracts = await contractsInstance.init(['Proposers', 'State']);

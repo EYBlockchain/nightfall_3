@@ -107,12 +107,8 @@ module.exports = {
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: 'ws://blockchain:8546',
-      PROPOSER_KEY:
-        process.env.BOOT_PROPOSER_KEY ||
-        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
-      CHALLENGER_KEY:
-        process.env.BOOT_CHALLENGER_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      PROPOSER_KEY: process.env.PROPOSER_KEY, // owner's/deployer's private key
+      DEFAULT_BLOCK_STAKE: 1,
     },
 
     localhost: {
@@ -142,11 +138,9 @@ module.exports = {
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
       PROPOSER_KEY:
-        process.env.BOOT_PROPOSER_KEY ||
+        process.env.PROPOSER_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
-      CHALLENGER_KEY:
-        process.env.BOOT_CHALLENGER_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      DEFAULT_BLOCK_STAKE: 1,
     },
     aws: {
       name: 'AWS',
@@ -159,7 +153,6 @@ module.exports = {
       adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
       adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
-      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
     polygonEdge: {
       name: 'Polygon Edge',
@@ -227,13 +220,6 @@ module.exports = {
       walletTest: process.env.WALLET_TEST_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
       user1: process.env.USER1_ADDRESS || '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
       user2: process.env.USER2_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-      proposer1: process.env.BOOT_PROPOSER_ADDRESS || '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-      proposer2: process.env.PROPOSER2_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-      proposer3: process.env.PROPOSER3_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
-      challenger:
-        process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-      liquidityProvider:
-        process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
     zkpPublicKeys: {
       user1:
@@ -265,20 +251,6 @@ module.exports = {
     },
   },
   RESTRICTIONS: {
-    signingKeys: {
-      bootProposerKey:
-        process.env.BOOT_PROPOSER_KEY ||
-        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
-      bootChallengerKey:
-        process.env.BOOT_CHALLENGER_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
-    },
-    addresses: {
-      bootProposer:
-        process.env.BOOT_PROPOSER_ADDRESS || '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-      bootChallenger:
-        process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-    },
     tokens: {
       blockchain: [
         {

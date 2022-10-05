@@ -3,6 +3,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import axios from 'axios';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import {
   depositNTransactions,
@@ -38,7 +39,6 @@ const {
 } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
-const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
 
@@ -71,18 +71,11 @@ const emptyL2 = async () => {
 
 describe('ERC20 tests', () => {
   before(async () => {
-    await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist1', MINIMUM_STAKE);
-
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
+    await axios.post('http://localhost:8092/proposer', {
+      bond: MINIMUM_STAKE,
+      url: 'http://proposer',
     });
-
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
@@ -100,6 +93,7 @@ describe('ERC20 tests', () => {
     it('should increment the balance after deposit some ERC20 crypto', async function () {
       const currentZkpPublicKeyBalance =
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
       await emptyL2();
@@ -486,8 +480,7 @@ describe('ERC20 tests', () => {
   });
 
   after(async () => {
-    await nf3Proposer.deregisterProposer();
-    await nf3Proposer.close();
+    await axios.delete('http://localhost:8092/proposer');
     await nf3Users[0].close();
     await nf3Users[1].close();
     await web3Client.closeWeb3();

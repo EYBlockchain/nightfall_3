@@ -1,2 +1,2 @@
 #! /bin/bash
-docker-compose -f docker/docker-compose.apps.yml -f docker/docker-compose.dev.yml -p 'nightfall_3' up proposer
+docker-compose -f docker/docker-compose.apps.yml -f docker/docker-compose.dev.yml -p 'nightfall_3' up proposer1 proposer2

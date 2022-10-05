@@ -1,6 +1,5 @@
 import { estimateGasPrice, estimateGas } from '../services/gas.mjs';
-import { web3 } from '../classes/web3.mjs';
-import { address, privateKey } from '../classes/keys.mjs';
+import { address, privateKey, web3 } from '../classes/web3.mjs';
 import { contracts } from '../classes/contracts.mjs';
 
 export default async function submitTransaction({
@@ -27,7 +26,7 @@ export default async function submitTransaction({
     const promiseTest = new Promise((resolve, reject) => {
       web3.eth
         .sendSignedTransaction(signed.rawTransaction)
-        .once('receipt', receipt => {
+        .once('receipt', async receipt => {
           console.log('receipt', receipt);
           resolve(receipt);
         })
@@ -35,6 +34,7 @@ export default async function submitTransaction({
           reject(err);
         });
     });
+
     return promiseTest;
   } catch (err) {
     throw new Error(err);

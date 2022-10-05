@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved */
 import submitTransaction from '../utils/submitTransaction.mjs';
 import { BadRequestError } from '../../common-files/utils/errors.mjs';
-import { address } from '../classes/keys.mjs';
+import { address } from '../classes/web3.mjs';
 import { optimist } from '../classes/http.mjs';
 import logger from '../../common-files/utils/logger.mjs';
 
@@ -15,10 +15,10 @@ export function getProposers() {
   return res;
 }
 
-export async function registerProposer(bond) {
+export async function registerProposer(bond, url) {
   const { txDataToSign: data } = await optimist.post(`/proposer/register`, {
     address,
-    url: 'url',
+    url,
   });
 
   if (!data) throw new BadRequestError('Already registered');
@@ -36,14 +36,16 @@ export async function unregisterProposer() {
   await submitTransaction({ data });
 }
 
-export async function updateProposer(url) {
+export async function updateProposer(url, stake) {
   const { txDataToSign: data } = await optimist.post(`/proposer/update`, {
     address,
     url,
   });
 
-  await submitTransaction({ data });
-  logger.debug(`Proposer with address ${address} updated to URL ${url}`);
+  const submit = { data };
+  if (stake) submit.stake = stake;
+  await submitTransaction(submit);
+  logger.debug(`Proposer with address ${address} updated to URL ${url} and stake ${stake}`);
 }
 
 export async function changeCurrentProposer() {
@@ -54,7 +56,7 @@ export async function changeCurrentProposer() {
   await submitTransaction({ data });
 }
 
-export async function withdrawBond() {
+export async function withdrawStake() {
   const { txDataToSign: data } = await optimist.post(`/proposer/withdrawBond`, {
     address,
   });

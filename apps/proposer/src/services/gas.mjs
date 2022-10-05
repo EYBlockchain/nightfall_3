@@ -1,6 +1,5 @@
-import { defaults, web3 } from '../classes/web3.mjs';
+import { address, defaults, web3 } from '../classes/web3.mjs';
 import { estimateGasUrl, blockchain } from '../classes/http.mjs';
-import { address } from '../classes/keys.mjs';
 
 export async function estimateGas(toAddress, tx) {
   let gasLimit;
