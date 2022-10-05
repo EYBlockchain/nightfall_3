@@ -52,7 +52,7 @@ export async function addSignedTransaction(signed) {
       await saveSigned(signed);
     } catch (err) {
       if (err.message.includes('duplicate key')) {
-        logger.info('You have already signed this message - no action taken');
+        console.log('You have already signed this message - no action taken');
       } else {
         throw err;
       }
@@ -60,12 +60,9 @@ export async function addSignedTransaction(signed) {
   }
   const numberOfSignatures = await checkThreshold(signed.messageHash);
 
-  logger.info({
-    msg: 'Number of signatures for this transaction',
-    total: numberOfSignatures,
-  });
+  console.log('Number of signatures for this transaction', numberOfSignatures);
 
-  if (numberOfSignatures === SIGNATURE_THRESHOLD) logger.info(`Signature threshold reached`);
+  if (numberOfSignatures === SIGNATURE_THRESHOLD) console.log(`Signature threshold reached`);
   const signedArray = (await getSigned(signed.messageHash)).sort((a, b) => {
     const x = BigInt(a.by);
     const y = BigInt(b.by);
