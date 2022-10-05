@@ -23,6 +23,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => address) public advancedWithdrawals;
     mapping(bytes32 => uint256) public advancedFeeWithdrawals;
+    mapping(bytes32 => uint256) public transactionEthFees;
     mapping(bytes32 => bool) public isEscrowed; // Check if transaction commitment values has been escrowed (only for deposit)
 
     function initialize() public override(Stateful, Config, Pausable, KYC) initializer {
@@ -37,13 +38,18 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         return isEscrowed[transactionHash];
     }
 
+    function getTransactionEthFee(bytes32 transactionHash) public view returns (uint256) {
+        return transactionEthFees[transactionHash];
+    }
+
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
         require(isWhitelisted(msg.sender), 'You are not authorised to transact using Nightfall');
         if (t.transactionType == TransactionTypes.DEPOSIT) {
-            isEscrowed[Utils.hashTransaction(t)] = true;
-            require(uint256(t.fee) == msg.value);
+            bytes32 transactionHash = Utils.hashTransaction(t);
+            isEscrowed[transactionHash] = true;
+            transactionEthFees[transactionHash] = msg.value;
             payIn(t);
         }
     }
@@ -70,10 +76,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         // add up how much the proposer is owed.
 
         //Request fees
-        FeeTokens memory feePayments = state.getFeeBookInfo(b.proposer, b.blockNumberL2);
-        feePayments.feesEth += blockStake;
+        FeeTokens memory feePayments = state.getFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
+        feePayments.feesEth += BLOCK_STAKE;
 
-        state.resetFeeBookInfo(b.proposer, b.blockNumberL2);
+        state.resetFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
 
         if (feePayments.feesEth > 0) {
             (bool success, ) = payable(address(state)).call{value: feePayments.feesEth}('');
