@@ -9,3 +9,4 @@ test/adversary/nightfall-adversary/*
 **/build/*
 hardhat.*
 hardhat/*
+typechain-types/*
