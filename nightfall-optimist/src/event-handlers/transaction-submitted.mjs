@@ -66,11 +66,18 @@ async function transactionSubmittedEventHandler(eventParams) {
 
   try {
     transaction = await checkAlreadyInBlock(transaction);
-    await checkTransaction(transaction, true);
+    // save transaction if not in block
+    if (fromBlockProposer) {
+      saveTransaction({ ...transaction });
+    } 
 
+    await checkTransaction(transaction, true);
     logger.info('Transaction checks passed');
 
-    saveTransaction({ ...transaction }); // then we need to save it
+    // save it
+    if (!fromBlockProposer) {
+      saveTransaction({ ...transaction });
+    }
   } catch (err) {
     if (err instanceof TransactionError) {
       logger.warn(
@@ -80,7 +87,6 @@ async function transactionSubmittedEventHandler(eventParams) {
       logger.error(err);
     }
 
-    if (fromBlockProposer) saveTransaction({ ...transaction }); // then we need to save it
   }
 }
 
