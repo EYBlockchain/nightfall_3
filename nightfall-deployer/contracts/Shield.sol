@@ -76,7 +76,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
             b.proposer,
             b.blockNumberL2
         );
-        feePaymentsEth += BLOCK_STAKE;
+        feePaymentsEth += blockStake;
 
         state.resetFeeBookInfo(b.proposer, b.blockNumberL2);
 
@@ -95,8 +95,8 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
 
         // recover the stake for that block
         TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
-        stake.amount += BLOCK_STAKE;
-        stake.challengeLocked -= BLOCK_STAKE;
+        stake.amount += blockStake;
+        stake.challengeLocked -= blockStake;
         state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
 
         state.addPendingWithdrawal(msg.sender, feePaymentsEth, feePaymentsMatic);

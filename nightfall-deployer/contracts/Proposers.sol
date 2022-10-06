@@ -20,16 +20,20 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
      @dev register proposer with stake  
      */
     function registerProposer(string calldata url) external payable nonReentrant {
+        require(
+            state.getNumProposers() < maxProposers,
+            'Proposers: Max number of registered proposers'
+        );
         TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
         stake.amount += msg.value;
-        require(MINIMUM_STAKE <= stake.amount, 'Proposers: Need MINIMUM_STAKE');
+        require(minimumStake <= stake.amount, 'Proposers: Need minimumStake');
         require(
             state.getProposer(msg.sender).thisAddress == address(0),
             'Proposers: This proposer is already registered'
         );
 
         // send the stake to the state contract
-        (bool success, ) = payable(address(state)).call{value: MINIMUM_STAKE}('');
+        (bool success, ) = payable(address(state)).call{value: minimumStake}('');
         require(success, 'Proposers: Transfer failed.');
         state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
 
@@ -119,7 +123,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
             stake.amount += msg.value;
 
             // send the stake to the state contract
-            (bool success, ) = payable(address(state)).call{value: MINIMUM_STAKE}('');
+            (bool success, ) = payable(address(state)).call{value: minimumStake}('');
             require(success, 'Proposers: Transfer failed.');
             state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
         }
