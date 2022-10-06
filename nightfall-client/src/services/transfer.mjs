@@ -175,9 +175,11 @@ async function transfer(transferParams) {
       logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
       await Promise.all(
         Object.keys(peerList).map(async address => {
-          logger.debug(`offchain transaction - calling ${peerList[address]}/transaction`);
+          logger.debug(
+            `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
+          );
           return axios.post(
-            `${peerList[address]}/transaction`,
+            `${peerList[address]}/proposer/offchain-transaction`,
             { transaction: optimisticTransferTransaction },
             { timeout: 3600000 },
           );

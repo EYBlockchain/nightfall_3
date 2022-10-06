@@ -141,11 +141,7 @@ services:
       LOG_LEVEL: info
       MPC: ${MPC}
 
-  proposer1:
-    profiles:
-      - donotstart
-
-  proposer2:
+  proposer:
     profiles:
       - donotstart
 

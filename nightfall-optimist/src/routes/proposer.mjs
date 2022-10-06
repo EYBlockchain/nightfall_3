@@ -418,20 +418,27 @@ router.post('/offchain-transaction', async (req, res) => {
    */
   const { transactionType, fee } = transaction;
   try {
-    if (Number(transactionType) > 2) return res.sendStatus(400);
+    switch (Number(transactionType)) {
+      case 1:
+      case 2: {
+        /*
+          When comparing this with getTransactionSubmittedCalldata,
+          note we dont need to decompressProof as proofs are only compressed if they go on-chain.
+          let's not directly call transactionSubmittedEventHandler, instead, we'll queue it
+         */
+        await enqueueEvent(transactionSubmittedEventHandler, 1, {
+          offchain: true,
+          ...transaction,
+          fee: Number(fee),
+        });
 
-    /*
-        When comparing this with getTransactionSubmittedCalldata,
-        note we dont need to decompressProof as proofs are only compressed if they go on-chain.
-        let's not directly call transactionSubmittedEventHandler, instead, we'll queue it
-        */
-    await enqueueEvent(transactionSubmittedEventHandler, 1, {
-      offchain: true,
-      ...transaction,
-      fee: Number(fee),
-    });
-
-    return res.sendStatus(200);
+        res.sendStatus(200);
+        break;
+      }
+      default:
+        res.sendStatus(400);
+        break;
+    }
   } catch (err) {
     if (err instanceof TransactionError) {
       logger.warn(
@@ -441,7 +448,7 @@ router.post('/offchain-transaction', async (req, res) => {
       logger.error(err);
     }
 
-    return res.sendStatus(400);
+    res.sendStatus(400);
   }
 });
 

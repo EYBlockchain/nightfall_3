@@ -11,3 +11,17 @@ __pycache__
 test/adversary/nightfall-adversary
 wallet/tests/e2e/videos
 wallet/tests/e2e/screenshots
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Coverage directory used by tools like istanbul
+coverage
+*.lcov
+
+dist
