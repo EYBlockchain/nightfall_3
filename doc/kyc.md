@@ -16,4 +16,4 @@ Whitelist managers are created/removed by the contract owner (multisig). They ca
 
 All whitelisting functionality is managed by the contract `KYC.sol`, the functions therein are self-explanatory.
 
-Note that all users are, by default members of the null group (group ID = 0). Members of this group are NOT whitelisted when whitelisting is enabled. Memebership of any other group confirs whitlisted status.
+Note that all users are, by default members of the null group (group ID = 0). Members of this group are NOT whitelisted when whitelisting is enabled. Membership of any other group confirs whitlisted status.

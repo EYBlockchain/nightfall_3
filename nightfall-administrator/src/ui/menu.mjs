@@ -78,11 +78,35 @@ export async function askQuestions(approved) {
         'Transfer ownership',
         'Set new boot proposer',
         'Set new boot challenger',
+        'Add whitelist manager',
+        'Remove whitelist manager',
+        'Enable whitelisting',
+        'Disable whitelisting',
+        'Check if address is a whitelist manager',
       ],
       get pageSize() {
         return this.choices.length;
       },
       when: answers => !approved && answers.workflow === 'create',
+    },
+    {
+      name: 'managerAddress',
+      type: 'input',
+      message: 'Please provide the address of the manager',
+      when: answers =>
+        [
+          'Add whitelist manager',
+          'Remove whitelist manager',
+          'Check if address is a whitelist manager',
+        ].includes(answers.task),
+      validate: input => web3.utils.isAddress(input),
+    },
+    {
+      name: 'managerGroupId',
+      type: 'input',
+      message: 'Please provide the group Id of the manager',
+      when: answers => answers.task === 'Add whitelist manager',
+      validate: input => Number.isInteger(Number(input)) && Number(input) > 0,
     },
     {
       name: 'tokenName',
@@ -92,12 +116,9 @@ export async function askQuestions(approved) {
       },
       message: 'Choose a token:',
       when: answers =>
-        [
-          'Get token restrictions',
-          'Set token restrictions',
-          'Transfer Shield contract balance',
-          'Remove token restrictions',
-        ].includes(answers.task),
+        ['Get token restrictions', 'Set token restrictions', 'Remove token restrictions'].includes(
+          answers.task,
+        ),
     },
     {
       name: 'depositRestriction',

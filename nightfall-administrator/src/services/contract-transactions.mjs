@@ -10,6 +10,69 @@ const pausables = ['State', 'Shield'];
 const ownables = ['State', 'Shield', 'Proposers', 'Challenges'];
 
 /**
+ This function adds a whitelist manager
+ */
+export async function createWhitelistManager(
+  groupId,
+  address,
+  signingKey,
+  executorAddress,
+  _nonce,
+) {
+  let nonce = _nonce;
+  if (!Number.isInteger(nonce)) nonce = await getMultiSigNonce();
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+  const data = shieldContractInstance.methods.createWhitelistManager(groupId, address).encodeABI();
+  return Promise.all([
+    addMultiSigSignature(
+      data,
+      signingKey,
+      shieldContractInstance.options.address,
+      executorAddress,
+      nonce,
+    ),
+  ]);
+}
+
+/**
+ This function removes a whitelist manager
+ */
+export async function removeWhitelistManager(address, signingKey, executorAddress, _nonce) {
+  let nonce = _nonce;
+  if (!Number.isInteger(nonce)) nonce = await getMultiSigNonce();
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+  const data = shieldContractInstance.methods.removeWhitelistManager(address).encodeABI();
+  return Promise.all([
+    addMultiSigSignature(
+      data,
+      signingKey,
+      shieldContractInstance.options.address,
+      executorAddress,
+      nonce,
+    ),
+  ]);
+}
+
+/**
+ This function enables/disables whitelisting
+ */
+export async function enableWhitelisting(enable, signingKey, executorAddress, _nonce) {
+  let nonce = _nonce;
+  if (!Number.isInteger(nonce)) nonce = await getMultiSigNonce();
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+  const data = shieldContractInstance.methods.enableWhitelisting(enable).encodeABI();
+  return Promise.all([
+    addMultiSigSignature(
+      data,
+      signingKey,
+      shieldContractInstance.options.address,
+      executorAddress,
+      nonce,
+    ),
+  ]);
+}
+
+/**
 This function sets the restriction data that the Shield contract is currently using
 */
 export async function setTokenRestrictions(
@@ -18,8 +81,10 @@ export async function setTokenRestrictions(
   withdrawRestriction,
   signingKey,
   executorAddress,
-  nonce,
+  _nonce,
 ) {
+  let nonce = _nonce;
+  if (!Number.isInteger(nonce)) nonce = await getMultiSigNonce();
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
     if (token.name === tokenName) {
@@ -81,7 +146,6 @@ export async function pauseContracts(signingKey, executorAddress, _nonce) {
 }
 
 export async function unpauseContracts(signingKey, executorAddress, _nonce) {
-  logger.info('All pausable contracts being unpaused');
   let nonce = _nonce;
   if (!Number.isInteger(nonce)) nonce = await getMultiSigNonce();
   return Promise.all(
@@ -152,7 +216,6 @@ export async function setBootChallenger(
     msg: 'Boot challenger',
     newChallenger,
   });
-
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   const data = shieldContractInstance.methods.setBootChallenger(newChallenger).encodeABI();
   return Promise.all([
