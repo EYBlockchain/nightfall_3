@@ -58,9 +58,6 @@ details on how to do the latter as there are some additional considerations.
   - Use `-g` to use a Ganache client inside the container
   - Use `-l` to use some localhost client running on your machine. We recommend using Ganache first
     to check everything works, because it's considerably faster.
-  - Use `-r` to use ropsten node hosted by the dev team. Note: with option -r set environment
-    variable $ROPSTEN_NODE, $FROM_ADDRESS and $ETH_PRIVATE_KEY to testnet node URL, EOA address and
-    EOA address's private key, respectively
 - Additionally, you can use the `-s` flag. If you do that, Nightfall_3 will run with stubbed ZKP
   circuits, which generate proofs that always verify. That's useful for development work because
   tests will run much faster but clearly you should run without stubs, as a final check.

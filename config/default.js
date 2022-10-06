@@ -107,14 +107,6 @@ module.exports = {
       optimistWsUrl: '',
       web3WsUrl: '',
     },
-    ropsten: {
-      name: 'Ropsten',
-      chainId: 3,
-      clientApiUrl: 'https://client.testnet.nightfall3.com',
-      optimistApiUrl: 'https://optimist.testnet.nightfall3.com',
-      optimistWsUrl: 'wss://optimist-ws.testnet.nightfall3.com',
-      web3WsUrl: `${process.env.ROPSTEN_NODE}`,
-    },
     rinkeby: {
       name: 'Rinkeby',
       chainId: 4,
