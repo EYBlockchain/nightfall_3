@@ -46,7 +46,7 @@ export async function getContractInstance(contractName, deployedAddress) {
   if (!options.from) {
     const accounts = await web3.eth.getAccounts();
 
-    logger.debug({
+    logger.trace({
       msg: 'blockchain accounts',
       accounts,
     });
