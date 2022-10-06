@@ -93,7 +93,7 @@ const handleCorrelationId = (req, res, next) => {
 const applyAxiosDefaults = () => {
   // Creates a request interceptor that adds the correlationId as an HTTP header in every call
   axios.interceptors.request.use(function (config) {
-    if(correlator.getId()) {
+    if (correlator.getId()) {
       config.headers[HEADER_CORRELATION_ID] = correlator.getId();
     }
 
