@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "declaration": true,
+    "esModuleInterop": true,
+    "module": "node16",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "target": "es2017",
+    "paths": { "~/*": ["optimist-sdk/*"] }
+  },
+  "include": ["optimist-sdk/**/*", "babel.config.js"]
+}

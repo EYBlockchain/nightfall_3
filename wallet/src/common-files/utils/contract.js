@@ -8,7 +8,8 @@ import { TOKEN_TYPE, APPROVE_AMOUNT } from '../../constants';
 const { ethereum } = global;
 const { proposerUrl } = global.config;
 
-const options = global.config.WEB3_OPTIONS;
+const { WEB3_OPTIONS: options } =
+  global.config.ENVIRONMENTS[process.env.ENVIRONMENT] || global.config.ENVIRONMENTS.localhost;
 
 // This is hardcoded because we just use it for all estimation.
 const gasEstimateEndpoint =

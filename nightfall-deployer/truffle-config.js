@@ -22,6 +22,9 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 const config = require('config');
 
+const { WEB3_OPTIONS } =
+  config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -69,7 +72,7 @@ module.exports = {
         }),
       network_id: 100, // Any network (default: none)
       gas: 8000000,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gasPrice: WEB3_OPTIONS.gasPrice,
       websockets: true,
     },
 
@@ -102,7 +105,7 @@ module.exports = {
       timeoutBlocks: 2000,
       skipDryRun: true,
       websockets: true,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gasPrice: WEB3_OPTIONS.gasPrice,
       gas: 7000000,
     },
 
@@ -113,8 +116,8 @@ module.exports = {
       timeoutBlocks: 2000,
       skipDryRun: true,
       websockets: true,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: config.WEB3_OPTIONS.gas,
+      gasPrice: WEB3_OPTIONS.gasPrice,
+      gas: WEB3_OPTIONS.gas,
     },
     mainnet: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
@@ -123,8 +126,8 @@ module.exports = {
       timeoutBlocks: 2000,
       skipDryRun: true,
       websockets: true,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: config.WEB3_OPTIONS.gas,
+      gasPrice: WEB3_OPTIONS.gasPrice,
+      gas: WEB3_OPTIONS.gas,
     },
   },
 

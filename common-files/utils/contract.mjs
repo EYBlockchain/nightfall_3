@@ -9,7 +9,8 @@ import logger from './logger.mjs';
 
 export const web3 = Web3.connection();
 
-const options = config.WEB3_OPTIONS;
+const { WEB3_OPTIONS: options } =
+  config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 export const contractPath = contractName => {
   return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;

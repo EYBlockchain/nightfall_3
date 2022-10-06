@@ -18,6 +18,10 @@ const web3 = Web3.connection();
 const fsPromises = fs.promises;
 
 const { USE_STUBS } = config;
+
+const { WEB3_OPTIONS } =
+  config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
 /**
  * This function will ping the Zokrates service until it is up before attempting
  * to use it. This is because the deployer must start before Zokrates as it needs
@@ -160,8 +164,8 @@ async function setupCircuits() {
           from: process.env.FROM_ADDRESS,
           to: keyRegistry.options.address,
           data: call.encodeABI(),
-          gas: config.WEB3_OPTIONS.gas,
-          gasPrice: config.WEB3_OPTIONS.gasPrice,
+          gas: WEB3_OPTIONS.gas,
+          gasPrice: WEB3_OPTIONS.gasPrice,
         };
 
         const signed = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);

@@ -1,0 +1,1 @@
+{"version":3,"file":"stake.js","sourceRoot":"","sources":["../../../../optimist-sdk/src/libs/proposer/stake.ts"],"names":[],"mappings":";;AAAe,KAAK,UAAU,aAAa;IACzC,MAAM,EAAE,YAAY,EAAE,IAAI,EAAE,GAAG,MAAM,IAAI,CAAC,QAAQ,CAAC,IAAI,CAAC,wBAAwB,EAAE;QAChF,OAAO,EAAE,IAAI,CAAC,OAAO;KACtB,CAAC,CAAC;IAEH,MAAM,IAAI,CAAC,iBAAiB,CAAC,EAAE,IAAI,EAAE,CAAC,CAAC;AACzC,CAAC;AAND,gCAMC"}

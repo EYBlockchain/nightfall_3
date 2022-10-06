@@ -16,7 +16,7 @@ WORKDIR /app/cli
 RUN npm ci
 
 WORKDIR /app/admin
-COPY config/default.js config/default.js
+COPY config config
 COPY nightfall-administrator/src src
 COPY nightfall-administrator/docker-entrypoint.sh nightfall-administrator/package*.json nightfall-administrator/admin ./
 

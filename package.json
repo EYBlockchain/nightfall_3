@@ -87,8 +87,8 @@
     "jsdoc": "^3.6.10",
     "minimist": "^1.2.6",
     "mocha": "^10.0.0",
-    "nightfall-sdk": "^0.1.1",
     "mongodb": "^4.7.0",
+    "nightfall-sdk": "^0.1.1",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "queue": "^6.0.2",
@@ -97,6 +97,7 @@
     "terser": "^5.14.2",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.0",
+    "typescript": "^4.8.4",
     "url-parse": "^1.5.9",
     "uuid": "^8.3.2",
     "web3": "^1.7.5",
@@ -108,7 +109,7 @@
     "general-number": "^1.0.1",
     "pino": "^8.3.1",
     "pino-pretty": "^8.1.0",
-    "typescript": "^4.6.2"
+    "tsconfig-paths": "^4.1.0"
   },
   "overrides": {
     "got": "11.8.5",

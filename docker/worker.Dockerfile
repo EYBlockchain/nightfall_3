@@ -19,7 +19,7 @@ WORKDIR /common-files
 RUN npm ci
 
 WORKDIR /app
-COPY config/default.js config/default.js
+COPY config config
 COPY /nightfall-deployer/circuits circuits
 COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /app/stdlib
 COPY --from=builder /app/ZoKrates/target/release/zokrates /app/zokrates

@@ -8,6 +8,9 @@ module.exports = {
     'no-plusplus': 'off',
     'func-names': 'off',
     'no-sparse-arrays': 'off',
+    'lines-between-class-members': 'off',
+    '@typescript-eslint/lines-between-class-members': ['error'],
+    '@typescript-eslint/no-non-null-assertion': 'off',
   },
   parser: 'babel-eslint', // Uses babel-eslint transforms.
   parserOptions: {

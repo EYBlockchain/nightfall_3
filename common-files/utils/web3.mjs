@@ -4,6 +4,9 @@ import Web3 from 'web3';
 import config from 'config';
 import logger from './logger.mjs';
 
+const { WEB3_OPTIONS } =
+  config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
 export default {
   connection() {
     if (!this.web3) this.connect();
@@ -51,15 +54,15 @@ export default {
   async submitRawTransaction(rawTransaction, contractAddress, value = 0) {
     if (!rawTransaction) throw Error('No tx data to sign');
     if (!contractAddress) throw Error('No contract address passed');
-    if (!config.WEB3_OPTIONS.from) throw Error('config WEB3_OPTIONS.from is not set');
+    if (!WEB3_OPTIONS.from) throw Error('config WEB3_OPTIONS.from is not set');
     if (!config.ETH_PRIVATE_KEY) throw Error('config ETH_PRIVATE_KEY not set');
 
     const tx = {
       to: contractAddress,
       data: rawTransaction,
       value,
-      gas: config.WEB3_OPTIONS.gas,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gas: WEB3_OPTIONS.gas,
+      gasPrice: WEB3_OPTIONS.gasPrice,
     };
 
     const signed = await this.web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
