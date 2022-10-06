@@ -19,7 +19,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
     /**
      @dev register proposer with stake  
      */
-    function registerProposer(string calldata url) external payable nonReentrant {
+    function registerProposer(string calldata url, uint256 fee) external payable nonReentrant {
         require(
             state.getNumProposers() < maxProposers,
             'Proposers: Max number of registered proposers'
@@ -40,7 +40,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
         LinkedAddress memory currentProposer = state.getCurrentProposer();
         // cope with this being the first proposer
         if (currentProposer.thisAddress == address(0)) {
-            currentProposer = LinkedAddress(msg.sender, msg.sender, msg.sender, url, false, 0);
+            currentProposer = LinkedAddress(msg.sender, msg.sender, msg.sender, url, fee, false, 0);
             state.setProposer(msg.sender, currentProposer);
             state.setProposerStartBlock(block.number);
             state.setNumProposers(1);
@@ -112,12 +112,12 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
     }
 
     // Proposers can change REST API URL or increment stake
-    function updateProposer(string calldata url) external payable nonReentrant {
+    function updateProposer(string calldata url, uint256 fee) external payable nonReentrant {
         require(
             state.getProposer(msg.sender).thisAddress != address(0),
             'Proposers: This proposer is not registered or you are not that proposer'
         );
-        state.updateProposer(msg.sender, url);
+        state.updateProposer(msg.sender, url, fee);
         if (msg.value > 0) {
             TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
             stake.amount += msg.value;

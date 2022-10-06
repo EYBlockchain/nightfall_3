@@ -44,14 +44,14 @@ router.post('/register', async (req, res, next) => {
   logger.debug({ msg: '/register endpoint', payload: JSON.stringify(req.body, null, 2) });
 
   try {
-    const { address, url = '' } = req.body;
+    const { address, url = '', fee = 0 } = req.body;
     const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
     // the first thing to do is to check if the proposer is already registered on the blockchain
     const proposers = (await getProposers()).map(p => p.thisAddress);
     // if not, let's register it
     let txDataToSign = '';
     if (!proposers.includes(address)) {
-      txDataToSign = await proposersContractInstance.methods.registerProposer(url).encodeABI();
+      txDataToSign = await proposersContractInstance.methods.registerProposer(url, fee).encodeABI();
     } else {
       logger.warn(
         'Proposer was already registered on the blockchain - registration attempt ignored',
@@ -98,12 +98,14 @@ router.post('/update', async (req, res, next) => {
   logger.debug({ msg: '/update endpoint', payload: JSON.stringify(req.body, null, 2) });
 
   try {
-    const { address, url = '' } = req.body;
+    const { address, url = '', fee = 0 } = req.body;
     if (url === '') {
       throw new Error('Rest API URL not provided');
     }
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.updateProposer(url).encodeABI();
+    const txDataToSign = await proposersContractInstance.methods
+      .updateProposer(url, fee)
+      .encodeABI();
 
     logger.debug({
       msg: 'Returning raw transaction',
