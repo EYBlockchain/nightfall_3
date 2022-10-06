@@ -170,7 +170,7 @@ describe('Basic Proposer tests', () => {
     let proposers;
     ({ proposers } = await bootProposer.getProposers());
     // we have to pay stake to be registered
-    const res = await bootProposer.updateProposer(testProposersUrl[3], 0);
+    const res = await bootProposer.updateProposer(testProposersUrl[3], 0, 0);
     expectTransaction(res);
     ({ proposers } = await bootProposer.getProposers());
     const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
@@ -180,12 +180,23 @@ describe('Basic Proposer tests', () => {
 
   it('should increment the stake of the proposer', async () => {
     const initialStake = await getStakeAccount(bootProposer.ethereumAddress);
-    const res = await bootProposer.updateProposer(testProposersUrl[0], MINIMUM_STAKE);
+    const res = await bootProposer.updateProposer(testProposersUrl[0], MINIMUM_STAKE, 0);
     expectTransaction(res);
     const finalStake = await getStakeAccount(bootProposer.ethereumAddress);
     expect(Number(finalStake.amount)).to.be.equal(
       Number(initialStake.amount) + Number(MINIMUM_STAKE),
     );
+  });
+
+  it('should update proposer fee', async () => {
+    let proposers;
+    ({ proposers } = await bootProposer.getProposers());
+    // we have to pay stake to be registered
+    const res = await bootProposer.updateProposer(testProposersUrl[3], 0, fee);
+    expectTransaction(res);
+    ({ proposers } = await bootProposer.getProposers());
+    const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
+    expect(Number(thisProposer[0].fee)).to.be.equal(fee);
   });
 
   it('should fail to register a proposer twice', async () => {

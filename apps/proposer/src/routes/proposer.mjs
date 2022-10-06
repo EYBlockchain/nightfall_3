@@ -32,4 +32,13 @@ router.get('/mempool', async (req, res) => {
   res.json({ mempoolTransactions });
 });
 
+router.get('/fee', async (req, res) => {
+  const nf3 = req.app.get('nf3');
+  logger.debug(`Proposer/fee endpoint received POST`);
+  logger.debug(`With content ${JSON.stringify(req.body, null, 2)}`);
+  const { proposers } = await nf3.getProposers();
+  const thisProposer = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
+  res.json({ fee: Number(thisProposer[0].fee) });
+});
+
 export default router;
