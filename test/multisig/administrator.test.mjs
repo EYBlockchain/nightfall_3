@@ -235,8 +235,10 @@ describe(`Testing Administrator`, () => {
     });
 
     it('Allowing register first proposer', async () => {
-      const res = await proposers[0].registerProposer('', MINIMUM_STAKE);
-      expectTransaction(res);
+      if (process.env.ENVIRONMENT !== 'aws') {
+        const res = await proposers[0].registerProposer('', MINIMUM_STAKE);
+        expectTransaction(res);
+      }
     });
 
     it('Not allowing register second proposer', async () => {
@@ -676,7 +678,9 @@ describe(`Testing Administrator`, () => {
 
   after(async () => {
     nf3User.close();
-    await proposers[0].deregisterProposer();
+    if (process.env.ENVIRONMENT !== 'aws') {
+      await proposers[0].deregisterProposer();
+    }
     proposers[0].close();
     proposers[1].close();
   });
