@@ -163,7 +163,7 @@ module.exports = {
       optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
       optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
-      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}${process.env.BLOCKCHAIN_PATH}`,
       adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
       adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
