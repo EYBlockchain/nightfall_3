@@ -1,5 +1,5 @@
 import gen from 'general-number';
-import constants from 'common-files/constants/index.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
 const { generalise } = gen;
 const { BN128_GROUP_ORDER } = constants;

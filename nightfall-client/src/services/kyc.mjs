@@ -2,8 +2,8 @@
  This module creates blockchain transactions to interact with the KYC smart contract
 */
 
-import constants from 'common-files/constants/index.mjs';
-import { waitForContract } from 'common-files/utils/contract.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 
 const { SHIELD_CONTRACT_NAME } = constants;
 

@@ -2,7 +2,7 @@
 A nullifier class
 */
 import gen from 'general-number';
-import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
+import poseidon from '@polygon-nightfall/common-files/utils/crypto/poseidon/poseidon.mjs';
 
 const { generalise } = gen;
 

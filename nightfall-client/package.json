@@ -24,17 +24,19 @@
   },
   "homepage": "https://github.com/EYBlockchain/nightfall-client#readme",
   "dependencies": {
+    "@polygon-nightfall/common-files": "^0.0.2",
     "amqplib": "^0.8.0",
     "async-mutex": "^0.3.1",
     "axios": "^0.21.4",
     "bip39": "^3.0.4",
     "body-parser": "1.19.0",
     "chai-as-promised": "^7.1.1",
-    "common-files": "file:../common-files",
+    "cls-hooked": "^4.2.2",
     "config": "^3.3.1",
     "cors": "2.8.5",
     "ethereumjs-wallet": "^1.0.2",
     "express": "^4.17.1",
+    "express-fileupload": "^1.4.0",
     "general-number": "^1.0.1",
     "hex-to-binary": "^1.0.1",
     "keccak": "^3.0.1",
@@ -44,11 +46,9 @@
     "pino-pretty": "^8.1.0",
     "queue": "^6.0.2",
     "safe-buffer": "^5.2.1",
-    "web3": "^1.7.5",
-    "ws": "^7.5.0",
-    "cls-hooked": "^4.2.2",
     "uuid": "^8.3.2",
-    "express-fileupload": "^1.4.0"
+    "web3": "^1.7.5",
+    "ws": "^7.5.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.19"

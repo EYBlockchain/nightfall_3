@@ -3,7 +3,7 @@
  */
 
 import express from 'express';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   getCommitmentBySalt,
   getWalletBalance,

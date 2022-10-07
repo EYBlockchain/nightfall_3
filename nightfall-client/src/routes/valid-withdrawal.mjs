@@ -2,7 +2,7 @@
 Route to get if a withdraw is valid for finalising.
 */
 import express from 'express';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { isValidWithdrawal } from '../services/valid-withdrawal.mjs';
 
 const router = express.Router();
