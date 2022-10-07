@@ -5,8 +5,7 @@ export default class HttpFactory {
   estimateGasUrl: Axios;
   blockchain: Axios;
 
-  constructor({ environment, options }) {
-    const { optimistApiUrl, web3WsUrl } = environment;
+  constructor({ optimistApiUrl, web3WsUrl, options }) {
     const { estimateGasEndpoint } = options;
 
     this.optimist = axios.create({

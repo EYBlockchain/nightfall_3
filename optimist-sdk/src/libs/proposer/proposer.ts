@@ -8,10 +8,10 @@ export async function getProposers() {
   return res;
 }
 
-export async function registerProposer({ stake, url }) {
+export async function registerProposer({ stake }) {
   const { txDataToSign: data } = await this.services.optimist.post(`/proposer/register`, {
     address: this.address,
-    url,
+    url: this.url,
   });
 
   await this.submitTransaction({
@@ -28,13 +28,13 @@ export async function unregisterProposer() {
   await this.submitTransaction({ data, value: 0 });
 }
 
-export async function updateProposer(url) {
+export async function updateProposer({ url }) {
   const { txDataToSign: data } = await this.services.optimist.post(`/proposer/update`, {
     address: this.address,
     url,
   });
 
-  await this.submitTransaction({ data });
+  await this.submitTransaction({ data, value: 0 });
   console.log(`Proposer with address ${this.address} updated to URL ${url}`);
 }
 
@@ -43,5 +43,5 @@ export async function changeCurrentProposer() {
     address: this.address,
   });
 
-  await this.submitTransaction({ data });
+  await this.submitTransaction({ data, to: this.contracts.state, value: 0 });
 }
