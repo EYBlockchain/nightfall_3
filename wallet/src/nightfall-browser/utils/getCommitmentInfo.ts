@@ -81,7 +81,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
 
     // then the new output commitment(s)
     const totalInputCommitmentValue = oldCommitments.reduce(
-      (acc, commitment) => acc + commitment.preimage.value.bigInt,
+      (acc: bigint, commitment: Commitment) => acc + commitment.preimage.value.bigInt,
       0n,
     );
 
@@ -98,7 +98,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
 
     // then the new output commitment(s) fee
     const totalInputCommitmentFeeValue = oldCommitmentsFee.reduce(
-      (acc, commitment) => acc + commitment.preimage.value.bigInt,
+      (acc: bigint, commitment: Commitment) => acc + commitment.preimage.value.bigInt,
       0n,
     );
 
@@ -150,7 +150,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
       salts,
     };
   } catch (err) {
-    await Promise.all(oldCommitments.map(o => clearPending(o)));
+    await Promise.all(oldCommitments.map((o: any) => clearPending(o)));
     throw new Error('Failed getting commitment info');
   }
 };
