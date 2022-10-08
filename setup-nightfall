@@ -1,25 +1,5 @@
 #! /bin/bash
 
-usage()
-{
-  echo "Usage:"
-  echo "  -g or --ganache; for a ganache simulator"
-}
-
-if [ ! -z "$1" ]; then
-  while [ -n "$1" ]; do
-    case $1 in
-        -g  | --ganache )             FILE="-f docker/docker-compose.yml -f docker/docker-compose.ganache.yml";
-                                      ;;
-        -mpc)                         export MPC="true"
-                                      ;;
-        * )                           usage
-                                exit 1
-      esac
-    shift
-  done
-fi
-
 set -e
 
 # Install node dependencies
