@@ -33,7 +33,7 @@ if [ $OS_ARCH != "x86_64" ]; then
   NO_CACHE_FLAG='--no-cache'
 fi
 
-docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-zokrates:0.8.2 -f docker/zokrates.Dockerfile .
+#docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-zokrates:0.8.2 -f docker/zokrates.Dockerfile .
 
 # containers built separately. A parallel build fails.
 

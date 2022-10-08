@@ -1,5 +1,5 @@
 # build zokrates from source for local verify
-FROM ghcr.io/eyblockchain/local-zokrates:0.8.2 as builder
+FROM docker.io/israelboudoux/tmp-nightfall-zokrates:0.8.2 as builder
 
 FROM ubuntu:20.04
 
