@@ -59,9 +59,10 @@ jobs:
           npm run unit-test
 
   circuits-test:
-    runs-on: ubuntu-20.04
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: client,deployer,optimist,worker
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -105,9 +106,10 @@ jobs:
           path: ./circuit-test.log
 
   ganache-test:
-    runs-on: ubuntu-20.04
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: client,deployer,optimist,worker
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -154,6 +156,8 @@ jobs:
   kyc-test:
     env:
       WHITELISTING: enable
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: client,deployer,optimist,worker
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -196,9 +200,11 @@ jobs:
           name: kyc-test-logs
           path: ./ganackyche-test.log
 
-
   optimist-sync-test:
     runs-on: ubuntu-18.04
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: client,deployer,optimist,worker
     steps:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v1
@@ -246,6 +252,7 @@ jobs:
   #    env:
   #      TRANSACTIONS_PER_BLOCK: 32
   #      CONFIRMATIONS: 1
+  #      NF_SERVICES_TO_START: adversary,client,deployer,optimist,worker
   #    steps:
   #      - uses: actions/checkout@v3
   #      - uses: actions/setup-node@v1
@@ -296,6 +303,9 @@ jobs:
   #          path: ./adversary-test.log
 
   ping-pong-test:
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: client,deployer,optimist,worker
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -338,10 +348,11 @@ jobs:
           path: ./ping-pong-test.log
 
   test-gas:
-    name: check gas for 32 transactions per block
-    runs-on: ubuntu-20.04
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: client,deployer,optimist,worker
+    name: check gas for 32 transactions per block
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -354,6 +365,7 @@ jobs:
           ./start-nightfall -g -d &> test-gas.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
+          CONFIRMATIONS: 1
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -389,6 +401,9 @@ jobs:
   test-apps:
     name: check apps for liveliness
     runs-on: ubuntu-20.04
+    env:
+      TRANSACTIONS_PER_BLOCK: 32
+      NF_SERVICES_TO_START: deployer,optimist,worker
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -399,8 +414,6 @@ jobs:
         run: |
           ./setup-nightfall
           ./start-nightfall -g -d &> test-apps.log &disown
-        env:
-          TRANSACTIONS_PER_BLOCK: 32
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
