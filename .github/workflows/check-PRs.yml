@@ -204,6 +204,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: administrator,blockchain,client,deployer,optimist,worker
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
