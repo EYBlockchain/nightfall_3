@@ -51,7 +51,7 @@ describe('Optimist synchronisation tests', () => {
       'docker/docker-compose.ganache.yml',
     ],
     log: process.env.LOG_LEVEL || 'silent',
-    composeOptions: [['-p "nightfall_3"']],
+    composeOptions: [['-p', 'nightfall_3']],
   };
 
   before(async () => {

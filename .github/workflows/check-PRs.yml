@@ -200,6 +200,52 @@ jobs:
           name: kyc-test-logs
           path: ./ganackyche-test.log
 
+  administrator-test:
+    runs-on: ubuntu-20.04
+    env:
+      CONFIRMATIONS: 1
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+
+      - name: Start Containers
+        run: |
+          ./setup-nightfall
+          ./start-nightfall -g -d &> administrator-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat administrator-test.log
+
+      - name: Run integration test
+        run: |
+          npm run test-administrator
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat administrator-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: administrator-test-logs
+          path: ./administrator-test.log
+
   optimist-sync-test:
     runs-on: ubuntu-18.04
     env:

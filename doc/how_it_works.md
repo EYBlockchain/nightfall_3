@@ -14,15 +14,21 @@ Transfer, Withdraw. Anyone can be a Transactor. They pay a fee for the service.
 A `Proposer` proposes new updates to the state of the Shield contract. By _state_, we mean
 specifically the storage variables that are associated with a zkp transaction: nullifiers, and
 commitment roots. Update proposals contain many `Transactions`, rolled up into a layer 2 `Block` and
-only a hash of the final state, that would exist after all the Transactions in the Block were processed, is
-stored. Anyone can become a Proposer but they must post a bond to do so. The bond is intended to
-incentivise good behaviour. They must also stake some ETH every time they propose a block, which is
-paid to a successful challenger. They make money by providing correct Blocks, collecting fees from
-transactors. They are somewhat analogous to Miners in a conventional blockchain although the way
-they operate is completely different.
+only a hash of the final state, that would exist after all the Transactions in the Block were
+processed, is stored. The system could be configured with a maximum number of proposers. Anyone can
+become a Proposer if this maximum number is not reached but they must post a minimum stake that is
+also configured in the system. All these parameters could be updated according to a multisig
+administrator contract. The stake is intended to incentivise good behaviour and also is the base to
+calculate the proposer set for the selection of next proposer. Using a similar approach to Polygon
+proposer selection protocol, with proposer set based on staking, and Tendermint’s proposer selection
+based in a weighted round robin algorithm, Nightfall will select next proposer. Every time the
+current proposer propose a block part of this stake is blocked, which is paid to a successful
+challenger. Proposers make money by providing correct blocks and collecting fees from transactors.
+They are somewhat analogous to Miners in a conventional blockchain although the way they operate is
+completely different.
 
-A `Challenger` challenges the correctness of a proposed block. Anyone can be a Challenger. They make money
-from correct challenges.
+A `Challenger` challenges the correctness of a proposed block. Anyone can be a Challenger. They make
+money from correct challenges.
 
 ## Contracts
 
@@ -33,15 +39,20 @@ and have the same functionality as conventional nightfall).
   deposit Transaction, it will take payment. It also allows anyone to request that the state of the
   Shield contract (commitment root and nullifier lists) is updated. When the state is updated, any
   withdrawals in the update will be processed (we don't yet allow immediate withdrawal; one needs to
-  wait until a block is finalised).
-  Note that there is no fundamental need to post a transfer or withdraw transaction to the blockchain: it's simply acting as a message board for proposers to pick up the transaction and incorporate it into a layer 2 Block.  These days, that's a lot of Gas for a bit of convenience.  Therefore this functionality can be disabled and transfer transactions sent directly to a proposer endpoint (see below).
-- `Proposers.sol` - functionality for registering, deregistering, paying and rotating proposers and, most importantly, proposing a new Layer 2 Block to the blockchain.
+  wait until a block is finalised). Note that there is no fundamental need to post a transfer or
+  withdraw transaction to the blockchain: it's simply acting as a message board for proposers to
+  pick up the transaction and incorporate it into a layer 2 Block. These days, that's a lot of Gas
+  for a bit of convenience. Therefore this functionality can be disabled and transfer transactions
+  sent directly to a proposer endpoint (see below).
+- `Proposers.sol` - functionality for registering, deregistering, paying and changing the current
+  proposer and, most importantly, proposing a new Layer 2 Block to the blockchain.
 - `Challenges.sol` - functionality to enable a Block to be challenged as incorrect in some way.
 - `MerkleTree_Computations.sol` - A stateless (pure function) version of the original
   `MerkleTree.sol`, used by `Challenges.sol` to help compute challenged blocks on-chain.
 - `Utils.sol` - collects together functionality which is either used in multiple contracts or which,
   if left inline, would affect readability of code.
-- `Config.sol` - holds constants rather like a Nodejs config file.
+- `Config.sol` - holds constants rather like a Nodejs config file. Also has some parameters that
+  could be configure with a multisig administrator contract.
 - `Structures.sol` - defines global structs, enums, events, mappings and state variables. It makes
   these easier to find.
 
@@ -53,6 +64,7 @@ ETH) to do so.
 ### Transaction posting
 
 #### **On-chain**
+
 The process starts with a Transactor creating a transaction by calling `submitTransaction` on
 `Shield.sol`. The Transactor pays a fee to the Shield contract for the Transaction, which can be
 anything the Transactor decides. Ultimately this will be paid to the Proposer that incorporates the
@@ -64,18 +76,20 @@ Transaction. If the Transaction is a Deposit, the Shield contract takes payment 
 token in question.
 
 #### **Off-chain**
-Transfer and Withdraw transactions have the option of being submitted directly to listening proposers
-rather than being submitted on-chain via the above process. These off-chain transactions will save
-transactors the on-chain submission cost (~45k gas), but requires a greater degree of trust from
-transactors with the proposers they choose to connect to. It is easier for bad acting proposers
-to censor transactions received off-chain than those received on-chain.
+
+Transfer and Withdraw transactions have the option of being submitted directly to listening
+proposers rather than being submitted on-chain via the above process. These off-chain transactions
+will save transactors the on-chain submission cost (~45k gas), but requires a greater degree of
+trust from transactors with the proposers they choose to connect to. It is easier for bad acting
+proposers to censor transactions received off-chain than those received on-chain.
 
 ### Transaction receival
+
 When proposers receive any transactions, they perform a range of checks to validate that the
 transaction is well-formed and that the proof verifies against the public inputs hash.
 
-If this is true in both cases, the transaction is added to proposer's mempool to be considered in
-a `Block`.
+If this is true in both cases, the transaction is added to proposer's mempool to be considered in a
+`Block`.
 
 ### Block assembly and submission
 
@@ -116,8 +130,8 @@ made are:
   has never existed;
 - DUPLICATE_NULLIFIER - A nullifier, given as part of a Transaction is present in the list of spent
   nullifiers;
-- HISTORIC_ROOT_INVALID - the updated commitment root that results from processing the
-  transactions in the Block is not correct.
+- HISTORIC_ROOT_INVALID - the updated commitment root that results from processing the transactions
+  in the Block is not correct.
 - DUPLICATE_TRANSACTION - An identical transaction included in this block has already been included
   in a prior block.
 - TRANSACTION_TYPE_INVALID - The transaction is not well-formed based on the transaction type (e.g.
