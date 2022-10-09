@@ -21,6 +21,7 @@ const {
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
+  MINIMUM_STAKE,
 } = config.TEST_OPTIONS;
 
 const nf3User = new Nf3(signingKeys.user1, environment);
@@ -76,7 +77,7 @@ describe('TPS test', () => {
       performance.mark('A');
 
       // we must set the URL from the point of view of the client container
-      await nf3Proposer.registerProposer('http://optimist');
+      await nf3Proposer.registerProposer('http://optimist', MINIMUM_STAKE);
 
       // Proposer listening for incoming events
       const newGasBlockEmitter = await nf3Proposer.startProposer();
