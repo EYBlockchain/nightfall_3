@@ -45,6 +45,9 @@ router.post('/register', async (req, res, next) => {
 
   try {
     const { address, url = '', fee = 0 } = req.body;
+    if (url === '') {
+      throw new Error('Rest API URL not provided');
+    }
     const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
     // the first thing to do is to check if the proposer is already registered on the blockchain
     const proposers = (await getProposers()).map(p => p.thisAddress);

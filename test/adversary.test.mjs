@@ -101,7 +101,7 @@ describe('Testing with an adversary', () => {
     startBalance = await retrieveL2Balance(nf3User);
 
     // Proposer registration
-    await nf3AdversarialProposer.registerProposer('', MINIMUM_STAKE);
+    await nf3AdversarialProposer.registerProposer('http://optimist', MINIMUM_STAKE);
     // Proposer listening for incoming events
     const blockProposeEmitter = await nf3AdversarialProposer.startProposer();
     blockProposeEmitter
