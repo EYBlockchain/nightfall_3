@@ -52,7 +52,7 @@ services:
     volumes:
       - type: volume
         source: mongodb
-        target: /data/db 
+        target: /data/db
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
