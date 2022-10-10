@@ -50,6 +50,8 @@ const checkCircuitsOutput = async () => {
             fs.mkdirSync(`${outputPath}/${circuit}`);
           }
 
+          const downloadPath = `${baseUrl}/proving_files/${circuit}/${f.split('  ')[1]}`;
+
           try {
             await downloadFile(
               downloadPath,
