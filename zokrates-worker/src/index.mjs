@@ -46,17 +46,28 @@ const checkCircuitsOutput = async () => {
           const filename = f.split('  ')[1];
           const circuit = circuits.find(c => filename.includes(c));
 
+          if(! circuit) {
+            circuit = '';
+          }
+
           if (!fs.existsSync(`${outputPath}/${circuit}`)) {
             fs.mkdirSync(`${outputPath}/${circuit}`);
           }
 
+          const downloadPath = `${baseUrl}/proving_files/${circuit}/${f.split('  ')[1]}`;
+
+          logger.info(`Downloading file: ${downloadPath}`);
+
           try {
             await downloadFile(
-              `${baseUrl}/proving_files/${circuit}/${f.split('  ')[1]}`,
+              downloadPath,
               `${outputPath}/${circuit}/${f.split('  ')[1]}`,
             );
           } catch (e) {
-            console.error(`ERROR downloading ${f.split('  ')[1]}`);
+            logger.error({
+              message: `ERROR downloading ${f.split('  ')[1]}`,
+              error: e
+            });
           }
         }
       }),
