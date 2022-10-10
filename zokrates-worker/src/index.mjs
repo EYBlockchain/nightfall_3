@@ -45,11 +45,7 @@ const checkCircuitsOutput = async () => {
         if (f) {
           const filename = f.split('  ')[1];
           const circuit = circuits.find(c => filename.includes(c));
-
-          if(! circuit) {
-            circuit = '';
-          }
-
+          
           if (!fs.existsSync(`${outputPath}/${circuit}`)) {
             fs.mkdirSync(`${outputPath}/${circuit}`);
           }
