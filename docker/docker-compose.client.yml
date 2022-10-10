@@ -65,7 +65,7 @@ services:
     networks:
       - nightfall_network
     environment:
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
       MPC: ${MPC:-true}
       ETH_NETWORK: ${ETH_NETWORK}
       CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL}
