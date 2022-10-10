@@ -48,6 +48,7 @@ services:
       OPTIMIST_PORT: 80
       MONGO_URL: mongodb://mongodb:27017
       USE_STUBS: 'false' # make sure this flag is the same as in deployer service
+      AUTOSTART_RETRIES: 600
     command: ['npm', 'run', 'dev']
 
     # Temporary container to deploy contracts and circuits and populate volumes
@@ -107,6 +108,7 @@ services:
       # by calling startMakingChallenges() function
       IS_CHALLENGER: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      AUTOSTART_RETRIES: 600
     command: ['npm', 'run', 'dev']
 
   rabbitmq:
@@ -128,7 +130,7 @@ services:
     volumes:
       - type: volume
         source: mongodb
-        target: /data/db 
+        target: /data/db
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest

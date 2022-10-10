@@ -124,14 +124,15 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate commitment
     case 2: {
-      logger.debug(`Challenging duplicate commitment for block ${JSON.stringify(block, null, 2)}`);
-      logger.debug(
-        `Challenging duplicate commitment for block transactions ${JSON.stringify(
-          transactions,
-          null,
-          2,
-        )}`,
-      );
+      logger.debug({
+        msg: 'Challenging duplicate commitment for block',
+        block,
+      });
+      logger.debug({
+        msg: 'Challenging duplicate commitment for block transactions',
+        transactions,
+      });
+      console.log('----', err.metadata, '---end---');
       const {
         block1,
         transaction1,
@@ -144,19 +145,20 @@ export async function createChallenge(block, transactions, err) {
         siblingPath2,
         duplicateCommitment2Index,
       } = err.metadata;
+      console.log('mmm-m----m----mmmm',siblingPath2 || block2.transactionHashes.filter(th => th !== transaction2.transactionHash));
       txDataToSign = await challengeContractInstance.methods
         .challengeCommitment(
           {
             blockL2: Block.buildSolidityStruct(block1),
             transaction: Transaction.buildSolidityStruct(transaction1),
             transactionIndex: transaction1Index,
-            transactionSiblingPath: siblingPath1,
+            transactionSiblingPath: [block1.transactionHashesRoot, ...siblingPath1],
           },
           {
             blockL2: Block.buildSolidityStruct(block2),
             transaction: Transaction.buildSolidityStruct(transaction2),
             transactionIndex: transaction2Index,
-            transactionSiblingPath: siblingPath2,
+            transactionSiblingPath: [block2.transactionHashesRoot, ...(siblingPath2 || block2.transactionHashes.filter(th => th !== transaction2.transactionHash))],
           },
           duplicateCommitment1Index,
           duplicateCommitment2Index,
@@ -167,14 +169,14 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate nullifier
     case 3: {
-      logger.debug(`Challenging duplicate nullifier for block ${JSON.stringify(block, null, 2)}`);
-      logger.debug(
-        `Challenging duplicate nullifier for block transactions ${JSON.stringify(
-          transactions,
-          null,
-          2,
-        )}`,
-      );
+      logger.debug({
+        msg: 'Challenging duplicate nullifier for block',
+        block,
+      });
+      logger.debug({
+        msg: 'Challenging duplicate nullifier for block transactions',
+        transactions,
+      });
       const {
         block1,
         transaction1,

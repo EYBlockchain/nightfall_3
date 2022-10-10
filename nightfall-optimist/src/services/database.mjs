@@ -66,7 +66,7 @@ export async function saveBlock(_block) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
 
-  logger.debug({ msg: 'Saving block', block: JSON.stringify(block, null, 2) });
+  logger.debug({ msg: 'Saving block', block });
 
   /* there are three possibilities here:
    1) We're just saving a block for the first time.  This is fine
@@ -597,20 +597,21 @@ export async function setTransactionHashSiblingInfo(
   transactionHashLeafIndex,
   transactionHashesRoot,
 ) {
+  console.log('-------setTransactionHashSiblingInfo---', transactionHash, transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot);
   const connection = await mongo.connection(MONGO_URL);
   const query = { transactionHash };
   const update = {
     $set: { transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot },
   };
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TIMBER_COLLECTION).updateMany(query, update);
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update, { upsert: true });
 }
 
 // function to get the path of the transaction hash leaf in transaction hash timber
 export async function getTransactionHashSiblingInfo(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TIMBER_COLLECTION).findOne(
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(
     { transactionHash },
     {
       projection: {

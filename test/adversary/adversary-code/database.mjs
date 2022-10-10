@@ -17,8 +17,8 @@ let error = process.env.BAD_TX_SEQUENCE
       // 'IncorrectTreeRoot',
       // 'IncorrectLeafCount',
       'DuplicateCommitmentTransfer',
-      'DuplicateCommitmentDeposit',
-      'DuplicateNullifierTransfer',
+      'ValidTransaction',
+      'ValidTransaction',
       'IncorrectProofDeposit',
       'IncorrectProofTransfer',
       'IncorrectPublicInputDepositCommitment',
@@ -65,9 +65,10 @@ const duplicateCommitment = async (number, transactionType) => {
         .toArray();
     }
     const { commitments: spentCommitments } = spentTransaction[0];
-    logger.debug(
-      `Transaction before modification ${JSON.stringify(unspentTransaction[0], null, 2)}`,
-    );
+    logger.debug({
+      msg: 'Transaction before modification',
+      transaction: unspentTransaction[0]
+    });
     logger.debug(`transactionType for transaction to be modified ${transactionType}`);
     const { commitments: unspentCommitments, ...unspentRes } = unspentTransaction[0];
     const modifiedTransaction = {
@@ -86,7 +87,10 @@ const duplicateCommitment = async (number, transactionType) => {
 
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
-    logger.debug(`Transfer after modification ${JSON.stringify(modifiedTransaction, null, 2)}`);
+    logger.debug({
+      msg: 'Transfer after modification',
+      transaction: modifiedTransaction
+    });
 
     modifiedTransactions = transactions.slice(0, number - 1);
     modifiedTransactions.push(modifiedTransaction);

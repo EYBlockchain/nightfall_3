@@ -51,7 +51,7 @@ async function rollbackEventHandler(data) {
     const blockTransactions = await getTransactionsByTransactionHashes(transactionHashesInBlock); // TODO move this to getTransactionsByTransactionHashes by l2 block number because transaction hash is not unique and might not pull the right l2 block number
     logger.info({
       msg: 'Rollback - blockTransactions to check:',
-      blockTransactions: JSON.stringify(blockTransactions),
+      blockTransactions,
     });
 
     for (let j = 0; j < blockTransactions.length; j++) {
@@ -73,6 +73,7 @@ async function rollbackEventHandler(data) {
       checkDuplicateCommitmentsWithinBlock(blocksToBeDeleted[i], blockTransactions);
       checkDuplicateNullifiersWithinBlock(blocksToBeDeleted[i], blockTransactions);
     } catch (error) {
+      console.log('---errrrrr---', error);
       const { transaction2: transaction } = error.metadata; // TODO pick transaction to delete based on which transaction pays more to proposer
       logger.debug(`Rollback - Invalid transaction: ${transaction.transactionHash}`);
       invalidTransactions.push(transaction.transactionHash);

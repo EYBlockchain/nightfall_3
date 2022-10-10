@@ -216,8 +216,8 @@ export const setupHttpDefaults = (
   app.use(cors());
   app.use(bodyParser.json({ limit: '2mb' }));
   app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
-  app.use(requestLogger);
-  app.use(responseLogger);
+  // app.use(requestLogger);
+  // app.use(responseLogger);
 
   if (routesDefiner) {
     routesDefiner(app);

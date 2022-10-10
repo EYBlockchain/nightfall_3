@@ -226,7 +226,11 @@ export async function checkBlock(block, transactions) {
     }
   } catch (err) {
     if (err.code + 2 === 2 || err.code + 2 === 3) {
-      const siblingPath1 = await getTransactionHashSiblingInfo(transaction.transactionHash);
+      let siblingPath1 = (await getTransactionHashSiblingInfo(transaction.transactionHash)).transactionHashSiblingPath;
+      if (!siblingPath1) {
+        await Block.calcTransactionHashesRoot(transactions);
+        siblingPath1 = (await getTransactionHashSiblingInfo(transaction.transactionHash)).transactionHashSiblingPath;
+      }
       err.metadata = {
         ...err.metadata,
         block1: block,
