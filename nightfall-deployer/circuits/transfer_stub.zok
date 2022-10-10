@@ -1,39 +1,31 @@
 from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer;
-from "./common/generic_circuit/Generics/transfer_generic_stub.zok" import transfer_generic_stub;
+from "./common/stubs/nullifiers_stub.zok" import main as nullifier_stub;
+from "./common/stubs/commitments_stub.zok" import main as commitment_stub;
+from "./common/stubs/encryption_stub.zok" import main as encryption_stub;
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field;
+from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8;
+
+const u32 numberCommitments = 3;
+const u32 numberNullifiers = 4;
 
 def main(\
-    PublicTransaction<4,3> tx,\
-    field[4] roots,\
-    field maticAddress,\
+    PublicTransaction<numberNullifiers,numberCommitments> tx,\
+    field[numberNullifiers] roots,\
+    field feeAddress,\
     private field rootKey,\
-    private Nullifiers<4> nullifiersInfo,\
-    private Commitments<3> commitmentsInfo,\
+    private Nullifiers<numberNullifiers> nullifiersInfo,\
+    private Commitments<numberCommitments> commitmentsInfo,\
     private Transfer transfer\
 ) {
-    assert(transfer_generic_stub::<4,3>(\
-        tx.value,\
-        tx.fee,\
-	tx.transactionType,\
-	tx.tokenType,\
-        tx.historicRootBlockNumberL2,\
-	tx.tokenId,\
-	tx.ercAddress,\
-	tx.recipientAddress,\
-	tx.commitments,\
-	tx.nullifiers,\
-	tx.compressedSecrets,\
-        roots,\
-        maticAddress,\
-        rootKey,\
-        nullifiersInfo.oldCommitments.value,\
-        nullifiersInfo.oldCommitments.salt,\
-        nullifiersInfo.paths,\
-        nullifiersInfo.orders,\
-        commitmentsInfo.newCommitments.value,\
-        commitmentsInfo.newCommitments.salt,\
-        commitmentsInfo.recipientPublicKey,\
-        transfer.ephemeralKey,\
-        transfer.ercAddressTransfer,\
-        transfer.idTransfer\
-        ));
+        field[numberNullifiers] nullifiersValue = u8_array_to_field(nullifiersInfo.oldCommitments.value);
+        field[numberCommitments] commitmentsValue = u8_array_to_field(commitmentsInfo.newCommitments.value);
+
+        assert(nullifier_stub::<numberNullifiers>(\
+                roots,  nullifiersValue,  nullifiersInfo.oldCommitments.salt,\
+                nullifiersInfo.paths, nullifiersInfo.orders, rootKey));
+
+        assert(commitment_stub::<numberCommitments>(commitmentsValue,\
+                commitmentsInfo.newCommitments.salt, commitmentsInfo.recipientPublicKey));
+
+        assert(encryption_stub(transfer.ephemeralKey, transfer.ercAddressTransfer, transfer.idTransfer));
 }

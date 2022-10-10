@@ -1,5 +1,5 @@
-from "../../utils/structures.zok" import Point;
-from "../../utils/calculations.zok" import sum;
+from "../utils/structures.zok" import Point;
+from "../utils/calculations.zok" import sum;
 
 def main<NumCommitments>(\
     private field[NumCommitments] newCommitmentValues,\

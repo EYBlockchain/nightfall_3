@@ -1,0 +1,24 @@
+/*
+* Given a Public tx, check that the structure and all the public parameters are valid
+*/
+def main<N,C>(\
+	field[C] commitments,\
+	field[N] nullifiers\
+) -> bool {
+    
+    //Check that there are not duplicate commitments in the same transaction
+    for u32 i in 0..C {
+        for u32 j in (i+1)..C {
+            assert(commitments[j] == 0 || commitments[i] != commitments[j]);
+        }
+    }
+
+    //Check that there are not duplicate nullifiers in the same transaction
+    for u32 i in 0..N {
+        for u32 j in (i+1)..N {
+            assert(nullifiers[j] == 0 || nullifiers[i] != nullifiers[j]);
+        }
+    }
+
+    return true;
+}

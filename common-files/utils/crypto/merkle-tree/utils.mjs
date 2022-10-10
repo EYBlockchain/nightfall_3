@@ -10,11 +10,12 @@ import config from 'config';
 import createKeccakHash from 'keccak';
 import crypto from 'crypto';
 import sb from 'safe-buffer';
-import { generalise } from 'general-number';
+import gen from 'general-number';
 import logger from '../../logger.mjs';
 import mimcHashFunction from '../mimc/mimc.mjs';
 import poseidonHashFunction from '../poseidon/poseidon.mjs';
 
+const { generalise } = gen;
 const { Buffer } = sb;
 
 function padArray(arr, padWith, n) {

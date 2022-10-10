@@ -1,4 +1,4 @@
-from "../../utils/calculations.zok" import sum;
+from "../utils/calculations.zok" import sum;
 from "utils/pack/u32/pack256.zok" import main as u32_8_to_field;
 
 def main(\

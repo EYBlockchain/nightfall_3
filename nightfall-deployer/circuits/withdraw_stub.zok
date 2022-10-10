@@ -1,36 +1,27 @@
-from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments;
-from "./common/generic_circuit/Generics/withdraw_generic_stub.zok" import withdraw_generic_stub;
+from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer;
+from "./common/stubs/nullifiers_stub.zok" import main as nullifier_stub;
+from "./common/stubs/commitments_stub.zok" import main as commitment_stub;
+from "./common/stubs/encryption_stub.zok" import main as encryption_stub;
+from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field;
 
+const u32 numberCommitments = 2;
+const u32 numberNullifiers = 4;
 
 def main(\
-    PublicTransaction<4,2> tx,\
-    field[4] roots,\
-    field maticAddress,\
+    PublicTransaction<numberNullifiers,numberCommitments> tx,\
+    field[numberNullifiers] roots,\
+    field feeAddress,\
     private field rootKey,\
-    private Nullifiers<4> nullifiersInfo,\
-    private Commitments<2> commitmentsInfo\
+    private Nullifiers<numberNullifiers> nullifiersInfo,\
+    private Commitments<numberCommitments> commitmentsInfo\
 ) {
-    assert(withdraw_generic_stub::<4,2>(\
-        tx.value,\
-        tx.fee,\
-	tx.transactionType,\
-	tx.tokenType,\
-        tx.historicRootBlockNumberL2,\
-	tx.tokenId,\
-	tx.ercAddress,\
-	tx.recipientAddress,\
-	tx.commitments,\
-	tx.nullifiers,\
-	tx.compressedSecrets,\
-        roots,\
-        maticAddress,\
-        rootKey,\
-        nullifiersInfo.oldCommitments.value,\
-        nullifiersInfo.oldCommitments.salt,\
-        nullifiersInfo.paths,\
-        nullifiersInfo.orders,\
-        commitmentsInfo.newCommitments.value,\
-        commitmentsInfo.newCommitments.salt,\
-        commitmentsInfo.recipientPublicKey\
-        ));
+        field[numberNullifiers] nullifiersValue = u8_array_to_field(nullifiersInfo.oldCommitments.value);
+        field[numberCommitments] commitmentsValue = u8_array_to_field(commitmentsInfo.newCommitments.value);
+
+        assert(nullifier_stub::<numberNullifiers>(\
+                roots,  nullifiersValue,  nullifiersInfo.oldCommitments.salt,\
+                nullifiersInfo.paths, nullifiersInfo.orders, rootKey));
+
+        assert(commitment_stub::<numberCommitments>(commitmentsValue,\
+                commitmentsInfo.newCommitments.salt, commitmentsInfo.recipientPublicKey));
 }

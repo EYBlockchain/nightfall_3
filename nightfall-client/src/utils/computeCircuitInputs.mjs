@@ -85,16 +85,6 @@ const computePrivateInputsCommitments = (
   ].flat(Infinity);
 };
 
-const computePrivateInputsDeposit = (salt, recipientPublicKeys) => {
-  return [
-    salt.field(BN128_GROUP_ORDER),
-    recipientPublicKeys.map(rcp => [
-      rcp[0].field(BN128_GROUP_ORDER),
-      rcp[1].field(BN128_GROUP_ORDER),
-    ]),
-  ].flat(Infinity);
-};
-
 // eslint-disable-next-line import/prefer-default-export
 export const computeCircuitInputs = (
   txObject,
@@ -104,9 +94,8 @@ export const computeCircuitInputs = (
   numberNullifiers,
   numberCommitments,
 ) => {
-  const publicWitness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
+  const witness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
   const {
-    salt,
     oldCommitmentPreimage,
     paths,
     orders,
@@ -117,13 +106,8 @@ export const computeCircuitInputs = (
     ercAddress,
     tokenId,
   } = generalise(privateData);
-
-  let witness;
-  if (Number(txObject.transactionType) === 0) {
-    witness = [...publicWitness, ...computePrivateInputsDeposit(salt, recipientPublicKeys)];
-  } else {
-    witness = [
-      ...publicWitness,
+  if (numberNullifiers > 0) {
+    witness.push(
       ...computePrivateInputsNullifiers(
         oldCommitmentPreimage,
         paths,
@@ -131,17 +115,21 @@ export const computeCircuitInputs = (
         rootKey,
         numberNullifiers,
       ),
+    );
+  }
+
+  if (numberCommitments > 0) {
+    witness.push(
       ...computePrivateInputsCommitments(
         newCommitmentPreimage,
         recipientPublicKeys,
         numberCommitments,
       ),
-    ];
-
-    if (Number(txObject.transactionType) === 1) {
-      witness.push(...computePrivateInputsEncryption(ephemeralKey, ercAddress, tokenId));
-    }
+    );
   }
 
+  if (Number(txObject.transactionType) === 1) {
+    witness.push(...computePrivateInputsEncryption(ephemeralKey, ercAddress, tokenId));
+  }
   return witness;
 };

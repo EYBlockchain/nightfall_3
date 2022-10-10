@@ -1,4 +1,4 @@
-from "../../utils/calculations.zok" import sum;
+from "../utils/calculations.zok" import sum;
 
 def main<NumNullifiers>(\
     field[NumNullifiers] nullifierRoots,\
