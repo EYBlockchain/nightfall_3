@@ -105,7 +105,7 @@ jobs:
           name: circuit-test-logs
           path: ./circuit-test.log
 
-  ganache-protocol+erc20-test:
+  ganache-protocol-erc20-test:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
