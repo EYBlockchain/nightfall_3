@@ -73,22 +73,19 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         state.setBlockStakeWithdrawn(blockHash);
 
         //Request fees
-        (uint256 feePaymentsEth, uint256 feePaymentsMatic) = state.getFeeBookInfo(
-            b.proposer,
-            b.blockNumberL2
-        );
+        FeeTokens memory feePayments = state.getFeeBookInfo(b.proposer, b.blockNumberL2);
 
         state.resetFeeBookInfo(b.proposer, b.blockNumberL2);
 
-        if (feePaymentsEth > 0) {
-            (bool success, ) = payable(address(state)).call{value: feePaymentsEth}('');
+        if (feePayments.feesEth > 0) {
+            (bool success, ) = payable(address(state)).call{value: feePayments.feesEth}('');
             require(success, 'Shield: Transfer failed.');
         }
 
-        if (feePaymentsMatic > 0) {
+        if (feePayments.feesMatic > 0) {
             IERC20Upgradeable(super.getMaticAddress()).safeTransfer(
                 address(state),
-                feePaymentsMatic
+                feePayments.feesMatic
             );
         }
 
@@ -98,7 +95,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         stake.challengeLocked -= blockData.blockStake;
         state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
 
-        state.addPendingWithdrawal(msg.sender, feePaymentsEth, feePaymentsMatic);
+        state.addPendingWithdrawal(msg.sender, feePayments.feesEth, feePayments.feesMatic);
     }
 
     /**
