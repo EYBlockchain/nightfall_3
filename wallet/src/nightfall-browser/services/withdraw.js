@@ -20,7 +20,7 @@ import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } f
 import { ZkpKeys } from './keys';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { USE_STUBS } = global.config;
+const { USE_STUBS, VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 const circuitName = USE_STUBS ? 'withdraw_stub' : 'withdraw';
@@ -75,6 +75,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     maticAddress,
     tokenId,
     rootKey,
+    maxNumberNullifiers: VK_IDS.withdraw.numberNullifiers,
   });
 
   try {
@@ -90,6 +91,8 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       recipientAddress,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
+      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
+      numberCommitments: VK_IDS.withdraw.numberCommitments,
     });
 
     const privateData = {
@@ -112,6 +115,8 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       privateData,
       commitmentsInfo.roots,
       maticAddress,
+      VK_IDS.withdraw.numberNullifiers,
+      VK_IDS.withdraw.numberCommitments,
     );
 
     // call a zokrates worker to generate the proof
@@ -137,6 +142,8 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
+      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
+      numberCommitments: VK_IDS.withdraw.numberCommitments,
     });
     try {
       const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);

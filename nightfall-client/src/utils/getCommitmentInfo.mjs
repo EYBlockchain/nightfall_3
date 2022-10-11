@@ -25,6 +25,7 @@ export const getCommitmentInfo = async txInfo => {
     maticAddress,
     tokenId = generalise(0),
     rootKey,
+    maxNumberNullifiers,
   } = txInfo;
 
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
@@ -49,6 +50,7 @@ export const getCommitmentInfo = async txInfo => {
     maticAddress,
     value,
     feeValue,
+    maxNumberNullifiers,
   );
 
   if (!commitments) throw new Error('Not available commitments has been found');

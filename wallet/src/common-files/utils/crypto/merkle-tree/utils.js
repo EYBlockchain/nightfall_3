@@ -16,6 +16,15 @@ const { Buffer } = sb;
 const { CURVE } = global.config;
 const { generalise } = gen;
 
+function padArray(arr, padWith, n) {
+  if (arr === undefined) return generalise([...Array.from({ length: n }, () => padWith)]);
+  if (arr.length < n) {
+    const nullPadding = generalise(Array.from({ length: n - arr.length }, () => padWith));
+    return arr.concat(nullPadding);
+  }
+  return arr;
+}
+
 function parseToDigitsArray(str, base) {
   const digits = str.split('');
   const ary = [];
@@ -211,4 +220,5 @@ export default {
   shaHash,
   poseidonHash,
   concatenateThenHash,
+  padArray,
 };
