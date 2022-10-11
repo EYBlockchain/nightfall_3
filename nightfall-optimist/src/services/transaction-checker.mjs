@@ -22,7 +22,7 @@ import {
 } from './database.mjs';
 
 const { generalise } = gen;
-const { PROVING_SCHEME, CURVE, CIRCUIT_MINIMUM_PUBLIC_INPUTS } = config;
+const { PROVING_SCHEME, CURVE } = config;
 const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
 async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
@@ -126,15 +126,14 @@ async function verifyProof(transaction) {
     .getVerificationKey(transaction.transactionType)
     .call();
 
-  const numberNullifiers = 4;
-  const numberCommitments = 3;
-
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
   const historicRoots = await Promise.all(
-    Array.from({ length: numberNullifiers }, () => 0).map((value, index) => {
+    Array.from({ length: transaction.nullifiers.length }, () => 0).map((value, index) => {
       if (transaction.nullifiers[index] === ZERO) return { root: ZERO };
-      return getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[index]) ?? { root: 0 };
+      return (
+        getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[index]) ?? { root: ZERO }
+      );
     }),
   );
 
@@ -162,9 +161,7 @@ async function verifyProof(transaction) {
     ].flat(Infinity),
   ).all.bigInt.map(inp => inp.toString());
 
-  const nPublicInputs = CIRCUIT_MINIMUM_PUBLIC_INPUTS + 3 * numberNullifiers + numberCommitments;
-
-  const vk = new VerificationKey(vkArray, CURVE, PROVING_SCHEME, nPublicInputs);
+  const vk = new VerificationKey(vkArray, CURVE, PROVING_SCHEME, inputs.length);
 
   const proof = new Proof(transaction.proof, CURVE, PROVING_SCHEME, inputs);
 

@@ -1,0 +1,89 @@
+
+from "../../utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT;
+from "../../utils/calculations.zok" import sum;
+from "../../utils/calculateKeys.zok" import Keys, main as calculateKeys;
+from "../../casts/u32_array_to_field.zok" import main as u32_array_to_field;
+from "../../casts/u8_array_to_field.zok" import main as u8_array_to_field;
+from "../Verifiers/verify_structure.zok" import main as verify_structure;
+from "../Verifiers/verify_encryption.zok" import main as verify_encryption;
+from "../Verifiers/verify_nullifiers.zok" import main as verify_nullifiers;
+from "../Verifiers/verify_commitments.zok" import main as verify_commitments;
+
+def transfer_generic<N,C>(\
+    field value,\
+    field fee,\
+	field transactionType,\
+	field tokenType,\
+	field[N] historicRootBlockNumberL2,\
+	u32[8] tokenId,\
+	field ercAddress,\
+	u32[8] recipientAddress,\
+	field[C] commitments,\
+	field[N] nullifiers,\
+	field[2] compressedSecrets,\
+    field[N] roots,\
+    field maticAddress,\
+    private field rootKey,\
+    private u8[N][31] oldCommitmentsValue,\
+ 	private field[N] oldCommitmentsSalt,\
+    private field[N][32] paths,\
+	private field[N] orders,\
+    private u8[C][31] newCommitmentsValue,\
+ 	private field[C] newCommitmentsSalt,\
+    private Point[C] recipientPublicKey,\
+    private u32[8] ephemeralKey,\
+    private field ercAddressTransfer,\
+    private u32[8] idTransfer\
+) -> bool {
+    //Verify public transaction structure
+    assert(verify_structure::<N,C,1>(\
+        value,\
+        fee,\
+	    transactionType,\
+	    tokenType,\
+        historicRootBlockNumberL2,\
+	    tokenId,\
+	    ercAddress,\
+	    recipientAddress,\
+	    commitments,\
+	    nullifiers,\
+	    compressedSecrets\
+    ));
+
+    field[N] nullifiersValue = u8_array_to_field(oldCommitmentsValue);
+    field[C] commitmentsValue = u8_array_to_field(newCommitmentsValue);
+
+    //Check that values match
+    assert(sum(nullifiersValue) == sum(commitmentsValue) + fee); 
+   
+    // pack the top four bytes of the token id into the ercAddress field (address only
+	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
+    field idRemainder = u32_array_to_field(idTransfer[1..8]); 
+    field packedErcAddress = ercAddressTransfer + u32_array_to_field([idTransfer[0]]) * SHIFT; 
+
+    //Calculate Keys
+    Keys keys = calculateKeys(rootKey);
+
+    //Verify nullifiers
+    assert(verify_nullifiers::<1,N>(packedErcAddress, idRemainder,\
+        nullifiers, roots, nullifiersValue, oldCommitmentsSalt,\
+        paths, orders, keys.nullifierKey, keys.zkpPublicKey, maticAddress));
+
+    //Verify new Commmitments
+    assert(verify_commitments::<1,C>(packedErcAddress, idRemainder, commitments,\
+    commitmentsValue, newCommitmentsSalt, recipientPublicKey,\
+    maticAddress));
+
+    //Verify Changes
+    assert(commitmentsValue[C - 2] == 0 || keys.zkpPublicKey == recipientPublicKey[C - 2]);
+    
+     //Verify Fee change
+    assert(commitmentsValue[C - 1] == 0 || keys.zkpPublicKey == recipientPublicKey[C - 1]);
+
+    //Verify Kem Dem encryption
+    assert(verify_encryption(ercAddress,tokenId, compressedSecrets,\
+        packedErcAddress,idRemainder,commitmentsValue[0],newCommitmentsSalt[0],\
+        recipientPublicKey[0],recipientAddress, ephemeralKey));
+
+    return true;
+}

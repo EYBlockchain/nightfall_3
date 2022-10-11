@@ -13,16 +13,17 @@ pragma solidity ^0.8.0;
 import './Utils.sol';
 import './Config.sol';
 import './Pausable.sol';
+import './Challenges.sol';
 
 contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // global state variables
     BlockData[] public blockHashes; // array containing mainly blockHashes
-    mapping(address => uint256[2]) public pendingWithdrawals;
+    mapping(address => FeeTokens) public pendingWithdrawalsFees;
     mapping(address => LinkedAddress) public proposers;
     mapping(address => TimeLockedStake) public stakeAccounts;
-    mapping(bytes32 => uint256[2]) public feeBook;
+    mapping(bytes32 => FeeTokens) public feeBook;
     mapping(bytes32 => bool) public claimedBlockStakes;
     LinkedAddress public currentProposer; // who can propose a new shield state
     uint256 public proposerStartBlock; // L1 block where currentProposer became current
@@ -120,23 +121,21 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
 
         bytes32 input = keccak256(abi.encodePacked(b.proposer, b.blockNumberL2));
-        feeBook[input][0] = 0; // fee payments Eth
-        feeBook[input][1] = 0; // fee payments Matic
-
+        feeBook[input].feesEth = 0;
+        feeBook[input].feesMatic = 0;
         for (uint256 i = 0; i < t.length; i++) {
             if (t[i].transactionType == TransactionTypes.DEPOSIT) {
-                feeBook[input][0] += uint256(t[i].fee);
+                feeBook[input].feesEth += uint256(t[i].fee);
             } else {
-                feeBook[input][1] += uint256(t[i].fee);
+                feeBook[input].feesMatic += uint256(t[i].fee);
             }
         }
 
         bytes32 blockHash;
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
-        uint256 transactionSlots = TRANSACTION_STRUCTURE_SLOTS; //Number of slots that the transaction structure has
 
         //Get the signature for the function that checks if the transaction has been escrowed or not
-        bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(bytes32)')); //Function signature
+        bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(bytes32)'));
 
         assembly {
             //Function that calculates the height of the Merkle Tree
@@ -166,26 +165,45 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             } lt(i, t.length) {
                 i := add(i, 1)
             } {
+                let transactionSlots := div(
+                    sub(
+                        add(t.offset, calldataload(add(t.offset, mul(0x20, add(i, 1))))),
+                        add(t.offset, calldataload(add(t.offset, mul(0x20, i))))
+                    ),
+                    32
+                )
+
+                if eq(add(i, 1), t.length) {
+                    transactionSlots := div(
+                        sub(
+                            calldatasize(),
+                            add(t.offset, calldataload(add(t.offset, mul(0x20, i))))
+                        ),
+                        32
+                    )
+                }
+
                 // Copy the transaction into transactionPos
                 calldatacopy(
-                    transactionPos,
-                    add(t.offset, mul(mul(0x20, transactionSlots), i)),
+                    add(transactionPos, 0x20),
+                    add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
                     mul(0x20, transactionSlots)
                 )
 
                 // Calculate the hash of the transaction and store it in transactionHashesPos
+                mstore(transactionPos, 0x20)
+
                 mstore(
                     add(transactionHashesPos, mul(0x20, i)),
-                    keccak256(transactionPos, mul(0x20, transactionSlots))
-                )
-
-                // Get the transaction type
-                let transactionType := calldataload(
-                    add(t.offset, add(mul(mul(0x20, transactionSlots), i), mul(0x20, 2)))
+                    keccak256(transactionPos, mul(0x20, add(transactionSlots, 1)))
                 )
 
                 // If the transactionType is zero (aka deposit), we need to check if the funds were escrowed
-                if iszero(transactionType) {
+                if iszero(
+                    calldataload(
+                        add(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))), mul(0x20, 2))
+                    )
+                ) {
                     mstore(x, checkTxEscrowedSignature) //Store the signature of the function in x
                     mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
                     pop(
@@ -195,7 +213,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                             shieldAddress.slot, //To addr
                             0, //No value
                             x, //Inputs are stored at location x
-                            0x24, //Inputs are 36 bytes long
+                            add(0x04, 0x20), //Inputs are 36 bytes long
                             x, //Store output over input (saves space)
                             0x20 //Outputs are 32 bytes long
                         )
@@ -287,10 +305,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     function getFeeBookInfo(address proposer, uint256 blockNumberL2)
         public
         view
-        returns (uint256, uint256)
+        returns (FeeTokens memory)
     {
         bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
-        return (feeBook[input][0], feeBook[input][1]);
+        return (feeBook[input]);
     }
 
     function resetFeeBookInfo(address proposer, uint256 blockNumberL2) public onlyShield {
@@ -315,24 +333,24 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
 
     function addPendingWithdrawal(
         address addr,
-        uint256 amountEth,
-        uint256 amountMatic
+        uint256 feesEth,
+        uint256 feesMatic
     ) public onlyRegistered {
-        pendingWithdrawals[addr][0] += amountEth;
-        pendingWithdrawals[addr][1] += amountMatic;
+        pendingWithdrawalsFees[addr].feesEth += feesEth;
+        pendingWithdrawalsFees[addr].feesMatic += feesMatic;
     }
 
     function withdraw() external nonReentrant whenNotPaused {
-        uint256 amountEth = pendingWithdrawals[msg.sender][0];
-        uint256 amountMatic = pendingWithdrawals[msg.sender][1];
+        uint256 amountEth = pendingWithdrawalsFees[msg.sender].feesEth;
+        uint256 amountMatic = pendingWithdrawalsFees[msg.sender].feesMatic;
 
-        pendingWithdrawals[msg.sender] = [0, 0];
         if (amountEth > 0) {
+            pendingWithdrawalsFees[msg.sender].feesEth = 0;
             (bool success, ) = payable(msg.sender).call{value: amountEth}('');
             require(success, 'Transfer failed.');
         }
         if (amountMatic > 0) {
-            pendingWithdrawals[msg.sender][1] = 0;
+            pendingWithdrawalsFees[msg.sender].feesMatic = 0;
             IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
                 address(this),
                 msg.sender,
@@ -387,13 +405,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
-    // block). It also checks that the transactions sent as a calldata are all contained
-    //in the block by performing its hash and comparing it to the value stored in the block
-    function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts)
-        public
-        view
-        returns (bytes32)
-    {
+    // block).
+    function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts) public view {
         bytes32 blockHash = Utils.hashBlock(b);
         require(
             blockHashes[b.blockNumberL2].blockHash == blockHash,
@@ -404,17 +417,14 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             b.transactionHashesRoot == tranasactionHashesRoot,
             'State: Some of these transactions are not in this block'
         );
-        return blockHash;
     }
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function isBlockReal(Block calldata b) public view returns (bytes32) {
+    function isBlockReal(Block calldata b) public view {
         bytes32 blockHash = Utils.hashBlock(b);
         require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
-
-        return blockHash;
     }
 
     // Checks if a block is actually referenced in the queue of blocks waiting
@@ -471,7 +481,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             stake.challengeLocked - numRemoved * blockStake,
             0
         );
-        pendingWithdrawals[challengerAddr][0] += numRemoved * blockStake;
+        pendingWithdrawalsFees[challengerAddr].feesEth += numRemoved * blockStake;
     }
 
     function updateStakeAccountTime(address addr, uint256 time) public onlyProposer {

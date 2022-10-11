@@ -51,12 +51,12 @@ contract Structures {
         uint112 fee;
         TransactionTypes transactionType;
         TokenType tokenType;
-        uint64[4] historicRootBlockNumberL2;
+        uint64[] historicRootBlockNumberL2;
         bytes32 tokenId;
         bytes32 ercAddress;
         bytes32 recipientAddress;
-        bytes32[3] commitments;
-        bytes32[4] nullifiers;
+        bytes32[] commitments;
+        bytes32[] nullifiers;
         bytes32[2] compressedSecrets;
         uint256[4] proof;
     }
@@ -68,7 +68,7 @@ contract Structures {
         uint256 blockNumberL2;
         bytes32 previousBlockHash;
         bytes32 frontierHash;
-        bytes32 transactionHashesRoot;
+        bytes32 transactionHashesRoot; // This variable needs to be the last one in order proposeBlock to work
     }
 
     struct BlockData {
@@ -96,8 +96,13 @@ contract Structures {
         uint256 blockNumberL2;
     }
 
+    struct FeeTokens {
+        uint256 feesEth;
+        uint256 feesMatic;
+    }
+
     struct PublicInputs {
-        uint256[4] roots;
+        uint256[] roots;
         address maticAddress;
     }
 

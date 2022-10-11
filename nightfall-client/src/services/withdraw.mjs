@@ -18,7 +18,7 @@ import { ZkpKeys } from './keys.mjs';
 import getProposersUrl from './peers.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
@@ -52,6 +52,7 @@ async function withdraw(withdrawParams) {
     maticAddress,
     tokenId,
     rootKey,
+    maxNumberNullifiers: VK_IDS.withdraw.numberNullifiers,
   });
 
   try {
@@ -67,6 +68,8 @@ async function withdraw(withdrawParams) {
       recipientAddress,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
+      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
+      numberCommitments: VK_IDS.withdraw.numberCommitments,
     });
 
     const privateData = {
@@ -89,6 +92,8 @@ async function withdraw(withdrawParams) {
       privateData,
       commitmentsInfo.roots,
       maticAddress,
+      VK_IDS.withdraw.numberNullifiers,
+      VK_IDS.withdraw.numberCommitments,
     );
 
     logger.debug({
@@ -126,6 +131,8 @@ async function withdraw(withdrawParams) {
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
+      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
+      numberCommitments: VK_IDS.withdraw.numberCommitments,
     });
 
     const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);

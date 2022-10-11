@@ -1,41 +1,29 @@
 
-from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer, SHIFT;
-from "./common/utils/calculations.zok" import sum;
-from "./common/casts/u32_array_to_field.zok" import main as u32_array_to_field;
-from "./common/casts/u8_array_to_field.zok" import main as u8_array_to_field;
-from "./common/generic_circuit/Verifiers/verify_structure.zok" import main as verify_structure;
-from "./common/generic_circuit/Verifiers/verify_commitments.zok" import main as verify_commitments;
+from "./common/utils/structures.zok" import Point, PublicTransaction;
+from "./common/generic_circuit/Generics/deposit_generic.zok" import deposit_generic;
 
 def main(\
-    PublicTransaction tx,\
-    field[4] roots,\
+    PublicTransaction<0,1> tx,\
+    field[0] roots,\
     field maticAddress,\
     private field salt,\
     private Point recipientPublicKey\
 ) {
-    
-    //Verify public transaction structure
-    assert(verify_structure::<0>(\
+    assert(deposit_generic::<0,1>(\
         tx.value,\
         tx.fee,\
-	    tx.transactionType,\
-	    tx.tokenType,\
-	    tx.tokenId,\
-	    tx.ercAddress,\
-	    tx.recipientAddress,\
-	    tx.commitments,\
-	    tx.nullifiers,\
-	    tx.historicRootBlockNumberL2,\
-	    tx.compressedSecrets\
-    ));
-
-    // pack the top four bytes of the token id into the ercAddress field (address only
-	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
-    field idRemainder = u32_array_to_field(tx.tokenId[1..8]); 
-    field packedErcAddress = tx.ercAddress + u32_array_to_field([tx.tokenId[0]]) * SHIFT;
-    //Verify new Commmitments
-    assert(verify_commitments::<1,1>(packedErcAddress, idRemainder, [tx.commitments[0]],\
-    [tx.value], [salt], [recipientPublicKey], maticAddress));
-        
-    return;
+	tx.transactionType,\
+	tx.tokenType,\
+        tx.historicRootBlockNumberL2,\
+	tx.tokenId,\
+	tx.ercAddress,\
+	tx.recipientAddress,\
+	tx.commitments,\
+	tx.nullifiers,\
+	tx.compressedSecrets,\
+        roots,\
+        maticAddress,\
+        salt,\
+        recipientPublicKey\
+        ));
 }
