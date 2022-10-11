@@ -17,17 +17,17 @@ struct CompressedPoint<N> {
 	field[N] ordinate;
 }
 
-struct PublicTransaction {
+struct PublicTransaction<N,C> {
 	field value;
     field fee;
 	field transactionType;
 	field tokenType;
-	field[4] historicRootBlockNumberL2;
+	field[N] historicRootBlockNumberL2;
 	u32[8] tokenId;
 	field ercAddress;
 	u32[8] recipientAddress;
-	field[3] commitments;
-	field[4] nullifiers;
+	field[C] commitments;
+	field[N] nullifiers;
 	field[2] compressedSecrets;
 }
 

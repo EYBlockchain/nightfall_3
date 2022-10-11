@@ -10,7 +10,6 @@ contract Config is Ownable, Structures {
     bytes32 constant ZERO = bytes32(0);
     uint256 constant TRANSACTIONS_PER_BLOCK = 32;
     uint256 constant BLOCK_STRUCTURE_SLOTS = 7;
-    uint256 constant TRANSACTION_STRUCTURE_SLOTS = 24;
 
     uint96 minimumStake;
     uint96 blockStake;
