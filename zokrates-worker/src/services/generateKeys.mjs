@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import * as snarkjs from 'snarkjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import downloadFile from '@polygon-nightfall/common-files/utils/httputils.mjs';
 import { compile, exportKeys } from '../zokrates-lib/index.mjs';
-import * as snarkjs from 'snarkjs';
 
 export default async function generateKeys({ filepath, curve = 'bn128' }) {
   const outputPath = `./output`;

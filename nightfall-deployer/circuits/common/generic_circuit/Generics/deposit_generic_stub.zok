@@ -1,0 +1,27 @@
+from "../../utils/structures.zok" import PublicTransaction, Commitments, Nullifiers, Point;
+from "../Stubs/commitments_stub.zok" import main as commitment_stub;
+from "../Stubs/nullifiers_stub.zok" import main as nullifier_stub;
+from "../../casts/u8_array_to_field.zok" import main as u8_array_to_field;
+from "../../utils/calculations.zok" import sum;
+
+def deposit_generic_stub<N,C>(\
+    field value,\
+    field fee,\
+	field transactionType,\
+	field tokenType,\
+	field[N] historicRootBlockNumberL2,\
+	u32[8] tokenId,\
+	field ercAddress,\
+	u32[8] recipientAddress,\
+	field[C] commitments,\
+	field[N] nullifiers,\
+	field[2] compressedSecrets,\
+    field[N] roots,\
+    field maticAddress,\
+    private field salt,\
+    private Point recipientPublicKey\
+) -> bool{
+     
+    assert(commitment_stub::<C>([value], [salt], [recipientPublicKey]));
+    return true;
+}
