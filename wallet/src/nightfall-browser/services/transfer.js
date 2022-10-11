@@ -31,7 +31,7 @@ import {
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { USE_STUBS } = global.config;
+const { USE_STUBS, VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 
@@ -42,6 +42,7 @@ async function transfer(transferParams, shieldContractAddress) {
   // let's extract the input items
   const { ...items } = transferParams;
   const { tokenId, recipientData, rootKey, fee = generalise(0) } = generalise(items);
+
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
@@ -81,6 +82,7 @@ async function transfer(transferParams, shieldContractAddress) {
       maticAddress,
       tokenId,
       rootKey,
+      maxNumberNullifiers: VK_IDS.transfer.numberNullifiers,
     });
 
     try {
@@ -112,6 +114,8 @@ async function transfer(transferParams, shieldContractAddress) {
         commitments: commitmentsInfo.newCommitments,
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
+        numberNullifiers: VK_IDS.transfer.numberNullifiers,
+        numberCommitments: VK_IDS.transfer.numberCommitments,
       });
 
       const privateData = {
@@ -133,8 +137,10 @@ async function transfer(transferParams, shieldContractAddress) {
       const witnessInput = computeCircuitInputs(
         transaction,
         privateData,
-        [...commitmentsInfo.roots],
+        commitmentsInfo.roots,
         maticAddress,
+        VK_IDS.transfer.numberNullifiers,
+        VK_IDS.transfer.numberCommitments,
       );
 
       // call a zokrates worker to generate the proof
@@ -176,6 +182,8 @@ async function transfer(transferParams, shieldContractAddress) {
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
         proof,
+        numberNullifiers: VK_IDS.transfer.numberNullifiers,
+        numberCommitments: VK_IDS.transfer.numberCommitments,
       });
 
       const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
