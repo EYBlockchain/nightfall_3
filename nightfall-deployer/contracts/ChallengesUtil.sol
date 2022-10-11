@@ -17,7 +17,6 @@ library ChallengesUtil {
     }
 
     function libChallengeNewFrontierCorrect(
-        Structures.Block calldata priorBlockL2, // the block immediately prior to this one
         bytes32[33] calldata frontierBeforeBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Structures.Block calldata blockL2,
         Structures.Transaction[] calldata transactions

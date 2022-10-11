@@ -26,7 +26,7 @@ contract Key_Registry is Ownable, Structures {
       emit VkChanged(_txType);
   }
 
-  function getVerificationKey(TransactionTypes txType) public view returns(uint[] memory) {
-    return vks[txType];
-  }
+    function getVerificationKey(TransactionTypes txType) public view returns (uint256[] memory) {
+        return vks[txType];
+    }
 }
