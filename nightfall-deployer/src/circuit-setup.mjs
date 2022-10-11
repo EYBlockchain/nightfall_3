@@ -150,7 +150,7 @@ async function setupCircuits() {
 
       const call = keyRegistry.methods.registerVerificationKey(
         vkArray,
-        config.VK_IDS[USE_STUBS ? folderpath.slice(0, -5) : folderpath],
+        config.VK_IDS[USE_STUBS ? folderpath.slice(0, -5) : folderpath].txType,
       );
 
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
