@@ -2,9 +2,9 @@ import fs from 'fs';
 import util from 'util';
 import crypto from 'crypto';
 import path from 'path';
+import * as snarkjs from 'snarkjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { computeWitness } from '../zokrates-lib/index.mjs';
-import * as snarkjs from 'snarkjs';
 
 const unlink = util.promisify(fs.unlink);
 

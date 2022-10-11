@@ -24,7 +24,6 @@ module.exports = {
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
-  CIRCUIT_MINIMUM_PUBLIC_INPUTS: 24,
   CONFIRMATION_POLL_TIME: 1000,
   CONFIRMATIONS: process.env.CONFIRMATIONS || 12,
   DEFAULT_ACCOUNT_NUM: 10,
@@ -92,9 +91,25 @@ module.exports = {
   CURVE: process.env.CURVE || 'bn128',
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 150,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 100,
   USE_STUBS: process.env.USE_STUBS === 'true',
-  VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
+  VK_IDS: {
+    deposit: {
+      txType: 0,
+      numberNullifiers: 0,
+      numberCommitments: 1,
+    },
+    transfer: {
+      txType: 1,
+      numberNullifiers: 4,
+      numberCommitments: 3,
+    },
+    withdraw: {
+      txType: 2,
+      numberNullifiers: 4,
+      numberCommitments: 2,
+    },
+  }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   MPC: {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
@@ -463,12 +478,12 @@ module.exports = {
   SIGNATURES: {
     BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32, bytes32)',
     TRANSACTION:
-      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+      '(uint112,uint112,uint8,uint8,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
     PROPOSE_BLOCK: [
       '(uint48,address,bytes32,uint256,bytes32,bytes32,bytes32)',
-      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])[]',
+      '(uint112,uint112,uint8,uint8,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])[]',
     ],
     SUBMIT_TRANSACTION:
-      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+      '(uint112,uint112,uint8,uint8,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
   },
 };

@@ -5,6 +5,7 @@
 An optimistic Transaction class
 */
 import gen from 'general-number';
+import utils from '../utils/crypto/merkle-tree/utils.js';
 import Web3 from '../utils/web3';
 import { compressProof } from '../utils/curve-maths/curves';
 import Proof from './proof.js';
@@ -77,37 +78,23 @@ class Transaction {
     nullifiers: _nullifiers, // this must be an array of objects from the Nullifier class
     compressedSecrets: _compressedSecrets, // this must be array of objects that are compressed from Secrets class
     proof, // this must be a proof object, as computed by zokrates worker
+    numberNullifiers,
+    numberCommitments,
   }) {
-    let commitments;
-    let nullifiers;
     let compressedSecrets;
     let flatProof;
-    let historicRootBlockNumberL2;
     if (proof === undefined) flatProof = [0, 0, 0, 0, 0, 0, 0, 0];
     else {
       flatProof = Proof.flatProof(proof);
     }
-    if (_commitments === undefined || _commitments.length === 0)
-      commitments = [{ hash: 0 }, { hash: 0 }, { hash: 0 }];
-    else if (_commitments.length === 1) commitments = [..._commitments, { hash: 0 }, { hash: 0 }];
-    else if (_commitments.length === 2) commitments = [..._commitments, { hash: 0 }];
-    else commitments = _commitments;
-    if (_nullifiers === undefined || _nullifiers.length === 0)
-      nullifiers = [{ hash: 0 }, { hash: 0 }, { hash: 0 }, { hash: 0 }];
-    else if (_nullifiers.length === 1)
-      nullifiers = [..._nullifiers, { hash: 0 }, { hash: 0 }, { hash: 0 }];
-    else if (_nullifiers.length === 2) nullifiers = [..._nullifiers, { hash: 0 }, { hash: 0 }];
-    else if (_nullifiers.length === 3) nullifiers = [..._nullifiers, { hash: 0 }];
-    else nullifiers = _nullifiers;
+
+    const commitments = utils.padArray(_commitments, { hash: 0 }, numberCommitments);
+    const nullifiers = utils.padArray(_nullifiers, { hash: 0 }, numberNullifiers);
+    const historicRootBlockNumberL2 = utils.padArray(_historicRoot, 0, numberNullifiers);
+
     if (_compressedSecrets === undefined || _compressedSecrets.length === 0)
       compressedSecrets = [0, 0];
     else compressedSecrets = _compressedSecrets;
-    if (_historicRoot === undefined || _historicRoot.length === 0)
-      historicRootBlockNumberL2 = [0, 0, 0, 0];
-    else if (_historicRoot.length === 1) historicRootBlockNumberL2 = [..._historicRoot, 0, 0, 0];
-    else if (_historicRoot.length === 2) historicRootBlockNumberL2 = [..._historicRoot, 0, 0];
-    else if (_historicRoot.length === 3) historicRootBlockNumberL2 = [..._historicRoot, 0];
-    else historicRootBlockNumberL2 = _historicRoot;
 
     if ((transactionType === 0 || transactionType === 2) && TOKEN_TYPES[tokenType] === undefined)
       throw new Error('Unrecognized token type');
