@@ -32,7 +32,7 @@ async function deposit(items, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { tokenId, value, compressedZkpPublicKey, nullifierKey, fee } = generalise(items);
+  const { tokenId, value, compressedZkpPublicKey, nullifierKey } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
@@ -67,7 +67,7 @@ async function deposit(items, shieldContractAddress) {
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const publicData = new Transaction({
-    fee,
+    fee: 0,
     transactionType: 0,
     tokenType: items.tokenType,
     tokenId,
@@ -108,7 +108,7 @@ async function deposit(items, shieldContractAddress) {
 
     // next we need to compute the optimistic Transaction object
     const optimisticDepositTransaction = new Transaction({
-      fee,
+      fee: 0,
       transactionType: 0,
       tokenType: items.tokenType,
       tokenId,
