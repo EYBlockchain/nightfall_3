@@ -92,6 +92,32 @@ this point.
 
 To stop the application, you can run `npm run nightfall-down` and it should exit cleanly.
 
+### To export nightfall state
+In some circumstances it may be useful to export nightfall state so that it can be replicated at any point in time. 
+For example, when doing load testing and many thousands of transactions needs to be generated, saving the nightfall state
+at the moment when all transactions have been generated may be benefitial.
+
+The exported nightfall state includes:
+- blockchain
+- file system (contracts and circuits)
+- client and optimist mondoDbs.
+
+This feature only works with `geth` and not with `ganache`.
+
+To export nightfall state, run `./export-nightfall <folder>` at the point where you want to save the state.
+
+Data is backup in `nightfall_3/backup` folder
+
+### To import nightfall state
+One can also import a previously exported state. To do so:
+```
+./geth-standalone -i <FOLDER>
+./start-nightfall -l -d
+./import-nightfall <FOLDER>
+```
+
+Each command will need to be entered in a different window.
+
 ## Testing
 
 Open a separate terminal window, cd to the nightfall_3 repo and run

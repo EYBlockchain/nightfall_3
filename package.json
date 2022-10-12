@@ -93,8 +93,8 @@
     "jsdoc": "^3.6.10",
     "minimist": "^1.2.6",
     "mocha": "^10.0.0",
-    "nightfall-sdk": "^0.1.1",
     "mongodb": "^4.7.0",
+    "nightfall-sdk": "^0.1.1",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "queue": "^6.0.2",
@@ -110,6 +110,7 @@
   },
   "dependencies": {
     "async-mutex": "^0.3.2",
+    "chalk": "^5.1.0",
     "docker-compose": "^0.23.13",
     "general-number": "^1.0.1",
     "pino": "^8.3.1",

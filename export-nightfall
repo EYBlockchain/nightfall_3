@@ -1,0 +1,37 @@
+#! /bin/bash
+
+usage()
+{
+  echo "Usage:"
+  echo "./export-nightfall <backup folder>"
+}
+
+# select a folder to backup state
+if [ -z "$1" ]; then
+  usage
+  exit 1
+fi
+
+# Dump client and optimist db
+BACKUP_FOLDER=backup/${1}
+if [ -d "${BACKUP_FOLDER}" ]; then
+  echo "${BACKUP_FOLDER} already exists"
+  exit 1
+fi
+
+mkdir -p $BACKUP_FOLDER
+mongodump --db=optimist_data --out=./${BACKUP_FOLDER}/optimist_db
+mongodump --db=nightfall_commitments --out=./${BACKUP_FOLDER}/client_db
+
+# Copy deployed circuits and contracts
+WORKER=$(docker ps | grep nightfall_3-worker-1 | awk '{print $1}')
+OPTIMIST=$(docker ps | grep  nightfall_3-optimist-1| awk '{print $1}')
+docker cp $WORKER:/app/output/ ./${BACKUP_FOLDER}
+docker cp $OPTIMIST:/app/build/ ./${BACKUP_FOLDER}
+
+# Copy geth data
+mkdir -p ${BACKUP_FOLDER}/geth
+sudo cp -R config/geth/data ./${BACKUP_FOLDER}/geth
+
+sudo chown -R $USER ./${BACKUP_FOLDER}
+sudo chown -R $USER ./config/geth/data

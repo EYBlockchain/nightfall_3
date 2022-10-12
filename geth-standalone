@@ -9,6 +9,7 @@ usage()
   echo "  -d or --down; to shut the network down and delete volumes"
   echo "  -p or --pause; to pause the network (useful if you want the CPU for something else for a bit)"
   echo "  -u or --unpause; to un-pause the network"
+  echo "  -i or --import; to import geth state"
   echo "  -l or --logs; start logging output"
   echo "  -h or --help; prints this message"
 }
@@ -22,13 +23,28 @@ if [ "$1" == "" ]; then
   exit 1
 fi
 case $1 in
-    -s | --start )          docker-compose -f $FILE -p $NAME up -d
+    -s | --start )          # Clean previous geth volumes
+                            sudo rm -rf config/geth/data/
+                            mkdir -p config/geth/data
+                            mkdir -p config/geth/data/dag1
+                            mkdir -p config/geth/data/geth1-chain
+                            mkdir -p config/geth/data/geth-miner-chain1
+                            docker-compose -f $FILE -p $NAME up -d
                             ;;
     -d | --down )           docker-compose -f $FILE -p $NAME down -v --remove-orphans -t 1
                             ;;
     -p | --pause )          docker-compose -f $FILE -p $NAME pause
                             ;;
     -u | --unpause )        docker-compose -f $FILE -p $NAME unpause
+                            ;;
+    -i | --import )         # Stop geth and restart with backup data
+                            shift&&BACKUP_FOLDER="$1"||die
+                            docker-compose -f $FILE -p $NAME down -v --remove-orphans -t 1
+                            sleep 5
+                            sudo rm -rf config/geth/data
+                            sudo cp -R -/${BACKUP_FOLDER}/geth/data ./config/geth
+                            sudo chown -R $USER ./config/geth/data
+                            docker-compose -f $FILE -p $NAME up -d
                             ;;
     -l | --logs )           docker-compose -f $FILE -p $NAME logs -f
                             ;;
