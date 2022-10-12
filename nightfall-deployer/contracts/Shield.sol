@@ -45,6 +45,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         return txInfo[transactionHash].isEscrowed;
     }
 
+    function getTransactionEthFee(bytes32 transactionHash) public view returns (uint256) {
+        return txInfo[transactionHash].ethFee;
+    }
+
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
@@ -57,8 +61,9 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
             'Shield: You are on the Chainalysis sanctions list'
         );
         if (t.transactionType == TransactionTypes.DEPOSIT) {
-            txInfo[Utils.hashTransaction(t)].isEscrowed = true;
-            require(uint256(t.fee) == msg.value);
+            bytes32 transactionHash = Utils.hashTransaction(t);
+            txInfo[transactionHash].isEscrowed = true;
+            txInfo[transactionHash].ethFee = uint240(msg.value);
             payIn(t);
         }
     }
@@ -83,9 +88,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         state.setBlockStakeWithdrawn(blockHash);
 
         //Request fees
-        FeeTokens memory feePayments = state.getFeeBookInfo(b.proposer, b.blockNumberL2);
-
-        state.resetFeeBookInfo(b.proposer, b.blockNumberL2);
+        FeeTokens memory feePayments = state.getFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
+        state.resetFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
 
         if (feePayments.feesEth > 0) {
             (bool success, ) = payable(address(state)).call{value: feePayments.feesEth}('');
@@ -276,6 +280,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         // set new owner of transaction, settign fee to zero.
         advancedWithdrawals[transactionHash].advanceFee = 0;
         advancedWithdrawals[transactionHash].currentOwner = msg.sender;
+
         state.addPendingWithdrawal(msg.sender, advanceFee, 0);
         (bool success, ) = payable(address(state)).call{value: uint256(advanceFee)}('');
         require(success, 'Shield: Transfer failed.');
@@ -343,6 +348,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
             'Shield: The given address is more than 160 bits'
         );
         // Now pay out the value of the commitment
+        require(
+            uint256(t.ercAddress) < 0x010000000000000000000000000000000000000000,
+            'Shield: The given address is more than 160 bits'
+        );
         address addr = address(uint160(uint256(t.ercAddress)));
 
         if (t.tokenType == TokenType.ERC20) {
@@ -370,8 +379,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
                 uint256(t.value),
                 ''
             );
-        } else {
-            revert('Shield: Invalid Token Type');
         }
     }
 
@@ -409,8 +416,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
                 uint256(t.value),
                 ''
             );
-        } else {
-            revert('Shield: Invalid Token Type');
         }
     }
 }

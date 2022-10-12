@@ -1,9 +1,9 @@
 from "ecc/edwardsCompress" import main as edwardsCompress;
 from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256;
 from "utils/casts/u32_8_to_bool_256.zok" import main as u32_8_to_bool_256;
-from "../../casts/u32_array_to_field.zok" import main as u32_array_to_field;
-from "../../encryption/kem-dem.zok" import main as kemDem, EncryptedMsgs;
-from "../../utils/structures.zok" import Point;
+from "../casts/u32_array_to_field.zok" import main as u32_array_to_field;
+from "../encryption/kem-dem.zok" import main as kemDem, EncryptedMsgs;
+from "../utils/structures.zok" import Point;
 
 /*
 * Verify that the secrets are encrypted properly in the Transfer

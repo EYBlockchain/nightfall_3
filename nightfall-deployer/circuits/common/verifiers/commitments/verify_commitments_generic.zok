@@ -1,0 +1,48 @@
+from "hashes/poseidon/poseidon.zok" import main as poseidon;
+from "../../utils/structures.zok" import Point;
+
+/*
+* Verify that all commitments are correct. It checks either the commitment belongs to the regular
+*  address or the fee one. If commitment value is zero, it is considered valid
+*/
+def main<C>(\
+    field packedErcAddress,\
+    field idRemainder,\
+    field[C] commitmentHashes,\
+    private field[C] newCommitmentValues,\
+    private field[C] newCommitmentSalts,\
+    private Point[C] recipientPublicKey,\
+    field feeAddress\
+) -> bool {
+
+    for u32 i in 0..C { 
+        //Calculate commitment hash assuming it belongs to packedErcAddress  
+        field calculatedCommitmentHash = poseidon([\
+                packedErcAddress,\
+                idRemainder,\
+                newCommitmentValues[i],\
+                ...recipientPublicKey[i],\
+                newCommitmentSalts[i]\
+            ]);
+
+        field commitment = if (newCommitmentValues[i] != 0) {\
+            calculatedCommitmentHash } else { 0 };
+
+        //Calculate commitment hash assuming it belongs to feeAddress  
+        field calculatedCommitmentHashFee = poseidon([\
+                feeAddress,\
+                0,\
+                newCommitmentValues[i],\
+                ...recipientPublicKey[i],\
+                newCommitmentSalts[i]\
+            ]);
+        
+        field commitmentFee = if (newCommitmentValues[i] != 0) {\
+            calculatedCommitmentHashFee } else { 0 };
+
+        //Check that the calculated commitment (either the regular or the fee one) matches with the one contained in the transaction
+        assert(commitment == commitmentHashes[i] || commitmentFee == commitmentHashes[i]);
+    }    
+    
+    return true;
+}
