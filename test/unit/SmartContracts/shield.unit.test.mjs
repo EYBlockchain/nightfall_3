@@ -154,7 +154,7 @@ describe('Testing Shield Contract', function () {
 
   describe('getTransactionEscrowed', async () => {
     it('returns true if a transaction is escrowed', async function () {
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, true, false);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, true, false, 0);
       const isEscrowed = await ShieldInstance.getTransactionEscrowed(withdrawTransactionHash);
       expect(isEscrowed).to.equal(true);
     });
@@ -165,16 +165,29 @@ describe('Testing Shield Contract', function () {
     });
   });
 
+  describe('getTransactionEthFee', async () => {
+    it('returns eth fee for a transaction', async function () {
+      await setTransactionInfo(shieldAddress, depositTransactionHash, true, false, 15);
+      const getTransactionEthFee = await ShieldInstance.getTransactionEthFee(
+        depositTransactionHash,
+      );
+      expect(getTransactionEthFee).to.equal(15);
+    });
+  });
+
   describe('submitTransaction', async function () {
     it('succeeds and sets is Escrowed to true for a deposit transaction of an ERC20 token', async function () {
       await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
       await Erc20MockInstance.approve(shieldAddress, '10');
 
-      const tx = await ShieldInstance.submitTransaction(depositTransaction);
+      const tx = await ShieldInstance.submitTransaction(depositTransaction, {
+        value: 15,
+      });
 
       expect((await ShieldInstance.txInfo(depositTransactionHash)).isEscrowed).to.equal(true);
       expect(await Erc20MockInstance.balanceOf(await owner[0].address)).to.equal(99999990);
       expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(10);
+      expect((await ShieldInstance.txInfo(depositTransactionHash)).ethFee).to.equal(15);
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 
@@ -525,7 +538,14 @@ describe('Testing Shield Contract', function () {
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
       await time.increase(86400 * 7 + 1);
-      await setFeeBookInfo(stateAddress, block, 0, 20);
+      await setFeeBookInfo(stateAddress, block, 15, 20);
+
+      await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
+      await Erc20MockInstance.approve(shieldAddress, '10');
+
+      await ShieldInstance.submitTransaction(depositTransaction, {
+        value: 15,
+      });
 
       const amount = 5;
       const challengeLocked = 2;
@@ -544,13 +564,16 @@ describe('Testing Shield Contract', function () {
         ethers.utils.solidityPack(['address', 'uint256'], [block.proposer, block.blockNumberL2]),
       );
 
-      expect(await StateInstance.feeBook(proposerBlockHash, 0)).to.equal(0);
-      expect(await StateInstance.feeBook(proposerBlockHash, 1)).to.equal(0);
+      expect((await StateInstance.feeBookBlocks(proposerBlockHash)).feesEth).to.equal(0);
+      expect((await StateInstance.feeBookBlocks(proposerBlockHash)).feesMatic).to.equal(0);
 
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 0)).to.equal(0);
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 1)).to.equal(20);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(15);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(20);
 
-      expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(80);
+      expect(await ethers.provider.getBalance(shieldAddress)).to.equal(0);
+      expect(await ethers.provider.getBalance(stateAddress)).to.equal(15);
+
+      expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(90);
       expect(await Erc20MockInstance.balanceOf(stateAddress)).to.equal(20);
 
       const stake = await StateInstance.stakeAccounts(owner[0].address);
@@ -692,7 +715,7 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
 
       await expect(
         ShieldInstance.isValidWithdrawal(block, withdrawTransaction, index, siblingPath),
@@ -734,8 +757,8 @@ describe('Testing Shield Contract', function () {
       );
       expect((await ShieldInstance.txInfo(withdrawTransactionHash)).isWithdrawn).to.equal(true);
       expect(advancedWithdrawal.advanceFee).to.equal(0n);
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 0)).to.equal(0);
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 1)).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
     });
 
     it('succeeds to finalise withdrawal for an ERC20 token if valid and has been advanced and fee pending', async function () {
@@ -765,8 +788,8 @@ describe('Testing Shield Contract', function () {
         '0x0000000000000000000000000000000000000000',
       );
       expect(advancedWithdrawal.advanceFee).to.equal(0n);
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 0)).to.equal(15);
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 1)).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(15);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
     });
 
     it('succeeds to finalise withdrawal for an ERC721 token', async function () {
@@ -851,8 +874,8 @@ describe('Testing Shield Contract', function () {
       expect(
         (await ShieldInstance.txInfo(calculateTransactionHash(withdrawERC721))).isWithdrawn,
       ).to.equal(true);
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 0)).to.equal(0);
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 1)).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
     });
 
     it('succeeds to finalise withdrawal for an ERC1155 token', async function () {
@@ -934,8 +957,8 @@ describe('Testing Shield Contract', function () {
       expect(
         (await ShieldInstance.txInfo(calculateTransactionHash(withdrawERC1155))).isWithdrawn,
       ).to.equal(true);
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 0)).to.equal(0);
-      expect(await StateInstance.pendingWithdrawals(owner[0].address, 1)).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
     });
 
     it('fails if block or transaction is not real', async function () {
@@ -966,7 +989,7 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
 
       await expect(
         ShieldInstance.finaliseWithdrawal(block, withdrawTransaction, index, siblingPath),
@@ -1407,8 +1430,8 @@ describe('Testing Shield Contract', function () {
       expect(await ethers.provider.getBalance(stateAddress)).to.equal(15);
       expect(advancedWithdrawal.currentOwner).to.equal(await owner[1].address);
       expect(advancedWithdrawal.advanceFee).to.equal(0n);
-      expect(await StateInstance.pendingWithdrawals(owner[1].address, 0)).to.equal(15);
-      expect(await StateInstance.pendingWithdrawals(owner[1].address, 1)).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[1].address)).feesEth).to.equal(15);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[1].address)).feesMatic).to.equal(0);
     });
 
     it('fails if block or transaction is not real', async function () {
@@ -1455,7 +1478,7 @@ describe('Testing Shield Contract', function () {
 
       await setAdvancedWithdrawal(shieldAddress, withdrawTransactionHash, owner[1].address, 1);
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
 
       await expect(
         ShieldInstance.advanceWithdrawal(block, withdrawTransaction, index, siblingPath),
@@ -1620,7 +1643,7 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
 
       await expect(
         ShieldInstance.setAdvanceWithdrawalFee(block, withdrawTransaction, index, siblingPath, {

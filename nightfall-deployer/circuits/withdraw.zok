@@ -1,15 +1,18 @@
 from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments;
-from "./common/generic_circuit/Generics/withdraw_generic.zok" import withdraw_generic;
+from "./common/generics/withdraw_generic.zok" import withdraw_generic;
+
+const u32 numberCommitments = 2;
+const u32 numberNullifiers = 4;
 
 def main(\
-    PublicTransaction<4,2> tx,\
-    field[4] roots,\
-    field maticAddress,\
+    PublicTransaction<numberNullifiers,numberCommitments> tx,\
+    field[numberNullifiers] roots,\
+    field feeAddress,\
     private field rootKey,\
-    private Nullifiers<4> nullifiersInfo,\
-    private Commitments<2> commitmentsInfo\
+    private Nullifiers<numberNullifiers> nullifiersInfo,\
+    private Commitments<numberCommitments> commitmentsInfo\
 ) {
-    assert(withdraw_generic::<4,2>(\
+    assert(withdraw_generic::<numberNullifiers,numberCommitments>(\
         tx.value,\
         tx.fee,\
 	tx.transactionType,\
@@ -22,7 +25,7 @@ def main(\
 	tx.nullifiers,\
 	tx.compressedSecrets,\
         roots,\
-        maticAddress,\
+        feeAddress,\
         rootKey,\
         nullifiersInfo.oldCommitments.value,\
         nullifiersInfo.oldCommitments.salt,\

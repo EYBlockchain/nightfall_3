@@ -18,3 +18,7 @@ cache/
 config/geth/data
 backup
 docker/volumes
+
+#hardhat coverage
+coverage
+coverage.json

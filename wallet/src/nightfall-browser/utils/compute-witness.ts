@@ -40,12 +40,6 @@ type Commitment = {
   recipientPublicKey: string[][];
 };
 
-type Transfer = {
-  ephemeralKey: string[];
-  ercAddressTransfer: string;
-  idTransfer: string[];
-};
-
 const computePublicInputs = (
   tx: PublicInputs,
   rootsOldCommitments: string[],
@@ -76,18 +70,6 @@ const computePublicInputs = (
   publicInput.push(generalise(maticAddress).field(BN128_GROUP_ORDER));
 
   return publicInput;
-};
-
-const computePrivateInputsEncryption = (
-  ephemeralKey: GeneralNumber,
-  ercAddress: GeneralNumber,
-  tokenId: GeneralNumber,
-): Transfer => {
-  return {
-    ephemeralKey: ephemeralKey.limbs(32, 8),
-    ercAddressTransfer: ercAddress.field(BN128_GROUP_ORDER),
-    idTransfer: tokenId.limbs(32, 8),
-  };
 };
 
 const computePrivateInputsNullifiers = (
@@ -142,19 +124,6 @@ const computePrivateInputsCommitments = (
   };
 };
 
-const computePrivateInputsDeposit = (
-  salt: any,
-  recipientPublicKeys: GeneralNumber[][],
-): string[] => {
-  return [
-    salt.field(BN128_GROUP_ORDER),
-    recipientPublicKeys.map((rcp: GeneralNumber[]) => [
-      rcp[0].field(BN128_GROUP_ORDER),
-      rcp[1].field(BN128_GROUP_ORDER),
-    ]),
-  ].flat(1);
-};
-
 const computeCircuitInputs = (
   txObject: PublicInputs,
   privateData: Record<string, any>,
@@ -163,9 +132,8 @@ const computeCircuitInputs = (
   numberNullifiers: number,
   numberCommitments: number,
 ): any => {
-  const publicInputs = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
+  const witness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
   const {
-    salt,
     oldCommitmentPreimage,
     paths,
     orders,
@@ -176,12 +144,8 @@ const computeCircuitInputs = (
     ercAddress,
     tokenId,
   } = generalise(privateData);
-  let witness;
-  if (Number(txObject.transactionType) === 0) {
-    witness = [...publicInputs, ...computePrivateInputsDeposit(salt, recipientPublicKeys)];
-  } else {
-    witness = [
-      ...publicInputs,
+  if (numberNullifiers > 0) {
+    witness.push(
       computePrivateInputsNullifiers(
         oldCommitmentPreimage,
         paths,
@@ -189,17 +153,31 @@ const computeCircuitInputs = (
         rootKey,
         numberNullifiers,
       ),
+    );
+  }
+
+  if (numberCommitments > 0) {
+    witness.push(
       computePrivateInputsCommitments(
         newCommitmentPreimage,
         recipientPublicKeys,
         numberCommitments,
       ),
-    ];
-
-    if (Number(txObject.transactionType) === 1) {
-      witness.push(computePrivateInputsEncryption(ephemeralKey, ercAddress, tokenId));
-    }
+    );
   }
+
+  if (ercAddress) {
+    witness.push({ ercAddressPrivate: ercAddress.field(BN128_GROUP_ORDER) });
+  }
+
+  if (tokenId) {
+    witness.push({ tokenIdPrivate: tokenId.limbs(32, 8) });
+  }
+
+  if (ephemeralKey) {
+    witness.push({ ephemeralKey: ephemeralKey.limbs(32, 8) });
+  }
+
   return witness;
 };
 

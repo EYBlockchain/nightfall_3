@@ -13,18 +13,8 @@ for PROVING_FILE_FOLDERS in * ; do
 done
 md5deep -r -s -b . > hash.txt
 echo -e "[" > s3_hash.txt
-echo "USE_STUBS: ${USE_STUBS}"
 for PROVING_FILE_FOLDERS in * ; do
   if [ -d "${PROVING_FILE_FOLDERS}" ]; then
-    skip=1
-    if [ "${USE_STUBS}" = 'true' ] && [[ "${PROVING_FILE_FOLDERS}" == *"_stub" ]]; then
-      skip=0
-    elif [[ "${PROVING_FILE_FOLDERS}" != *"_stub" ]]; then
-      skip=0
-    fi
-    if [ "${skip}" = "1" ]; then
-      continue
-    fi
     HF_PK=$(cat hash.txt | grep ${PROVING_FILE_FOLDERS}_pk | awk '{print $1}')
     HF_OUT=$(cat hash.txt | grep ${PROVING_FILE_FOLDERS}_out | awk '{print $1}')
     HF_ABI=$(cat hash.txt | grep ${PROVING_FILE_FOLDERS}_abi.json | awk '{print $1}')
