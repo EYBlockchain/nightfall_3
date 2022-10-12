@@ -26,7 +26,7 @@ async function deposit(items) {
   logger.info('Creating a deposit transaction');
 
   // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
-  const { tokenId, value, compressedZkpPublicKey, nullifierKey, fee } = generalise(items);
+  const { tokenId, value, compressedZkpPublicKey, nullifierKey } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const salt = await randValueLT(BN128_GROUP_ORDER);
@@ -45,7 +45,7 @@ async function deposit(items) {
   );
 
   const publicData = new Transaction({
-    fee,
+    fee: 0,
     transactionType: 0,
     tokenType: items.tokenType,
     tokenId,
@@ -91,7 +91,7 @@ async function deposit(items) {
 
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({
-    fee,
+    fee: 0,
     transactionType: 0,
     tokenType: items.tokenType,
     tokenId,
