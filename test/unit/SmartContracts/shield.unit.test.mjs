@@ -154,7 +154,7 @@ describe('Testing Shield Contract', function () {
 
   describe('getTransactionEscrowed', async () => {
     it('returns true if a transaction is escrowed', async function () {
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, true, false);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, true, false, 0);
       const isEscrowed = await ShieldInstance.getTransactionEscrowed(withdrawTransactionHash);
       expect(isEscrowed).to.equal(true);
     });
@@ -692,7 +692,7 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
 
       await expect(
         ShieldInstance.isValidWithdrawal(block, withdrawTransaction, index, siblingPath),
@@ -966,7 +966,7 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
 
       await expect(
         ShieldInstance.finaliseWithdrawal(block, withdrawTransaction, index, siblingPath),
@@ -1455,7 +1455,7 @@ describe('Testing Shield Contract', function () {
 
       await setAdvancedWithdrawal(shieldAddress, withdrawTransactionHash, owner[1].address, 1);
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
 
       await expect(
         ShieldInstance.advanceWithdrawal(block, withdrawTransaction, index, siblingPath),
@@ -1620,7 +1620,7 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true);
+      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
 
       await expect(
         ShieldInstance.setAdvanceWithdrawalFee(block, withdrawTransaction, index, siblingPath, {

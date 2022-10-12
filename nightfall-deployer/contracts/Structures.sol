@@ -134,5 +134,6 @@ contract Structures {
     struct TransactionInfo {
         bool isEscrowed;
         bool isWithdrawn;
+        uint240 ethFee;
     }
 }

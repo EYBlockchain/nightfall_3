@@ -490,7 +490,7 @@ class Nf3 {
       value,
       compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
       nullifierKey: this.zkpKeys.nullifierKey,
-      fee,
+      fee: 0,
     });
     return new Promise((resolve, reject) => {
       userQueue.push(async () => {

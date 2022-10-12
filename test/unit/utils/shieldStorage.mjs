@@ -8,20 +8,24 @@ const whitelistSlot = 163;
 const txInfoSlot = 166;
 const advancedWithdrawalSlot = 167;
 
-export async function setTransactionInfo(shieldAddress, transactionHash, isEscrowed, isWithdrawn) {
+export async function setTransactionInfo(
+  shieldAddress,
+  transactionHash,
+  isEscrowed = false,
+  isWithdrawn = false,
+  ethFee = 0,
+) {
   const index = ethers.utils.solidityKeccak256(
     ['uint256', 'uint256'],
     [transactionHash, txInfoSlot],
   );
 
-  const txInfoStruct = ethers.utils.hexZeroPad(
-    ethers.utils.hexlify(
-      ethers.utils.concat([
-        ethers.utils.hexlify(Number(isWithdrawn)),
-        ethers.utils.hexlify(Number(isEscrowed)),
-      ]),
-    ),
-    32,
+  const txInfoStruct = ethers.utils.hexlify(
+    ethers.utils.concat([
+      ethers.utils.hexZeroPad(ethers.utils.hexlify(ethFee), 30),
+      ethers.utils.hexlify(Number(isWithdrawn)),
+      ethers.utils.hexlify(Number(isEscrowed)),
+    ]),
   );
 
   await setStorageAt(shieldAddress, index, txInfoStruct);
