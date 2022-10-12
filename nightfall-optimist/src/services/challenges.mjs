@@ -195,13 +195,13 @@ export async function createChallenge(block, transactions, err) {
             blockL2: Block.buildSolidityStruct(block1),
             transaction: Transaction.buildSolidityStruct(transaction1),
             transactionIndex: transaction1Index,
-            transactionSiblingPath: siblingPath1,
+            transactionSiblingPath: [block1.transactionHashesRoot, ...siblingPath1],
           },
           {
             blockL2: Block.buildSolidityStruct(block2),
             transaction: Transaction.buildSolidityStruct(transaction2),
             transactionIndex: transaction2Index,
-            transactionSiblingPath: siblingPath2,
+            transactionSiblingPath: [block2.transactionHashesRoot, ...(siblingPath2 || block2.transactionHashes.filter(th => th !== transaction2.transactionHash))],
           },
           duplicateNullifier1Index,
           duplicateNullifier2Index,
@@ -233,9 +233,16 @@ export async function createChallenge(block, transactions, err) {
         }),
       );
 
-      const transactionSiblingPath = await getTransactionHashSiblingInfo(
+      let transactionSiblingPath = (await getTransactionHashSiblingInfo(
         transactions[transactionIndex].transactionHash,
-      );
+      )).transactionHashSiblingPath;
+
+      if (!transactionSiblingPath) {
+        await Block.calcTransactionHashesRoot(transactions);
+        transactionSiblingPath = (await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)).transactionHashSiblingPath;
+      }
+
+      console.log('----in challenge case 4------transactionSiblingPath----', JSON.stringify(transactionSiblingPath, null, 2), JSON.stringify(block, null, 2));
 
       txDataToSign = await challengeContractInstance.methods
         .challengeProofVerification(
@@ -243,7 +250,7 @@ export async function createChallenge(block, transactions, err) {
             blockL2: Block.buildSolidityStruct(block),
             transaction: Transaction.buildSolidityStruct(transactions[transactionIndex]),
             transactionIndex,
-            transactionSiblingPath,
+            transactionSiblingPath: [block.transactionHashesRoot, ...transactionSiblingPath],
           },
           [historicBlock1, historicBlock2, historicBlock3, historicBlock4],
           uncompressedProof,

@@ -175,7 +175,6 @@ class Block {
   }
 
   static async calcTransactionHashesRoot(transactions) {
-    console.log('---------calcTransactionHashesRoot---------');
     const transactionHashes = transactions.map(t => t.transactionHash);
     let height = 1;
     while (2 ** height < transactionHashes.length) {
@@ -193,7 +192,6 @@ class Block {
     await Promise.all(
       // eslint-disable-next-line consistent-return
       transactionHashes.map(async (t, i) => {
-        console.log('-------t-----', t, i);
         const siblingPath = Timber.statelessSiblingPath(
           timber,
           transactionHashes,
@@ -201,7 +199,6 @@ class Block {
           TXHASH_TREE_HASH_TYPE,
           height,
         );
-        console.log('----siblingPath---', siblingPath);
         return setTransactionHashSiblingInfo(
           t,
           siblingPath.path.map(p => p.value),

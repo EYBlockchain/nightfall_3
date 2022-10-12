@@ -140,7 +140,7 @@ contract State is Initializable, ReentrancyGuardUpgradeable, Pausable, Config {
         bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(bytes32)')); //Function signature
 
         assembly {
-            //Function that calculates the height of the Merkle Tree
+            // Function that calculates the height of the Merkle Tree
             function getTreeHeight(leaves) -> _height {
                 _height := 1
                 for {
