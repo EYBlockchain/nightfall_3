@@ -67,7 +67,7 @@ const duplicateCommitment = async (number, transactionType) => {
     const { commitments: spentCommitments } = spentTransaction[0];
     logger.debug({
       msg: 'Transaction before modification',
-      transaction: unspentTransaction[0]
+      transaction: unspentTransaction[0],
     });
     logger.debug(`transactionType for transaction to be modified ${transactionType}`);
     const { commitments: unspentCommitments, ...unspentRes } = unspentTransaction[0];
@@ -89,7 +89,7 @@ const duplicateCommitment = async (number, transactionType) => {
     modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
     logger.debug({
       msg: 'Transfer after modification',
-      transaction: modifiedTransaction
+      transaction: modifiedTransaction,
     });
 
     modifiedTransactions = transactions.slice(0, number - 1);

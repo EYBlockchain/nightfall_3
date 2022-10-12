@@ -8,7 +8,7 @@ import { rand } from '../common-files/utils/crypto/crypto-random.mjs';
 
 const { expect } = chai;
 const { WEB3_PROVIDER_OPTIONS } = config;
-const { MINIMUM_STAKE } = config.TEST_OPTIONS
+const { MINIMUM_STAKE } = config.TEST_OPTIONS;
 const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const USE_EXTERNAL_NODE = config.USE_EXTERNAL_NODE === 'true';

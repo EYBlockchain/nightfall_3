@@ -145,7 +145,10 @@ export async function createChallenge(block, transactions, err) {
         siblingPath2,
         duplicateCommitment2Index,
       } = err.metadata;
-      console.log('mmm-m----m----mmmm',siblingPath2 || block2.transactionHashes.filter(th => th !== transaction2.transactionHash));
+      console.log(
+        'mmm-m----m----mmmm',
+        siblingPath2 || block2.transactionHashes.filter(th => th !== transaction2.transactionHash),
+      );
       txDataToSign = await challengeContractInstance.methods
         .challengeCommitment(
           {
@@ -158,7 +161,11 @@ export async function createChallenge(block, transactions, err) {
             blockL2: Block.buildSolidityStruct(block2),
             transaction: Transaction.buildSolidityStruct(transaction2),
             transactionIndex: transaction2Index,
-            transactionSiblingPath: [block2.transactionHashesRoot, ...(siblingPath2 || block2.transactionHashes.filter(th => th !== transaction2.transactionHash))],
+            transactionSiblingPath: [
+              block2.transactionHashesRoot,
+              ...(siblingPath2 ||
+                block2.transactionHashes.filter(th => th !== transaction2.transactionHash)),
+            ],
           },
           duplicateCommitment1Index,
           duplicateCommitment2Index,
@@ -201,7 +208,11 @@ export async function createChallenge(block, transactions, err) {
             blockL2: Block.buildSolidityStruct(block2),
             transaction: Transaction.buildSolidityStruct(transaction2),
             transactionIndex: transaction2Index,
-            transactionSiblingPath: [block2.transactionHashesRoot, ...(siblingPath2 || block2.transactionHashes.filter(th => th !== transaction2.transactionHash))],
+            transactionSiblingPath: [
+              block2.transactionHashesRoot,
+              ...(siblingPath2 ||
+                block2.transactionHashes.filter(th => th !== transaction2.transactionHash)),
+            ],
           },
           duplicateNullifier1Index,
           duplicateNullifier2Index,
@@ -233,16 +244,22 @@ export async function createChallenge(block, transactions, err) {
         }),
       );
 
-      let transactionSiblingPath = (await getTransactionHashSiblingInfo(
-        transactions[transactionIndex].transactionHash,
-      )).transactionHashSiblingPath;
+      let transactionSiblingPath = (
+        await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+      ).transactionHashSiblingPath;
 
       if (!transactionSiblingPath) {
         await Block.calcTransactionHashesRoot(transactions);
-        transactionSiblingPath = (await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)).transactionHashSiblingPath;
+        transactionSiblingPath = (
+          await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+        ).transactionHashSiblingPath;
       }
 
-      console.log('----in challenge case 4------transactionSiblingPath----', JSON.stringify(transactionSiblingPath, null, 2), JSON.stringify(block, null, 2));
+      console.log(
+        '----in challenge case 4------transactionSiblingPath----',
+        JSON.stringify(transactionSiblingPath, null, 2),
+        JSON.stringify(block, null, 2),
+      );
 
       txDataToSign = await challengeContractInstance.methods
         .challengeProofVerification(

@@ -597,7 +597,13 @@ export async function setTransactionHashSiblingInfo(
   transactionHashLeafIndex,
   transactionHashesRoot,
 ) {
-  console.log('-------setTransactionHashSiblingInfo---', transactionHash, transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot);
+  console.log(
+    '-------setTransactionHashSiblingInfo---',
+    transactionHash,
+    transactionHashSiblingPath,
+    transactionHashLeafIndex,
+    transactionHashesRoot,
+  );
   const connection = await mongo.connection(MONGO_URL);
   const query = { transactionHash };
   const update = {

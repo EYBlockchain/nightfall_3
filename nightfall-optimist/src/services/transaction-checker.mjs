@@ -46,7 +46,8 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txB
         const blockL2 = await getBlockByBlockNumberL2(transactionL2.blockNumberL2);
 
         if (blockL2 !== null) {
-          let siblingPath2 = (await getTransactionHashSiblingInfo(transactionL2.transactionHash)).transactionHashSiblingPath;
+          let siblingPath2 = (await getTransactionHashSiblingInfo(transactionL2.transactionHash))
+            .transactionHashSiblingPath;
           // if (!siblingPath2) {
           //   await Block.calcTransactionHashesRoot([transactionL2]);
           //   siblingPath2 = (await getTransactionHashSiblingInfo(transactionL2.transactionHash)).transactionHashSiblingPath;
@@ -89,7 +90,8 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBl
       if (transactionL2 !== null) {
         const blockL2 = await getBlockByBlockNumberL2(transactionL2.blockNumberL2);
         if (blockL2 !== null) {
-          const siblingPath2 = (await getTransactionHashSiblingInfo(transactionL2.transactionHash)).transactionHashSiblingPath;
+          const siblingPath2 = (await getTransactionHashSiblingInfo(transactionL2.transactionHash))
+            .transactionHashSiblingPath;
           throw new TransactionError(
             `The transaction has a duplicate nullifier ${nullifier}`,
             1,
