@@ -16,5 +16,4 @@ artifacts/
 cache/
 config/geth/data
 backup
-config/geth/data
 
