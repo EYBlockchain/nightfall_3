@@ -33,5 +33,3 @@ docker cp $OPTIMIST:/app/build/ ./${BACKUP_FOLDER}
 mkdir -p ${BACKUP_FOLDER}/geth
 sudo cp -R config/geth/data ./${BACKUP_FOLDER}/geth
 
-sudo chown -R $USER ./${BACKUP_FOLDER}
-sudo chown -R $USER ./config/geth/data

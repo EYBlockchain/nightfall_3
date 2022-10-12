@@ -38,12 +38,20 @@ case $1 in
     -u | --unpause )        docker-compose -f $FILE -p $NAME unpause
                             ;;
     -i | --import )         # Stop geth and restart with backup data
-                            shift&&BACKUP_FOLDER="$1"||die
+                            shift
+                            if [ -z "${1}" ]; then
+                              echo "Missing import folder"
+                              exit 1
+                            fi
+                            BACKUP_FOLDER=backup/$1
+                            if [ ! -d ${BACKUP_FOLDER} ]; then
+                              echo "$BACKUP_FOLDER doesnt exist"
+                              exit 1
+                            fi
                             docker-compose -f $FILE -p $NAME down -v --remove-orphans -t 1
                             sleep 5
                             sudo rm -rf config/geth/data
-                            sudo cp -R -/${BACKUP_FOLDER}/geth/data ./config/geth
-                            sudo chown -R $USER ./config/geth/data
+                            sudo cp -R ./${BACKUP_FOLDER}/geth/data ./config/geth
                             docker-compose -f $FILE -p $NAME up -d
                             ;;
     -l | --logs )           docker-compose -f $FILE -p $NAME logs -f
