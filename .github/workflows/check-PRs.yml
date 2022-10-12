@@ -351,7 +351,9 @@ jobs:
       - name: Start Containers
         run: |
           ./setup-nightfall
-          ./start-nightfall -g -d &> ping-pong-test.log &disown
+          ./geth-standalone -s
+          sleep 300
+          ./start-nightfall -l -d &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -373,7 +375,9 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: npm run nightfall-down
+        run: |
+          npm run nightfall-down
+          ./geth-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -381,6 +385,13 @@ jobs:
         with:
           name: ping-pong-test-logs
           path: ./ping-pong-test.log
+
+      - name: Export/Import state
+        run : |
+          ./export-nightfall test
+          sleep 100
+          ./geth-standalone -i test
+
 
   test-gas:
     name: check gas for 32 transactions per block
