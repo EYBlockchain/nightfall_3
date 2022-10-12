@@ -13,7 +13,6 @@ pragma solidity ^0.8.0;
 import './Utils.sol';
 import './Config.sol';
 import './Pausable.sol';
-import './Challenges.sol';
 
 contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -23,7 +22,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     mapping(address => FeeTokens) public pendingWithdrawalsFees;
     mapping(address => LinkedAddress) public proposers;
     mapping(address => TimeLockedStake) public stakeAccounts;
-    mapping(bytes32 => FeeTokens) public feeBook;
+    mapping(bytes32 => FeeTokens) public feeBookBlocks;
     mapping(bytes32 => bool) public claimedBlockStakes;
     LinkedAddress public currentProposer; // who can propose a new shield state
     uint256 public proposerStartBlock; // L1 block where currentProposer became current
@@ -121,22 +120,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         stake.challengeLocked += blockStake; // the block stake in case of an invalid block
         stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
 
-        bytes32 input = keccak256(abi.encodePacked(b.proposer, b.blockNumberL2));
-        feeBook[input].feesEth = 0;
-        feeBook[input].feesMatic = 0;
-        for (uint256 i = 0; i < t.length; i++) {
-            if (t[i].transactionType == TransactionTypes.DEPOSIT) {
-                feeBook[input].feesEth += uint256(t[i].fee);
-            } else {
-                feeBook[input].feesMatic += uint256(t[i].fee);
-            }
-        }
+        FeeTokens memory feePayments = FeeTokens(0, 0);
 
         bytes32 blockHash;
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
-
-        //Get the signature for the function that checks if the transaction has been escrowed or not
-        bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(bytes32)'));
 
         assembly {
             //Function that calculates the height of the Merkle Tree
@@ -152,11 +139,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             }
 
             let x := mload(0x40) //Gets the first free memory pointer
-            let blockPos := add(x, mul(0x20, 2)) //Save two slots of 32 bytes for calling external libraries
-            calldatacopy(blockPos, 0x04, mul(0x20, blockSlots)) //Copy the block structure into blockPos
-            let transactionHashesPos := add(blockPos, mul(0x20, blockSlots)) // calculate memory location of the transaction hashes
+            let transactionHashesPos := add(x, mul(0x20, 2)) // calculate memory location of the transaction hashes
             let transactionPos := add(
-                // calculate memory location of transactions
                 transactionHashesPos,
                 mul(0x20, exp(2, getTreeHeight(t.length)))
             )
@@ -205,7 +189,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                         add(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))), mul(0x20, 2))
                     )
                 ) {
-                    mstore(x, checkTxEscrowedSignature) //Store the signature of the function in x
+                    mstore(x, 0x16ab930800000000000000000000000000000000000000000000000000000000) //Store the signature of the getTransactionEscrowed(bytes 32) function in x
                     mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
                     pop(
                         call(
@@ -219,10 +203,65 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                             0x20 //Outputs are 32 bytes long
                         )
                     )
+
                     //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
                     if iszero(mload(x)) {
-                        revert(0, 0)
+                        mstore(
+                            0,
+                            0xd96541f500000000000000000000000000000000000000000000000000000000 //Custom error DepositNotEscrowed
+                        )
+                        mstore(0x04, mload(add(transactionHashesPos, mul(0x20, i))))
+                        revert(0, 36)
                     }
+                }
+
+                // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
+                if iszero(
+                    calldataload(
+                        add(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))), mul(0x20, 1))
+                    )
+                ) {
+                    mstore(x, 0x6f0b7d3100000000000000000000000000000000000000000000000000000000) //Store the signature of the getTransactionEthFee(bytes 32) function in x
+                    mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
+                    pop(
+                        call(
+                            // Call getTransactionFeesEth function to see if funds has been deposited
+                            gas(),
+                            sload(shieldAddress.slot), //To addr
+                            0, //No value
+                            x, //Inputs are stored at location x
+                            add(0x04, 0x20), //Inputs are 36 bytes long
+                            x, //Store output over input (saves space)
+                            0x20 //Outputs are 32 bytes long
+                        )
+                    )
+                    mstore(feePayments, add(mload(x), mload(feePayments)))
+                }
+
+                // If the transaction fee is not zero, update the MATIC fee payments
+                if eq(
+                    iszero(
+                        calldataload(
+                            add(
+                                add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
+                                mul(0x20, 1)
+                            )
+                        )
+                    ),
+                    0
+                ) {
+                    mstore(
+                        add(feePayments, 0x20),
+                        add(
+                            calldataload(
+                                add(
+                                    add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
+                                    mul(0x20, 1)
+                                )
+                            ),
+                            mload(add(feePayments, 0x20))
+                        )
+                    )
                 }
             }
 
@@ -253,15 +292,17 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             // check if the transaction hashes root calculated equal to the one passed as part of block data
             if eq(
                 eq(
-                    mload(add(blockPos, mul(sub(blockSlots, 1), 0x20))),
+                    calldataload(add(0x04, mul(sub(blockSlots, 1), 0x20))),
                     mload(transactionHashesPos)
                 ),
                 0
             ) {
-                revert(0, 0)
+                mstore(0, 0x3c80abfc00000000000000000000000000000000000000000000000000000000) //Custom error InvalidTransactionHash
+                revert(0, 4)
             }
             // calculate block hash
-            blockHash := keccak256(blockPos, mul(blockSlots, 0x20))
+            calldatacopy(x, 0x04, mul(0x20, blockSlots)) //Copy the block structure into x
+            blockHash := keccak256(x, mul(blockSlots, 0x20))
         }
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain
@@ -270,6 +311,9 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         // To do this, we simply hash the function parameters because (1) they
         // contain all of the relevant data (2) it doesn't take much gas.
         // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
+
+        // Store block fees
+        feeBookBlocks[keccak256(abi.encodePacked(b.proposer, b.blockNumberL2))] = feePayments;
 
         // blockHash is hash of all block data and hash of all the transactions data.
         blockHashes.push(
@@ -310,17 +354,16 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         return currentProposer;
     }
 
-    function getFeeBookInfo(address proposer, uint256 blockNumberL2)
+    function getFeeBookBlocksInfo(address proposer, uint256 blockNumberL2)
         public
         view
         returns (FeeTokens memory)
     {
-        bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
-        return (feeBook[input]);
+        return (feeBookBlocks[keccak256(abi.encodePacked(proposer, blockNumberL2))]);
     }
 
-    function resetFeeBookInfo(address proposer, uint256 blockNumberL2) public onlyShield {
-        delete feeBook[keccak256(abi.encodePacked(proposer, blockNumberL2))];
+    function resetFeeBookBlocksInfo(address proposer, uint256 blockNumberL2) public onlyShield {
+        delete feeBookBlocks[keccak256(abi.encodePacked(proposer, blockNumberL2))];
     }
 
     function popBlockData() public onlyChallenger returns (BlockData memory) {
@@ -436,7 +479,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function isBlockReal(Block calldata b) public view {
+    function isBlockReal(Block calldata b) public view returns (bytes32) {
         bytes32 blockHash = Utils.hashBlock(b);
         require(
             b.blockNumberL2 < blockHashes.length &&

@@ -59,32 +59,20 @@ async function blockProposedEventHandler(data, syncing) {
     const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
     const countOfNonZeroNullifiers = await countNullifiers(nonZeroNullifiers);
 
-    if (transaction.transactionType === '1') {
-      if (countOfNonZeroCommitments === 0) {
-        await decryptCommitment(transaction, zkpPrivateKeys, nullifierKeys)
-          .then(isDecrypted => {
-            // case when one of user is recipient of transfer transaction
-            if (isDecrypted) {
-              saveTxToDb = true;
-            }
-          })
-          .catch(err => {
-            // case when transfer transaction created by user
-            if (countOfNonZeroNullifiers >= 1) {
-              saveTxToDb = true;
-            } else {
-              logger.error(err);
-            }
-          });
-      } else {
-        // case when user has transferred to himself
-        saveTxToDb = true;
+    if (
+      (transaction.compressedSecrets[0] !== 0 || transaction.compressedSecrets[1] !== 0) &&
+      !countOfNonZeroCommitments
+    ) {
+      try {
+        const isDecrypted = await decryptCommitment(transaction, zkpPrivateKeys, nullifierKeys);
+        if (isDecrypted) saveTxToDb = true;
+      } catch (err) {
+        // This error will be caught regularly if the commitment isn't for us
+        // We dont print anything in order not to pollute the logs
       }
-    } else if (transaction.transactionType === '0' && countOfNonZeroCommitments >= 1) {
-      // case when deposit transaction created by user
-      saveTxToDb = true;
-    } else if (transaction.transactionType === '2' && countOfNonZeroNullifiers >= 1) {
-      // case when withdraw transaction created by user
+    }
+
+    if (countOfNonZeroCommitments >= 1 || countOfNonZeroNullifiers >= 1) {
       saveTxToDb = true;
     }
 
