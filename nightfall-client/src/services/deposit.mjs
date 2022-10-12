@@ -18,7 +18,7 @@ import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, VK_IDS } = config;
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
 const { generalise } = gen;
 
@@ -26,7 +26,7 @@ async function deposit(items) {
   logger.info('Creating a deposit transaction');
 
   // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
-  const { tokenId, value, compressedZkpPublicKey, nullifierKey, fee } = generalise(items);
+  const { tokenId, value, compressedZkpPublicKey, nullifierKey } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const salt = await randValueLT(BN128_GROUP_ORDER);
@@ -45,7 +45,7 @@ async function deposit(items) {
   );
 
   const publicData = new Transaction({
-    fee,
+    fee: 0,
     transactionType: 0,
     tokenType: items.tokenType,
     tokenId,
@@ -56,7 +56,10 @@ async function deposit(items) {
     numberCommitments: VK_IDS.deposit.numberCommitments,
   });
 
-  const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
+  const privateData = {
+    newCommitmentPreimage: [{ value, salt }],
+    recipientPublicKeys: [zkpPublicKey],
+  };
 
   const witness = computeCircuitInputs(
     publicData,
@@ -71,8 +74,7 @@ async function deposit(items) {
     witness: witness.join(' '),
   });
   // call a zokrates worker to generate the proof
-  let folderpath = 'deposit';
-  if (USE_STUBS) folderpath = `${folderpath}_stub`;
+  const folderpath = 'deposit';
   const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
     folderpath,
     inputs: witness,
@@ -91,7 +93,7 @@ async function deposit(items) {
 
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({
-    fee,
+    fee: 0,
     transactionType: 0,
     tokenType: items.tokenType,
     tokenId,

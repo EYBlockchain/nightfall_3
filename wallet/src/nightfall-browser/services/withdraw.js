@@ -20,10 +20,10 @@ import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } f
 import { ZkpKeys } from './keys';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { USE_STUBS, VK_IDS } = global.config;
+const { VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
-const circuitName = USE_STUBS ? 'withdraw_stub' : 'withdraw';
+const circuitName = 'withdraw';
 
 const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
 
@@ -36,6 +36,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     recipientAddress,
     rootKey,
     fee = generalise(0),
+    providedCommitments,
   } = generalise(withdrawParams);
 
   const ercAddress = generalise(withdrawParams.ercAddress.toLowerCase());
@@ -76,6 +77,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     tokenId,
     rootKey,
     maxNumberNullifiers: VK_IDS.withdraw.numberNullifiers,
+    providedCommitments,
   });
 
   try {
@@ -106,8 +108,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      ercAddress,
-      tokenId,
     };
 
     const witnessInput = computeCircuitInputs(

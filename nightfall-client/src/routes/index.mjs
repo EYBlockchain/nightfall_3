@@ -3,6 +3,8 @@ import getContractAddress from './contract-address.mjs';
 import getContractAbi from './contract-abi.mjs';
 import transfer from './transfer.mjs';
 import withdraw from './withdraw.mjs';
+import tokenise from './tokenise.mjs';
+import burn from './burn.mjs';
 import finaliseWithdrawal from './finalise-withdrawal.mjs';
 import isValidWithdrawal from './valid-withdrawal.mjs';
 import commitment from './commitment.mjs';
@@ -15,6 +17,8 @@ export {
   transfer,
   deposit,
   withdraw,
+  tokenise,
+  burn,
   getContractAddress,
   getContractAbi,
   finaliseWithdrawal,

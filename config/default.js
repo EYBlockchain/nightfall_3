@@ -93,7 +93,6 @@ module.exports = {
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 100,
-  USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: {
     deposit: {
       txType: 0,
@@ -108,6 +107,16 @@ module.exports = {
     withdraw: {
       txType: 2,
       numberNullifiers: 4,
+      numberCommitments: 2,
+    },
+    tokenise: {
+      txType: 3,
+      numberNullifiers: 2,
+      numberCommitments: 2,
+    },
+    burn: {
+      txType: 4,
+      numberNullifiers: 3,
       numberCommitments: 2,
     },
   }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)

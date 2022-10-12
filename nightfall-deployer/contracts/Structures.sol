@@ -6,10 +6,15 @@ Basic data structures for an optimistic rollup
 pragma solidity ^0.8.0;
 
 contract Structures {
+    error InvalidTransactionHash();
+    error DepositNotEscrowed(bytes32 depositHash);
+
     enum TransactionTypes {
         DEPOSIT,
         TRANSFER,
-        WITHDRAW
+        WITHDRAW,
+        TOKENISE,
+        BURN
     }
 
     enum TokenType {
@@ -134,5 +139,6 @@ contract Structures {
     struct TransactionInfo {
         bool isEscrowed;
         bool isWithdrawn;
+        uint240 ethFee;
     }
 }
