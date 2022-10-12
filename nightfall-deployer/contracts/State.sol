@@ -42,7 +42,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     }
 
-    function initialize(
+    function initializeState(
         address _proposersAddress,
         address _challengesAddress,
         address _shieldAddress
@@ -294,8 +294,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     }
 
     function resetFeeBookInfo(address proposer, uint256 blockNumberL2) public onlyShield {
-        bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
-        delete feeBook[input];
+        delete feeBook[keccak256(abi.encodePacked(proposer, blockNumberL2))];
     }
 
     function popBlockData() public onlyChallenger returns (BlockData memory) {
@@ -306,6 +305,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     }
 
     function getBlockData(uint256 blockNumberL2) public view returns (BlockData memory) {
+        require(blockNumberL2 < blockHashes.length, 'State: Invalid block number L2');
         return blockHashes[blockNumberL2];
     }
 
@@ -401,7 +401,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     {
         bytes32 blockHash = Utils.hashBlock(b);
         require(
-            blockHashes[b.blockNumberL2].blockHash == blockHash,
+            b.blockNumberL2 < blockHashes.length &&
+                blockHashes[b.blockNumberL2].blockHash == blockHash,
             'State: This block does not exist'
         );
         bytes32 tranasactionHashesRoot = Utils.hashTransactionHashes(ts);
@@ -417,7 +418,11 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     // block).
     function isBlockReal(Block calldata b) public view returns (bytes32) {
         bytes32 blockHash = Utils.hashBlock(b);
-        require(blockHashes[b.blockNumberL2].blockHash == blockHash, 'This block does not exist');
+        require(
+            b.blockNumberL2 < blockHashes.length &&
+                blockHashes[b.blockNumberL2].blockHash == blockHash,
+            'This block does not exist'
+        );
 
         return blockHash;
     }
@@ -430,18 +435,21 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         Transaction calldata t,
         uint256 index,
         bytes32[] calldata siblingPath
-    ) public view {
+    ) public view returns (bytes32) {
         bytes32 blockHash = Utils.hashBlock(b);
         require(
-            blockHashes[b.blockNumberL2].blockHash == blockHash,
+            b.blockNumberL2 < blockHashes.length &&
+                blockHashes[b.blockNumberL2].blockHash == blockHash,
             'State: This block does not exist'
         );
         require(
             b.transactionHashesRoot == siblingPath[0],
             'State: This transaction hashes root is incorrect'
         );
-        bool valid = Utils.checkPath(siblingPath, index, Utils.hashTransaction(t));
+        bytes32 transactionHash = Utils.hashTransaction(t);
+        bool valid = Utils.checkPath(siblingPath, index, transactionHash);
         require(valid, 'State: Transaction does not exist in block');
+        return transactionHash;
     }
 
     /**
@@ -451,7 +459,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         address addr,
         uint256 amount,
         uint256 challengeLocked
-    ) public onlyProposer {
+    ) public onlyRegistered {
         stakeAccounts[addr] = TimeLockedStake(amount, challengeLocked, 0);
     }
 
