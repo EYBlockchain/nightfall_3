@@ -11,3 +11,4 @@ test/adversary/nightfall-adversary/*
 hardhat.*
 typechain-types/
 config/geth/data
+backup/
