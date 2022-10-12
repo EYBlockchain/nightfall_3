@@ -35,13 +35,18 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         return txInfo[transactionHash].isEscrowed;
     }
 
+    function getTransactionEthFee(bytes32 transactionHash) public view returns (uint256) {
+        return txInfo[transactionHash].ethFee;
+    }
+
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
         require(isWhitelisted(msg.sender), 'You are not authorised to transact using Nightfall');
         if (t.transactionType == TransactionTypes.DEPOSIT) {
-            txInfo[Utils.hashTransaction(t)].isEscrowed = true;
-            require(uint256(t.fee) == msg.value);
+            bytes32 transactionHash = Utils.hashTransaction(t);
+            txInfo[transactionHash].isEscrowed = true;
+            txInfo[transactionHash].ethFee = uint240(msg.value);
             payIn(t);
         }
     }
@@ -66,9 +71,9 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         state.setBlockStakeWithdrawn(blockHash);
 
         //Request fees
-        FeeTokens memory feePayments = state.getFeeBookInfo(b.proposer, b.blockNumberL2);
+        FeeTokens memory feePayments = state.getFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
 
-        state.resetFeeBookInfo(b.proposer, b.blockNumberL2);
+        state.resetFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
 
         if (feePayments.feesEth > 0) {
             (bool success, ) = payable(address(state)).call{value: feePayments.feesEth}('');
