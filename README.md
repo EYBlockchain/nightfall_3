@@ -104,8 +104,7 @@ The exported nightfall state includes:
 
 This feature only works with `geth` and not with `ganache`.
 
-To export nightfall state, run `./export-nightfall <folder>` at the point where you want to save the state.
-
+To export nightfall state, run `./export-nightfall <folder>` at the point where you want to save the state. 
 Data is backup in `nightfall_3/backup` folder
 
 ### To import nightfall state
