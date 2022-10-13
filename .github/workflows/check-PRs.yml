@@ -70,8 +70,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> circuit-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> circuit-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -116,8 +116,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -163,8 +163,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> kyc-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> kyc-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -208,8 +208,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> administrator-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> administrator-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -252,8 +252,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> optimist-sync-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> optimist-sync-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -302,10 +302,10 @@ jobs:
   #
   #      - name: Start Containers with geth
   #        run: |
-  #          ./setup-nightfall
-  #          ./geth-standalone -s
+  #          ./bin/setup-nightfall
+  #          ./bin/geth-standalone -s
   #          sleep 300
-  #          ./start-nightfall -l -d -a &> adversary-test.log &disown
+  #          ./bin/start-nightfall -l -d -a &> adversary-test.log &disown
   #
   #      - name: Wait for images to be ready
   #        uses: Wandalen/wretry.action@v1.0.11
@@ -331,7 +331,7 @@ jobs:
   #        if: failure()
   #        run: |
   #          npm run nightfall-down
-  #          ./geth-standalone -d
+  #          ./bin/geth-standalone -d
   #
   #      - name: If integration test failed, upload logs files as artifacts
   #        if: failure()
@@ -350,10 +350,10 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./geth-standalone -s
+          ./bin/setup-nightfall
+          ./bin/geth-standalone -s
           sleep 300
-          ./start-nightfall -l -d &> ping-pong-test.log &disown
+          ./bin/start-nightfall -l -d &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -377,7 +377,7 @@ jobs:
         if: failure()
         run: |
           npm run nightfall-down
-          ./geth-standalone -d
+          ./bin/geth-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -388,13 +388,19 @@ jobs:
 
       - name: Export/Import state
         run : |
-          ./export-nightfall test
+          ./bin/export-nightfall test
           sleep 10
           npm run nightfall-down
-          ./geth-standalone -i test
+          ./bin/geth-standalone -i test
           sleep 10
-          ./start-nightfall -l -d
-          ./import-nightfall test
+          ./bin/start-nightfall -l -d &> export-test.log &disown
+          ./bin/import-nightfall test
+
+      - name: Debug logs - after import
+        if: always()
+        run: |
+          sleep 10
+          cat export-test.log
 
 
   test-gas:
@@ -410,8 +416,8 @@ jobs:
 
       - name: Start Containers with ganache
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> test-gas.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> test-gas.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
 
@@ -457,8 +463,8 @@ jobs:
 
       - name: Start Containers with ganache
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> test-apps.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> test-apps.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
 
