@@ -5,7 +5,7 @@
  * same blocks from our local database record and to reset cached Frontier and
  * leafCount values in the Block class
  */
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   clearNullified,
   clearOnChain,

@@ -1,7 +1,7 @@
 /* eslint no-shadow: "off" */
 
 import express from 'express';
-import { setupHttpDefaults } from 'common-files/utils/httputils.mjs';
+import { setupHttpDefaults } from '@polygon-nightfall/common-files/utils/httputils.mjs';
 import {
   deposit,
   getContractAddress,
