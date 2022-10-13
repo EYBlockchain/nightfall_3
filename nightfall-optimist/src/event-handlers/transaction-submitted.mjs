@@ -78,7 +78,6 @@ async function transactionSubmittedEventHandler(eventParams) {
     if (!fromBlockProposer) {
       await saveTransaction({ ...transaction });
     }
-
   } catch (err) {
     if (err instanceof TransactionError) {
       logger.warn(
