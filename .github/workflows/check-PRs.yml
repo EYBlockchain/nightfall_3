@@ -504,7 +504,7 @@ jobs:
 
       - name: Start client
         run: |
-          cd nightfall-client && ./start-client -g -d &> test-client.log &disown
+          cd nightfall-client && ./start-client &> ../test-client.log &disown
           sleep 20
 
       - name: Debug logs - after container startup
