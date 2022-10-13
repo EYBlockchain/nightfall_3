@@ -29,7 +29,7 @@ const doObfuscation = object => {
 const finished = promisify(stream.finished);
 
 const downloadFile = async (fileUrl, outputLocationPath) => {
-  logger.debug(`Downloading file: $fileUrl`);
+  logger.debug(`Downloading file: ${fileUrl}`);
 
   const writer = fs.createWriteStream(outputLocationPath);
   return axios({
