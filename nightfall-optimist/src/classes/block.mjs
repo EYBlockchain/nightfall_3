@@ -204,7 +204,7 @@ class Block {
         );
         return setTransactionHashSiblingInfo(
           t,
-          siblingPath,
+          [updatedTimber.root, ...siblingPath.path.map(p => p.value).reverse()],
           timber.leafCount + i,
           updatedTimber.root,
         );
