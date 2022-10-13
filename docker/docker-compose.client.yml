@@ -26,7 +26,7 @@ services:
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
       USE_STUBS: ${USE_STUBS:-false} # make sure this flag is the same as in deployer service
-      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
+      BLOCKCHAIN_URL: wss://${BLOCKCHAIN_WS_HOST}
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
       ETH_NETWORK: ${ETH_NETWORK}
