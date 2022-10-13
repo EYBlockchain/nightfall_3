@@ -3,7 +3,7 @@
 usage()
 {
   echo "Usage:"
-  echo "./import-nightfall <backup folder>"
+  echo "./bin/import-nightfall <backup folder>"
 }
 
 # select a folder to backup state
