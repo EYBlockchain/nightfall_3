@@ -2,8 +2,8 @@
 Routes for setting and removing valid challenger addresses.
 */
 import express from 'express';
-import logger from 'common-files/utils/logger.mjs';
-import { emptyQueue } from 'common-files/utils/event-queue.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { emptyQueue } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import { startMakingChallenges, stopMakingChallenges } from '../services/challenges.mjs';
 
 const router = express.Router();
