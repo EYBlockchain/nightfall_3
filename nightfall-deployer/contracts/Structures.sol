@@ -81,6 +81,7 @@ contract Structures {
         address previousAddress;
         address nextAddress;
         string url;
+        uint256 fee;
         bool inProposerSet;
         uint256 indexProposerSet;
     }

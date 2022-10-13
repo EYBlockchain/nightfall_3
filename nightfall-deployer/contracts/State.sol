@@ -381,8 +381,13 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         }
     }
 
-    function updateProposer(address proposer, string calldata url) public onlyProposer {
+    function updateProposer(
+        address proposer,
+        string calldata url,
+        uint256 fee
+    ) public onlyProposer {
         proposers[proposer].url = url;
+        proposers[proposer].fee = fee;
     }
 
     // Checks if a block is actually referenced in the queue of blocks waiting
