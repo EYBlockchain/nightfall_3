@@ -503,9 +503,9 @@ jobs:
           cat ./nightfall-client/client.env
 
       - name: Start client
+          #cd nightfall-client && ./start-client &> ../test-client.log &disown
         run: |
-          cd nightfall-client && ./start-client &> ../test-client.log &disown
-          sleep 20
+          cd nightfall-client && ./start-client 
 
       - name: Debug logs - after container startup
         if: always()
