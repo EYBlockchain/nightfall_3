@@ -3,7 +3,7 @@
 usage()
 {
   echo "Usage:"
-  echo "./export-nightfall <backup folder>"
+  echo "./bin/export-nightfall <backup folder>"
 }
 # select a folder to backup state
 if [ -z "$1" ]; then
@@ -11,7 +11,7 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-./geth-standalone -d
+./bin/geth-standalone -d
 sleep 5
 
 # Dump client and optimist db
