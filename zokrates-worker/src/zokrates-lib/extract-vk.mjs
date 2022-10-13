@@ -1,5 +1,5 @@
 import fs from 'fs';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 const readJsonFile = filePath => {
   if (fs.existsSync(filePath)) {

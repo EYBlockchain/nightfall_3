@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { compile, extractVk, exportKeys, setup } from '../zokrates-lib/index.mjs';
 
 export default async function generateKeys({ filepath, curve = 'bn128' }) {
