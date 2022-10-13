@@ -5,8 +5,10 @@ import constants from 'common-files/constants/index.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import {
   clearPending,
+  markPending,
   findUsableCommitmentsMutex,
   getSiblingInfo,
+  getCommitmentsByHash,
 } from '../services/commitment-storage.mjs';
 import Commitment from '../classes/commitment.mjs';
 import { ZkpKeys } from '../services/keys.mjs';
@@ -26,6 +28,7 @@ export const getCommitmentInfo = async txInfo => {
     tokenId = generalise(0),
     rootKey,
     maxNumberNullifiers,
+    providedCommitments,
     onlyFee = false,
   } = txInfo;
 
@@ -44,16 +47,38 @@ export const getCommitmentInfo = async txInfo => {
   const value = totalValueToSend + addedFee;
   const feeValue = fee.bigInt - addedFee;
 
-  const commitments = await findUsableCommitmentsMutex(
-    compressedZkpPublicKey,
-    ercAddress,
-    tokenId,
-    maticAddress,
-    value,
-    feeValue,
-    maxNumberNullifiers,
-    onlyFee,
-  );
+  logger.debug(`using user provided commitments: ${providedCommitments !== undefined}`);
+
+  let commitments;
+  if (providedCommitments) {
+    // look up the hashes
+    const commitmentHashes = providedCommitments.map(c => c.toString());
+    logger.debug({ msg: 'looking up these commitment hashes:', commitmentHashes });
+    const rawCommitments = await getCommitmentsByHash(commitmentHashes);
+    // await Promise.all(rawCommitments);
+    logger.debug({ msg: 'found commitments from provided hashes:', rawCommitments });
+
+    // transform the hashes retrieved from the DB to well formed
+    const oldCommitments = rawCommitments
+      .map(ct => new Commitment(ct.preimage))
+      .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
+
+    await Promise.all(oldCommitments.map(commitment => markPending(commitment)));
+
+    // this seems wrong, does this break something?
+    commitments = { oldCommitments, oldCommitmentsFee: [] };
+  } else {
+    commitments = await findUsableCommitmentsMutex(
+      compressedZkpPublicKey,
+      ercAddress,
+      tokenId,
+      maticAddress,
+      value,
+      feeValue,
+      maxNumberNullifiers,
+      onlyFee
+    );
+  }
 
   if (!commitments) throw new Error('Not available commitments has been found');
 

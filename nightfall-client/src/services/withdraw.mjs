@@ -28,7 +28,7 @@ const NEXT_N_PROPOSERS = 3;
 async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = withdrawParams;
+  const { offchain = false, providedCommitments, ...items } = withdrawParams;
   const { tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
@@ -53,6 +53,7 @@ async function withdraw(withdrawParams) {
     tokenId,
     rootKey,
     maxNumberNullifiers: VK_IDS.withdraw.numberNullifiers,
+    providedCommitments,
   });
 
   try {

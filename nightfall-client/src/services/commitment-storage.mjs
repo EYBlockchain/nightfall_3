@@ -119,7 +119,7 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
 }
 
 // function to mark a commitment as pending nullication for a mongo db
-async function markPending(commitment) {
+export async function markPending(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
   const update = { $set: { isPendingNullification: true } };
@@ -1013,6 +1013,16 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
     })
     .toArray();
   return commitmentsByListOfCompressedZkpPublicKey;
+}
+
+export async function getCommitmentsByHash(hashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const commitment = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({ _id: { $in: hashes } })
+    .toArray();
+  return commitment;
 }
 
 /**
