@@ -145,27 +145,20 @@ export async function createChallenge(block, transactions, err) {
         siblingPath2,
         duplicateCommitment2Index,
       } = err.metadata;
-      console.log(
-        'mmm-m----m----mmmm',
-        siblingPath2 || block2.transactionHashes.filter(th => th !== transaction2.transactionHash),
-      );
+
       txDataToSign = await challengeContractInstance.methods
         .challengeCommitment(
           {
             blockL2: Block.buildSolidityStruct(block1),
             transaction: Transaction.buildSolidityStruct(transaction1),
             transactionIndex: transaction1Index,
-            transactionSiblingPath: [block1.transactionHashesRoot, ...siblingPath1],
+            transactionSiblingPath: siblingPath1,
           },
           {
             blockL2: Block.buildSolidityStruct(block2),
             transaction: Transaction.buildSolidityStruct(transaction2),
             transactionIndex: transaction2Index,
-            transactionSiblingPath: [
-              block2.transactionHashesRoot,
-              ...(siblingPath2 ||
-                block2.transactionHashes.filter(th => th !== transaction2.transactionHash)),
-            ],
+            transactionSiblingPath: siblingPath2,
           },
           duplicateCommitment1Index,
           duplicateCommitment2Index,
@@ -202,17 +195,13 @@ export async function createChallenge(block, transactions, err) {
             blockL2: Block.buildSolidityStruct(block1),
             transaction: Transaction.buildSolidityStruct(transaction1),
             transactionIndex: transaction1Index,
-            transactionSiblingPath: [block1.transactionHashesRoot, ...siblingPath1],
+            transactionSiblingPath: siblingPath1,
           },
           {
             blockL2: Block.buildSolidityStruct(block2),
             transaction: Transaction.buildSolidityStruct(transaction2),
             transactionIndex: transaction2Index,
-            transactionSiblingPath: [
-              block2.transactionHashesRoot,
-              ...(siblingPath2 ||
-                block2.transactionHashes.filter(th => th !== transaction2.transactionHash)),
-            ],
+            transactionSiblingPath: siblingPath2,
           },
           duplicateNullifier1Index,
           duplicateNullifier2Index,
@@ -223,14 +212,14 @@ export async function createChallenge(block, transactions, err) {
     }
     // proof does not verify
     case 4: {
-      logger.debug(`Challenging proof verification for block ${JSON.stringify(block, null, 2)}`);
-      logger.debug(
-        `Challenging proof verification for block transactions ${JSON.stringify(
-          transactions,
-          null,
-          2,
-        )}`,
-      );
+      logger.debug({
+        msg: 'Challenging proof verification for block',
+        block,
+      });
+      logger.debug({
+        msg: 'Challenging proof verification for block transactions',
+        transactions,
+      });
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
       const uncompressedProof = transactions[transactionIndex].proof;
@@ -248,18 +237,16 @@ export async function createChallenge(block, transactions, err) {
         await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
       ).transactionHashSiblingPath;
 
-      if (!transactionSiblingPath) {
+      // case when block.build never was called
+      // may be this optimist never ran as proposer
+      // or more likely since this tx is bad tx from a bad proposer.
+      // prposer hosted in this optimist never build any block with this bad tx in it
+      if (transactionSiblingPath === undefined) {
         await Block.calcTransactionHashesRoot(transactions);
         transactionSiblingPath = (
           await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
         ).transactionHashSiblingPath;
       }
-
-      console.log(
-        '----in challenge case 4------transactionSiblingPath----',
-        JSON.stringify(transactionSiblingPath, null, 2),
-        JSON.stringify(block, null, 2),
-      );
 
       txDataToSign = await challengeContractInstance.methods
         .challengeProofVerification(
@@ -267,7 +254,7 @@ export async function createChallenge(block, transactions, err) {
             blockL2: Block.buildSolidityStruct(block),
             transaction: Transaction.buildSolidityStruct(transactions[transactionIndex]),
             transactionIndex,
-            transactionSiblingPath: [block.transactionHashesRoot, ...transactionSiblingPath],
+            transactionSiblingPath,
           },
           [historicBlock1, historicBlock2, historicBlock3, historicBlock4],
           uncompressedProof,
