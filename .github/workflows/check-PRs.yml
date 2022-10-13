@@ -394,6 +394,7 @@ jobs:
           ./bin/geth-standalone -i test
           sleep 10
           ./bin/start-nightfall -l -d &> export-test.log &disown
+          sleep 10
           ./bin/import-nightfall test
 
       - name: Debug logs - after import
