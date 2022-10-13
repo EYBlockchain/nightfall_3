@@ -20,7 +20,6 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-DEPLOYER="-f docker/docker-compose.deployer.yml"
 # delete env file
 rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
@@ -95,4 +94,4 @@ if [[ -d "$DIR" ]]; then
 fi
 
 docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans
-docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY $DEPLOYER logs -f
+docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY logs -f

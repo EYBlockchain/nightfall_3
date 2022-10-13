@@ -389,8 +389,12 @@ jobs:
       - name: Export/Import state
         run : |
           ./export-nightfall test
-          sleep 100
+          sleep 10
+          npm run nightfall-down
           ./geth-standalone -i test
+          sleep 10
+          ./start-nightfall -l -d
+          ./import-nightfall test
 
 
   test-gas:
