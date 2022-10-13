@@ -499,12 +499,13 @@ jobs:
       - name: Create env file
         run: |
           echo "ETH_NETWORK=goerli" > ./nightfall-client/client.env
-          echo "BLOCKCHAIN_WS_HOST=${GOERLI_ALCHEMY}" >> ./nightfall-client/client.env
+          echo "BLOCKCHAIN_WS_HOST=${{ secrets.GOERLI_ALCHEMY }}" >> ./nightfall-client/client.env
           cat ./nightfall-client/client.env
 
       - name: Start client
         run: |
           cd nightfall-client && ./start-client -g -d &> test-client.log &disown
+          sleep 20
 
       - name: Debug logs - after container startup
         if: always()
