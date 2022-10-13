@@ -207,6 +207,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
 
             state.addPendingWithdrawal(recipientAddress, uint256(advancedWithdrawal.advanceFee), 0);
         }
+        require(isWhitelisted(msg.sender), 'Shield: You are not authorised to withdraw funds');
         payOut(t, recipientAddress);
     }
 

@@ -963,6 +963,20 @@ describe('Testing Shield Contract', function () {
       ).to.be.revertedWith('Shield: Transaction is not a valid withdraw');
     });
 
+    it('fails if user is not whitelisted and whitelisting is active', async function () {
+      await setWhitelist(shieldAddress);
+      await setBlockHash(StateInstance, stateAddress, blockHash);
+
+      await time.increase(86400 * 7 + 1);
+
+      const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
+      const index = 0;
+
+      await expect(
+        ShieldInstance.finaliseWithdrawal(block, withdrawTransaction, index, siblingPath),
+      ).to.be.revertedWith('Shield: You are not authorised to withdraw funds');
+    });
+
     it('fails to finalise withdrawal if tokenType is ERC20 and tokenId not zero', async function () {
       const withdrawalTransactionInvalid = {
         value: '10',
