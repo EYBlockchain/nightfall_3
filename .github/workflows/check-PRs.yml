@@ -391,16 +391,17 @@ jobs:
           ./bin/export-nightfall test
           sleep 10
           npm run nightfall-down
+          sleep 10
           ./bin/geth-standalone -i test
           sleep 10
           ./bin/start-nightfall -l -d &> export-test.log &disown
-          sleep 10
+          sleep 20
           ./bin/import-nightfall test
 
       - name: Debug logs - after import
         if: always()
         run: |
-          sleep 10
+          sleep 25
           cat export-test.log
 
 
