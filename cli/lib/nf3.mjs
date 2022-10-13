@@ -707,12 +707,14 @@ class Nf3 {
     @async
     @param {string} url REST API URL with format https://xxxx.xxx.xx
     @param {number} stake - amount to stake
+    @param {number} fee - fee of the proposer
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
-  async registerProposer(url, stake) {
+  async registerProposer(url, stake, fee) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
       address: this.ethereumAddress,
       url,
+      fee,
     });
     if (res.data.txDataToSign === '') return false; // already registered
     return new Promise((resolve, reject) => {
@@ -871,12 +873,14 @@ class Nf3 {
     @async
     @param {string} Proposer REST API URL with format https://xxxx.xxx.xx
     @param {number} stake - amount to stake
+    @param {number} fee - fee of the proposer
     @returns {array} A promise that resolves to the Ethereum transaction receipt.
     */
-  async updateProposer(url, stake) {
+  async updateProposer(url, stake, fee) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/update`, {
       address: this.ethereumAddress,
       url,
+      fee,
     });
     logger.debug(`Proposer with address ${this.ethereumAddress} updated to URL ${url}`);
     return new Promise((resolve, reject) => {
