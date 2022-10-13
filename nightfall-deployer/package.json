@@ -4,7 +4,6 @@
   "description": "deploys fundamental smart contracts and circuits for Nightfall",
   "main": "index.js",
   "scripts": {
-    "prestart": "./pre-start-script.sh",
     "start": "node src/index.mjs"
   },
   "repository": {
@@ -23,11 +22,11 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.2",
     "@openzeppelin/contracts-upgradeable": "^4.7.3",
+    "@polygon-nightfall/common-files": "^0.0.4",
     "@truffle/contract": "^4.5.21",
     "axios": "^0.21.4",
     "big-integer": "^1.6.48",
     "cls-hooked": "^4.2.2",
-    "common-files": "file:../common-files",
     "config": "^3.3.1",
     "express-fileupload": "^1.4.0",
     "hex-to-binary": "^1.0.1",
