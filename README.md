@@ -39,7 +39,7 @@ You need to run a setup script the first time that you use nightfall_3. This wil
 dependencies.
 
 ```sh
-./setup-nightfall
+./bin/setup-nightfall
 ```
 
 ### To start the application
@@ -47,7 +47,7 @@ dependencies.
 If running for first time, do the setup as above and then run this script:
 
 ```sh
-./start-nightfall -l | -g | -r [-s] [-d]
+./bin/start-nightfall -l | -g | -r [-s] [-d]
 ```
 
 This will bring up the application. You can run it either with a Ganache blockchain simulator or a
@@ -104,15 +104,15 @@ The exported nightfall state includes:
 
 This feature only works with `geth` and not with `ganache`.
 
-To export nightfall state, run `./export-nightfall <folder>` at the point where you want to save the state. 
+To export nightfall state, run `./bin/export-nightfall <folder>` at the point where you want to save the state. 
 Data is backup in `nightfall_3/backup` folder
 
 ### To import nightfall state
 One can also import a previously exported state. To do so:
 ```
-./geth-standalone -i <FOLDER>
-./start-nightfall -l -d
-./import-nightfall <FOLDER>
+./bin/geth-standalone -i <FOLDER>
+./bin/start-nightfall -l -d
+./bin/import-nightfall <FOLDER>
 ```
 
 Each command will need to be entered in a different window.
@@ -150,7 +150,7 @@ it only makes sense to compare performance at the same value of `TRANSACTIONS_PE
 Then start nightfall:
 
 ```sh
-./start-nightfall -g -d -s
+./bin/start-nightfall -g -d -s
 ```
 
 Then, in the other terminal window run the test
@@ -190,7 +190,7 @@ npm test-chain-reorg
 
 ## Using a Geth private blockchain
 
-The script `./geth-standalone` will run up a private blockchain consisting of a bootnode, two client
+The script `./bin/geth-standalone` will run up a private blockchain consisting of a bootnode, two client
 nodes and two miners. This is required for testing chain reorganisations (Ganache does not simulate
 a chain-reorg) but can be used for other tests or general running. It's slower than using Ganache
 but it does provide a more real-life test. Note also that the private chain exposes a client on
@@ -206,12 +206,12 @@ machine. If you aren't on a Mac then you can do one of these 3 options:
 
 To use the private blockchain:
 
-- Run up the private chain with `./geth-standalone -s`
-- Start terminal logging with `./geth-standalone -l` and wait for the DAG build to complete
-- Start Nightfall in another terminal with the `-l` option (`./start-nightfall -l`) and, optionally,
+- Run up the private chain with `./bin/geth-standalone -s`
+- Start terminal logging with `./bin/geth-standalone -l` and wait for the DAG build to complete
+- Start Nightfall in another terminal with the `-l` option (`./bin/start-nightfall -l`) and, optionally,
   the `-s` option if you want stubbed circuits.
 
-That's it. You can shut down the geth blockchain with `./geth-standalone -d` or pause/unpause it
+That's it. You can shut down the geth blockchain with `./bin/geth-standalone -d` or pause/unpause it
 with `-p`, `-u`.
 
 ## Software Development Kit
@@ -244,7 +244,7 @@ docker volume prune
 ```
 
 These will hopefully delete every image, container and volume so you should have a clean slate. Mind
-that you need to run `setup-nightfall` again.
+that you need to run `./bin/setup-nightfall` again.
 
 # Acknowledgements
 
