@@ -25,7 +25,6 @@ services:
       RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://rabbitmq}
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
-      USE_STUBS: ${USE_STUBS:-false} # make sure this flag is the same as in deployer service
       BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
