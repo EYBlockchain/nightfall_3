@@ -43,16 +43,22 @@ async function rollbackEventHandler(data) {
    Any commitments that have been nullified and are now no longer spent because
    of the rollback should be made available to be spent again.
    */
-  const { result } = await clearNullified(Number(blockNumberL2));
+  const clearNullifiedResult = await clearNullified(Number(blockNumberL2));
+  logger.debug({
+    clearNullifiedResult,
+  });
   logger.debug({
     msg: 'Rollback removed nullfiers',
-    total: result.nModified,
+    total: clearNullifiedResult?.result?.nModified ?? 0,
   });
 
   const cResult = await clearOnChain(Number(blockNumberL2));
   logger.debug({
+    cResult,
+  });
+  logger.debug({
     msg: 'Rollback moved commitments off-chain',
-    total: cResult.result.nModified,
+    total: cResult?.result?.nModified ?? 0,
   });
 
   const blocksToDelete = await findBlocksFromBlockNumberL2(Number(blockNumberL2));
