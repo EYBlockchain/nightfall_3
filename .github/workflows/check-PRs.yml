@@ -386,25 +386,6 @@ jobs:
           name: ping-pong-test-logs
           path: ./ping-pong-test.log
 
-      - name: Export/Import state
-        run : |
-          ./bin/export-nightfall test
-          sleep 10
-          npm run nightfall-down
-          sleep 10
-          ./bin/geth-standalone -i test
-          sleep 10
-          ./bin/start-nightfall -l -d &> export-test.log &disown
-          sleep 20
-          ./bin/import-nightfall test
-
-      - name: Debug logs - after import
-        if: always()
-        run: |
-          sleep 25
-          cat export-test.log
-
-
   test-gas:
     name: check gas for 32 transactions per block
     runs-on: ubuntu-20.04
