@@ -118,4 +118,9 @@ contract Structures {
         int256 currentWeight;
         uint256 effectiveWeight;
     }
+
+    struct AdvanceWithdrawal {
+        address currentOwner;
+        uint96 advanceFee;
+    }
 }

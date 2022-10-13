@@ -225,7 +225,7 @@ router.get('/pending-payments', async (req, res, next) => {
       try {
         // eslint-disable-next-line no-await-in-loop
         pending = await shieldContractInstance.methods
-          .isBlockPaymentPending(blocks[i].blockHash, blocks[i].blockNumberL2)
+          .isBlockPaymentPending(blocks[i].blockNumberL2)
           .call();
       } catch (e) {
         if (e.message.includes('Too soon to get paid for this block')) {
