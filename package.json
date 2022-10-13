@@ -75,7 +75,6 @@
     "chai-things": "^0.2.0",
     "cls-hooked": "^4.2.2",
     "colors": "1.4.0",
-    "common-files": "file:./common-files",
     "config": "^3.3.1",
     "eslint": "^7.25.0",
     "eslint-config-codfish": "^10.0.0",
@@ -96,8 +95,8 @@
     "jsdoc": "^3.6.10",
     "minimist": "^1.2.6",
     "mocha": "^10.0.0",
-    "nightfall-sdk": "^0.1.1",
     "mongodb": "^4.7.0",
+    "nightfall-sdk": "^0.1.1",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "queue": "^6.0.2",
@@ -112,6 +111,7 @@
     "ws": "^7.5.0"
   },
   "dependencies": {
+    "@polygon-nightfall/common-files": "^0.0.4",
     "async-mutex": "^0.3.2",
     "docker-compose": "^0.23.13",
     "general-number": "^1.0.1",

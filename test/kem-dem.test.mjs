@@ -1,8 +1,8 @@
 import chai from 'chai';
 import fc from 'fast-check';
 import { generalise } from 'general-number';
-import { scalarMult } from 'common-files/utils/curve-maths/curves.mjs';
-import constants from 'common-files/constants/index.mjs';
+import { scalarMult } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { encrypt, decrypt, packSecrets } from '../nightfall-client/src/services/kem-dem.mjs';
 
 const { expect } = chai;
