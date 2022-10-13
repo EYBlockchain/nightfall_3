@@ -1,7 +1,7 @@
 import config from 'config';
-import { waitForContract, web3 } from '../../../common-files/utils/contract.mjs';
-import logger from '../../../common-files/utils/logger.mjs';
-import constants from '../../../common-files/constants/index.mjs';
+import { waitForContract, web3 } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { addMultiSigSignature, getMultiSigNonce } from './helpers.mjs';
 
 const { RESTRICTIONS } = config;

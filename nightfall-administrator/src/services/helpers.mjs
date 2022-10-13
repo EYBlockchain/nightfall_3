@@ -1,6 +1,6 @@
 import config from 'config';
 import { ecsign } from 'ethereumjs-util';
-import { waitForContract, web3 } from '../../../common-files/utils/contract.mjs';
+import { waitForContract, web3 } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { checkThreshold, saveSigned, getSigned } from './database.mjs';
 
 const { RESTRICTIONS, WEB3_OPTIONS, MULTISIG } = config;
