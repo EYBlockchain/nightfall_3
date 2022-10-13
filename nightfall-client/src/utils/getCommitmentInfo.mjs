@@ -54,18 +54,27 @@ export const getCommitmentInfo = async txInfo => {
     // look up the hashes
     const commitmentHashes = providedCommitments.map(c => c.toString());
     logger.debug({ msg: 'looking up these commitment hashes:', commitmentHashes });
-    const rawCommitments = await getCommitmentsByHash(commitmentHashes);
-    // await Promise.all(rawCommitments);
+    const rawCommitments = await getCommitmentsByHash(
+      commitmentHashes,
+      compressedZkpPublicKey,
+      ercAddress,
+      tokenId,
+    );
+
+    if (!rawCommitments || rawCommitments.length < 1)
+      throw new Error('Provided Commitments could not be found');
+
+    if (rawCommitments.reduce((sum, c) => sum + c.preimage.value.bigInt, 0) < value)
+      throw new Error('Provided Commitments do not cover the value');
+
     logger.debug({ msg: 'found commitments from provided hashes:', rawCommitments });
 
-    // transform the hashes retrieved from the DB to well formed
-    const oldCommitments = rawCommitments
-      .map(ct => new Commitment(ct.preimage))
-      .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
+    // transform the hashes retrieved from the DB to well formed commitments
+    const oldCommitments = rawCommitments.map(ct => new Commitment(ct.preimage));
 
     await Promise.all(oldCommitments.map(commitment => markPending(commitment)));
 
-    // this seems wrong, does this break something?
+    // TODO: this seems wrong, does this break something?
     commitments = { oldCommitments, oldCommitmentsFee: [] };
   } else {
     commitments = await findUsableCommitmentsMutex(

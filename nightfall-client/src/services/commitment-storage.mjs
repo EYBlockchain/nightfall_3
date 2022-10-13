@@ -1015,12 +1015,19 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
   return commitmentsByListOfCompressedZkpPublicKey;
 }
 
-export async function getCommitmentsByHash(hashes) {
+export async function getCommitmentsByHash(hashes, compressedZkpPublicKey, ercAddress, tokenId) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const commitment = await db
     .collection(COMMITMENTS_COLLECTION)
-    .find({ _id: { $in: hashes } })
+    .find({
+      _id: { $in: hashes },
+      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
+      'preimage.ercAddress': ercAddress.hex(32),
+      'preimage.tokenId': generalise(tokenId).hex(32),
+      isNullified: false,
+      isPendingNullification: false,
+    })
     .toArray();
   return commitment;
 }
