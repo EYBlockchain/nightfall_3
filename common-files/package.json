@@ -1,6 +1,6 @@
 {
   "name": "@polygon-nightfall/common-files",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "scripts": {
     "test": "NODE_CONFIG_DIR=../config mocha --timeout 0 --bail --exit test/*.mjs"
   },
@@ -9,18 +9,21 @@
   "description": "nightfall_3 common files",
   "dependencies": {
     "axios": "^0.21.4",
+    "body-parser": "^1.19.0",
+    "cls-hooked": "^4.2.2",
     "config": "^3.3.7",
+    "cors": "^2.8.5",
+    "express-fileupload": "^1.4.0",
     "general-number": "^1.0.1",
+    "keccak": "^3.0.2",
     "mongodb": "^4.7.0",
     "pino": "^8.3.1",
     "pino-pretty": "^8.1.0",
-    "web3": "^1.7.5",
-    "ws": "^8.5.0",
-    "body-parser": "^1.19.0",
-    "cors": "^2.8.5",
-    "cls-hooked": "^4.2.2",
+    "queue": "^6.0.2",
+    "safe-buffer": "^5.2.1",
     "uuid": "^8.3.2",
-    "express-fileupload": "^1.4.0"
+    "web3": "^1.7.5",
+    "ws": "^8.5.0"
   },
   "devDependencies": {
     "mocha": "^10.0.0"
