@@ -20,12 +20,11 @@ EXPOSE 8080
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 WORKDIR /
-COPY common-files common-files
 COPY config/default.js app/config/default.js
 
 WORKDIR /app
 COPY nightfall-optimist/src src
-COPY nightfall-optimist/docker-entrypoint.sh nightfall-optimist/pre-start-script.sh nightfall-optimist/package*.json ./
+COPY nightfall-optimist/docker-entrypoint.sh nightfall-optimist/package*.json ./
 COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /root/.zokrates/stdlib
 COPY --from=builder /app/ZoKrates/target/release/zokrates /app/
 
