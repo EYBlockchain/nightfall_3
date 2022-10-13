@@ -603,14 +603,14 @@ export async function setTransactionHashSiblingInfo(
     $set: { transactionHashSiblingPath, transactionHashLeafIndex, transactionHashesRoot },
   };
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TIMBER_COLLECTION).updateMany(query, update);
+  return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update, { upsert: true });
 }
 
 // function to get the path of the transaction hash leaf in transaction hash timber
 export async function getTransactionHashSiblingInfo(transactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TIMBER_COLLECTION).findOne(
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(
     { transactionHash },
     {
       projection: {

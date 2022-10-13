@@ -124,14 +124,15 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate commitment
     case 2: {
-      logger.debug(`Challenging duplicate commitment for block ${JSON.stringify(block, null, 2)}`);
-      logger.debug(
-        `Challenging duplicate commitment for block transactions ${JSON.stringify(
-          transactions,
-          null,
-          2,
-        )}`,
-      );
+      logger.debug({
+        msg: 'Challenging duplicate commitment for block',
+        block,
+      });
+      logger.debug({
+        msg: 'Challenging duplicate commitment for block transactions',
+        transactions,
+      });
+
       const {
         block1,
         transaction1,
@@ -167,14 +168,15 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate nullifier
     case 3: {
-      logger.debug(`Challenging duplicate nullifier for block ${JSON.stringify(block, null, 2)}`);
-      logger.debug(
-        `Challenging duplicate nullifier for block transactions ${JSON.stringify(
-          transactions,
-          null,
-          2,
-        )}`,
-      );
+      logger.debug({
+        msg: 'Challenging duplicate nullifier for block',
+        block,
+      });
+      logger.debug({
+        msg: 'Challenging duplicate nullifier for block transactions',
+        transactions,
+      });
+
       const {
         block1,
         transaction1,
@@ -210,14 +212,15 @@ export async function createChallenge(block, transactions, err) {
     }
     // proof does not verify
     case 4: {
-      logger.debug(`Challenging proof verification for block ${JSON.stringify(block, null, 2)}`);
-      logger.debug(
-        `Challenging proof verification for block transactions ${JSON.stringify(
-          transactions,
-          null,
-          2,
-        )}`,
-      );
+      logger.debug({
+        msg: 'Challenging proof verification for block',
+        block,
+      });
+      logger.debug({
+        msg: 'Challenging proof verification for block transactions',
+        transactions,
+      });
+
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
       const uncompressedProof = transactions[transactionIndex].proof;
@@ -231,9 +234,20 @@ export async function createChallenge(block, transactions, err) {
         }),
       );
 
-      const transactionSiblingPath = await getTransactionHashSiblingInfo(
-        transactions[transactionIndex].transactionHash,
-      );
+      let transactionSiblingPath = (
+        await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+      ).transactionHashSiblingPath;
+
+      // case when block.build never was called
+      // may be this optimist never ran as proposer
+      // or more likely since this tx is bad tx from a bad proposer.
+      // prposer hosted in this optimist never build any block with this bad tx in it
+      if (transactionSiblingPath === undefined) {
+        await Block.calcTransactionHashesRoot(transactions);
+        transactionSiblingPath = (
+          await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+        ).transactionHashSiblingPath;
+      }
 
       txDataToSign = await challengeContractInstance.methods
         .challengeProofVerification(
