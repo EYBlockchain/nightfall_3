@@ -15,4 +15,4 @@ wallet/tests/e2e/screenshots
 typechain-types/
 artifacts/
 cache/
-
+docker/volumes
