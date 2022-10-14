@@ -3,6 +3,7 @@ node_modules
 cli/build
 .*swp
 .vscode/*
+.oppenzeppelin/
 
 # wallet
 wallet/build
@@ -16,4 +17,4 @@ artifacts/
 cache/
 config/geth/data
 backup
-
+docker/volumes

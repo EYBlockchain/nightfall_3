@@ -48,6 +48,7 @@ module.exports = async function (deployer) {
   await deployProxy(State, [Proposers.address, Challenges.address, Shield.address], {
     deployer,
     unsafeAllowLinkedLibraries: true,
+    initializer: 'initializeState',
   });
   // initialisation
   const proposers = await Proposers.deployed();

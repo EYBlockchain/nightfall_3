@@ -81,6 +81,7 @@ contract Structures {
         address previousAddress;
         address nextAddress;
         string url;
+        uint256 fee;
         bool inProposerSet;
         uint256 indexProposerSet;
     }
@@ -116,5 +117,10 @@ contract Structures {
         uint256 weight;
         int256 currentWeight;
         uint256 effectiveWeight;
+    }
+
+    struct AdvanceWithdrawal {
+        address currentOwner;
+        uint96 advanceFee;
     }
 }

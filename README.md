@@ -42,6 +42,9 @@ dependencies.
 ./bin/setup-nightfall
 ```
 
+One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to 
+build up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./setup-nightfall`).
+
 ### To start the application
 
 If running for first time, do the setup as above and then run this script:
@@ -49,6 +52,8 @@ If running for first time, do the setup as above and then run this script:
 ```sh
 ./bin/start-nightfall -l | -g | -r [-s] [-d]
 ```
+One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to 
+start up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./start-nightfall`).
 
 This will bring up the application. You can run it either with a Ganache blockchain simulator or a
 real blockchain client which exposes a websocket connection on localHost:8546. See below for more
@@ -58,9 +63,6 @@ details on how to do the latter as there are some additional considerations.
   - Use `-g` to use a Ganache client inside the container
   - Use `-l` to use some localhost client running on your machine. We recommend using Ganache first
     to check everything works, because it's considerably faster.
-  - Use `-r` to use ropsten node hosted by the dev team. Note: with option -r set environment
-    variable $ROPSTEN_NODE, $FROM_ADDRESS and $ETH_PRIVATE_KEY to testnet node URL, EOA address and
-    EOA address's private key, respectively
 - Additionally, you can use the `-s` flag. If you do that, Nightfall_3 will run with stubbed ZKP
   circuits, which generate proofs that always verify. That's useful for development work because
   tests will run much faster but clearly you should run without stubs, as a final check.
