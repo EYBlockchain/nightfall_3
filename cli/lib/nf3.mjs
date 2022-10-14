@@ -1,3 +1,5 @@
+/* eslint class-methods-use-this: "off" */
+
 import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
@@ -905,12 +907,7 @@ class Nf3 {
     /*
       Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
      */
-    emitter.on('error', error => {
-      logger.error({
-        msg: 'Error caught by emitter',
-        error
-      });
-    });
+    emitter.on('error', error => logger.error({ msg: 'Error caught by emitter', error }));
   }
 
   /**
@@ -920,7 +917,7 @@ class Nf3 {
     @async
     */
   async startProposer() {
-    const proposeEmitter = createEmitter();
+    const proposeEmitter = this.createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
 
     this.websockets.push(connection); // save so we can close it properly later
@@ -930,7 +927,7 @@ class Nf3 {
       only exists in the underlying 'ws' object (_ws) and that is undefined until the
       websocket is opened, it seems. Hence, we put all this code inside the onopen.
      */
-     connection.onopen = () => {
+    connection.onopen = () => {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
@@ -965,10 +962,7 @@ class Nf3 {
             try {
               await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
             } catch (axiosErr) {
-              logger.error({
-                msg: "Error when trying to reset block",
-                err
-              });
+              logger.error({ msg: 'Error when trying to call reset-localblock', err });
             }
           }
         });
