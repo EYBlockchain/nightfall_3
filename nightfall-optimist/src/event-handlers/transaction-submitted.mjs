@@ -68,15 +68,20 @@ async function transactionSubmittedEventHandler(eventParams) {
     transaction = await checkAlreadyInBlock(transaction);
     // save transaction if not in block
     if (fromBlockProposer) {
-      saveTransaction({ ...transaction });
+      saveTransaction({ ...transaction }).catch(err =>
+        logger.error({ msg: 'Error while saving transaction', err }),
+      );
     }
 
     await checkTransaction(transaction, true);
+
     logger.info('Transaction checks passed');
 
     // save it
     if (!fromBlockProposer) {
-      saveTransaction({ ...transaction });
+      saveTransaction({ ...transaction }).catch(err =>
+        logger.error({ msg: 'Error while saving transaction', err }),
+      );
     }
   } catch (err) {
     if (err instanceof TransactionError) {
