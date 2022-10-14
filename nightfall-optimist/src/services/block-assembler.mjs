@@ -157,7 +157,7 @@ export async function conditionalMakeBlock(proposer) {
           increaseProposerBlockNotSent();
 
           if (ws) logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
-          else logger.debug('Block not sent. Uinitialized socket');
+          else logger.debug('Block not sent. Non-initialized socket');
         }
 
         // remove the transactions from the mempool so we don't keep making new
