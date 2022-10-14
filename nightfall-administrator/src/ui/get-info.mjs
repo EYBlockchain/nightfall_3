@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import config from 'config';
 import { askQuestions } from './menu.mjs';
-import { getTokenRestrictions } from '../services/contract-calls.mjs';
+import { getTokenRestrictions, isWhitelistManager } from '../services/contract-calls.mjs';
 import {
   setTokenRestrictions,
   removeTokenRestrictions,
@@ -10,6 +10,9 @@ import {
   transferOwnership,
   setBootProposer,
   setBootChallenger,
+  createWhitelistManager,
+  removeWhitelistManager,
+  enableWhitelisting,
 } from '../services/contract-transactions.mjs';
 import {
   executeMultiSigTransaction,
@@ -36,18 +39,14 @@ async function start() {
     nonce,
     signedTx,
     workflow,
+    managerAddress,
+    managerGroupId,
   } = await askQuestions(false);
   if (workflow === 'create') {
     switch (task) {
       case 'Get token restrictions': {
         const [deposit, withdraw] = await getTokenRestrictions(tokenName);
-
-        logger.info({
-          msg: 'Token restrictions are',
-          deposit,
-          withdraw,
-        });
-
+        console.log('Token restrictions are', deposit, withdraw);
         break;
       }
       case 'Set token restrictions': {
@@ -105,8 +104,41 @@ async function start() {
         );
         break;
       }
+      case 'Add whitelist manager': {
+        approved = await createWhitelistManager(
+          managerGroupId,
+          managerAddress,
+          ethereumSigningKey,
+          executorAddress,
+          nonce,
+        );
+        break;
+      }
+      case 'Remove whitelist manager': {
+        approved = await removeWhitelistManager(
+          managerAddress,
+          ethereumSigningKey,
+          executorAddress,
+          nonce,
+        );
+        break;
+      }
+      case 'Enable whitelisting': {
+        approved = await enableWhitelisting(true, ethereumSigningKey, executorAddress, nonce);
+        break;
+      }
+      case 'Disable whitelisting': {
+        approved = await enableWhitelisting(false, ethereumSigningKey, executorAddress, nonce);
+        break;
+      }
+      case 'Check if address is a whitelist manager': {
+        const groupId = await isWhitelistManager(managerAddress);
+        if (groupId) console.log('This address is a manager with group Id', groupId);
+        else console.log('This address is not a manager');
+        break;
+      }
       default: {
-        logger.info('This option has not been implemented');
+        logger.error('This option has not been implemented');
       }
     }
   }

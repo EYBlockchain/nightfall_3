@@ -82,7 +82,7 @@ module.exports = {
       websockets: true,
       networkCheckTimeout: 1000000000,
     },
-
+    
     staging_edge: {
       provider: () =>
         new HDWalletProvider({
@@ -96,18 +96,6 @@ module.exports = {
       networkCheckTimeout: 1000000000,
       timeoutBlocks: 2000,
     },
-
-    ropsten: {
-      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
-      network_id: 3,
-      networkCheckTimeout: 1000000000,
-      timeoutBlocks: 2000,
-      skipDryRun: true,
-      websockets: true,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: 7000000,
-    },
-
     goerli: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 5,
