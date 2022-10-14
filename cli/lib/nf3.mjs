@@ -924,7 +924,7 @@ class Nf3 {
 
     this.websockets.push(connection); // save so we can close it properly later
 
-    /* 
+    /*
       we can't setup up a ping until the connection is made because the ping function
       only exists in the underlying 'ws' object (_ws) and that is undefined until the
       websocket is opened, it seems. Hence, we put all this code inside the onopen.
