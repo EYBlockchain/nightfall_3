@@ -605,10 +605,6 @@ jobs:
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-apps.log &disown
-        env:
-          TRANSACTIONS_PER_BLOCK: 32
-          ./setup-nightfall
-          ./start-nightfall -g -d &> test-apps.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
