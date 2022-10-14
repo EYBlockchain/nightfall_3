@@ -44,8 +44,7 @@ const checkCircuitsOutput = async () => {
       files.map(async f => {
         if (f) {
           const filename = f.split('  ')[1];
-          const _circuit = circuits.find(c => filename.includes(c));
-          const circuit = typeof _circuit === 'undefined' ? '.' : _circuit;
+          const circuit = circuits.find(c => filename.includes(c));
 
           if (!fs.existsSync(`${outputPath}/${circuit}`)) {
             fs.mkdirSync(`${outputPath}/${circuit}`);
