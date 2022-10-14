@@ -899,6 +899,20 @@ class Nf3 {
     });
   }
 
+  createEmitter() {
+    const emitter = new EventEmitter();
+
+    /*
+      Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
+     */
+    emitter.on('error', error => {
+      logger.error({
+        msg: 'Error caught by emitter',
+        error
+      });
+    });
+  }
+
   /**
     Starts a Proposer that listens for blocks and submits block proposal
     transactions to the blockchain.
@@ -906,13 +920,17 @@ class Nf3 {
     @async
     */
   async startProposer() {
-    const proposeEmitter = new EventEmitter();
+    const proposeEmitter = createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
+
     this.websockets.push(connection); // save so we can close it properly later
-    // we can't setup up a ping until the connection is made because the ping function
-    // only exists in the underlying 'ws' object (_ws) and that is undefined until the
-    // websocket is opened, it seems. Hence, we put all this code inside the onopen.
-    connection.onopen = () => {
+
+    /* 
+      we can't setup up a ping until the connection is made because the ping function
+      only exists in the underlying 'ws' object (_ws) and that is undefined until the
+      websocket is opened, it seems. Hence, we put all this code inside the onopen.
+     */
+     connection.onopen = () => {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
@@ -921,12 +939,16 @@ class Nf3 {
       );
       // and a listener for the pong
       logger.debug('Proposer websocket connection opened');
+
       connection.send('blocks');
     };
+
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign, block, transactions, data } = msg;
+
       logger.debug(`Proposer received websocket message of type ${type}`);
+
       if (type === 'block') {
         proposerQueue.push(async () => {
           try {
@@ -939,15 +961,27 @@ class Nf3 {
           } catch (err) {
             // block proposed is reverted. Send transactions back to mempool
             proposeEmitter.emit('error', err, block, transactions);
-            await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+
+            try {
+              await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+            } catch (axiosErr) {
+              logger.error({
+                msg: "Error when trying to reset block",
+                err
+              });
+            }
           }
         });
+      } else if (type === 'rollback') {
+        proposeEmitter.emit('rollback', data);
       }
-      if (type === 'rollback') proposeEmitter.emit('rollback', data);
+
       return null;
     };
+
     connection.onerror = () => logger.error('Proposer websocket connection error');
     connection.onclosed = () => logger.warn('Proposer websocket connection closed');
+
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return proposeEmitter;
   }
