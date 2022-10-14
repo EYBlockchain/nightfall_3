@@ -492,7 +492,7 @@ jobs:
   ping-pong-test:
     env:
       CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: client,deployer,optimist,worker
+      NF_SERVICES_TO_START: blockchain, client,deployer,optimist,worker
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -503,9 +503,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/geth-standalone -s
-          sleep 300
-          ./bin/start-nightfall -l -d &> ping-pong-test.log &disown
+          ./bin/start-nightfall -g -d &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
