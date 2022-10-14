@@ -61,8 +61,15 @@ export const getCommitmentInfo = async txInfo => {
       tokenId,
     );
 
-    if (!rawCommitments || rawCommitments.length < 1)
-      throw new Error('Provided Commitments could not be found');
+    if (rawCommitments.length < commitmentHashes.length) {
+      const invalidHashes = commitmentHashes.filter(ch => {
+        for (const rc of rawCommitments) {
+          if (rc._id === ch) return false;
+        }
+        return true;
+      });
+      throw new Error(`invalid commitment hashes: ${invalidHashes}`);
+    }
 
     if (rawCommitments.reduce((sum, c) => sum + c.preimage.value.bigInt, 0) < value)
       throw new Error('Provided Commitments do not cover the value');

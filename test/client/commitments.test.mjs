@@ -100,7 +100,8 @@ describe('Custom Commitment Selection Test', () => {
     // figure out what commitment would be picked natively
     // specify a different one in the call to client
     // make sure we used the correct commitment
-    if (commitments.filter(c => c.preimage.value > transferValue + fee).length < 3) {
+    if (commitments.filter(c => parseInt(c.preimage.value, 16) >= transferValue + fee).length < 3) {
+      logger.debug('funding sender account');
       const deposits = Array.from({ length: 4 }, () =>
         nf3Users[0].deposit(ercAddress, tokenType, transferValue + fee, tokenId, fee),
       );
@@ -141,7 +142,6 @@ describe('Custom Commitment Selection Test', () => {
         fee,
         providedCommitments: [selectedCommitment._id],
       });
-      expect(!res.data.error);
 
       // since the transaction is on chain we still need to submit it
       await nf3Users[0].submitTransaction(
@@ -156,6 +156,51 @@ describe('Custom Commitment Selection Test', () => {
       expect(remainingCommitments).to.not.include(selectedCommitment);
       expect(await getL2tokenBalance(nf3Users[0])).to.equal(senderBalance - transferValue - fee);
       expect(await getL2tokenBalance(nf3Users[1])).to.equal(recipientBalance + transferValue);
+    });
+
+    it('should reject invalid hashes', async () => {
+      const recipientKey = nf3Users[1].zkpKeys.compressedZkpPublicKey;
+      const invalidHash = 'invalid hash';
+      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
+        offchain: false,
+        ercAddress,
+        tokenId,
+        recipientData: {
+          values: [transferValue],
+          recipientCompressedZkpPublicKeys: [recipientKey],
+        },
+        rootKey: nf3Users[0].zkpKeys.rootKey,
+        fee,
+        providedCommitments: [invalidHash],
+      });
+
+      expect(res.data.error).to.include(invalidHash);
+    });
+
+    it('reject and return only the invalid hash to the user', async () => {
+      const senderKey = nf3Users[0].zkpKeys.compressedZkpPublicKey;
+      const recipientKey = nf3Users[1].zkpKeys.compressedZkpPublicKey;
+      const invalidHash = 'invalid hash';
+      const commitments = await commitmentsToSend(senderKey).then(rawCommitments =>
+        rawCommitments
+          .filter(c => c.preimage.value >= transferValue + fee)
+          .sort((a, b) => b.preimage.value - a.preimage.value),
+      );
+      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
+        offchain: false,
+        ercAddress,
+        tokenId,
+        recipientData: {
+          values: [transferValue],
+          recipientCompressedZkpPublicKeys: [recipientKey],
+        },
+        rootKey: nf3Users[0].zkpKeys.rootKey,
+        fee,
+        providedCommitments: [commitments[0]._id, invalidHash],
+      });
+
+      expect(res.data.error).to.include(invalidHash);
+      expect(res.data.error).to.not.include(commitments[0]._id);
     });
   });
 
@@ -189,7 +234,6 @@ describe('Custom Commitment Selection Test', () => {
           providedCommitments: [selectedCommitment._id],
         })
         .catch(console.log);
-      // expect(!res.data.error);
       logger.debug(res);
 
       // since the transaction is on chain we still need to submit it
