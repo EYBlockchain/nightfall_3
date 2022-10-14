@@ -6,8 +6,9 @@
  */
 import WebSocket from 'ws';
 import config from 'config';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { waitForTimeout } from 'common-files/utils/utils.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -47,7 +48,7 @@ export async function signalRollbackCompleted(data) {
   // before sending. If not wait until the challenger reconnects
   let tryCount = 0;
   while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+    await waitForTimeout(3000);
     logger.warn(
       `Websocket to proposer is closed for rollback complete.  Waiting for challenger to reconnect`,
     );
@@ -129,16 +130,19 @@ export async function conditionalMakeBlock(proposer) {
         // before sending Proposed block. If not wait until the proposer reconnects
         let tryCount = 0;
         while (!ws || ws.readyState !== WebSocket.OPEN) {
-          await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+          await waitForTimeout(3000); // eslint-disable-line no-await-in-loop
 
-          logger.warn(`Websocket to proposer is closed.  Waiting for proposer to reconnect`);
+          logger.warn(`Websocket to proposer is closed. Waiting for proposer to reconnect`);
 
           increaseProposerWsClosed();
           if (tryCount++ > 100) {
             increaseProposerWsFailed();
-            throw new Error(`Websocket to proposer has failed`);
+
+            logger.error(`Websocket to proposer has failed. Returning...`);
+            return;
           }
         }
+
         if (ws && ws.readyState === WebSocket.OPEN) {
           await ws.send(
             JSON.stringify({
@@ -149,19 +153,17 @@ export async function conditionalMakeBlock(proposer) {
             }),
           );
           logger.debug('Send unsigned block-assembler transactions to ws client');
-        } else if (ws) {
-          increaseProposerBlockNotSent();
-          logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
         } else {
           increaseProposerBlockNotSent();
-          logger.debug('Block not sent. Uinitialized socket');
+
+          if (ws) logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
+          else logger.debug('Block not sent. Uinitialized socket');
         }
+
         // remove the transactions from the mempool so we don't keep making new
         // blocks with them
         await removeTransactionsFromMemPool(block.transactionHashes);
       }
     }
   }
-  // Let's slow down here so we don't slam the database.
-  await new Promise(resolve => setTimeout(resolve, 3000));
 }

@@ -147,3 +147,7 @@ const obfuscateValue = (value, obfuscationSettings, obfuscationKey) => {
 
   return obfuscateString(value, obfuscationToApply);
 };
+
+export const waitForTimeout = async timeoutInMs => {
+  await new Promise(resolve => setTimeout(resolve, timeoutInMs));
+};
