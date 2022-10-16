@@ -6,7 +6,12 @@ RUN apt-get install -y netcat-openbsd
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 WORKDIR /
+COPY common-files common-files
 COPY config/default.js app/config/default.js
+
+WORKDIR /common-files
+RUN npm ci
+RUN npm link
 
 WORKDIR /app
 COPY nightfall-deployer/package*.json ./

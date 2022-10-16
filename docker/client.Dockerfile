@@ -8,7 +8,12 @@ EXPOSE 80
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 WORKDIR /
+COPY common-files common-files
 COPY config/default.js app/config/default.js
+
+WORKDIR /common-files
+RUN npm ci
+RUN npm link
 
 WORKDIR /app
 

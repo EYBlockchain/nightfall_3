@@ -11,7 +11,7 @@
     "axios": "^0.21.4",
     "body-parser": "^1.19.0",
     "cls-hooked": "^4.2.2",
-    "config": "^3.3.7",
+    "config": "^3.3.8",
     "cors": "^2.8.5",
     "express-fileupload": "^1.4.0",
     "general-number": "^1.0.1",
@@ -26,6 +26,7 @@
     "ws": "^8.5.0"
   },
   "devDependencies": {
+    "chai-http": "^4.3.0",
     "mocha": "^10.0.0"
   },
   "overrides": {

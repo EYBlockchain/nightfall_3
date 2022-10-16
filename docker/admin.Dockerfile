@@ -6,7 +6,13 @@ RUN apt-get install -y netcat
 ENTRYPOINT ["/app/admin/docker-entrypoint.sh"]
 
 WORKDIR /app
+COPY common-files common-files
 COPY cli cli
+
+WORKDIR /app/common-files
+RUN npm ci
+RUN npm link
+
 
 WORKDIR /app/cli
 RUN npm ci
