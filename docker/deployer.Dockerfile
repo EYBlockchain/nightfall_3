@@ -22,4 +22,5 @@ COPY nightfall-deployer/truffle-config.js truffle-config.js
 COPY nightfall-deployer/circuits circuits
 COPY nightfall-deployer/entrypoint.sh entrypoint.sh
 
+RUN npm link @polygon-nightfall/common-files
 RUN npm ci
