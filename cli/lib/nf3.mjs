@@ -908,6 +908,8 @@ class Nf3 {
       Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
      */
     emitter.on('error', error => logger.error({ msg: 'Error caught by emitter', error }));
+
+    return emitter;
   }
 
   /**
