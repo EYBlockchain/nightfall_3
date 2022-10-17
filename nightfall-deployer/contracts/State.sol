@@ -255,7 +255,12 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
 
         // blockHash is hash of all block data and hash of all the transactions data.
         blockHashes.push(
-            BlockData({blockHash: blockHash, time: block.timestamp, blockStake: blockStake})
+            BlockData({
+                blockHash: blockHash,
+                time: block.timestamp,
+                blockStake: blockStake,
+                proposer: b.proposer
+            })
         );
         // Timber will listen for the BlockProposed event as well as
         // nightfall-optimist.  The current, optimistic version of Timber does not
@@ -476,18 +481,23 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     function rewardChallenger(
         address challengerAddr,
         address proposer,
-        uint256 numRemoved
+        BlockData[] memory badBlocks
     ) public onlyChallenger {
         removeProposer(proposer);
 
-        TimeLockedStake memory stake = stakeAccounts[proposer];
-        // Give reward to challenger from the stake locked for challenges
-        stakeAccounts[proposer] = TimeLockedStake(
-            stake.amount,
-            stake.challengeLocked - numRemoved * blockStake,
-            0
-        );
-        pendingWithdrawals[challengerAddr][0] += numRemoved * blockStake;
+        uint256 rewardedStake = 0;
+        for (uint256 i = 0; i < badBlocks.length; ++i) {
+            TimeLockedStake memory stake = stakeAccounts[badBlocks[i].proposer];
+            // Give reward to challenger from the stake locked for challenges
+            stakeAccounts[proposer] = TimeLockedStake(
+                stake.amount,
+                stake.challengeLocked - badBlocks[i].blockStake,
+                0
+            );
+            rewardedStake += badBlocks[i].blockStake;
+        }
+
+        pendingWithdrawals[challengerAddr][0] += rewardedStake;
     }
 
     function updateStakeAccountTime(address addr, uint256 time) public onlyProposer {
