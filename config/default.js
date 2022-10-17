@@ -104,6 +104,16 @@ module.exports = {
       numberNullifiers: 4,
       numberCommitments: 2,
     },
+    tokenise: {
+      txType: 3,
+      numberNullifiers: 2,
+      numberCommitments: 2,
+    },
+    burn: {
+      txType: 4,
+      numberNullifiers: 3,
+      numberCommitments: 1,
+    },
   }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   MPC: {
     MPC_PARAMS_URL:

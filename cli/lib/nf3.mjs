@@ -365,6 +365,59 @@ class Nf3 {
   }
 
   /**
+    Mint an L2 token
+    @method
+    @async
+    @param {number} fee - The amount (Wei) to pay a proposer for the transaction
+    @param {string} ercAddress - The "fake" ercAddress
+    @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  Since the token was minted on thin
+    air, it can be any value
+    @param {string} salt - The salt used to mint the new token. It is optional
+    @param {string[2]} compressedSecrets "Extra information the may want to add to the transaction"
+    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    */
+  async tokenise(
+    offchain,
+    ercAddress,
+    fee = this.defaultFeeMatic,
+    salt = undefined,
+    tokenId = 0,
+    compressedSecrets = undefined,
+  ) {
+    const res = await axios.post(`${this.clientBaseUrl}/tokenise`, {
+      offchain,
+      ercAddress,
+      tokenId,
+      salt,
+      compressedSecrets,
+      rootKey: this.zkpKeys.rootKey,
+      compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
+      fee,
+    });
+
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
+    if (!offchain) {
+      return new Promise((resolve, reject) => {
+        userQueue.push(async () => {
+          try {
+            const receipt = await this.submitTransaction(
+              res.data.txDataToSign,
+              this.shieldContractAddress,
+              0,
+            );
+            resolve(receipt);
+          } catch (err) {
+            reject(err);
+          }
+        });
+      });
+    }
+    return res.status;
+  }
+
+  /**
     Deposits a Layer 1 token into Layer 2, so that it can be transacted
     privately.
     @method

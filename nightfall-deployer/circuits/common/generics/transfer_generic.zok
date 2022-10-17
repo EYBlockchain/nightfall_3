@@ -34,9 +34,9 @@ def transfer_generic<N,C>(\
     private u8[C][31] newCommitmentsValue,\
  	private field[C] newCommitmentsSalt,\
     private Point[C] recipientPublicKey,\
-    private u32[8] ephemeralKey,\
     private field ercAddressTransfer,\
-    private u32[8] idTransfer\
+    private u32[8] idTransfer,\
+    private u32[8] ephemeralKey\
 ) -> bool {
     // Verify public transaction structure
     assert(ercAddress != 0);

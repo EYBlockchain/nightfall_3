@@ -43,7 +43,7 @@ struct Commitments<N> {
 }
 
 struct Transfer {
-	u32[8] ephemeralKey;
     field ercAddressTransfer;
     u32[8] idTransfer;
+	u32[8] ephemeralKey;
 }

@@ -39,8 +39,8 @@ def main(\
         commitmentsInfo.newCommitments.value,\
         commitmentsInfo.newCommitments.salt,\
         commitmentsInfo.recipientPublicKey,\
-        transfer.ephemeralKey,\
         transfer.ercAddressTransfer,\
-        transfer.idTransfer\
+        transfer.idTransfer,\
+        transfer.ephemeralKey\
         ));
 }

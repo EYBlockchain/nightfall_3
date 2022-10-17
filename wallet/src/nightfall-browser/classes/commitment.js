@@ -41,7 +41,7 @@ class Commitment {
     const SHIFT = 1461501637330902918203684832716283019655932542976n;
     this.hash = poseidon(
       generalise([
-        this.preimage.ercAddress.bigInt + top4Bytes * SHIFT,
+        generalise(this.preimage.ercAddress.hex(20)).bigInt + top4Bytes * SHIFT,
         remainder,
         this.preimage.value.field(BN128_GROUP_ORDER),
         ...this.preimage.zkpPublicKey.all.field(BN128_GROUP_ORDER),
