@@ -144,9 +144,11 @@ module.exports = {
           ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
           : 'ws://localhost:8546',
       PROPOSER_KEY:
+        process.env.PROPOSER_KEY ||
         process.env.BOOT_PROPOSER_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
       CHALLENGER_KEY:
+        process.env.CHALLENGER_KEY ||
         process.env.BOOT_CHALLENGER_KEY ||
         '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
     },
