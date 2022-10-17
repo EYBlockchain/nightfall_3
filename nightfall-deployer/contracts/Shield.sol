@@ -77,8 +77,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
 
         //Request fees
         FeeTokens memory feePayments = state.getFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
-        feePayments.feesEth += blockStake;
-
         state.resetFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
 
         if (feePayments.feesEth > 0) {

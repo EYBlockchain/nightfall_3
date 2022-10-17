@@ -1,17 +1,23 @@
 
 from "./common/utils/structures.zok" import Point, PublicTransaction, Nullifiers, Commitments, Transfer;
-from "./common/generic_circuit/Generics/transfer_generic.zok" import transfer_generic;
+from "./common/generics/transfer_generic.zok" import transfer_generic;
+
+
+const u32 numberCommitments = 3;
+const u32 numberNullifiers = 4;
 
 def main(\
-    PublicTransaction<4,3> tx,\
-    field[4] roots,\
-    field maticAddress,\
+    PublicTransaction<numberNullifiers,numberCommitments> tx,\
+    field[numberNullifiers] roots,\
+    field feeAddress,\
     private field rootKey,\
-    private Nullifiers<4> nullifiersInfo,\
-    private Commitments<3> commitmentsInfo,\
+    private Nullifiers<numberNullifiers> nullifiersInfo,\
+    private Commitments<numberCommitments> commitmentsInfo,\
     private Transfer transfer\
 ) {
-    assert(transfer_generic::<4,3>(\
+
+
+    assert(transfer_generic::<numberNullifiers,numberCommitments>(\
         tx.value,\
         tx.fee,\
 	tx.transactionType,\
@@ -24,7 +30,7 @@ def main(\
 	tx.nullifiers,\
 	tx.compressedSecrets,\
         roots,\
-        maticAddress,\
+        feeAddress,\
         rootKey,\
         nullifiersInfo.oldCommitments.value,\
         nullifiersInfo.oldCommitments.salt,\

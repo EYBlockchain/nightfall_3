@@ -56,7 +56,10 @@ async function deposit(items) {
     numberCommitments: VK_IDS.deposit.numberCommitments,
   });
 
-  const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
+  const privateData = {
+    newCommitmentPreimage: [{ value, salt }],
+    recipientPublicKeys: [zkpPublicKey],
+  };
 
   const witness = computeCircuitInputs(
     publicData,
