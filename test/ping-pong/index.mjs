@@ -11,7 +11,8 @@ import { waitForSufficientBalance, retrieveL2Balance } from '../utils.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys, zkpPublicKeys } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys, zkpPublicKeys, MINIMUM_STAKE, ROTATE_PROPOSER_BLOCKS } =
+  config.TEST_OPTIONS;
 
 const txPerBlock =
   process.env.DEPLOYER_ETH_NETWORK === 'mainnet'
@@ -24,7 +25,7 @@ const TEST_LENGTH = 4;
 /**
 Does the preliminary setup and starts listening on the websocket
 */
-export default async function localTest(IS_TEST_RUNNER) {
+export async function userTest(IS_TEST_RUNNER) {
   logger.info('Starting local test...');
   const tokenType = 'ERC20';
   const value = 1;
@@ -125,4 +126,52 @@ export default async function localTest(IS_TEST_RUNNER) {
     }
   } while (loop < loopMax);
   process.exit(1);
+}
+
+export async function proposerTest() {
+  const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
+  await nf3Proposer.init(mnemonics.proposer3);
+  // we must set the URL from the point of view of the client container
+  await nf3Proposer.registerProposer('http://optimist', MINIMUM_STAKE);
+
+  const stateAddress = await nf3Proposer.getContractAddress('State');
+  const stateABI = await nf3Proposer.getContractAbi('State');
+
+  const getCurrentProposer = async () => {
+    const stateContractInstance = new nf3Proposer.web3.eth.Contract(stateABI, stateAddress);
+    const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
+    return currentProposer;
+  };
+
+  const getCurrentSprint = async () => {
+    const stateContractInstance = new nf3Proposer.web3.eth.Contract(stateABI, stateAddress);
+    const currentSprint = await stateContractInstance.methods.currentSprint().call();
+    return currentSprint;
+  };
+
+  for (let i = 0; i < 8; i++) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const currentSprint = await getCurrentSprint();
+      // eslint-disable-next-line no-await-in-loop
+      const currentProposer = await getCurrentProposer();
+      console.log(
+        `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress} ]`,
+      );
+
+      console.log('     Waiting blocks to rotate current proposer...');
+      const initBlock = await nf3Proposer.web3.eth.getBlockNumber();
+      let currentBlock = initBlock;
+
+      while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
+      }
+
+      console.log('     Change current proposer...');
+      await nf3Proposer.changeCurrentProposer();
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }

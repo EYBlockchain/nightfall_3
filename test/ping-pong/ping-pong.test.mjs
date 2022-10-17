@@ -1,5 +1,5 @@
 import config from 'config';
-import localTest from './index.mjs';
+import { userTest, proposerTest } from './index.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
@@ -19,8 +19,9 @@ describe('Ping-pong tests', () => {
   });
 
   it('Runs ping-pong tests', async () => {
-    localTest(true);
-    await localTest(false);
+    userTest(true);
+    proposerTest();
+    await userTest(false);
   });
 
   after(async () => {
