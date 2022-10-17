@@ -1,4 +1,4 @@
-import mongo from '../../../common-files/utils/mongo.mjs';
+import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
 
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017';
 const DB = 'administration';

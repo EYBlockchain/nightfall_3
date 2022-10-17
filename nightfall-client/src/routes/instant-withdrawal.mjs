@@ -1,5 +1,5 @@
 import express from 'express';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import setInstantWithdrawl from '../services/instant-withdrawal.mjs';
 
 const router = express.Router();

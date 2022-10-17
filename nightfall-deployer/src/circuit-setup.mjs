@@ -8,9 +8,9 @@ import axios from 'axios';
 import config from 'config';
 import fs from 'fs';
 import path from 'path';
-import logger from 'common-files/utils/logger.mjs';
-import Web3 from 'common-files/utils/web3.mjs';
-import { waitForContract } from 'common-files/utils/contract.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import crypto from 'crypto';
 
 const web3 = Web3.connection();

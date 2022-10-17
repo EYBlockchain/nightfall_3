@@ -6,7 +6,7 @@ import {
   decompressG2,
   compressProof,
   decompressProof,
-} from 'common-files/utils/curve-maths/curves.mjs';
+} from '../utils/curve-maths/curves.mjs';
 
 const testProof = {
   a: [

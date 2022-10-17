@@ -3,7 +3,7 @@
 Module that runs up as a proposer
 */
 import config from 'config';
-import logger from '../common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 const { MINIMUM_STAKE } = config.TEST_OPTIONS;
 /**

@@ -1,5 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import config from 'config';
+import { web3, waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { askQuestions } from './menu.mjs';
 import { getTokenRestrictions, isWhitelistManager } from '../services/contract-calls.mjs';
 import {
@@ -19,8 +21,6 @@ import {
   verifyTransactions,
   addSignedTransaction,
 } from '../services/helpers.mjs';
-import { web3, waitForContract } from '../../../common-files/utils/contract.mjs';
-import logger from '../../../common-files/utils/logger.mjs';
 
 const { MULTISIG } = config;
 const { SIGNATURE_THRESHOLD } = MULTISIG;

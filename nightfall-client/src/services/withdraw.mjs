@@ -8,9 +8,9 @@
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import logger from 'common-files/utils/logger.mjs';
-import constants from 'common-files/constants/index.mjs';
-import { waitForContract } from 'common-files/utils/contract.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage.mjs';

@@ -7,11 +7,11 @@ their local commitments databsae.
 import axios from 'axios';
 import fs from 'fs';
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
-import mongo from 'common-files/utils/mongo.mjs';
-import downloadFile from 'common-files/utils/httputils.mjs';
-import { unpauseQueue } from 'common-files/utils/event-queue.mjs';
-import constants from 'common-files/constants/index.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
+import downloadFile from '@polygon-nightfall/common-files/utils/httputils.mjs';
+import { unpauseQueue } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '../event-handlers/subscribe.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';

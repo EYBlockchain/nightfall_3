@@ -3,7 +3,7 @@
 import fs from 'fs';
 import tar from 'tar';
 import path from 'path';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 const outputPath = `/app/output`;
 

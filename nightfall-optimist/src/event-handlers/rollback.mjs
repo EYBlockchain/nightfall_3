@@ -4,8 +4,8 @@
  * same blocks from our local database record and to reset cached Frontier and
  * leafCount values in the Block class
  */
-import logger from 'common-files/utils/logger.mjs';
-import { dequeueEvent, enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { dequeueEvent, enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import {
   addTransactionsToMemPool,
   deleteBlock,

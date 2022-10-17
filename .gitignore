@@ -3,7 +3,7 @@ node_modules
 cli/build
 .*swp
 .vscode/*
-.oppenzeppelin/
+.openzeppelin/
 
 # wallet
 wallet/build

@@ -1,7 +1,7 @@
 /**
  * Module to handle new Transactions being posted
  */
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   saveTransaction,
   getBlockByTransactionHash,

@@ -1,8 +1,8 @@
 import chai from 'chai';
 import fc from 'fast-check';
-import Timber from '../common-files/classes/timber.mjs';
-import utils from '../common-files/utils/crypto/merkle-tree/utils.mjs';
-import constants from '../common-files/constants/index.mjs';
+import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
+import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
 const { expect } = chai;
 const TIMBER_HEIGHT = 5;

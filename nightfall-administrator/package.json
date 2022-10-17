@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/EYBlockchain/nightfall_3#readme",
   "dependencies": {
+    "@polygon-nightfall/common-files": "^0.0.5",
     "chalk": "^5.0.1",
     "clear": "^0.1.0",
     "config": "^3.3.7",
@@ -30,8 +31,7 @@
     "inquirer": "^8.2.4",
     "queue": "^6.0.2",
     "web3": "^1.7.5",
-    "yargs": "^17.5.1",
-    "express-fileupload": "^1.4.0"
+    "yargs": "^17.5.1"
   },
   "overrides": {
     "swarm-js": {
