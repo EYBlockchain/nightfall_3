@@ -980,7 +980,7 @@ class Nf3 {
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
         // First sign transaction, and send it within asynchronous queue. This will
-        // ensure that blocks are sent in order and with the correct nonce.
+        // ensure that blockProposed events are emitted in order and with the correct nonce.
         const tx = await this._signTransaction(
           txDataToSign,
           this.stateContractAddress,
