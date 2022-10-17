@@ -3,7 +3,6 @@ import { obfuscate } from '../utils/utils.mjs';
 
 describe('Utils tests', function () {
   describe('Obfuscation', function () {
-
     const OBFUSCATION_SETTINGS_TEST = {
       public_key: 'HALF',
       '.*key(s)?|.*password.*|.*secret.*': 'ALL',
