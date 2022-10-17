@@ -4,7 +4,6 @@ Route for setting the decryption key that will be used to decrypt secrets during
 
 import express from 'express';
 import { generalise } from 'general-number';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { storeMemoryKeysForDecryption } from '../services/keys.mjs';
 import { clientCommitmentSync } from '../services/commitment-sync.mjs';
 
