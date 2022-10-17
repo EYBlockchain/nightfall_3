@@ -19,7 +19,7 @@ import { isDev, obfuscate } from './utils.mjs';
  * Default obfuscation's rules.
  */
 const OBFUSCATION_SETTINGS = {
-  '.*key(s)?|.*password.*|.*secret.*': 'ALL',
+  '.*key(s)?|.*password.*|.*secret.*|.*mnemonic.*': 'ALL',
 };
 
 const doObfuscation = object => {
