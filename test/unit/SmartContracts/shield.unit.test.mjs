@@ -14,7 +14,7 @@ import {
   setWhitelist,
 } from '../utils/shieldStorage.mjs';
 import {
-  setBlockHash,
+  setBlockData,
   setBlockPaymentClaimed,
   setFeeBookInfo,
   setStakeAccount,
@@ -519,7 +519,7 @@ describe('Testing Shield Contract', function () {
   describe('requestBlockPayment', async function () {
     it('succeeds when requesting a block payment', async function () {
       await Erc20MockInstance.transfer(shieldAddress, 100);
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
       await setFeeBookInfo(stateAddress, block, 0, 20);
@@ -557,7 +557,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it("fails if block doesn't exist", async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const blockFake = {
         leafCount: 1,
@@ -581,7 +581,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block is still challengeable', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await expect(ShieldInstance.requestBlockPayment(block)).to.be.revertedWith(
         'Shield: Too soon to get paid for this block',
@@ -589,7 +589,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if someone other than proposer is trying to request a payment', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -599,7 +599,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block payment has been already claimed', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -613,7 +613,7 @@ describe('Testing Shield Contract', function () {
 
   describe('isBlockPaymentPending', async function () {
     it('succeeds if block payment is pending', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -627,7 +627,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block is still challengeable', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await expect(ShieldInstance.isBlockPaymentPending(0)).to.be.revertedWith(
         'Shield: Too soon to get paid for this block',
@@ -635,7 +635,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block payment has been claimed', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await setBlockPaymentClaimed(stateAddress, blockHash);
 
@@ -649,7 +649,7 @@ describe('Testing Shield Contract', function () {
 
   describe('isValidWithdrawal', async function () {
     it('returns true if withdrawal is valid', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -661,7 +661,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block or transaction is not real (sibling path wrong)', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -673,7 +673,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if transaction is still challengeable', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -683,7 +683,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if transaction payment has been claimed', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -698,7 +698,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if transaction is not a withdraw', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -715,7 +715,7 @@ describe('Testing Shield Contract', function () {
     it('succeeds to finalise withdrawal for an ERC20 token if valid and has not been advanced', async function () {
       await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
       await Erc20MockInstance.transfer(shieldAddress, 10);
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -738,7 +738,7 @@ describe('Testing Shield Contract', function () {
     it('succeeds to finalise withdrawal for an ERC20 token if valid and has been advanced and fee pending', async function () {
       await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
       await Erc20MockInstance.transfer(shieldAddress, 110);
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -819,7 +819,7 @@ describe('Testing Shield Contract', function () {
         transactionHashesRoot,
       };
 
-      await setBlockHash(StateInstance, stateAddress, calculateBlockHash(blockERC721));
+      await setBlockData(StateInstance, stateAddress, calculateBlockHash(blockERC721));
 
       await time.increase(86400 * 7 + 1);
 
@@ -896,7 +896,7 @@ describe('Testing Shield Contract', function () {
         transactionHashesRoot,
       };
 
-      await setBlockHash(StateInstance, stateAddress, calculateBlockHash(blockERC1155));
+      await setBlockData(StateInstance, stateAddress, calculateBlockHash(blockERC1155));
 
       await time.increase(86400 * 7 + 1);
 
@@ -917,7 +917,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block or transaction is not real', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
       const siblingPath = [block.transactionHashesRoot, withdrawTransactionHash];
       const wrongIndex = 0;
 
@@ -927,7 +927,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block is still challengeable', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -937,7 +937,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block payment has been claimed', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -952,7 +952,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if transaction is not a withdraw', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
       const siblingPath = [block.transactionHashesRoot, withdrawTransactionHash];
       const index = 1;
 
@@ -965,7 +965,7 @@ describe('Testing Shield Contract', function () {
 
     it('fails if user is not whitelisted and whitelisting is active', async function () {
       await setWhitelist(shieldAddress);
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await time.increase(86400 * 7 + 1);
 
@@ -1030,7 +1030,7 @@ describe('Testing Shield Contract', function () {
         transactionHashesRoot,
       };
 
-      await setBlockHash(StateInstance, stateAddress, calculateBlockHash(blockWithdrawalInvalid));
+      await setBlockData(StateInstance, stateAddress, calculateBlockHash(blockWithdrawalInvalid));
 
       await time.increase(86400 * 7 + 1);
 
@@ -1100,7 +1100,7 @@ describe('Testing Shield Contract', function () {
         transactionHashesRoot,
       };
 
-      await setBlockHash(StateInstance, stateAddress, calculateBlockHash(blockWithdrawalInvalid));
+      await setBlockData(StateInstance, stateAddress, calculateBlockHash(blockWithdrawalInvalid));
 
       await time.increase(86400 * 7 + 1);
 
@@ -1169,7 +1169,7 @@ describe('Testing Shield Contract', function () {
         transactionHashesRoot,
       };
 
-      await setBlockHash(StateInstance, stateAddress, calculateBlockHash(blockWithdrawalInvalid));
+      await setBlockData(StateInstance, stateAddress, calculateBlockHash(blockWithdrawalInvalid));
       await time.increase(86400 * 7 + 1);
 
       const index = 0;
@@ -1237,7 +1237,7 @@ describe('Testing Shield Contract', function () {
         transactionHashesRoot,
       };
 
-      await setBlockHash(StateInstance, stateAddress, calculateBlockHash(blockWithdrawalInvalid));
+      await setBlockData(StateInstance, stateAddress, calculateBlockHash(blockWithdrawalInvalid));
 
       await time.increase(86400 * 7 + 1);
 
@@ -1259,7 +1259,7 @@ describe('Testing Shield Contract', function () {
       await Erc20MockInstance.transfer(await owner[1].address, 100);
       await Erc20MockInstance.connect(owner[1]).approve(shieldAddress, 10);
 
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -1288,7 +1288,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block or transaction is not real', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
       const siblingPath = [block.transactionHashesRoot, withdrawTransactionHash];
       const wrongIndex = 0;
 
@@ -1298,7 +1298,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if no fee is set', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -1309,7 +1309,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block is finalized', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -1324,7 +1324,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block payment has been claimed', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -1341,7 +1341,7 @@ describe('Testing Shield Contract', function () {
 
   describe('setAdvanceWithdrawalFee', async function () {
     it('succeeds to set fee for advance withdrawal', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -1368,7 +1368,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if transaction is not a withdrawal', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
       const siblingPath = [block.transactionHashesRoot, withdrawTransactionHash];
       const index = 1;
 
@@ -1380,7 +1380,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if advance fee is zero', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
@@ -1390,7 +1390,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block or transaction is not real', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
       const siblingPath = [block.transactionHashesRoot, withdrawTransactionHash];
       const wrongIndex = 0;
 
@@ -1452,7 +1452,7 @@ describe('Testing Shield Contract', function () {
         transactionHashesRoot,
       };
 
-      await setBlockHash(StateInstance, stateAddress, calculateBlockHash(blockERC721));
+      await setBlockData(StateInstance, stateAddress, calculateBlockHash(blockERC721));
 
       const index = 0;
       const siblingPath = [blockERC721.transactionHashesRoot, ethers.utils.hexZeroPad(0, 32)];
@@ -1470,7 +1470,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block is finalized', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -1485,7 +1485,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if block payment has been claimed', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
@@ -1500,7 +1500,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if trying to set a fee for a withdrawal that is not yours', async function () {
-      await setBlockHash(StateInstance, stateAddress, blockHash);
+      await setBlockData(StateInstance, stateAddress, blockHash);
 
       await setAdvancedWithdrawal(shieldAddress, withdrawTransactionHash, owner[1].address, 1);
 

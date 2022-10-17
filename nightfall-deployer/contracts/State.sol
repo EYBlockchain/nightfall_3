@@ -115,6 +115,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         require(b.proposer == msg.sender, 'State: Proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
+        require(stake.amount >= blockStake, 'State: Proposer does not have enough funds staked');
         stake.amount -= blockStake;
         stake.challengeLocked += blockStake;
         stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
@@ -253,7 +254,9 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
 
         // blockHash is hash of all block data and hash of all the transactions data.
-        blockHashes.push(BlockData({blockHash: blockHash, time: block.timestamp}));
+        blockHashes.push(
+            BlockData({blockHash: blockHash, time: block.timestamp, blockStake: blockStake})
+        );
         // Timber will listen for the BlockProposed event as well as
         // nightfall-optimist.  The current, optimistic version of Timber does not
         // require the smart contract to craft NewLeaf/NewLeaves events.

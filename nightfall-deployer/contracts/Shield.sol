@@ -90,8 +90,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
 
         // recover the stake for that block
         TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
-        stake.amount += blockStake;
-        stake.challengeLocked -= blockStake;
+        stake.amount += blockData.blockStake;
+        stake.challengeLocked -= blockData.blockStake;
         state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
 
         state.addPendingWithdrawal(msg.sender, feePaymentsEth, feePaymentsMatic);
