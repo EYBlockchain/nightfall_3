@@ -82,7 +82,7 @@ module.exports = {
       websockets: true,
       networkCheckTimeout: 1000000000,
     },
-    
+
     staging_edge: {
       provider: () =>
         new HDWalletProvider({
