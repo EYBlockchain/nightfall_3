@@ -933,7 +933,7 @@ class Nf3 {
       if (type === 'block') {
         proposerQueue.push(async () => {
           try {
-            logger.info('Submiting block');
+            logger.info('Submitting block');
 
             const receipt = await this.submitTransaction(
               txDataToSign,
