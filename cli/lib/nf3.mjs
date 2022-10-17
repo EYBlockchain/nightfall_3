@@ -261,7 +261,7 @@ class Nf3 {
   }
 
   /**
-  Method for signing and submitting an Ethereum transaction to the
+  Method for signing an Ethereum transaction to the
   blockchain.
   @method
   @async
@@ -269,7 +269,7 @@ class Nf3 {
   @param {string} shieldContractAddress - The address of the Nightfall_3 shield address.
   @param {number} fee - the value of the transaction.
   This can be found using the getContractAddress convenience function.
-  @returns {Promise} This will resolve into a transaction receipt.
+  @returns {Oject} Signed transaction.
   */
   async _signTransaction(unsignedTransaction, contractAddress, fee) {
     let tx;
@@ -306,6 +306,14 @@ class Nf3 {
     return { tx, nonce: tx.nonce };
   }
 
+  /**
+  Method for submitting an Ethereum transaction to the
+  blockchain.
+  @method
+  @async
+  @param {object} tx - An signed web3js transaction object.
+  @returns {Promise} This will resolve into a transaction receipt.
+  */
   async _sendTransaction(tx) {
     if (this.ethereumSigningKey) {
       const promiseTest = new Promise((resolve, reject) => {
@@ -323,6 +331,17 @@ class Nf3 {
     return this.web3.eth.sendTransaction(tx);
   }
 
+  /**
+  Method for signing and submitting an Ethereum transaction to the
+  blockchain.
+  @method
+  @async
+  @param {object} unsignedTransaction - An unsigned web3js transaction object.
+  @param {string} shieldContractAddress - The address of the Nightfall_3 shield address.
+  @param {number} fee - the value of the transaction.
+  This can be found using the getContractAddress convenience function.
+  @returns {Promise} This will resolve into a transaction receipt.
+  */
   async submitTransaction(unsignedTransaction, contractAddress = this.shieldContractAddress, fee) {
     const tx = await this._signTransaction(unsignedTransaction, contractAddress, fee);
     return this._sendTransaction(tx.signed);
@@ -960,6 +979,8 @@ class Nf3 {
       const { type, txDataToSign, block, transactions, data } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
+        // First sign transaction, and send it within asynchronous queue. This will
+        // ensure that blocks are sent in order and with the correct nonce.
         const tx = await this._signTransaction(
           txDataToSign,
           this.stateContractAddress,
@@ -969,11 +990,9 @@ class Nf3 {
           try {
             const receipt = await this._sendTransaction(tx.signed);
             proposeEmitter.emit('receipt', receipt, block, transactions);
-            console.log('BLOCK PROPOSED', block, tx.nonce);
           } catch (err) {
             // block proposed is reverted. Send transactions back to mempool
             logger.error(`Submitted block error ${err}`);
-            console.log('BLOCK', block);
             await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
             proposeEmitter.emit('error', err, block, transactions);
           }
