@@ -11,7 +11,6 @@ usage()
   echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
   echo "  -h or --help; to print this message"
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
-  echo "  -r or --ropsten to connect testnet node (Note: please set environment variable ROPSTEN_NODE, FROM_ADDRESS, and ETH_PRIVATE_KEY. Find more description in README.md)"
 }
 
 # select a Geth or Ganache client
@@ -27,8 +26,6 @@ while [ -n "$1" ]; do
       -g  | --ganache )             FILE="-f docker/docker-compose.yml -f docker/docker-compose.ganache.yml";
                                     ;;
       -l  | --localhost )           FILE="-f docker/docker-compose.yml -f docker/docker-compose.host.docker.internal.yml"
-                                    ;;
-      -r  | --ropsten )              FILE="-f docker/docker-compose.yml -f docker/docker-compose.ropsten.yml"
                                     ;;
       -e  | --edge )                FILE="-f docker/docker-compose.yml -f docker/docker-compose.polygon-edge.yml"
                                     ;;
@@ -93,5 +90,5 @@ if [[ -d "$DIR" ]]; then
   rm -dr common-files/node_modules
 fi
 
-docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans
-docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY logs -f
+docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }
+docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_START//,/ }

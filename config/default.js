@@ -25,7 +25,7 @@ module.exports = {
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
   CONFIRMATION_POLL_TIME: 1000,
-  CONFIRMATIONS: 12,
+  CONFIRMATIONS: process.env.CONFIRMATIONS || 12,
   DEFAULT_ACCOUNT_NUM: 10,
   HASH_TYPE: 'poseidon',
   TXHASH_TREE_HASH_TYPE: 'keccak256',
@@ -107,14 +107,6 @@ module.exports = {
       optimistApiUrl: '',
       optimistWsUrl: '',
       web3WsUrl: '',
-    },
-    ropsten: {
-      name: 'Ropsten',
-      chainId: 3,
-      clientApiUrl: 'https://client.testnet.nightfall3.com',
-      optimistApiUrl: 'https://optimist.testnet.nightfall3.com',
-      optimistWsUrl: 'wss://optimist-ws.testnet.nightfall3.com',
-      web3WsUrl: `${process.env.ROPSTEN_NODE}`,
     },
     rinkeby: {
       name: 'Rinkeby',

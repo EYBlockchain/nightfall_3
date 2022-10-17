@@ -50,13 +50,15 @@ const checkCircuitsOutput = async () => {
             fs.mkdirSync(`${outputPath}/${circuit}`);
           }
 
+          const downloadPath = `${baseUrl}/proving_files/${circuit}/${filename}`;
+
           try {
-            await downloadFile(
-              `${baseUrl}/proving_files/${circuit}/${f.split('  ')[1]}`,
-              `${outputPath}/${circuit}/${f.split('  ')[1]}`,
-            );
+            await downloadFile(downloadPath, `${outputPath}/${circuit}/${filename}`);
           } catch (e) {
-            console.error(`ERROR downloading ${f.split('  ')[1]}`);
+            logger.error({
+              message: `ERROR downloading ${filename}`,
+              error: e,
+            });
           }
         }
       }),

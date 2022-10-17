@@ -3,6 +3,7 @@ node_modules
 cli/build
 .*swp
 .vscode/*
+.oppenzeppelin/
 
 # wallet
 wallet/build
@@ -15,3 +16,4 @@ docker/volumes
 typechain-types/
 artifacts/
 cache/
+docker/volumes

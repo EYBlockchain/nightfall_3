@@ -11,13 +11,13 @@ jobs:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v2.1.0
+        uses: actions/dependency-review-action@v2
 
   eslint-check:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
       - name: eslint check
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
       - name: General Tests
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
       - name: Unit Tests
@@ -59,12 +59,13 @@ jobs:
           npm run unit-test
 
   circuits-test:
-    runs-on: ubuntu-20.04
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
 
@@ -104,10 +105,58 @@ jobs:
           name: circuit-test-logs
           path: ./circuit-test.log
 
-  ganache-test:
-    runs-on: ubuntu-20.04
+  ganache-protocol-test:
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.17.0'
+
+      - name: Start Containers
+        run: |
+          ./setup-nightfall
+          ./start-nightfall -g -d &> ganache-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat ganache-test.log
+
+      - name: Run integration test
+        run: |
+          npm run test-e2e-protocol
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat ganache-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: ganache-test-logs
+          path: ./ganache-test.log
+
+  ganache-erc20-test:
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1
@@ -133,8 +182,101 @@ jobs:
 
       - name: Run integration test
         run: |
-          npm run test-e2e-protocol
-          npm run test-e2e-tokens
+          npm run test-erc20-tokens
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat ganache-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: ganache-test-logs
+          path: ./ganache-test.log
+
+  ganache-erc721-test:
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+
+      - name: Start Containers
+        run: |
+          ./setup-nightfall
+          ./start-nightfall -g -d &> ganache-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat ganache-test.log
+
+      - name: Run integration test
+        run: |
+          npm run test-erc721-tokens
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat ganache-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: ganache-test-logs
+          path: ./ganache-test.log
+
+  ganache-erc1155-test:
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+
+      - name: Start Containers
+        run: |
+          ./setup-nightfall
+          ./start-nightfall -g -d &> ganache-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat ganache-test.log
+
+      - name: Run integration test
+        run: |
+          npm run test-erc1155-tokens
 
       - name: Debug logs - after integration test run
         if: always()
@@ -154,10 +296,12 @@ jobs:
   kyc-test:
     env:
       WHITELISTING: enable
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
 
@@ -196,12 +340,61 @@ jobs:
           name: kyc-test-logs
           path: ./ganackyche-test.log
 
+  administrator-test:
+    runs-on: ubuntu-20.04
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: administrator,blockchain,client,deployer,optimist,worker
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.17.0'
+
+      - name: Start Containers
+        run: |
+          ./setup-nightfall
+          ./start-nightfall -g -d &> administrator-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat administrator-test.log
+
+      - name: Run integration test
+        run: |
+          npm run test-administrator
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat administrator-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: administrator-test-logs
+          path: ./administrator-test.log
 
   optimist-sync-test:
     runs-on: ubuntu-18.04
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
 
@@ -246,9 +439,10 @@ jobs:
   #    env:
   #      TRANSACTIONS_PER_BLOCK: 32
   #      CONFIRMATIONS: 1
+  #      NF_SERVICES_TO_START: adversary,blockchain,client,deployer,optimist,worker
   #    steps:
   #      - uses: actions/checkout@v3
-  #      - uses: actions/setup-node@v1
+  #      - uses: actions/setup-node@v3
   #        with:
   #          node-version: '16.17.0'
   #
@@ -296,10 +490,13 @@ jobs:
   #          path: ./adversary-test.log
 
   ping-pong-test:
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
 
@@ -338,13 +535,14 @@ jobs:
           path: ./ping-pong-test.log
 
   test-gas:
-    name: check gas for 32 transactions per block
-    runs-on: ubuntu-20.04
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
+    name: check gas for 32 transactions per block
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
 
@@ -354,6 +552,7 @@ jobs:
           ./start-nightfall -g -d &> test-gas.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
+          CONFIRMATIONS: 1
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -389,9 +588,12 @@ jobs:
   test-apps:
     name: check apps for liveliness
     runs-on: ubuntu-20.04
+    env:
+      TRANSACTIONS_PER_BLOCK: 32
+      NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
 
@@ -399,8 +601,6 @@ jobs:
         run: |
           ./setup-nightfall
           ./start-nightfall -g -d &> test-apps.log &disown
-        env:
-          TRANSACTIONS_PER_BLOCK: 32
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11

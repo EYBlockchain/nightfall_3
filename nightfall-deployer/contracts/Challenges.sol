@@ -32,7 +32,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Block calldata blockL2,
         Transaction[] calldata transactions,
         bytes32 salt
-    ) external onlyBootChallenger {
+    ) external {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block. Also if the transactions are part of these block
         state.isBlockReal(priorBlockL2);
@@ -56,7 +56,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Block calldata blockL2,
         Transaction[] calldata transactions,
         bytes32 salt
-    ) external onlyBootChallenger {
+    ) external {
         checkCommit(msg.data);
         // check if the block hash is correct and the block hash exists for the block and prior block
         state.isBlockReal(priorBlockL2);
@@ -91,7 +91,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         bytes32[33] calldata frontierAfterBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Block calldata blockL2,
         bytes32 salt
-    ) external onlyBootChallenger {
+    ) external {
         checkCommit(msg.data);
 
         // check that the current block hash is correct
@@ -116,7 +116,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 commitment1Index,
         uint256 commitment2Index,
         bytes32 salt
-    ) external onlyBootChallenger {
+    ) external {
         checkCommit(msg.data);
 
         // first, check we have real, in-train, contiguous blocks
@@ -166,7 +166,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         uint256 nullifier1Index,
         uint256 nullifier2Index,
         bytes32 salt
-    ) external onlyBootChallenger {
+    ) external {
         checkCommit(msg.data);
 
         // first, check we have real, in-train, contiguous blocks
@@ -210,7 +210,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         Block[4] calldata blockL2ContainingHistoricRoot,
         uint256[8] memory uncompressedProof,
         bytes32 salt
-    ) external onlyBootChallenger {
+    ) external {
         checkCommit(msg.data);
         state.areBlockAndTransactionReal(
             transaction.blockL2,
@@ -248,10 +248,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         challengeAccepted(transaction.blockL2);
     }
 
-    function challengeHistoricRootBlockNumber(TransactionInfoBlock calldata transaction)
-        external
-        onlyBootChallenger
-    {
+    function challengeHistoricRootBlockNumber(TransactionInfoBlock calldata transaction) external {
         checkCommit(msg.data);
         state.areBlockAndTransactionReal(
             transaction.blockL2,
@@ -301,7 +298,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     }
 
     //To prevent frontrunning, we need to commit to a challenge before we send it
-    function commitToChallenge(bytes32 commitHash) external onlyBootChallenger {
+    function commitToChallenge(bytes32 commitHash) external {
         require(committers[commitHash] == address(0), 'Hash already committed to');
         committers[commitHash] = msg.sender;
         emit CommittedToChallenge(commitHash, msg.sender);
