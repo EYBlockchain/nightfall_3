@@ -1,3 +1,5 @@
+/* eslint import/no-extraneous-dependencies: "off" */
+
 import chai from 'chai';
 import assert from 'assert';
 import { obfuscate } from '../utils/utils.mjs';
