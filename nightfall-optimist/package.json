@@ -4,8 +4,6 @@
   "description": "A container for optimistic proposals and challenges",
   "main": "index.mjs",
   "scripts": {
-    "prestart": "./pre-start-script.sh",
-    "predev": "./pre-start-script.sh",
     "start": "node src/index.mjs",
     "dev": "nodemon src/index.mjs"
   },
@@ -31,9 +29,9 @@
     ]
   },
   "dependencies": {
+    "@polygon-nightfall/common-files": "^0.0.5",
     "axios": "^0.21.4",
     "body-parser": "1.19.0",
-    "common-files": "file:../common-files",
     "config": "^3.3.1",
     "cors": "2.8.5",
     "express": "^4.17.1",
@@ -41,17 +39,12 @@
     "hex-to-binary": "^1.0.1",
     "jsonfile": "^6.1.0",
     "keccak": "^3.0.1",
-    "mongodb": "^3.6.3",
-    "pino": "^8.3.1",
-    "pino-pretty": "^8.1.0",
+    "mongodb": "^4.7.0",
     "queue": "^6.0.2",
     "safe-buffer": "^5.2.1",
     "tar": "^6.1.11",
     "web3": "^1.7.5",
-    "ws": "^7.4.3",
-    "cls-hooked": "^4.2.2",
-    "uuid": "^8.3.2",
-    "express-fileupload": "^1.4.0"
+    "ws": "^7.4.3"
   },
   "devDependencies": {
     "mocha": "^10.0.0",

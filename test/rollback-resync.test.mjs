@@ -6,7 +6,7 @@ import chaiAsPromised from 'chai-as-promised';
 import childProcess from 'child_process';
 import WebSocket from 'ws';
 import { generateMnemonic } from 'bip39';
-import logger from '../common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   topicEventMapping,
   createBadBlock,

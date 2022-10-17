@@ -13,22 +13,21 @@ functionality is not really required - it's just a data availability aid.
 pragma solidity ^0.8.0;
 
 import './Utils.sol';
-import './Key_Registry.sol';
 import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
 import './KYC.sol';
 
-contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, Pausable, KYC {
+contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => bool) public withdrawn;
-    mapping(bytes32 => address) public advancedWithdrawals;
-    mapping(bytes32 => uint256) public advancedFeeWithdrawals;
+    mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
     mapping(bytes32 => bool) public isEscrowed; // Check if transaction commitment values has been escrowed (only for deposit)
 
-    function initialize() public override(Stateful, Key_Registry, Config, Pausable, KYC) initializer {
+    address public challengesAddress;
+
+    function initialize() public override(Stateful, Config, Pausable, KYC) initializer {
         Stateful.initialize();
-        Key_Registry.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
@@ -55,28 +54,25 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         bytes32 blockHash = Utils.hashBlock(b);
 
         BlockData memory blockData = state.getBlockData(b.blockNumberL2);
-        require(blockData.blockHash == blockHash, 'This block does not exist');
+        require(blockData.blockHash == blockHash, 'Shield: This block does not exist');
 
         // check that the block has been finalised
-        uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
-            time + CHALLENGE_PERIOD < block.timestamp,
+            blockData.time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to get paid for this block'
         );
         require(b.proposer == msg.sender, 'Shield: Not the proposer of this block');
         require(
-            state.isBlockStakeWithdrawn(blockHash) == false,
+            !state.isBlockStakeWithdrawn(blockHash),
             'Shield: Block stake for this block already claimed'
         );
         state.setBlockStakeWithdrawn(blockHash);
-        // add up how much the proposer is owed.
 
         //Request fees
         (uint256 feePaymentsEth, uint256 feePaymentsMatic) = state.getFeeBookInfo(
             b.proposer,
             b.blockNumberL2
         );
-        feePaymentsEth += blockStake;
 
         state.resetFeeBookInfo(b.proposer, b.blockNumberL2);
 
@@ -86,8 +82,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         }
 
         if (feePaymentsMatic > 0) {
-            IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
-                address(this),
+            IERC20Upgradeable(super.getMaticAddress()).safeTransfer(
                 address(state),
                 feePaymentsMatic
             );
@@ -105,18 +100,14 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
     /**
      * @dev Check if a block has been paid to the proposer
      */
-    function isBlockPaymentPending(bytes32 blockHash, uint256 blockNumberL2)
-        external
-        view
-        returns (bool)
-    {
-        uint256 time = state.getBlockData(blockNumberL2).time;
+    function isBlockPaymentPending(uint256 blockNumberL2) external view returns (bool) {
+        BlockData memory blockData = state.getBlockData(blockNumberL2);
         require(
-            time + CHALLENGE_PERIOD < block.timestamp,
+            blockData.time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to get paid for this block'
         );
         require(
-            state.isBlockStakeWithdrawn(blockHash) == false,
+            !state.isBlockStakeWithdrawn(blockData.blockHash),
             'Shield: Block stake for this block already claimed'
         );
 
@@ -139,7 +130,7 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         uint256 _value,
         bytes calldata _data
     ) external returns (bytes4) {
-        return bytes4(keccak256('onERC1155Received(address,address,uint256,uint256,bytes)'));
+        return 0xf23a6e61;
     }
 
     /* *
@@ -155,20 +146,18 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         bytes32[] calldata siblingPath
     ) external view returns (bool) {
         // check this block is a real one, in the queue, not something made up.
-        state.areBlockAndTransactionReal(b, t, index, siblingPath);
+        bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
         // check that the block has been finalised
-        uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
-            time + CHALLENGE_PERIOD < block.timestamp,
+            t.transactionType == TransactionTypes.WITHDRAW,
+            'Shield: Transaction is not a valid withdraw'
+        );
+        require(
+            state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to withdraw funds from this block'
         );
 
-        bytes32 transactionHash = Utils.hashTransaction(t);
-        require(!withdrawn[transactionHash], 'Shield: Transaction already paid out');
-        require(
-            t.transactionType == TransactionTypes.WITHDRAW,
-            'Shield: Transaction is not a valid WITHDRAW'
-        );
+        require(!withdrawn[transactionHash], 'Shield: This transaction has already paid out');
 
         return true;
     }
@@ -188,106 +177,134 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
         bytes32[] calldata siblingPath
     ) external {
         // check this block is a real one, in the queue, not something made up and that the transaction exists in the block
-        state.areBlockAndTransactionReal(b, t, index, siblingPath);
+        bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
         // check that the block has been finalised
-        uint256 time = state.getBlockData(b.blockNumberL2).time;
         require(
-            time + CHALLENGE_PERIOD < block.timestamp,
+            state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to withdraw funds from this block'
         );
-        bytes32 transactionHash = Utils.hashTransaction(t);
+        require(
+            t.transactionType == TransactionTypes.WITHDRAW,
+            'Shield: Transaction is not a valid withdraw'
+        );
         require(!withdrawn[transactionHash], 'Shield: This transaction has already paid out');
         withdrawn[transactionHash] = true;
-        if (t.transactionType == TransactionTypes.WITHDRAW) {
-            address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
-            // check if an advancedWithdrawal has been paid, if so payout the new owner.
-            address recipientAddress = advancedWithdrawals[transactionHash] == address(0)
-                ? originalRecipientAddress
-                : advancedWithdrawals[transactionHash];
-            require(isWhitelisted(msg.sender), 'You are not authorised to withdraw funds');
-            payOut(t, recipientAddress);
+
+        AdvanceWithdrawal memory advancedWithdrawal = advancedWithdrawals[transactionHash];
+        address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
+        // check if an advancedWithdrawal has been paid, if so payout the new owner.
+        address recipientAddress = advancedWithdrawal.currentOwner == address(0)
+            ? originalRecipientAddress
+            : advancedWithdrawal.currentOwner;
+
+        delete advancedWithdrawals[transactionHash];
+
+        if (advancedWithdrawal.advanceFee > 0) {
+            (bool success, ) = payable(address(state)).call{
+                value: uint256(advancedWithdrawal.advanceFee)
+            }('');
+            require(success, 'Shield: Transfer failed.');
+
+            state.addPendingWithdrawal(recipientAddress, uint256(advancedWithdrawal.advanceFee), 0);
         }
+        require(isWhitelisted(msg.sender), 'Shield: You are not authorised to withdraw funds');
+        payOut(t, recipientAddress);
     }
 
-    // TODO does this need to be constrained to blocks within the challenge window
     // Currently this can pose as a non-interactive way for transactors to get their withdrawals
     // Instead of calling finaliseWithdrawal (a pull op), advanceWithdrawal will send them the funds (push op) for a fee.
-    function advanceWithdrawal(Transaction calldata withdrawTransaction) external {
-        bytes32 withdrawTransactionHash = Utils.hashTransaction(withdrawTransaction);
+    function advanceWithdrawal(
+        Block calldata b,
+        Transaction calldata t,
+        uint256 index,
+        bytes32[] calldata siblingPath
+    ) external {
+        // check this block is a real one, in the queue, not something made up.
+        bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
 
         // if no fee is set, then the withdrawal is not tagged as advanceable - else someone could just steal withdrawals
         require(
-            advancedFeeWithdrawals[withdrawTransactionHash] > 0,
+            advancedWithdrawals[transactionHash].advanceFee > 0,
             'Shield: No advanced fee has been set for this withdrawal'
         );
-        require(
-            withdrawTransaction.tokenType == TokenType.ERC20,
-            'Shield: Can only advance withdrawals for fungible tokens'
-        );
-        // The withdrawal has not been withdrawn
-        require(!withdrawn[withdrawTransactionHash], 'Shield: Cannot double withdraw');
 
-        // TODO should we check if the withdrawal is not in a finalised block
+        //Check that the withdrawal is still challengeable
+        require(
+            state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD >= block.timestamp,
+            'Shield: The block has already been finalized'
+        );
+
+        // The withdrawal has not been withdrawn
+        require(!withdrawn[transactionHash], 'Shield: This transaction has already paid out');
+
         // this might incentives sniping freshly finalised blocks by liquidity providers
         // this is risk-free as the block is finalised, the advancedFee should reflect a risk premium.
-        address tokenAddress = address(uint160(uint256(withdrawTransaction.ercAddress)));
-        address originalRecipientAddress = address(
-            uint160(uint256(withdrawTransaction.recipientAddress))
-        );
-        address currentOwner = advancedWithdrawals[withdrawTransactionHash] == address(0)
+        address tokenAddress = address(uint160(uint256(t.ercAddress)));
+        address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
+        address currentOwner = advancedWithdrawals[transactionHash].currentOwner == address(0)
             ? originalRecipientAddress
-            : advancedWithdrawals[withdrawTransactionHash];
-        uint256 advancedFee = advancedFeeWithdrawals[withdrawTransactionHash];
+            : advancedWithdrawals[transactionHash].currentOwner;
+        uint256 advanceFee = advancedWithdrawals[transactionHash].advanceFee;
 
-        // Send the token from the msg.sender to the receipient
-        if (withdrawTransaction.tokenId != ZERO)
-            revert('Shield: ERC20 deposit should have tokenId equal to ZERO');
-        else {
-            // set new owner of transaction, settign fee to zero.
-            advancedFeeWithdrawals[withdrawTransactionHash] = 0;
-            advancedWithdrawals[withdrawTransactionHash] = msg.sender;
-            state.addPendingWithdrawal(msg.sender, advancedFee, 0);
-            IERC20Upgradeable(tokenAddress).safeTransferFrom(
-                address(msg.sender),
-                currentOwner,
-                uint256(withdrawTransaction.value)
-            );
-        }
+        // set new owner of transaction, settign fee to zero.
+        advancedWithdrawals[transactionHash].advanceFee = 0;
+        advancedWithdrawals[transactionHash].currentOwner = msg.sender;
+        state.addPendingWithdrawal(msg.sender, advanceFee, 0);
+        (bool success, ) = payable(address(state)).call{value: uint256(advanceFee)}('');
+        require(success, 'Shield: Transfer failed.');
+
+        IERC20Upgradeable(tokenAddress).safeTransferFrom(
+            address(msg.sender),
+            currentOwner,
+            uint256(t.value)
+        );
     }
 
-    // TODO Is there a better way to set this fee, e.g. at the point of making a transaction.
     function setAdvanceWithdrawalFee(
         Block calldata b,
         Transaction calldata t,
         uint256 index,
         bytes32[] calldata siblingPath
     ) external payable nonReentrant {
+        // check this block is a real one, in the queue, not something made up.
+        bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
+
         // The transaction is a withdrawal transaction
         require(
             t.transactionType == TransactionTypes.WITHDRAW,
             'Shield: Can only advance withdrawals'
         );
 
-        // check this block is a real one, in the queue, not something made up.
-        state.areBlockAndTransactionReal(b, t, index, siblingPath);
+        require(msg.value > 0, 'Shield: Advance fee cannot be zero');
 
-        bytes32 withdrawTransactionHash = Utils.hashTransaction(t);
+        //Check that the withdrawal is still challengeable
+        require(
+            state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD >= block.timestamp,
+            'Shield: The block has already been finalized'
+        );
+
+        require(
+            t.tokenType == TokenType.ERC20 && t.tokenId == ZERO,
+            'Shield: Can only advance withdrawals for fungible tokens'
+        );
+
         // The withdrawal has not been withdrawn
-        require(!withdrawn[withdrawTransactionHash], 'Shield: Cannot double withdraw');
+        require(!withdrawn[transactionHash], 'Shield: This transaction has already paid out');
+        AdvanceWithdrawal memory advancedWithdrawal = advancedWithdrawals[transactionHash];
         address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
-        address currentOwner = advancedWithdrawals[withdrawTransactionHash] == address(0)
+        address currentOwner = advancedWithdrawal.currentOwner == address(0)
             ? originalRecipientAddress
-            : advancedWithdrawals[withdrawTransactionHash];
+            : advancedWithdrawal.currentOwner;
 
         // Only the owner of the withdraw can set the advanced withdrawal
         require(
             msg.sender == currentOwner,
             'Shield: You are not the current owner of this withdrawal'
         );
-        advancedFeeWithdrawals[withdrawTransactionHash] = msg.value;
-        (bool success, ) = payable(address(state)).call{value: msg.value}('');
-        require(success, 'Shield: Transfer failed.');
-        emit InstantWithdrawalRequested(withdrawTransactionHash, msg.sender, msg.value);
+
+        advancedWithdrawal.advanceFee += uint96(msg.value);
+        advancedWithdrawals[transactionHash] = advancedWithdrawal;
+        emit InstantWithdrawalRequested(transactionHash, msg.sender, advancedWithdrawal.advanceFee);
     }
 
     function payOut(Transaction calldata t, address recipientAddress) internal whenNotPaused {
@@ -296,14 +313,14 @@ contract Shield is Stateful, Config, Key_Registry, ReentrancyGuardUpgradeable, P
 
         if (t.tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
-                revert('Shield: ERC20 deposit should have tokenId equal to ZERO');
+                revert('Shield: ERC20 withdrawal should have tokenId equal to ZERO');
             if (t.value > super.getRestriction(addr, 1))
                 revert('Shield: Value is above current restrictions for withdrawals');
             else IERC20Upgradeable(addr).safeTransfer(recipientAddress, uint256(t.value));
         } else if (t.tokenType == TokenType.ERC721) {
             if (t.value != 0)
                 // value should always be equal to 0
-                revert('Shield: Invalid inputs for ERC721 deposit');
+                revert('Shield: Invalid inputs for ERC721 withdrawal');
             else
                 IERC721(addr).safeTransferFrom(
                     address(this),

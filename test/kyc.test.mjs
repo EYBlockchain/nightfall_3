@@ -3,9 +3,9 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { expectTransaction, Web3Client } from './utils.mjs';
-import logger from '../common-files/utils/logger.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -37,7 +37,7 @@ describe('KYC tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist1', MINIMUM_STAKE);
+    await nf3Proposer.registerProposer('http://optimist', MINIMUM_STAKE);
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();

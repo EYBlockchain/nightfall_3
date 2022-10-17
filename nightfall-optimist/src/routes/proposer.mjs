@@ -5,11 +5,11 @@
  */
 import express from 'express';
 import config from 'config';
-import Timber from 'common-files/classes/timber.mjs';
-import logger from 'common-files/utils/logger.mjs';
-import { getContractInstance } from 'common-files/utils/contract.mjs';
-import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
-import constants from 'common-files/constants/index.mjs';
+import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import { enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
@@ -44,14 +44,17 @@ router.post('/register', async (req, res, next) => {
   logger.debug({ msg: '/register endpoint', payload: JSON.stringify(req.body, null, 2) });
 
   try {
-    const { address, url = '' } = req.body;
+    const { address, url = '', fee = 0 } = req.body;
+    if (url === '') {
+      throw new Error('Rest API URL not provided');
+    }
     const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
     // the first thing to do is to check if the proposer is already registered on the blockchain
     const proposers = (await getProposers()).map(p => p.thisAddress);
     // if not, let's register it
     let txDataToSign = '';
     if (!proposers.includes(address)) {
-      txDataToSign = await proposersContractInstance.methods.registerProposer(url).encodeABI();
+      txDataToSign = await proposersContractInstance.methods.registerProposer(url, fee).encodeABI();
     } else {
       logger.warn(
         'Proposer was already registered on the blockchain - registration attempt ignored',
@@ -98,12 +101,14 @@ router.post('/update', async (req, res, next) => {
   logger.debug({ msg: '/update endpoint', payload: JSON.stringify(req.body, null, 2) });
 
   try {
-    const { address, url = '' } = req.body;
+    const { address, url = '', fee = 0 } = req.body;
     if (url === '') {
       throw new Error('Rest API URL not provided');
     }
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.updateProposer(url).encodeABI();
+    const txDataToSign = await proposersContractInstance.methods
+      .updateProposer(url, fee)
+      .encodeABI();
 
     logger.debug({
       msg: 'Returning raw transaction',
@@ -220,7 +225,7 @@ router.get('/pending-payments', async (req, res, next) => {
       try {
         // eslint-disable-next-line no-await-in-loop
         pending = await shieldContractInstance.methods
-          .isBlockPaymentPending(blocks[i].blockHash, blocks[i].blockNumberL2)
+          .isBlockPaymentPending(blocks[i].blockNumberL2)
           .call();
       } catch (e) {
         if (e.message.includes('Too soon to get paid for this block')) {

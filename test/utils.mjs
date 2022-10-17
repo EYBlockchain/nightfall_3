@@ -3,8 +3,8 @@
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
-import logger from '../common-files/utils/logger.mjs';
-import { rand } from '../common-files/utils/crypto/crypto-random.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 
 const { expect } = chai;
 const { WEB3_PROVIDER_OPTIONS, MINIMUM_STAKE } = config;
@@ -445,7 +445,7 @@ export const retrieveL2Balance = async (client, ercAddress) => {
 */
 export const registerProposerOnNoProposer = async proposer => {
   if ((await proposer.getCurrentProposer()) === '0x0000000000000000000000000000000000000000') {
-    await proposer.registerProposer('', MINIMUM_STAKE);
+    await proposer.registerProposer('http://optimist', MINIMUM_STAKE);
   }
 };
 

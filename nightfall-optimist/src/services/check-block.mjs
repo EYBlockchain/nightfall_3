@@ -1,8 +1,8 @@
 /**
 Module to check that submitted Blocks and Transactions are valid
 */
-import logger from 'common-files/utils/logger.mjs';
-import constants from 'common-files/constants/index.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { BlockError, Transaction } from '../classes/index.mjs';
 import checkTransaction from './transaction-checker.mjs';
 import {

@@ -9,6 +9,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import {
   waitForSufficientBalance,
@@ -17,7 +18,6 @@ import {
   // eslint-disable-next-line no-unused-vars
   waitForNoPendingCommitments,
 } from './utils.mjs';
-import logger from '../common-files/utils/logger.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -101,7 +101,7 @@ describe('Testing with an adversary', () => {
     startBalance = await retrieveL2Balance(nf3User);
 
     // Proposer registration
-    await nf3AdversarialProposer.registerProposer('', MINIMUM_STAKE);
+    await nf3AdversarialProposer.registerProposer('http://optimist', MINIMUM_STAKE);
     // Proposer listening for incoming events
     const blockProposeEmitter = await nf3AdversarialProposer.startProposer();
     blockProposeEmitter

@@ -1,6 +1,6 @@
 import Web3 from 'web3';
 import config from 'config';
-import constants from 'common-files/constants/index.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
 // These functions are called by static methods in the Block class but are sometimes needed when the rest
 // of the block object isn't.  They can thus be called directly when instantiating the Block class

@@ -1,7 +1,7 @@
 version: '3.5'
 # Use this script for making an adversary service
 services:
-  adversary1:
+  adversary:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     build:

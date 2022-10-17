@@ -1,7 +1,7 @@
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
-import mongo from 'common-files/utils/mongo.mjs';
-import { queueManager } from 'common-files/utils/event-queue.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
+import { queueManager } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
