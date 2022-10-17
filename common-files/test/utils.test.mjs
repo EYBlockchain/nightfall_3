@@ -128,7 +128,7 @@ describe('Utils tests', function () {
     expect(obfuscate.bind('', OBFUSCATION_SETTINGS_TEST)).to.throw(Error);
   });
 
-  it('Should raise an error if if ObfuscationSettings param is undefined', () => {
+  it('Should raise an error if ObfuscationSettings param is undefined', () => {
     expect(obfuscate.bind('', undefined)).to.throw(Error);
   });
 
