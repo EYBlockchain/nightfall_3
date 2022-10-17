@@ -54,6 +54,8 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
                 proposer.thisAddress = msg.sender; // proposer: (_,B,_)
                 proposer.nextAddress = currentProposer.thisAddress; // proposer: (_,B,A)
                 proposer.previousAddress = currentProposer.previousAddress; // proposer: (x,B,A)
+                proposer.url = url;
+                proposer.fee = fee;
                 // pull global state
                 LinkedAddress memory proposersPrevious = state.getProposer(
                     currentProposer.previousAddress
