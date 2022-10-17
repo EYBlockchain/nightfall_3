@@ -103,6 +103,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-32}
     command: ['npm', 'run', 'dev']
 
   rabbitmq:
