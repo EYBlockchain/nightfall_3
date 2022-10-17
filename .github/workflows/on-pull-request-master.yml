@@ -618,7 +618,7 @@ jobs:
 
       - name: Boot up the apps
         run: |
-          ./start-apps &> test-proposer.log &disown
+          ./bin/start-apps &> test-proposer.log &disown
 
       - name: 'Check proposer liveliness'
 
