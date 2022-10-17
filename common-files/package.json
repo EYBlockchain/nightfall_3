@@ -23,6 +23,7 @@
     "express-fileupload": "^1.4.0"
   },
   "devDependencies": {
+    "chai": "^4.3.6",
     "mocha": "^10.0.0"
   },
   "overrides": {
