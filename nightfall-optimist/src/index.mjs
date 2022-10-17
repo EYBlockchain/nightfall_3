@@ -1,5 +1,9 @@
-import logger from 'common-files/utils/logger.mjs';
-import { queueManager, queues, enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import {
+  queueManager,
+  queues,
+  enqueueEvent,
+} from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import app from './app.mjs';
 import {
   startEventQueue,

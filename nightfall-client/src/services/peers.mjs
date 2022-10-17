@@ -1,8 +1,8 @@
 /**
  * This module discovers and manages optimistic peers for direct transfers
  */
-import { getContractInstance } from 'common-files/utils/contract.mjs';
-import constants from 'common-files/constants/index.mjs';
+import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
 const { STATE_CONTRACT_NAME } = constants;
 

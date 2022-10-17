@@ -1,4 +1,4 @@
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Block from '../classes/block.mjs';
 import {
   isRegisteredProposerAddressMine,

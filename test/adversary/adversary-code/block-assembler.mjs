@@ -5,7 +5,7 @@ This module does all of the heaving lifting for a Proposer: It assembles blocks
 from posted transactions and proposes these blocks.
 */
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { getMostProfitableTransactions } from './database.mjs';
 import Block from './block.mjs';
 
