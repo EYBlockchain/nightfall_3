@@ -63,7 +63,7 @@ describe('Utils tests', function () {
       process.env.ENVIRONMENT = 'aws';
     });
 
-    it('Should obfuscate the object successfuly', () => {
+    it('Should obfuscate the object successfully', () => {
       const result = obfuscate(OBJECT_TO_OBFUSCATE, OBFUSCATION_SETTINGS_TEST);
 
       assert.deepEqual(result, {
