@@ -82,7 +82,7 @@ export async function conditionalMakeBlock(proposer) {
    */
   if (proposer.isMe) {
     const unprocessed = await numberOfUnprocessedTransactions();
-    let numberOfProposableL2Blocks = Math.floor(unprocessed / TRANSACTIONS_PER_BLOCK);
+    let numberOfProposableL2Blocks = Math.floor(unprocessed);
     // if we want to make a block right now but there aren't enough transactions, this logic
     // tells us to go anyway
     if (makeNow && unprocessed > 0 && numberOfProposableL2Blocks === 0)
@@ -102,8 +102,7 @@ export async function conditionalMakeBlock(proposer) {
 
       for (let i = 0; i < numberOfProposableL2Blocks; i++) {
         // work out if this is a normal size block or a short one
-        const numberOfTransactionsInBlock =
-          unprocessed >= TRANSACTIONS_PER_BLOCK ? TRANSACTIONS_PER_BLOCK : unprocessed;
+        const numberOfTransactionsInBlock = 1;
         makeNow = false; // reset the makeNow so we only make one block with a short number of transactions
         const { block, transactions } = await makeBlock(
           proposer.address,
