@@ -34,6 +34,7 @@ type TxInfo = {
   tokenId: GeneralNumber;
   rootKey: any;
   maxNumberNullifiers: number;
+  onlyFee: boolean;
 };
 
 const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
@@ -46,6 +47,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
     tokenId = generalise(0),
     rootKey,
     maxNumberNullifiers,
+    onlyFee = false,
   } = txInfo;
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
@@ -67,6 +69,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
     value,
     feeValue,
     maxNumberNullifiers,
+    onlyFee,
   );
 
   if (!commitments) throw new Error('Not available commitments has been found');
