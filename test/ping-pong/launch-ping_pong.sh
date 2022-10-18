@@ -87,7 +87,7 @@ do
 
   echo "Launching proposer_${i} ${PROPOSER_PORT[i-1]} ${PROPOSER_KEY[i-1]}"
   docker run --rm -d --name proposer_${i} \
-    -v ${PWD}/../../apps/proposer/src:/app/src \
+    -v ${PWD}/apps/proposer/src:/app/src \
     --network nightfall_3_nightfall_network \
     -p ${PROPOSER_PORT[i-1]}:${PROPOSER_PORT[i-1]} \
     -e PROPOSER_HOST=proposer_${i} \
