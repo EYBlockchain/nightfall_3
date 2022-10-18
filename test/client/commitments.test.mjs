@@ -5,11 +5,14 @@ import axios from 'axios';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
+import { getERCInfo } from '../../cli/lib/tokens.mjs';
 import { pendingCommitmentCount, Web3Client } from '../utils.mjs';
 
+const { generalise } = gen;
 // so we can use require with mjs file
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -156,6 +159,65 @@ describe('Custom Commitment Selection Test', () => {
       expect(remainingCommitments).to.not.include(selectedCommitment);
       expect(await getL2tokenBalance(nf3Users[0])).to.equal(senderBalance - transferValue - fee);
       expect(await getL2tokenBalance(nf3Users[1])).to.equal(recipientBalance + transferValue);
+    });
+
+    it('should transfer a specified ERC721 commitment', async () => {
+      const senderKey = nf3Users[0].zkpKeys.compressedZkpPublicKey;
+      const recipientKey = nf3Users[1].zkpKeys.compressedZkpPublicKey;
+
+      const erc721Address = await nf3Users[0].getContractAddress('ERC721Mock');
+      logger.debug(erc721Address);
+
+      const availableTokenIds = (
+        await getERCInfo(erc721Address, nf3Users[0].ethereumAddress, web3Client.getWeb3(), {
+          details: true,
+        })
+      ).details.map(t => t.tokenId);
+      const erc721TokenId = generalise(availableTokenIds.shift()).hex(32);
+      logger.debug(`erc721 token id ${erc721TokenId}`);
+
+      await nf3Users[0].deposit(erc721Address, 'ERC721', 0, erc721TokenId);
+      await emptyL2();
+
+      const connection = await mongo.connection(MONGO_URL);
+      const selectedCommitment = await connection
+        .db(COMMITMENTS_DB)
+        .collection(COMMITMENTS_COLLECTION)
+        .findOne({
+          compressedZkpPublicKey: senderKey,
+          isNullified: false,
+          isPendingNullification: false,
+          'preimage.ercAddress': ethers.utils.hexZeroPad(erc721Address, 32),
+          'preimage.tokenId': erc721TokenId,
+        });
+
+      expect(selectedCommitment).to.not.equal(null);
+      logger.debug(`selected commit with ID: ${selectedCommitment._id}`);
+
+      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
+        offchain: false,
+        ercAddress: erc721Address,
+        tokenId: erc721TokenId,
+        recipientData: {
+          values: [0],
+          recipientCompressedZkpPublicKeys: [recipientKey],
+        },
+        rootKey: nf3Users[0].zkpKeys.rootKey,
+        fee,
+        providedCommitments: [selectedCommitment._id],
+      });
+
+      // since the transaction is on chain we still need to submit it
+      await nf3Users[0].submitTransaction(
+        res.data.txDataToSign,
+        nf3Users[0].shieldContractAddress,
+        0,
+      );
+
+      // assert commitment is spent
+      await emptyL2();
+      const remainingCommitments = await commitmentsToSend(senderKey);
+      expect(remainingCommitments).to.not.include(selectedCommitment);
     });
 
     it('should reject invalid hashes', async () => {

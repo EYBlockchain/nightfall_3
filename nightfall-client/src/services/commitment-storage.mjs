@@ -582,7 +582,7 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
   return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
 
-async function verifyEnoughCommitments(
+export async function verifyEnoughCommitments(
   compressedZkpPublicKey,
   ercAddress,
   tokenId,
@@ -667,7 +667,7 @@ async function verifyEnoughCommitments(
       .toArray();
 
     // If not commitments are found, the fee cannot be paid, so return null
-    if (commitmentArrayFee === []) return null;
+    if (commitmentArrayFee === []) throw new Error('no commitments found');
 
     // Turn the fee commitments into real commitment object and sort it
     commitmentsFee = commitmentArrayFee
@@ -694,8 +694,55 @@ async function verifyEnoughCommitments(
 
     // If after the loop minFc is still zero means that we didn't found any sum of commitments
     // higher or equal than the fee required. Therefore the user can not pay it
-    if (minFc === 0) return null;
+    if (minFc === 0) throw new Error('no commitments to cover the fee');
   }
+
+  // Get the commitments from the database
+  const commitmentArray = await db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({
+      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
+      'preimage.ercAddress': ercAddress.hex(32),
+      'preimage.tokenId': tokenId.hex(32),
+      isNullified: false,
+      isPendingNullification: false,
+    })
+    .toArray();
+
+  // If not commitments are found, the transfer/withdrawal cannot be paid, so return null
+  if (commitmentArray === []) throw new Error('no commitment for the actual transfer fround');
+
+  // Turn the fee commitments into real commitment object and sort it
+  const commitments = commitmentArray
+    .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
+    .map(ct => new Commitment(ct.preimage))
+    .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
+
+  const c = commitments.length; // Store the number of commitments
+  let minC = 0;
+
+  // At most, we can use (maxNumberNullifiers - number of fee commitments needed) commitments to pay for the
+  // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
+  // Therefore, the maximum number of commitments the user will be able to use is the minimum between
+  // maxNumberNullifiers - minFc and the number of commitments (c)
+  const maxPossibleCommitments = Math.min(c, maxNumberNullifiers - minFc);
+
+  let j = 1;
+  let sumHighestCommitments = 0n;
+  // We try to find the minimum number of commitments whose sum is higher than the value sent.
+  // Since the array is sorted, we just need to try to sum the highest commitments.
+  while (j <= maxPossibleCommitments) {
+    sumHighestCommitments += commitments[c - j].preimage.value.bigInt;
+    if (sumHighestCommitments >= value.bigInt) {
+      minC = j;
+      break;
+    }
+    ++j;
+  }
+
+  // If after the loop minC is still zero means that we didn't found any sum of commitments
+  // higher or equal than the amount required. Therefore the user can not pay it
+  if (minC === 0) throw new Error('no commitments found to cover the value');
 
   return { commitmentsFee, minFc, commitments, minC };
 }
@@ -815,6 +862,38 @@ function findSubsetNCommitments(N, commitments, value) {
   return commitmentsToUse;
 }
 
+export function selectCommitments(commitments, value, minC, minFc, maxNumberNullifiers) {
+  const possibleSubsetsCommitments = [];
+
+  // Get the "best" subset of each possible size to then decide which one is better overall
+  // From the calculations performed in "verifyEnoughCommitments" we know that at least
+  // minC commitments are required. On the other hand, we can use a maximum of maxNumberNullifiers commitments
+  // but we have to take into account that some spots needs to be used for the fee and that
+  // maybe the user does not have as much commitments
+  for (let i = minC; i <= Math.min(commitments.length, maxNumberNullifiers - minFc); ++i) {
+    const subset = findSubsetNCommitments(i, commitments, value);
+    possibleSubsetsCommitments.unshift(subset);
+  }
+
+  // Rank the possible commitments subsets.
+  // We prioritize the subset that minimizes the change.
+  // If two subsets have the same change, we priority the subset that uses more commitments
+  const rankedSubsetCommitmentsArray = possibleSubsetsCommitments
+    .filter(subset => subset.length > 0)
+    .sort((a, b) => {
+      const changeA = a.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
+      const changeB = b.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
+      if (changeA - changeB === 0n) {
+        return b.length - a.length;
+      }
+
+      return changeA > changeB ? 0 : -1;
+    });
+
+  // Select the first ranked subset as the commitments the user will spend
+  return rankedSubsetCommitmentsArray.length > 0 ? rankedSubsetCommitmentsArray[0] : [];
+}
+
 async function findUsableCommitments(
   compressedZkpPublicKey,
   ercAddress,
@@ -853,73 +932,10 @@ async function findUsableCommitments(
     );
   }
 
-  const possibleSubsetsCommitments = [];
+  const oldCommitments = selectCommitments(commitments, value, minC, minFc, maxNumberNullifiers);
 
-  // Get the "best" subset of each possible size to then decide which one is better overall
-  // From the calculations performed in "verifyEnoughCommitments" we know that at least
-  // minC commitments are required. On the other hand, we can use a maximum of maxNumberNullifiers commitments
-  // but we have to take into account that some spots needs to be used for the fee and that
-  // maybe the user does not have as much commitments
-  for (let i = minC; i <= Math.min(commitments.length, maxNumberNullifiers - minFc); ++i) {
-    const subset = findSubsetNCommitments(i, commitments, value);
-    possibleSubsetsCommitments.unshift(subset);
-  }
-
-  // Rank the possible commitments subsets.
-  // We prioritize the subset that minimizes the change.
-  // If two subsets have the same change, we priority the subset that uses more commitments
-  const rankedSubsetCommitmentsArray = possibleSubsetsCommitments
-    .filter(subset => subset.length > 0)
-    .sort((a, b) => {
-      const changeA = a.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
-      const changeB = b.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
-      if (changeA - changeB === 0n) {
-        return b.length - a.length;
-      }
-
-      return changeA > changeB ? 0 : -1;
-    });
-
-  // Select the first ranked subset as the commitments the user will spend
-  const oldCommitments =
-    rankedSubsetCommitmentsArray.length > 0 ? rankedSubsetCommitmentsArray[0] : [];
-
-  const possibleSubsetsCommitmentsFee = [];
-
-  if (fee.bigInt > 0n) {
-    // Get the "best" subset of each possible size for the fee to then decide which one
-    // is better overall. We know that at least we require minFc commitments.
-    // On the other hand, we can use a maximum of maxNumberNullifiers commitments minus the spots already used
-    // for the regular transfer. We also take into account that the user may not have as much commits
-    for (
-      let i = minFc;
-      i <= Math.min(commitmentsFee.length, maxNumberNullifiers - oldCommitments.length);
-      ++i
-    ) {
-      const subset = findSubsetNCommitments(i, commitmentsFee, fee);
-      possibleSubsetsCommitmentsFee.unshift(subset);
-    }
-  }
-
-  // Rank the possible commitments subsets.
-  // We prioritize the subset that minimizes the change.
-  // If two subsets have the same change, we priority the subset that uses more commitments
-  const rankedSubsetCommitmentsFeeArray = possibleSubsetsCommitmentsFee
-    .filter(subset => subset.length > 0)
-    .sort((a, b) => {
-      const changeA = a.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
-      const changeB = b.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
-      if (changeA - changeB === 0n) {
-        return b.length - a.length;
-      }
-
-      return Number(changeA - changeB);
-    });
-
-  // If fee was zero, ranked subset will be an empty array and therefore no commitments will be assigned
-  // Otherwise, set the best ranked as the commitments to spend
   const oldCommitmentsFee =
-    rankedSubsetCommitmentsFeeArray.length > 0 ? rankedSubsetCommitmentsFeeArray[0] : [];
+    fee.bigInt > 0n ? selectCommitments(commitments, fee, minC, minFc, maxNumberNullifiers) : [];
 
   // Mark all the commitments used as pending so that they can not be used twice
   await Promise.all(

@@ -9,6 +9,8 @@ import {
   findUsableCommitmentsMutex,
   getSiblingInfo,
   getCommitmentsByHash,
+  verifyEnoughCommitments,
+  selectCommitments,
 } from '../services/commitment-storage.mjs';
 import Commitment from '../classes/commitment.mjs';
 import { ZkpKeys } from '../services/keys.mjs';
@@ -79,10 +81,27 @@ export const getCommitmentInfo = async txInfo => {
     // transform the hashes retrieved from the DB to well formed commitments
     const oldCommitments = rawCommitments.map(ct => new Commitment(ct.preimage));
 
-    await Promise.all(oldCommitments.map(commitment => markPending(commitment)));
+    const commitmentsVerification = await verifyEnoughCommitments(
+      compressedZkpPublicKey,
+      ercAddress,
+      tokenId,
+      generalise(value),
+      maticAddress,
+      fee,
+      maxNumberNullifiers,
+    );
 
-    // TODO: this seems wrong, does this break something?
-    commitments = { oldCommitments, oldCommitmentsFee: [] };
+    if (!commitmentsVerification) throw new Error('commitment verification failed');
+
+    const { minC, minFc, commitmentsFee } = commitmentsVerification;
+    const oldCommitmentsFee =
+      fee.bigInt > 0n
+        ? selectCommitments(commitmentsFee, fee, minC, minFc, maxNumberNullifiers)
+        : [];
+    await Promise.all(
+      [...oldCommitments, ...oldCommitmentsFee].map(commitment => markPending(commitment)),
+    );
+    commitments = { oldCommitments, oldCommitmentsFee };
   } else {
     commitments = await findUsableCommitmentsMutex(
       compressedZkpPublicKey,
