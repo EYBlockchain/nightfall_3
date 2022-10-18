@@ -114,10 +114,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      # right now it doesn't matter what is IS_CHALLENGER flag's value is because
-      # optimist container state-sync code start challenges at time of startup
-      # by calling startMakingChallenges() function
-      IS_CHALLENGER: ${IS_CHALLENGER:-false}
+      IS_CHALLENGER: ${IS_CHALLENGER:-true}
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
 

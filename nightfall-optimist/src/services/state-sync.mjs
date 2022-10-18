@@ -112,7 +112,11 @@ export default async proposer => {
   if (lastBlockNumberL2 === -1) {
     unpauseQueue(0); // queues are started paused, therefore we need to unpause them before proceeding.
     unpauseQueue(1);
-    startMakingChallenges();
+    try {
+      startMakingChallenges();
+    } catch (err) {
+      // ignore the error
+    }
     return null; // The blockchain is empty
   }
   // pause the queues so we stop processing incoming events while we sync
@@ -140,7 +144,11 @@ export default async proposer => {
      a challenge in the stop queue that was not removed by a rollback.
      If this is the case we'll run the stop queue to challenge the bad block.
     */
-    await startMakingChallenges();
+    try {
+      startMakingChallenges();
+    } catch (err) {
+      // ignore the error
+    }
     if (queues[2].length === 0)
       logger.info('After synchronisation, no challenges remain unresolved');
     else {
