@@ -291,7 +291,7 @@ contract Challenges is Stateful, Key_Registry, Config {
     function removeBlockHashes(uint256 blockNumberL2) internal returns (BlockData[] memory) {
         uint256 lastBlock = state.getNumberOfL2Blocks() - 1;
         BlockData[] memory badBlocks = new BlockData[](lastBlock - blockNumberL2 + 1);
-        for (uint256 i = 0; i <= lastBlock - blockNumberL2 + 1; i++) {
+        for (uint256 i = 0; i <= lastBlock - blockNumberL2; i++) {
             BlockData memory blockData = state.popBlockData();
             state.setBlockStakeWithdrawn(blockData.blockHash);
             badBlocks[i] = blockData;
