@@ -87,6 +87,7 @@ describe('Gas test', () => {
 
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
     });
+  });
 
   describe('Withdraws', () => {
     it('should be a reasonable gas cost', async function () {
