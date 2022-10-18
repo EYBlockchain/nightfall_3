@@ -377,7 +377,6 @@ class Nf3 {
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
   async tokenise(
-    offchain,
     ercAddress,
     fee = this.defaultFeeMatic,
     salt = undefined,
@@ -385,7 +384,6 @@ class Nf3 {
     compressedSecrets = undefined,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/tokenise`, {
-      offchain,
       ercAddress,
       tokenId,
       salt,
@@ -397,22 +395,6 @@ class Nf3 {
 
     if (res.data.error && res.data.error === 'No suitable commitments') {
       throw new Error('No suitable commitments');
-    }
-    if (!offchain) {
-      return new Promise((resolve, reject) => {
-        userQueue.push(async () => {
-          try {
-            const receipt = await this.submitTransaction(
-              res.data.txDataToSign,
-              this.shieldContractAddress,
-              0,
-            );
-            resolve(receipt);
-          } catch (err) {
-            reject(err);
-          }
-        });
-      });
     }
     return res.status;
   }

@@ -19,7 +19,6 @@ const { generalise } = gen;
 async function tokenise(items) {
   logger.info('Creating a tokenise transaction');
   const {
-    offchain = false,
     ercAddress,
     salt = await randValueLT(BN128_GROUP_ORDER),
     compressedZkpPublicKey,
@@ -54,13 +53,15 @@ async function tokenise(items) {
     onlyFee: true,
   });
 
+  commitmentsInfo.newCommitments = [commitment, ...commitmentsInfo.newCommitments];
+
   try {
     const publicData = new Transaction({
       fee,
       tokenId,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       transactionType: 3,
-      commitments: [commitment, ...commitmentsInfo.newCommitments],
+      commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets,
       numberNullifiers: VK_IDS.tokenise.numberNullifiers,
@@ -75,16 +76,11 @@ async function tokenise(items) {
 
       paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
       orders: commitmentsInfo.leafIndices,
-      newCommitmentPreimage: [
-        { value: 0, salt },
-        ...commitmentsInfo.newCommitments.map(o => {
-          return { value: o.preimage.value, salt: o.preimage.salt };
-        }),
-      ],
-      recipientPublicKeys: [
-        zkpPublicKey,
-        ...commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      ],
+      newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
+        return { value: o.preimage.value, salt: o.preimage.salt };
+      }),
+
+      recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
       ercAddress,
       tokenId,
     };
@@ -122,7 +118,7 @@ async function tokenise(items) {
       tokenId,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       transactionType: 3,
-      commitments: [commitment, ...commitmentsInfo.newCommitments],
+      commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets,
       proof,
@@ -133,7 +129,6 @@ async function tokenise(items) {
     logger.debug({
       msg: 'Client made transaction',
       transaction: JSON.stringify(optimisticTokeniseTransaction, null, 2),
-      offchain,
     });
 
     return submitTransaction(
@@ -141,7 +136,7 @@ async function tokenise(items) {
       commitmentsInfo,
       rootKey,
       shieldContractInstance,
-      offchain,
+      true,
     );
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));

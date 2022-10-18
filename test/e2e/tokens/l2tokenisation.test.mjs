@@ -97,18 +97,22 @@ describe('L2 Tokenisation tests', () => {
     await web3Client.closeWeb3();
   });
 
-  describe('Tokenise tests', async () => {
-    it('should increment the balance after deposit some ERC20 crypto', async function () {
+  describe('Tokenise tests', () => {
+    it('should create a l2 tokenisation successfully', async function () {
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
-      console.log('BEFORE BALANCE', beforeBalance);
-      const res = await nf3Users[0].tokenise(false, l2Address, fee);
+      const erc20AddressBalanceBefore = beforeBalance[erc20Address]?.[0].balance || 0;
+      const l2AddressBalanceBefore = beforeBalance[l2Address]?.length || 0;
 
-      console.log('RES', res);
+      await nf3Users[0].tokenise(l2Address, fee);
+
       await emptyL2();
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
-      console.log('AFTER BALANCE', afterBalance);
+      const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
+      const l2AddressBalanceAfter = afterBalance[l2Address]?.length || 0;
+      expect(l2AddressBalanceAfter - l2AddressBalanceBefore).to.be.equal(1);
+      expect(erc20AddressBalanceAfter - erc20AddressBalanceBefore).to.be.equal(-fee);
     });
   });
 });

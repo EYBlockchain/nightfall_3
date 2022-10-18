@@ -18,7 +18,7 @@ const { generalise } = gen;
 async function burn(burnParams) {
   logger.info('Creating a burn transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = burnParams;
+  const { ...items } = burnParams;
   const { providedCommitments, rootKey, fee } = generalise(items);
 
   // TODO: THIS LINE IS WRONG
@@ -32,11 +32,10 @@ async function burn(burnParams) {
   );
 
   const commitmentsInfo = await getCommitmentInfo({
-    totalValueToSend: 0,
+    totalValueToSend: 0n,
     fee,
-    ercAddress: 0,
+    ercAddress: generalise(0),
     maticAddress,
-    tokenId: 0,
     rootKey,
     maxNumberNullifiers: VK_IDS.burn.numberNullifiers,
     onlyFee: true,
@@ -112,7 +111,6 @@ async function burn(burnParams) {
     logger.debug({
       msg: 'Client made transaction',
       transaction: JSON.stringify(optimisticBurnTransaction, null, 2),
-      offchain,
     });
 
     return submitTransaction(
@@ -120,7 +118,7 @@ async function burn(burnParams) {
       commitmentsInfo,
       rootKey,
       shieldContractInstance,
-      offchain,
+      true,
     );
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
