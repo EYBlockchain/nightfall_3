@@ -11,7 +11,7 @@ services:
     networks:
       - nightfall_network
     ports:
-      - 8091:80
+      - 8080:80
     depends_on:
       - worker
       - rabbitmq
