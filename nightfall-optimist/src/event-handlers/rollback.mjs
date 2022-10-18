@@ -13,7 +13,7 @@ import {
   getTransactionsByTransactionHashes,
   deleteTransactionsByTransactionHashes,
   deleteTreeByBlockNumberL2,
-  getAllRegisteredProposers,
+  getAllRegisteredProposersCount,
 } from '../services/database.mjs';
 import {
   checkDuplicateCommitmentsWithinBlock,
@@ -100,7 +100,7 @@ async function rollbackEventHandler(data) {
 
   // if optimist has a register proposer, signal rollback to
   // that proposer websocket client
-  if ((await getAllRegisteredProposers()).length > 0)
+  if ((await getAllRegisteredProposersCount()) > 0)
     await enqueueEvent(() => signalRollbackCompletedToProposer(), 0);
 
   // assumption is if optimist has makeChallenges ON there is challenger

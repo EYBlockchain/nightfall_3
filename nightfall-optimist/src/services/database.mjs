@@ -282,10 +282,10 @@ export async function deleteRegisteredProposerAddress(address) {
 }
 
 // get all register proposer
-export async function getAllRegisteredProposers() {
+export async function getAllRegisteredProposersCount() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(PROPOSER_COLLECTION).find();
+  return db.collection(PROPOSER_COLLECTION).count();
 }
 
 /**

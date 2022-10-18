@@ -87,7 +87,11 @@ describe('Optimist synchronisation tests', () => {
       );
     // setup a listener for a block proposal
     const rollbackPromise = () =>
-      new Promise(resolve => blockProposeEmitter.on('rollback', () => resolve()));
+      new Promise(resolve =>
+        challengeEmitter.on('rollback', () => {
+          resolve();
+        }),
+      );
 
     // setup a healthcheck wait
     const healthy = async () => {
