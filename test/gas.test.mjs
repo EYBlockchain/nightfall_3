@@ -87,66 +87,6 @@ describe('Gas test', () => {
 
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
     });
-    it('should be a reasonable gas cost', async function () {
-      // We create enough transactions to fill blocks full of deposits.
-      const receipts = await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        0,
-      );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
-      console.log('Deposit L1 average gas used was', averageL1GasCost(receipts));
-    });
-  });
-
-  describe('Single transfers', () => {
-    it('should be a reasonable gas cost', async function () {
-      // We create enough transactions to fill blocks full of deposits.
-      const receipts = await transferNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        nf3Users[0].zkpKeys.compressedZkpPublicKey,
-        0,
-      );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
-      console.log(
-        'Single transfer L1 average gas used, if on-chain, was',
-        averageL1GasCost(receipts),
-      );
-    });
-  });
-
-  describe('Double transfers', () => {
-    it('should be a reasonable gas cost', async function () {
-      // We create enough transactions to fill blocks full of deposits.
-      const receipts = await transferNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue / 2,
-        tokenId,
-        nf3Users[0].zkpKeys.compressedZkpPublicKey,
-        0,
-      );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
-      console.log(
-        'Double transfer L1 average gas used, if on-chain, was',
-        averageL1GasCost(receipts),
-      );
-    });
-  });
 
   describe('Withdraws', () => {
     it('should be a reasonable gas cost', async function () {

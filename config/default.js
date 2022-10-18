@@ -206,19 +206,19 @@ module.exports = {
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
       user2:
         process.env.USER2_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+        '0x955ff4fac3c1ae8a1b7b9ff197476de1f93e9f0bf5f1c21ff16456e3c84da587',
       proposer1:
         process.env.BOOT_PROPOSER_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
       proposer2:
         process.env.PROPOSER2_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+        '0xabf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce',
       proposer3:
         process.env.PROPOSER3_KEY ||
-        '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+        '0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a',
       challenger:
         process.env.BOOT_CHALLENGER_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+        '0x1da216993fb96745dcba8bc6f2ef5deb75ce602fd92f91ab702d8250033f4e1c',
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_KEY ||
         '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
@@ -226,12 +226,12 @@ module.exports = {
     addresses: {
       walletTest: process.env.WALLET_TEST_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
       user1: process.env.USER1_ADDRESS || '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
-      user2: process.env.USER2_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      user2: process.env.USER2_ADDRESS || '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
       proposer1: process.env.BOOT_PROPOSER_ADDRESS || '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-      proposer2: process.env.PROPOSER2_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-      proposer3: process.env.PROPOSER3_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+      proposer2: process.env.PROPOSER2_ADDRESS || '0xa12D5C4921518980c57Ce3fFe275593e4BAB9211',
+      proposer3: process.env.PROPOSER3_ADDRESS || '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8',
       challenger:
-        process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+        process.env.BOOT_CHALLENGER_ADDRESS || '0xFFF578cDdc48792522F4a7Fdc3973Ec0d41A831f',
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
