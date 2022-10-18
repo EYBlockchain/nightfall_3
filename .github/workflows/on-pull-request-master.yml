@@ -1,8 +1,8 @@
 name: Check PR
 
 on:
-  push:
-    branches: [liju.jose/fix-chait/adversary2]
+  pull_request:
+    branches: [master]
 
 jobs:
   dependency-review:
