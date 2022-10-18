@@ -116,6 +116,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
         stake.amount -= blockStake;
+        require(stake.amount >= blockStake, "Proposer doesn't have enough funds staked");
         stake.challengeLocked += blockStake;
         stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
 

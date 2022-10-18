@@ -5,6 +5,7 @@ import WebSocket from 'ws';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { Mutex } from 'async-mutex';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
@@ -27,7 +28,7 @@ import {
 // then there will only be one queue here. The constructor does not need to initialise clientBaseUrl
 // for proposer/liquidityProvider/challenger and optimistBaseUrl, optimistWsUrl for a user etc
 const userQueue = new Queue({ autostart: true, concurrency: 1 });
-const proposerQueue = new Queue({ autostart: true, concurrency: 1 });
+const proposerQueue = new Queue({ autostart: true });
 const challengerQueue = new Queue({ autostart: true, concurrency: 1 });
 const liquidityProviderQueue = new Queue({ autostart: true, concurrency: 1 });
 
@@ -85,6 +86,10 @@ class Nf3 {
   contracts = { ERC20: erc20, ERC721: erc721, ERC1155: erc1155 };
 
   currentEnvironment;
+
+  nonce = 0;
+
+  nonceMutex = new Mutex();
 
   constructor(
     ethereumSigningKey,
@@ -150,6 +155,7 @@ class Nf3 {
   async setEthereumSigningKey(key) {
     this.ethereumSigningKey = key;
     this.ethereumAddress = await this.getAccounts();
+    this.nonce = 0;
   }
 
   /**
@@ -255,6 +261,77 @@ class Nf3 {
   }
 
   /**
+  Method for signing an Ethereum transaction to the
+  blockchain.
+  @method
+  @async
+  @param {object} unsignedTransaction - An unsigned web3js transaction object.
+  @param {string} shieldContractAddress - The address of the Nightfall_3 shield address.
+  @param {number} fee - the value of the transaction.
+  This can be found using the getContractAddress convenience function.
+  @returns {Oject} Signed transaction.
+  */
+  async _signTransaction(unsignedTransaction, contractAddress, fee) {
+    let tx;
+    let signed;
+
+    await this.nonceMutex.runExclusive(async () => {
+      // estimate the gasPrice
+      const gasPrice = await this.estimateGasPrice();
+      // Estimate the gasLimit
+      const gas = await this.estimateGas(contractAddress, unsignedTransaction);
+
+      // if we don't have a nonce, we must get one from the ethereum client
+      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+
+      tx = {
+        from: this.ethereumAddress,
+        to: contractAddress,
+        data: unsignedTransaction,
+        value: fee,
+        gas,
+        gasPrice,
+        nonce: this.nonce,
+      };
+      this.nonce++;
+
+      if (this.ethereumSigningKey) {
+        signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
+      }
+    });
+
+    if (this.ethereumSigningKey) {
+      return { signed, nonce: tx.nonce };
+    }
+    return { tx, nonce: tx.nonce };
+  }
+
+  /**
+  Method for submitting an Ethereum transaction to the
+  blockchain.
+  @method
+  @async
+  @param {object} tx - An signed web3js transaction object.
+  @returns {Promise} This will resolve into a transaction receipt.
+  */
+  async _sendTransaction(tx) {
+    if (this.ethereumSigningKey) {
+      const promiseTest = new Promise((resolve, reject) => {
+        this.web3.eth
+          .sendSignedTransaction(tx.rawTransaction)
+          .once('receipt', receipt => {
+            resolve(receipt);
+          })
+          .on('error', err => {
+            reject(err);
+          });
+      });
+      return promiseTest;
+    }
+    return this.web3.eth.sendTransaction(tx);
+  }
+
+  /**
   Method for signing and submitting an Ethereum transaction to the
   blockchain.
   @method
@@ -266,34 +343,8 @@ class Nf3 {
   @returns {Promise} This will resolve into a transaction receipt.
   */
   async submitTransaction(unsignedTransaction, contractAddress = this.shieldContractAddress, fee) {
-    // estimate the gasPrice
-    const gasPrice = await this.estimateGasPrice();
-    // Estimate the gasLimit
-    const gas = await this.estimateGas(contractAddress, unsignedTransaction);
-    const tx = {
-      from: this.ethereumAddress,
-      to: contractAddress,
-      data: unsignedTransaction,
-      value: fee,
-      gas,
-      gasPrice,
-    };
-    // logger.debug(`submitting tx, ${JSON.stringify(tx, null, 2)}`);
-    if (this.ethereumSigningKey) {
-      const signed = await this.web3.eth.accounts.signTransaction(tx, this.ethereumSigningKey);
-      const promiseTest = new Promise((resolve, reject) => {
-        this.web3.eth
-          .sendSignedTransaction(signed.rawTransaction)
-          .once('receipt', receipt => {
-            resolve(receipt);
-          })
-          .on('error', err => {
-            reject(err);
-          });
-      });
-      return promiseTest;
-    }
-    return this.web3.eth.sendTransaction(tx);
+    const tx = await this._signTransaction(unsignedTransaction, contractAddress, fee);
+    return this._sendTransaction(tx.signed);
   }
 
   /**
@@ -928,18 +979,22 @@ class Nf3 {
       const { type, txDataToSign, block, transactions, data } = msg;
       logger.debug(`Proposer received websocket message of type ${type}`);
       if (type === 'block') {
+        // First sign transaction, and send it within asynchronous queue. This will
+        // ensure that blockProposed events are emitted in order and with the correct nonce.
+        const tx = await this._signTransaction(
+          txDataToSign,
+          this.stateContractAddress,
+          this.BLOCK_STAKE,
+        );
         proposerQueue.push(async () => {
           try {
-            const receipt = await this.submitTransaction(
-              txDataToSign,
-              this.stateContractAddress,
-              this.BLOCK_STAKE,
-            );
+            const receipt = await this._sendTransaction(tx.signed);
             proposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
             // block proposed is reverted. Send transactions back to mempool
-            proposeEmitter.emit('error', err, block, transactions);
+            logger.error(`Submitted block error ${err}`);
             await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+            proposeEmitter.emit('error', err, block, transactions);
           }
         });
       }
