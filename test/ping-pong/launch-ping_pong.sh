@@ -8,6 +8,7 @@ MONGO_PORT=(27019 27020)
 MONGO_INITDB_ROOT_USERNAME=mongo
 MONGO_INITDB_ROOT_PASSWORD=mongo
 
+cd ../..
 
 for (( i=1; i<=${#PROPOSER_KEY[@]} ; i++ ))
 do
@@ -65,8 +66,7 @@ do
   sudo docker build \
   --build-arg OPTIMIST_PORT=${OPTIMIST_PORT[i-1]} \
   --build-arg OPTIMIST_WS_PORT=${OPTIMIST_WS_PORT[i-1]} \
-  -f ../../docker/optimist.standalone.Dockerfile . -t nightfall-optimist-${i}:latest
-
+  -f docker/optimist.standalone.Dockerfile . -t nightfall-optimist-${i}:latest
 
   echo "Launching proposer_optimist_${i} container..."
   docker run --rm -d \
@@ -83,7 +83,7 @@ do
     -e LOG_LEVEL=debug \
     -e TRANSACTIONS_PER_BLOCK=2 \
     -e AUTOSTART_RETRIES=10000 \
-    nightfall-optimist:latest
+    nightfall-optimist-${i}:latest
 
   echo "Launching proposer_${i} ${PROPOSER_PORT[i-1]} ${PROPOSER_KEY[i-1]}"
   docker run --rm -d --name proposer_${i} \
