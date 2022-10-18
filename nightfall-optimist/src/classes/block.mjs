@@ -132,8 +132,8 @@ class Block {
     this.localBlockNumberL2 += 1;
     this.localRoot = updatedTimber.root;
 
-    const _transactionHashesRoot = await this.calcTransactionHashesRoot(transactions);
-    const _frontierHash = await this.calcFrontierHash(updatedTimber.frontier);
+    const transactionHashesRoot = await this.calcTransactionHashesRoot(transactions);
+    const frontierHash = await this.calcFrontierHash(updatedTimber.frontier);
     // compute the keccak hash of the proposeBlock signature
     const blockHash = this.calcHash({
       proposer,
@@ -141,8 +141,8 @@ class Block {
       leafCount: updatedTimber.leafCount,
       blockNumberL2,
       previousBlockHash,
-      transactionHashesRoot: _transactionHashesRoot,
-      frontierHash: _frontierHash,
+      transactionHashesRoot,
+      frontierHash,
     });
     this.localPreviousBlockHash = blockHash;
     // note that the transactionHashes array is not part of the on-chain block
@@ -151,14 +151,14 @@ class Block {
     return new Block({
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
-      transactionHashesRoot: _transactionHashesRoot,
+      transactionHashesRoot,
       leafCount: updatedTimber.leafCount,
       root: updatedTimber.root,
       blockHash,
       nCommitments,
       blockNumberL2,
       previousBlockHash,
-      frontierHash: _frontierHash,
+      frontierHash,
     });
   }
 
