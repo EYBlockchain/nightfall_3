@@ -281,8 +281,11 @@ class Nf3 {
       // Estimate the gasLimit
       const gas = await this.estimateGas(contractAddress, unsignedTransaction);
 
-      // if we don't have a nonce, we must get one from the ethereum client
-      if (!this.nonce) this.nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      // Update nonce if necessary
+      const _nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      if (this.nonce < _nonce) {
+        this.nonce = _nonce;
+      }
 
       tx = {
         from: this.ethereumAddress,
