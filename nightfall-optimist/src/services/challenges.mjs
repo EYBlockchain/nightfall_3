@@ -20,11 +20,35 @@ const { CHALLENGES_CONTRACT_NAME, ZERO } = constants;
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
 let ws;
 
+export function isMakeChallengesEnable() {
+  return makeChallenges;
+}
+
 export function setChallengeWebSocketConnection(_ws) {
   ws = _ws;
 }
 
+/**
+Function to indicate to a listening challenger that a rollback has been completed.
+*/
+export async function signalRollbackCompleted(data) {
+  // check that the websocket exists (it should) and its readyState is OPEN
+  // before sending. If not wait until the challenger reconnects
+  let tryCount = 0;
+  while (!ws || ws.readyState !== WebSocket.OPEN) {
+    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+    logger.warn(
+      `Websocket to challenger is closed for rollback complete. Waiting for challenger to reconnect`,
+    );
+    if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
+  }
+  logger.debug('Rollback completed');
+  ws.send(JSON.stringify({ type: 'rollback', data }));
+}
+
 export function startMakingChallenges() {
+  if (process.env.IS_CHALLENGER !== 'true')
+    throw Error('Connot start challenger as this optimist never intend to be a challenger');
   logger.info(`Challenges ON`);
   makeChallenges = true;
 }

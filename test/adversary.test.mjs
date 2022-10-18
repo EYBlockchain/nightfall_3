@@ -100,16 +100,6 @@ describe('Testing with an adversary', () => {
     ercAddress = await nf3User.getContractAddress('ERC20Mock');
     startBalance = await retrieveL2Balance(nf3User);
 
-    // initiating proposed websocket connection for optimist ran as challenger
-    // this bit of a code added as work-around to a bug in code
-    // Bug is, when a optimist only spinned as challenger
-    // after a rollback we queue a job called `signalRollbackCompleted`
-    // inside in which we look for ws(websocket) of a propser continuously via
-    // while loop since optimist container only has challenger this case never satisfies
-    // and 'Error(`Websocket to proposer has failed`)'is throw and optimist crash
-    // meanwhile blockProposeEventHandler job never get picked from queue.
-    await nf3Challenger.startProposer();
-
     // Proposer registration
     await nf3AdversarialProposer.registerProposer('http://optimist', MINIMUM_STAKE);
     // Proposer listening for incoming events
@@ -144,11 +134,6 @@ describe('Testing with an adversary', () => {
           `Challenge transaction to the blochain of type ${type} failed due to error: ${error} `,
         );
       });
-
-    // for now optimist containers at time for startup state-sync code logic
-    // starts challenger by calling startMakingChallenges() function
-    // that reason explicitly call stop challenge api for nf3AdversarialProposer
-    await nf3AdversarialProposer.challengeEnable(false);
 
     // Configure adversary bad block sequence
     if (process.env.CHALLENGE_TYPE !== '') {
