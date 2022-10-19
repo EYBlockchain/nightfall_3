@@ -111,7 +111,7 @@ export const getCommitmentInfo = async txInfo => {
       value,
       feeValue,
       maxNumberNullifiers,
-      onlyFee
+      onlyFee,
     );
   }
 

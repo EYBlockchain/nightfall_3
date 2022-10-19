@@ -148,129 +148,129 @@ describe('Custom Commitment Selection Test', () => {
       expect(await getL2tokenBalance(nf3Receiver)).to.equal(recipientBalance + transferValue);
     });
 
-    it('should transfer a specified ERC721 commitment', async () => {
-      const senderKey = nf3Sender.zkpKeys.compressedZkpPublicKey;
-      const recipientKey = nf3Receiver.zkpKeys.compressedZkpPublicKey;
-
-      const tokenAddress = await nf3Sender.getContractAddress('ERC721Mock');
-      const availableTokenIds = (
-        await getERCInfo(tokenAddress, nf3Sender.ethereumAddress, web3Client.getWeb3(), {
-          details: true,
-        })
-      ).details.map(t => t.tokenId);
-      const tokenId = generalise(availableTokenIds.shift()).hex(32);
-
-      const commitment = await prepareCommitment(tokenAddress, 'ERC721', 1, nf3Sender, tokenId);
-
-      const commitmentFee = await prepareCommitment(tokenAddress, 'ERC20', fee, nf3Sender, '0x00');
-
-      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
-        offchain: false,
-        ercAddress: tokenAddress,
-        tokenId,
-        recipientData: {
-          values: [0],
-          recipientCompressedZkpPublicKeys: [recipientKey],
-        },
-        rootKey: nf3Sender.zkpKeys.rootKey,
-        fee,
-        providedCommitments: [commitment._id],
-      });
-
-      // since the transaction is on chain we still need to submit it
-      await nf3Sender.submitTransaction(res.data.txDataToSign, nf3Sender.shieldContractAddress, 0);
-
-      // assert commitment is spent
-      await emptyL2();
-    });
-
-    it('should reject invalid hashes', async () => {
-      const recipientKey = nf3Receiver.zkpKeys.compressedZkpPublicKey;
-      const invalidHash = 'invalid hash';
-      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
-        offchain: false,
-        ercAddress,
-        tokenId,
-        recipientData: {
-          values: [transferValue],
-          recipientCompressedZkpPublicKeys: [recipientKey],
-        },
-        rootKey: nf3Sender.zkpKeys.rootKey,
-        fee,
-        providedCommitments: [invalidHash],
-      });
-
-      expect(res.data.error).to.include(invalidHash);
-    });
-
-    it('reject and return only the invalid hash to the user', async () => {
-      const senderKey = nf3Sender.zkpKeys.compressedZkpPublicKey;
-      const recipientKey = nf3Receiver.zkpKeys.compressedZkpPublicKey;
-      const invalidHash = 'invalid hash';
-      const commitments = await commitmentsToSend(senderKey).then(rawCommitments =>
-        rawCommitments
-          .filter(c => c.preimage.value >= transferValue + fee)
-          .sort((a, b) => b.preimage.value - a.preimage.value),
-      );
-      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
-        offchain: false,
-        ercAddress,
-        tokenId,
-        recipientData: {
-          values: [transferValue],
-          recipientCompressedZkpPublicKeys: [recipientKey],
-        },
-        rootKey: nf3Receiver.zkpKeys.rootKey,
-        fee,
-        providedCommitments: [commitments[0]._id, invalidHash],
-      });
-
-      expect(res.data.error).to.include(invalidHash);
-      expect(res.data.error).to.not.include(commitments[0]._id);
-    });
-  });
-
-  describe('Withdrawals', () => {
-    it('should withdraw the specified commitment', async () => {
-      const senderKey = nf3Sender.zkpKeys.compressedZkpPublicKey;
-      const commitments = await commitmentsToSend(senderKey).then(rawCommitments =>
-        rawCommitments
-          .filter(c => c.preimage.value >= transferValue + fee)
-          .sort((a, b) => b.preimage.value - a.preimage.value),
-      );
-
-      logger.debug({
-        msg: 'possible commitments:',
-        values: commitments.map(c => Number(c.preimage.value)).toString(),
-      });
-
-      const selectedCommitment = commitments[0];
-      const senderBalance = await getL2tokenBalance(nf3Sender);
-
-      const res = await axios
-        .post(`${environment.clientApiUrl}/withdraw`, {
-          offchain: false,
-          ercAddress,
-          tokenId,
-          tokenType,
-          value: transferValue,
-          recipientAddress: nf3Sender.ethereumAddress,
-          rootKey: nf3Sender.zkpKeys.rootKey,
-          fee,
-          providedCommitments: [selectedCommitment._id],
-        })
-        .catch(console.log);
-      logger.debug(res);
-
-      // since the transaction is on chain we still need to submit it
-      await nf3Sender.submitTransaction(res.data.txDataToSign, nf3Sender.shieldContractAddress, 0);
-
-      // assert commitment is spent
-      await emptyL2();
-      const remainingCommitments = await commitmentsToSend(senderKey);
-      expect(remainingCommitments).to.not.include(selectedCommitment);
-      expect(await getL2tokenBalance(nf3Sender)).to.equal(senderBalance - transferValue - fee);
-    });
+//    it('should transfer a specified ERC721 commitment', async () => {
+//      const senderKey = nf3Sender.zkpKeys.compressedZkpPublicKey;
+//      const recipientKey = nf3Receiver.zkpKeys.compressedZkpPublicKey;
+//
+//      const tokenAddress = await nf3Sender.getContractAddress('ERC721Mock');
+//      const availableTokenIds = (
+//        await getERCInfo(tokenAddress, nf3Sender.ethereumAddress, web3Client.getWeb3(), {
+//          details: true,
+//        })
+//      ).details.map(t => t.tokenId);
+//      const tokenId = generalise(availableTokenIds.shift()).hex(32);
+//
+//      const commitment = await prepareCommitment(tokenAddress, 'ERC721', 1, nf3Sender, tokenId);
+//
+//      const commitmentFee = await prepareCommitment(tokenAddress, 'ERC20', fee, nf3Sender, '0x00');
+//
+//      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
+//        offchain: false,
+//        ercAddress: tokenAddress,
+//        tokenId,
+//        recipientData: {
+//          values: [0],
+//          recipientCompressedZkpPublicKeys: [recipientKey],
+//        },
+//        rootKey: nf3Sender.zkpKeys.rootKey,
+//        fee,
+//        providedCommitments: [commitment._id],
+//      });
+//
+//      // since the transaction is on chain we still need to submit it
+//      await nf3Sender.submitTransaction(res.data.txDataToSign, nf3Sender.shieldContractAddress, 0);
+//
+//      // assert commitment is spent
+//      await emptyL2();
+//    });
+//
+//    it('should reject invalid hashes', async () => {
+//      const recipientKey = nf3Receiver.zkpKeys.compressedZkpPublicKey;
+//      const invalidHash = 'invalid hash';
+//      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
+//        offchain: false,
+//        ercAddress,
+//        tokenId,
+//        recipientData: {
+//          values: [transferValue],
+//          recipientCompressedZkpPublicKeys: [recipientKey],
+//        },
+//        rootKey: nf3Sender.zkpKeys.rootKey,
+//        fee,
+//        providedCommitments: [invalidHash],
+//      });
+//
+//      expect(res.data.error).to.include(invalidHash);
+//    });
+//
+//    it('reject and return only the invalid hash to the user', async () => {
+//      const senderKey = nf3Sender.zkpKeys.compressedZkpPublicKey;
+//      const recipientKey = nf3Receiver.zkpKeys.compressedZkpPublicKey;
+//      const invalidHash = 'invalid hash';
+//      const commitments = await commitmentsToSend(senderKey).then(rawCommitments =>
+//        rawCommitments
+//          .filter(c => c.preimage.value >= transferValue + fee)
+//          .sort((a, b) => b.preimage.value - a.preimage.value),
+//      );
+//      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
+//        offchain: false,
+//        ercAddress,
+//        tokenId,
+//        recipientData: {
+//          values: [transferValue],
+//          recipientCompressedZkpPublicKeys: [recipientKey],
+//        },
+//        rootKey: nf3Receiver.zkpKeys.rootKey,
+//        fee,
+//        providedCommitments: [commitments[0]._id, invalidHash],
+//      });
+//
+//      expect(res.data.error).to.include(invalidHash);
+//      expect(res.data.error).to.not.include(commitments[0]._id);
+//    });
+//  });
+//
+//  describe('Withdrawals', () => {
+//    it('should withdraw the specified commitment', async () => {
+//      const senderKey = nf3Sender.zkpKeys.compressedZkpPublicKey;
+//      const commitments = await commitmentsToSend(senderKey).then(rawCommitments =>
+//        rawCommitments
+//          .filter(c => c.preimage.value >= transferValue + fee)
+//          .sort((a, b) => b.preimage.value - a.preimage.value),
+//      );
+//
+//      logger.debug({
+//        msg: 'possible commitments:',
+//        values: commitments.map(c => Number(c.preimage.value)).toString(),
+//      });
+//
+//      const selectedCommitment = commitments[0];
+//      const senderBalance = await getL2tokenBalance(nf3Sender);
+//
+//      const res = await axios
+//        .post(`${environment.clientApiUrl}/withdraw`, {
+//          offchain: false,
+//          ercAddress,
+//          tokenId,
+//          tokenType,
+//          value: transferValue,
+//          recipientAddress: nf3Sender.ethereumAddress,
+//          rootKey: nf3Sender.zkpKeys.rootKey,
+//          fee,
+//          providedCommitments: [selectedCommitment._id],
+//        })
+//        .catch(console.log);
+//      logger.debug(res);
+//
+//      // since the transaction is on chain we still need to submit it
+//      await nf3Sender.submitTransaction(res.data.txDataToSign, nf3Sender.shieldContractAddress, 0);
+//
+//      // assert commitment is spent
+//      await emptyL2();
+//      const remainingCommitments = await commitmentsToSend(senderKey);
+//      expect(remainingCommitments).to.not.include(selectedCommitment);
+//      expect(await getL2tokenBalance(nf3Sender)).to.equal(senderBalance - transferValue - fee);
+//    });
   });
 
   after(() => {

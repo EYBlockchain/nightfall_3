@@ -862,15 +862,15 @@ function findSubsetNCommitments(N, commitments, value) {
   return commitmentsToUse;
 }
 
-export function selectCommitments(commitments, value, minC, minFc, maxNumberNullifiers) {
+export function selectCommitments(commitments, value, minC, maxC) {
   const possibleSubsetsCommitments = [];
 
   // Get the "best" subset of each possible size to then decide which one is better overall
   // From the calculations performed in "verifyEnoughCommitments" we know that at least
-  // minC commitments are required. On the other hand, we can use a maximum of maxNumberNullifiers commitments
+  // minC commitments are required. On the other hand, we can use a maximum of maxC commitments
   // but we have to take into account that some spots needs to be used for the fee and that
   // maybe the user does not have as much commitments
-  for (let i = minC; i <= Math.min(commitments.length, maxNumberNullifiers - minFc); ++i) {
+  for (let i = minC; i <= Math.min(commitments.length, maxC); ++i) {
     const subset = findSubsetNCommitments(i, commitments, value);
     possibleSubsetsCommitments.unshift(subset);
   }
@@ -932,10 +932,12 @@ async function findUsableCommitments(
     );
   }
 
-  const oldCommitments = selectCommitments(commitments, value, minC, minFc, maxNumberNullifiers);
+  const maxC = maxNumberNullifiers - minFc;
+  const oldCommitments = selectCommitments(commitments, value, minC, maxC);
 
+  const maxFc = maxNumberNullifiers - oldCommitments.length;
   const oldCommitmentsFee =
-    fee.bigInt > 0n ? selectCommitments(commitments, fee, minC, minFc, maxNumberNullifiers) : [];
+    fee.bigInt > 0n ? selectCommitments(commitments, fee, minFc, maxFc) : [];
 
   // Mark all the commitments used as pending so that they can not be used twice
   await Promise.all(
