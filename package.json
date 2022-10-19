@@ -108,6 +108,7 @@
   },
   "dependencies": {
     "@polygon-nightfall/common-files": "^0.0.5",
+    "async-mutex": "^0.4.0",
     "docker-compose": "^0.23.13",
     "general-number": "^1.0.1",
     "typescript": "^4.6.2"

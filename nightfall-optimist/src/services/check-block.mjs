@@ -53,9 +53,6 @@ async function checkBlockRoot(block) {
       history = await getTreeByLeafCount(block.leafCount);
       logger.debug(`Block has commitments - retrieved history from Timber`);
       logger.trace(`Timber history was ${JSON.stringify(history, null, 2)}`);
-
-      // eslint-disable-next-line no-await-in-loop
-      await new Promise(resolve => setTimeout(resolve, 3000));
     }
   }
 
@@ -210,7 +207,6 @@ export async function checkBlock(block, transactions) {
   await checkLeafCount(block);
   // now we have to check the commitment root.
   // For this we can make use of Timber with its optimistic extensions.
-  await new Promise(resolve => setTimeout(resolve, 1000));
   await checkBlockRoot(block);
   await checkFrontier(block);
   await checkDuplicateCommitmentsWithinBlock(block, transactions);

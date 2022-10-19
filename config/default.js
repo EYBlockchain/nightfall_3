@@ -194,7 +194,7 @@ module.exports = {
     gasCosts: 80000000000000000,
     fee: 1,
     BLOCK_STAKE: 1, // 1 wei
-    MINIMUM_STAKE: 100, // 100 wei
+    MINIMUM_STAKE: process.env.MINIMUM_STAKE || 1000000, // 1000000 wei
     ROTATE_PROPOSER_BLOCKS: 20,
     txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
     signingKeys: {

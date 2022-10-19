@@ -39,7 +39,7 @@ You need to run a setup script the first time that you use nightfall_3. This wil
 dependencies.
 
 ```sh
-./setup-nightfall
+./bin/setup-nightfall
 ```
 
 One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to 
@@ -50,7 +50,7 @@ build up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./setup-nightfall`).
 If running for first time, do the setup as above and then run this script:
 
 ```sh
-./start-nightfall -l | -g | -r [-s] [-d]
+./bin/start-nightfall -l | -g | -r [-s] [-d]
 ```
 One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to 
 start up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./start-nightfall`).
@@ -94,6 +94,31 @@ this point.
 
 To stop the application, you can run `npm run nightfall-down` and it should exit cleanly.
 
+### To export nightfall state
+In some circumstances it may be useful to export nightfall state so that it can be replicated at any point in time. 
+For example, when doing load testing and many thousands of transactions needs to be generated, saving the nightfall state
+at the moment when all transactions have been generated may be benefitial.
+
+The exported nightfall state includes:
+- blockchain
+- file system (contracts and circuits)
+- client and optimist mondoDbs.
+
+This feature only works with `geth` and not with `ganache`.
+
+To export nightfall state, run `./bin/export-nightfall <folder>` at the point where you want to save the state. 
+Data is backup in `nightfall_3/backup` folder
+
+### To import nightfall state
+One can also import a previously exported state. To do so:
+```
+./bin/geth-standalone -i <FOLDER>
+./bin/start-nightfall -l -d
+./bin/import-nightfall <FOLDER>
+```
+
+Each command will need to be entered in a different window.
+
 ## Testing
 
 Open a separate terminal window, cd to the nightfall_3 repo and run
@@ -127,7 +152,7 @@ it only makes sense to compare performance at the same value of `TRANSACTIONS_PE
 Then start nightfall:
 
 ```sh
-./start-nightfall -g -d -s
+./bin/start-nightfall -g -d -s
 ```
 
 Then, in the other terminal window run the test
@@ -167,7 +192,7 @@ npm test-chain-reorg
 
 ## Using a Geth private blockchain
 
-The script `./geth-standalone` will run up a private blockchain consisting of a bootnode, two client
+The script `./bin/geth-standalone` will run up a private blockchain consisting of a bootnode, two client
 nodes and two miners. This is required for testing chain reorganisations (Ganache does not simulate
 a chain-reorg) but can be used for other tests or general running. It's slower than using Ganache
 but it does provide a more real-life test. Note also that the private chain exposes a client on
@@ -183,12 +208,12 @@ machine. If you aren't on a Mac then you can do one of these 3 options:
 
 To use the private blockchain:
 
-- Run up the private chain with `./geth-standalone -s`
-- Start terminal logging with `./geth-standalone -l` and wait for the DAG build to complete
-- Start Nightfall in another terminal with the `-l` option (`./start-nightfall -l`) and, optionally,
+- Run up the private chain with `./bin/geth-standalone -s`
+- Start terminal logging with `./bin/geth-standalone -l` and wait for the DAG build to complete
+- Start Nightfall in another terminal with the `-l` option (`./bin/start-nightfall -l`) and, optionally,
   the `-s` option if you want stubbed circuits.
 
-That's it. You can shut down the geth blockchain with `./geth-standalone -d` or pause/unpause it
+That's it. You can shut down the geth blockchain with `./bin/geth-standalone -d` or pause/unpause it
 with `-p`, `-u`.
 
 ## Software Development Kit
@@ -203,7 +228,7 @@ exercise its features. To use it:
 
 - run up nightfall_3 as described above and wait for the deployment to complete;
 - in the `apps` folder there are small applications like `proposer` or `challenger` you can run with
-  `./start-apps`. For example, `proposer` will start a small application running which will sign
+  `./bin/start-apps`. For example, `proposer` will start a small application running which will sign
   block proposal transactions;
 
 ## Limitations
@@ -221,7 +246,7 @@ docker volume prune
 ```
 
 These will hopefully delete every image, container and volume so you should have a clean slate. Mind
-that you need to run `setup-nightfall` again.
+that you need to run `./bin/setup-nightfall` again.
 
 # Acknowledgements
 

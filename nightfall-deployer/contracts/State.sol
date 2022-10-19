@@ -117,6 +117,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
         require(stake.amount >= blockStake, 'State: Proposer does not have enough funds staked');
         stake.amount -= blockStake;
+        require(stake.amount >= blockStake, "Proposer doesn't have enough funds staked");
         stake.challengeLocked += blockStake;
         stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
 
