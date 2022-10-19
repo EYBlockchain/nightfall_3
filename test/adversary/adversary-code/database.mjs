@@ -73,8 +73,6 @@ let indexOffset = 0;
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { Transaction } from '../classes/index.mjs';
 
-const { BN128_GROUP_ORDER } = config;
-
 const { BN128_GROUP_ORDER } = constants;
 
 // Duplicate Commitment -> { mempool: false, transactionType: [0,1] } -> overwrite with a duplicate spent commitment
