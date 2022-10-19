@@ -85,10 +85,5 @@ if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag1) ]]; then
   docker volume rm nightfall_3_dag1
 fi
 
-DIR=./common-files/node_modules
-if [[ -d "$DIR" ]]; then
-  rm -dr common-files/node_modules
-fi
-
 docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }
 docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_START//,/ }
