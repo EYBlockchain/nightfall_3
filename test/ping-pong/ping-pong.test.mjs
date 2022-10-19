@@ -1,7 +1,7 @@
 // import config from 'config';
 import compose from 'docker-compose';
 import { Docker } from 'docker-cli-js';
-import { userTest, proposerTest } from './index.mjs';
+import { userTest } from './index.mjs';
 
 let result;
 
