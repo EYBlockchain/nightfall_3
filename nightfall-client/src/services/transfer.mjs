@@ -132,7 +132,7 @@ async function transfer(transferParams) {
     });
 
     logger.trace({
-      msg: 'Received response from generete-proof',
+      msg: 'Received response from generate-proof',
       response: JSON.stringify(res.data, null, 2),
     });
 

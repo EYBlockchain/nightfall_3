@@ -34,9 +34,9 @@ def transfer_generic<N,C>(\
     private u8[C][31] newCommitmentsValue,\
  	private field[C] newCommitmentsSalt,\
     private Point[C] recipientPublicKey,\
-    private u32[8] ephemeralKey,\
-    private field ercAddressTransfer,\
-    private u32[8] idTransfer\
+    private field ercAddressPrivate,\
+    private u32[8] tokenIdPrivate,\
+    private u32[8] ephemeralKey\
 ) -> bool {
     // Verify public transaction structure
     assert(ercAddress != 0);
@@ -56,8 +56,8 @@ def transfer_generic<N,C>(\
    
     // pack the top four bytes of the token id into the ercAddress field (address only
 	// uses 160 bits and the Shield contract prevents creation of something with more than 160 bits)
-    field idRemainder = u32_array_to_field(idTransfer[1..8]); 
-    field packedErcAddress = ercAddressTransfer + u32_array_to_field([idTransfer[0]]) * SHIFT; 
+    field idRemainder = u32_array_to_field(tokenIdPrivate[1..8]); 
+    field packedErcAddress = ercAddressPrivate + u32_array_to_field([tokenIdPrivate[0]]) * SHIFT; 
 
     //Calculate Keys
     Keys keys = calculateKeys(rootKey);
