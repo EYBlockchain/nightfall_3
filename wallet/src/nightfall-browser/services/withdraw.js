@@ -106,8 +106,6 @@ async function withdraw(withdrawParams, shieldContractAddress) {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      ercAddress,
-      tokenId,
     };
 
     const witnessInput = computeCircuitInputs(
