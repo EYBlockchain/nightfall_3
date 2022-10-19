@@ -41,12 +41,6 @@ type Commitment = {
   recipientPublicKey: string[][];
 };
 
-type Transfer = {
-  ephemeralKey: string[];
-  ercAddressTransfer: string;
-  idTransfer: string[];
-};
-
 const computePublicInputs = (
   tx: PublicInputs,
   rootsOldCommitments: string[],
@@ -77,18 +71,6 @@ const computePublicInputs = (
   publicInput.push(generalise(maticAddress).field(BN128_GROUP_ORDER));
 
   return publicInput;
-};
-
-const computePrivateInputsEncryption = (
-  ephemeralKey: GeneralNumber,
-  ercAddress: GeneralNumber,
-  tokenId: GeneralNumber,
-): Transfer => {
-  return {
-    ephemeralKey: ephemeralKey.limbs(32, 8),
-    ercAddressTransfer: ercAddress.field(BN128_GROUP_ORDER),
-    idTransfer: tokenId.limbs(32, 8),
-  };
 };
 
 const computePrivateInputsNullifiers = (
@@ -186,9 +168,18 @@ const computeCircuitInputs = (
     );
   }
 
-  if (Number(txObject.transactionType) === 1) {
-    witness.push(computePrivateInputsEncryption(ephemeralKey, ercAddress, tokenId));
+  if (ercAddress) {
+    witness.push({ ercAddressPrivate: ercAddress.field(BN128_GROUP_ORDER) });
   }
+
+  if (tokenId) {
+    witness.push({ tokenIdPrivate: tokenId.limbs(32, 8) });
+  }
+
+  if (ephemeralKey) {
+    witness.push({ ephemeralKey: ephemeralKey.limbs(32, 8) });
+  }
+
   return witness;
 };
 
