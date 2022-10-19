@@ -71,8 +71,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> circuit-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> circuit-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -118,8 +118,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -165,8 +165,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -212,8 +212,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -259,8 +259,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -307,8 +307,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> kyc-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> kyc-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -353,8 +353,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> administrator-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> administrator-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -400,8 +400,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> optimist-sync-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> optimist-sync-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -451,10 +451,10 @@ jobs:
   #
   #      - name: Start Containers with geth
   #        run: |
-  #          ./setup-nightfall
-  #          ./geth-standalone -s
+  #          ./bin/setup-nightfall
+  #          ./bin/geth-standalone -s
   #          sleep 300
-  #          ./start-nightfall -l -d -a &> adversary-test.log &disown
+  #          ./bin/start-nightfall -l -d -a &> adversary-test.log &disown
   #
   #      - name: Wait for images to be ready
   #        uses: Wandalen/wretry.action@v1.0.11
@@ -480,7 +480,7 @@ jobs:
   #        if: failure()
   #        run: |
   #          npm run nightfall-down
-  #          ./geth-standalone -d
+  #          ./bin/geth-standalone -d
   #
   #      - name: If integration test failed, upload logs files as artifacts
   #        if: failure()
@@ -492,7 +492,7 @@ jobs:
   ping-pong-test:
     env:
       CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,optimist,worker
+      NF_SERVICES_TO_START: blockchain, client,deployer,optimist,worker
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -502,8 +502,8 @@ jobs:
 
       - name: Start Containers
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> ping-pong-test.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -525,7 +525,9 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: npm run nightfall-down
+        run: |
+          npm run nightfall-down
+          ./bin/geth-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -548,8 +550,8 @@ jobs:
 
       - name: Start Containers with ganache
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> test-gas.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> test-gas.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
           CONFIRMATIONS: 1
@@ -599,8 +601,8 @@ jobs:
 
       - name: Start Containers with ganache
         run: |
-          ./setup-nightfall
-          ./start-nightfall -g -d &> test-apps.log &disown
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> test-apps.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -616,7 +618,7 @@ jobs:
 
       - name: Boot up the apps
         run: |
-          ./start-apps &> test-proposer.log &disown
+          ./bin/start-apps &> test-proposer.log &disown
 
       - name: 'Check proposer liveliness'
 

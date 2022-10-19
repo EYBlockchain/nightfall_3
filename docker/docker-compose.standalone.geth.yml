@@ -22,8 +22,8 @@ services:
       - type: bind
         source: ../config/geth
         target: /setup
-      - type: volume
-        source: geth1-chain
+      - type: bind
+        source: ../config/geth/data/geth1-chain
         target: /data
     networks:
       geth_network:
@@ -36,17 +36,18 @@ services:
       - type: bind
         source: ../config/geth
         target: /setup
-      - type: volume
-        source: geth-miner-chain1
+      - type: bind
+        source: ../config/geth/data/geth-miner-chain1
         target: /data
-      - type: volume
-        source: dag1
+      - type: bind
+        source: ../config/geth/data/dag1
         target: /dag
     networks:
       geth_network:
     entrypoint: /setup/entrypoint.sh
     command:
       --ws.port 8546 --ws --ws.origins '*' --ws.addr 0.0.0.0 --mine --verbosity 3 --rpc.txfeecap 0
+
 
 networks:
   geth_network:
@@ -56,8 +57,3 @@ networks:
       config:
         - subnet: 172.16.239.0/24
           gateway: 172.16.239.1
-
-volumes:
-  geth1-chain:
-  geth-miner-chain1:
-  dag1:
