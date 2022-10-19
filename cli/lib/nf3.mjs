@@ -304,9 +304,9 @@ class Nf3 {
     });
 
     if (this.ethereumSigningKey) {
-      return { signed, nonce: tx.nonce };
+      return signed;
     }
-    return { tx, nonce: tx.nonce };
+    return tx;
   }
 
   /**
@@ -347,7 +347,7 @@ class Nf3 {
   */
   async submitTransaction(unsignedTransaction, contractAddress = this.shieldContractAddress, fee) {
     const tx = await this._signTransaction(unsignedTransaction, contractAddress, fee);
-    return this._sendTransaction(tx.signed);
+    return this._sendTransaction(tx);
   }
 
   /**
@@ -991,7 +991,7 @@ class Nf3 {
         );
         proposerQueue.push(async () => {
           try {
-            const receipt = await this._sendTransaction(tx.signed);
+            const receipt = await this._sendTransaction(tx);
             proposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
             // block proposed is reverted. Send transactions back to mempool
