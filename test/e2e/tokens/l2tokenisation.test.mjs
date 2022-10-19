@@ -18,7 +18,6 @@ chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
-  fee,
   txPerBlock,
   transferValue,
   tokenConfigs: { tokenType, tokenId },
@@ -104,7 +103,10 @@ describe('L2 Tokenisation tests', () => {
       const erc20AddressBalanceBefore = beforeBalance[erc20Address]?.[0].balance || 0;
       const l2AddressBalanceBefore = beforeBalance[l2Address]?.length || 0;
 
-      await nf3Users[0].tokenise(l2Address, fee);
+      const value = 1;
+      const privateTokenId = 11;
+      const salt = 100;
+      await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt);
 
       await emptyL2();
 
@@ -112,7 +114,7 @@ describe('L2 Tokenisation tests', () => {
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
       const l2AddressBalanceAfter = afterBalance[l2Address]?.length || 0;
       expect(l2AddressBalanceAfter - l2AddressBalanceBefore).to.be.equal(1);
-      expect(erc20AddressBalanceAfter - erc20AddressBalanceBefore).to.be.equal(-fee);
+      expect(erc20AddressBalanceAfter - erc20AddressBalanceBefore).to.be.equal(-10);
     });
   });
 });

@@ -12,8 +12,8 @@ from "utils/pack/bool/nonStrictUnpack256.zok" import main as field_to_bool_256;
 from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8;
 
 
-const u32 C = 2;
-const u32 N = 2;
+const u32 C = 2; // Number of Commitments
+const u32 N = 2; // Number of Nullifiers
 
 def main(\
     PublicTransaction<N,C> tx,\
@@ -26,6 +26,7 @@ def main(\
     private u32[8] tokenId\
 ) {
     //Verify public transaction structure
+    // In Tokenise we expect the following are zeroes
     assert(tx.ercAddress == 0);
     assert(tx.recipientAddress == field_to_u32_8(0));
     assert(tx.value == 0);
@@ -51,7 +52,7 @@ def main(\
     //Calculate Keys
     Keys keys = calculateKeys(rootKey);
 
-    // //Verify nullifiers
+    // Verify nullifiers used to pay for fees
     assert(verify_nullifiers_optional::<N>(feeAddress, 0,\
         tx.nullifiers, roots, nullifiersValue, nullifiersInfo.oldCommitments.salt,\
         nullifiersInfo.paths, nullifiersInfo.orders, keys.nullifierKey, keys.zkpPublicKey));
@@ -60,11 +61,12 @@ def main(\
     assert(verify_commitments::<1>(packedErcAddress, idRemainder, tx.commitments[0..1],\
         commitmentsValue[0..1], commitmentsInfo.newCommitments.salt[0..1], commitmentsInfo.recipientPublicKey[0..1]));
 
+    // Verify change commitments from fees
     u32 feeCommitments = C - 1;
     assert(verify_commitments_optional::<feeCommitments>(feeAddress, 0, tx.commitments[1..C],\
         commitmentsValue[1..C], commitmentsInfo.newCommitments.salt[1..C], commitmentsInfo.recipientPublicKey[1..C]));
 
-     //Verify Fee change
+     // Verify Fee change address
     assert(commitmentsValue[C - 1] == 0 || keys.zkpPublicKey == commitmentsInfo.recipientPublicKey[C - 1]);
 }
 

@@ -21,15 +21,15 @@ async function tokenise(items) {
   const {
     ercAddress,
     salt = await randValueLT(BN128_GROUP_ORDER),
+    value = 0,
     compressedZkpPublicKey,
     rootKey,
     tokenId = 0,
-    compressedSecrets = undefined,
     fee,
   } = generalise(items);
 
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
-  const commitment = new Commitment({ ercAddress, tokenId, value: 0, zkpPublicKey, salt });
+  const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
 
   logger.debug({
     msg: 'Hash of new commitment',
@@ -43,6 +43,7 @@ async function tokenise(items) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
+  // Currently just the fee commitments
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: 0n,
     fee,
@@ -53,17 +54,16 @@ async function tokenise(items) {
     onlyFee: true,
   });
 
+  // Prepend the new tokenised commitment
   commitmentsInfo.newCommitments = [commitment, ...commitmentsInfo.newCommitments];
 
   try {
     const publicData = new Transaction({
       fee,
-      tokenId,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       transactionType: 3,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      compressedSecrets,
       numberNullifiers: VK_IDS.tokenise.numberNullifiers,
       numberCommitments: VK_IDS.tokenise.numberCommitments,
     });
@@ -115,12 +115,10 @@ async function tokenise(items) {
 
     const optimisticTokeniseTransaction = new Transaction({
       fee,
-      tokenId,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       transactionType: 3,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      compressedSecrets,
       proof,
       numberNullifiers: VK_IDS.tokenise.numberNullifiers,
       numberCommitments: VK_IDS.tokenise.numberCommitments,

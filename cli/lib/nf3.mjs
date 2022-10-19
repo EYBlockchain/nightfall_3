@@ -376,18 +376,12 @@ class Nf3 {
     @param {string[2]} compressedSecrets "Extra information the may want to add to the transaction"
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
-  async tokenise(
-    ercAddress,
-    fee = this.defaultFeeMatic,
-    salt = undefined,
-    tokenId = 0,
-    compressedSecrets = undefined,
-  ) {
+  async tokenise(ercAddress, value = 0, tokenId = 0, salt = undefined, fee = this.defaultFeeMatic) {
     const res = await axios.post(`${this.clientBaseUrl}/tokenise`, {
       ercAddress,
       tokenId,
       salt,
-      compressedSecrets,
+      value,
       rootKey: this.zkpKeys.rootKey,
       compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
       fee,
