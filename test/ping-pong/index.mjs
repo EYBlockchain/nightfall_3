@@ -7,7 +7,7 @@ Module that runs up as a user
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { waitForSufficientBalance, retrieveL2Balance } from '../utils.mjs';
+import { waitForSufficientBalance, retrieveL2Balance, Web3Client } from '../utils.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -54,7 +54,7 @@ export async function userTest(IS_TEST_RUNNER) {
 
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
-    await waitForSufficientBalance(nf3, value, ercAddress);
+    await waitForSufficientBalance(nf3, startBalance + value, ercAddress);
     for (let j = 0; j < txPerBlock - 1; j++) {
       try {
         await nf3.transfer(
@@ -113,29 +113,33 @@ export async function userTest(IS_TEST_RUNNER) {
       );
       logger.info(`Amount sent to other User: ${value * TEST_LENGTH}`);
       nf3.close();
-      process.exit(0);
-    } else {
-      logger.info(
-        `The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting:
-        Current Transacted Balance is: ${endBalance - startBalance} - Expecting: ${
-          txPerBlock * value + value * TEST_LENGTH
-        }`,
-      );
-      await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
-      loop++;
+      return 0;
     }
+
+    logger.info(
+      `The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting:
+        Current Transacted Balance is: ${endBalance - startBalance} - Expecting: ${
+        txPerBlock * value + value * TEST_LENGTH
+      }`,
+    );
+    await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
+    loop++;
   } while (loop < loopMax);
-  process.exit(1);
+  return 1;
 }
 
 export async function proposerTest() {
+  // we must set the URL from the point of view of the client container
   const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
   await nf3Proposer.init(mnemonics.proposer3);
-  // we must set the URL from the point of view of the client container
   await nf3Proposer.registerProposer('http://optimist', MINIMUM_STAKE);
 
   const stateAddress = await nf3Proposer.getContractAddress('State');
   const stateABI = await nf3Proposer.getContractAbi('State');
+  const eventLogs = [];
+
+  const web3Client = new Web3Client();
+  web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
   const getCurrentProposer = async () => {
     const stateContractInstance = new nf3Proposer.web3.eth.Contract(stateABI, stateAddress);
@@ -149,6 +153,8 @@ export async function proposerTest() {
     return currentSprint;
   };
 
+  const proposersBlocks = [];
+
   for (let i = 0; i < 8; i++) {
     try {
       // eslint-disable-next-line no-await-in-loop
@@ -159,19 +165,35 @@ export async function proposerTest() {
         `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress} ]`,
       );
 
+      proposersBlocks.push({ proposer: currentProposer.thisAddress, blocks: 0 });
+
       console.log('     Waiting blocks to rotate current proposer...');
       const initBlock = await nf3Proposer.web3.eth.getBlockNumber();
       let currentBlock = initBlock;
 
       while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        let proposerBlock = proposersBlocks.find(p => p.proposer === currentProposer.thisAddress);
+        if (!proposerBlock) {
+          proposerBlock = { proposer: currentProposer.thisAddress, blocks: 0 };
+          proposersBlocks.push(proposerBlock);
+        } else {
+          proposerBlock.blocks++;
+        }
+        // await new Promise(resolve => setTimeout(resolve, 10000));
         currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
       }
 
+      for (const proposerBlock of proposersBlocks) {
+        console.log(`${proposerBlock.proposer} : ${proposerBlock.blocks}`);
+      }
       console.log('     Change current proposer...');
       await nf3Proposer.changeCurrentProposer();
     } catch (err) {
       console.log(err);
     }
+    await nf3Proposer.deregisterProposer();
+    await nf3Proposer.close();
+    await web3Client.closeWeb3();
   }
 }

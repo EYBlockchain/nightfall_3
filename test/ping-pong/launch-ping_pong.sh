@@ -50,6 +50,7 @@ do
    -v ${MONGODB}:/data/db \
    -p ${MONGO_PORT[i-1]}:27017 \
    --name optimist_mongodb_${i} \
+   --hostname optimist_mongodb_${i} \
    --network=nightfall_3_nightfall_network  \
    -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD} \
    -e MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME} \
