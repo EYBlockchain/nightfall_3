@@ -88,7 +88,6 @@ module.exports = {
 
   TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 100,
-  USE_STUBS: process.env.USE_STUBS === 'true',
   VK_IDS: {
     deposit: {
       txType: 0,
