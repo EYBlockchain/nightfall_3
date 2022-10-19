@@ -6,7 +6,6 @@ Some transactions are so simple that, we don't split out a separate service
 module but handle the entire request here.
 */
 import express from 'express';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 const router = express.Router();
 
