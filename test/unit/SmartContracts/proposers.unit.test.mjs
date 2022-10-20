@@ -310,36 +310,44 @@ describe('Proposers contract Proposers functions', function () {
   });
 
   it('should withdrawStake', async function () {
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
-    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 100 });
-    const receiptRegister = await registerProposerTx.wait();
+    const network = await ethers.provider.getNetwork();
+    console.log('Network chain id=', network.chainId);
+    if (network.chainId === 31337 || network.chainId === 1337) {
+      expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
+        ethers.constants.AddressZero,
+      );
+      const registerProposerTx = await ProposersInstance.registerProposer('url', 100, {
+        value: 100,
+      });
+      const receiptRegister = await registerProposerTx.wait();
 
-    const eventTransfer = receiptRegister.events.find(
-      event => event.event === 'NewCurrentProposer',
-    );
-    const [proposer] = eventTransfer.args;
+      const eventTransfer = receiptRegister.events.find(
+        event => event.event === 'NewCurrentProposer',
+      );
+      const [proposer] = eventTransfer.args;
 
-    expect(proposer).to.equal(addr1.address);
+      expect(proposer).to.equal(addr1.address);
 
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
+      expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
 
-    await ProposersInstance.deRegisterProposer();
+      await ProposersInstance.deRegisterProposer();
 
-    await ethers.provider.send('evm_increaseTime', [604800]); // + 1 week
-    await ethers.provider.send('evm_mine');
+      await ethers.provider.send('evm_increaseTime', [604800]); // + 1 week
+      await ethers.provider.send('evm_mine');
 
-    const TimeLockedStakeBefore = await state.stakeAccounts(addr1.address);
+      const TimeLockedStakeBefore = await state.stakeAccounts(addr1.address);
 
-    await ProposersInstance.withdrawStake();
+      await ProposersInstance.withdrawStake();
 
-    expect((await state.stakeAccounts(addr1.address)).amount).to.equal(0);
+      expect((await state.stakeAccounts(addr1.address)).amount).to.equal(0);
 
-    expect(await state.pendingWithdrawals(addr1.address, 0)).to.equal(
-      TimeLockedStakeBefore.amount.add(TimeLockedStakeBefore.challengeLocked),
-    );
-    expect(await state.pendingWithdrawals(addr1.address, 1)).to.equal(0);
+      expect(await state.pendingWithdrawals(addr1.address, 0)).to.equal(
+        TimeLockedStakeBefore.amount.add(TimeLockedStakeBefore.challengeLocked),
+      );
+      expect(await state.pendingWithdrawals(addr1.address, 1)).to.equal(0);
+    } else {
+      console.log('Test skipped');
+    }
   });
 
   it('should not updateProposer if you are not a proposer', async function () {
