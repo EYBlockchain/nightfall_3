@@ -1,0 +1,124 @@
+// SPDX-License-Identifier: CC0-1.0
+
+pragma solidity ^0.8.9;
+
+// This contract can parse a DER object, such as a suitably encoded SSL certificate
+import "hardhat/console.sol";
+
+contract DERParser {
+  struct DecodedTlv {
+    uint id;
+    Tag tag;
+    uint length;
+    bytes value;
+    uint depth;
+  }
+  struct Tag {
+    bool isConstructed;
+    bytes1 tagType;
+  }
+
+  uint constant MAX_DEPTH = 5;
+
+  DecodedTlv[] tlvs;
+
+  /*
+  Parses the input tag.
+  */
+  function getTlvTag(bytes1 tagByte, uint pointer) private view returns(Tag memory, uint) {
+    bytes1 tagClass = tagByte & 0xC0;
+    bool isConstructed = (tagByte & 0x20) != 0;
+    bytes1 tagType = tagByte & 0x1F;
+    require(tagType < 0x1F, 'Tag is Long Form, which is not supported');
+    require(tagClass == 0 || tagClass == 0x80, 'Only the Universal or ContextSpecific tag classes are supported');
+    return (Tag(isConstructed, tagType), ++pointer);
+  }
+  /*
+  Parses the length bytes, which must be at the start of the passed-in bytes
+  */
+  function getTlvLength(bytes calldata derSlice, uint pointer) private view returns(uint, uint) {
+    bool shortForm = (derSlice[0] & 0x80) == 0;
+    uint lengthBits = uint(uint8(derSlice[0] & 0x7F)); // this contains either the length value (shortform) or the number of following bytes that contain the length value (long form)
+    if (shortForm) return (lengthBits, ++pointer); //it's a short form length, so we're done
+    // it's not short form so more work to do
+    require (lengthBits != 0, 'Indefinite lengths are not supported');
+    require (lengthBits != 0x7F, 'A value of 0x7F for a long form length is a reserved value');
+    uint length = 0;
+    for (uint i = 0; i < lengthBits; i++) {
+      length = (length << 8) | uint(uint8(derSlice[i+1]));
+      console.log(length);
+    }
+    return (length, pointer + lengthBits + 1);
+  }
+  /*
+  Returns the value field for the tlv encoded data.  The passed in bytes must have the value field starting at byte[0]
+  */
+  function getTlvValue(bytes calldata derSlice, uint length, uint pointer, Tag memory tag) private pure returns(bytes memory, uint) {
+    if (tag.isConstructed) return (derSlice[:length], pointer); // we want to point at the start of the value because it contains child tlv constructs so we need to process it further
+    return (derSlice[:length], pointer + length); //these '1' values should be length - DEBUG
+  }
+  /*
+  Assembles the next tlv element from an array of bytes representing DER encoded data.  The next element must be at the start of the DER bytes array
+  */
+  function getNextTlv(bytes calldata derSlice, uint pointer, uint depth, uint id) private view returns(DecodedTlv memory, uint) {
+    Tag memory tag;
+    uint length;
+    bytes memory value;
+    (tag, pointer) = getTlvTag(derSlice[pointer], pointer);
+    (length, pointer) = getTlvLength(derSlice[pointer:], pointer);
+    (value, pointer) = getTlvValue(derSlice[pointer:], length, pointer, tag);
+    DecodedTlv memory tlv = DecodedTlv(id, tag, length, value, depth );
+    return (tlv, pointer);
+  }
+
+  /**
+  A function that recurses through the ASN.1 tree that the DER bytes encode (recursive tlv within tlv has to be handled)
+  @param derBytes the DER encoded certificate (although this should work with any ASN.1 DER encoded binary object)
+  */
+  // function recurseDerTree(bytes calldata derBytes, uint pointer, uint id, uint depth, uint endOfConstruction) private returns(uint, uint, uint, uint) {
+  //   DecodedTlv memory tlv;
+  //   uint lastDepth;
+  //   // uint endOfConstruction;
+  //   (tlv, pointer) = getNextTlv(derBytes, pointer, depth, id);
+  //   tlvs.push(tlv);
+  //   id++;
+  //   if (pointer == endOfConstruction) --lastDepth;
+  //   if (tlv.tag.isConstructed) { 
+  //     lastDepth = depth;
+  //     (pointer, id, depth, endOfConstruction ) = recurseDerTree(derBytes, pointer, id, ++depth, pointer + tlv.length);
+  //   }
+  //   console.log(depth, pointer, endOfConstruction, tlv.length);
+  //   return(pointer, id, depth, endOfConstruction);
+  // }
+  function walkDerTree(bytes calldata derBytes) private {
+    DecodedTlv memory tlv;
+    uint pointer = 0;
+    uint  depth = 0;
+    uint id = 0;
+    uint[MAX_DEPTH] memory depthChangesAt;
+    do {
+      (tlv, pointer) = getNextTlv(derBytes, pointer, depth, id++);
+      tlvs.push(tlv);
+      if (tlv.tag.isConstructed) {
+        depthChangesAt[depth] = pointer + tlv.length;
+        depth++;
+      }
+      for (uint i = 0; i < MAX_DEPTH; i++ ) {
+        if (pointer == depthChangesAt[i]) depth--;
+      }
+    } while (pointer < derBytes.length);
+  }
+  /*
+  Parses the bytes DER encoded data and extracts the (possibly nested) TLV elements
+  as 'DecodedTlv[]'. Each struct has a pointer to its children (if any)
+  */
+  function parseDER(bytes calldata derBytes) external {
+      walkDerTree(derBytes);
+  }
+  /*
+  Getter for the parsed TLV data
+  */
+  function getTlvs() external view returns(DecodedTlv[] memory) {
+    return tlvs;
+  }
+}

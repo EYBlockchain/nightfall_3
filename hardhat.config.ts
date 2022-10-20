@@ -4,10 +4,11 @@ import '@nomicfoundation/hardhat-toolbox';
 import 'hardhat-contract-sizer';
 import 'hardhat-storage-layout';
 import '@openzeppelin/hardhat-upgrades';
+import "hardhat-gas-reporter"
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.8.3',
+    version: '0.8.9',
     settings: {
       optimizer: {
         enabled: true,
@@ -21,6 +22,9 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 0,
+  },
+  gasReporter: {
+    enabled: true
   },
 };
 
