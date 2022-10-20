@@ -204,17 +204,28 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
  * TODO - nullifiers
  */
 export async function checkBlock(block, transactions) {
+  const startLeafCount = new Date();
   await checkLeafCount(block);
+  const endLeafCount = new Date();
   // now we have to check the commitment root.
   // For this we can make use of Timber with its optimistic extensions.
+  const startBlockRoot = new Date();
   await checkBlockRoot(block);
+  const endBlockRoot = new Date();
+  const startFrontier = new Date();
   await checkFrontier(block);
+  const endFrontier = new Date();
+  const startDupCommit = new Date();
   await checkDuplicateCommitmentsWithinBlock(block, transactions);
+  const endDupCommit = new Date();
+  const startDupNull = new Date();
   await checkDuplicateNullifiersWithinBlock(block, transactions);
+  const endDupNull = new Date();
 
   // check if the transactions are valid - transaction type, public input hash and proof verification are all checked
 
   let transaction;
+  const startTx = new Date();
   try {
     for (let i = 0; i < transactions.length; i++) {
       transaction = transactions[i];
@@ -240,4 +251,14 @@ export async function checkBlock(block, transactions) {
       },
     );
   }
+  const endTx = new Date();
+  console.log(
+    'VERIF BLOCK TIMES: ',
+    endLeafCount.getTime() - startLeafCount.getTime(),
+    endBlockRoot.getTime() - startBlockRoot.getTime(),
+    endFrontier.getTime() - startFrontier.getTime(),
+    endDupCommit.getTime() - startDupCommit.getTime(),
+    endDupNull.getTime() - startDupNull.getTime(),
+    endTx.getTime() - startTx.getTime(),
+  );
 }

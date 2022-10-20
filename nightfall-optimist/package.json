@@ -40,6 +40,7 @@
     "jsonfile": "^6.1.0",
     "keccak": "^3.0.1",
     "mongodb": "^4.7.0",
+    "node-worker-threads-pool": "^1.5.1",
     "queue": "^6.0.2",
     "safe-buffer": "^5.2.1",
     "tar": "^6.1.11",

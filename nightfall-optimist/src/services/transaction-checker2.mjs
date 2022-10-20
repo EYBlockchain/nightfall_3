@@ -8,20 +8,27 @@ Here are the things that could be wrong with a transaction:
 */
 
 import config from 'config';
-import gen from 'general-number';
+//import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+//import { TransactionError } from '../classes/index.mjs';
+import TransactionError from '../classes/transaction-error.mjs';
+/*
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
+*/
+//import { waitForContract } from '../event-handlers/subscribe.mjs';
+
 import {
   getBlockByBlockNumberL2,
   getL2TransactionByCommitment,
   getL2TransactionByNullifier,
   getTransactionHashSiblingInfo,
   getLatestBlockInfo,
-} from './database.mjs';
+} from './database2.mjs';
+/*
 import verify from './verify.mjs';
+*/
 
-const { generalise } = gen;
+//const { generalise } = gen;
 const { PROVING_SCHEME, BACKEND, CURVE } = config;
 const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
@@ -192,7 +199,7 @@ async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
     checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
     checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumberL2),
     checkHistoricRootBlockNumber(transaction),
-    verifyProof(transaction),
+    //verifyProof(transaction),
   ]);
 }
 

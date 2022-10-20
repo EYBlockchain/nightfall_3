@@ -35,6 +35,7 @@ export function setBlockProposedWebSocketConnection(_ws) {
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
 async function blockProposedEventHandler(data) {
+  const start = new Date();
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { block, transactions } = await getProposeBlockCalldata(data);
 
@@ -62,7 +63,9 @@ async function blockProposedEventHandler(data) {
     // we will save before checking because the database at any time should reflect the state the blockchain holds
     // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
     // update this collection
+    const startSaveBlck = new Date();
     await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, timeBlockL2, ...block });
+    const endSaveBlck = new Date();
 
     // It's possible that some of these transactions are new to us. That's because they were
     // submitted by someone directly to another proposer and so there was never a TransactionSubmitted
@@ -70,6 +73,7 @@ async function blockProposedEventHandler(data) {
     // In which case this handler is being called be the resync code. either way, we need to add the transaction.
     // let's use transactionSubmittedEventHandler to do this because it will perform all the duties associated
     // with saving a transaction.
+    const startTxSubmit = new Date();
     await Promise.all(
       transactions.map(async tx => {
         if (!(await getTransactionByTransactionHash(tx.transactionHash))) {
@@ -87,9 +91,11 @@ async function blockProposedEventHandler(data) {
         return true;
       }),
     );
+    const endTxSubmit = new Date();
 
     // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
+    const startRemoveTx = new Date();
     await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2); // TODO is await needed?
     const blockCommitments = transactions
       .map(t => t.commitments.filter(c => c !== ZERO))
@@ -99,7 +105,9 @@ async function blockProposedEventHandler(data) {
       .flat(Infinity);
     await removeCommitmentsFromMemPool(blockCommitments);
     await removeNullifiersFromMemPool(blockNullifiers);
+    const endRemoveTx = new Date();
 
+    const startTree = new Date();
     const latestTree = await getLatestTree();
     const updatedTimber = Timber.statelessUpdate(
       latestTree,
@@ -108,12 +116,24 @@ async function blockProposedEventHandler(data) {
       TIMBER_HEIGHT,
     );
     const res = await saveTree(currentBlockCount, block.blockNumberL2, updatedTimber);
+    const endTree = new Date();
     logger.debug(`Saving tree with block number ${block.blockNumberL2}, ${res}`);
     // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.
     // we'll check the block and issue a challenge if appropriate
+    const startCheckBlock = new Date();
     await checkBlock(block, transactions);
+    const endCheckBlock = new Date();
+    const end = new Date();
     logger.info('Block Checker - Block was valid');
+    console.log("BLOCK PROPOPSED TIMES:",
+      end.getTime() - start.getTime(),
+      endSaveBlck.getTime() - startSaveBlck.getTime(),
+      endTxSubmit.getTime() - startTxSubmit.getTime(),
+      endRemoveTx.getTime() - startRemoveTx.getTime(),
+      endTree.getTime() - startTree.getTime(),
+      endCheckBlock.getTime() - startCheckBlock.getTime(),
+    );
   } catch (err) {
     if (err instanceof BlockError) {
       logger.warn(`Block Checker - Block invalid, with code ${err.code}! ${err.message}`);

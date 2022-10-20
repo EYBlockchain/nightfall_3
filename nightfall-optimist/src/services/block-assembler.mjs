@@ -105,10 +105,13 @@ export async function conditionalMakeBlock(proposer) {
         const numberOfTransactionsInBlock =
           unprocessed >= TRANSACTIONS_PER_BLOCK ? TRANSACTIONS_PER_BLOCK : unprocessed;
         makeNow = false; // reset the makeNow so we only make one block with a short number of transactions
+        const start = new Date();
+        const startMake = new Date();
         const { block, transactions } = await makeBlock(
           proposer.address,
           numberOfTransactionsInBlock,
         );
+        const endMake = new Date();
 
         logger.info({
           msg: 'Block Assembler - New Block created',
@@ -116,6 +119,7 @@ export async function conditionalMakeBlock(proposer) {
         });
 
         // propose this block to the Shield contract here
+        const startContract = new Date();
         const unsignedProposeBlockTransaction = await (
           await waitForContract(STATE_CONTRACT_NAME)
         ).methods
@@ -124,10 +128,12 @@ export async function conditionalMakeBlock(proposer) {
             transactions.map(t => Transaction.buildSolidityStruct(t)),
           )
           .encodeABI();
+        const endContract = new Date();
 
         // check that the websocket exists (it should) and its readyState is OPEN
         // before sending Proposed block. If not wait until the proposer reconnects
         let tryCount = 0;
+        const startWs = new Date();
         while (!ws || ws.readyState !== WebSocket.OPEN) {
           await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
 
@@ -156,9 +162,21 @@ export async function conditionalMakeBlock(proposer) {
           increaseProposerBlockNotSent();
           logger.debug('Block not sent. Uinitialized socket');
         }
+        const endWs = new Date();
         // remove the transactions from the mempool so we don't keep making new
         // blocks with them
+        const startRemoveTx = new Date();
         await removeTransactionsFromMemPool(block.transactionHashes);
+        const endRemoveTx = new Date();
+        const end = new Date();
+        console.log(
+          'BLOCK ASSEMBLER TIME:',
+          end.getTime() - start.getTime(),
+          endMake.getTime() - startMake.getTime(),
+          endContract.getTime() - startContract.getTime(),
+          endWs.getTime() - startWs.getTime(),
+          endRemoveTx.getTime() - startRemoveTx.getTime(),
+        );
       }
     }
   }

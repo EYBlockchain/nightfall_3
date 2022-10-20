@@ -2,6 +2,10 @@
  * Module to handle new Transactions being posted
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { StaticPool } from 'node-worker-threads-pool';
+import { fileURLToPath } from 'url';
+import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
+import gen from 'general-number';
 import {
   saveTransaction,
   getBlockByTransactionHash,
@@ -10,6 +14,11 @@ import {
 import checkTransaction from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
+
+const __filename = fileURLToPath(import.meta.url);
+const init = false;
+let checkTxPool;
+let worker;
 
 /**
  * It's possible this is a replay or a re-mine of a transaction that's already
@@ -47,7 +56,21 @@ async function checkAlreadyInBlock(_transaction) {
  * This handler runs whenever a new transaction is submitted to the blockchain
  */
 async function transactionSubmittedEventHandler(eventParams) {
+  /*
+  if (!init) {
+    console.log("XXXXXXXXXXXXXXX INIT XXXXXXXXXXXXX", __filename)
+    checkTxPool = new StaticPool({
+      size: 4,
+       task: '/app/src/services/transaction-checker.mjs',
+      //task: __filename,
+      // task: (a,b) => 
+    });
+    init = true;
+  }
+  */
   const { offchain = false, fromBlockProposer, ...data } = eventParams;
+  const { generalise } = gen;
+  const start = new Date();
   let transaction;
   if (offchain) {
     transaction = data;
@@ -63,30 +86,72 @@ async function transactionSubmittedEventHandler(eventParams) {
     msg: 'Transaction Handler - New transaction received.',
     transaction: JSON.stringify(transaction, null, 2),
   });
+  // if (isMainThread) {
+  // worker = new Worker(__filename);
+  worker = new Worker('/app/src/event-handlers/worker.mjs', {
+    workerData: { transaction, fromBlockProposer},
+  });
+  worker.on('message', msg => {
+    console.log('SSSSSSSSSSSSSSSSSSSSSSSS', msg);
+  });
+  worker.on('error', err => {
+    console.log('XXXXXXXXXXXXX', err);
+  });
+  /*
+  } else {
+    logger.info({
+      msg: 'Transaction Handler - New transaction received.',
+      transaction: JSON.stringify(transaction, null, 2),
+    });
 
-  try {
-    transaction = await checkAlreadyInBlock(transaction);
-    // save transaction if not in block
-    if (fromBlockProposer) {
-      saveTransaction({ ...transaction });
-    }
+    try {
+      const startCheckInBlock = new Date();
+      transaction = await checkAlreadyInBlock(transaction);
+      const endCheckInBlock = new Date();
+      const startSave1 = new Date();
+      // save transaction if not in block
+      if (fromBlockProposer) {
+        saveTransaction({ ...transaction });
+      }
+      const endSave1 = new Date();
 
-    await checkTransaction(transaction, true);
-    logger.info('Transaction checks passed');
+      const startCheckTx = new Date();
+      console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+      // const res = await checkTxPool.exec(transaction, true);
+      // console.log("XXXXXXXXXXXXXXX", res)
+      await checkTransaction(transaction, true);
+      const endCheckTx = new Date();
+      logger.info('Transaction checks passed');
 
-    // save it
-    if (!fromBlockProposer) {
-      saveTransaction({ ...transaction });
-    }
-  } catch (err) {
-    if (err instanceof TransactionError) {
-      logger.warn(
-        `The transaction check failed with error: ${err.message}. The transaction has been ignored`,
+      // save it
+      const startSave2 = new Date();
+      if (!fromBlockProposer) {
+        saveTransaction({ ...transaction });
+      }
+      const endSave2 = new Date();
+      const end = new Date();
+      console.log(
+        'TX HANDLER TIME:',
+        end.getTime() - start.getTime(),
+        endCheckInBlock.getTime() - startCheckInBlock.getTime(),
+        endSave1.getTime() - startSave1.getTime(),
+        endCheckTx.getTime() - startCheckTx.getTime(),
+        endSave2.getTime() - startSave2.getTime(),
       );
-    } else {
-      logger.error(err);
+    } catch (err) {
+      if (err instanceof TransactionError) {
+        logger.warn(
+          `The transaction check failed with error: ${err.message}. The transaction has been ignored`,
+        );
+      } else {
+        logger.error(err);
+      }
     }
-  }
+  } */
+  /* } else if (!isMainThread) {
+    console.log('XXXXXXXXXX');
+    //parentPort.postMessage('DONE');
+  } */
 }
 
 export default transactionSubmittedEventHandler;

@@ -16,11 +16,12 @@ const { mnemonics, signingKeys, zkpPublicKeys } = config.TEST_OPTIONS;
 const txPerBlock =
   process.env.DEPLOYER_ETH_NETWORK === 'mainnet'
     ? process.env.TEST_LENGTH
-    : config.TEST_OPTIONS.txPerBlock;
+    //: config.TEST_OPTIONS.txPerBlock;
+    : 32;
 
 const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
 
-const TEST_LENGTH = 4;
+const TEST_LENGTH = 400;
 /**
 Does the preliminary setup and starts listening on the websocket
 */
