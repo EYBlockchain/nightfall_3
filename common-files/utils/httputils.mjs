@@ -17,7 +17,7 @@ import logger from './logger.mjs';
 import correlator from './correlation-id.mjs';
 import { isDev, obfuscate } from './utils.mjs';
 
-const { LOG_HTTP_PAYLOAD_ENABLED } = config;
+const { LOG_HTTP_PAYLOAD_ENABLED, LOG_HTTP_FULL_DATA } = config;
 
 /**
  * Default obfuscation's rules.
@@ -105,6 +105,22 @@ const applyAxiosDefaults = () => {
   });
 };
 
+/* eslint no-else-return: "off" */
+const getRequestParam = req => {
+  const dataInput = {};
+
+  if (Object.keys(req.query).length !== 0)
+    dataInput.query = req.query;
+
+  if (Object.keys(req.params).length !== 0)
+    dataInput.params = req.params;
+
+  if (Object.keys(req.body).length !== 0)
+    dataInput.params = req.body;
+
+  return dataInput;
+};
+
 /**
  * Logs request information if the DEBUG log level is enabled (We can create a
  * environment variable in another moment to handle this).
@@ -113,23 +129,30 @@ const requestLogger = (req, res, next) => {
   if (
     req.url === '/healthcheck' ||
     !logger.isLevelEnabled('debug') ||
-    LOG_HTTP_PAYLOAD_ENABLED !== true
+    LOG_HTTP_PAYLOAD_ENABLED !== 'true'
   ) {
     return next();
   }
 
-  logger.debug({
-    message: 'Request info',
-    request: {
-      method: req.method,
-      url: doObfuscation(req.url),
-      originalUrl: doObfuscation(req.originalUrl),
-      headers: doObfuscation(req.headers),
-      query: doObfuscation(req.query),
-      params: doObfuscation(req.params),
-      body: doObfuscation(req.body),
-    },
-  });
+  if (LOG_HTTP_FULL_DATA === 'true') {
+    logger.debug({
+      msg: 'Request info',
+      request: {
+        method: req.method,
+        url: doObfuscation(req.url),
+        originalUrl: doObfuscation(req.originalUrl),
+        headers: doObfuscation(req.headers),
+        query: doObfuscation(req.query),
+        params: doObfuscation(req.params),
+        body: doObfuscation(req.body),
+      },
+    });
+  } else {
+    logger.debug({
+      msg: `Call to endpoint '${doObfuscation(req.url)}'`,
+      inputParams: doObfuscation(getRequestParam(req)),
+    });
+  }
 
   return next();
 };
@@ -165,18 +188,25 @@ const addInterceptorForJson = (res, next) => {
 };
 
 const logResponseData = (req, res, jsonData) => {
-  logger.debug({
-    message: 'Response info',
-    request: {
-      url: doObfuscation(req.url),
-      method: req.method,
-    },
-    response: {
-      status: res.statusCode,
-      data: doObfuscation(jsonData),
-      headers: doObfuscation(res.getHeaders()),
-    },
-  });
+  if (LOG_HTTP_FULL_DATA === 'true') {
+    logger.debug({
+      msg: 'Response info',
+      request: {
+        url: doObfuscation(req.url),
+        method: req.method,
+      },
+      response: {
+        status: res.statusCode,
+        data: doObfuscation(jsonData),
+        headers: doObfuscation(res.getHeaders()),
+      },
+    });
+  } else {
+    logger.debug({
+      msg: `Result from endpoint ${req.baseUrl}${doObfuscation(req.url)} [${res.statusCode}]`,
+      result: doObfuscation(jsonData),
+    });
+  }
 };
 
 /**
@@ -195,7 +225,7 @@ const responseLogger = (req, res, next) => {
   if (
     req.url === '/healthcheck' ||
     !logger.isLevelEnabled('debug') ||
-    LOG_HTTP_PAYLOAD_ENABLED !== true
+    LOG_HTTP_PAYLOAD_ENABLED !== 'true'
   ) {
     return next();
   }

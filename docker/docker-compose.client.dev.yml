@@ -15,7 +15,7 @@ services:
         target: /common-files
       - type: bind
         source: ../config/default.js
-        target: /app/config/default.js
+        target: /config/default.js
 
   worker:
     build:
