@@ -164,7 +164,6 @@ router.post('/de-register', async (req, res, next) => {
  */
 
 router.post('/withdrawStake', async (req, res, next) => {
-  logger.debug(`withdrawStake endpoint received GET`);
   try {
     const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposerContractInstance.methods.withdrawStake().encodeABI();
@@ -178,10 +177,7 @@ router.post('/withdrawStake', async (req, res, next) => {
  * Function to get pending blocks payments for a proposer.
  */
 router.get('/pending-payments', async (req, res, next) => {
-  logger.debug(`pending-payments endpoint received GET`);
   const { proposerPayments = proposer } = req.query;
-  logger.debug(`requested pending payments for proposer ${proposer}`);
-
   const pendingPayments = [];
   // get blocks by proposer
   try {
@@ -209,10 +205,8 @@ router.get('/pending-payments', async (req, res, next) => {
         pendingPayments.push({ blockHash: blocks[i].blockHash, challengePeriod });
       }
     }
-    logger.debug('returning pending blocks payments');
     res.json({ pendingPayments });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });
@@ -239,6 +233,7 @@ router.get('/withdraw', async (req, res, next) => {
  * withdrawal and then /withdraw needs to be called to recover the money.
  */
 router.post('/payment', async (req, res, next) => {
+  const { blockHash } = req.body;
   try {
     const block = await getBlockByBlockHash(blockHash);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);

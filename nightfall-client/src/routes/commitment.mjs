@@ -3,7 +3,6 @@
  */
 
 import express from 'express';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   getCommitmentBySalt,
   getWalletBalance,
@@ -23,8 +22,6 @@ router.get('/salt', async (req, res, next) => {
   try {
     const { salt } = req.query;
     const commitment = await getCommitmentBySalt(salt);
-    if (commitment === null) logger.debug(`Found commitment ${commitment} for salt ${salt}`);
-    else logger.debug(`No commitment found for salt ${salt}`);
     res.json({ commitment });
   } catch (err) {
     next(err);
@@ -34,9 +31,6 @@ router.get('/salt', async (req, res, next) => {
 router.get('/balance', async (req, res, next) => {
   try {
     const { compressedZkpPublicKey, ercList } = req.query;
-    logger.debug(
-      `Details requested with compressedZkpPublicKey ${compressedZkpPublicKey} and ercList ${ercList}`,
-    );
     let balance;
     if (compressedZkpPublicKey) balance = await getWalletBalance(compressedZkpPublicKey, ercList);
     else balance = await getWalletBalanceUnfiltered(compressedZkpPublicKey, ercList);
@@ -49,9 +43,6 @@ router.get('/balance', async (req, res, next) => {
 router.get('/pending-deposit', async (req, res, next) => {
   try {
     const { compressedZkpPublicKey, ercList } = req.query;
-    logger.debug(
-      `Details requested with compressedZkpPublicKey ${compressedZkpPublicKey} and ercList ${ercList}`,
-    );
     const balance = await getWalletPendingDepositBalance(compressedZkpPublicKey, ercList);
     res.json({ balance });
   } catch (err) {
@@ -62,9 +53,6 @@ router.get('/pending-deposit', async (req, res, next) => {
 router.get('/pending-spent', async (req, res, next) => {
   try {
     const { compressedZkpPublicKey, ercList } = req.query;
-    logger.debug(
-      `Details requested with compressedZkpPublicKey ${compressedZkpPublicKey} and ercList ${ercList}`,
-    );
     const balance = await getWalletPendingSpentBalance(compressedZkpPublicKey, ercList);
     res.json({ balance });
   } catch (err) {
