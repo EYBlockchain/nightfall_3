@@ -134,7 +134,7 @@ export async function proposerTest() {
 
   const stateAddress = await nf3Proposer.getContractAddress('State');
   const stateABI = await nf3Proposer.getContractAbi('State');
-  const eventLogs = [];
+  let eventLogs = [];
 
   const web3Client = new Web3Client();
   web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
@@ -159,6 +159,8 @@ export async function proposerTest() {
     currentProposer = await getCurrentProposer();
   }
 
+  proposersBlocks.push({ proposer: currentProposer.thisAddress.toUpperCase(), blocks: 0 });
+
   for (let i = 0; i < 8; i++) {
     try {
       // eslint-disable-next-line no-await-in-loop
@@ -169,33 +171,32 @@ export async function proposerTest() {
         `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress} ]`,
       );
 
-      proposersBlocks.push({ proposer: currentProposer.thisAddress, blocks: 0 });
-
       console.log('     Waiting blocks to rotate current proposer...');
       const initBlock = await nf3Proposer.web3.eth.getBlockNumber();
       let currentBlock = initBlock;
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      let proposerBlock = proposersBlocks.find(
+        // eslint-disable-next-line no-loop-func
+        p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
+      );
+      if (!proposerBlock) {
+        proposerBlock = { proposer: currentProposer.thisAddress.toUpperCase(), blocks: 0 };
+        proposersBlocks.push(proposerBlock);
+      } else {
+        proposerBlock.blocks++;
+      }
 
       while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        let proposerBlock = proposersBlocks.find(
-          // eslint-disable-next-line no-loop-func
-          p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-        );
-        if (!proposerBlock) {
-          proposerBlock = { proposer: currentProposer.thisAddress.toUpperCase(), blocks: 0 };
-          proposersBlocks.push(proposerBlock);
-        } else {
-          proposerBlock.blocks++;
-        }
-        // await new Promise(resolve => setTimeout(resolve, 10000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
       }
 
-      for (const proposerBlock of proposersBlocks) {
-        console.log(`${proposerBlock.proposer} : ${proposerBlock.blocks}`);
+      for (const pb of proposersBlocks) {
+        console.log(`${pb.proposer} : ${pb.blocks}`);
       }
       console.log('     Change current proposer...');
       await nf3Proposer.changeCurrentProposer();
+      eventLogs = [];
     } catch (err) {
       console.log(err);
     }
