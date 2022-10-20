@@ -2,7 +2,9 @@ version: '3.5'
 # Use this script for running up 2 independent proposers with optimist and mongodb services.
 services:
   proposer_optimist_1:
-    image: nightfall-optimist-1:latest
+    build:
+      dockerfile: docker/optimist.standalone.Dockerfile
+      context: ..
     container_name: proposer_optimist_1
     depends_on:
       - optimist_mongodb_1
@@ -28,7 +30,9 @@ services:
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
-    image: nightfall-optimist-2:latest
+    build:
+      dockerfile: docker/optimist.standalone.Dockerfile
+      context: ..
     container_name: proposer_optimist_2
     depends_on:
       - optimist_mongodb_2
