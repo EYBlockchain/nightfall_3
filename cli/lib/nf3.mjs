@@ -5,6 +5,7 @@ import WebSocket from 'ws';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { estimateGas } from '@polygon-nightfall/common-files/utils/ethereum/gas.mjs';
 import { Mutex } from 'async-mutex';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
@@ -17,11 +18,6 @@ import {
   DEFAULT_FEE_ETH,
   DEFAULT_FEE_MATIC,
   WEBSOCKET_PING_TIME,
-  GAS_MULTIPLIER,
-  GAS,
-  GAS_PRICE,
-  GAS_PRICE_MULTIPLIER,
-  GAS_ESTIMATE_ENDPOINT,
 } from './constants.mjs';
 
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
@@ -221,45 +217,6 @@ class Nf3 {
     return axios.get(`${this.optimistBaseUrl}/block/make-now`);
   }
 
-  async estimateGas(contractAddress, unsignedTransaction) {
-    let gasLimit;
-    try {
-      // Workaround to estimateGas call not working properly on Polygon Edge nodes
-      const res = await axios.post(this.web3WsUrl, {
-        method: 'eth_estimateGas',
-        params: [
-          {
-            from: this.ethereumAddress,
-            to: contractAddress,
-            data: unsignedTransaction,
-            value: this.defaultFee.toString(),
-          },
-        ],
-      });
-      if (res.data.error) throw new Error(res.data.error);
-      gasLimit = parseInt(res.data.result, 16);
-    } catch (error) {
-      gasLimit = GAS; // backup if estimateGas failed
-    }
-    return Math.ceil(Number(gasLimit) * GAS_MULTIPLIER); // 50% seems a more than reasonable buffer.
-  }
-
-  async estimateGasPrice() {
-    let proposedGasPrice;
-    try {
-      // Call the endpoint to estimate the gas fee.
-      const res = (await axios.get(GAS_ESTIMATE_ENDPOINT)).data.result;
-      proposedGasPrice = Number(res?.ProposeGasPrice) * 10 ** 9;
-    } catch (error) {
-      try {
-        proposedGasPrice = Number(await this.web3.eth.getGasPrice());
-      } catch (err) {
-        proposedGasPrice = GAS_PRICE;
-      }
-    }
-    return Math.ceil(proposedGasPrice * GAS_PRICE_MULTIPLIER);
-  }
-
   /**
   Method for signing an Ethereum transaction to the
   blockchain.
@@ -276,11 +233,6 @@ class Nf3 {
     let signed;
 
     await this.nonceMutex.runExclusive(async () => {
-      // estimate the gasPrice
-      const gasPrice = await this.estimateGasPrice();
-      // Estimate the gasLimit
-      const gas = await this.estimateGas(contractAddress, unsignedTransaction);
-
       // Update nonce if necessary
       const _nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
       if (this.nonce < _nonce) {
@@ -292,10 +244,12 @@ class Nf3 {
         to: contractAddress,
         data: unsignedTransaction,
         value: fee,
-        gas,
-        gasPrice,
         nonce: this.nonce,
       };
+      // Estimate the gasLimit
+      const gas = await estimateGas(tx, this.web3);
+      tx.gas = gas;
+
       this.nonce++;
 
       if (this.ethereumSigningKey) {
