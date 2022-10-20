@@ -49,6 +49,7 @@ module.exports = {
           '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
           '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
           '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+          '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
         ],
   },
   WHITELIST_MANAGERS: [
@@ -56,6 +57,7 @@ module.exports = {
     { address: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0', groupId: 1 },
     { address: '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9', groupId: 2 },
     { address: '0x4789FD18D5d71982045d85d5218493fD69F55AC4', groupId: 2 },
+    { address: '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816', groupId: 2 },
   ],
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
