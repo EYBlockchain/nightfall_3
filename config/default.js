@@ -155,7 +155,7 @@ module.exports = {
       optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
       optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
-      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}${process.env.BLOCKCHAIN_PATH}`,
       adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
       adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
@@ -194,7 +194,7 @@ module.exports = {
     gasCosts: 80000000000000000,
     fee: 1,
     BLOCK_STAKE: 1, // 1 wei
-    MINIMUM_STAKE: 100, // 100 wei
+    MINIMUM_STAKE: process.env.MINIMUM_STAKE || 1000000, // 1000000 wei
     ROTATE_PROPOSER_BLOCKS: 20,
     txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
     signingKeys: {
@@ -302,7 +302,7 @@ module.exports = {
           amount: '1000000000000',
         },
       ],
-      edge: [
+      staging_edge: [
         {
           name: 'ERC20Mock',
           address: '0x7578E001dCF334F48a87dA44e30C7ab3b517a5B8',
