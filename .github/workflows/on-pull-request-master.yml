@@ -72,7 +72,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> circuit-test.log &disown
+          ./bin/start-nightfall -g &> circuit-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -119,7 +119,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -166,7 +166,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -213,7 +213,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -260,7 +260,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g &> ganache-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -308,7 +308,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> kyc-test.log &disown
+          ./bin/start-nightfall -g &> kyc-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -354,7 +354,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> administrator-test.log &disown
+          ./bin/start-nightfall -g &> administrator-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -401,7 +401,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> optimist-sync-test.log &disown
+          ./bin/start-nightfall -g &> optimist-sync-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -454,7 +454,7 @@ jobs:
   #          ./bin/setup-nightfall
   #          ./bin/geth-standalone -s
   #          sleep 300
-  #          ./bin/start-nightfall -l -d -a &> adversary-test.log &disown
+  #          ./bin/start-nightfall -l -a &> adversary-test.log &disown
   #
   #      - name: Wait for images to be ready
   #        uses: Wandalen/wretry.action@v1.0.11
@@ -503,7 +503,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ping-pong-test.log &disown
+          ./bin/start-nightfall -g &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -551,7 +551,7 @@ jobs:
       - name: Start Containers with ganache
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> test-gas.log &disown
+          ./bin/start-nightfall -g &> test-gas.log &disown
         env:
           TRANSACTIONS_PER_BLOCK: 32
           CONFIRMATIONS: 1
@@ -602,7 +602,7 @@ jobs:
       - name: Start Containers with ganache
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> test-apps.log &disown
+          ./bin/start-nightfall -g &> test-apps.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
