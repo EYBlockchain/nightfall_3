@@ -52,7 +52,6 @@ async function checkBlockRoot(block) {
       // eslint-disable-next-line no-await-in-loop
       history = await getTreeByLeafCount(block.leafCount);
       logger.debug(`Block has commitments - retrieved history from Timber`);
-<<<<<<< HEAD
       logger.trace({
         msg: 'Timber history was',
         history,
@@ -60,9 +59,6 @@ async function checkBlockRoot(block) {
 
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
-=======
-      logger.trace(`Timber history was ${JSON.stringify(history, null, 2)}`);
->>>>>>> master
     }
   }
 
