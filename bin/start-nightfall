@@ -44,6 +44,7 @@ while [ -n "$1" ]; do
     esac
   shift
 done
+
 # FILE should always be set.  Asking for -s on its own makes no sense
 if [ -z "$FILE" ]; then
   usage
@@ -83,6 +84,10 @@ fi
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag1) ]]; then
   echo -n 'Removing '
   docker volume rm nightfall_3_dag1
+fi
+
+if [ ! -z "$DEV" ]; then
+  cd common-files && npm ci && cd ..
 fi
 
 docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }
