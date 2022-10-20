@@ -3,7 +3,7 @@ version: '3.5'
 # bindings.  See the readme for more information.
 services:
   client:
-    image: ghcr.io/eyblockchain/nightfall3-client:latest
+    image: public.ecr.aws/m0t3e1j9/nightfall-client:testnet
     volumes:
       - type: volume
         source: build
@@ -26,11 +26,13 @@ services:
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
       USE_STUBS: ${USE_STUBS:-false} # make sure this flag is the same as in deployer service
-      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
+      BLOCKCHAIN_URL: wss://${BLOCKCHAIN_WS_HOST}
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
       ETH_NETWORK: ${ETH_NETWORK}
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
+
     command: ['npm', 'run', 'dev']
 
   rabbitmq:
@@ -55,7 +57,7 @@ services:
         target: /data/db 
 
   worker:
-    image: ghcr.io/eyblockchain/nightfall3-worker:latest
+    image: public.ecr.aws/m0t3e1j9/nightfall-worker:testnet
     volumes:
       - type: volume
         source: proving_files

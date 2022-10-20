@@ -36,14 +36,14 @@ run the client.
 
 ```
 ETH_NETWORK=goerli or mainnet
-BLOCKCHAIN_URL=your web3 url provider to access the blockchain
+BLOCKCHAIN_WS_HOST=your web3 host to access the blockchain
 ```
 
 Example of `client.env`:
 
 ```
 ETH_NETWORK=goerli
-BLOCKCHAIN_URL=wss://eth-goerli.alchemyapi.io/v2/xxxxxxxxxxxxxxxxxxxxxxxxxxxxs
+BLOCKCHAIN_WS_HOST=eth-goerli.alchemyapi.io/v2/xxxxxxxxxxxxxxxxxxxxxxxxxxxxs
 ```
 
 To run the script with existing images of the different services based on the
@@ -68,6 +68,6 @@ This will run a docker-compose with the needed components:
 
 ### Localhost deployment
 
-If you just want to run Polygon Nightfall in localhost then use `start-nightfall` script with all
+If you just want to run Polygon Nightfall in localhost then use `./bin/start-nightfall` script with all
 necessary services conteainerised in localhost. See the README in the
 [Polygon Nightfall](https://github.com/EYBlockchain/nightfall_3) repository

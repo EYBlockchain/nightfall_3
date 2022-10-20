@@ -177,6 +177,7 @@ describe('Gas test', () => {
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
         await nf3Users[0].makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForTimeout(10000);
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
         const commitments = await nf3Users[0].getPendingWithdraws();
         expect(
