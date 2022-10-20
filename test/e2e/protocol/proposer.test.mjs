@@ -235,6 +235,7 @@ describe('Basic Proposer tests', () => {
   });
 
   it('Should create a valid changeCurrentProposer (because blocks has passed)', async function () {
+    let numChanges = 0;
     for (let i = 0; i < 8; i++) {
       try {
         // eslint-disable-next-line no-await-in-loop
@@ -256,10 +257,12 @@ describe('Basic Proposer tests', () => {
 
         const res = await secondProposer.changeCurrentProposer();
         expectTransaction(res);
+        numChanges++;
       } catch (err) {
         console.log(err);
       }
     }
+    expect(numChanges).to.be.equal(8);
   });
 
   it('should unregister the third proposer', async () => {

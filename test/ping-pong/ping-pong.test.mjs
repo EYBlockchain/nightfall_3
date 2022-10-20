@@ -32,7 +32,7 @@ describe('Ping-pong tests', () => {
 
   it('Runs ping-pong tests', async () => {
     userTest(false);
-    // proposerTest();
+    proposerTest();
     result = await userTest(true);
   });
 

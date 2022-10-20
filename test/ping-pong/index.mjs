@@ -11,8 +11,7 @@ import { waitForSufficientBalance, retrieveL2Balance, Web3Client } from '../util
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys, zkpPublicKeys, MINIMUM_STAKE, ROTATE_PROPOSER_BLOCKS } =
-  config.TEST_OPTIONS;
+const { mnemonics, signingKeys, zkpPublicKeys, ROTATE_PROPOSER_BLOCKS } = config.TEST_OPTIONS;
 
 const txPerBlock =
   process.env.DEPLOYER_ETH_NETWORK === 'mainnet'
@@ -132,7 +131,6 @@ export async function proposerTest() {
   // we must set the URL from the point of view of the client container
   const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
   await nf3Proposer.init(mnemonics.proposer3);
-  await nf3Proposer.registerProposer('http://optimist', MINIMUM_STAKE);
 
   const stateAddress = await nf3Proposer.getContractAddress('State');
   const stateABI = await nf3Proposer.getContractAbi('State');
@@ -154,13 +152,19 @@ export async function proposerTest() {
   };
 
   const proposersBlocks = [];
+  let currentProposer = await getCurrentProposer();
+
+  while (currentProposer.thisAddress === '0x0000000000000000000000000000000000000000') {
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    currentProposer = await getCurrentProposer();
+  }
 
   for (let i = 0; i < 8; i++) {
     try {
       // eslint-disable-next-line no-await-in-loop
       const currentSprint = await getCurrentSprint();
       // eslint-disable-next-line no-await-in-loop
-      const currentProposer = await getCurrentProposer();
+      currentProposer = await getCurrentProposer();
       console.log(
         `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress} ]`,
       );
@@ -173,9 +177,12 @@ export async function proposerTest() {
 
       while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        let proposerBlock = proposersBlocks.find(p => p.proposer === currentProposer.thisAddress);
+        let proposerBlock = proposersBlocks.find(
+          // eslint-disable-next-line no-loop-func
+          p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
+        );
         if (!proposerBlock) {
-          proposerBlock = { proposer: currentProposer.thisAddress, blocks: 0 };
+          proposerBlock = { proposer: currentProposer.thisAddress.toUpperCase(), blocks: 0 };
           proposersBlocks.push(proposerBlock);
         } else {
           proposerBlock.blocks++;
@@ -192,8 +199,7 @@ export async function proposerTest() {
     } catch (err) {
       console.log(err);
     }
-    await nf3Proposer.deregisterProposer();
-    await nf3Proposer.close();
-    await web3Client.closeWeb3();
   }
+  await nf3Proposer.close();
+  await web3Client.closeWeb3();
 }
