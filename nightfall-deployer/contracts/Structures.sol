@@ -74,6 +74,8 @@ contract Structures {
     struct BlockData {
         bytes32 blockHash; // hash of the block
         uint256 time; // time the block was created
+        address proposer; //proposer of the block
+        uint96 blockStake; //amount staked by the proposer for this block
     }
 
     struct LinkedAddress {

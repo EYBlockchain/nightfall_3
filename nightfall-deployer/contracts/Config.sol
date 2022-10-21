@@ -12,8 +12,8 @@ contract Config is Ownable, Structures {
     uint256 constant BLOCK_STRUCTURE_SLOTS = 7;
     uint256 constant TRANSACTION_STRUCTURE_SLOTS = 24;
 
-    uint256 minimumStake;
-    uint256 blockStake;
+    uint96 minimumStake;
+    uint96 blockStake;
     uint256 rotateProposerBlocks;
     uint256 valuePerSlot; // amount of value of a slot
     uint256 proposerSetCount; // number of slots to pop after shuffling slots that will build the proposer set
@@ -27,7 +27,7 @@ contract Config is Ownable, Structures {
 
     function initialize() public virtual override onlyInitializing {
         Ownable.initialize();
-        minimumStake = 100 wei;
+        minimumStake = 1000000 wei;
         blockStake = 1 wei;
         rotateProposerBlocks = 20;
         valuePerSlot = 10;
@@ -157,7 +157,7 @@ contract Config is Ownable, Structures {
     /**
      * @dev Set minimum stake for a proposer
      */
-    function setMinimumStake(uint256 _minimumStake) external onlyOwner {
+    function setMinimumStake(uint96 _minimumStake) external onlyOwner {
         minimumStake = _minimumStake;
     }
 
@@ -171,14 +171,14 @@ contract Config is Ownable, Structures {
     /**
      * @dev Set block stake for a proposer
      */
-    function setBlockStake(uint256 _blockStake) external onlyOwner {
+    function setBlockStake(uint96 _blockStake) external onlyOwner {
         blockStake = _blockStake;
     }
 
     /**
      * @dev Get block stake for a proposer
      */
-    function getBlockStake() public view returns (uint256) {
+    function getBlockStake() public view returns (uint96) {
         return blockStake;
     }
 
