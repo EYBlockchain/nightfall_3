@@ -19,12 +19,13 @@ WORKDIR /app/cli
 RUN npm ci
 
 WORKDIR /app
-COPY apps/proposer/package.json ./
+COPY apps/proposer/package*.json ./
 COPY apps/proposer/src src
 COPY apps/proposer/docker-entrypoint.sh docker-entrypoint.sh
 COPY config config
 
 RUN npm link @polygon-nightfall/common-files
-RUN npm i
+RUN npm ci
+COPY common-files/classes common-files/utils common-files/constants node_modules/@polygon-nightfall/common-files/
 
 CMD ["npm", "start"]

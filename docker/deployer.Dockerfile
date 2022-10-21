@@ -24,3 +24,5 @@ COPY nightfall-deployer/entrypoint.sh entrypoint.sh
 
 RUN npm link @polygon-nightfall/common-files
 RUN npm ci
+COPY common-files/classes common-files/utils common-files/constants node_modules/@polygon-nightfall/common-files/
+
