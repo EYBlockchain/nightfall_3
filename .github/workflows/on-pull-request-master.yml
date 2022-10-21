@@ -626,8 +626,8 @@ jobs:
         with:
           command: |
             curl -i http://localhost:8092/healthcheck
-          attempt_limit: 100
-          attempt_delay: 20000
+          attempt_limit: 10
+          attempt_delay: 30000
 
       - name: Debug logs - after integration test run
         if: always()
@@ -674,8 +674,8 @@ jobs:
         with:
           command: |
             curl -i http://localhost:8080/healthcheck
-          attempt_limit: 100
-          attempt_delay: 20000
+          attempt_limit: 10
+          attempt_delay: 30000
 
       - name: 'Check access to contracts'
 
@@ -683,8 +683,8 @@ jobs:
         with:
           command: |
             curl -i http://localhost:8080/contract-address/Shield
-          attempt_limit: 100
-          attempt_delay: 20000
+          attempt_limit: 10
+          attempt_delay: 30000
 
       - name: Debug logs - after integration test run
         if: always()
