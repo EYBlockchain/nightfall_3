@@ -6,8 +6,8 @@ then
   while ! nc -z ${BLOCKCHAIN_WS_HOST} ${BLOCKCHAIN_PORT}; do sleep 3; done
 fi
 
-# wait until there's a zokrates worker host up
-while ! nc -z ${ZOKRATES_WORKER_HOST} 80; do sleep 3; done
+# wait until there's a circom worker host up
+while ! nc -z ${CIRCOM_WORKER_HOST} 80; do sleep 3; done
 
 # wait until there's a rabbitmq server up
 if [ $ENABLE_QUEUE == "1" ]
