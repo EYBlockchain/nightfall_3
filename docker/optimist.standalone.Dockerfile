@@ -42,8 +42,9 @@ COPY nightfall-optimist/package*.json  ./
 COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
 COPY --from=builder /home/zokrates/.zokrates/stdlib /app/stdlib/
 
-RUN npm ci
 RUN npm link @polygon-nightfall/common-files
+RUN npm ci
+COPY common-files/classes common-files/utils common-files/constants node_modules/@polygon-nightfall/common-files/
 
 
 CMD ["npm", "start"]

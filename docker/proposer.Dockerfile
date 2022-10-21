@@ -24,7 +24,8 @@ COPY apps/proposer/src src
 COPY apps/proposer/docker-entrypoint.sh docker-entrypoint.sh
 COPY config config
 
-RUN npm ci
 RUN npm link @polygon-nightfall/common-files
+RUN npm ci
+COPY common-files/classes common-files/utils common-files/constants node_modules/@polygon-nightfall/common-files/
 
 CMD ["npm", "start"]

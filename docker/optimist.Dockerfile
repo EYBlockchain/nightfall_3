@@ -33,8 +33,9 @@ COPY nightfall-optimist/docker-entrypoint.sh nightfall-optimist/package*.json ./
 COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /root/.zokrates/stdlib
 COPY --from=builder /app/ZoKrates/target/release/zokrates /app/
 
-RUN npm ci
 RUN npm link @polygon-nightfall/common-files
+RUN npm ci
+COPY common-files/classes common-files/utils common-files/constants node_modules/@polygon-nightfall/common-files/
 
 
 CMD ["npm", "start"]
