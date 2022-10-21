@@ -22,7 +22,7 @@ COPY config/default.js config/default.js
 COPY nightfall-administrator/src src
 COPY nightfall-administrator/docker-entrypoint.sh nightfall-administrator/package*.json nightfall-administrator/admin ./
 
-RUN npm link @polygon-nightfall/common-files
 RUN npm ci
+RUN npm link @polygon-nightfall/common-files
 
 CMD ["sleep", "infinity"]

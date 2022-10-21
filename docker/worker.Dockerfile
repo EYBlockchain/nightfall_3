@@ -30,7 +30,7 @@ COPY ./zokrates-worker/circuits ./circuits
 COPY ./zokrates-worker/start-script ./start-script
 COPY ./zokrates-worker/start-dev ./start-dev
 
-RUN npm link @polygon-nightfall/common-files
 RUN npm ci
+RUN npm link @polygon-nightfall/common-files
 
 CMD ["npm", "start"]
