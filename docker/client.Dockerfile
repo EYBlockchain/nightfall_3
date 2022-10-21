@@ -22,5 +22,6 @@ COPY nightfall-client/docker-entrypoint.sh nightfall-client/package.json nightfa
 
 RUN npm link @polygon-nightfall/common-files
 RUN npm ci
+COPY common-files/classes common-files/utils common-files/constants node_modules/@polygon-nightfall/common-files/
 
 CMD ["npm", "start"]

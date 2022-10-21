@@ -35,5 +35,7 @@ COPY --from=builder /app/ZoKrates/target/release/zokrates /app/
 
 RUN npm link @polygon-nightfall/common-files
 RUN npm ci
+COPY common-files/classes common-files/utils common-files/constants node_modules/@polygon-nightfall/common-files/
+
 
 CMD ["npm", "start"]
