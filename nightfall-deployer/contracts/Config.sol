@@ -27,7 +27,7 @@ contract Config is Ownable, Structures {
 
     function initialize() public virtual override onlyInitializing {
         Ownable.initialize();
-        minimumStake = 100 wei;
+        minimumStake = 1000000 wei;
         blockStake = 1 wei;
         rotateProposerBlocks = 20;
         valuePerSlot = 10;
