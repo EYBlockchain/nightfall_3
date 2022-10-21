@@ -93,11 +93,21 @@ async function manufacture(manfParams) {
   //   recipientZkpPublicKeysArray.map(async () => randValueLT(BN128_GROUP_ORDER)),
   // );
   logger.debug(`This commimtnets to ${JSON.stringify(commitmentsToUse)}`);
-  const useCommitmentsDB = await Promise.all(commitmentsToUse.map(c => getCommitmentByHash(c))); // CHeck ordering
+  const useCommitmentsDB = []; // Do it this bad way because enforcing ordered retrieval from Mongo sucks
+  for (let i = 0; i < commitmentsToUse.length; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    const c = await getCommitmentByHash(commitmentsToUse[i]);
+    useCommitmentsDB.push(c);
+  }
   const useCommitments = useCommitmentsDB.map(c => new Commitment(c.preimage));
   // Commitment Tree Information
   logger.debug(`UseCommitmnets ${JSON.stringify(useCommitments)}`);
-  const commitmentTreeInfo = await Promise.all(useCommitments.map(c => getSiblingInfo(c)));
+  const commitmentTreeInfo = [];
+  for (let i = 0; i < useCommitments.length; i++) {
+    // eslint-disable-next-line no-await-in-loop
+    const c = await getSiblingInfo(useCommitments[i]);
+    commitmentTreeInfo.push(c);
+  }
   const localSiblingPaths = commitmentTreeInfo.map(l => {
     const path = l.siblingPath.path.map(p => p.value);
     return generalise([l.root].concat(path.reverse()));
@@ -169,7 +179,7 @@ async function manufacture(manfParams) {
     });
 
     const privateData = {
-      rootKey: [rootKey],
+      rootKey: commitmentsToUse.map(() => rootKey),
       oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
@@ -181,7 +191,7 @@ async function manufacture(manfParams) {
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
       tokenIds: commitmentsInfo.oldCommitments.map(o => o.preimage.tokenId),
       ercAddresses: commitmentsInfo.oldCommitments.map(o => o.preimage.ercAddress),
-      recipeIndex: 0,
+      recipeIndex,
       outputTokenId,
       outputErcAddress,
       // ephemeralKey: ePrivate,

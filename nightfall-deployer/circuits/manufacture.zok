@@ -34,8 +34,8 @@ def main(\
             outputPartNumber: 99,
         },
         BillOfMaterials {
-            partQty: [ ...[1], ...[0; MAX_PART_INPUTS - 1]],
-            partNumber: [ ...[2], ...[0; MAX_PART_INPUTS - 1]],
+            partQty: [1,1,0],
+            partNumber: [ 1,2,0],
             outputPartNumber: 98,
         }
     ];
