@@ -199,6 +199,11 @@ export async function proposerTest() {
       eventLogs = [];
     } catch (err) {
       console.log(err);
+      if (err.message.toLowerCase.includes('timeout')) {
+        console.log('     Change current proposer...');
+        await nf3Proposer.changeCurrentProposer();
+        eventLogs = [];
+      }
     }
   }
   await nf3Proposer.close();
