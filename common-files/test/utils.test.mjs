@@ -9,7 +9,7 @@ const { expect } = chai;
 describe('Utils tests', function () {
   const OBFUSCATION_SETTINGS_TEST = {
     public_key: 'HALF',
-    '.*key(s)?|.*password.*|.*secret.*|.*mnemonic.*': 'ALL',
+    '^(?!.*public).*key(s)?$|.*password.*|.*secret.*|.*mnemonic.*': 'ALL',
   };
 
   const OBJECT_TO_OBFUSCATE = {
@@ -17,6 +17,8 @@ describe('Utils tests', function () {
     ETH_PRIVATE_KEY: 0x0123456789abcdef,
     ETH_ADDRESS: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
     pUbLic_key: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+    zkpPublicKey: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+    compreessedZkpPublicKey: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     My_secret: 'testing...',
     SECRET: 'testing...',
     SECRET_test: 'testing...',
@@ -67,6 +69,8 @@ describe('Utils tests', function () {
     ETH_PRIVATE_KEY: '*****************',
     ETH_ADDRESS: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
     pUbLic_key: '0x4789FD18D5d71982045*********************',
+    zkpPublicKey: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+    compreessedZkpPublicKey: '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     My_secret: '**********',
     SECRET: '**********',
     SECRET_test: '**********',
