@@ -1,6 +1,9 @@
 // import config from 'config';
 import compose from 'docker-compose';
+import yaml from 'js-yaml';
+import fs from 'fs';
 import { Docker } from 'docker-cli-js';
+import Web3 from 'web3';
 // eslint-disable-next-line no-unused-vars
 import { userTest, proposerTest } from './index.mjs';
 
@@ -24,6 +27,35 @@ const dockerComposeOptions = {
   composeOptions: [['-p', 'nightfall_3']],
 };
 
+const getOptimistUrls = async () => {
+  const data = await docker.command('ps');
+  const optimistList = data.containerList.filter(c => c.names.includes('proposer_optimist_'));
+  const optimistUrls = [];
+
+  let configYml;
+  try {
+    configYml = yaml.load(fs.readFileSync('docker/docker-compose.proposers.yml', 'utf8'));
+    // const indentedJson = JSON.stringify(configYml, null, 4);
+    // console.log(indentedJson);
+  } catch (e) {
+    console.log(e);
+  }
+  const web3 = new Web3();
+  for (const opt of optimistList) {
+    // console.log(`proposer_${opt.names.split('_')[2]}`);
+    const proposerAddress = web3.eth.accounts
+      .privateKeyToAccount(
+        configYml.services[`proposer_${opt.names.split('_')[2]}`].environment.PROPOSER_KEY,
+      )
+      .address.toUpperCase();
+    optimistUrls.push({
+      proposer: proposerAddress,
+      optimistUrl: `http://localhost:${opt.ports.split('->')[0].split(':')[1]}`,
+    });
+  }
+  return optimistUrls;
+};
+
 describe('Ping-pong tests', () => {
   before(async () => {
     console.log('Starting containers...');
@@ -31,8 +63,9 @@ describe('Ping-pong tests', () => {
   });
 
   it('Runs ping-pong tests', async () => {
+    const optimistUrls = await getOptimistUrls();
     userTest(false);
-    proposerTest();
+    proposerTest(optimistUrls);
     result = await userTest(true);
   });
 

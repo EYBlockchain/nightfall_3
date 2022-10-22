@@ -5,9 +5,15 @@ Module that runs up as a user
 /* eslint-disable no-await-in-loop */
 
 import config from 'config';
+import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { waitForSufficientBalance, retrieveL2Balance, Web3Client } from '../utils.mjs';
+import {
+  waitForSufficientBalance,
+  retrieveL2Balance,
+  topicEventMapping,
+  Web3Client,
+} from '../utils.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -21,6 +27,7 @@ const txPerBlock =
 const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
 
 const TEST_LENGTH = 4;
+
 /**
 Does the preliminary setup and starts listening on the websocket
 */
@@ -127,17 +134,15 @@ export async function userTest(IS_TEST_RUNNER) {
   return 1;
 }
 
-export async function proposerTest() {
+export async function proposerTest(optimistUrls) {
+  console.log('OPTIMISTURLS', optimistUrls);
+  const web3Client = new Web3Client();
   // we must set the URL from the point of view of the client container
   const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
   await nf3Proposer.init(mnemonics.proposer3);
 
   const stateAddress = await nf3Proposer.getContractAddress('State');
   const stateABI = await nf3Proposer.getContractAbi('State');
-  let eventLogs = [];
-
-  const web3Client = new Web3Client();
-  web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
   const getCurrentProposer = async () => {
     const stateContractInstance = new nf3Proposer.web3.eth.Contract(stateABI, stateAddress);
@@ -151,17 +156,51 @@ export async function proposerTest() {
     return currentSprint;
   };
 
-  const proposersBlocks = [];
+  const proposersStats = [];
+  const eventLogs = [];
   let currentProposer = await getCurrentProposer();
+  web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+
+  nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
+    let proposerStat = proposersStats.find(
+      // eslint-disable-next-line no-loop-func
+      p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
+    );
+
+    if (!proposerStat) {
+      proposerStat = {
+        proposer: currentProposer.thisAddress.toUpperCase(),
+        blocks: 0,
+      };
+      proposersStats.push(proposerStat);
+    }
+
+    for (const topic of log.topics) {
+      switch (topic) {
+        case topicEventMapping.BlockProposed:
+          proposerStat.blocks++;
+          break;
+        case topicEventMapping.TransactionSubmitted:
+          break;
+        case topicEventMapping.NewCurrentProposer:
+          break;
+        default:
+          break;
+      }
+    }
+    console.log('STATS:');
+    for (const pb of proposersStats) {
+      console.log(`  ${pb.proposer} : ${pb.blocks}`);
+    }
+  });
 
   while (currentProposer.thisAddress === '0x0000000000000000000000000000000000000000') {
     await new Promise(resolve => setTimeout(resolve, 10000));
     currentProposer = await getCurrentProposer();
   }
 
-  proposersBlocks.push({ proposer: currentProposer.thisAddress.toUpperCase(), blocks: 0 });
-
-  for (let i = 0; i < 8; i++) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
     try {
       // eslint-disable-next-line no-await-in-loop
       const currentSprint = await getCurrentSprint();
@@ -174,38 +213,29 @@ export async function proposerTest() {
       console.log('     Waiting blocks to rotate current proposer...');
       const initBlock = await nf3Proposer.web3.eth.getBlockNumber();
       let currentBlock = initBlock;
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      let proposerBlock = proposersBlocks.find(
-        // eslint-disable-next-line no-loop-func
-        p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-      );
-      if (!proposerBlock) {
-        proposerBlock = { proposer: currentProposer.thisAddress.toUpperCase(), blocks: 0 };
-        proposersBlocks.push(proposerBlock);
-      } else {
-        proposerBlock.blocks++;
-      }
 
       while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 10000));
         currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
       }
 
-      for (const pb of proposersBlocks) {
-        console.log(`${pb.proposer} : ${pb.blocks}`);
+      const url = optimistUrls.find(
+        // eslint-disable-next-line no-loop-func
+        o => o.proposer === currentProposer.thisAddress.toUpperCase(),
+      ).optimistUrl;
+      const res = await axios.get(`${url}/proposer/mempool`);
+      console.log(` *** ${res.data.result.length} transactions in the mempool`);
+      if (res.data.result.length > 0) {
+        console.log('     Make block...');
+        await axios.get(`${url}/block/make-now`);
+        console.log('     Waiting for event blockProposed');
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        console.log('     Event blockProposed');
       }
       console.log('     Change current proposer...');
       await nf3Proposer.changeCurrentProposer();
-      eventLogs = [];
     } catch (err) {
       console.log(err);
-      if (err.message.toLowerCase.includes('timeout')) {
-        console.log('     Change current proposer...');
-        await nf3Proposer.changeCurrentProposer();
-        eventLogs = [];
-      }
     }
   }
-  await nf3Proposer.close();
-  await web3Client.closeWeb3();
 }
