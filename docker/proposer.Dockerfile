@@ -16,6 +16,7 @@ RUN npm ci
 RUN npm link
 
 WORKDIR /app/cli
+RUN npm link @polygon-nightfall/common-files
 RUN npm ci
 
 WORKDIR /app
