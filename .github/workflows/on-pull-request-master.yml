@@ -69,6 +69,16 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -115,6 +125,16 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
 
       - name: Start Containers
         run: |
@@ -163,6 +183,16 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -210,6 +240,16 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -256,6 +296,16 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
 
       - name: Start Containers
         run: |
@@ -305,6 +355,16 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -350,6 +410,16 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
 
       - name: Start Containers
         run: |
@@ -398,6 +468,16 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -445,6 +525,16 @@ jobs:
   #      - uses: actions/setup-node@v3
   #        with:
   #          node-version: '16.17.0'
+  #
+  #      - name: Perform npm link
+  #        run: |
+  #          cd common-files
+  #          npm link
+  #          cd ..
+  #          RUN npm link @polygon-nightfall/common-files
+  #          cd cli
+  #          RUN npm link @polygon-nightfall/common-files
+  #          cd ..
   #
   #      - name: Build adversary
   #        run: npm run build-adversary
@@ -500,6 +590,16 @@ jobs:
         with:
           node-version: '16.17.0'
 
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -547,6 +647,16 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
 
       - name: Start Containers with ganache
         run: |
@@ -598,6 +708,16 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          RUN npm link @polygon-nightfall/common-files
+          cd cli
+          RUN npm link @polygon-nightfall/common-files
+          cd ..
 
       - name: Start Containers with ganache
         run: |
