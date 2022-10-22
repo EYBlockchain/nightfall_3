@@ -1,6 +1,7 @@
 /* eslint no-use-before-define: "off" */
 /* eslint no-else-return: "off" */
 /* eslint no-cond-assign: "off" */
+/* ignore unused exports */
 
 export const isDev = () => process.env.NODE_ENV !== 'production';
 
@@ -25,15 +26,19 @@ export const isLocal = () => {
  *  HALF - ofuscate the second half of the content (e.g. 'private_key': 'HALF')
  */
 export const obfuscate = (object, obfuscationSettings) => {
+  if (!obfuscationSettings) {
+    throw new Error('Param obfuscationSettings is required!');
+  }
+
   if (
-    isLocal() ||
-    !object ||
-    (typeof object !== 'object' && typeof object !== 'string') ||
-    !obfuscationSettings ||
     typeof obfuscationSettings !== 'object' ||
     Array.isArray(obfuscationSettings) ||
     obfuscationSettings.length === 0
   ) {
+    throw new Error('Invalid obfuscationSettings object!');
+  }
+
+  if (!object || (typeof object !== 'object' && typeof object !== 'string')) {
     return object;
   }
 

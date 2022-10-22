@@ -24,7 +24,8 @@ COPY nightfall-administrator/docker-entrypoint.sh nightfall-administrator/packag
 
 RUN npm link @polygon-nightfall/common-files
 RUN npm ci
-COPY common-files/classes common-files/utils common-files/constants node_modules/@polygon-nightfall/common-files/
-
+COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
+COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils
+COPY common-files/constants node_modules/@polygon-nightfall/common-files/constants
 
 CMD ["sleep", "infinity"]
