@@ -5,6 +5,7 @@ import constants from 'common-files/constants/index.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import {
   clearPending,
+  markPending,
   findUsableCommitmentsMutex,
   getSiblingInfo,
   getCommitmentsByHash,
@@ -51,23 +52,7 @@ export const getCommitmentInfo = async txInfo => {
     `fee is: ${feeValue} - getting only fee: ${Boolean(providedCommitments) || onlyFee}`,
   );
 
-  const commitments = await findUsableCommitmentsMutex(
-    compressedZkpPublicKey,
-    ercAddress,
-    tokenId,
-    maticAddress,
-    value,
-    feeValue,
-    maxNumberNullifiers,
-    Boolean(providedCommitments) || onlyFee,
-  );
-
-  if (Boolean(providedCommitments) || onlyFee) {
-    logger.debug(
-      `got fee commitments: ${commitments.oldCommitmentsFee.map(c => c.preimage.value)}`,
-    );
-  }
-
+  let validatedProvidedCommitments = [];
   if (providedCommitments) {
     const commitmentHashes = providedCommitments.map(c => c.toString());
     logger.debug({ msg: 'looking up these commitment hashes:', commitmentHashes });
@@ -88,20 +73,69 @@ export const getCommitmentInfo = async txInfo => {
       throw new Error(`invalid commitment hashes: ${invalidHashes}`);
     }
 
-    // TODO: if we cover totalValueToSend but not value, look for fee commitments
-    if (rawCommitments.reduce((sum, c) => sum + c.preimage.value.bigInt, 0) < value)
+    const providedValue = rawCommitments
+      .map(c => generalise(c.preimage.value).bigInt)
+      .reduce((sum, c) => sum + c);
+
+    if (providedValue < totalValueToSend)
       throw new Error('provided commitments do not cover the value');
 
-    // logger.debug({ msg: 'found commitments from provided hashes:', rawCommitments });
-
     // transform the hashes retrieved from the DB to well formed commitments
-    const oldCommitments = rawCommitments.map(ct => new Commitment(ct.preimage));
-    commitments.oldCommitments = oldCommitments;
+    validatedProvidedCommitments = rawCommitments.map(ct => new Commitment(ct.preimage));
+
+    // the user provieded enough commitments to cover the value but not the fee
+    // this can only happen when the token to send is the fee token
+    if (providedValue < value) {
+      const missing = value - providedValue;
+      logger.debug({
+        msg: 'looking for commitment to cover the difference between value and totalValueToSend',
+        missing,
+      });
+
+      await Promise.all(validatedProvidedCommitments.map(c => markPending(c)));
+      // this can return the same commitments that are also providided
+      // if the are not marked as pending
+      try {
+        const feeCommitments = await findUsableCommitmentsMutex(
+          compressedZkpPublicKey,
+          ercAddress,
+          tokenId,
+          maticAddress,
+          missing, // value
+          0, // fee
+          maxNumberNullifiers,
+        );
+        feeCommitments.oldCommitments.forEach(c => validatedProvidedCommitments.push(c));
+      } catch {
+        await Promise.all(validatedProvidedCommitments.map(c => clearPending(c)));
+        throw new Error('no commitments to cover the fee');
+      }
+    }
   }
+
+  logger.debug({
+    msg: 'getting fC',
+    value,
+    feeValue,
+    onlyFee: Boolean(providedCommitments) || onlyFee,
+  });
+  const commitments = await findUsableCommitmentsMutex(
+    compressedZkpPublicKey,
+    ercAddress,
+    tokenId,
+    maticAddress,
+    value,
+    feeValue,
+    maxNumberNullifiers,
+    Boolean(providedCommitments) || onlyFee,
+  );
 
   if (!commitments) throw new Error('Not available commitments has been found');
 
-  const { oldCommitments, oldCommitmentsFee } = commitments;
+  const { oldCommitmentsFee } = commitments;
+  const oldCommitments = providedCommitments
+    ? validatedProvidedCommitments
+    : commitments.oldCommitments;
 
   logger.debug(
     `Found commitments ${addedFee > 0n ? 'including fee' : ''} ${JSON.stringify(
@@ -110,6 +144,7 @@ export const getCommitmentInfo = async txInfo => {
       2,
     )}`,
   );
+  logger.debug(oldCommitments.map(c => c.preimage.value.bigInt));
 
   if (feeValue > 0n) {
     logger.debug(`Found commitments fee ${JSON.stringify(oldCommitmentsFee, null, 2)}`);
@@ -130,6 +165,8 @@ export const getCommitmentInfo = async txInfo => {
     // we may need to return change to the recipient
     const change = totalInputCommitmentValue - value;
 
+    logger.debug({ totalInputCommitmentValue, change });
+
     // if so, add an output commitment to do that
     if (change !== 0n) {
       valuesArray.push(new GN(change));
@@ -146,6 +183,8 @@ export const getCommitmentInfo = async txInfo => {
 
     // we may need to return change to the recipient
     const changeFee = totalInputCommitmentFeeValue - feeValue;
+
+    logger.debug({ totalInputCommitmentFeeValue, changeFee });
 
     // if so, add an output commitment to do that
     if (changeFee !== 0n) {

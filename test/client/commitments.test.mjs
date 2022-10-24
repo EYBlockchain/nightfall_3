@@ -165,6 +165,69 @@ describe('Custom Commitment Selection Test', () => {
       expect(endBalances.recipientBalance).to.equal(startBalances.recipientBalance + transferValue);
     });
 
+    it('should look for missing fee when transferring fee token', async () => {
+      const receiverKey = nf3Receiver.zkpKeys.compressedZkpPublicKey;
+      const tokenAddress = await nf3Sender.getContractAddress('ERC20Mock');
+
+      // not enough to pay the fee
+      const commitment = await prepareCommitment(
+        tokenAddress,
+        'ERC20',
+        transferValue,
+        nf3Sender,
+        '0x00',
+      );
+
+      // a different commitment that covers the fee
+      await nf3Sender.deposit(tokenAddress, 'ERC20', fee, ethers.utils.hexZeroPad('0x00', 32), fee);
+
+      await emptyL2(nf3Sender);
+
+      const startBalances = {
+        msg: 'start balances',
+        senderBalance: await getL2tokenBalance(nf3Sender, tokenAddress),
+        recipientBalance: await getL2tokenBalance(nf3Receiver, tokenAddress),
+      };
+      logger.debug({
+        ...startBalances,
+        transferValue,
+        fee,
+        commitmentValue: parseInt(commitment.preimage.value, 16),
+      });
+
+      const res = await axios.post(`${environment.clientApiUrl}/transfer`, {
+        offchain: false,
+        ercAddress: ethers.utils.hexZeroPad(tokenAddress, 32),
+        tokenId: ethers.utils.hexZeroPad('0x00', 32),
+        recipientData: {
+          values: [transferValue],
+          recipientCompressedZkpPublicKeys: [receiverKey],
+        },
+        rootKey: nf3Sender.zkpKeys.rootKey,
+        fee,
+        providedCommitments: [commitment._id],
+      });
+
+      // since the transaction is on chain we still need to submit it
+      await nf3Sender.submitTransaction(res.data.txDataToSign, nf3Sender.shieldContractAddress, 0);
+
+      // assert commitment is spent
+      await emptyL2(nf3Sender);
+      const remainingCommitments = await getCommitments(tokenAddress, 0, nf3Sender, '0x00');
+      logger.debug(remainingCommitments.map(c => parseInt(c.preimage.value, 16)));
+      expect(remainingCommitments).to.not.include(commitment);
+
+      await emptyL2(nf3Receiver);
+      const endBalances = {
+        msg: 'end balances',
+        senderBalance: await getL2tokenBalance(nf3Sender, tokenAddress),
+        recipientBalance: await getL2tokenBalance(nf3Receiver, tokenAddress),
+      };
+      logger.debug(endBalances);
+
+      expect(endBalances.senderBalance).to.equal(startBalances.senderBalance - transferValue - fee);
+      expect(endBalances.recipientBalance).to.equal(startBalances.recipientBalance + transferValue);
+    });
     it('should transfer a specified ERC721 commitment', async () => {
       const recipientKey = nf3Receiver.zkpKeys.compressedZkpPublicKey;
 
@@ -207,8 +270,6 @@ describe('Custom Commitment Selection Test', () => {
 
     describe('Withdrawals', () => {
       it('should withdraw the specified commitment', async () => {
-        const senderKey = nf3Sender.zkpKeys.compressedZkpPublicKey;
-
         const tokenAddress = await nf3Sender.getContractAddress('ERC20Mock');
 
         const commitment = await prepareCommitment(

@@ -119,7 +119,7 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
 }
 
 // function to mark a commitment as pending nullication for a mongo db
-async function markPending(commitment) {
+export async function markPending(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
   const update = { $set: { isPendingNullification: true } };
@@ -599,6 +599,9 @@ async function verifyEnoughCommitments(
   let commitmentsFee = []; // Array containing the fee commitments available sorted
   let minC = 0;
   let commitments = [];
+
+  logger.debug({ value, fee, ercAddressFee });
+  if (onlyFee && fee.bigInt === 0n) return { commitmentsFee, minFc, commitments, minC };
 
   if (!onlyFee) {
     // Get the commitments from the database
