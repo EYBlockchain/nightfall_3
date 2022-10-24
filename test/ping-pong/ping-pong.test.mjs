@@ -65,9 +65,17 @@ describe('Ping-pong tests', () => {
   it('Runs ping-pong tests', async () => {
     const optimistUrls = await getOptimistUrls();
     userTest(false);
-    proposerTest(optimistUrls);
+    const proposersStats = { proposersBlocks: {}, sprints: 0 };
+    proposerTest(optimistUrls, proposersStats);
     result = await userTest(true);
+    console.log('FINAL STATS:');
+    console.log('  - BLOCKS:');
+    for (const pb of proposersStats.proposersBlocks) {
+      console.log(`     ${pb.proposer} : ${pb.blocks}`);
+    }
+    console.log(`  - SPRINTS: ${proposersStats.sprints}`);
     expect(result).to.be.equal(0);
+    expect(proposersStats.sprints).to.be.greaterThan(0);
   });
 
   after(async () => {
@@ -85,7 +93,5 @@ describe('Ping-pong tests', () => {
       // eslint-disable-next-line no-await-in-loop
       await docker.command(`volume rm ${v}`);
     }
-
-    // process.exit(result); // we should terminate with result for GHA to have the correct exit result
   });
 });

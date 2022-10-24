@@ -134,7 +134,7 @@ export async function userTest(IS_TEST_RUNNER) {
   return 1;
 }
 
-export async function proposerTest(optimistUrls) {
+export async function proposerTest(optimistUrls, proposersStats) {
   console.log('OPTIMISTURLS', optimistUrls);
   const web3Client = new Web3Client();
   // we must set the URL from the point of view of the client container
@@ -156,29 +156,34 @@ export async function proposerTest(optimistUrls) {
     return currentSprint;
   };
 
-  const proposersStats = [];
+  // eslint-disable-next-line no-param-reassign
   const eventLogs = [];
+  const proposersBlocks = [];
+  // eslint-disable-next-line no-param-reassign
+  proposersStats.proposersBlocks = proposersBlocks;
+  // eslint-disable-next-line no-param-reassign
+  proposersStats.sprints = 0;
   let currentProposer = await getCurrentProposer();
   web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
   nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
-    let proposerStat = proposersStats.find(
+    let proposerBlock = proposersBlocks.find(
       // eslint-disable-next-line no-loop-func
       p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
     );
 
-    if (!proposerStat) {
-      proposerStat = {
+    if (!proposerBlock) {
+      proposerBlock = {
         proposer: currentProposer.thisAddress.toUpperCase(),
         blocks: 0,
       };
-      proposersStats.push(proposerStat);
+      proposersBlocks.push(proposerBlock);
     }
 
     for (const topic of log.topics) {
       switch (topic) {
         case topicEventMapping.BlockProposed:
-          proposerStat.blocks++;
+          proposerBlock.blocks++;
           break;
         case topicEventMapping.TransactionSubmitted:
           break;
@@ -188,8 +193,8 @@ export async function proposerTest(optimistUrls) {
           break;
       }
     }
-    console.log('STATS:');
-    for (const pb of proposersStats) {
+    console.log('BLOCKS:');
+    for (const pb of proposersBlocks) {
       console.log(`  ${pb.proposer} : ${pb.blocks}`);
     }
   });
@@ -199,11 +204,19 @@ export async function proposerTest(optimistUrls) {
     currentProposer = await getCurrentProposer();
   }
 
+  let previousSprint = await getCurrentSprint();
+
   // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
       // eslint-disable-next-line no-await-in-loop
       const currentSprint = await getCurrentSprint();
+      console.log(`sprints previous - current. (${previousSprint}) - (${currentSprint})`);
+      if (previousSprint !== currentSprint) {
+        // eslint-disable-next-line no-param-reassign
+        proposersStats.sprints++;
+        previousSprint = currentSprint;
+      }
       // eslint-disable-next-line no-await-in-loop
       currentProposer = await getCurrentProposer();
       console.log(
