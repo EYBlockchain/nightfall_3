@@ -91,7 +91,7 @@ describe('Proposers contract Proposers functions', function () {
   it('should register proposer', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const newStake = 300;
+    const newStake = 2000000;
 
     const numProposers = await state.getNumProposers();
 
@@ -125,7 +125,7 @@ describe('Proposers contract Proposers functions', function () {
   });
 
   it('should not register an already registered proposer', async function () {
-    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 100 });
+    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 1000000 });
     const receiptRegister = await registerProposerTx.wait();
 
     const eventTransfer = receiptRegister.events.find(
@@ -137,7 +137,7 @@ describe('Proposers contract Proposers functions', function () {
 
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
 
-    await expect(ProposersInstance.registerProposer('url', 100, { value: 100 })).to.be.revertedWith(
+    await expect(ProposersInstance.registerProposer('url', 100, { value: 1000000 })).to.be.revertedWith(
       'Proposers: This proposer is already registered',
     );
   });
@@ -148,7 +148,7 @@ describe('Proposers contract Proposers functions', function () {
     expect(await ProposersInstance.getMaxProposers()).to.equal(1);
     expect(await ProposersInstance.getMaxProposers()).to.not.equal(maxProposers);
 
-    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 100 });
+    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 1000000 });
     const receiptRegister = await registerProposerTx.wait();
 
     const eventTransfer = receiptRegister.events.find(
@@ -160,7 +160,7 @@ describe('Proposers contract Proposers functions', function () {
 
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
 
-    await expect(ProposersInstance.registerProposer('url', 100, { value: 100 })).to.be.revertedWith(
+    await expect(ProposersInstance.registerProposer('url', 100, { value: 1000000 })).to.be.revertedWith(
       'Proposers: Max number of registered proposers',
     );
   });
@@ -168,7 +168,7 @@ describe('Proposers contract Proposers functions', function () {
   it('should register two different proposer', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const newStake = 300;
+    const newStake = 3000000;
 
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
       ethers.constants.AddressZero,
@@ -237,7 +237,7 @@ describe('Proposers contract Proposers functions', function () {
       ethers.constants.AddressZero,
     );
 
-    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 100 });
+    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 1000000 });
     const receiptRegister = await registerProposerTx.wait();
 
     const eventTransfer = receiptRegister.events.find(
@@ -269,7 +269,7 @@ describe('Proposers contract Proposers functions', function () {
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
       ethers.constants.AddressZero,
     );
-    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 100 });
+    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 1000000 });
     const receiptRegister = await registerProposerTx.wait();
 
     const eventTransfer = receiptRegister.events.find(
@@ -290,7 +290,7 @@ describe('Proposers contract Proposers functions', function () {
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
       ethers.constants.AddressZero,
     );
-    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 100 });
+    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 1000000 });
     const receiptRegister = await registerProposerTx.wait();
 
     const eventTransfer = receiptRegister.events.find(
@@ -317,7 +317,7 @@ describe('Proposers contract Proposers functions', function () {
         ethers.constants.AddressZero,
       );
       const registerProposerTx = await ProposersInstance.registerProposer('url', 100, {
-        value: 100,
+        value: 1000000,
       });
       const receiptRegister = await registerProposerTx.wait();
 
@@ -359,7 +359,7 @@ describe('Proposers contract Proposers functions', function () {
       'Proposers: This proposer is not registered or you are not that proposer',
     );
 
-    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 100 });
+    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 1000000 });
     const receiptRegister = await registerProposerTx.wait();
 
     const eventTransfer = receiptRegister.events.find(
@@ -383,7 +383,7 @@ describe('Proposers contract Proposers functions', function () {
       ethers.constants.AddressZero,
     );
 
-    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 100 });
+    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 1000000 });
     const receiptRegister = await registerProposerTx.wait();
 
     const eventTransfer = receiptRegister.events.find(
@@ -410,7 +410,7 @@ describe('Proposers contract Proposers functions', function () {
       ethers.constants.AddressZero,
     );
 
-    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 100 });
+    const registerProposerTx = await ProposersInstance.registerProposer('url', 100, { value: 1000000 });
     const receiptRegister = await registerProposerTx.wait();
 
     const eventTransfer = receiptRegister.events.find(
