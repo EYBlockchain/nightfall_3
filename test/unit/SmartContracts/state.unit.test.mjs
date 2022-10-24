@@ -1106,4 +1106,111 @@ describe('Proposers contract Proposers functions', function () {
     expect(await state.pendingWithdrawals(addressC.address, 0)).to.equal(badBlock.blockStake);
     expect(await state.pendingWithdrawals(addressC.address, 1)).to.equal(0);
   });
+<<<<<<< HEAD
+
+  it('should setBlockStakeWithdrawn', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await setTransactionInfo(
+      shield.address,
+      calculateTransactionHash(transactionsCreated.withdrawTransaction),
+      true,
+      false,
+    );
+    await setTransactionInfo(
+      shield.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      false,
+    );
+    await state.proposeBlock(
+      transactionsCreated.block,
+      [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
+      { value: 10 },
+    );
+
+    const { blockHash } = await state.blockHashes(0);
+    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(false);
+    await state.setBlockStakeWithdrawn(blockHash);
+    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(true);
+  });
+
+  it('should rewardChallenger', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 300;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setProposer(addr2.address, [
+      addr2.address,
+      addr2.address,
+      addr2.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(2);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await state.setStakeAccount(addr2.address, amount, challengeLocked);
+    await setTransactionInfo(
+      shield.address,
+      calculateTransactionHash(transactionsCreated.withdrawTransaction),
+      true,
+      false,
+    );
+    await setTransactionInfo(
+      shield.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      false,
+    );
+    await state.proposeBlock(
+      transactionsCreated.block,
+      [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
+      { value: 10 },
+    );
+
+    const badBlock = {
+      blockHash: (await state.blockHashes(0)).blockHash,
+      time: (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp,
+      proposer: addr2.address,
+      blockStake: amount,
+    };
+
+    await state.connect(addressC).rewardChallenger(addressC.address, addr2.address, [badBlock]);
+
+    const stakeAccount = await state.getStakeAccount(addr2.address);
+    expect(stakeAccount.amount).to.equal(amount);
+    expect(stakeAccount.time).to.equal(0);
+    expect(stakeAccount.challengeLocked).to.equal(challengeLocked - amount);
+    expect(await state.pendingWithdrawals(addressC.address, 0)).to.equal(badBlock.blockStake);
+    expect(await state.pendingWithdrawals(addressC.address, 1)).to.equal(0);
+  });
+=======
+>>>>>>> fa14480e (fix: eslint)
 });
