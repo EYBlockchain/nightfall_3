@@ -40,7 +40,7 @@ services:
       LOG_LEVEL: debug
       BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
-      ZOKRATES_WORKER_HOST: worker
+      CIRCOM_WORKER_HOST: worker
       RABBITMQ_HOST: amqp://rabbitmq
       RABBITMQ_PORT: 5672
       ENABLE_QUEUE: 1
@@ -65,7 +65,7 @@ services:
       ETH_NETWORK: blockchain
       BLOCKCHAIN_WS_HOST: blockchain
       BLOCKCHAIN_PORT: 8546
-      ZOKRATES_WORKER_HOST: worker
+      CIRCOM_WORKER_HOST: worker
       WHITELISTING: ${WHITELISTING}
 
   hosted-utils-api-server:
@@ -139,7 +139,6 @@ services:
       - nightfall_network
     environment:
       LOG_LEVEL: info
-      MPC: ${MPC}
 
 volumes:
   mongodb:

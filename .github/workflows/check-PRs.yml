@@ -57,6 +57,22 @@ jobs:
           npm ci
           cd ../
           npm run unit-test
+  unit-test-circuits:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+      - name: Unit Circuit Tests
+        run: |
+          npm ci
+          cd common-files
+          npm ci
+          cd ../nightfall-deployer
+          npm ci
+          cd ../
+          npm run unit-test-circuits
 
   circuits-test:
     runs-on: ubuntu-20.04

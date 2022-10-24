@@ -20,7 +20,7 @@ import { clearPending, markNullified, storeCommitment } from './commitment-stora
 import getProposersUrl from './peers.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
+const { CIRCOM_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
@@ -78,13 +78,13 @@ async function transfer(transferParams) {
     const compressedEPub = edwardsCompress(ePublic);
 
     // now we have everything we need to create a Witness and compute a proof
-    const transaction = new Transaction({
+    const publicData = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       transactionType: 1,
       ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-      tokenId: compressedSecrets[1], // this is the encrypted tokenID
-      recipientAddress: compressedEPub,
+      tokenId: compressedEPub,
+      recipientAddress: compressedSecrets[1], // this is the encrypted tokenID
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
@@ -109,7 +109,7 @@ async function transfer(transferParams) {
     };
 
     const witness = computeCircuitInputs(
-      transaction,
+      publicData,
       privateData,
       commitmentsInfo.roots,
       maticAddress,
@@ -119,12 +119,12 @@ async function transfer(transferParams) {
 
     logger.debug({
       msg: 'witness input is',
-      witness: witness.join(' '),
+      witness: JSON.stringify(witness, 0, 2),
     });
 
-    // call a zokrates worker to generate the proof
+    // call a worker to generate the proof
     const folderpath = 'transfer';
-    const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
+    const res = await axios.post(`${PROTOCOL}${CIRCOM_WORKER_HOST}/generate-proof`, {
       folderpath,
       inputs: witness,
       provingScheme: PROVING_SCHEME,
@@ -144,8 +144,8 @@ async function transfer(transferParams) {
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       transactionType: 1,
       ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-      tokenId: compressedSecrets[1], // this is the encrypted tokenID
-      recipientAddress: compressedEPub,
+      tokenId: compressedEPub, // this is the encrypted tokenID
+      recipientAddress: compressedSecrets[1],
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
