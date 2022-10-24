@@ -5,12 +5,9 @@ import constants from 'common-files/constants/index.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import {
   clearPending,
-  markPending,
   findUsableCommitmentsMutex,
   getSiblingInfo,
   getCommitmentsByHash,
-  verifyEnoughCommitments,
-  selectCommitments,
 } from '../services/commitment-storage.mjs';
 import Commitment from '../classes/commitment.mjs';
 import { ZkpKeys } from '../services/keys.mjs';
@@ -50,10 +47,28 @@ export const getCommitmentInfo = async txInfo => {
   const feeValue = fee.bigInt - addedFee;
 
   logger.debug(`using user provided commitments: ${providedCommitments !== undefined}`);
+  logger.debug(
+    `fee is: ${feeValue} - getting only fee: ${Boolean(providedCommitments) || onlyFee}`,
+  );
 
-  let commitments;
+  const commitments = await findUsableCommitmentsMutex(
+    compressedZkpPublicKey,
+    ercAddress,
+    tokenId,
+    maticAddress,
+    value,
+    feeValue,
+    maxNumberNullifiers,
+    Boolean(providedCommitments) || onlyFee,
+  );
+
+  if (Boolean(providedCommitments) || onlyFee) {
+    logger.debug(
+      `got fee commitments: ${commitments.oldCommitmentsFee.map(c => c.preimage.value)}`,
+    );
+  }
+
   if (providedCommitments) {
-    // look up the hashes
     const commitmentHashes = providedCommitments.map(c => c.toString());
     logger.debug({ msg: 'looking up these commitment hashes:', commitmentHashes });
     const rawCommitments = await getCommitmentsByHash(
@@ -73,46 +88,15 @@ export const getCommitmentInfo = async txInfo => {
       throw new Error(`invalid commitment hashes: ${invalidHashes}`);
     }
 
+    // TODO: if we cover totalValueToSend but not value, look for fee commitments
     if (rawCommitments.reduce((sum, c) => sum + c.preimage.value.bigInt, 0) < value)
-      throw new Error('Provided Commitments do not cover the value');
+      throw new Error('provided commitments do not cover the value');
 
-    logger.debug({ msg: 'found commitments from provided hashes:', rawCommitments });
+    // logger.debug({ msg: 'found commitments from provided hashes:', rawCommitments });
 
     // transform the hashes retrieved from the DB to well formed commitments
     const oldCommitments = rawCommitments.map(ct => new Commitment(ct.preimage));
-
-    const commitmentsVerification = await verifyEnoughCommitments(
-      compressedZkpPublicKey,
-      ercAddress,
-      tokenId,
-      generalise(value),
-      maticAddress,
-      fee,
-      maxNumberNullifiers,
-    );
-
-    if (!commitmentsVerification) throw new Error('commitment verification failed');
-
-    const { minC, minFc, commitmentsFee } = commitmentsVerification;
-    const oldCommitmentsFee =
-      fee.bigInt > 0n
-        ? selectCommitments(commitmentsFee, fee, minC, minFc, maxNumberNullifiers)
-        : [];
-    await Promise.all(
-      [...oldCommitments, ...oldCommitmentsFee].map(commitment => markPending(commitment)),
-    );
-    commitments = { oldCommitments, oldCommitmentsFee };
-  } else {
-    commitments = await findUsableCommitmentsMutex(
-      compressedZkpPublicKey,
-      ercAddress,
-      tokenId,
-      maticAddress,
-      value,
-      feeValue,
-      maxNumberNullifiers,
-      onlyFee,
-    );
+    commitments.oldCommitments = oldCommitments;
   }
 
   if (!commitments) throw new Error('Not available commitments has been found');

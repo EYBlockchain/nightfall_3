@@ -119,7 +119,7 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
 }
 
 // function to mark a commitment as pending nullication for a mongo db
-export async function markPending(commitment) {
+async function markPending(commitment) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
   const update = { $set: { isPendingNullification: true } };
@@ -582,7 +582,7 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
   return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
 
-export async function verifyEnoughCommitments(
+async function verifyEnoughCommitments(
   compressedZkpPublicKey,
   ercAddress,
   tokenId,
@@ -713,13 +713,13 @@ export async function verifyEnoughCommitments(
   if (commitmentArray === []) throw new Error('no commitment for the actual transfer fround');
 
   // Turn the fee commitments into real commitment object and sort it
-  const commitments = commitmentArray
+  commitments = commitmentArray
     .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
     .map(ct => new Commitment(ct.preimage))
     .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
 
   const c = commitments.length; // Store the number of commitments
-  let minC = 0;
+  minC = 0;
 
   // At most, we can use (maxNumberNullifiers - number of fee commitments needed) commitments to pay for the
   // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
@@ -740,6 +740,8 @@ export async function verifyEnoughCommitments(
     ++j;
   }
 
+  logger.debug(commitmentArray);
+  logger.debug(commitments.lenght);
   // If after the loop minC is still zero means that we didn't found any sum of commitments
   // higher or equal than the amount required. Therefore the user can not pay it
   if (minC === 0) throw new Error('no commitments found to cover the value');
@@ -862,7 +864,7 @@ function findSubsetNCommitments(N, commitments, value) {
   return commitmentsToUse;
 }
 
-export function selectCommitments(commitments, value, minC, maxC) {
+function selectCommitments(commitments, value, minC, maxC) {
   const possibleSubsetsCommitments = [];
 
   // Get the "best" subset of each possible size to then decide which one is better overall
@@ -933,11 +935,11 @@ async function findUsableCommitments(
   }
 
   const maxC = maxNumberNullifiers - minFc;
-  const oldCommitments = selectCommitments(commitments, value, minC, maxC);
+  const oldCommitments = !onlyFee ? selectCommitments(commitments, value, minC, maxC) : [];
 
   const maxFc = maxNumberNullifiers - oldCommitments.length;
   const oldCommitmentsFee =
-    fee.bigInt > 0n ? selectCommitments(commitments, fee, minFc, maxFc) : [];
+    fee.bigInt > 0n ? selectCommitments(commitmentsFee, fee, minFc, maxFc) : [];
 
   // Mark all the commitments used as pending so that they can not be used twice
   await Promise.all(
@@ -1036,12 +1038,20 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
 export async function getCommitmentsByHash(hashes, compressedZkpPublicKey, ercAddress, tokenId) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
+  logger.debug({
+    msg: 'DB lookup',
+    compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
+    'preimage.ercAddress': generalise(ercAddress).hex(32),
+    'preimage.tokenId': generalise(tokenId).hex(32),
+    isNullified: false,
+    isPendingNullification: false,
+  });
   const commitment = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({
       _id: { $in: hashes },
       compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-      'preimage.ercAddress': ercAddress.hex(32),
+      'preimage.ercAddress': generalise(ercAddress).hex(32),
       'preimage.tokenId': generalise(tokenId).hex(32),
       isNullified: false,
       isPendingNullification: false,
