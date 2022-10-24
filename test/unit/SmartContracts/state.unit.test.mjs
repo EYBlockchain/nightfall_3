@@ -5,7 +5,7 @@ import { setTransactionInfo } from '../utils/shieldStorage.mjs';
 
 const { ethers, upgrades } = hardhat;
 
-describe('State contract State functions', function () {
+describe('Proposers contract Proposers functions', function () {
   let ProposersInstance;
   let addr1;
   let addr2;
@@ -62,7 +62,7 @@ describe('State contract State functions', function () {
     await challenges.deployed();
 
     const Shield = await ethers.getContractFactory('Shield');
-    shield = await upgrades.deployProxy(Shield, []);
+    const shield = await upgrades.deployProxy(Shield, []);
     await shield.deployed();
 
     const Utils = await ethers.getContractFactory('Utils');
@@ -74,7 +74,7 @@ describe('State contract State functions', function () {
         Utils: utils.address,
       },
     });
-    state = await upgrades.deployProxy(State, [addr1.address, addressC.address, shield.address], {
+    state = await upgrades.deployProxy(State, [addr1.address, addressC.address, addressS.address], {
       unsafeAllow: ['external-library-linking'],
       initializer: 'initializeState',
     });
@@ -95,20 +95,6 @@ describe('State contract State functions', function () {
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
       ethers.constants.AddressZero,
     );
-    await expect(
-      state
-        .connect(addr2)
-        .setProposer(addr1.address, [
-          addr1.address,
-          addr1.address,
-          addr1.address,
-          newUrl,
-          newFee,
-          false,
-          0,
-        ]),
-    ).to.be.revertedWith('Only proposer contract is authorized');
-
     await state.setProposer(addr1.address, [
       addr1.address,
       addr1.address,
@@ -187,10 +173,6 @@ describe('State contract State functions', function () {
   });
 
   it('should setProposerStartBlock', async function () {
-    const newBlock = 10;
-    await state.setProposerStartBlock(newBlock);
-    expect(await state.getProposerStartBlock()).to.equal(newBlock);
-
     const actualProposerStartBlock = await state.getProposerStartBlock();
     const newProposerStartBlock = 100;
 
@@ -201,13 +183,7 @@ describe('State contract State functions', function () {
   });
 
   it('should setNumProposers', async function () {
-    const prevNumProposers = 0;
-
-    await state.setNumProposers(prevNumProposers);
-
     const actualNumProposers = await state.getNumProposers();
-    expect(await state.getNumProposers()).to.equal(prevNumProposers);
-
     const newNumProposers = 1;
 
     await state.setNumProposers(newNumProposers);
@@ -382,8 +358,6 @@ describe('State contract State functions', function () {
     );
     expect((await state.proposers(addr2.address)).url).to.equal('');
     expect((await state.proposers(addr2.address)).fee).to.equal(0);
-
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
   });
 
   it('should change current proposer with maxProposers == 1', async function () {
@@ -429,53 +403,6 @@ describe('State contract State functions', function () {
     await state.changeCurrentProposer();
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
-
-    expect(await state.getNumProposers()).to.equal(1);
-  });
-
-  it('should not change current proposer: State: Too soon to rotate proposer', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr2.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
-    expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
-    expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
-    expect((await state.proposers(addr1.address)).url).to.equal(newUrl);
-    expect((await state.proposers(addr1.address)).fee).to.equal(newFee);
-    await state.setProposer(addr2.address, [
-      addr2.address,
-      addr2.address,
-      addr2.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setNumProposers(2);
-
-    await state.setCurrentProposer(addr2.address);
-    await state.setBootProposer(addr1.address);
-
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(addr2.address);
-
-    await state.setMaxProposers(5);
-    await state.setProposerStartBlock(await ethers.provider.getBlockNumber());
-    await expect(state.changeCurrentProposer()).to.be.revertedWith(
-      'State: Too soon to rotate proposer',
-    );
   });
 
   it('should not change current proposer with numProposers <= 1', async function () {
@@ -507,11 +434,8 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
-    const prevSprint = await state.currentSprint();
 
     await state.changeCurrentProposer();
-
-    expect(await state.currentSprint()).to.equal(prevSprint);
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
   });
@@ -560,11 +484,9 @@ describe('State contract State functions', function () {
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
 
-    const prevSprint = await state.currentSprint();
-
     await state.changeCurrentProposer();
 
-    expect(await state.currentSprint()).to.equal(prevSprint + 1);
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(addr2.address);
   });
 
   it('should not change current proposer with numProposers > 1 and 49 wei in stake', async function () {
@@ -609,11 +531,8 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
-    const prevSprint = await state.currentSprint();
 
     await expect(state.changeCurrentProposer()).to.be.reverted;
-
-    expect(await state.currentSprint()).to.equal(prevSprint);
   });
 
   it('should proposeBlock', async function () {
@@ -813,7 +732,7 @@ describe('State contract State functions', function () {
     ).to.be.revertedWith('State: The block has too many transactions');
   });
 
-  it('should not proposeBlock: Block flawed or out of order', async function () {
+  it('should resetFeeBookInfo', async function () {
     const newUrl = 'url';
     const newFee = 100;
     const amount = 100;
@@ -972,7 +891,6 @@ describe('State contract State functions', function () {
 
     expect(lastBlockHashes.time).to.above(0);
     expect(await state.getNumberOfL2Blocks()).to.equal(1);
-    await expect(state.popBlockData()).to.be.revertedWith('Only challenger contract is authorized');
     await state.connect(addressC).popBlockData();
     expect(await state.getNumberOfL2Blocks()).to.equal(0);
 
