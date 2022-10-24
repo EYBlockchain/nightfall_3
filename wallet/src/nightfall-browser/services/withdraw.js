@@ -36,6 +36,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     recipientAddress,
     rootKey,
     fee = generalise(0),
+    providedCommitments,
   } = generalise(withdrawParams);
 
   const ercAddress = generalise(withdrawParams.ercAddress.toLowerCase());
@@ -76,6 +77,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     tokenId,
     rootKey,
     maxNumberNullifiers: VK_IDS.withdraw.numberNullifiers,
+    providedCommitments,
   });
 
   try {

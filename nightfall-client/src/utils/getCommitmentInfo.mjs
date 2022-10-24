@@ -27,10 +27,10 @@ export const getCommitmentInfo = async txInfo => {
     maticAddress,
     tokenId = generalise(0),
     rootKey,
-    maxNumberNullifiers,
     providedCommitments,
-    onlyFee = false,
   } = txInfo;
+
+  let { maxNumberNullifiers, onlyFee = false } = txInfo;
 
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
@@ -44,115 +44,90 @@ export const getCommitmentInfo = async txInfo => {
 
   logger.debug(`Fee will be added as part of the transaction commitments: ${addedFee > 0n}`);
 
-  const value = totalValueToSend + addedFee;
-  const feeValue = fee.bigInt - addedFee;
+  let value = totalValueToSend + addedFee;
+  let feeValue = fee.bigInt - addedFee;
 
   logger.debug(`using user provided commitments: ${providedCommitments !== undefined}`);
-  logger.debug(
-    `fee is: ${feeValue} - getting only fee: ${Boolean(providedCommitments) || onlyFee}`,
-  );
 
-  let validatedProvidedCommitments = [];
-  if (providedCommitments) {
-    const commitmentHashes = providedCommitments.map(c => c.toString());
-    logger.debug({ msg: 'looking up these commitment hashes:', commitmentHashes });
-    const rawCommitments = await getCommitmentsByHash(
-      commitmentHashes,
+  const spentCommitments = [];
+  try {
+    let validatedProvidedCommitments = [];
+    if (providedCommitments) {
+      const commitmentHashes = providedCommitments.map(c => c.toString());
+      logger.debug({ msg: 'looking up these commitment hashes:', commitmentHashes });
+      const rawCommitments = await getCommitmentsByHash(
+        commitmentHashes,
+        compressedZkpPublicKey,
+        ercAddress,
+        tokenId,
+      );
+
+      if (rawCommitments.length < commitmentHashes.length) {
+        const invalidHashes = commitmentHashes.filter(ch => {
+          for (const rc of rawCommitments) {
+            if (rc._id === ch) return false;
+          }
+          return true;
+        });
+        throw new Error(`invalid commitment hashes: ${invalidHashes}`);
+      }
+
+      const providedValue = rawCommitments
+        .map(c => generalise(c.preimage.value).bigInt)
+        .reduce((sum, c) => sum + c);
+
+      if (providedValue < totalValueToSend)
+        throw new Error('provided commitments do not cover the value');
+
+      // transform the hashes retrieved from the DB to well formed commitments
+      validatedProvidedCommitments = rawCommitments.map(ct => new Commitment(ct.preimage));
+
+      // the user provieded enough commitments to cover the value but not the fee
+      // this can only happen when the token to send is the fee token
+      onlyFee = true;
+      value = 0n;
+      maxNumberNullifiers -= validatedProvidedCommitments.length;
+
+      if (maticAddress.hex(32) === ercAddress.hex(32)) {
+        feeValue = providedValue > value ? 0n : value - providedValue;
+      } else {
+        feeValue = fee.bigInt;
+      }
+
+      await Promise.all(validatedProvidedCommitments.map(c => markPending(c)));
+      spentCommitments.push(...validatedProvidedCommitments);
+    }
+
+    const commitments = await findUsableCommitmentsMutex(
       compressedZkpPublicKey,
       ercAddress,
       tokenId,
+      maticAddress,
+      value,
+      feeValue,
+      maxNumberNullifiers,
+      onlyFee,
     );
 
-    if (rawCommitments.length < commitmentHashes.length) {
-      const invalidHashes = commitmentHashes.filter(ch => {
-        for (const rc of rawCommitments) {
-          if (rc._id === ch) return false;
-        }
-        return true;
-      });
-      throw new Error(`invalid commitment hashes: ${invalidHashes}`);
+    const { oldCommitments, oldCommitmentsFee } = commitments;
+    spentCommitments.push(...oldCommitments);
+    spentCommitments.push(...oldCommitmentsFee);
+
+    oldCommitments.push(...validatedProvidedCommitments);
+
+    logger.debug(
+      `Found commitments ${addedFee > 0n ? 'including fee' : ''} ${JSON.stringify(
+        oldCommitments,
+        null,
+        2,
+      )}`,
+    );
+    logger.debug(oldCommitments.map(c => c.preimage.value.bigInt));
+
+    if (feeValue > 0n) {
+      logger.debug(`Found commitments fee ${JSON.stringify(oldCommitmentsFee, null, 2)}`);
     }
 
-    const providedValue = rawCommitments
-      .map(c => generalise(c.preimage.value).bigInt)
-      .reduce((sum, c) => sum + c);
-
-    if (providedValue < totalValueToSend)
-      throw new Error('provided commitments do not cover the value');
-
-    // transform the hashes retrieved from the DB to well formed commitments
-    validatedProvidedCommitments = rawCommitments.map(ct => new Commitment(ct.preimage));
-
-    // the user provieded enough commitments to cover the value but not the fee
-    // this can only happen when the token to send is the fee token
-    if (providedValue < value) {
-      const missing = value - providedValue;
-      logger.debug({
-        msg: 'looking for commitment to cover the difference between value and totalValueToSend',
-        missing,
-      });
-
-      await Promise.all(validatedProvidedCommitments.map(c => markPending(c)));
-      // this can return the same commitments that are also providided
-      // if the are not marked as pending
-      try {
-        const feeCommitments = await findUsableCommitmentsMutex(
-          compressedZkpPublicKey,
-          ercAddress,
-          tokenId,
-          maticAddress,
-          missing, // value
-          0, // fee
-          maxNumberNullifiers,
-        );
-        feeCommitments.oldCommitments.forEach(c => validatedProvidedCommitments.push(c));
-      } catch {
-        await Promise.all(validatedProvidedCommitments.map(c => clearPending(c)));
-        throw new Error('no commitments to cover the fee');
-      }
-    }
-  }
-
-  logger.debug({
-    msg: 'getting fC',
-    value,
-    feeValue,
-    onlyFee: Boolean(providedCommitments) || onlyFee,
-  });
-  const commitments = await findUsableCommitmentsMutex(
-    compressedZkpPublicKey,
-    ercAddress,
-    tokenId,
-    maticAddress,
-    value,
-    feeValue,
-    maxNumberNullifiers,
-    Boolean(providedCommitments) || onlyFee,
-  );
-
-  if (!commitments) throw new Error('Not available commitments has been found');
-
-  const { oldCommitmentsFee } = commitments;
-  const oldCommitments = providedCommitments
-    ? validatedProvidedCommitments
-    : commitments.oldCommitments;
-
-  logger.debug(
-    `Found commitments ${addedFee > 0n ? 'including fee' : ''} ${JSON.stringify(
-      oldCommitments,
-      null,
-      2,
-    )}`,
-  );
-  logger.debug(oldCommitments.map(c => c.preimage.value.bigInt));
-
-  if (feeValue > 0n) {
-    logger.debug(`Found commitments fee ${JSON.stringify(oldCommitmentsFee, null, 2)}`);
-  }
-
-  const spentCommitments = [...oldCommitments, ...oldCommitmentsFee];
-
-  try {
     // Compute the nullifiers
     const nullifiers = spentCommitments.map(commitment => new Nullifier(commitment, nullifierKey));
 

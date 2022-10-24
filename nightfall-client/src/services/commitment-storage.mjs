@@ -600,9 +600,6 @@ async function verifyEnoughCommitments(
   let minC = 0;
   let commitments = [];
 
-  logger.debug({ value, fee, ercAddressFee });
-  if (onlyFee && fee.bigInt === 0n) return { commitmentsFee, minFc, commitments, minC };
-
   if (!onlyFee) {
     // Get the commitments from the database
     const commitmentArray = await db
@@ -616,8 +613,8 @@ async function verifyEnoughCommitments(
       })
       .toArray();
 
-    // If not commitments are found, the transfer/withdrawal cannot be paid, so return null
-    if (commitmentArray === []) return null;
+    // If not commitments are found, the transfer/withdrawal cannot be paid, so throw an error
+    if (commitmentArray === []) throw new Error('no commitment for the actual transfer found');
 
     // Turn the fee commitments into real commitment object and sort it
     commitments = commitmentArray
@@ -650,7 +647,7 @@ async function verifyEnoughCommitments(
 
     // If after the loop minC is still zero means that we didn't found any sum of commitments
     // higher or equal than the amount required. Therefore the user can not pay it
-    if (minC === 0) return null;
+    if (minC === 0) throw new Error('no commitments found to cover the value');
   }
 
   // If there is a fee and the ercAddress of the fee doesn't match the ercAddress, get
@@ -669,7 +666,7 @@ async function verifyEnoughCommitments(
       })
       .toArray();
 
-    // If not commitments are found, the fee cannot be paid, so return null
+    // If not commitments are found, the fee cannot be paid, so throw an error
     if (commitmentArrayFee === []) throw new Error('no commitments found');
 
     // Turn the fee commitments into real commitment object and sort it
@@ -699,55 +696,6 @@ async function verifyEnoughCommitments(
     // higher or equal than the fee required. Therefore the user can not pay it
     if (minFc === 0) throw new Error('no commitments to cover the fee');
   }
-
-  // Get the commitments from the database
-  const commitmentArray = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .find({
-      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-      'preimage.ercAddress': ercAddress.hex(32),
-      'preimage.tokenId': tokenId.hex(32),
-      isNullified: false,
-      isPendingNullification: false,
-    })
-    .toArray();
-
-  // If not commitments are found, the transfer/withdrawal cannot be paid, so return null
-  if (commitmentArray === []) throw new Error('no commitment for the actual transfer fround');
-
-  // Turn the fee commitments into real commitment object and sort it
-  commitments = commitmentArray
-    .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
-    .map(ct => new Commitment(ct.preimage))
-    .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
-
-  const c = commitments.length; // Store the number of commitments
-  minC = 0;
-
-  // At most, we can use (maxNumberNullifiers - number of fee commitments needed) commitments to pay for the
-  // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
-  // Therefore, the maximum number of commitments the user will be able to use is the minimum between
-  // maxNumberNullifiers - minFc and the number of commitments (c)
-  const maxPossibleCommitments = Math.min(c, maxNumberNullifiers - minFc);
-
-  let j = 1;
-  let sumHighestCommitments = 0n;
-  // We try to find the minimum number of commitments whose sum is higher than the value sent.
-  // Since the array is sorted, we just need to try to sum the highest commitments.
-  while (j <= maxPossibleCommitments) {
-    sumHighestCommitments += commitments[c - j].preimage.value.bigInt;
-    if (sumHighestCommitments >= value.bigInt) {
-      minC = j;
-      break;
-    }
-    ++j;
-  }
-
-  logger.debug(commitmentArray);
-  logger.debug(commitments.lenght);
-  // If after the loop minC is still zero means that we didn't found any sum of commitments
-  // higher or equal than the amount required. Therefore the user can not pay it
-  if (minC === 0) throw new Error('no commitments found to cover the value');
 
   return { commitmentsFee, minFc, commitments, minC };
 }
@@ -922,8 +870,6 @@ async function findUsableCommitments(
     maxNumberNullifiers,
     onlyFee,
   );
-
-  if (!commitmentsVerification) return null;
 
   const { commitments, minC, minFc, commitmentsFee } = commitmentsVerification;
 
