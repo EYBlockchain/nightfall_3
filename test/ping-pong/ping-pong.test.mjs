@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import fs from 'fs';
 import { Docker } from 'docker-cli-js';
 import Web3 from 'web3';
-// eslint-disable-next-line no-unused-vars
+import { expect } from 'chai';
 import { userTest, proposerTest } from './index.mjs';
 
 let result;
@@ -67,6 +67,7 @@ describe('Ping-pong tests', () => {
     userTest(false);
     proposerTest(optimistUrls);
     result = await userTest(true);
+    expect(result).to.be.equal(0);
   });
 
   after(async () => {
@@ -85,6 +86,6 @@ describe('Ping-pong tests', () => {
       await docker.command(`volume rm ${v}`);
     }
 
-    process.exit(result); // we should terminate with result for GHA to have the correct exit result
+    // process.exit(result); // we should terminate with result for GHA to have the correct exit result
   });
 });

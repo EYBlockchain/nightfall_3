@@ -126,7 +126,7 @@ export async function userTest(IS_TEST_RUNNER) {
       `The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting:
         Current Transacted Balance is: ${endBalance - startBalance} - Expecting: ${
         txPerBlock * value + value * TEST_LENGTH
-      }`,
+      } (IS_TEST_RUNNER: ${IS_TEST_RUNNER})`,
     );
     await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
     loop++;
