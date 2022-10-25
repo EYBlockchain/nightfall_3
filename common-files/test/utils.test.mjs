@@ -158,7 +158,7 @@ describe('Utils tests', function () {
     assert.equal(result, 'http://localhost?');
   });
 
-  it('Should obfuscate the query string successfully #1', () => {
+  it('Should obfuscate the query string successfully', () => {
     const result = obfuscate(
       'http://localhost?xpto=blablabla&public_key=0x4789FD18D5d71982045d85d5218493fD69F55AC4&priv_key=0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d&secret=xpto01234567&name=&&nop',
       OBFUSCATION_SETTINGS_TEST,

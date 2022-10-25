@@ -111,7 +111,7 @@ const getRequestParam = req => {
 
   if (Object.keys(req.query).length !== 0) dataInput.query = req.query;
   if (Object.keys(req.params).length !== 0) dataInput.params = req.params;
-  if (Object.keys(req.body).length !== 0) dataInput.params = req.body;
+  if (Object.keys(req.body).length !== 0) dataInput.body = req.body;
 
   return dataInput;
 };
