@@ -931,10 +931,13 @@ class Nf3 {
       logger.debug('Proposer websocket connection opened');
       connection.send('blocks');
     };
+
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign, block, transactions, data } = msg;
+
       logger.debug(`Proposer received websocket message of type ${type}`);
+
       if (type === 'block') {
         // First sign transaction, and send it within asynchronous queue. This will
         // ensure that blockProposed events are emitted in order and with the correct nonce.
@@ -948,16 +951,30 @@ class Nf3 {
             const receipt = await this._sendTransaction(tx);
             proposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
+            logger.error({
+              msg: 'Error while trying to submit a block',
+              err,
+            });
+
             // block proposed is reverted. Send transactions back to mempool
-            logger.error(`Submitted block error ${err}`);
-            await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+            try {
+              await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+            } catch (errorResetLocalBlock) {
+              logger.error({
+                msg: 'Error while trying to reset local block',
+                errorResetLocalBlock,
+              });
+            }
             proposeEmitter.emit('error', err, block, transactions);
           }
         });
       }
+
       if (type === 'rollback') proposeEmitter.emit('rollback', data);
+
       return null;
     };
+
     connection.onerror = () => logger.error('Proposer websocket connection error');
     connection.onclosed = () => logger.warn('Proposer websocket connection closed');
     // add this proposer to the list of peers that can accept direct transfers and withdraws

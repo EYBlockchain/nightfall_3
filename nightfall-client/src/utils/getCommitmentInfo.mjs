@@ -55,16 +55,16 @@ export const getCommitmentInfo = async txInfo => {
 
   const { oldCommitments, oldCommitmentsFee } = commitments;
 
-  logger.debug(
-    `Found commitments ${addedFee > 0n ? 'including fee' : ''} ${JSON.stringify(
-      oldCommitments,
-      null,
-      2,
-    )}`,
-  );
+  logger.debug({
+    msg: `Found commitments ${addedFee > 0n ? 'including fee' : ''}`,
+    oldCommitments,
+  });
 
   if (feeValue > 0n) {
-    logger.debug(`Found commitments fee ${JSON.stringify(oldCommitmentsFee, null, 2)}`);
+    logger.debug({
+      msg: 'Found commitments fee',
+      oldCommitmentsFee,
+    });
   }
 
   const spentCommitments = [...oldCommitments, ...oldCommitmentsFee];
