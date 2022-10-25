@@ -29,7 +29,7 @@ services:
         source: ../config/default.js
         target: /app/config/default.js
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-local}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
