@@ -15,9 +15,11 @@ describe('DerParser contract functions', function () {
     DerParserInstance = await DerParserDeployer.deploy();
   });
   it('Should parse the root cert der file', async function () {
-    await DerParserInstance.parseDER(derBuffer);
-    const tlvs = (await DerParserInstance.getTlvs()).map(tlv => makeTlv(tlv));
+    const tlvs = (await DerParserInstance.parseDER(derBuffer)).map(tlv => makeTlv(tlv));
     console.log(tlvs);
+  });
+  it('Should store some state', async function () {
+    await DerParserInstance.store(derBuffer);
   });
   /*
   let ShieldInstance;
