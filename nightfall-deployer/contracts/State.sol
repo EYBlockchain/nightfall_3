@@ -13,7 +13,6 @@ pragma solidity ^0.8.0;
 import './Utils.sol';
 import './Config.sol';
 import './Pausable.sol';
-import './Challenges.sol';
 
 contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -359,8 +358,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         view
         returns (FeeTokens memory)
     {
-        bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
-        return (feeBookBlocks[input]);
+        return (feeBookBlocks[keccak256(abi.encodePacked(proposer, blockNumberL2))]);
     }
 
     function resetFeeBookBlocksInfo(address proposer, uint256 blockNumberL2) public onlyShield {
@@ -480,7 +478,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function isBlockReal(Block calldata b) public view {
+    function isBlockReal(Block calldata b) public view returns (bytes32) {
         bytes32 blockHash = Utils.hashBlock(b);
         require(
             b.blockNumberL2 < blockHashes.length &&

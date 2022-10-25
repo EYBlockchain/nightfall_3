@@ -22,8 +22,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => bool) public withdrawn;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
-    mapping(bytes32 => uint256) public transactionEthFees;
     mapping(bytes32 => bool) public isEscrowed; // Check if transaction commitment values has been escrowed (only for deposit)
+    mapping(bytes32 => uint256) public transactionEthFees;
 
     function initialize() public override(Stateful, Config, Pausable, KYC) initializer {
         Stateful.initialize();
@@ -74,7 +74,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
 
         //Request fees
         FeeTokens memory feePayments = state.getFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
-
         state.resetFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
 
         if (feePayments.feesEth > 0) {
@@ -250,6 +249,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         // set new owner of transaction, settign fee to zero.
         advancedWithdrawals[transactionHash].advanceFee = 0;
         advancedWithdrawals[transactionHash].currentOwner = msg.sender;
+
         state.addPendingWithdrawal(msg.sender, advanceFee, 0);
         (bool success, ) = payable(address(state)).call{value: uint256(advanceFee)}('');
         require(success, 'Shield: Transfer failed.');

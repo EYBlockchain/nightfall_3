@@ -8,6 +8,7 @@ const whitelistSlot = 163;
 const withdrawnSlot = 166;
 const advancedWithdrawalSlot = 167;
 const isEscrowedSlot = 168;
+const transactionEthFeeSlot = 169;
 
 export async function setTransactionWithdrawn(shieldAddress, withdrawTransactionHash) {
   const indexWithdrawn = ethers.utils.solidityKeccak256(
@@ -33,6 +34,15 @@ export async function setEscrowed(shieldAddress, transactionHash) {
   );
 
   await setStorageAt(shieldAddress, index, ethers.utils.hexlify(ethers.utils.zeroPad(1, 32)));
+}
+
+export async function setTransactionEthFee(shieldAddress, transactionHash, fee) {
+  const index = ethers.utils.solidityKeccak256(
+    ['uint256', 'uint256'],
+    [transactionHash, transactionEthFeeSlot],
+  );
+
+  await setStorageAt(shieldAddress, index, ethers.utils.hexlify(ethers.utils.zeroPad(fee, 32)));
 }
 
 export async function setAdvancedWithdrawal(
