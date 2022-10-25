@@ -156,6 +156,12 @@ export async function proposerTest(optimistUrls, proposersStats) {
     return currentSprint;
   };
 
+  const getStakeAccount = async proposer => {
+    const stateContractInstance = new nf3Proposer.web3.eth.Contract(stateABI, stateAddress);
+    const stakeAccount = await stateContractInstance.methods.getStakeAccount(proposer).call();
+    return stakeAccount;
+  };
+
   // eslint-disable-next-line no-param-reassign
   const eventLogs = [];
   const proposersBlocks = [];
@@ -219,8 +225,10 @@ export async function proposerTest(optimistUrls, proposersStats) {
       }
       // eslint-disable-next-line no-await-in-loop
       currentProposer = await getCurrentProposer();
+      const stakeAccount = await getStakeAccount(currentProposer.thisAddress);
       console.log(
-        `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress} ]`,
+        `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress}, Stake account:  ]`,
+        stakeAccount,
       );
 
       console.log('     Waiting blocks to rotate current proposer...');
