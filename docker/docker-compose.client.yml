@@ -28,7 +28,6 @@ services:
       RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://rabbitmq}
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
-      USE_STUBS: ${USE_STUBS:-false} # make sure this flag is the same as in deployer service
       BLOCKCHAIN_URL: wss://${BLOCKCHAIN_WS_HOST}
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
@@ -57,7 +56,7 @@ services:
     volumes:
       - type: volume
         source: mongodb
-        target: /data/db 
+        target: /data/db
 
   worker:
     image: public.ecr.aws/m0t3e1j9/nightfall-worker:testnet

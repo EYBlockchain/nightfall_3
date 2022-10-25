@@ -603,13 +603,65 @@ async function verifyEnoughCommitments(
   ercAddressFee,
   fee,
   maxNumberNullifiers,
+  onlyFee = false,
 ) {
   const connection = await connectDB();
   const db = connection.db(COMMITMENTS_DB);
 
-  let fc = 0; // Number of fee commitments
   let minFc = 0; // Minimum number of fee commitments required to pay the fee
   let commitmentsFee = []; // Array containing the fee commitments available sorted
+  let minC = 0;
+  let commitments = [];
+
+  if (!onlyFee) {
+    // Get the commitments from the database
+    const commitmentArray = await db
+      .collection(COMMITMENTS_COLLECTION)
+      .find({
+        compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
+        'preimage.ercAddress': ercAddress.hex(32),
+        'preimage.tokenId': tokenId.hex(32),
+        isNullified: false,
+        isPendingNullification: false,
+      })
+      .toArray();
+
+    // If not commitments are found, the transfer/withdrawal cannot be paid, so return null
+    if (commitmentArray === []) return null;
+
+    // Turn the fee commitments into real commitment object and sort it
+    commitments = commitmentArray
+      .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
+      .map(ct => new Commitment(ct.preimage))
+      .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
+
+    const c = commitments.length; // Store the number of commitments
+
+    // At most, we can use (maxNumberNullifiers - number of fee commitments needed) commitments to pay for the
+    // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
+    // Therefore, the maximum number of commitments the user will be able to use is the minimum between
+    // maxNumberNullifiers - minFc and the number of commitments (c)
+
+    const minimumFeeCommits = fee.bigInt > 0n ? 1 : 0;
+    const maxPossibleCommitments = Math.min(c, maxNumberNullifiers - minimumFeeCommits);
+
+    let j = 1;
+    let sumHighestCommitments = 0n;
+    // We try to find the minimum number of commitments whose sum is higher than the value sent.
+    // Since the array is sorted, we just need to try to sum the highest commitments.
+    while (j <= maxPossibleCommitments) {
+      sumHighestCommitments += commitments[c - j].preimage.value.bigInt;
+      if (sumHighestCommitments >= value.bigInt) {
+        minC = j;
+        break;
+      }
+      ++j;
+    }
+
+    // If after the loop minC is still zero means that we didn't found any sum of commitments
+    // higher or equal than the amount required. Therefore the user can not pay it
+    if (minC === 0) return null;
+  }
 
   // If there is a fee and the ercAddress of the fee doesn't match the ercAddress, get
   // the fee commitments available and check the minimum number of commitments the user
@@ -636,22 +688,15 @@ async function verifyEnoughCommitments(
       .map(ct => new Commitment(ct.preimage))
       .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
 
-    fc = commitmentsFee.length; // Store the number of fee commitments
+    const fc = commitmentsFee.length; // Store the number of fee commitments
 
-    // At most, we can use maxNumberNullifiers - 1 commitments to pay for the fee. However, it is possible that
-    // the user has less than maxNumberNullifiers - 1 matic commitments. Therefore, the maximum number of commitments
-    // the user will be able to use is the minimum between maxNumberNullifiers - 1 and the number of fee commitments (fc)
-    const maxPossibleCommitmentsFee = Math.min(fc, maxNumberNullifiers - 1);
-
-    console.log('maxPossibleCommitments', maxPossibleCommitmentsFee);
+    const maxPossibleCommitmentsFee = Math.min(fc, maxNumberNullifiers - minC);
 
     let i = 1;
     let sumHighestCommitmentsFee = 0n;
     // We try to find the minimum number of commitments whose sum is higher than the fee.
     // Since the array is sorted, we just need to try to sum the highest commitments.
     while (i <= maxPossibleCommitmentsFee) {
-      console.log('FC', fc);
-      console.log('i', i);
       sumHighestCommitmentsFee += commitmentsFee[fc - i].preimage.value.bigInt;
       if (sumHighestCommitmentsFee >= fee.bigInt) {
         minFc = i;
@@ -664,52 +709,6 @@ async function verifyEnoughCommitments(
     // higher or equal than the fee required. Therefore the user can not pay it
     if (minFc === 0) return null;
   }
-
-  // Get the commitments from the database
-  const commitmentArray = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .find({
-      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-      'preimage.ercAddress': ercAddress.hex(32),
-      'preimage.tokenId': tokenId.hex(32),
-      isNullified: false,
-      isPendingNullification: false,
-    })
-    .toArray();
-
-  // If not commitments are found, the transfer/withdrawal cannot be paid, so return null
-  if (commitmentArray === []) return null;
-
-  // Turn the fee commitments into real commitment object and sort it
-  const commitments = commitmentArray
-    .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
-    .map(ct => new Commitment(ct.preimage))
-    .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
-
-  const c = commitments.length; // Store the number of commitments
-  let minC = 0;
-
-  // At most, we can use (maxNumberNullifiers - number of fee commitments needed) commitments to pay for the
-  // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
-  // Therefore, the maximum number of commitments the user will be able to use is the minimum between
-  // maxNumberNullifiers - minFc and the number of commitments (c)
-  const maxPossibleCommitments = Math.min(c, maxNumberNullifiers - minFc);
-  let j = 1;
-  let sumHighestCommitments = 0n;
-  // We try to find the minimum number of commitments whose sum is higher than the value sent.
-  // Since the array is sorted, we just need to try to sum the highest commitments.
-  while (j <= maxPossibleCommitments) {
-    sumHighestCommitments += commitments[c - j].preimage.value.bigInt;
-    if (sumHighestCommitments >= value.bigInt) {
-      minC = j;
-      break;
-    }
-    ++j;
-  }
-
-  // If after the loop minC is still zero means that we didn't found any sum of commitments
-  // higher or equal than the amount required. Therefore the user can not pay it
-  if (minC === 0) return null;
 
   return { commitmentsFee, minFc, commitments, minC };
 }
@@ -837,6 +836,7 @@ async function findUsableCommitments(
   _value,
   _fee,
   maxNumberNullifiers,
+  onlyFee = false,
 ) {
   const value = generalise(_value); // sometimes this is sent as a BigInt.
   const fee = generalise(_fee); // sometimes this is sent as a BigInt.
@@ -849,6 +849,7 @@ async function findUsableCommitments(
     ercAddressFee,
     fee,
     maxNumberNullifiers,
+    onlyFee,
   );
 
   if (!commitmentsVerification) return null;
@@ -940,6 +941,7 @@ export async function findUsableCommitmentsMutex(
   _value,
   _fee,
   maxNumberNullifiers,
+  onlyFee = false,
 ) {
   return mutex.runExclusive(async () =>
     findUsableCommitments(
@@ -950,6 +952,7 @@ export async function findUsableCommitmentsMutex(
       _value,
       _fee,
       maxNumberNullifiers,
+      onlyFee,
     ),
   );
 }

@@ -23,10 +23,10 @@ import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
 import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
 
-const { USE_STUBS, VK_IDS } = global.config;
+const { VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.nightfallConstants;
 const { generalise } = gen;
-const circuitName = USE_STUBS ? 'deposit_stub' : 'deposit';
+const circuitName = 'deposit';
 
 async function deposit(items, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
@@ -78,7 +78,10 @@ async function deposit(items, shieldContractAddress) {
     numberCommitments: VK_IDS.deposit.numberCommitments,
   });
 
-  const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
+  const privateData = {
+    newCommitmentPreimage: [{ value, salt }],
+    recipientPublicKeys: [zkpPublicKey],
+  };
 
   const witnessInput = computeCircuitInputs(
     publicData,

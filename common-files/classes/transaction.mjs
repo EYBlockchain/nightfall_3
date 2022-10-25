@@ -7,7 +7,7 @@ An optimistic Transaction class
 import config from 'config';
 import gen from 'general-number';
 import Web3 from 'web3';
-import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
+import utils from '../utils/crypto/merkle-tree/utils.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
 import Proof from './proof.mjs';
 
