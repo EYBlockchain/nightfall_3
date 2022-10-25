@@ -27,12 +27,12 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
     try {
       const cipherTexts = [
         transaction.ercAddress,
-        transaction.tokenId,
+        transaction.recipientAddress,
         ...transaction.compressedSecrets,
       ];
       const [packedErc, unpackedTokenID, ...rest] = decrypt(
         generalise(key),
-        generalise(edwardsDecompress(transaction.recipientAddress)),
+        generalise(edwardsDecompress(transaction.tokenId)),
         generalise(cipherTexts),
       );
       const [erc, tokenId] = packSecrets(generalise(packedErc), generalise(unpackedTokenID), 2, 0);

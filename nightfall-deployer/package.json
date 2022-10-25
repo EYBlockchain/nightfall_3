@@ -26,6 +26,7 @@
     "@truffle/contract": "^4.5.21",
     "axios": "^0.21.4",
     "big-integer": "^1.6.48",
+    "circomlib": "^2.0.5",
     "cls-hooked": "^4.2.2",
     "common-files": "file:../common-files",
     "config": "^3.3.1",

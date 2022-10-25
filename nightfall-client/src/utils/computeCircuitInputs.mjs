@@ -14,21 +14,24 @@ const computePublicInputs = (tx, rootsOldCommitments, maticAddress, numberNullif
   const roots = utils.padArray(generalise(rootsOldCommitments), 0, numberNullifiers);
 
   const transaction = generalise(tx);
-  return [
-    transaction.value.field(BN128_GROUP_ORDER),
-    transaction.fee.field(BN128_GROUP_ORDER),
-    transaction.transactionType.field(BN128_GROUP_ORDER),
-    transaction.tokenType.field(BN128_GROUP_ORDER),
-    transaction.historicRootBlockNumberL2.map(h => h.field(BN128_GROUP_ORDER)),
-    transaction.tokenId.limbs(32, 8),
-    transaction.ercAddress.field(BN128_GROUP_ORDER),
-    transaction.recipientAddress.limbs(32, 8),
-    transaction.commitments.map(c => c.field(BN128_GROUP_ORDER)),
-    transaction.nullifiers.map(n => n.field(BN128_GROUP_ORDER)),
-    transaction.compressedSecrets.map(cs => cs.field(BN128_GROUP_ORDER)),
-    roots.map(r => r.field(BN128_GROUP_ORDER)),
-    generalise(maticAddress).field(BN128_GROUP_ORDER),
-  ].flat(Infinity);
+
+  return {
+    value: transaction.value.field(BN128_GROUP_ORDER),
+    fee: transaction.fee.field(BN128_GROUP_ORDER),
+    transactionType: transaction.transactionType.field(BN128_GROUP_ORDER),
+    tokenType: transaction.tokenType.field(BN128_GROUP_ORDER),
+    historicRootBlockNumberL2: transaction.historicRootBlockNumberL2.map(h =>
+      h.field(BN128_GROUP_ORDER),
+    ),
+    ercAddress: transaction.ercAddress.field(BN128_GROUP_ORDER),
+    tokenId: transaction.tokenId.limbs(32, 8).reverse(),
+    recipientAddress: transaction.recipientAddress.field(BN128_GROUP_ORDER),
+    commitments: transaction.commitments.map(c => c.field(BN128_GROUP_ORDER)),
+    nullifiers: transaction.nullifiers.map(n => n.field(BN128_GROUP_ORDER)),
+    compressedSecrets: transaction.compressedSecrets.map(cs => cs.field(BN128_GROUP_ORDER)),
+    roots: roots.map(r => r.field(BN128_GROUP_ORDER)),
+    feeAddress: generalise(maticAddress).field(BN128_GROUP_ORDER),
+  };
 };
 
 const computePrivateInputsNullifiers = (
@@ -46,14 +49,17 @@ const computePrivateInputsNullifiers = (
   const paddedPaths = utils.padArray(paths, new Array(32).fill(0), numberNullifiers);
   const paddedOrders = utils.padArray(orders, 0, numberNullifiers);
 
-  const privateInputsNullifiers = [
-    rootKey.field(BN128_GROUP_ORDER),
-    paddedOldCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
-    paddedOldCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
-    paddedPaths.map(ps => ps.map(p => p.field(BN128_GROUP_ORDER))),
-    paddedOrders.map(m => m.field(BN128_GROUP_ORDER)),
-  ].flat(Infinity);
-  return privateInputsNullifiers;
+  return {
+    rootKey: rootKey.field(BN128_GROUP_ORDER),
+    nullifiersValues: paddedOldCommitmentPreimage.map(commitment =>
+      commitment.value.field(BN128_GROUP_ORDER),
+    ),
+    nullifiersSalts: paddedOldCommitmentPreimage.map(commitment =>
+      commitment.salt.field(BN128_GROUP_ORDER),
+    ),
+    paths: paddedPaths.map(ps => ps.map(p => p.field(BN128_GROUP_ORDER))),
+    orders: paddedOrders.map(m => m.field(BN128_GROUP_ORDER)),
+  };
 };
 
 const computePrivateInputsCommitments = (
@@ -67,14 +73,18 @@ const computePrivateInputsCommitments = (
     numberCommitments,
   );
   const paddedRecipientPublicKeys = utils.padArray(recipientPublicKeys, [0, 0], numberCommitments);
-  return [
-    paddedNewCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
-    paddedNewCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
-    paddedRecipientPublicKeys.map(rcp => [
+  return {
+    commitmentsValues: paddedNewCommitmentPreimage.map(commitment =>
+      commitment.value.field(BN128_GROUP_ORDER),
+    ),
+    commitmentsSalts: paddedNewCommitmentPreimage.map(commitment =>
+      commitment.salt.field(BN128_GROUP_ORDER),
+    ),
+    recipientPublicKey: paddedRecipientPublicKeys.map(rcp => [
       rcp[0].field(BN128_GROUP_ORDER),
       rcp[1].field(BN128_GROUP_ORDER),
     ]),
-  ].flat(Infinity);
+  };
 };
 
 // eslint-disable-next-line import/prefer-default-export
@@ -86,7 +96,7 @@ export const computeCircuitInputs = (
   numberNullifiers,
   numberCommitments,
 ) => {
-  const witness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
+  let witness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
   const {
     oldCommitmentPreimage,
     paths,
@@ -99,7 +109,8 @@ export const computeCircuitInputs = (
     tokenId,
   } = generalise(privateData);
   if (numberNullifiers > 0) {
-    witness.push(
+    witness = {
+      ...witness,
       ...computePrivateInputsNullifiers(
         oldCommitmentPreimage,
         paths,
@@ -107,29 +118,31 @@ export const computeCircuitInputs = (
         rootKey,
         numberNullifiers,
       ),
-    );
+    };
   }
 
   if (numberCommitments > 0) {
-    witness.push(
+    witness = {
+      ...witness,
       ...computePrivateInputsCommitments(
         newCommitmentPreimage,
         recipientPublicKeys,
         numberCommitments,
       ),
-    );
+    };
   }
 
   if (ercAddress) {
-    witness.push(ercAddress.field(BN128_GROUP_ORDER));
-  }
-
-  if (tokenId) {
-    witness.push(...tokenId.limbs(32, 8));
+    const SHIFT = 1461501637330902918203684832716283019655932542976n;
+    const [top4Bytes, remainder] = tokenId.limbs(224, 2).map(l => BigInt(l));
+    const packedErcAddress = ercAddress.bigInt + top4Bytes * SHIFT;
+    witness.packedErcAddressPrivate = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
+    witness.idRemainderPrivate = generalise(remainder).field(BN128_GROUP_ORDER);
   }
 
   if (ephemeralKey) {
-    witness.push(...ephemeralKey.limbs(32, 8));
+    witness.ephemeralKey = ephemeralKey.field(BN128_GROUP_ORDER);
   }
+
   return witness;
 };

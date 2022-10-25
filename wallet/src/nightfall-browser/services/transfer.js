@@ -9,11 +9,9 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
-
 import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
-import computeCircuitInputs from '../utils/compute-witness';
+import computeCircuitInputs from '../utils/computeCircuitInputs';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -22,7 +20,6 @@ import { edwardsCompress } from '../../common-files/utils/curve-maths/curves';
 import { ZkpKeys } from './keys';
 import {
   checkIndexDBForCircuit,
-  getStoreCircuit,
   getLatestTree,
   getMaxBlock,
   emptyStoreBlocks,
@@ -134,7 +131,7 @@ async function transfer(transferParams, shieldContractAddress) {
         ephemeralKey: ePrivate,
       };
 
-      const witnessInput = computeCircuitInputs(
+      const witness = computeCircuitInputs(
         transaction,
         privateData,
         commitmentsInfo.roots,
@@ -143,34 +140,19 @@ async function transfer(transferParams, shieldContractAddress) {
         VK_IDS.transfer.numberCommitments,
       );
 
-      // call a zokrates worker to generate the proof
-      // This is (so far) the only place where we need to get specific about the
-      // circuit
       if (!(await checkIndexDBForCircuit(circuitName)))
         throw Error('Some circuit data are missing from IndexedDB');
-      const [abiData, programData, pkData] = await Promise.all([
-        getStoreCircuit(`${circuitName}-abi`),
-        getStoreCircuit(`${circuitName}-program`),
-        getStoreCircuit(`${circuitName}-pk`),
-      ]);
-      const abi = abiData.data;
-      const program = programData.data;
-      const pk = pkData.data;
+      // const [wasmData, pkData] = await Promise.all([
+      //   getStoreCircuit(`${circuitName}-wasm`),
+      //   getStoreCircuit(`${circuitName}-pk`),
+      // ]);
 
-      const zokratesProvider = await initialize();
-      const artifacts = { program: new Uint8Array(program), abi };
-      const keypair = { pk: new Uint8Array(pk) };
-      console.log('Computing witness');
-      const witnessInfo = zokratesProvider.computeWitness(artifacts, witnessInput, {
-        snarkjs: true,
-      });
+      const wasmFilePath = '';
+      const zkeyFilePath = '';
 
       // generate proof
-      console.log('Generating Proof');
-      const prove = await snarkjs.groth16.prove(keypair, witnessInfo.snarkjs.witness); // zkey, witness
-      const { proof } = prove;
-      console.log('Proof Generated');
-      // and work out the ABI encoded data that the caller should sign and send to the shield contract
+      const { proof } = await snarkjs.groth16.fullProve(witness, wasmFilePath, zkeyFilePath); // zkey, witness
+
       const optimisticTransferTransaction = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,

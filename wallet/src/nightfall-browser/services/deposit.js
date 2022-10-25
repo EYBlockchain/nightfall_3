@@ -10,8 +10,6 @@
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
-
 import computeCircuitInputs from '@Nightfall/utils/compute-witness';
 import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
@@ -21,7 +19,7 @@ import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
+import { checkIndexDBForCircuit, getLatestTree, getMaxBlock } from './database';
 
 const { VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.nightfallConstants;
@@ -45,22 +43,10 @@ async function deposit(items, shieldContractAddress) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
-  if (!(await checkIndexDBForCircuit(circuitName)))
-    throw Error('Some circuit data are missing from IndexedDB');
-  const [abiData, programData, pkData] = await Promise.all([
-    getStoreCircuit(`${circuitName}-abi`),
-    getStoreCircuit(`${circuitName}-program`),
-    getStoreCircuit(`${circuitName}-pk`),
-  ]);
-
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
   await confirmBlock(lastBlockNumber, lastTree);
-
-  const abi = abiData.data;
-  const program = programData.data;
-  const pk = pkData.data;
 
   const salt = await randValueLT(BN128_GROUP_ORDER);
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
@@ -83,7 +69,7 @@ async function deposit(items, shieldContractAddress) {
     recipientPublicKeys: [zkpPublicKey],
   };
 
-  const witnessInput = computeCircuitInputs(
+  const witness = computeCircuitInputs(
     publicData,
     privateData,
     [],
@@ -93,17 +79,19 @@ async function deposit(items, shieldContractAddress) {
   );
 
   try {
-    const zokratesProvider = await initialize();
-    const artifacts = { program: new Uint8Array(program), abi };
-    const keypair = { pk: new Uint8Array(pk) };
+    if (!(await checkIndexDBForCircuit(circuitName)))
+      throw Error('Some circuit data are missing from IndexedDB');
+    // const [wasmData, pkData] = await Promise.all([
+    //   getStoreCircuit(`${circuitName}-wasm`),
+    //   getStoreCircuit(`${circuitName}-pk`),
+    // ]);
 
-    // computation
-    console.log('Computing Witness');
-    const witnessInfo = zokratesProvider.computeWitness(artifacts, witnessInput, { snarkjs: true });
+    const wasmFilePath = '';
+    const zkeyFilePath = '';
+
     // generate proof
-    console.log('Generate Proof');
-    const prove = await snarkjs.groth16.prove(keypair, witnessInfo.snarkjs.witness); // zkey, witness
-    const { proof } = prove;
+    const { proof } = await snarkjs.groth16.fullProve(witness, wasmFilePath, zkeyFilePath); // zkey, witness
+
     const shieldContractInstance = await getContractInstance(
       SHIELD_CONTRACT_NAME,
       shieldContractAddress,
