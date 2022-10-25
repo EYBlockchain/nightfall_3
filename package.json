@@ -27,7 +27,8 @@
     "test-kyc": "LOG_LEVEL=silent npx hardhat test --bail --no-compile test/kyc.test.mjs",
     "unit-test": "npx hardhat test --bail test/unit/SmartContracts/*",
     "unit-test-kyc": "npx hardhat test --bail test/unit/SmartContracts/kyc.unit.test.mjs",
-    "unit-test-shield": "npx hardhat test --bail test/unit/SmartContracts/shield.unit.test.mjs"
+    "unit-test-shield": "npx hardhat test --bail test/unit/SmartContracts/shield.unit.test.mjs",
+    "prune": "docker system prune -a && docker volume prune"
   },
   "repository": {
     "type": "git",
