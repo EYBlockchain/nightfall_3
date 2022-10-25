@@ -1,5 +1,6 @@
 /* eslint import/no-extraneous-dependencies: "off" */
 /* eslint no-unused-vars: "off" */
+/* eslint no-param-reassign: "off" */
 
 import config from 'config';
 import pino from 'pino';
@@ -11,9 +12,21 @@ const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss.l';
 const getInstance = () => {
   const pinoOptions = {
     level: config.LOG_LEVEL || 'info',
-    messageKey: 'message',
+    base: undefined,
+    hooks: {
+      logMethod(inputArgs, method, level) {
+        if (inputArgs.length === 1 && typeof inputArgs[0] === 'string') {
+          inputArgs[0] = { msg: inputArgs[0] };
+        }
+
+        return method.apply(this, inputArgs);
+      },
+    },
     mixin() {
       return { correlationId: correlator.getId() };
+    },
+    mixinMergeStrategy(mergeObject, mixinObject) {
+      return Object.assign(mergeObject, mixinObject);
     },
     formatters: {
       // echoes the level as the label instead of the number
