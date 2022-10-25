@@ -6,9 +6,9 @@
  */
 import WebSocket from 'ws';
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
-import { waitForTimeout } from 'common-files/utils/utils.mjs';
-import constants from 'common-files/constants/index.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
