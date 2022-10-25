@@ -19,13 +19,14 @@ contract DERParser {
   }
 
   uint constant MAX_DEPTH = 5;
+  uint constant MAX_TLVS = 75;
 
-  DecodedTlv[] tlvs;
+  uint public state;
 
   /*
   Parses the input tag.
   */
-  function getTlvTag(bytes1 tagByte, uint pointer) private view returns(Tag memory, uint) {
+  function getTlvTag(bytes1 tagByte, uint pointer) private pure returns(Tag memory, uint) {
     bytes1 tagClass = tagByte & 0xC0;
     bool isConstructed = (tagByte & 0x20) != 0;
     bytes1 tagType = tagByte & 0x1F;
@@ -36,7 +37,7 @@ contract DERParser {
   /*
   Parses the length bytes, which must be at the start of the passed-in bytes
   */
-  function getTlvLength(bytes calldata derSlice, uint pointer) private view returns(uint, uint) {
+  function getTlvLength(bytes calldata derSlice, uint pointer) private pure returns(uint, uint) {
     bool shortForm = (derSlice[0] & 0x80) == 0;
     uint lengthBits = uint(uint8(derSlice[0] & 0x7F)); // this contains either the length value (shortform) or the number of following bytes that contain the length value (long form)
     if (shortForm) return (lengthBits, ++pointer); //it's a short form length, so we're done
@@ -46,7 +47,6 @@ contract DERParser {
     uint length = 0;
     for (uint i = 0; i < lengthBits; i++) {
       length = (length << 8) | uint(uint8(derSlice[i+1]));
-      console.log(length);
     }
     return (length, pointer + lengthBits + 1);
   }
@@ -60,7 +60,7 @@ contract DERParser {
   /*
   Assembles the next tlv element from an array of bytes representing DER encoded data.  The next element must be at the start of the DER bytes array
   */
-  function getNextTlv(bytes calldata derSlice, uint pointer, uint depth, uint id) private view returns(DecodedTlv memory, uint) {
+  function getNextTlv(bytes calldata derSlice, uint pointer, uint depth, uint id) private pure returns(DecodedTlv memory, uint) {
     Tag memory tag;
     uint length;
     bytes memory value;
@@ -72,33 +72,19 @@ contract DERParser {
   }
 
   /**
-  A function that recurses through the ASN.1 tree that the DER bytes encode (recursive tlv within tlv has to be handled)
+  A function that walks through the ASN.1 tree that the DER bytes encode
   @param derBytes the DER encoded certificate (although this should work with any ASN.1 DER encoded binary object)
   */
-  // function recurseDerTree(bytes calldata derBytes, uint pointer, uint id, uint depth, uint endOfConstruction) private returns(uint, uint, uint, uint) {
-  //   DecodedTlv memory tlv;
-  //   uint lastDepth;
-  //   // uint endOfConstruction;
-  //   (tlv, pointer) = getNextTlv(derBytes, pointer, depth, id);
-  //   tlvs.push(tlv);
-  //   id++;
-  //   if (pointer == endOfConstruction) --lastDepth;
-  //   if (tlv.tag.isConstructed) { 
-  //     lastDepth = depth;
-  //     (pointer, id, depth, endOfConstruction ) = recurseDerTree(derBytes, pointer, id, ++depth, pointer + tlv.length);
-  //   }
-  //   console.log(depth, pointer, endOfConstruction, tlv.length);
-  //   return(pointer, id, depth, endOfConstruction);
-  // }
-  function walkDerTree(bytes calldata derBytes) private {
+  function walkDerTree(bytes calldata derBytes) private pure returns(DecodedTlv[MAX_TLVS] memory) {
     DecodedTlv memory tlv;
+    DecodedTlv[MAX_TLVS] memory tlvs;
     uint pointer = 0;
     uint  depth = 0;
     uint id = 0;
     uint[MAX_DEPTH] memory depthChangesAt;
     do {
       (tlv, pointer) = getNextTlv(derBytes, pointer, depth, id++);
-      tlvs.push(tlv);
+      tlvs[id] = tlv;
       if (tlv.tag.isConstructed) {
         depthChangesAt[depth] = pointer + tlv.length;
         depth++;
@@ -107,18 +93,20 @@ contract DERParser {
         if (pointer == depthChangesAt[i]) depth--;
       }
     } while (pointer < derBytes.length);
+    return tlvs;
   }
   /*
   Parses the bytes DER encoded data and extracts the (possibly nested) TLV elements
-  as 'DecodedTlv[]'. Each struct has a pointer to its children (if any)
+  as 'DecodedTlv[]'.
   */
-  function parseDER(bytes calldata derBytes) external {
-      walkDerTree(derBytes);
+  function parseDER(bytes calldata derBytes) external pure returns(DecodedTlv[MAX_TLVS] memory) {
+      return walkDerTree(derBytes);
   }
+
   /*
-  Getter for the parsed TLV data
+  state-changing function to test cost of compute of the pure functions above
   */
-  function getTlvs() external view returns(DecodedTlv[] memory) {
-    return tlvs;
+  function store(bytes calldata derBytes) external {
+    state = walkDerTree(derBytes)[0].id;
   }
 }
