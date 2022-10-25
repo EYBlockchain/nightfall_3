@@ -76,13 +76,15 @@ describe('Gas test', () => {
       // We create enough transactions to fill blocks full of deposits.
       await depositNTransactions(
         nf3Users[0],
-        txPerBlock,
+        1,
         erc20Address,
         tokenType,
         transferValue,
         tokenId,
         0,
       );
+      
+      await nf3Users[0].makeBlockNow
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
@@ -104,29 +106,7 @@ describe('Gas test', () => {
     });
   });
 
-  describe('Single transfers', () => {
-    it('should be a reasonable gas cost', async function () {
-      // We create enough transactions to fill blocks full of deposits.
-      const receipts = await transferNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        nf3Users[0].zkpKeys.compressedZkpPublicKey,
-        0,
-      );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
-      console.log(
-        'Single transfer L1 average gas used, if on-chain, was',
-        averageL1GasCost(receipts),
-      );
-    });
-  });
-
-  describe('Double transfers', () => {
+  describe('Transfers', () => {
     it('should be a reasonable gas cost', async function () {
       // We create enough transactions to fill blocks full of deposits.
       const receipts = await transferNTransactions(
@@ -142,7 +122,7 @@ describe('Gas test', () => {
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log(
-        'Double transfer L1 average gas used, if on-chain, was',
+        'Transfer L1 average gas used, if on-chain, was',
         averageL1GasCost(receipts),
       );
     });
