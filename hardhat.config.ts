@@ -7,7 +7,7 @@ import '@openzeppelin/hardhat-upgrades';
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: '0.8.3',
+    version: '0.8.17',
     settings: {
       optimizer: {
         enabled: true,

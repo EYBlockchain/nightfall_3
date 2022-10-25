@@ -27,12 +27,12 @@ export function calculateTransactionHash(tx) {
       'uint112',
       'uint8',
       'uint8',
-      'uint64[4]',
+      'uint64[]',
       'bytes32',
       'bytes32',
       'bytes32',
-      'bytes32[3]',
-      'bytes32[4]',
+      'bytes32[]',
+      'bytes32[]',
       'bytes32[2]',
       'uint256[4]',
     ],
@@ -52,7 +52,8 @@ export function calculateTransactionHash(tx) {
     ],
   );
 
-  return ethers.utils.keccak256(encodedTx);
+  const encodedTxPadded = ethers.utils.hexZeroPad(32, 32).concat(encodedTx.slice(2));
+  return ethers.utils.keccak256(encodedTxPadded);
 }
 
 export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
@@ -72,7 +73,6 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
     recipientAddress: ethers.utils.hexZeroPad(ownerAddress, 32),
     commitments: [
       '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
       '0x0000000000000000000000000000000000000000000000000000000000000000',
     ],
     nullifiers: [
@@ -98,26 +98,12 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
     fee: '0',
     transactionType: '0',
     tokenType: '0',
-    historicRootBlockNumberL2: [
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ],
+    historicRootBlockNumberL2: [],
     tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
     ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
     recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    commitments: [
-      '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ],
-    nullifiers: [
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ],
+    commitments: ['0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf'],
+    nullifiers: [],
     compressedSecrets: [
       '0x0000000000000000000000000000000000000000000000000000000000000000',
       '0x0000000000000000000000000000000000000000000000000000000000000000',

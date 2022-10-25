@@ -51,7 +51,6 @@ services:
       OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
-      USE_STUBS: ${USE_STUBS:-false} # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
 
     # Temporary container to deploy contracts and circuits and populate volumes
@@ -74,7 +73,6 @@ services:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       ZOKRATES_WORKER_HOST: ${ZOKRATES_WORKER_HOST:-worker}
-      USE_STUBS: ${USE_STUBS:-false}
       WHITELISTING: ${WHITELISTING}
 
   hosted-utils-api-server:
@@ -136,7 +134,7 @@ services:
     volumes:
       - type: volume
         source: mongodb
-        target: /data/db 
+        target: /data/db
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
@@ -157,9 +155,9 @@ services:
       MPC: ${MPC}
 
 volumes:
-  mongodb:  
-  proving_files: 
-  build: 
+  mongodb:
+  proving_files:
+  build:
 networks:
   nightfall_network:
     driver: bridge

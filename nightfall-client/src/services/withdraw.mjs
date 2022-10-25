@@ -18,7 +18,7 @@ import { ZkpKeys } from './keys.mjs';
 import getProposersUrl from './peers.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS, VK_IDS } = config;
+const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
@@ -83,8 +83,6 @@ async function withdraw(withdrawParams) {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      ercAddress,
-      tokenId,
     };
 
     const witness = computeCircuitInputs(
@@ -102,8 +100,7 @@ async function withdraw(withdrawParams) {
     });
 
     // call a zokrates worker to generate the proof
-    let folderpath = 'withdraw';
-    if (USE_STUBS) folderpath = `${folderpath}_stub`;
+    const folderpath = 'withdraw';
     const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
       folderpath,
       inputs: witness,
