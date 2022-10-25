@@ -5,7 +5,7 @@ import { setTransactionInfo } from '../utils/shieldStorage.mjs';
 
 const { ethers, upgrades } = hardhat;
 
-describe('Proposers contract Proposers functions', function () {
+describe('State contract State functions', function () {
   let ProposersInstance;
   let addr1;
   let addr2;
@@ -173,6 +173,10 @@ describe('Proposers contract Proposers functions', function () {
   });
 
   it('should setProposerStartBlock', async function () {
+    const newBlock = 10;
+    await state.setProposerStartBlock(newBlock);
+    expect(await state.getProposerStartBlock()).to.equal(newBlock);
+
     const actualProposerStartBlock = await state.getProposerStartBlock();
     const newProposerStartBlock = 100;
 
@@ -183,7 +187,13 @@ describe('Proposers contract Proposers functions', function () {
   });
 
   it('should setNumProposers', async function () {
+    const prevNumProposers = 0;
+
+    await state.setNumProposers(prevNumProposers);
+
     const actualNumProposers = await state.getNumProposers();
+    expect(await state.getNumProposers()).to.equal(prevNumProposers);
+
     const newNumProposers = 1;
 
     await state.setNumProposers(newNumProposers);
@@ -358,6 +368,8 @@ describe('Proposers contract Proposers functions', function () {
     );
     expect((await state.proposers(addr2.address)).url).to.equal('');
     expect((await state.proposers(addr2.address)).fee).to.equal(0);
+
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
   });
 
   it('should change current proposer with maxProposers == 1', async function () {
@@ -403,6 +415,8 @@ describe('Proposers contract Proposers functions', function () {
     await state.changeCurrentProposer();
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
+
+    expect(await state.getNumProposers()).to.equal(1);
   });
 
   it('should not change current proposer with numProposers <= 1', async function () {
