@@ -21,15 +21,10 @@ export default {
       });
       connection[url] = await client.connect();
     } else {
-      const options = { server:
-               { socketOptions: 
-                    { 
-                        socketTimeoutMS: 1000,
-                        connectTimeoutMS: 1000
-                    },
+      const options = {
+                  connectTimeoutMS: 10000,
                   useUnifiedTopology: true
-                }
-              };
+                };
       const client = await new MongoClient(url, options);
       connection[url] = await client.connect();
     }
@@ -37,6 +32,6 @@ export default {
   },
   async disconnect(url) {
     connection[url].close();
-    delete connection[url];
+    delete connection[url]; no
   },
 };
