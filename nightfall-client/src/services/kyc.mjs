@@ -1,5 +1,5 @@
 /**
- This module creates blockchain transactions to interact with the KYC smart contract
+ This module creates blockchain transactions to interact with the Whitelist smart contract
 */
 
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';

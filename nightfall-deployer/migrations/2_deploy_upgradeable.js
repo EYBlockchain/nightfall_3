@@ -10,7 +10,6 @@ const Proposers = artifacts.require('Proposers.sol');
 const Challenges = artifacts.require('Challenges.sol');
 const State = artifacts.require('State.sol');
 const SimpleMultiSig = artifacts.require('SimpleMultiSig.sol');
-const KYC = artifacts.require('KYC.sol');
 
 const config = require('config');
 

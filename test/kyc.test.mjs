@@ -32,7 +32,7 @@ let erc20Address;
 let stateAddress;
 const eventLogs = [];
 
-describe('KYC tests', () => {
+describe('Whitelist tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
