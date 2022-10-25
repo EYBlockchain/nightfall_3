@@ -1,5 +1,5 @@
 /**
- Routes to perform whitelist manager KYC work
+ Routes to perform whitelist manager work
  */
 
 import express from 'express';
@@ -20,7 +20,7 @@ router.get('/check', async (req, res, next) => {
 });
 
 /**
- Add a use to a KYC whitelist (only works if user is a whitelist manager, otherwise just wastes gas)
+ Add a use to a whitelist (only works if user is a whitelist manager, otherwise just wastes gas)
  */
 router.post('/add', async (req, res, next) => {
   const { address } = req.body;
@@ -33,7 +33,7 @@ router.post('/add', async (req, res, next) => {
 });
 
 /**
- Add a use to a KYC whitelist (only works if user is a relevant (to the group) whitelist manager, otherwise just wastes gas)
+ Add a use to a whitelist (only works if user is a relevant (to the group) whitelist manager, otherwise just wastes gas)
  */
 router.post('/remove', async (req, res, next) => {
   const { address } = req.body;

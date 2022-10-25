@@ -3,8 +3,7 @@ import './Ownable.sol';
 
 pragma solidity ^0.8.0;
 
-contract KYC is Ownable {
-   
+contract Whitelist is Ownable {
     bool public whitelisting;
     mapping(address => uint256) public users;
     mapping(address => uint256) public managers;
@@ -12,7 +11,7 @@ contract KYC is Ownable {
     // groupIds cannot be zero, although we don't specifcally chack for this because assigning a groupId of zero has
     // no effect other than wasting gas.
 
-    function initialize() override virtual public onlyInitializing {
+    function initialize() public virtual override onlyInitializing {
         whitelisting = false;
         Ownable.initialize();
     }
@@ -24,7 +23,7 @@ contract KYC is Ownable {
 
     function removeUserFromWhitelist(address _user) external {
         require(users[_user] != 0, 'This user is not whitelisted, so cannot be delisted');
-        require (managers[msg.sender] == users[_user], 'You are not the manager of this group' );
+        require(managers[msg.sender] == users[_user], 'You are not the manager of this group');
         delete users[_user];
     }
 
@@ -41,12 +40,12 @@ contract KYC is Ownable {
     }
 
     function isWhitelisted(address _user) public view returns (bool) {
-        if (whitelisting == false ) return true; // whitelisting is turned off
+        if (whitelisting == false) return true; // whitelisting is turned off
         if (users[_user] != 0) return true;
         return false;
     }
 
-    function isWhitelistManager(address _manager) public view returns (uint) {
+    function isWhitelistManager(address _manager) public view returns (uint256) {
         return managers[_manager];
     }
 }

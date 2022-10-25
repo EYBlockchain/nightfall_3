@@ -16,21 +16,21 @@ import './Utils.sol';
 import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
-import './KYC.sol';
+import './Whitelist.sol';
 
-contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
+contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, Whitelist {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => TransactionInfo) public txInfo;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
 
     address public challengesAddress;
 
-    function initialize() public override(Stateful, Config, Pausable, KYC) initializer {
+    function initialize() public override(Stateful, Config, Pausable, Whitelist) initializer {
         Stateful.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
-        KYC.initialize();
+        Whitelist.initialize();
     }
 
     function getTransactionEscrowed(bytes32 transactionHash) public view returns (bool) {
