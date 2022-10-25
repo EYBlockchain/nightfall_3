@@ -31,11 +31,11 @@ import {
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { USE_STUBS, VK_IDS } = global.config;
+const { VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 
-const circuitName = USE_STUBS ? 'transfer_stub' : 'transfer';
+const circuitName = 'transfer';
 
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');

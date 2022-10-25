@@ -17,7 +17,6 @@ const web3 = Web3.connection();
 
 const fsPromises = fs.promises;
 
-const { USE_STUBS } = config;
 /**
  * This function will ping the Zokrates service until it is up before attempting
  * to use it. This is because the deployer must start before Zokrates as it needs
@@ -69,9 +68,7 @@ async function walk(dir) {
  */
 async function setupCircuits() {
   // do all the trusted setups needed first, we need to find the circuits we're going to do the setup on
-  const circuitsToSetup = await (
-    await walk(config.CIRCUITS_HOME)
-  ).filter(c => (USE_STUBS ? c.includes('_stub') : !c.includes('_stub')));
+  const circuitsToSetup = await await walk(config.CIRCUITS_HOME);
   // then we'll get all of the vks (some may not exist but we'll handle that in
   // a moments). We'll grab promises and then resolve them after the loop.
   const resp = [];
@@ -150,7 +147,7 @@ async function setupCircuits() {
 
       const call = keyRegistry.methods.registerVerificationKey(
         vkArray,
-        config.VK_IDS[USE_STUBS ? folderpath.slice(0, -5) : folderpath].txType,
+        config.VK_IDS[folderpath].txType,
       );
 
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly

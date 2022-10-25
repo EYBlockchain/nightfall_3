@@ -1,0 +1,59 @@
+from "hashes/poseidon/poseidon.zok" import main as poseidon;
+from "../../utils/structures.zok" import Point;
+from "../../utils/path-check.zok" import main as pathCheck;
+
+/*
+* Verify that all nullifiers are correct. It checks either the nullifiers belongs to the regular
+*  address or the fee one. If nullifier value is zero, it is considered valid
+*/
+def main<N>(\
+    field packedErcAddress,\
+    field idRemainder,\
+    field[N] nullifierHashes,\
+    field[N] roots,\
+    private field[N] oldCommitmentValues,\
+    private field[N] oldCommitmentSalts,\
+    private field[N][32] paths,\
+	private field[N] orders,\
+    private field nullifierKeys,\
+    private Point zkpPublicKeys,\
+    field feeAddress\
+) -> bool {
+   
+    for u32 i in 0..N {
+        //Calculate old commitment hash assuming it belongs to packedErcAddress  
+        field calculatedOldCommitmentHash = poseidon([\
+            packedErcAddress,\
+            idRemainder,\
+            oldCommitmentValues[i],\
+            ...zkpPublicKeys,\
+            oldCommitmentSalts[i]\
+        ]);
+        //Calculate corresponding nullifier
+        field nullifier = if(oldCommitmentValues[i] != 0) { poseidon([nullifierKeys, calculatedOldCommitmentHash]) } else { 0 };
+
+        //Calculate old commitment hash assuming it belongs to feeAddress  
+        field calculatedOldCommitmentHashFee = poseidon([\
+            feeAddress,\
+            0,\
+            oldCommitmentValues[i],\
+            ...zkpPublicKeys,\
+            oldCommitmentSalts[i]\
+        ]);
+
+        //Calculate corresponding nullifier
+        field nullifierFee = if(oldCommitmentValues[i] != 0) { poseidon([nullifierKeys, calculatedOldCommitmentHashFee]) } else { 0 };
+
+        //Check that the calculated nullifier matches with the one contained in the transaction
+        assert(nullifier == nullifierHashes[i] || nullifierFee == nullifierHashes[i]);
+
+        field validCalculatedOldCommitmentHash = if (nullifier == nullifierHashes[i]) {\
+            calculatedOldCommitmentHash } else { calculatedOldCommitmentHashFee };
+
+        //Check that the nullifier is contained in the tree
+        bool pathValidity = if(oldCommitmentValues[i] != 0) { pathCheck([roots[i], ...paths[i]], orders[i], validCalculatedOldCommitmentHash) } else { true };
+        assert(pathValidity);
+    }
+    
+    return true;
+}

@@ -50,7 +50,7 @@ build up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./setup-nightfall`).
 If running for first time, do the setup as above and then run this script:
 
 ```sh
-./bin/start-nightfall -l | -g | -r [-s] [-d]
+./start-nightfall -l | -g | -r [-d]
 ```
 One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to 
 start up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./start-nightfall`).
@@ -63,9 +63,9 @@ details on how to do the latter as there are some additional considerations.
   - Use `-g` to use a Ganache client inside the container
   - Use `-l` to use some localhost client running on your machine. We recommend using Ganache first
     to check everything works, because it's considerably faster.
-- Additionally, you can use the `-s` flag. If you do that, Nightfall_3 will run with stubbed ZKP
-  circuits, which generate proofs that always verify. That's useful for development work because
-  tests will run much faster but clearly you should run without stubs, as a final check.
+  - Use `-r` to use ropsten node hosted by the dev team. Note: with option -r set environment
+    variable $ROPSTEN_NODE, $FROM_ADDRESS and $ETH_PRIVATE_KEY to testnet node URL, EOA address and
+    EOA address's private key, respectively
 - Use the `-d` or `--dev` flag to bind mount the development folders inside the containers, making
   it useful for development purposes. Omit it to deploy the services using the existing `ghcr`
   images.
@@ -210,8 +210,7 @@ To use the private blockchain:
 
 - Run up the private chain with `./bin/geth-standalone -s`
 - Start terminal logging with `./bin/geth-standalone -l` and wait for the DAG build to complete
-- Start Nightfall in another terminal with the `-l` option (`./bin/start-nightfall -l`) and, optionally,
-  the `-s` option if you want stubbed circuits.
+- Start Nightfall in another terminal with the `-l` option (`./bin/start-nightfall -l`)
 
 That's it. You can shut down the geth blockchain with `./bin/geth-standalone -d` or pause/unpause it
 with `-p`, `-u`.
