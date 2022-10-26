@@ -134,6 +134,20 @@ describe('State contract State functions', function () {
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
       ethers.constants.AddressZero,
     );
+    await expect(
+      state
+        .connect(addr2)
+        .setProposer(addr1.address, [
+          addr1.address,
+          addr1.address,
+          addr1.address,
+          newUrl,
+          newFee,
+          false,
+          0,
+        ]),
+    ).to.be.revertedWith('Only proposer contract is authorized');
+
     await state.setProposer(addr1.address, [
       addr1.address,
       addr1.address,
@@ -658,6 +672,9 @@ describe('State contract State functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await expect(
+      state.connect(addr2).proposeBlock(block, [transaction1], { value: 10 }),
+    ).to.be.revertedWith('State: Only current proposer authorised');
     await state.proposeBlock(block, [transaction1], { value: 10 });
 
     expect(
@@ -839,6 +856,9 @@ describe('State contract State functions', function () {
 
   it('should emit rollback', async function () {
     const blockNumber = 5;
+    await expect(state.connect(addr2).emitRollback(blockNumber)).to.be.revertedWith(
+      'State: Not authorised to call this function',
+    );
     const tx = await state.emitRollback(blockNumber);
     const receipt = await tx.wait();
 
@@ -880,6 +900,9 @@ describe('State contract State functions', function () {
       ),
     ).to.equal(0);
 
+    await expect(state.resetFeeBookInfo(addr1.address, 0)).to.be.revertedWith(
+      'Only shield contract is authorized',
+    );
     await state.connect(addressS).resetFeeBookInfo(addr1.address, 0);
 
     expect((await state.getFeeBookInfo(addr1.address, 0))[0]).to.equal(0);
@@ -909,6 +932,7 @@ describe('State contract State functions', function () {
 
     expect(lastBlockHashes.time).to.above(0);
     expect(await state.getNumberOfL2Blocks()).to.equal(1);
+    await expect(state.popBlockData()).to.be.revertedWith('Only challenger contract is authorized');
     await state.connect(addressC).popBlockData();
     expect(await state.getNumberOfL2Blocks()).to.equal(0);
 
