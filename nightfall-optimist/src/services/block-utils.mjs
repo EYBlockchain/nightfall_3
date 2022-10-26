@@ -1,6 +1,7 @@
 import Web3 from 'web3';
 import config from 'config';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 // These functions are called by static methods in the Block class but are sometimes needed when the rest
 // of the block object isn't.  They can thus be called directly when instantiating the Block class
@@ -29,6 +30,13 @@ export function calcBlockHash(block) {
     frontierHash,
     transactionHashesRoot,
   ];
+
+  logger.debug({
+    msg: 'Encoding parameters',
+    signaturesBlock: SIGNATURES.BLOCK,
+    blockArray,
+  });
+
   const encoded = web3.eth.abi.encodeParameters([SIGNATURES.BLOCK], [blockArray]);
   return web3.utils.soliditySha3({ t: 'bytes', v: encoded });
 }
