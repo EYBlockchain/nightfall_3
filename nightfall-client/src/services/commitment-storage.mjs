@@ -995,6 +995,7 @@ export async function getCommitmentsByHash(hashes, compressedZkpPublicKey, ercAd
     isNullified: false,
     isPendingNullification: false,
   });
+  console.log(await db.collection(COMMITMENTS_COLLECTION).find().toArray());
   const commitment = await db
     .collection(COMMITMENTS_COLLECTION)
     .find({

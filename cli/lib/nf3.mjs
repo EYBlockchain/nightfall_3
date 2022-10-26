@@ -419,6 +419,51 @@ class Nf3 {
   }
 
   /**
+    Mint an L2 token
+    @method
+    @async
+    @param {number} fee - The amount (Wei) to pay a proposer for the transaction
+    @param {string} ercAddress - The "fake" ercAddress
+    @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  Since the token was minted on thin
+    air, it can be any value
+    @param {string} salt - The salt used to mint the new token. It is optional
+    @param {string[2]} compressedSecrets "Extra information the may want to add to the transaction"
+    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    */
+  async tokenise(ercAddress, value = 0, tokenId = 0, salt = undefined, fee = this.defaultFeeMatic) {
+    const res = await axios.post(`${this.clientBaseUrl}/tokenise`, {
+      ercAddress,
+      tokenId,
+      salt,
+      value,
+      rootKey: this.zkpKeys.rootKey,
+      compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
+      fee,
+    });
+
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
+    return res.status;
+  }
+
+  async burn(ercAddress, value, tokenId, providedCommitments, fee = this.defaultFeeMatic) {
+    const res = await axios.post(`${this.clientBaseUrl}/burn`, {
+      ercAddress,
+      tokenId,
+      value,
+      providedCommitments,
+      rootKey: this.zkpKeys.rootKey,
+      fee,
+    });
+
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
+    return res.status;
+  }
+
+  /**
     Deposits a Layer 1 token into Layer 2, so that it can be transacted
     privately.
     @method

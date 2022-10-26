@@ -30,6 +30,7 @@ class Commitment {
     // the compressedPkd is not part of the pre-image but it's used widely in the rest of
     // the code, so we hold it in the commitment object (but not as part of the preimage)
     this.preimage = generalise(items);
+
     this.compressedZkpPublicKey =
       this.preimage.zkpPublicKey[0] === 0
         ? [0, 0]

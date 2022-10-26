@@ -1,74 +1,65 @@
-/**
- * This module contains the logic needed create a zkp transfer, i.e. to nullify
- * two input commitments and create two new output commitments to the same value.
- * It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
- * @module deposit.mjs
- * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
- */
-import config from 'config';
 import axios from 'axios';
-import gen from 'general-number';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import config from 'config';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import { Transaction } from '../classes/index.mjs';
-import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
+import gen from 'general-number';
+import Transaction from '@polygon-nightfall/common-files/classes/transaction.mjs';
 import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
+import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
-const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
-
-async function withdraw(withdrawParams) {
-  logger.info('Creating a withdraw transaction');
+async function burn(burnParams) {
+  logger.info('Creating a burn transaction');
   // let's extract the input items
-  const { offchain = false, providedCommitments, ...items } = withdrawParams;
-  const { tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
-  const ercAddress = generalise(items.ercAddress.toLowerCase());
+  const { providedCommitments, ...items } = burnParams;
+  const { rootKey, value, fee, ercAddress, tokenId } = generalise(items);
+
+  console.log('BURN PARAMS', burnParams);
+  console.log('PROVIDED COMMITMENT', providedCommitments);
+  // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
   const maticAddress = generalise(
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
-  logger.debug({
-    msg: 'Withdraw ERC Token and Fee addresses',
-    ercAddress: ercAddress.hex(32),
-    maticAddress: maticAddress.hex(32),
-  });
-
-  const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
-
   const commitmentsInfo = await getCommitmentInfo({
-    totalValueToSend: withdrawValue,
+    totalValueToSend: generalise(value).bigInt,
     fee,
     ercAddress,
-    maticAddress,
     tokenId,
+    maticAddress,
     rootKey,
-    maxNumberNullifiers: VK_IDS.withdraw.numberNullifiers,
+    maxNumberNullifiers: VK_IDS.burn.numberNullifiers,
+    onlyFee: true,
     providedCommitments,
   });
 
+  // Burn will have two commitments. The first will belong to the change if commitment isn't fully burnt, and the second one to the fee.
+  // Therefore, we need to make sure that if the commitment was completely burn we still keep this order.
+  if (!commitmentsInfo.hasChange && commitmentsInfo.hasChangeFee) {
+    console.log('COMMITMENTS INFO', commitmentsInfo.newCommitments);
+    commitmentsInfo.newCommitments.unshift({
+      hash: 0,
+      preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
+    });
+  }
+
   try {
-    // now we have everything we need to create a Witness and compute a proof
-    const transaction = new Transaction({
+    const publicData = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
-      tokenType: items.tokenType,
-      tokenId,
-      value,
-      ercAddress,
-      recipientAddress,
+      transactionType: 4,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
-      numberCommitments: VK_IDS.withdraw.numberCommitments,
+      numberNullifiers: VK_IDS.burn.numberNullifiers,
+      numberCommitments: VK_IDS.burn.numberCommitments,
     });
 
     const privateData = {
@@ -76,30 +67,33 @@ async function withdraw(withdrawParams) {
       oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
+
       paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
       orders: commitmentsInfo.leafIndices,
       newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
+      ercAddress,
+      tokenId,
+      value,
     };
 
     const witness = computeCircuitInputs(
-      transaction,
+      publicData,
       privateData,
       commitmentsInfo.roots,
       maticAddress,
-      VK_IDS.withdraw.numberNullifiers,
-      VK_IDS.withdraw.numberCommitments,
+      VK_IDS.burn.numberNullifiers,
+      VK_IDS.burn.numberCommitments,
     );
 
     logger.debug({
-      msg: 'Witness input is',
+      msg: 'witness input is',
       witness: witness.join(' '),
     });
 
-    // call a zokrates worker to generate the proof
-    const folderpath = 'withdraw';
+    const folderpath = 'burn';
     const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
       folderpath,
       inputs: witness,
@@ -113,42 +107,34 @@ async function withdraw(withdrawParams) {
     });
 
     const { proof } = res.data;
-    // and work out the ABI encoded data that the caller should sign and send to the shield contract
 
-    const optimisticWithdrawTransaction = new Transaction({
+    const optimisticBurnTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
-      tokenType: items.tokenType,
-      tokenId,
-      value,
-      ercAddress,
-      recipientAddress,
+      transactionType: 4,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
-      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
-      numberCommitments: VK_IDS.withdraw.numberCommitments,
+      numberNullifiers: VK_IDS.burn.numberNullifiers,
+      numberCommitments: VK_IDS.burn.numberCommitments,
     });
 
     logger.debug({
       msg: 'Client made transaction',
-      transaction: JSON.stringify(optimisticWithdrawTransaction, null, 2),
-      offchain,
+      transaction: JSON.stringify(optimisticBurnTransaction, null, 2),
     });
 
     return submitTransaction(
-      optimisticWithdrawTransaction,
+      optimisticBurnTransaction,
       commitmentsInfo,
       rootKey,
       shieldContractInstance,
-      offchain,
+      true,
     );
   } catch (error) {
-    logger.error(error);
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-    throw error;
+    throw new Error(error);
   }
 }
 
-export default withdraw;
+export default burn;
