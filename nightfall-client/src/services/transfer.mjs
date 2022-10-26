@@ -16,15 +16,13 @@ import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
-import { clearPending, markNullified, storeCommitment } from './commitment-storage.mjs';
-import getProposersUrl from './peers.mjs';
+import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
+import { submitTransaction } from '../utils/submitTransaction.mjs';
 
 const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
-
-const NEXT_N_PROPOSERS = 3;
 
 async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
@@ -161,43 +159,13 @@ async function transfer(transferParams) {
       offchain,
     });
 
-    const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
-
-    // Store new commitments that are ours.
-    const storeNewCommitments = commitmentsInfo.newCommitments
-      .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
-      .map(c => storeCommitment(c, nullifierKey));
-
-    const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
-      markNullified(c, optimisticTransferTransaction),
+    return submitTransaction(
+      optimisticTransferTransaction,
+      commitmentsInfo,
+      rootKey,
+      shieldContractInstance,
+      offchain,
     );
-
-    await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
-
-    const returnObj = { transaction: optimisticTransferTransaction };
-
-    if (offchain) {
-      // dig up connection peers
-      const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
-      logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
-      await Promise.all(
-        Object.keys(peerList).map(async address => {
-          logger.debug(
-            `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
-          );
-          return axios.post(
-            `${peerList[address]}/proposer/offchain-transaction`,
-            { transaction: optimisticTransferTransaction },
-            { timeout: 3600000 },
-          );
-        }),
-      );
-    } else {
-      returnObj.rawTransaction = await shieldContractInstance.methods
-        .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
-        .encodeABI();
-    }
-    return returnObj;
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
     throw new Error(error);
