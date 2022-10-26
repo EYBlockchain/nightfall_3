@@ -86,7 +86,7 @@ describe('Gas test', () => {
 
       await waitForTimeout(10000);
       await nf3Users[0].makeBlockNow();
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
 
     it('should be a reasonable gas cost', async function () {
