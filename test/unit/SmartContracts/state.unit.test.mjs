@@ -458,6 +458,51 @@ describe('State contract State functions', function () {
     expect(await state.getNumProposers()).to.equal(1);
   });
 
+  it('should not change current proposer: State: Too soon to rotate proposer', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
+      ethers.constants.AddressZero,
+    );
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr2.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
+    expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
+    expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
+    expect((await state.proposers(addr1.address)).url).to.equal(newUrl);
+    expect((await state.proposers(addr1.address)).fee).to.equal(newFee);
+    await state.setProposer(addr2.address, [
+      addr2.address,
+      addr2.address,
+      addr2.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(2);
+
+    await state.setCurrentProposer(addr2.address);
+    await state.setBootProposer(addr1.address);
+
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(addr2.address);
+
+    await state.setMaxProposers(5);
+    await state.setProposerStartBlock(await ethers.provider.getBlockNumber());
+    await expect(state.changeCurrentProposer()).to.be.revertedWith(
+      'State: Too soon to rotate proposer',
+    );
+  });
+
   it('should not change current proposer with numProposers <= 1', async function () {
     const newUrl = 'url';
     const newFee = 100;
@@ -487,8 +532,11 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
+    const prevSprint = await state.currentSprint();
 
     await state.changeCurrentProposer();
+
+    expect(await state.currentSprint()).to.equal(prevSprint);
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
   });
@@ -537,9 +585,11 @@ describe('State contract State functions', function () {
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
 
+    const prevSprint = await state.currentSprint();
+
     await state.changeCurrentProposer();
 
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(addr2.address);
+    expect(await state.currentSprint()).to.equal(prevSprint + 1);
   });
 
   it('should not change current proposer with numProposers > 1 and 49 wei in stake', async function () {
@@ -584,8 +634,11 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
+    const prevSprint = await state.currentSprint();
 
     await expect(state.changeCurrentProposer()).to.be.reverted;
+
+    expect(await state.currentSprint()).to.equal(prevSprint);
   });
 
   it('should proposeBlock', async function () {
@@ -619,6 +672,113 @@ describe('State contract State functions', function () {
         1,
       ),
     ).to.equal(0);
+  });
+
+  it('should not proposeBlock: State: Proposer does not have enough funds staked', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 0;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await expect(state.proposeBlock(block, [transaction1], { value: 10 })).to.be.revertedWith(
+      'State: Proposer does not have enough funds staked',
+    );
+  });
+
+  it('should not proposeBlock: Proposer does not have enough funds staked', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 1;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await expect(state.proposeBlock(block, [transaction1], { value: 10 })).to.be.revertedWith(
+      "Proposer doesn't have enough funds staked",
+    );
+  });
+
+  it('should not proposeBlock: The block has too many transactions', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+
+    const transactions = new Array(33);
+    transactions.fill(transaction1);
+    await expect(state.proposeBlock(block, transactions, { value: 10 })).to.be.revertedWith(
+      'State: The block has too many transactions',
+    );
+  });
+
+  it('should not proposeBlock: Block flawed or out of order', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await state.proposeBlock(block, [transaction1], { value: 10 });
+
+    expect(
+      await state.feeBook(
+        ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
+        0,
+      ),
+    ).to.equal(10);
+    expect(
+      await state.feeBook(
+        ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
+        1,
+      ),
+    ).to.equal(0);
+
+    block.blockNumberL2 = 1;
+    await expect(state.proposeBlock(block, [transaction1], { value: 10 })).to.be.revertedWith(
+      'State: Block flawed or out of order',
+    );
   });
 
   it('should not proposeBlock Stake payment is incorrect', async function () {
@@ -675,6 +835,17 @@ describe('State contract State functions', function () {
     await expect(state.proposeBlock(wrongBlock, [transaction1], { value: 10 })).to.be.revertedWith(
       'State: Proposer address is not the sender',
     );
+  });
+
+  it('should emit rollback', async function () {
+    const blockNumber = 5;
+    const tx = await state.emitRollback(blockNumber);
+    const receipt = await tx.wait();
+
+    const eventRollback = receipt.events.find(event => event.event === 'Rollback');
+    const [blockNumberL2] = eventRollback.args;
+
+    expect(blockNumberL2).to.equal(blockNumber);
   });
 
   it('should resetFeeBookInfo', async function () {
@@ -782,5 +953,81 @@ describe('State contract State functions', function () {
     await expect(
       state.areBlockAndTransactionsReal(wrongBlockNumber, [transaction1]),
     ).to.be.revertedWith('State: This block does not exist');
+
+    await expect(
+      state.areBlockAndTransactionsReal(block, [transaction1, transaction1]),
+    ).to.be.revertedWith('State: Some of these transactions are not in this block');
+  });
+
+  it('should setBlockStakeWithdrawn', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await state.proposeBlock(block, [transaction1], { value: 10 });
+
+    const { blockHash } = await state.blockHashes(0);
+    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(false);
+    await state.setBlockStakeWithdrawn(blockHash);
+    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(true);
+  });
+
+  it('should rewardChallenger', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 300;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setProposer(addr2.address, [
+      addr2.address,
+      addr2.address,
+      addr2.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(2);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await state.setStakeAccount(addr2.address, amount, challengeLocked);
+    await state.proposeBlock(block, [transaction1], { value: 10 });
+
+    const badBlock = {
+      blockHash: (await state.blockHashes(0)).blockHash,
+      time: (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp,
+      proposer: addr2.address,
+      blockStake: amount,
+    };
+
+    await state.connect(addressC).rewardChallenger(addressC.address, addr2.address, [badBlock]);
+
+    const stakeAccount = await state.getStakeAccount(addr2.address);
+    expect(stakeAccount.amount).to.equal(amount);
+    expect(stakeAccount.time).to.equal(0);
+    expect(stakeAccount.challengeLocked).to.equal(challengeLocked - amount);
+    expect(await state.pendingWithdrawals(addressC.address, 0)).to.equal(badBlock.blockStake);
+    expect(await state.pendingWithdrawals(addressC.address, 1)).to.equal(0);
   });
 });
