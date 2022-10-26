@@ -33,6 +33,5 @@ export default {
   async disconnect(url) {
     connection[url].close();
     delete connection[url];
-    no;
   },
 };
