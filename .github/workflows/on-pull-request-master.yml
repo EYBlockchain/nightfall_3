@@ -77,7 +77,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
