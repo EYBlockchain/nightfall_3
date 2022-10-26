@@ -9,7 +9,9 @@ contract Structures {
     enum TransactionTypes {
         DEPOSIT,
         TRANSFER,
-        WITHDRAW
+        WITHDRAW,
+        TOKENISE,
+        BURN
     }
 
     enum TokenType {

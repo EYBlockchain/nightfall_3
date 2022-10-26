@@ -17,6 +17,7 @@
     "test-erc20-tokens": "npx hardhat test --bail --no-compile --grep ERC20",
     "test-erc721-tokens": "npx hardhat test --bail --no-compile --grep ERC721",
     "test-erc1155-tokens": "npx hardhat test --bail --no-compile --grep ERC1155",
+    "test-l2tokenisation": "npx hardhat test --bail --no-compile test/e2e/tokens/l2tokenisation.test.mjs",
     "test-erc20-cli": "npx hardhat test --no-compile --bail test/client/erc20.test.mjs ",
     "ping-pong": "npx hardhat test --bail --no-compile test/ping-pong/ping-pong.test.mjs",
     "test-administrator": "npx hardhat test --bail --no-compile test/multisig/administrator.test.mjs ",

@@ -69,10 +69,19 @@ async function transactionSubmittedEventHandler(eventParams) {
     // save transaction if not in block
     if (fromBlockProposer) {
       saveTransaction({ ...transaction });
+      logger.info({
+        msg: 'Transaction successfully saved',
+      });
     }
 
+    logger.info({
+      msg: 'Checking transaction validity...',
+    });
+
     await checkTransaction(transaction, true);
-    logger.info('Transaction checks passed');
+    logger.info({
+      msg: 'Transaction checks passed',
+    });
 
     // save it
     if (!fromBlockProposer) {
