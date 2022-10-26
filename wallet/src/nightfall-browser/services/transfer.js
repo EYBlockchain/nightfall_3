@@ -40,7 +40,7 @@ const circuitName = 'transfer';
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { ...items } = transferParams;
+  const { providedCommitments, ...items } = transferParams;
   const { tokenId, recipientData, rootKey, fee = generalise(0) } = generalise(items);
 
   const ercAddress = generalise(items.ercAddress.toLowerCase());
@@ -83,6 +83,7 @@ async function transfer(transferParams, shieldContractAddress) {
       tokenId,
       rootKey,
       maxNumberNullifiers: VK_IDS.transfer.numberNullifiers,
+      providedCommitments,
     });
 
     try {
