@@ -125,4 +125,9 @@ contract Structures {
         address currentOwner;
         uint96 advanceFee;
     }
+
+    struct TransactionInfo {
+        bool isEscrowed;
+        bool isWithdrawn;
+    }
 }
