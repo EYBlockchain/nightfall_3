@@ -115,12 +115,32 @@ describe('Optimist synchronisation tests', () => {
       }
     };
 
+    const dropOptimistMongoBlocksCollection = async () => {
+      logger.debug(`Dropping Optimist's Mongo collection`);
+      let mongoConn;
+      try {
+        mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+        while (!(await mongoConn.db('optimist_data').collection('blocks').drop())) {
+          logger.debug(`Retrying dropping MongoDB blocks colection`);
+          await waitForTimeout(2000);
+        }
+
+        logger.debug(`Optimist's Mongo blocks dropped successfuly!`);
+      } finally {
+        mongo.disconnect();
+      }
+    };
+
     async function restartOptimist(dropDb = true) {
       await compose.stopOne('optimist', options);
       await compose.rm(options, 'optimist');
 
+      // dropDb vs dropCollection.
       if (dropDb) {
         await dropOptimistMongoDatabase();
+      } else {
+        await dropOptimistMongoBlocksCollection();
       }
 
       await compose.upOne('optimist', options);
