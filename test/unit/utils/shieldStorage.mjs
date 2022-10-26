@@ -5,17 +5,26 @@ import { setStorageAt } from '@nomicfoundation/hardhat-network-helpers';
 const { ethers } = hardhat;
 
 const whitelistSlot = 163;
-const withdrawnSlot = 166;
+const txInfoSlot = 166;
 const advancedWithdrawalSlot = 167;
-const isEscrowedSlot = 168;
 
-export async function setTransactionWithdrawn(shieldAddress, withdrawTransactionHash) {
-  const indexWithdrawn = ethers.utils.solidityKeccak256(
+export async function setTransactionInfo(shieldAddress, transactionHash, isEscrowed, isWithdrawn) {
+  const index = ethers.utils.solidityKeccak256(
     ['uint256', 'uint256'],
-    [withdrawTransactionHash, withdrawnSlot],
+    [transactionHash, txInfoSlot],
   );
 
-  await setStorageAt(shieldAddress, indexWithdrawn, ethers.utils.hexZeroPad(1, 32));
+  const txInfoStruct = ethers.utils.hexZeroPad(
+    ethers.utils.hexlify(
+      ethers.utils.concat([
+        ethers.utils.hexlify(Number(isWithdrawn)),
+        ethers.utils.hexlify(Number(isEscrowed)),
+      ]),
+    ),
+    32,
+  );
+
+  await setStorageAt(shieldAddress, index, txInfoStruct);
 }
 
 export async function setWhitelist(shieldAddress) {
@@ -24,15 +33,6 @@ export async function setWhitelist(shieldAddress) {
     ethers.utils.hexlify(whitelistSlot),
     ethers.utils.hexlify(ethers.utils.zeroPad(1, 32)),
   );
-}
-
-export async function setEscrowed(shieldAddress, transactionHash) {
-  const index = ethers.utils.solidityKeccak256(
-    ['uint256', 'uint256'],
-    [transactionHash, isEscrowedSlot],
-  );
-
-  await setStorageAt(shieldAddress, index, ethers.utils.hexlify(ethers.utils.zeroPad(1, 32)));
 }
 
 export async function setAdvancedWithdrawal(
