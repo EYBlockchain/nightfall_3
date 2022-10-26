@@ -18,7 +18,7 @@ services:
       - mongodb
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
-      ZOKRATES_WORKER_HOST: worker
+      CIRCOM_WORKER_HOST: worker
       OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
@@ -67,7 +67,6 @@ services:
       - nightfall_network
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
-      MPC: ${MPC:-true}
       ETH_NETWORK: ${ETH_NETWORK}
       CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL}
 

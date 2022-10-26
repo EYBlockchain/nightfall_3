@@ -28,7 +28,9 @@
     "test-kyc": "LOG_LEVEL=silent npx hardhat test --bail --no-compile test/kyc.test.mjs",
     "unit-test": "npx hardhat test --bail test/unit/SmartContracts/*",
     "unit-test-kyc": "npx hardhat test --bail test/unit/SmartContracts/kyc.unit.test.mjs",
-    "unit-test-shield": "npx hardhat test --bail test/unit/SmartContracts/shield.unit.test.mjs"
+    "unit-test-shield": "npx hardhat test --bail test/unit/SmartContracts/shield.unit.test.mjs",
+    "unit-test-verifier":"npx hardhat test --bail test/unit/SmartContracts/verifier.unit.test.mjs",
+    "unit-test-circuits": "npx hardhat test --bail --no-compile test/circuits/common/**/*.test.mjs test/circuits/common/verifiers/**/*.test.mjs"
   },
   "repository": {
     "type": "git",
@@ -73,6 +75,8 @@
     "chai-as-promised": "^7.1.1",
     "chai-http": "^4.3.0",
     "chai-things": "^0.2.0",
+    "circom_tester": "^0.0.18",
+    "cls-hooked": "^4.2.2",
     "colors": "1.4.0",
     "config": "^3.3.1",
     "eslint": "^7.25.0",
@@ -84,6 +88,7 @@
     "ethers": "^5.7.1",
     "fast-check": "^2.18.0",
     "find-unused-exports": "^2.0.0",
+    "fs-extra": "^10.1.0",
     "general-number": "^1.0.1",
     "hardhat": "^2.12.0-esm.0",
     "hardhat-contract-sizer": "^2.6.1",
@@ -92,9 +97,10 @@
     "husky": "^6.0.0",
     "jsdoc": "^3.6.10",
     "minimist": "^1.2.6",
-    "mocha": "^10.0.0",
+    "mocha": "^10.1.0",
     "mongodb": "^4.7.0",
     "nightfall-sdk": "^0.1.1",
+    "path": "^0.12.7",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "queue": "^6.0.2",
@@ -103,6 +109,7 @@
     "terser": "^5.14.2",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.0",
+    "url": "^0.11.0",
     "url-parse": "^1.5.9",
     "web3": "^1.7.5",
     "ws": "^7.5.0"

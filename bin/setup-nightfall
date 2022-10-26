@@ -13,17 +13,17 @@ if [ $OS_ARCH != "x86_64" ]; then
   NO_CACHE_FLAG='--no-cache'
 fi
 
-docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-zokrates:0.8.2 -f docker/zokrates.Dockerfile .
+# docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
 
 # containers built separately. A parallel build fails.
 
-if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"administrator"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} administrator
-fi
+# if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"administrator"* ]]; then
+#   docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} administrator
+# fi
 
-if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.adversary.yml build ${NO_CACHE_FLAG} adversary
-fi
+# if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"adversary"* ]]; then
+#   docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.adversary.yml build ${NO_CACHE_FLAG} adversary
+# fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"client"* ]]; then
   docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} client
@@ -41,9 +41,9 @@ if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"optimist"* 
   docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} optimist
 fi
 
-if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"proposer"* ]]; then
-  docker-compose -f docker/docker-compose.apps.yml build ${NO_CACHE_FLAG} proposer
-fi
+# if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"proposer"* ]]; then
+#   docker-compose -f docker/docker-compose.apps.yml build ${NO_CACHE_FLAG} proposer
+# fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"worker"* ]]; then
   docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml build ${NO_CACHE_FLAG} worker

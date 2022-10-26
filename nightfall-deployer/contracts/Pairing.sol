@@ -96,6 +96,46 @@ library Pairing {
         require(success, 'pairing-mul-failed');
     }
 
+    function checkG1Point(G1Point memory p) internal pure returns (bool) {
+        uint256 q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+
+        if (p.Y > q || p.X > q) return false;
+
+        // check on curve
+        uint256 lhs = mulmod(p.Y, p.Y, q); // y^2
+        uint256 rhs = mulmod(p.X, p.X, q); // x^2
+        rhs = mulmod(rhs, p.X, q); // x^3
+        rhs = addmod(rhs, 3, q); // x^3 + b
+        if (lhs != rhs) {
+            return false;
+        }
+        return true;
+    }
+
+    function checkG2Point(G2Point memory p) internal pure returns (bool) {
+        uint256 q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+
+        if (p.Y[0] > q || p.X[0] > q || p.Y[1] > 0 || p.X[1] > 0) return false;
+
+        // check on curve
+        uint256 lhs1 = mulmod(p.Y[0], p.Y[0], q); // y^2
+        uint256 rhs1 = mulmod(p.X[0], p.X[0], q); // x^2
+        rhs1 = mulmod(rhs1, p.X[0], q); // x^3
+        //TODO: y^2 = x^3 + b / xi
+        if (lhs1 != rhs1) {
+            return false;
+        }
+
+        uint256 lhs2 = mulmod(p.Y[1], p.Y[1], q); //y^2
+        uint256 rhs2 = mulmod(p.X[1], p.X[1], q); //x^2
+        rhs2 = mulmod(rhs2, p.X[1], q); // x^3
+        //TODO: y^2 = x^3 + b / xi
+        if (rhs2 != lhs2) {
+            return false;
+        }
+        return true;
+    }
+
     /// @return the result of computing the pairing check
     /// e(p1[0], p2[0]) *  .... * e(p1[n], p2[n]) == 1
     /// For example pairing([P1(), P1().negate()], [P2(), P2()]) should
