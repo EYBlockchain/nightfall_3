@@ -95,6 +95,20 @@ describe('State contract State functions', function () {
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
       ethers.constants.AddressZero,
     );
+    await expect(
+      state
+        .connect(addr2)
+        .setProposer(addr1.address, [
+          addr1.address,
+          addr1.address,
+          addr1.address,
+          newUrl,
+          newFee,
+          false,
+          0,
+        ]),
+    ).to.be.revertedWith('Only proposer contract is authorized');
+
     await state.setProposer(addr1.address, [
       addr1.address,
       addr1.address,
@@ -958,6 +972,7 @@ describe('State contract State functions', function () {
 
     expect(lastBlockHashes.time).to.above(0);
     expect(await state.getNumberOfL2Blocks()).to.equal(1);
+    await expect(state.popBlockData()).to.be.revertedWith('Only challenger contract is authorized');
     await state.connect(addressC).popBlockData();
     expect(await state.getNumberOfL2Blocks()).to.equal(0);
 
