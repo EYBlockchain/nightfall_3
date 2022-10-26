@@ -125,6 +125,10 @@ describe('Optimist synchronisation tests', () => {
           logger.debug(`Retrying dropping MongoDB blocks colection`);
           await waitForTimeout(2000);
         }
+        while (!(await mongoConn.db('optimist_data').collection('timber').drop())) {
+          logger.debug(`Retrying dropping MongoDB timber colection`);
+          await waitForTimeout(2000);
+        }
 
         logger.debug(`Optimist's Mongo blocks dropped successfuly!`);
       } finally {
@@ -173,6 +177,7 @@ describe('Optimist synchronisation tests', () => {
 
       // we need to remind optimist which proposer it's connected to
       await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
+      await waitForTimeout(5000);
       // TODO - get optimist to do this automatically.
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a resync correctly occured
