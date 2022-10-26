@@ -9,7 +9,7 @@ import { Command } from 'commander/esm.mjs';
 import clear from 'clear';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import logger from '../../common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../lib/nf3.mjs';
 import { APPROVE_AMOUNT, TOKEN_TYPE } from '../lib/constants.mjs';
 import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';

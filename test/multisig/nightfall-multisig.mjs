@@ -1,5 +1,5 @@
 /* ignore unused exports */
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { MultiSig } from './multisig.mjs';
 
 // eslint-disable-next-line import/prefer-default-export

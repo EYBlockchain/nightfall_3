@@ -9,10 +9,10 @@
 import config from 'config';
 import axios from 'axios';
 import gen from 'general-number';
-import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
-import { waitForContract } from 'common-files/utils/contract.mjs';
-import logger from 'common-files/utils/logger.mjs';
-import constants from 'common-files/constants/index.mjs';
+import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
@@ -74,7 +74,7 @@ async function deposit(items) {
 
   logger.trace({
     msg: 'Received response from generete-proof',
-    response: JSON.stringify(res.data, null, 2),
+    response: res.data,
   });
 
   const { proof } = res.data;
@@ -94,7 +94,7 @@ async function deposit(items) {
   });
 
   logger.trace({
-    optimisticDepositTransaction: JSON.stringify(optimisticDepositTransaction, null, 2),
+    optimisticDepositTransaction,
   });
 
   // and then we can create an unsigned blockchain transaction

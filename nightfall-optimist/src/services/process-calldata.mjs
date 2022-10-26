@@ -4,9 +4,9 @@ This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
-import Web3 from 'common-files/utils/web3.mjs';
-import { decompressProof } from 'common-files/utils/curve-maths/curves.mjs';
-import constants from 'common-files/constants/index.mjs';
+import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
+import { decompressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 

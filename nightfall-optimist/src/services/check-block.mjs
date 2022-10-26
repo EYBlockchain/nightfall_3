@@ -1,8 +1,8 @@
 /**
 Module to check that submitted Blocks and Transactions are valid
 */
-import logger from 'common-files/utils/logger.mjs';
-import constants from 'common-files/constants/index.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { BlockError, Transaction } from '../classes/index.mjs';
 import checkTransaction from './transaction-checker.mjs';
 import {
@@ -52,7 +52,10 @@ async function checkBlockRoot(block) {
       // eslint-disable-next-line no-await-in-loop
       history = await getTreeByLeafCount(block.leafCount);
       logger.debug(`Block has commitments - retrieved history from Timber`);
-      logger.trace(`Timber history was ${JSON.stringify(history, null, 2)}`);
+      logger.trace({
+        msg: 'Timber history was',
+        history,
+      });
 
       // eslint-disable-next-line no-await-in-loop
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -210,7 +213,6 @@ export async function checkBlock(block, transactions) {
   await checkLeafCount(block);
   // now we have to check the commitment root.
   // For this we can make use of Timber with its optimistic extensions.
-  await new Promise(resolve => setTimeout(resolve, 1000));
   await checkBlockRoot(block);
   await checkFrontier(block);
   await checkDuplicateCommitmentsWithinBlock(block, transactions);

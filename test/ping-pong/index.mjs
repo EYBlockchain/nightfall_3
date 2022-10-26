@@ -5,7 +5,7 @@ Module that runs up as a user
 /* eslint-disable no-await-in-loop */
 
 import config from 'config';
-import logger from '../../common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { waitForSufficientBalance, retrieveL2Balance } from '../utils.mjs';
 
@@ -107,7 +107,7 @@ export default async function localTest(IS_TEST_RUNNER) {
     if (endBalance - startBalance === txPerBlock * value + value * TEST_LENGTH && IS_TEST_RUNNER) {
       logger.info('Test passed');
       logger.info(
-        `Balance of User (txPerBlock*value (txPerBlock*1) + value received) : 
+        `Balance of User (txPerBlock*value (txPerBlock*1) + value received) :
         ${endBalance - startBalance}`,
       );
       logger.info(`Amount sent to other User: ${value * TEST_LENGTH}`);

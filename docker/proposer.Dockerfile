@@ -13,15 +13,23 @@ COPY common-files common-files
 COPY cli cli
 WORKDIR /app/common-files
 RUN npm ci
+RUN npm link
+
 WORKDIR /app/cli
+RUN npm link @polygon-nightfall/common-files
 RUN npm ci
 
 WORKDIR /app
-COPY apps/proposer/package.json ./
+COPY apps/proposer/package*.json ./
 COPY apps/proposer/src src
 COPY apps/proposer/docker-entrypoint.sh docker-entrypoint.sh
 COPY config config
 
-RUN npm i
+RUN npm link @polygon-nightfall/common-files
+RUN npm ci
+
+COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
+COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils
+COPY common-files/constants node_modules/@polygon-nightfall/common-files/constants
 
 CMD ["npm", "start"]

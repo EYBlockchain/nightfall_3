@@ -25,7 +25,7 @@ module.exports = {
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
   CONFIRMATION_POLL_TIME: 1000,
-  CONFIRMATIONS: 12,
+  CONFIRMATIONS: process.env.CONFIRMATIONS || 12,
   DEFAULT_ACCOUNT_NUM: 10,
   HASH_TYPE: 'poseidon',
   TXHASH_TREE_HASH_TYPE: 'keccak256',
@@ -33,6 +33,8 @@ module.exports = {
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
+  LOG_HTTP_PAYLOAD_ENABLED: process.env.LOG_HTTP_PAYLOAD_ENABLED || 'true',
+  LOG_HTTP_FULL_DATA: process.env.LOG_HTTP_FULL_DATA || 'false',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
@@ -107,14 +109,6 @@ module.exports = {
       optimistWsUrl: '',
       web3WsUrl: '',
     },
-    ropsten: {
-      name: 'Ropsten',
-      chainId: 3,
-      clientApiUrl: 'https://client.testnet.nightfall3.com',
-      optimistApiUrl: 'https://optimist.testnet.nightfall3.com',
-      optimistWsUrl: 'wss://optimist-ws.testnet.nightfall3.com',
-      web3WsUrl: `${process.env.ROPSTEN_NODE}`,
-    },
     rinkeby: {
       name: 'Rinkeby',
       chainId: 4,
@@ -163,7 +157,7 @@ module.exports = {
       optimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
       optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
-      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}`,
+      web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}${process.env.BLOCKCHAIN_PATH}`,
       adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
       adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
@@ -202,7 +196,7 @@ module.exports = {
     gasCosts: 80000000000000000,
     fee: 1,
     BLOCK_STAKE: 1, // 1 wei
-    MINIMUM_STAKE: 100, // 100 wei
+    MINIMUM_STAKE: process.env.MINIMUM_STAKE || 1000000, // 1000000 wei
     ROTATE_PROPOSER_BLOCKS: 20,
     txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
     signingKeys: {
@@ -310,7 +304,7 @@ module.exports = {
           amount: '1000000000000',
         },
       ],
-      edge: [
+      staging_edge: [
         {
           name: 'ERC20Mock',
           address: '0x7578E001dCF334F48a87dA44e30C7ab3b517a5B8',

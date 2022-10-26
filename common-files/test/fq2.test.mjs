@@ -1,5 +1,5 @@
 import assert from 'assert';
-import Fq2 from 'common-files/classes/fq2.mjs';
+import Fq2 from '../classes/fq2.mjs';
 
 // use the base point x ordinate as a test element
 const fq2 = new Fq2(

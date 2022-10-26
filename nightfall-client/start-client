@@ -10,7 +10,7 @@ else
 fi
 
 VOLUME_LIST=$(docker volume ls -q)
-FILE="-f ../docker/docker-compose.client.yml -f ../docker/docker-compose.client.dev.yml"
+FILE="-f ../docker/docker-compose.client.yml"
 
 usage()
 {
@@ -49,15 +49,10 @@ if [ -n "$REMOVE_VOLUMES" ]; then
 fi 
 
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose $FILE $DEV -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+trap "docker-compose $FILE -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose $FILE $DEV -p 'nightfall_3' down --remove-orphans
+docker-compose $FILE -p 'nightfall_3' down --remove-orphans
 
-DIR=../common-files/node_modules
-if [[ -d "$DIR" ]]; then
-  rm -dr common-files/node_modules
-fi
-
-echo "docker-compose $FILE $DEV -p 'nightfall_3' up -d --remove-orphans"
-docker-compose $FILE $DEV -p 'nightfall_3' up -d --remove-orphans
-docker-compose -p 'nightfall_3' $FILE $DEV logs -f
+echo "docker-compose $FILE -p 'nightfall_3' up -d --remove-orphans"
+docker-compose $FILE -p 'nightfall_3' up -d --remove-orphans
+docker-compose -p 'nightfall_3' $FILE logs -f

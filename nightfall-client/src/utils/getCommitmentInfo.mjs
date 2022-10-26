@@ -1,7 +1,7 @@
 import gen from 'general-number';
-import logger from 'common-files/utils/logger.mjs';
-import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
-import constants from 'common-files/constants/index.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import {
   clearPending,
@@ -55,16 +55,16 @@ export const getCommitmentInfo = async txInfo => {
 
   const { oldCommitments, oldCommitmentsFee } = commitments;
 
-  logger.debug(
-    `Found commitments ${addedFee > 0n ? 'including fee' : ''} ${JSON.stringify(
-      oldCommitments,
-      null,
-      2,
-    )}`,
-  );
+  logger.debug({
+    msg: `Found commitments ${addedFee > 0n ? 'including fee' : ''}`,
+    oldCommitments,
+  });
 
   if (feeValue > 0n) {
-    logger.debug(`Found commitments fee ${JSON.stringify(oldCommitmentsFee, null, 2)}`);
+    logger.debug({
+      msg: 'Found commitments fee',
+      oldCommitmentsFee,
+    });
   }
 
   const spentCommitments = [...oldCommitments, ...oldCommitmentsFee];

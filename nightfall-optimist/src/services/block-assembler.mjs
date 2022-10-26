@@ -6,8 +6,8 @@
  */
 import WebSocket from 'ws';
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
-import constants from 'common-files/constants/index.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -112,7 +112,7 @@ export async function conditionalMakeBlock(proposer) {
 
         logger.info({
           msg: 'Block Assembler - New Block created',
-          block: JSON.stringify(block, null, 2),
+          block,
         });
 
         // propose this block to the Shield contract here

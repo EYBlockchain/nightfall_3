@@ -21,7 +21,11 @@ export default {
       });
       connection[url] = await client.connect();
     } else {
-      const client = await new MongoClient(url, { useUnifiedTopology: true });
+      const options = {
+        serverSelectionTimeoutMS: 10000,
+        useUnifiedTopology: true,
+      };
+      const client = await new MongoClient(url, options);
       connection[url] = await client.connect();
     }
     return connection[url];

@@ -17,6 +17,7 @@ WORKDIR /
 COPY common-files common-files
 WORKDIR /common-files
 RUN npm ci
+RUN npm link
 
 WORKDIR /app
 COPY config/default.js config/default.js
@@ -29,6 +30,11 @@ COPY ./zokrates-worker/circuits ./circuits
 COPY ./zokrates-worker/start-script ./start-script
 COPY ./zokrates-worker/start-dev ./start-dev
 
+RUN npm link @polygon-nightfall/common-files
 RUN npm ci
+
+COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
+COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils
+COPY common-files/constants node_modules/@polygon-nightfall/common-files/constants
 
 CMD ["npm", "start"]

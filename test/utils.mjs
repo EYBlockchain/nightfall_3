@@ -3,8 +3,8 @@
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
-import logger from '../common-files/utils/logger.mjs';
-import { rand } from '../common-files/utils/crypto/crypto-random.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 
 const { expect } = chai;
 const { WEB3_PROVIDER_OPTIONS, MINIMUM_STAKE } = config;

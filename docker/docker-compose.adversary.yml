@@ -1,7 +1,7 @@
 version: '3.5'
 # Use this script for making an adversary service
 services:
-  adversary1:
+  adversary:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     build:
@@ -29,11 +29,14 @@ services:
         source: ../config/default.js
         target: /app/config/default.js
     environment:
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 8546
       HASH_TYPE: poseidon
-      LOG_LEVEL: debug
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
       IS_CHALLENGER: 'true'
       NONSTOP_QUEUE_AFTER_INVALID_BLOCK: 'false'
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}

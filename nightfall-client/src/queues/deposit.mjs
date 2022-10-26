@@ -1,4 +1,4 @@
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import deposit from '../services/deposit.mjs';
 import rabbitmq from '../utils/rabbitmq.mjs';
 
@@ -12,9 +12,10 @@ export default function receiveMessage() {
 
     try {
       const txDataToSign = await deposit(JSON.parse(message.content.toString()));
+
       logger.debug({
         msg: 'Returning raw transaction',
-        rawTransaction: JSON.stringify(txDataToSign, null, 2),
+        rawTransaction: txDataToSign,
       });
 
       response.data = { txDataToSign };

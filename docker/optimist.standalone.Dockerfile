@@ -30,14 +30,22 @@ WORKDIR /
 COPY common-files common-files
 COPY config/default.js app/config/default.js
 
+WORKDIR /common-files
+RUN npm ci
+RUN npm link
+
 WORKDIR /app
 RUN mkdir /app/mongodb
 COPY nightfall-optimist/src src
 COPY nightfall-optimist/docker-entrypoint.standalone.sh ./docker-entrypoint.sh
-COPY nightfall-optimist/pre-start-script.sh nightfall-optimist/package*.json  ./
+COPY nightfall-optimist/package*.json  ./
 COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
 COPY --from=builder /home/zokrates/.zokrates/stdlib /app/stdlib/
 
+RUN npm link @polygon-nightfall/common-files
 RUN npm ci
+COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
+COPY common-files/utils node_modules/@polygon-nightfall/common-files/utils
+COPY common-files/constants node_modules/@polygon-nightfall/common-files/constants
 
 CMD ["npm", "start"]

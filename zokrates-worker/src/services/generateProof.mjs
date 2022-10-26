@@ -2,7 +2,7 @@ import fs from 'fs';
 import util from 'util';
 import crypto from 'crypto';
 import path from 'path';
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { computeWitness, generateProof } from '../zokrates-lib/index.mjs';
 import { getProofFromFile } from '../utils/filing.mjs';
 
@@ -64,7 +64,7 @@ export default async ({
 
     logger.debug({
       msg: 'Responding with proof and inputs',
-      proof: JSON.stringify(proof, null, 2),
+      proof,
       publicInputs,
     });
   } finally {

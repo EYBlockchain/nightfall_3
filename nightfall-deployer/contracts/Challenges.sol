@@ -283,18 +283,21 @@ contract Challenges is Stateful, Key_Registry, Config {
         // we need to remove the block that has been successfully
         // challenged from the linked list of blocks and all of the subsequent
         // blocks
-        uint256 numRemoved = removeBlockHashes(badBlock.blockNumberL2);
+        BlockData[] memory badBlocks = removeBlockHashes(badBlock.blockNumberL2);
         // remove the proposer and give the proposer's block stake to the challenger
-        state.rewardChallenger(msg.sender, badBlock.proposer, numRemoved);
+        state.rewardChallenger(msg.sender, badBlock.proposer, badBlocks);
     }
 
-    function removeBlockHashes(uint256 blockNumberL2) internal returns (uint256) {
+    function removeBlockHashes(uint256 blockNumberL2) internal returns (BlockData[] memory) {
         uint256 lastBlock = state.getNumberOfL2Blocks() - 1;
-        for (uint256 i = lastBlock; i >= blockNumberL2; i--) {
-            state.setBlockStakeWithdrawn(state.popBlockData().blockHash);
+        BlockData[] memory badBlocks = new BlockData[](lastBlock - blockNumberL2 + 1);
+        for (uint256 i = 0; i <= lastBlock - blockNumberL2; i++) {
+            BlockData memory blockData = state.popBlockData();
+            state.setBlockStakeWithdrawn(blockData.blockHash);
+            badBlocks[i] = blockData;
         }
         require(state.getNumberOfL2Blocks() == blockNumberL2, 'Number remaining not as expected.');
-        return (lastBlock + 1 - blockNumberL2);
+        return badBlocks;
     }
 
     //To prevent frontrunning, we need to commit to a challenge before we send it

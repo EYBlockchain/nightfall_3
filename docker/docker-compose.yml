@@ -13,11 +13,14 @@ services:
         source: build
         target: /app/build/
     environment:
-      BLOCKCHAIN_WS_HOST: blockchain
-      BLOCKCHAIN_PORT: 8546
-      LOG_LEVEL: error
-      ETH_NETWORK: blockchain
-      MONGO_URL: mongodb://mongodb:27017
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      LOG_LEVEL: ${LOG_LEVEL:-error}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      MONGO_URL: ${ADMIN_MONGO_URL:-mongodb://mongodb:27017}
 
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -35,19 +38,20 @@ services:
       - rabbitmq
       - mongodb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin
-      LOG_LEVEL: debug
-      BLOCKCHAIN_WS_HOST: blockchain
-      BLOCKCHAIN_PORT: 8546
-      ZOKRATES_WORKER_HOST: worker
-      RABBITMQ_HOST: amqp://rabbitmq
-      RABBITMQ_PORT: 5672
-      ENABLE_QUEUE: 1
-      OPTIMIST_HOST: optimist
-      OPTIMIST_PORT: 80
-      MONGO_URL: mongodb://mongodb:27017
-      USE_STUBS: 'false' # make sure this flag is the same as in deployer service
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      ZOKRATES_WORKER_HOST: ${ZOKRATES_WORKER_HOST:-worker}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
+      OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
+      OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
+      MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
+      USE_STUBS: ${USE_STUBS:-false} # make sure this flag is the same as in deployer service
     command: ['npm', 'run', 'dev']
 
     # Temporary container to deploy contracts and circuits and populate volumes
@@ -60,14 +64,17 @@ services:
     networks:
       - nightfall_network
     environment:
-      LOG_LEVEL: debug
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: blockchain
-      BLOCKCHAIN_WS_HOST: blockchain
-      BLOCKCHAIN_PORT: 8546
-      ZOKRATES_WORKER_HOST: worker
-      USE_STUBS: 'false'
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      ZOKRATES_WORKER_HOST: ${ZOKRATES_WORKER_HOST:-worker}
+      USE_STUBS: ${USE_STUBS:-false}
       WHITELISTING: ${WHITELISTING}
 
   hosted-utils-api-server:
@@ -97,13 +104,16 @@ services:
         source: build
         target: /app/build/
     environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}
       WEBSOCKET_PORT: 8080
-      BLOCKCHAIN_WS_HOST: blockchain
-      BLOCKCHAIN_PORT: 8546
-      MONGO_URL: mongodb://mongodb:27017
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://mongodb:27017}
       HASH_TYPE: poseidon
-      LOG_LEVEL: debug
-      IS_CHALLENGER: 'false'
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      IS_CHALLENGER: ${IS_CHALLENGER:-false}
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
     command: ['npm', 'run', 'dev']
 
@@ -134,13 +144,16 @@ services:
       - type: volume
         source: proving_files
         target: /app/output/
-
     depends_on:
       - deployer
+      - rabbitmq
     networks:
       - nightfall_network
     environment:
-      LOG_LEVEL: info
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
       MPC: ${MPC}
 
 volumes:

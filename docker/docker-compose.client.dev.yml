@@ -3,9 +3,6 @@ version: '3.5'
 # bindings.  See the readme for more information.
 services:
   client:
-    build:
-      dockerfile: docker/client.Dockerfile
-      context: ..
     volumes:
       - type: bind
         source: ../nightfall-client/src
@@ -15,12 +12,9 @@ services:
         target: /common-files
       - type: bind
         source: ../config/default.js
-        target: /app/config/default.js
+        target: /config/default.js
 
   worker:
-    build:
-      dockerfile: docker/worker.Dockerfile
-      context: ..
     volumes:
       - type: bind
         source: ../nightfall-deployer/circuits

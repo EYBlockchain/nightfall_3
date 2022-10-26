@@ -3,7 +3,7 @@
 
 import express from 'express';
 import config from 'config';
-import { setupHttpDefaults } from 'common-files/utils/httputils.mjs';
+import { setupHttpDefaults } from '@polygon-nightfall/common-files/utils/httputils.mjs';
 import { contracts } from './routes/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import startSynchronizer from './synchronizer.mjs';

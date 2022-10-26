@@ -1,10 +1,10 @@
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { notifyInstantWithdrawalRequest } from '../services/instant-withdrawal.mjs';
 
 async function instantWithdrawalRequestedEventHandler(data) {
   logger.debug({
     msg: 'Instant withdrawal request',
-    data: JSON.stringify(data.returnValues, null, 2),
+    data: data.returnValues,
   });
 
   const { withdrawTransactionHash, paidBy, amount } = data.returnValues;

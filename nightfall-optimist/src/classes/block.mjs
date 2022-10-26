@@ -2,8 +2,8 @@
 An optimistic layer 2 Block class
 */
 import config from 'config';
-import Timber from 'common-files/classes/timber.mjs';
-import constants from 'common-files/constants/index.mjs';
+import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import {
   getLatestBlockInfo,
   getTreeByBlockNumberL2,
@@ -131,6 +131,9 @@ class Block {
     this.localFrontier = updatedTimber.frontier;
     this.localBlockNumberL2 += 1;
     this.localRoot = updatedTimber.root;
+
+    const transactionHashesRoot = await this.calcTransactionHashesRoot(transactions);
+    const frontierHash = await this.calcFrontierHash(updatedTimber.frontier);
     // compute the keccak hash of the proposeBlock signature
     const blockHash = this.calcHash({
       proposer,
@@ -138,8 +141,8 @@ class Block {
       leafCount: updatedTimber.leafCount,
       blockNumberL2,
       previousBlockHash,
-      transactionHashesRoot: await this.calcTransactionHashesRoot(transactions),
-      frontierHash: this.calcFrontierHash(updatedTimber.frontier),
+      transactionHashesRoot,
+      frontierHash,
     });
     this.localPreviousBlockHash = blockHash;
     // note that the transactionHashes array is not part of the on-chain block
@@ -148,14 +151,14 @@ class Block {
     return new Block({
       proposer,
       transactionHashes: transactions.map(t => t.transactionHash),
-      transactionHashesRoot: await this.calcTransactionHashesRoot(transactions),
+      transactionHashesRoot,
       leafCount: updatedTimber.leafCount,
       root: updatedTimber.root,
       blockHash,
       nCommitments,
       blockNumberL2,
       previousBlockHash,
-      frontierHash: this.calcFrontierHash(updatedTimber.frontier),
+      frontierHash,
     });
   }
 

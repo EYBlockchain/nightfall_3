@@ -5,7 +5,7 @@
  * same blocks from our local database record and to reset cached Frontier and
  * leafCount values in the Block class
  */
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   clearNullified,
   clearOnChain,
@@ -37,22 +37,28 @@ async function rollbackEventHandler(data) {
   // Deposit transactions should not be dropped because they are always valid even post-rollback.
   const nonDeposit = commitments.filter(c => c.isDeposited === false).map(c => c._id);
 
-  logger.debug({ nonDeposit: JSON.stringify(nonDeposit) });
+  logger.debug({ nonDeposit });
 
   /*
    Any commitments that have been nullified and are now no longer spent because
    of the rollback should be made available to be spent again.
    */
-  const { result } = await clearNullified(Number(blockNumberL2));
+  const clearNullifiedResult = await clearNullified(Number(blockNumberL2));
+  logger.debug({
+    clearNullifiedResult,
+  });
   logger.debug({
     msg: 'Rollback removed nullfiers',
-    total: result.nModified,
+    total: clearNullifiedResult?.result?.nModified ?? 0,
   });
 
   const cResult = await clearOnChain(Number(blockNumberL2));
   logger.debug({
+    cResult,
+  });
+  logger.debug({
     msg: 'Rollback moved commitments off-chain',
-    total: cResult.result.nModified,
+    total: cResult?.result?.nModified ?? 0,
   });
 
   const blocksToDelete = await findBlocksFromBlockNumberL2(Number(blockNumberL2));

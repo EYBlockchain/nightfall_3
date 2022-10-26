@@ -1,10 +1,10 @@
 import WebSocket from 'ws';
 import config from 'config';
-import logger from 'common-files/utils/logger.mjs';
-import Timber from 'common-files/classes/timber.mjs';
-import getTimeByBlock from 'common-files/utils/block-info.mjs';
-import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
-import constants from 'common-files/constants/index.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
+import getTimeByBlock from '@polygon-nightfall/common-files/utils/block-info.mjs';
+import { enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { checkBlock } from '../services/check-block.mjs';
 import BlockError from '../classes/block-error.mjs';
 import { createChallenge, commitToChallenge } from '../services/challenges.mjs';
@@ -52,8 +52,12 @@ async function blockProposedEventHandler(data) {
       }),
     );
   }
-  logger.info('Received BlockProposed event');
-  logger.debug(`With transactions ${transactions}`);
+
+  logger.debug({
+    msg: 'Received BlockProposed event',
+    transactions,
+  });
+
   try {
     // We get the L1 block time in order to save it in the database to have this information available
     let timeBlockL2 = await getTimeByBlock(transactionHashL1);

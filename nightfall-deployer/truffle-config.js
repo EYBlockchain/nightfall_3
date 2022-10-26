@@ -61,18 +61,6 @@ module.exports = {
       gas: 8000000,
     },
 
-    edge: {
-      provider: () =>
-        new HDWalletProvider({
-          privateKeys: [config.ETH_PRIVATE_KEY],
-          providerOrUrl: 'ws://host.docker.internal:10002/ws',
-        }),
-      network_id: 100, // Any network (default: none)
-      gas: 8000000,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
-      websockets: true,
-    },
-
     development: {
       url: 'ws://host.docker.internal:8546',
       network_id: 1337, // Any network (default: none)
@@ -95,17 +83,19 @@ module.exports = {
       networkCheckTimeout: 1000000000,
     },
 
-    ropsten: {
-      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
-      network_id: 3,
+    staging_edge: {
+      provider: () =>
+        new HDWalletProvider({
+          privateKeys: [config.ETH_PRIVATE_KEY],
+          providerOrUrl: config.BLOCKCHAIN_URL,
+        }),
+      network_id: 100, // Any network (default: none)
+      gas: 8000000,
+      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      websockets: true,
       networkCheckTimeout: 1000000000,
       timeoutBlocks: 2000,
-      skipDryRun: true,
-      websockets: true,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: 7000000,
     },
-
     goerli: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 5,

@@ -2,8 +2,8 @@
 A commitment class
 */
 import gen from 'general-number';
-import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
-import constants from 'common-files/constants/index.mjs';
+import poseidon from '@polygon-nightfall/common-files/utils/crypto/poseidon/poseidon.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { ZkpKeys } from '../services/keys.mjs';
 
 const { generalise } = gen;

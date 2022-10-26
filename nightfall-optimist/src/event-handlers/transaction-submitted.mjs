@@ -1,7 +1,7 @@
 /**
  * Module to handle new Transactions being posted
  */
-import logger from 'common-files/utils/logger.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   saveTransaction,
   getBlockByTransactionHash,
@@ -61,7 +61,7 @@ async function transactionSubmittedEventHandler(eventParams) {
 
   logger.info({
     msg: 'Transaction Handler - New transaction received.',
-    transaction: JSON.stringify(transaction, null, 2),
+    transaction,
   });
 
   try {

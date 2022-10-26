@@ -1,0 +1,21 @@
+name: Publish @polygon-nightfall/common-files
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.17.0'
+          registry-url: 'https://registry.npmjs.org'
+      - run: |
+          cd common-files
+          if [ $(npm diff | wc -w) -gt 0 ]; then npm version patch && npm publish && echo "✨ The @polygon-nightfall/common-files package sucessfully published to npm"; else echo "✨ The @polygon-nightfall/common-files package is up to date"; fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
