@@ -18,19 +18,17 @@ const contractPath = contractName => {
 };
 
 async function getContractInterface(contractName) {
-  /*
-  if (cachedContracts.hasOWnProperty(contractName)) {
+  if (contractName in cachedContracts) {
     return cachedContracts[contractName];
   }
-  */
   const path = contractPath(contractName);
   const contractInterface = JSON.parse(fs.readFileSync(path, 'utf8'));
   cachedContracts[contractName] = contractInterface;
   return contractInterface;
 }
 
-async function clearCachedContract(contractName) {
-  delete cachedContracts[contractName];
+export async function clearCachedContracts() {
+  cachedContracts = {};
 }
 
 export async function getContractAddress(contractName) {
