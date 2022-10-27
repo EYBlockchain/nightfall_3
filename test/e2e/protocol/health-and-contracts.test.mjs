@@ -28,8 +28,8 @@ before(async () => {
 
 describe('Health and Contract Checks', () => {
   it('new sdk should respond with "true" the health check', async function () {
-    const statuses = await user.checkStatus();
-    expect(statuses.isClientAlive).to.be.equal(true);
+    const status = await user.isClientAlive();
+    expect(status).to.be.equal(true);
   });
 
   it('new sdk should get the address of the shield contract', async function () {
