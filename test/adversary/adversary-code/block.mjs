@@ -25,41 +25,6 @@ let error = process.env.BAD_BLOCK_SEQUENCE
       'ValidBlock',
     ];
 
-// let error = process.env.BAD_BLOCK_SEQUENCE
-//   ? process.env.BAD_BLOCK_SEQUENCE.split(',')
-//   : [
-//       'ValidBlock',
-//       'ValidBlock',
-//       'ValidBlock',
-//       // 'IncorrectTreeRoot', // Needs two prior blocks
-//       // 'ValidBlock',
-//       'IncorrectLeafCount', //  Needs one prior block
-//       'ValidBlock',
-//       'DuplicateCommitmentTransfer', // needs atleast one non withdraw transaction in a prior block
-//       'DuplicateCommitmentDeposit',
-//       // 'ValidBlock',
-//       // 'DuplicateCommitmentDeposit', // needs atleast one non withdraw transaction in a prior block
-//       'ValidBlock',
-//       'DuplicateNullifierTransfer', // needs atleast one non deposit transaction in a prior block
-//       'ValidBlock',
-//       'DuplicateNullifierWithdraw', // needs atleast one non deposit transaction in a prior block
-//       'ValidBlock',
-//       // 'IncorrectProofDeposit',
-//       // 'ValidBlock',
-//       // 'IncorrectProofTransfer',
-//       // 'ValidBlock',
-//       // 'IncorrectProofWithdraw',
-//       // 'ValidBlock',
-//       // 'IncorrectPublicInputDepositCommitment',
-//       // 'ValidBlock'
-//       // 'IncorrectPublicInputTransferCommitment',
-//       // 'ValidBlock'
-//       // 'IncorrectPublicInputTransferNullifier',
-//       // 'ValidBlock'
-//       // 'IncorrectPublicInputWithdrawNullifier',
-//       // 'ValidBlock'
-//     ];
-
 let resetErrorIdx = false;
 let indexOffset = 0;
 
