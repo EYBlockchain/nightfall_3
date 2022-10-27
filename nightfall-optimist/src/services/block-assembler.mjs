@@ -8,6 +8,7 @@ import WebSocket from 'ws';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -15,7 +16,6 @@ import {
 } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
 import {
   increaseProposerWsFailed,
   increaseProposerWsClosed,
