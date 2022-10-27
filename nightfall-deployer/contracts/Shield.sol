@@ -355,8 +355,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
                 uint256(t.value),
                 ''
             );
-        } else {
-            revert('Shield: Invalid Token Type');
         }
     }
 
@@ -394,8 +392,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
                 uint256(t.value),
                 ''
             );
-        } else {
-            revert('Shield: Invalid Token Type');
         }
     }
 }
