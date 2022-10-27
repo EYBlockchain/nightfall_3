@@ -10,8 +10,8 @@ Here are the things that could be wrong with a transaction:
 import config from 'config';
 import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
 import {
   getBlockByBlockNumberL2,
   getL2TransactionByCommitment,

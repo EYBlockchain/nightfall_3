@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 
-import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import { getContractInstance, waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import {
   pauseQueue,
@@ -16,7 +16,6 @@ import committedToChallengeEventHandler from '../event-handlers/challenge-commit
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 import { getBlockByBlockNumberL2, getBlocks, getLatestBlockInfo } from './database.mjs';
 import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
 
 // TODO can we remove these await-in-loops?
 
