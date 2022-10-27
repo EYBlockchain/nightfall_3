@@ -18,7 +18,7 @@ const config: HardhatUserConfig = {
   },
   paths: {
     sources: './nightfall-deployer/contracts',
-    tests: './test/unit',
+    tests: './test/e2e',
   },
   mocha: {
     timeout: 0,
