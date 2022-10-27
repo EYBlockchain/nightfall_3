@@ -113,7 +113,7 @@ export async function conditionalMakeBlock(proposer) {
 
         logger.info({
           msg: 'Block Assembler - New Block created',
-          block: JSON.stringify(block, null, 2),
+          block,
         });
 
         // propose this block to the Shield contract here

@@ -164,7 +164,11 @@ export async function subscribeToProposedBlockWebSocketConnection(callback, ...a
           callback(ws, args);
         }
       } catch (error) {
-        logger.debug('Not JSON Message');
+        logger.error({
+          msg: 'Not a JSON Message',
+          message,
+          error,
+        });
       }
     });
   });

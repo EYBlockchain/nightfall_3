@@ -1,5 +1,4 @@
 import express from 'express';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { getVerificationKeyByCircuitPath } from '../utils/filing.mjs';
 
 const router = express.Router();
@@ -9,12 +8,8 @@ const router = express.Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    logger.debug({ msg: 'Received request to /vk', query: req.query });
-
     const { folderpath } = req.query;
     const vk = getVerificationKeyByCircuitPath(folderpath);
-
-    logger.debug({ msg: 'Returning vk', vk });
 
     return res.send({ vk });
   } catch (err) {

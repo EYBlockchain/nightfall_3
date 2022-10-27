@@ -152,7 +152,7 @@ describe('Utils tests', function () {
     assert.equal(result, 'http://localhost');
   });
 
-  it("Shouldn't obfuscate because the string doesn't have a query string - #1", () => {
+  it("Shouldn't obfuscate because the string doesn't have a query string - #2", () => {
     const result = obfuscate('http://localhost?', OBFUSCATION_SETTINGS_TEST);
 
     assert.equal(result, 'http://localhost?');
@@ -167,6 +167,18 @@ describe('Utils tests', function () {
     assert.equal(
       result,
       'http://localhost?xpto=blablabla&public_key=0x4789FD18D5d71982045*********************&priv_key=******************************************************************&secret=************&name=&&nop',
+    );
+  });
+
+  it("Shouldn't obfuscate the query string for '*PublicKey' strings", () => {
+    const result = obfuscate(
+      '/commitment/balance?compressedZkpPublicKey=0x8b1cd14f2defec7928cc958e2dfbc86fbd3218e25a10807388a5db4b8fa4837e',
+      OBFUSCATION_SETTINGS_TEST,
+    );
+
+    assert.equal(
+      result,
+      '/commitment/balance?compressedZkpPublicKey=0x8b1cd14f2defec7928cc958e2dfbc86fbd3218e25a10807388a5db4b8fa4837e',
     );
   });
 });

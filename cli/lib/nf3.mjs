@@ -1015,13 +1015,20 @@ class Nf3 {
             const receipt = await this._sendTransaction(tx);
             proposeEmitter.emit('receipt', receipt, block, transactions);
           } catch (err) {
+            logger.error({
+              msg: 'Error while trying to submit a block',
+              err,
+            });
+
             // block proposed is reverted. Send transactions back to mempool
             try {
               await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
-            } catch (axiosErr) {
-              logger.error({ msg: 'Error when trying to call reset-localblock', err });
+            } catch (errorResetLocalBlock) {
+              logger.error({
+                msg: 'Error while trying to reset local block',
+                errorResetLocalBlock,
+              });
             }
-            logger.error(`Submitted block error ${err}`);
             proposeEmitter.emit('error', err, block, transactions);
           }
         });
