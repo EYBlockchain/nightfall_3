@@ -6,10 +6,6 @@
 import WebSocket from 'ws';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import {
-  getContractInstance,
-  getContractAddress,
-} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 

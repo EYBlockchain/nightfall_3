@@ -58,6 +58,7 @@
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   clearBlockNumberL1ForBlock,
   clearBlockNumberL1ForTransaction,
@@ -65,7 +66,6 @@ import {
   getBlockByTransactionHashL1,
   deleteTreeByBlockNumberL2,
 } from '../services/database.mjs';
-import { waitForContract } from './subscribe.mjs';
 
 const { STATE_CONTRACT_NAME } = constants;
 
