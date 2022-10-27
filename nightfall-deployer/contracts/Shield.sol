@@ -324,6 +324,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             'Shield: The given address is more than 160 bits'
         );
         // Now pay out the value of the commitment
+        require(
+            uint256(t.ercAddress) < 0x010000000000000000000000000000000000000000,
+            'Shield: The given address is more than 160 bits'
+        );
         address addr = address(uint160(uint256(t.ercAddress)));
 
         if (t.tokenType == TokenType.ERC20) {

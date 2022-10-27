@@ -97,6 +97,7 @@ export const computeCircuitInputs = (
     ephemeralKey,
     ercAddress,
     tokenId,
+    value,
   } = generalise(privateData);
   if (numberNullifiers > 0) {
     witness.push(
@@ -130,6 +131,10 @@ export const computeCircuitInputs = (
 
   if (ephemeralKey) {
     witness.push(...ephemeralKey.limbs(32, 8));
+  }
+
+  if (value) {
+    witness.push(value.field(BN128_GROUP_ORDER));
   }
   return witness;
 };
