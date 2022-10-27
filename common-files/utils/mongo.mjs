@@ -22,11 +22,11 @@ export default {
       connection[url] = await client.connect();
     } else {
       const options = {
-        connectTimeoutMS: 10000,
+        connectTimeoutMS: 120000,
         useUnifiedTopology: true,
       };
       const client = await new MongoClient(url, options);
-      connection[url] = await client.connect();
+      connection[url] = await connect(client);
     }
     return connection[url];
   },
@@ -34,4 +34,27 @@ export default {
     connection[url].close();
     delete connection[url];
   },
+
+  async connect(client) {
+   const options = {
+     connectTimeoutMS: 120000,
+     useUnifiedTopology: true,
+   };
+   let errorCount = 0;
+   let error;
+   while (errorCount < 600) {
+    try {
+      const connection = await client.connect()
+      return connection: 
+    } catch (err) {
+      error = err;
+      errorCount++;
+
+      logger.warn({
+        msg: 'Unable to connect to Db, retrying in 3 secs'
+      });
+
+      await new Promise(resolve => setTimeout(() => resolve(), 3000)); // eslint-disable-line no-await-in-loop
+    }
+  }
 };
