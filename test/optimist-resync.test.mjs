@@ -115,18 +115,92 @@ describe('Optimist synchronisation tests', () => {
       }
     };
 
-    const restartOptimist = async () => {
+    const dropOptimistMongoBlocksCollection = async () => {
+      logger.debug(`Dropping Optimist's Mongo collection`);
+      let mongoConn;
+      try {
+        mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+        while (!(await mongoConn.db('optimist_data').collection('blocks').drop())) {
+          logger.debug(`Retrying dropping MongoDB blocks colection`);
+          await waitForTimeout(2000);
+        }
+        while (!(await mongoConn.db('optimist_data').collection('timber').drop())) {
+          logger.debug(`Retrying dropping MongoDB timber colection`);
+          await waitForTimeout(2000);
+        }
+
+        logger.debug(`Optimist's Mongo blocks dropped successfuly!`);
+      } finally {
+        mongo.disconnect();
+      }
+    };
+
+    async function restartOptimist(dropDb = true) {
       await compose.stopOne('optimist', options);
       await compose.rm(options, 'optimist');
 
-      await dropOptimistMongoDatabase();
+      // dropDb vs dropCollection.
+      if (dropDb) {
+        await dropOptimistMongoDatabase();
+      } else {
+        await dropOptimistMongoBlocksCollection();
+      }
 
       await compose.upOne('optimist', options);
 
       await healthy();
-    };
+    }
 
-    it('Resync optimist after making a good block', async function () {
+    it('Resync optimist after making a good block without dropping dB', async function () {
+      // We create enough good transactions to fill a block full of deposits.
+      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      let p = proposePromise();
+      await depositNTransactions(
+        nf3Users[0],
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        fee,
+      );
+      // we can use the emitter that nf3 provides to get the block and transactions we've just made.
+      // The promise resolves once the block is on-chain.
+      const { block } = await p;
+      const firstBlock = { ...block };
+      // we still need to clean the 'BlockProposed' event from the  test logs though.
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
+      await waitForTimeout(5000);
+      await restartOptimist(false);
+
+      // we need to remind optimist which proposer it's connected to
+      await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
+      await waitForTimeout(5000);
+      // TODO - get optimist to do this automatically.
+      // Now we'll add another block and check that it's blocknumber is correct, indicating
+      // that a resync correctly occured
+      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      p = proposePromise();
+      await depositNTransactions(
+        nf3Users[0],
+        txPerBlock,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        fee,
+      );
+      // we can use the emitter that nf3 provides to get the block and transactions we've just made.
+      // The promise resolves once the block is on-chain.
+      const { block: secondBlock } = await p;
+      // we still need to clean the 'BlockProposed' event from the  test logs though.
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
+    });
+
+    it('Resync optimist after making a good block dropping Db', async function () {
       // We create enough good transactions to fill a block full of deposits.
       logger.debug(`      Sending ${txPerBlock} deposits...`);
       let p = proposePromise();
