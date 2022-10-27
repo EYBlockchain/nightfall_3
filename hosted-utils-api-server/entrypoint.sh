@@ -15,18 +15,6 @@ md5deep -r -s -b . > hash.txt
 echo -e "[" > s3_hash.txt
 for PROVING_FILE_FOLDERS in * ; do
   if [ -d "${PROVING_FILE_FOLDERS}" ]; then
-<<<<<<< HEAD
-    skip=1
-    if [ "${USE_STUBS}" = 'true' ] && [[ "${PROVING_FILE_FOLDERS}" == *"_stub" ]]; then
-      skip=0
-    elif [[ "${PROVING_FILE_FOLDERS}" != *"_stub" ]]; then
-      skip=0
-    fi
-    if [ "${skip}" = "1" ]; then
-      continue
-    fi
-=======
->>>>>>> 0a2be669 (build: circuits refactor and removing stubs)
     HF_PK=$(cat hash.txt | grep ${PROVING_FILE_FOLDERS}_pk | awk '{print $1}')
     HF_OUT=$(cat hash.txt | grep ${PROVING_FILE_FOLDERS}_out | awk '{print $1}')
     HF_ABI=$(cat hash.txt | grep ${PROVING_FILE_FOLDERS}_abi.json | awk '{print $1}')
