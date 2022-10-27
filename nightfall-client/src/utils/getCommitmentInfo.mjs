@@ -27,7 +27,7 @@ export const getCommitmentInfo = async txInfo => {
     maticAddress,
     tokenId = generalise(0),
     rootKey,
-    providedCommitments,
+    providedCommitments = [],
   } = txInfo;
 
   let { maxNumberNullifiers, onlyFee = false } = txInfo;
@@ -52,7 +52,7 @@ export const getCommitmentInfo = async txInfo => {
   const spentCommitments = [];
   try {
     let validatedProvidedCommitments = [];
-    if (providedCommitments) {
+    if (providedCommitments.length > 0) {
       const commitmentHashes = providedCommitments.map(c => c.toString());
       logger.debug({ msg: 'looking up these commitment hashes:', commitmentHashes });
       const rawCommitments = await getCommitmentsByHash(
@@ -88,7 +88,6 @@ export const getCommitmentInfo = async txInfo => {
         // this can only happen when the token to send is the fee token
         // we need to set the value here instead of the feeValue
         value = providedValue >= value ? 0n : value - providedValue;
-        onlyFee = value === 0n;
       } else {
         onlyFee = true;
       }
@@ -99,12 +98,6 @@ export const getCommitmentInfo = async txInfo => {
       spentCommitments.push(...validatedProvidedCommitments);
     }
 
-    logger.debug({
-      msg: 'find usable commitments inputs',
-      value,
-      feeValue,
-      onlyFee,
-    });
     const commitments = await findUsableCommitmentsMutex(
       compressedZkpPublicKey,
       ercAddress,
@@ -213,6 +206,8 @@ export const getCommitmentInfo = async txInfo => {
       blockNumberL2s,
       roots,
       salts,
+      hasChange: change !== 0n,
+      hasChangeFee: changeFee !== 0n,
     };
   } catch (err) {
     logger.error(err);
