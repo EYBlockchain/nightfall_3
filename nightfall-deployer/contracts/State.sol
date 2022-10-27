@@ -125,10 +125,6 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         bytes32 blockHash;
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
 
-        //Get the signature for the function that checks if the transaction has been escrowed or not
-        bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(bytes32)'));
-        bytes4 checkTxEthFeesSignature = bytes4(keccak256('getTransactionEthFee(bytes32)'));
-
         assembly {
             //Function that calculates the height of the Merkle Tree
             function getTreeHeight(leaves) -> _height {
@@ -143,11 +139,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             }
 
             let x := mload(0x40) //Gets the first free memory pointer
-            let blockPos := add(x, mul(0x20, 2)) //Save two slots of 32 bytes for calling external libraries
-            calldatacopy(blockPos, 0x04, mul(0x20, blockSlots)) //Copy the block structure into blockPos
-            let transactionHashesPos := add(blockPos, mul(0x20, blockSlots)) // calculate memory location of the transaction hashes
+            let transactionHashesPos := add(x, mul(0x20, 2)) // calculate memory location of the transaction hashes
             let transactionPos := add(
-                // calculate memory location of transactions
                 transactionHashesPos,
                 mul(0x20, exp(2, getTreeHeight(t.length)))
             )
@@ -196,13 +189,13 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                         add(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))), mul(0x20, 2))
                     )
                 ) {
-                    mstore(x, checkTxEscrowedSignature) //Store the signature of the function in x
+                    mstore(x, 0x16ab930800000000000000000000000000000000000000000000000000000000) //Store the signature of the getTransactionEscrowed(bytes 32) function in x
                     mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
                     pop(
                         call(
                             // Call getTransactionEscrowed function to see if funds has been deposited
                             gas(),
-                            shieldAddress.slot, //To addr
+                            sload(shieldAddress.slot), //To addr
                             0, //No value
                             x, //Inputs are stored at location x
                             add(0x04, 0x20), //Inputs are 36 bytes long
@@ -210,24 +203,31 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                             0x20 //Outputs are 32 bytes long
                         )
                     )
+
                     //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
                     if iszero(mload(x)) {
-                        revert(0, 0)
+                        mstore(
+                            0,
+                            0xd96541f500000000000000000000000000000000000000000000000000000000 //Custom error DepositNotEscrowed
+                        )
+                        mstore(0x04, mload(add(transactionHashesPos, mul(0x20, i))))
+                        revert(0, 36)
                     }
                 }
 
+                // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
                 if iszero(
                     calldataload(
                         add(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))), mul(0x20, 1))
                     )
                 ) {
-                    mstore(x, checkTxEthFeesSignature) //Store the signature of the function in x
+                    mstore(x, 0x6f0b7d3100000000000000000000000000000000000000000000000000000000) //Store the signature of the getTransactionEthFee(bytes 32) function in x
                     mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
                     pop(
                         call(
                             // Call getTransactionFeesEth function to see if funds has been deposited
                             gas(),
-                            shieldAddress.slot, //To addr
+                            sload(shieldAddress.slot), //To addr
                             0, //No value
                             x, //Inputs are stored at location x
                             add(0x04, 0x20), //Inputs are 36 bytes long
@@ -235,10 +235,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                             0x20 //Outputs are 32 bytes long
                         )
                     )
-
                     mstore(feePayments, add(mload(x), mload(feePayments)))
                 }
 
+                // If the transaction fee is not zero, update the MATIC fee payments
                 if eq(
                     iszero(
                         calldataload(
@@ -292,15 +292,17 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             // check if the transaction hashes root calculated equal to the one passed as part of block data
             if eq(
                 eq(
-                    mload(add(blockPos, mul(sub(blockSlots, 1), 0x20))),
+                    calldataload(add(0x04, mul(sub(blockSlots, 1), 0x20))),
                     mload(transactionHashesPos)
                 ),
                 0
             ) {
-                revert(0, 0)
+                mstore(0, 0x3c80abfc00000000000000000000000000000000000000000000000000000000) //Custom error InvalidTransactionHash
+                revert(0, 4)
             }
             // calculate block hash
-            blockHash := keccak256(blockPos, mul(blockSlots, 0x20))
+            calldatacopy(x, 0x04, mul(0x20, blockSlots)) //Copy the block structure into x
+            blockHash := keccak256(x, mul(blockSlots, 0x20))
         }
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain

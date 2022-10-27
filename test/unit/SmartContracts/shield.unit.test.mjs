@@ -538,7 +538,14 @@ describe('Testing Shield Contract', function () {
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
       await time.increase(86400 * 7 + 1);
-      await setFeeBookInfo(stateAddress, block, 0, 20);
+      await setFeeBookInfo(stateAddress, block, 15, 20);
+
+      await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
+      await Erc20MockInstance.approve(shieldAddress, '10');
+
+      await ShieldInstance.submitTransaction(depositTransaction, {
+        value: 15,
+      });
 
       const amount = 5;
       const challengeLocked = 2;
@@ -560,10 +567,13 @@ describe('Testing Shield Contract', function () {
       expect((await StateInstance.feeBookBlocks(proposerBlockHash)).feesEth).to.equal(0);
       expect((await StateInstance.feeBookBlocks(proposerBlockHash)).feesMatic).to.equal(0);
 
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(15);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(20);
 
-      expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(80);
+      expect(await ethers.provider.getBalance(shieldAddress)).to.equal(0);
+      expect(await ethers.provider.getBalance(stateAddress)).to.equal(15);
+
+      expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(90);
       expect(await Erc20MockInstance.balanceOf(stateAddress)).to.equal(20);
 
       const stake = await StateInstance.stakeAccounts(owner[0].address);

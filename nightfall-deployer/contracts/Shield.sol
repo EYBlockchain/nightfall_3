@@ -45,7 +45,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         require(isWhitelisted(msg.sender), 'You are not authorised to transact using Nightfall');
         if (t.transactionType == TransactionTypes.DEPOSIT) {
             bytes32 transactionHash = Utils.hashTransaction(t);
-            txInfo[transactionHash].isEscrowed = true;
+            // txInfo[transactionHash].isEscrowed = true;
             txInfo[transactionHash].ethFee = uint240(msg.value);
             payIn(t);
         }
@@ -355,8 +355,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
                 uint256(t.value),
                 ''
             );
-        } else {
-            revert('Shield: Invalid Token Type');
         }
     }
 
@@ -394,8 +392,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
                 uint256(t.value),
                 ''
             );
-        } else {
-            revert('Shield: Invalid Token Type');
         }
     }
 }
