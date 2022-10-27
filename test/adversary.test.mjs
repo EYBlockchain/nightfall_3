@@ -233,7 +233,6 @@ describe('Testing with an adversary', () => {
         );
         nWithdraws++;
         expectedBalance -= value2;
-
       } catch (err) {
         if (err.message.includes('No suitable commitments')) {
           // if we get here, it's possible that a block we are waiting for has not been proposed yet
