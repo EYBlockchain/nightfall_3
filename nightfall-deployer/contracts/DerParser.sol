@@ -21,9 +21,6 @@ contract DERParser {
     }
 
     uint256 constant MAX_DEPTH = 5;
-    uint256 constant MAX_TLVS = 75;
-
-    uint256 public state;
 
     /*
   Parses the input tag.
@@ -119,13 +116,13 @@ contract DERParser {
   @param derBytes the DER encoded certificate (although this should work with any ASN.1 DER encoded binary object)
   @param pointer the place inthe DER bytes to start the decode from (usually zero)
   */
-    function walkDerTree(bytes calldata derBytes, uint256 pointer)
-        internal
-        pure
-        returns (DecodedTlv[MAX_TLVS] memory, uint256)
-    {
+    function walkDerTree(
+        bytes calldata derBytes,
+        uint256 pointer,
+        uint256 tlvLength
+    ) internal pure returns (DecodedTlv[] memory) {
         DecodedTlv memory tlv;
-        DecodedTlv[MAX_TLVS] memory tlvs;
+        DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         uint256 depth = 0;
         uint256 id = 0;
         uint256[MAX_DEPTH] memory depthChangesAt;
@@ -140,27 +137,45 @@ contract DERParser {
                 if (pointer == depthChangesAt[i]) depth--;
             }
         } while (pointer < derBytes.length);
-        return (tlvs, id);
+        return (tlvs);
+    }
+
+    /*
+    This function is like walkDerTree but it doesn't store any tlvs. It can be used without gas cost
+    To compute the length of the tlv array (we could make a nodejs version of this in the future)
+    */
+    function computeNumberOfTlvs(bytes calldata derBytes, uint256 pointer)
+        external
+        pure
+        returns (uint256)
+    {
+        DecodedTlv memory tlv;
+        uint256 depth = 0;
+        uint256 id = 0;
+        uint256[MAX_DEPTH] memory depthChangesAt;
+        do {
+            (tlv, pointer) = getNextTlv(derBytes, pointer, depth);
+            id++;
+            if (tlv.tag.isConstructed) {
+                depthChangesAt[depth] = pointer + tlv.length;
+                depth++;
+            }
+            for (uint256 i = 0; i < MAX_DEPTH; i++) {
+                if (pointer == depthChangesAt[i]) depth--;
+            }
+        } while (pointer < derBytes.length);
+        return id;
     }
 
     /*
   Parses the bytes DER encoded data and extracts the (possibly nested) TLV elements
   as 'DecodedTlv[]'.
   */
-    function parseDER(bytes calldata derBytes, uint256 pointer)
-        external
-        pure
-        returns (DecodedTlv[MAX_TLVS] memory, uint256)
-    {
-        return walkDerTree(derBytes, pointer);
-    }
-
-    /*
-  state-changing function to test cost of compute of the pure functions above
-  */
-    function store(bytes calldata derBytes) external {
-        DecodedTlv[MAX_TLVS] memory tlvs;
-        (tlvs, ) = walkDerTree(derBytes, 0);
-        state = tlvs[0].headerLength;
+    function parseDER(
+        bytes calldata derBytes,
+        uint256 pointer,
+        uint256 tlvLength
+    ) external pure returns (DecodedTlv[] memory) {
+        return walkDerTree(derBytes, pointer, tlvLength);
     }
 }

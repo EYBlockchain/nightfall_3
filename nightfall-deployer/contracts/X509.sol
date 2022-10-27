@@ -7,6 +7,9 @@ import './DerParser.sol';
 import './Ownable.sol';
 
 contract X509 is DERParser, Ownable {
+    uint256 constant SECONDS_PER_DAY = 24 * 60 * 60;
+    int256 constant OFFSET19700101 = 2440588;
+
     struct RSAPublicKey {
         bytes modulus;
         uint256 exponent;
@@ -26,7 +29,7 @@ contract X509 is DERParser, Ownable {
         trustedPublicKeys[authorityKeyIdentifier] = trustedPublicKey;
     }
 
-    function getSignature(DecodedTlv[MAX_TLVS] memory tlvs, uint256 maxId)
+    function getSignature(DecodedTlv[] memory tlvs, uint256 maxId)
         private
         pure
         returns (bytes memory)
@@ -41,7 +44,7 @@ contract X509 is DERParser, Ownable {
         return signature;
     }
 
-    function getMessage(DecodedTlv[MAX_TLVS] memory tlvs) private pure returns (bytes memory) {
+    function getMessage(DecodedTlv[] memory tlvs) private pure returns (bytes memory) {
         DecodedTlv memory messageTlv = tlvs[1];
         require(messageTlv.depth == 1, 'Message tlv depth is incorrect');
         require(messageTlv.tag.tagType == 0x10, 'Message tlv should have a tag type of BIT STRING');
@@ -66,12 +69,12 @@ contract X509 is DERParser, Ownable {
     /*
     Validate the decrypted signature and returns the message hash
     */
-    function validateAndExtractPayload(bytes memory decrypt)
+    function validateAndExtractPayload(bytes memory decrypt, uint256 tlvLength)
         private
         view
-        returns (DecodedTlv[MAX_TLVS] memory)
+        returns (DecodedTlv[] memory)
     {
-        DecodedTlv[MAX_TLVS] memory tlvs;
+        DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         require(
             decrypt[0] == 0x00 && decrypt[1] == 0x00,
             'Decrypt does not have a leading zero octets'
@@ -86,22 +89,71 @@ contract X509 is DERParser, Ownable {
             if (decrypt[i] != 0xff) break;
         }
         i++;
-        (tlvs, ) = this.parseDER(decrypt, i);
+        tlvs = this.parseDER(decrypt, i, tlvLength);
         return tlvs;
     }
 
-    function validateCertificate(bytes calldata certificate, bytes32 authorityKeyIdentifier)
-        external
-        returns (DecodedTlv[MAX_TLVS] memory)
-    {
-        DecodedTlv[MAX_TLVS] memory tlvs;
-        uint256 maxId;
-        (tlvs, maxId) = walkDerTree(certificate, 0);
-        bytes memory signature = getSignature(tlvs, maxId);
+    // note: this function is from an MIT licensed library, with appreciation to
+    // https://github.com/bokkypoobah/BokkyPooBahsDateTimeLibrary/blob/v1.01/contracts/BokkyPooBahsDateTimeLibrary.sol
+    // minor changes made
+    function timestampFromDate(bytes memory utcTime) private pure returns (uint256 _seconds) {
+        uint256 year = uint256(uint8(utcTime[0]) - 48) *
+            10 +
+            uint256(uint8(utcTime[1]) - 48) +
+            2000;
+        uint256 month = uint256(uint8(utcTime[2]) - 48) * 10 + uint256(uint8(utcTime[3]) - 48);
+        uint256 day = uint256(uint8(utcTime[4]) - 48) * 10 + uint256(uint8(utcTime[5]) - 48);
+        require(year >= 1970);
+        int256 _year = int256(year);
+        int256 _month = int256(month);
+        int256 _day = int256(day);
+
+        int256 __days = _day -
+            32075 +
+            (1461 * (_year + 4800 + (_month - 14) / 12)) /
+            4 +
+            (367 * (_month - 2 - ((_month - 14) / 12) * 12)) /
+            12 -
+            (3 * ((_year + 4900 + (_month - 14) / 12) / 100)) /
+            4 -
+            OFFSET19700101;
+
+        _seconds = uint256(__days) * SECONDS_PER_DAY;
+    }
+
+    // this function finds and checks the Not Before and Not After tlvs
+    function checkDates(DecodedTlv[] memory tlvs) private view {
+        // The Not Before and Not After dates are the third SEQUENCE at depth 2
+        uint256 i;
+        uint256 j;
+        for (i = 0; i < tlvs.length; i++) {
+            if (tlvs[i].tag.tagType == 0x10 && tlvs[i].depth == 2) j++;
+            if (j == 3) break;
+        }
+        require(tlvs[i + 1].tag.tagType == 0x17, 'First tag was not in fact a UTC time');
+        require(tlvs[i + 2].tag.tagType == 0x17, 'Second tag was not in fact a UTC time');
+        require(
+            block.timestamp > timestampFromDate(tlvs[i + 1].value),
+            'It is too early to use this certificate'
+        );
+        require(
+            block.timestamp < timestampFromDate(tlvs[i + 2].value),
+            'This certificate has expired'
+        );
+    }
+
+    function validateCertificate(
+        bytes calldata certificate,
+        bytes32 authorityKeyIdentifier,
+        uint256 tlvLength
+    ) external {
+        DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
+        tlvs = walkDerTree(certificate, 0, tlvLength);
+        bytes memory signature = getSignature(tlvs, tlvLength);
         bytes memory message = getMessage(tlvs);
         RSAPublicKey memory publicKey = trustedPublicKeys[authorityKeyIdentifier];
         bytes memory signatureDecrypt = modExp(signature, publicKey.exponent, publicKey.modulus);
-        DecodedTlv[MAX_TLVS] memory payload = validateAndExtractPayload(signatureDecrypt);
+        DecodedTlv[] memory payload = validateAndExtractPayload(signatureDecrypt, 5);
         require(
             payload[4].depth == 1 && payload[4].tag.tagType == 0x04,
             'Incorrect tag or position for decrypted hash data'
@@ -112,8 +164,8 @@ contract X509 is DERParser, Ownable {
             keccak256(messageHashFromSignature) == keccak256(abi.encode(sha256(message))),
             'Signature is invalid'
         );
+        checkDates(tlvs);
         isValid = true;
-        return payload;
     }
 
     // test function, for modExp
