@@ -44,13 +44,23 @@ well-structured TLV object
 */
 
 function makeTlv(struct) {
-  const { id: _id, tag: _tag, _length, value, depth: _depth } = struct;
+  const {
+    start: _start,
+    headerLength: _headerLength,
+    tag: _tag,
+    _length,
+    value,
+    octets,
+    depth: _depth,
+  } = struct;
   const { isConstructed, tagType } = _tag;
   const tlv = {
-    id: _id.toNumber(),
+    start: _start.toNumber(),
+    headerLength: _headerLength.toNumber(),
     tag: { isConstructed, tagType: derMapping[parseInt(tagType, 16)] },
     length: _length.toNumber(),
     value,
+    octets,
     depth: _depth.toNumber(),
   };
   return tlv;
