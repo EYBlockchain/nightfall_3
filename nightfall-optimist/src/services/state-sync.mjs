@@ -1,6 +1,9 @@
 /* eslint-disable no-await-in-loop */
 
-import { getContractInstance, waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  getContractInstance,
+  waitForContract,
+} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import {
   pauseQueue,
