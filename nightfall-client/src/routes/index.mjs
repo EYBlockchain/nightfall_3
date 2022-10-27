@@ -12,6 +12,7 @@ import incomingViewingKey from './incoming-viewing-key.mjs';
 import setInstantWithdrawl from './instant-withdrawal.mjs';
 import generateZkpKeys from './generate-zkp-keys.mjs';
 import kyc from './kyc.mjs';
+import manufacture from './manufacture.mjs';
 
 export {
   transfer,
@@ -28,4 +29,5 @@ export {
   setInstantWithdrawl,
   generateZkpKeys,
   kyc,
+  manufacture,
 };

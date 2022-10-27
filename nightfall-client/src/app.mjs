@@ -17,6 +17,7 @@ import {
   kyc,
   tokenise,
   burn,
+  manufacture,
 } from './routes/index.mjs';
 
 const app = express();
@@ -38,6 +39,7 @@ setupHttpDefaults(
     app.use('/set-instant-withdrawal', setInstantWithdrawl);
     app.use('/generate-zkp-keys', generateZkpKeys);
     app.use('/whitelist', kyc);
+    app.use('/manufacture', manufacture);
   },
   true,
   false,
