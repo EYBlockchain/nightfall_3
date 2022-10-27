@@ -40,7 +40,7 @@ function mix(state, m) {
 function poseidonHash(_inputs) {
   if (_inputs.length > 6) throw new Error('To many inputs to Poseidon hash');
   // convert generalnumber to BigInts, which Poseidon uses internally
-  const inputs = _inputs.map(i => BigInt(i.field(q)));
+  const inputs = _inputs.map(i => BigInt(i.bigInt % q));
   const N = inputs.length;
   const t = N + 1;
   const roundsP = [56, 57, 56, 60, 60, 63, 64, 63];

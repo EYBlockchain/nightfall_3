@@ -84,7 +84,7 @@ export class ZkpKeys {
         edwardsCompress([zkpPublicKey[0].bigInt, zkpPublicKey[1].bigInt]),
       );
       return {
-        rootKey: generalise(rootKey.field(BN128_GROUP_ORDER)).hex(32),
+        rootKey: rootKey.hex(32),
         zkpPrivateKey: zkpPrivateKey.hex(32),
         nullifierKey: nullifierKey.hex(32),
         zkpPublicKey: [zkpPublicKey[0].hex(32), zkpPublicKey[1].hex(32)],
