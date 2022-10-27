@@ -35,7 +35,7 @@ let error = process.env.BAD_TX_SEQUENCE
 let resetErrorIdx = false;
 let indexOffset = 0;
 
-import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import { Transaction } from '../classes/index.mjs';
 
 const { BN128_GROUP_ORDER } = constants;
