@@ -3,6 +3,8 @@ import { scalarMult } from '../../common-files/utils/curve-maths/curves';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import poseidon from '../../common-files/utils/crypto/poseidon/poseidon';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 const { BABYJUBJUB, BN128_GROUP_ORDER } = global.nightfallConstants;
 const { generalise, stitchLimbs } = gen;
 // DOMAIN_KEM = field(SHA256('nightfall-kem'))

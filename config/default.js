@@ -33,6 +33,8 @@ module.exports = {
   CIRCUITS_HOME: process.env.CIRCUITS_HOME || '/app/circuits/',
   ALWAYS_DO_TRUSTED_SETUP: process.env.ALWAYS_DO_TRUSTED_SETUP || false,
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
+  LOG_HTTP_PAYLOAD_ENABLED: process.env.LOG_HTTP_PAYLOAD_ENABLED || 'true',
+  LOG_HTTP_FULL_DATA: process.env.LOG_HTTP_FULL_DATA || 'false',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   PROTOCOL: 'http://', // connect to zokrates microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,

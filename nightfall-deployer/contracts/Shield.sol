@@ -20,9 +20,8 @@ import './KYC.sol';
 
 contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    mapping(bytes32 => bool) public withdrawn;
+    mapping(bytes32 => TransactionInfo) public txInfo;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
-    mapping(bytes32 => bool) public isEscrowed; // Check if transaction commitment values has been escrowed (only for deposit)
 
     address public challengesAddress;
 
@@ -35,7 +34,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     }
 
     function getTransactionEscrowed(bytes32 transactionHash) public view returns (bool) {
-        return isEscrowed[transactionHash];
+        return txInfo[transactionHash].isEscrowed;
     }
 
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
@@ -43,7 +42,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         emit TransactionSubmitted();
         require(isWhitelisted(msg.sender), 'You are not authorised to transact using Nightfall');
         if (t.transactionType == TransactionTypes.DEPOSIT) {
-            isEscrowed[Utils.hashTransaction(t)] = true;
+            txInfo[Utils.hashTransaction(t)].isEscrowed = true;
             require(uint256(t.fee) == msg.value);
             payIn(t);
         }
@@ -157,7 +156,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             'Shield: Too soon to withdraw funds from this block'
         );
 
-        require(!withdrawn[transactionHash], 'Shield: This transaction has already paid out');
+        require(
+            !txInfo[transactionHash].isWithdrawn,
+            'Shield: This transaction has already paid out'
+        );
 
         return true;
     }
@@ -187,8 +189,11 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             t.transactionType == TransactionTypes.WITHDRAW,
             'Shield: Transaction is not a valid withdraw'
         );
-        require(!withdrawn[transactionHash], 'Shield: This transaction has already paid out');
-        withdrawn[transactionHash] = true;
+        require(
+            !txInfo[transactionHash].isWithdrawn,
+            'Shield: This transaction has already paid out'
+        );
+        txInfo[transactionHash].isWithdrawn = true;
 
         AdvanceWithdrawal memory advancedWithdrawal = advancedWithdrawals[transactionHash];
         address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
@@ -235,7 +240,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         );
 
         // The withdrawal has not been withdrawn
-        require(!withdrawn[transactionHash], 'Shield: This transaction has already paid out');
+        require(
+            !txInfo[transactionHash].isWithdrawn,
+            'Shield: This transaction has already paid out'
+        );
 
         // this might incentives sniping freshly finalised blocks by liquidity providers
         // this is risk-free as the block is finalised, the advancedFee should reflect a risk premium.
@@ -289,7 +297,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         );
 
         // The withdrawal has not been withdrawn
-        require(!withdrawn[transactionHash], 'Shield: This transaction has already paid out');
+        require(
+            !txInfo[transactionHash].isWithdrawn,
+            'Shield: This transaction has already paid out'
+        );
         AdvanceWithdrawal memory advancedWithdrawal = advancedWithdrawals[transactionHash];
         address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
         address currentOwner = advancedWithdrawal.currentOwner == address(0)
@@ -308,6 +319,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     }
 
     function payOut(Transaction calldata t, address recipientAddress) internal whenNotPaused {
+        require(
+            uint256(t.ercAddress) < 0x010000000000000000000000000000000000000000,
+            'Shield: The given address is more than 160 bits'
+        );
         // Now pay out the value of the commitment
         address addr = address(uint160(uint256(t.ercAddress)));
 

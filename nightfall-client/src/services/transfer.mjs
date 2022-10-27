@@ -129,7 +129,7 @@ async function transfer(transferParams) {
 
     logger.trace({
       msg: 'Received response from generete-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
@@ -150,7 +150,7 @@ async function transfer(transferParams) {
 
     logger.debug({
       msg: 'Client made transaction',
-      transaction: JSON.stringify(optimisticTransferTransaction, null, 2),
+      transaction: optimisticTransferTransaction,
       offchain,
     });
 
@@ -172,7 +172,12 @@ async function transfer(transferParams) {
     if (offchain) {
       // dig up connection peers
       const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
-      logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
+
+      logger.debug({
+        msg: 'Peer List',
+        peerList,
+      });
+
       await Promise.all(
         Object.keys(peerList).map(async address => {
           logger.debug(

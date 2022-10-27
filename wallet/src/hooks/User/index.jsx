@@ -144,13 +144,15 @@ export const UserProvider = ({ children }) => {
               }),
             );
           }
-        } else if (lastBlock.blockHash) console.log('Sync complete');
-        setState(previousState => {
-          return {
-            ...previousState,
-            chainSync: true,
-          };
-        });
+        } else if (lastBlock.blockHash) {
+          console.log('Sync complete');
+          setState(previousState => {
+            return {
+              ...previousState,
+              chainSync: true,
+            };
+          });
+        }
       } else if (parsed.type === 'blockProposed') {
         console.log('blockProposed Event');
         if (
