@@ -11,12 +11,17 @@ export const web3 = Web3.connection();
 
 const options = config.WEB3_OPTIONS;
 
-const cachedContracts = {};
+let cachedContracts = {};
 
 const contractPath = contractName => {
   return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;
 };
 
+/**
+ * Function returns the interface of a contract. First time interface is retrieved, it is cached.
+ * @param {String} contractName - Name of Smart Contract
+ * @returns {String} - contract interface
+ */
 async function getContractInterface(contractName) {
   if (contractName in cachedContracts) {
     return cachedContracts[contractName];
@@ -124,7 +129,8 @@ export async function waitForContract(contractName) {
       error = undefined;
       const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
       if (address === undefined) {
-        clearCachedContract(contractName);
+        // contract was cached when retrieving address, so we need to clear
+        delete cachedContracts[contractName];
         throw new Error(`${contractName} contract address was undefined`);
       }
       instance = await getContractInstance(contractName, address); // eslint-disable-line no-await-in-loop

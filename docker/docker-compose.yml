@@ -76,6 +76,7 @@ services:
       ZOKRATES_WORKER_HOST: ${ZOKRATES_WORKER_HOST:-worker}
       USE_STUBS: ${USE_STUBS:-false}
       WHITELISTING: ${WHITELISTING}
+      UPGRADE: ${UPGRADE_CONTRACTS}
 
   hosted-utils-api-server:
     build:
