@@ -25,8 +25,8 @@ export default {
         useUnifiedTopology: true,
         //connectTimeoutMS: 30000,
         //keepAlive: true,
-        serverSelectionTimeoutMS: 30000,
-        socketTimeoutMS: 30000,
+        // serverSelectionTimeoutMS: 30000,
+        // socketTimeoutMS: 30000,
       });
       connection[url] = await client.connect();
     }
