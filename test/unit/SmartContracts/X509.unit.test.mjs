@@ -8,36 +8,64 @@ const { ethers } = hardhat;
 const { BigNumber } = ethers;
 
 describe('DerParser contract functions', function () {
-  const authorityKeyIdentifier = `0x${'3016801479B459E67BB6E5E40173800888C81A58F6E99B6E'.padStart(
+  const authorityKeyIdentifier = `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(
     64,
     '0',
   )}`;
-  const LetsEncryptRootPublicKey = {
+  const nightfallRootPublicKey = {
     modulus:
-      '0x00ade82473f41437f39b9e2b57281c87bedcb7df38908c6e3ce657a078f775c2a2fef56a6ef6004f28dbde68866c4493b6b163fd14126bbf1fd2ea319b217ed1333cba48f5dd79dfb3b8ff12f1219a4bc18a8671694a66666c8f7e3c70bfad292206f3e4c0e680aee24b8fb7997e94039fd347977c99482353e838ae4f0a6f832ed149578c8074b6da2fd0388d7b0370211b75f2303cfa8faeddda63abeb164fc28e114b7ecf0be8ffb5772ef4b27b4ae04c12250c708d0329a0e15324ec13d9ee19bf10b34a8c3f89a36151deac870794f46371ec2ee26f5b9881e1895c34796c76ef3b906279e6dba49a2f26c5d010e10eded9108e16fbb7f7a8f7c7e50207988f360895e7e237960d36759efb0e72b11d9bbc03f94905d881dd05b42ad641e9ac0176950a0fd8dfd5bd121f352f28176cd298c1a80964776e4737baceac595e689d7f72d689c50641293e593edd26f524c911a75aa34c401f46a199b5a73a516e863b9e7d72a712057859ed3e5178150b038f8dd02f05b23e7b4a1c4b730512fcc6eae050137c439374b3ca74e78e1f0108d030d45b7136b407bac130305c48b7823b98a67d608aa2a32982ccbabd83041ba2830341a1d605f11bc2b6f0a87c863b46a8482a88dc769a76bf1f6aa53d198feb38f364dec82b0d0a28fff7dbe21542d422d0275de179fe18e77088ad4ee6d98b3ac6dd27516effbc64f533434f',
+      '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
     exponent: 65537,
   };
-  let derBuffer;
   let X509Instance;
-  let tlvLength;
+  const certChain = []; // contains the certificate to verify chain, lowest index is lowest cert in chain (i.e. [0] = end user)
   before(async () => {
-    derBuffer = fs.readFileSync('test/unit/utils/root.der');
     const X509Deployer = await ethers.getContractFactory('X509');
+    let derBuffer;
+    let tlvLength;
     X509Instance = await X509Deployer.deploy();
     await X509Instance.initialize();
-    await X509Instance.setTrustedPublicKey(LetsEncryptRootPublicKey, authorityKeyIdentifier);
+    await X509Instance.setTrustedPublicKey(nightfallRootPublicKey, authorityKeyIdentifier);
+    derBuffer = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
+    certChain[1] = {
+      derBuffer,
+      tlvLength,
+      authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`,
+    };
+    derBuffer = fs.readFileSync('test/unit/utils/Nightfall_end_user.cer');
+    tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
+    certChain[0] = { derBuffer, tlvLength };
   });
-  it('Should parse the root cert der file', async function () {
-    const result = await X509Instance.parseDER(derBuffer, 0, tlvLength);
+  it('Should parse the intermediate CA cert DER encoding', async function () {
+    const intermediateCaCert = certChain[0];
+    const result = await X509Instance.parseDER(
+      intermediateCaCert.derBuffer,
+      0,
+      intermediateCaCert.tlvLength,
+    );
     const tlvs = result.map(tlv => makeTlv(tlv));
     // make a few checks on the output
     expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[0].depth).to.equal(0);
     expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
     expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[tlvLength - 1].depth).to.equal(1);
+    expect(tlvs[intermediateCaCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[intermediateCaCert.tlvLength - 1].depth).to.equal(1);
+    // console.log(tlvs);
+  });
+  it('Should parse the end-user cert DER encoding', async function () {
+    const endUserCert = certChain[1];
+    const result = await X509Instance.parseDER(endUserCert.derBuffer, 0, endUserCert.tlvLength);
+    const tlvs = result.map(tlv => makeTlv(tlv));
+    // make a few checks on the output
+    expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
+    expect(tlvs[0].depth).to.equal(0);
+    expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
+    expect(tlvs[1].depth).to.equal(1);
+    expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
+    // console.log(tlvs);
   });
   it('Should correctly compute modular exponentiation', async function () {
     // test data taken from eip-198.md
@@ -48,8 +76,16 @@ describe('DerParser contract functions', function () {
     );
     expect(res).to.equal('0x0000000000000000000000000000000000000000000000000000000000000001');
   });
-  it('Should validate the certificate', async function () {
-    await X509Instance.validateCertificate(derBuffer, authorityKeyIdentifier, tlvLength);
-    expect(await X509Instance.isValid()).to.equal(true);
+  it('Should fail to validate the user certificate until it has validated the intermediate CA cert', async function () {
+    // presenting the end user cert should fail because the smart contract doesn't have the intermediate CA cert
+    try {
+      await X509Instance.validateCertificate(certChain[0].derBuffer, certChain[0].tlvLength);
+    } catch (err) {
+      expect(err.message.includes('VM Exception')).to.equal(true);
+    }
+    // presenting the Intermediate CA cert should work because the smart contact trusts the root public key
+    await X509Instance.validateCertificate(certChain[1].derBuffer, certChain[1].tlvLength);
+    // presenting the end user cert should work because the smart contract now trusts the Intermediate CA public key
+    await X509Instance.validateCertificate(certChain[0].derBuffer, certChain[0].tlvLength);
   });
 });

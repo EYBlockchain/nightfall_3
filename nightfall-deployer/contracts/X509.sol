@@ -15,7 +15,6 @@ contract X509 is DERParser, Ownable {
         uint256 exponent;
     }
     mapping(bytes32 => RSAPublicKey) trustedPublicKeys;
-    bool public isValid = false; // used for testing gas
 
     function initialize() public override initializer {
         Ownable.initialize();
@@ -122,6 +121,7 @@ contract X509 is DERParser, Ownable {
     }
 
     // this function finds and checks the Not Before and Not After tlvs
+    // TODO this and the subsequent function loop over the tlvs twice - this is inefficient - refactor code
     function checkDates(DecodedTlv[] memory tlvs) private view {
         // The Not Before and Not After dates are the third SEQUENCE at depth 2
         uint256 i;
@@ -142,13 +142,77 @@ contract X509 is DERParser, Ownable {
         );
     }
 
-    function validateCertificate(
-        bytes calldata certificate,
-        bytes32 authorityKeyIdentifier,
-        uint256 tlvLength
-    ) external {
+    function extractPublicKey(DecodedTlv[] memory tlvs) private view returns (RSAPublicKey memory) {
+        // The public key data begins at the 5th SEQUENCE at depth 2
+        uint256 i;
+        uint256 j;
+        for (i = 0; i < tlvs.length; i++) {
+            if (tlvs[i].tag.tagType == 0x10 && tlvs[i].depth == 2) j++;
+            if (j == 5) break;
+        }
+        // check we have RSA encryption. We use the keccak hash to check equality of the byte arrays
+        require(
+            keccak256(tlvs[i + 2].value) ==
+                keccak256(abi.encodePacked(bytes9(0x2a864886f70d010101))),
+            'Only RSA ecryption keys are supported, the OID indicates a different key type'
+        );
+        bytes memory keyBytes = tlvs[i + 4].value;
+        // extract the public key tlvs
+        DecodedTlv[] memory keyTlvs = new DecodedTlv[](10);
+        keyTlvs = this.parseDER(keyBytes, 1, 10);
+        bytes memory modulus = keyTlvs[1].value;
+        uint256 exponent = uint256(
+            bytes32(keyTlvs[2].value) >> ((32 - keyTlvs[2].value.length) * 8)
+        );
+        return RSAPublicKey(modulus, exponent);
+    }
+
+    function extractSubjectKeyIdentifier(DecodedTlv[] memory tlvs) private view returns (bytes32) {
+        // // The SKID begins after the Suject Key Identifier OID at depth 5
+        uint256 i;
+        for (i = 0; i < tlvs.length; i++) {
+            if (tlvs[i].depth != 5) continue;
+            if (
+                bytes32(tlvs[i].value) ==
+                bytes32((0x551d0e0000000000000000000000000000000000000000000000000000000000))
+            ) break; // OID for the SKID
+        }
+        require(i < tlvs.length, 'OID for Subject Key Identifier not found');
+        bytes memory skidBytes = tlvs[i + 1].value;
+        require(skidBytes.length < 33, 'SKID is too long to encode as a bytes 32');
+        DecodedTlv[] memory skidTlvs = new DecodedTlv[](1);
+        skidTlvs = this.parseDER(skidBytes, 0, 2);
+        bytes32 skid = bytes32(skidTlvs[0].value) >> ((32 - skidTlvs[0].length) * 8);
+        return skid;
+    }
+
+    function extractAuthorityKeyIdentifier(DecodedTlv[] memory tlvs)
+        private
+        view
+        returns (bytes32)
+    {
+        // // The AKID begins after the Authority Key Identifier OID at depth 5
+        uint256 i;
+        for (i = 0; i < tlvs.length; i++) {
+            if (tlvs[i].depth != 5) continue;
+            if (
+                bytes32(tlvs[i].value) ==
+                bytes32((0x551d230000000000000000000000000000000000000000000000000000000000))
+            ) break; // OID for the AKID
+        }
+        require(i < tlvs.length, 'OID for Authority Key Identifier not found');
+        bytes memory akidBytes = tlvs[i + 1].value;
+        require(akidBytes.length < 33, 'AKID is too long to encode as a bytes 32');
+        DecodedTlv[] memory akidTlvs = new DecodedTlv[](3);
+        akidTlvs = this.parseDER(akidBytes, 0, 2);
+        bytes32 akid = bytes32(akidTlvs[1].value) >> ((32 - akidTlvs[1].value.length) * 8);
+        return akid;
+    }
+
+    function validateCertificate(bytes calldata certificate, uint256 tlvLength) external {
         DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         tlvs = walkDerTree(certificate, 0, tlvLength);
+        bytes32 authorityKeyIdentifier = extractAuthorityKeyIdentifier(tlvs);
         bytes memory signature = getSignature(tlvs, tlvLength);
         bytes memory message = getMessage(tlvs);
         RSAPublicKey memory publicKey = trustedPublicKeys[authorityKeyIdentifier];
@@ -165,7 +229,10 @@ contract X509 is DERParser, Ownable {
             'Signature is invalid'
         );
         checkDates(tlvs);
-        isValid = true;
+        RSAPublicKey memory certificatePublicKey = extractPublicKey(tlvs);
+        bytes32 subjectKeyIdentifier = extractSubjectKeyIdentifier(tlvs);
+        // The certificate is valid and linked to a root we trust, so now we trust the certificate's public key too.
+        trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
     }
 
     // test function, for modExp
