@@ -73,9 +73,10 @@ const duplicateCommitment = async (number, transactionType) => {
     const { commitments: unspentCommitments, ...unspentRes } = unspentTransaction[0];
     let modifiedTransaction;
     // if transactionType is Deposit we need entire spentTx instead
-    // of just a spentCommitment
+    // of just a spentCommitment this need to statisfy escrow check in solidity
+    // contract.
     if (transactionType === '0') {
-      modifiedTransaction = spentTransaction[0];
+      [modifiedTransaction] = spentTransaction;
     } else {
       modifiedTransaction = {
         commitments: [spentCommitments[0], unspentCommitments[1], ZERO],
