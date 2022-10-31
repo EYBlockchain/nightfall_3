@@ -179,7 +179,8 @@ router.post('/withdrawStake', async (req, res, next) => {
  * Function to get pending blocks payments for a proposer.
  */
 router.get('/pending-payments', async (req, res, next) => {
-  const { proposerPayments = proposer } = req.query;
+  const proposerPayments = req.query.proposer;
+
   const pendingPayments = [];
   // get blocks by proposer
   try {
@@ -209,6 +210,29 @@ router.get('/pending-payments', async (req, res, next) => {
     }
     res.json({ pendingPayments });
   } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * Function to get stake for a proposer.
+ */
+router.get('/stake', async (req, res, next) => {
+  logger.debug(`stake endpoint received GET`);
+  const addr = req.query.proposer;
+  logger.debug(`requested stake for proposer ${addr}`);
+
+  try {
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const stakeAccount = await stateContractInstance.methods.getStakeAccount(addr).call();
+
+    res.json({
+      amount: Number(stakeAccount[0]),
+      challengeLocked: Number(stakeAccount[1]),
+      time: Number(stakeAccount[2]),
+    });
+  } catch (err) {
+    logger.error(err);
     next(err);
   }
 });

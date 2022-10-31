@@ -908,6 +908,21 @@ class Nf3 {
         proposer: this.ethereumAddress,
       },
     });
+    return res.data.pendingPayments;
+  }
+
+  /**
+    Get all the proposer stake.
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum transaction receipt.
+    */
+  async getProposerStake() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`, {
+      params: {
+        proposer: this.ethereumAddress,
+      },
+    });
     return res.data;
   }
 

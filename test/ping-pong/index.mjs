@@ -14,10 +14,12 @@ import {
   topicEventMapping,
   Web3Client,
 } from '../utils.mjs';
+import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys, zkpPublicKeys, ROTATE_PROPOSER_BLOCKS } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys, addresses, zkpPublicKeys, ROTATE_PROPOSER_BLOCKS } =
+  config.TEST_OPTIONS;
 
 const txPerBlock =
   process.env.DEPLOYER_ETH_NETWORK === 'mainnet'
@@ -25,6 +27,14 @@ const txPerBlock =
     : config.TEST_OPTIONS.txPerBlock;
 
 const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
+
+const { WEB3_OPTIONS } = config;
+
+const amountBlockStake = 25;
+const amountMinimumStake = 100;
+let nfMultiSig;
+let multisigContract;
+let shieldContract;
 
 const TEST_LENGTH = 4;
 
@@ -134,6 +144,120 @@ export async function userTest(IS_TEST_RUNNER) {
   return 1;
 }
 
+/**
+Get contract instance
+*/
+const getContractInstance = async (contractName, nf3) => {
+  const abi = await nf3.getContractAbi(contractName);
+  const contractAddress = await nf3.getContractAddress(contractName);
+  const contractInstance = new nf3.web3.eth.Contract(abi, contractAddress);
+  return contractInstance;
+};
+
+/**
+Set the block stake parameter for the proposers
+*/
+const setBlockStake = async amount => {
+  console.log('Setting BLOCK STAKE...');
+  const transactions = await nfMultiSig.setBlockStake(
+    amount,
+    signingKeys.user1,
+    addresses.user1,
+    await multisigContract.methods.nonce().call(),
+    [],
+  );
+  const approved = await nfMultiSig.setBlockStake(
+    amount,
+    signingKeys.user2,
+    addresses.user1,
+    await multisigContract.methods.nonce().call(),
+    transactions,
+  );
+  await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+  const blockStake = await shieldContract.methods.getBlockStake().call();
+  console.log('BLOCK STAKE SET: ', blockStake);
+};
+
+const setMinimumStake = async amount => {
+  console.log('Setting MINIMUM STAKE...');
+  const transactions = await nfMultiSig.setMinimumStake(
+    amount,
+    signingKeys.user1,
+    addresses.user1,
+    await multisigContract.methods.nonce().call(),
+    [],
+  );
+  const approved = await nfMultiSig.setMinimumStake(
+    amount,
+    signingKeys.user2,
+    addresses.user1,
+    await multisigContract.methods.nonce().call(),
+    transactions,
+  );
+  await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+  const minimumStake = await shieldContract.methods.getMinimumStake().call();
+  console.log('MINIMUM STAKE SET: ', minimumStake);
+};
+
+/**
+Set the value per slot parameter for the proposers
+*/
+const setValuePerSlot = async amount => {
+  console.log('Setting VALUE PER SLOT...');
+  const transactions = await nfMultiSig.setValuePerSlot(
+    amount,
+    signingKeys.user1,
+    addresses.user1,
+    await multisigContract.methods.nonce().call(),
+    [],
+  );
+  const approved = await nfMultiSig.setValuePerSlot(
+    amount,
+    signingKeys.user2,
+    addresses.user1,
+    await multisigContract.methods.nonce().call(),
+    transactions,
+  );
+  await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+  const valuePerSlot = await shieldContract.methods.getBlockStake().call();
+  console.log('VALUE PER SLOT SET: ', valuePerSlot);
+};
+
+/**
+Set parameters config for the test
+*/
+export async function setParametersConfig() {
+  const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
+  await nf3Proposer.init(mnemonics.proposer3);
+
+  const stateContract = await getContractInstance('State', nf3Proposer);
+  const proposersContract = await getContractInstance('Proposers', nf3Proposer);
+  const challengesContract = await getContractInstance('Challenges', nf3Proposer);
+  shieldContract = await getContractInstance('Shield', nf3Proposer);
+  multisigContract = await getContractInstance('SimpleMultiSig', nf3Proposer);
+
+  nfMultiSig = new NightfallMultiSig(
+    nf3Proposer.web3,
+    {
+      state: stateContract,
+      proposers: proposersContract,
+      shield: shieldContract,
+      challenges: challengesContract,
+      multisig: multisigContract,
+    },
+    2,
+    await nf3Proposer.web3.eth.getChainId(),
+    WEB3_OPTIONS.gas,
+  );
+
+  await setBlockStake(amountBlockStake);
+  await setMinimumStake(amountMinimumStake);
+  await setValuePerSlot(amountMinimumStake / 10);
+}
+
+/**
+Proposer test for checking different points for the PoS
+*/
 export async function proposerTest(optimistUrls, proposersStats) {
   console.log('OPTIMISTURLS', optimistUrls);
   const web3Client = new Web3Client();
@@ -141,122 +265,128 @@ export async function proposerTest(optimistUrls, proposersStats) {
   const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
   await nf3Proposer.init(mnemonics.proposer3);
 
-  const stateAddress = await nf3Proposer.getContractAddress('State');
-  const stateABI = await nf3Proposer.getContractAbi('State');
+  try {
+    const stateContract = await getContractInstance('State', nf3Proposer);
 
-  const getCurrentProposer = async () => {
-    const stateContractInstance = new nf3Proposer.web3.eth.Contract(stateABI, stateAddress);
-    const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
-    return currentProposer;
-  };
+    const stateAddress = stateContract.options.address;
 
-  const getCurrentSprint = async () => {
-    const stateContractInstance = new nf3Proposer.web3.eth.Contract(stateABI, stateAddress);
-    const currentSprint = await stateContractInstance.methods.currentSprint().call();
-    return currentSprint;
-  };
+    const getCurrentProposer = async () => {
+      const currentProposer = await stateContract.methods.getCurrentProposer().call();
+      return currentProposer;
+    };
 
-  const getStakeAccount = async proposer => {
-    const stateContractInstance = new nf3Proposer.web3.eth.Contract(stateABI, stateAddress);
-    const stakeAccount = await stateContractInstance.methods.getStakeAccount(proposer).call();
-    return stakeAccount;
-  };
+    const getCurrentSprint = async () => {
+      const currentSprint = await stateContract.methods.currentSprint().call();
+      return currentSprint;
+    };
 
-  // eslint-disable-next-line no-param-reassign
-  const eventLogs = [];
-  const proposersBlocks = [];
-  // eslint-disable-next-line no-param-reassign
-  proposersStats.proposersBlocks = proposersBlocks;
-  // eslint-disable-next-line no-param-reassign
-  proposersStats.sprints = 0;
-  let currentProposer = await getCurrentProposer();
-  web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    const getStakeAccount = async proposer => {
+      const stakeAccount = await stateContract.methods.getStakeAccount(proposer).call();
+      return stakeAccount;
+    };
 
-  nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
-    let proposerBlock = proposersBlocks.find(
-      // eslint-disable-next-line no-loop-func
-      p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-    );
+    // eslint-disable-next-line no-param-reassign
+    const eventLogs = [];
+    const proposersBlocks = [];
+    // eslint-disable-next-line no-param-reassign
+    proposersStats.proposersBlocks = proposersBlocks;
+    // eslint-disable-next-line no-param-reassign
+    proposersStats.sprints = 0;
+    let currentProposer = await getCurrentProposer();
+    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
-    if (!proposerBlock) {
-      proposerBlock = {
-        proposer: currentProposer.thisAddress.toUpperCase(),
-        blocks: 0,
-      };
-      proposersBlocks.push(proposerBlock);
-    }
-
-    for (const topic of log.topics) {
-      switch (topic) {
-        case topicEventMapping.BlockProposed:
-          proposerBlock.blocks++;
-          break;
-        case topicEventMapping.TransactionSubmitted:
-          break;
-        case topicEventMapping.NewCurrentProposer:
-          break;
-        default:
-          break;
-      }
-    }
-    console.log('BLOCKS:');
-    for (const pb of proposersBlocks) {
-      console.log(`  ${pb.proposer} : ${pb.blocks}`);
-    }
-  });
-
-  while (currentProposer.thisAddress === '0x0000000000000000000000000000000000000000') {
-    await new Promise(resolve => setTimeout(resolve, 10000));
-    currentProposer = await getCurrentProposer();
-  }
-
-  let previousSprint = await getCurrentSprint();
-
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      const currentSprint = await getCurrentSprint();
-      console.log(`sprints previous - current. (${previousSprint}) - (${currentSprint})`);
-      if (previousSprint !== currentSprint) {
-        // eslint-disable-next-line no-param-reassign
-        proposersStats.sprints++;
-        previousSprint = currentSprint;
-      }
-      // eslint-disable-next-line no-await-in-loop
-      currentProposer = await getCurrentProposer();
-      const stakeAccount = await getStakeAccount(currentProposer.thisAddress);
-      console.log(
-        `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress}, Stake account:  ]`,
-        stakeAccount,
+    nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
+      let proposerBlock = proposersBlocks.find(
+        // eslint-disable-next-line no-loop-func
+        p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
       );
 
-      console.log('     Waiting blocks to rotate current proposer...');
-      const initBlock = await nf3Proposer.web3.eth.getBlockNumber();
-      let currentBlock = initBlock;
-
-      while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
+      if (!proposerBlock) {
+        proposerBlock = {
+          proposer: currentProposer.thisAddress.toUpperCase(),
+          blocks: 0,
+        };
+        proposersBlocks.push(proposerBlock);
       }
 
-      const url = optimistUrls.find(
-        // eslint-disable-next-line no-loop-func
-        o => o.proposer === currentProposer.thisAddress.toUpperCase(),
-      ).optimistUrl;
-      const res = await axios.get(`${url}/proposer/mempool`);
-      console.log(` *** ${res.data.result.length} transactions in the mempool`);
-      if (res.data.result.length > 0) {
-        console.log('     Make block...');
-        await axios.get(`${url}/block/make-now`);
-        console.log('     Waiting for event blockProposed');
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('     Event blockProposed');
+      for (const topic of log.topics) {
+        switch (topic) {
+          case topicEventMapping.BlockProposed:
+            proposerBlock.blocks++;
+            break;
+          case topicEventMapping.TransactionSubmitted:
+            break;
+          case topicEventMapping.NewCurrentProposer:
+            break;
+          default:
+            break;
+        }
       }
-      console.log('     Change current proposer...');
-      await nf3Proposer.changeCurrentProposer();
-    } catch (err) {
-      console.log(err);
+      console.log('BLOCKS:');
+      for (const pb of proposersBlocks) {
+        console.log(`  ${pb.proposer} : ${pb.blocks}`);
+      }
+    });
+
+    while (currentProposer.thisAddress === '0x0000000000000000000000000000000000000000') {
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      currentProposer = await getCurrentProposer();
     }
+
+    let previousSprint = await getCurrentSprint();
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const currentSprint = await getCurrentSprint();
+        if (previousSprint !== currentSprint) {
+          // eslint-disable-next-line no-param-reassign
+          proposersStats.sprints++;
+          previousSprint = currentSprint;
+        }
+        // eslint-disable-next-line no-await-in-loop
+        currentProposer = await getCurrentProposer();
+        const stakeAccount = await getStakeAccount(currentProposer.thisAddress);
+        console.log(
+          `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress}, Stake account:  ]`,
+          stakeAccount,
+        );
+
+        console.log('     Waiting blocks to rotate current proposer...');
+        const initBlock = await nf3Proposer.web3.eth.getBlockNumber();
+        let currentBlock = initBlock;
+
+        while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
+        }
+
+        const url = optimistUrls.find(
+          // eslint-disable-next-line no-loop-func
+          o => o.proposer === currentProposer.thisAddress.toUpperCase(),
+        ).optimistUrl;
+
+        let res = await axios.get(`${url}/proposer/mempool`);
+        while (res.data.result.length > 0) {
+          console.log(` *** ${res.data.result.length} transactions in the mempool`);
+          if (res.data.result.length > 0) {
+            console.log('     Make block...');
+            await axios.get(`${url}/block/make-now`);
+            console.log('     Waiting for block to be created');
+            // await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+            // console.log('     Event blockProposed');
+            await new Promise(resolve => setTimeout(resolve, 20000));
+            res = await axios.get(`${url}/proposer/mempool`);
+          }
+        }
+        console.log('     Change current proposer...');
+        await nf3Proposer.changeCurrentProposer();
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  } catch (e) {
+    console.log('ERROR!!!!', e);
   }
 }

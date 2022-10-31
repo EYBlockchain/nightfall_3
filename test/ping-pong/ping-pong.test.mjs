@@ -1,11 +1,10 @@
-// import config from 'config';
 import compose from 'docker-compose';
 import yaml from 'js-yaml';
 import fs from 'fs';
 import { Docker } from 'docker-cli-js';
 import Web3 from 'web3';
 import { expect } from 'chai';
-import { userTest, proposerTest } from './index.mjs';
+import { userTest, proposerTest, setParametersConfig } from './index.mjs';
 
 let result;
 
@@ -30,19 +29,16 @@ const dockerComposeOptions = {
 const getOptimistUrls = async () => {
   const data = await docker.command('ps');
   const optimistList = data.containerList.filter(c => c.names.includes('proposer_optimist_'));
-  const optimistUrls = [];
+  const optimistUrls = []; // list with all the proposers from the yml file and their optimistUrl
 
   let configYml;
   try {
     configYml = yaml.load(fs.readFileSync('docker/docker-compose.proposers.yml', 'utf8'));
-    // const indentedJson = JSON.stringify(configYml, null, 4);
-    // console.log(indentedJson);
   } catch (e) {
     console.log(e);
   }
   const web3 = new Web3();
   for (const opt of optimistList) {
-    // console.log(`proposer_${opt.names.split('_')[2]}`);
     const proposerAddress = web3.eth.accounts
       .privateKeyToAccount(
         configYml.services[`proposer_${opt.names.split('_')[2]}`].environment.PROPOSER_KEY,
@@ -58,24 +54,30 @@ const getOptimistUrls = async () => {
 
 describe('Ping-pong tests', () => {
   before(async () => {
+    await setParametersConfig();
     console.log('Starting containers...');
     await compose.upAll(dockerComposeOptions);
   });
 
   it('Runs ping-pong tests', async () => {
-    const optimistUrls = await getOptimistUrls();
+    const optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers
+    const proposersStats = { proposersBlocks: {}, sprints: 0 }; // initialize stats for the test
+
     userTest(false);
-    const proposersStats = { proposersBlocks: {}, sprints: 0 };
     proposerTest(optimistUrls, proposersStats);
     result = await userTest(true);
-    console.log('FINAL STATS:');
-    console.log('  - BLOCKS:');
-    for (const pb of proposersStats.proposersBlocks) {
-      console.log(`     ${pb.proposer} : ${pb.blocks}`);
-    }
-    console.log(`  - SPRINTS: ${proposersStats.sprints}`);
     expect(result).to.be.equal(0);
-    expect(proposersStats.sprints).to.be.greaterThan(0);
+
+    if (proposersStats.proposersBlocks) {
+      console.log('FINAL STATS:');
+      console.log('  - BLOCKS:');
+      for (const pb of proposersStats.proposersBlocks) {
+        console.log(`     ${pb.proposer} : ${pb.blocks}`);
+      }
+      console.log(`  - SPRINTS: ${proposersStats.sprints}`);
+
+      expect(proposersStats.sprints).to.be.greaterThan(0);
+    }
   });
 
   after(async () => {
