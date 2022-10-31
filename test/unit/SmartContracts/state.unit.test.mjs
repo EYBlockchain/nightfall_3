@@ -62,7 +62,7 @@ describe('State contract State functions', function () {
     await challenges.deployed();
 
     const Shield = await ethers.getContractFactory('Shield');
-    const shield = await upgrades.deployProxy(Shield, []);
+    shield = await upgrades.deployProxy(Shield, []);
     await shield.deployed();
 
     const Utils = await ethers.getContractFactory('Utils');
@@ -74,7 +74,7 @@ describe('State contract State functions', function () {
         Utils: utils.address,
       },
     });
-    state = await upgrades.deployProxy(State, [addr1.address, addressC.address, addressS.address], {
+    state = await upgrades.deployProxy(State, [addr1.address, addressC.address, shield.address], {
       unsafeAllow: ['external-library-linking'],
       initializer: 'initializeState',
     });
