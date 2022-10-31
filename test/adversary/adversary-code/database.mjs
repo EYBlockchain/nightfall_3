@@ -71,10 +71,17 @@ const duplicateCommitment = async (number, transactionType) => {
     });
     logger.debug(`transactionType for transaction to be modified ${transactionType}`);
     const { commitments: unspentCommitments, ...unspentRes } = unspentTransaction[0];
-    const modifiedTransaction = {
-      commitments: [spentCommitments[0], unspentCommitments[1], ZERO],
-      ...unspentRes,
-    };
+    let modifiedTransaction;
+    // if transactionType is Deposit we need entire spentTx instead
+    // of just a spentCommitment
+    if (transactionType === '0') {
+      modifiedTransaction = spentTransaction[0];
+    } else {
+      modifiedTransaction = {
+        commitments: [spentCommitments[0], unspentCommitments[1], ZERO],
+        ...unspentRes,
+      };
+    }
 
     const availableTxs = await db
       .collection(TRANSACTIONS_COLLECTION)
