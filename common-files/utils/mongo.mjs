@@ -26,7 +26,7 @@ export default {
         //connectTimeoutMS: 30000,
         //keepAlive: true,
         // serverSelectionTimeoutMS: 30000,
-        socketTimeoutMS: 300,
+        socketTimeoutMS: 3000,
       });
       connection[url] = await client.connect();
     }
