@@ -1,6 +1,15 @@
 import { expect } from 'chai';
 import hardhat from 'hardhat';
-
+import {
+  calculateBlockHash,
+  calculateTransactionHash,
+  createBlockAndTransactions,
+} from '../utils/utils.mjs';
+import {
+  setAdvancedWithdrawal,
+  setTransactionInfo,
+  setWhitelist,
+} from '../utils/shieldStorage.mjs';
 const { ethers, upgrades } = hardhat;
 
 describe('State contract State functions', function () {
@@ -11,6 +20,8 @@ describe('State contract State functions', function () {
   let addressS;
   let addressC;
   let block;
+  let transactionsCreated;
+  let shield;
   const transaction1 = {
     value: '100000000000000',
     fee: '10',
@@ -51,15 +62,17 @@ describe('State contract State functions', function () {
   beforeEach(async () => {
     [addr1, addr2, addressS, addressC] = await ethers.getSigners();
 
-    block = {
-      leafCount: 700,
-      proposer: addr1.address,
-      root: '0x2bcd2b4a55cf968f9f3dd85b3dbdd3da19e44d11a0053b221c9b5dfaf9792127',
-      blockNumberL2: 0,
-      previousBlockHash: '0x01b3dd9607d81663fc1437e08423f028070afd2006a2679b3c674f64176fd934',
-      frontierHash: '0xa2f1ec04a89542d6f1e04449398052422c7b1057df8606db047f48047bb7ab72',
-      transactionHashesRoot: '0x0487da81cb1d53536928de44fa55de0accf9a8bc9f42739a80f69584970d572f',
-    };
+    transactionsCreated = createBlockAndTransactions('0x000000000000000000000000499d11e0b6eac7c0593d8fb292dcbbf815fb29ae', addr1.address, '10');
+
+    // block = {
+    //   leafCount: 700,
+    //   proposer: addr1.address,
+    //   root: '0x2bcd2b4a55cf968f9f3dd85b3dbdd3da19e44d11a0053b221c9b5dfaf9792127',
+    //   blockNumberL2: 0,
+    //   previousBlockHash: '0x01b3dd9607d81663fc1437e08423f028070afd2006a2679b3c674f64176fd934',
+    //   frontierHash: '0xa2f1ec04a89542d6f1e04449398052422c7b1057df8606db047f48047bb7ab72',
+    //   transactionHashesRoot: '0x0487da81cb1d53536928de44fa55de0accf9a8bc9f42739a80f69584970d572f',
+    // };
 
     const Proposers = await ethers.getContractFactory('Proposers');
     ProposersInstance = await upgrades.deployProxy(Proposers, []);
@@ -101,7 +114,7 @@ describe('State contract State functions', function () {
     await challenges.deployed();
 
     const Shield = await ethers.getContractFactory('Shield');
-    const shield = await upgrades.deployProxy(Shield, []);
+    shield = await upgrades.deployProxy(Shield, []);
     await shield.deployed();
 
     const Utils = await ethers.getContractFactory('Utils');
@@ -113,7 +126,7 @@ describe('State contract State functions', function () {
         Utils: utils.address,
       },
     });
-    state = await upgrades.deployProxy(State, [addr1.address, addressC.address, addressS.address], {
+    state = await upgrades.deployProxy(State, [addr1.address, addressC.address, shield.address], {
       unsafeAllow: ['external-library-linking'],
       initializer: 'initializeState',
     });
@@ -673,10 +686,11 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await expect(
-      state.connect(addr2).proposeBlock(block, [transaction1], { value: 10 }),
+      state.connect(addr2).proposeBlock(transactionsCreated.block, [transactionsCreated.depositTransaction, transactionsCreated.withdrawTransaction], { value: 10 }),
     ).to.be.revertedWith('State: Only current proposer authorised');
-    await state.proposeBlock(block, [transaction1], { value: 10 });
-
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 });
     expect(
       await state.feeBook(
         ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
@@ -688,7 +702,57 @@ describe('State contract State functions', function () {
         ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
         1,
       ),
-    ).to.equal(0);
+    ).to.equal(10);
+  });
+
+  it('should not proposeBlock: funds not escrowed', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await expect(
+      state.connect(addr2).proposeBlock(transactionsCreated.block, [transactionsCreated.depositTransaction, transactionsCreated.withdrawTransaction], { value: 10 }),
+    ).to.be.revertedWith('State: Only current proposer authorised');
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await expect(state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 })).to.be.reverted;
+  });
+
+  it('should not proposeBlock: transaction hashes root', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await expect(
+      state.connect(addr2).proposeBlock(transactionsCreated.block, [transactionsCreated.depositTransaction, transactionsCreated.withdrawTransaction], { value: 10 }),
+    ).to.be.revertedWith('State: Only current proposer authorised');
+    transactionsCreated.block.transactionHashesRoot = ethers.constants.HashZero
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await expect(state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 })).to.be.reverted;
   });
 
   it('should not proposeBlock: State: Proposer does not have enough funds staked', async function () {
@@ -708,7 +772,9 @@ describe('State contract State functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await expect(state.proposeBlock(block, [transaction1], { value: 10 })).to.be.revertedWith(
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await expect(state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 })).to.be.revertedWith(
       'State: Proposer does not have enough funds staked',
     );
   });
@@ -730,7 +796,9 @@ describe('State contract State functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await expect(state.proposeBlock(block, [transaction1], { value: 10 })).to.be.revertedWith(
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await expect(state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 })).to.be.revertedWith(
       "Proposer doesn't have enough funds staked",
     );
   });
@@ -754,8 +822,10 @@ describe('State contract State functions', function () {
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
 
     const transactions = new Array(33);
-    transactions.fill(transaction1);
-    await expect(state.proposeBlock(block, transactions, { value: 10 })).to.be.revertedWith(
+    transactions.fill(transactionsCreated.withdrawTransaction);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await expect(state.proposeBlock(transactionsCreated.block, transactions, { value: 10 })).to.be.revertedWith(
       'State: The block has too many transactions',
     );
   });
@@ -777,7 +847,9 @@ describe('State contract State functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.proposeBlock(block, [transaction1], { value: 10 });
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 });
 
     expect(
       await state.feeBook(
@@ -790,10 +862,10 @@ describe('State contract State functions', function () {
         ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
         1,
       ),
-    ).to.equal(0);
+    ).to.equal(10);
 
-    block.blockNumberL2 = 1;
-    await expect(state.proposeBlock(block, [transaction1], { value: 10 })).to.be.revertedWith(
+    transactionsCreated.block.blockNumberL2 = 1;
+    await expect(state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 })).to.be.revertedWith(
       'State: Block flawed or out of order',
     );
   });
@@ -815,8 +887,9 @@ describe('State contract State functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-
-    await expect(state.proposeBlock(block, [transaction1])).to.be.revertedWith(
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await expect(state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction])).to.be.revertedWith(
       'State: Stake payment is incorrect',
     );
   });
@@ -848,7 +921,8 @@ describe('State contract State functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
     await expect(state.proposeBlock(wrongBlock, [transaction1], { value: 10 })).to.be.revertedWith(
       'State: Proposer address is not the sender',
     );
@@ -868,47 +942,6 @@ describe('State contract State functions', function () {
     expect(blockNumberL2).to.equal(blockNumber);
   });
 
-  it('should resetFeeBookInfo', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-    const amount = 100;
-    const challengeLocked = 5;
-
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr1.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setCurrentProposer(addr1.address);
-    await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.proposeBlock(block, [transaction1], { value: 10 });
-
-    expect(
-      await state.feeBook(
-        ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
-        0,
-      ),
-    ).to.equal(10);
-    expect(
-      await state.feeBook(
-        ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
-        1,
-      ),
-    ).to.equal(0);
-
-    await expect(state.resetFeeBookInfo(addr1.address, 0)).to.be.revertedWith(
-      'Only shield contract is authorized',
-    );
-    await state.connect(addressS).resetFeeBookInfo(addr1.address, 0);
-
-    expect((await state.getFeeBookInfo(addr1.address, 0))[0]).to.equal(0);
-    expect((await state.getFeeBookInfo(addr1.address, 0))[1]).to.equal(0);
-  });
-
   it('should popBlockData', async function () {
     const newUrl = 'url';
     const newFee = 100;
@@ -926,7 +959,9 @@ describe('State contract State functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.proposeBlock(block, [transaction1], { value: 10 });
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 });
 
     const lastBlockHashes = await state.getBlockData(0);
 
@@ -966,12 +1001,14 @@ describe('State contract State functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.proposeBlock(block, [transaction1], { value: 10 });
-    expect(await state.isBlockReal(block)).to.equal((await state.getBlockData(0)).blockHash);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 });
+    expect(await state.isBlockReal(transactionsCreated.block)).to.equal((await state.getBlockData(0)).blockHash);
     await expect(state.isBlockReal(wrongBlockNumber)).to.be.revertedWith(
       'This block does not exist',
     );
-    expect(await state.areBlockAndTransactionsReal(block, [transaction1])).to.equal(
+    expect(await state.areBlockAndTransactionsReal(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction])).to.equal(
       (await state.getBlockData(0)).blockHash,
     );
     await expect(
@@ -979,7 +1016,7 @@ describe('State contract State functions', function () {
     ).to.be.revertedWith('State: This block does not exist');
 
     await expect(
-      state.areBlockAndTransactionsReal(block, [transaction1, transaction1]),
+      state.areBlockAndTransactionsReal(transactionsCreated.block, [transaction1, transaction1]),
     ).to.be.revertedWith('State: Some of these transactions are not in this block');
   });
 
@@ -1000,7 +1037,9 @@ describe('State contract State functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.proposeBlock(block, [transaction1], { value: 10 });
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 });
 
     const { blockHash } = await state.blockHashes(0);
     expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(false);
@@ -1036,7 +1075,9 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await state.setStakeAccount(addr2.address, amount, challengeLocked);
-    await state.proposeBlock(block, [transaction1], { value: 10 });
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.withdrawTransaction), true, false);
+    await setTransactionInfo(shield.address, calculateTransactionHash(transactionsCreated.depositTransaction), true, false);
+    await state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction], { value: 10 });
 
     const badBlock = {
       blockHash: (await state.blockHashes(0)).blockHash,
