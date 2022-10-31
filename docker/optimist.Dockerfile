@@ -13,9 +13,7 @@ RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
 ENV ZOKRATES_HOME /app
 ENV ZOKRATES_STDLIB /app/stdlib
 
-EXPOSE 80
-# websocket port 8080
-EXPOSE 8080
+EXPOSE 80 8080 9229
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
