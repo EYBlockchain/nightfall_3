@@ -194,7 +194,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                         call(
                             // Call getTransactionEscrowed function to see if funds has been deposited
                             gas(),
-                            shieldAddress.slot, //To addr
+                            sload(shieldAddress.slot), //To addr
                             0, //No value
                             x, //Inputs are stored at location x
                             0x24, //Inputs are 36 bytes long
