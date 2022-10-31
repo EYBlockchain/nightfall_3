@@ -5,6 +5,7 @@ import { setTransactionInfo } from '../utils/shieldStorage.mjs';
 
 const { ethers, upgrades } = hardhat;
 
+
 describe('State contract State functions', function () {
   let ProposersInstance;
   let addr1;
