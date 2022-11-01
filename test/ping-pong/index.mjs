@@ -158,7 +158,6 @@ const getContractInstance = async (contractName, nf3) => {
 Set the block stake parameter for the proposers
 */
 const setBlockStake = async amount => {
-  console.log('Setting BLOCK STAKE...');
   const transactions = await nfMultiSig.setBlockStake(
     amount,
     signingKeys.user1,
@@ -179,7 +178,6 @@ const setBlockStake = async amount => {
 };
 
 const setMinimumStake = async amount => {
-  console.log('Setting MINIMUM STAKE...');
   const transactions = await nfMultiSig.setMinimumStake(
     amount,
     signingKeys.user1,
@@ -203,7 +201,6 @@ const setMinimumStake = async amount => {
 Set the value per slot parameter for the proposers
 */
 const setValuePerSlot = async amount => {
-  console.log('Setting VALUE PER SLOT...');
   const transactions = await nfMultiSig.setValuePerSlot(
     amount,
     signingKeys.user1,
@@ -219,7 +216,7 @@ const setValuePerSlot = async amount => {
     transactions,
   );
   await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-  const valuePerSlot = await shieldContract.methods.getBlockStake().call();
+  const valuePerSlot = await shieldContract.methods.getValuePerSlot().call();
   console.log('VALUE PER SLOT SET: ', valuePerSlot);
 };
 
