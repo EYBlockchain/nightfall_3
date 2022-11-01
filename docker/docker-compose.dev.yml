@@ -92,7 +92,7 @@ services:
         source: ../nightfall-deployer/circuits
         target: /app/circuits/
       - type: bind
-        source: ../zokrates-worker/src
+        source: ../worker/src
         target: /app/src/
       - type: bind
         source: ../config/default.js
@@ -100,4 +100,4 @@ services:
     ports:
       # to use with postman and etc
       - 8091:80
-    entrypoint: [ "npm", "run", "start" ]
+    entrypoint: ['npm', 'run', 'start']

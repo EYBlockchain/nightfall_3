@@ -58,12 +58,12 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
         try {
           const cipherTexts = [
             transaction.ercAddress,
-            transaction.tokenId,
+            transaction.recipientAddress,
             ...transaction.compressedSecrets,
           ];
           const [packedErc, unpackedTokenID, ...rest] = decrypt(
             generalise(key),
-            generalise(edwardsDecompress(transaction.recipientAddress)),
+            generalise(edwardsDecompress(transaction.tokenId)),
             generalise(cipherTexts),
           );
           const [erc, tokenId] = packSecrets(

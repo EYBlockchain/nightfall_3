@@ -12,7 +12,7 @@ import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
+const { CIRCOM_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
 const { generalise } = gen;
 
@@ -96,11 +96,11 @@ async function tokenise(items) {
 
     logger.debug({
       msg: 'witness input is',
-      witness: witness.join(' '),
+      witness: JSON.stringify(witness, 0, 2),
     });
 
     const folderpath = 'tokenise';
-    const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
+    const res = await axios.post(`${PROTOCOL}${CIRCOM_WORKER_HOST}/generate-proof`, {
       folderpath,
       inputs: witness,
       provingScheme: PROVING_SCHEME,
