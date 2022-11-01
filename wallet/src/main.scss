@@ -1,48 +1,40 @@
-@import '~bootstrap/dist/css/bootstrap.min.css';
-@import "~bootstrap/scss/bootstrap";
+@import '~bootstrap/scss/bootstrap';
 @import 'font-awesome/css/font-awesome.min.css';
 @import 'bootstrap-social/bootstrap-social.css';
 
-@import '../src/assets/css/main.scss';
-// @import './index.css';
-// @import '../src/views/app.style.css';
+@import './assets/css/main.scss';
 
-// For the initial page
-@import '../src/views/initialPage/initial.scss';
+@import './views/App/styles.scss';
 
 // For the wallet page
-@import '../src/views/wallet/wallet.scss';
-@import '../src/styles/assets.scss';
-@import '../src/styles/tokenItem.scss';
-@import '../src/styles/tokens.scss';
+@import './styles/assets.scss';
+@import './styles/tokenItem.scss';
+@import './styles/tokens.scss';
 
 // For the header
-@import '../src/components/Header/accountDetails.scss';
-@import '../src/components/Header/header.scss';
-@import '../src/components/Header/logo.scss';
-@import '../src/components/Header/menuItem.scss';
-@import '../src/components/Header/navItems.scss';
+@import './components/Header/accountDetails.scss';
+@import './components/Header/header.scss';
+@import './components/Header/logo.scss';
+@import './components/Header/menuItem.scss';
+@import './components/Header/navItems.scss';
 
 // For the sidebar
-@import '../src/components/SideBar/index.scss';
-@import '../src/components/SideBar/sideItem.scss';
+@import './components/SideBar/index.scss';
 
 // For the bridge page
 @import './views/bridge/styles.scss';
-@import '../src/components/BridgeComponent/styles.scss';
+@import './components/BridgeComponent/styles.scss';
 
-// For Modals
-@import './styles/modal.scss';
-
-// // For the Tokens Modal in the Bridge Page when the user click to select other token
-// @import './components/Modals/Bridge/TokensList/styles.scss';
-
+//
 // For the transaction page
-@import '../src/views/transactionPage/styles.scss';
+@import './views/transactionPage/styles.scss';
 
 // For transaction component
-@import '../src/components/Transactions/index.scss';
-@import '../src/components/Transactions/withdraw.scss';
+@import './components/Transactions/index.scss';
+@import './components/Transactions/withdraw.scss';
 
 // For the toast
 @import '../node_modules/react-toastify/dist/ReactToastify.css';
+
+// For Modals
+// @import './styles/modal.scss';

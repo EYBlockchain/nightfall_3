@@ -5,16 +5,13 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  
-  width: 100%;  
-  padding: 15px;            
-  
-  background-color: $light-gray-100;  
-  position: sticky;
-  top: 0px;
-  z-index: 1;
 
-  @media screen and (max-width: '1000px'){
+  width: 100%;
+  padding: 15px;
+
+  background-color: $light-gray-100;
+
+  @media screen and (max-width: '1000px') {
     svg {
       width: 30px;
       height: 30px;
@@ -25,6 +22,4 @@
       }
     }
   }
-
 }
-  

@@ -10,14 +10,11 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import importTokens from '@TokenList/index';
 import Assets from '@Components/Assets/index.jsx';
-import Header from '@Components/Header/header.jsx';
-import SideBar from '@Components/SideBar/index.jsx';
 import Tokens from '@Components/Tokens/index.jsx';
 import { getWalletBalance } from '@Nightfall/services/commitment-storage.js';
 import Lottie from 'lottie-react';
 import { UserContext } from '../../hooks/User/index.jsx';
 
-import './wallet.scss';
 import * as Storage from '../../utils/lib/local-storage';
 import Web3 from '../../common-files/utils/web3';
 import { useAccount } from '../../hooks/Account/index.tsx';
@@ -518,38 +515,27 @@ export default function Wallet() {
   }, delay);
 
   return (
-    <div>
-      {process.env.REACT_APP_MODE === 'local' ? <Header /> : <></>}
-      <div className="wallet">
-        <div className="walletComponents">
-          <div className="walletComponents__left">
-            <SideBar />
-          </div>
-          <div className="walletComponents__right">
-            <Assets tokenList={tokens} />
-            <Tokens tokenList={tokens} />
-          </div>
-        </div>
-        <div>
-          <WalletModal
-            show={modalShow}
-            onHide={() => {
-              setModalShow(false);
-            }}
-            setIsWalletRecovered={setIsWalletRecovered}
-            setShowWalletRecoveredModal={setShowWalletRecoveredModal}
-          />
-          <RecoveredWalletModal
-            show={showWalletRecoveredModal}
-            isRecovered={isWalletRecoverd}
-            setShowModal={setModalShow}
-            onHide={() => {
-              setShowWalletRecoveredModal(false);
-            }}
-          />
-        </div>
-      </div>
-    </div>
+    <>
+      <Assets tokenList={tokens} />
+      <Tokens tokenList={tokens} />
+
+      <WalletModal
+        show={modalShow}
+        onHide={() => {
+          setModalShow(false);
+        }}
+        setIsWalletRecovered={setIsWalletRecovered}
+        setShowWalletRecoveredModal={setShowWalletRecoveredModal}
+      />
+      <RecoveredWalletModal
+        show={showWalletRecoveredModal}
+        isRecovered={isWalletRecoverd}
+        setShowModal={setModalShow}
+        onHide={() => {
+          setShowWalletRecoveredModal(false);
+        }}
+      />
+    </>
   );
 }
 

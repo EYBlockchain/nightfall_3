@@ -551,7 +551,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
 
   return (
     <>
-      <Modal contentClassName="modalFather" show={show} onHide={() => onHide()}>
+      <Modal show={show} onHide={() => onHide()}>
         <Modal.Header closeButton>
           <HeaderTitle>Send</HeaderTitle>
         </Modal.Header>

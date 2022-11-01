@@ -5,10 +5,8 @@
   left: 0;
   top: 0;
   height: 100%;
-  width: 100%;  
-  
+  width: 100%;
 }
-
 
 .modal-content {
   margin: 10% auto;
@@ -20,14 +18,14 @@
 
 .modal-footer h3 {
   margin: 0;
-  color: #000
+  color: #000;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   background: var(--modal-color);
-  padding: 15px;  
+  padding: 15px;
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   color: black;
@@ -95,14 +93,12 @@
 }
 
 .estimationFee {
-  
   margin-top: 24px;
   &__title {
-
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    
+
     &__main {
       font-size: large;
       font-weight: bold;
@@ -116,14 +112,12 @@
 }
 
 .transferModeModal {
-
   margin-top: 24px;
   &__title {
-
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    
+
     &__main {
       font-size: large;
       font-weight: bold;
@@ -139,7 +133,6 @@
     font-size: small;
     text-align: start;
   }
-
 }
 
 .divider {
@@ -153,11 +146,10 @@
 
 .modalBody {
   flex-direction: column;
-  text-align: center;  
+  text-align: center;
   padding: 10px;
 
   .tokenDetails {
-
     &__val {
       margin-top: 20px;
       font-size: x-large;
@@ -168,7 +160,7 @@
       margin-top: 10px;
       color: $light-gray-600;
       font-size: small;
-    }    
+    }
   }
 
   .networkButtons {
@@ -183,21 +175,20 @@
       background-color: #bbb6f363;
       border-radius: 15px;
       margin-right: 15px;
-      width: 70%;      
+      width: 70%;
     }
 
     &__button2 {
-      padding: 10px;      
+      padding: 10px;
       background-color: #b7b1f5ad;
       border-radius: 15px;
       margin-left: 15px;
       width: 70%;
     }
-  }  
+  }
 }
 
-.sendModal {        
-  
+.sendModal {
   input {
     width: 100%;
     border: 1px solid $light-gray-500;
@@ -210,7 +201,7 @@
     font-size: small;
     color: $light-gray-500;
     margin-top: 10px;
-  }  
+  }
 
   .balanceText {
     display: flex;
@@ -223,12 +214,10 @@
       justify-content: space-between;
 
       p {
-        
         &:first-child {
           margin-right: 5px;
         }
       }
-      
     }
   }
 
@@ -247,36 +236,36 @@
 
 .sendModalBalance {
   margin-top: 50px;
-  display: flex;  
-  flex-direction: row !important;  
+  display: flex;
+  flex-direction: row !important;
   align-items: center;
   border: solid 1px $light-gray-500;
   height: 60px;
   border-radius: 10px;
   padding: 5px;
   width: 100%;
-  
-  input{
+
+  input {
     border: none;
-    width: 50%; 
+    width: 50%;
     padding: 0 10px;
     ::placeholder {
       color: $light-gray-900;
     }
   }
-  
+
   .letfItems {
     width: 40%;
     display: flex;
     align-items: center;
-    justify-content: space-around;    
+    justify-content: space-around;
     align-content: center;
 
     .maxButton {
       color: $light-primary-500;
       font-weight: 600;
-      font-size: small;      
-      padding: 5px;            
+      font-size: small;
+      padding: 5px;
 
       &:hover {
         cursor: pointer;
@@ -284,7 +273,6 @@
         border-radius: 5px;
       }
     }
-
   }
 
   .rightItems {
@@ -303,4 +291,3 @@
     }
   }
 }
-

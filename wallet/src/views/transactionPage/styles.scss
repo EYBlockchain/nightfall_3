@@ -6,19 +6,6 @@
   transform: translate(-50%);
 }
 
-.bridgeComponent {
-  display: flex;
-
-  &__left {
-    min-width: 270px;
-    width: 15%;
-  }
-
-  &__right {
-    
-    width: 85%;
-  }
-}
 .warningBanner {
   margin: 0 -15px;
 }
@@ -36,16 +23,8 @@
       rgba(108, 38, 255, 0.2) 0%,
       rgba(242, 89, 255, 0) 100%
     ),
-    linear-gradient(
-      211.99deg,
-      rgba(65, 157, 241, 0.2) -4.17%,
-      rgba(45, 143, 234, 0) 68.7%
-    ),
-    radial-gradient(
-      100% 100% at 28.65% 0%,
-      #d5bdf5 0%,
-      rgba(250, 247, 254, 0) 100%
-    );
+    linear-gradient(211.99deg, rgba(65, 157, 241, 0.2) -4.17%, rgba(45, 143, 234, 0) 68.7%),
+    radial-gradient(100% 100% at 28.65% 0%, #d5bdf5 0%, rgba(250, 247, 254, 0) 100%);
 }
 
 .pagePartition {
@@ -144,31 +123,31 @@
         width: 22px;
         margin-top: -2px;
         margin-right: 2px;
-      }      
+      }
     }
 
     .fastWithdraw {
-        color: $light-primary-500;        
-        outline: none;
-        margin: 6px 0;          
-        border-radius: 38px;        
-        cursor: pointer;
-  
-        @media #{$lg-devices} {
-          width: fit-content;
-        }          
-  
-        .infoIcon {
-          height: 22px;
-          width: 22px;
-          margin-top: -2px;
-          margin-right: 2px;
-        }
-  
-        // &fastWithdraw {
-        font-weight: bold;
-        text-decoration: underline;        
+      color: $light-primary-500;
+      outline: none;
+      margin: 6px 0;
+      border-radius: 38px;
+      cursor: pointer;
+
+      @media #{$lg-devices} {
+        width: fit-content;
       }
+
+      .infoIcon {
+        height: 22px;
+        width: 22px;
+        margin-top: -2px;
+        margin-right: 2px;
+      }
+
+      // &fastWithdraw {
+      font-weight: bold;
+      text-decoration: underline;
+    }
   }
 }
 
@@ -240,7 +219,7 @@
   margin-top: 16px;
 
   .fromLabel {
-    @extend .headerH6 !optional
+    @extend .headerH6 !optional;
   }
 
   .fromSection {
@@ -269,9 +248,9 @@
       .balanceDetails {
         // font-label-extra-small
         font-size: small;
-        
+
         &__label {
-          margin-right: 4px;    
+          margin-right: 4px;
           color: $light-gray-500;
         }
       }
@@ -346,7 +325,7 @@
           border-radius: 12px;
         }
 
-        &__maxButton {            
+        &__maxButton {
           margin-right: 10px;
           color: $light-primary-500;
           font-weight: 600;
@@ -367,7 +346,7 @@
 
   .toLabel {
     margin-top: 8px;
-    @extend .headerH6 !optional
+    @extend .headerH6 !optional;
   }
 
   .toChainAndBalanceDetails {
@@ -393,23 +372,22 @@
     }
 
     .balanceDetails {
-        // font-label-extra-small
-        font-size: small;
-        
-        &__label {
-          margin-right: 4px;    
-          color: $light-gray-500;
-        }
+      // font-label-extra-small
+      font-size: small;
+
+      &__label {
+        margin-right: 4px;
+        color: $light-gray-500;
       }
+    }
   }
 }
 
 .transferMode {
-  margin-top: 36px;  
+  margin-top: 36px;
   //   font-body-small text-center
   text-align: center;
   font-size: small;
-  
 
   &__label {
     color: $light-gray-600;

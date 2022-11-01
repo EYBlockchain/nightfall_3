@@ -1,49 +1,86 @@
-@import '~/../../../assets/css/theme/theme';
-
-
-a {
-  text-decoration: none;
-}
-a:hover{
-  text-decoration: none;
-}
-
-.sideBar{
+.sidebar {
   display: flex;
   flex-direction: column;
-  align-content: space-between;
-  justify-content: space-between;  
-  min-height: calc(90vh - #{$navbar-local-height});
-  
-}
-.sideItems {  
-  display: flex;
-  flex-direction: column;
-  padding: 0 10px 200px;  
+  justify-content: space-between;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100%;
+  padding: 20px;
 }
 
-.links    {  
-  display: flex;  
-  
+.sidebar__links {
+  position: sticky;
+  top: 20px;
+}
+
+.sidebar__link {
+  display: flex;
+  gap: 20px;
   align-items: center;
-  margin-top: 20px;
   border-radius: 10px;
-  width: 250px;
   height: 40px;
-  padding: 0 20px;
-  margin-left: 10px;
+  padding: 0 10px;
+  margin-bottom: 20px;
   color: #555;
+  text-decoration: none;
 
-  .linkText {
-    margin-left: 20px;
-  }
-
-
-  font-size: medium;
-
-  &:hover {    
+  &:hover {
+    color: inherit;
     background-color: #eee;
-    cursor: pointer;
+    text-decoration: none;
   }
+}
 
+.sidebar__link--active {
+  background-color: #eee;
+}
+
+.sidebar__icon {
+  filter: grayscale(1);
+
+  .sidebar__link--active & {
+    filter: none;
+  }
+}
+
+@keyframes sidebarSpinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.sidebar__status {
+  position: sticky;
+  bottom: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sidebar__spinner {
+  display: block;
+  width: 32px;
+  height: 32px;
+  background: #f4ba40;
+  position: relative;
+  border-radius: 50%;
+}
+
+.sidebar__spinner:after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  border-color: #fff #fff #fff transparent;
+  animation-name: sidebarSpinner;
+  animation-duration: 600ms;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
 }

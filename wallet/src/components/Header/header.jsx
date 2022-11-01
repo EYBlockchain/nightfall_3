@@ -1,6 +1,5 @@
 import React from 'react';
 import { useMediaQuery } from 'react-responsive';
-import { CgMenu } from 'react-icons/cg';
 import Logo from './logo.jsx';
 import NavItems from './navItems.jsx';
 
@@ -14,18 +13,13 @@ export default function Header() {
       <div className="navHead">
         <Logo />
         <NavItems />
-
-        {/* <SearchBox /> */}
       </div>
     );
   }
   return (
     <div className="navHead">
-      <CgMenu />
       <Logo />
       <NavItems />
-
-      {/* <SearchBox /> */}
     </div>
   );
 }

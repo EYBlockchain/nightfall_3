@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import reactToWebcomponent from 'react-to-webcomponent';
-import App from '../views/app.view.jsx';
+import App from '../views/App';
 
 const generateWebComponents = () => {
   if (customElements.get('nightfall-app') === undefined) {
