@@ -51,7 +51,7 @@ function loadDemoApp() {
   };
   console.log('fetching asset manifest');
   return (
-    fetch(`https://wallet-beta.polygon.technology/nightfall/asset-manifest.json`)
+    fetch(`https://wallet.testnet.polygon-nightfall.technology/asset-manifest.json`)
       .then(response => {
         return response.json();
       })
