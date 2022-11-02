@@ -31,6 +31,20 @@ async function tokenise(items) {
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
 
+  const responseCircuitHash = await axios.get(
+    `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
+    {
+      params: { circuit: 'tokenise' },
+    },
+  );
+
+  logger.trace({
+    msg: 'Received response from get-circuit-hash',
+    response: responseCircuitHash.data,
+  });
+
+  const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
+
   logger.debug({
     msg: 'Hash of new commitment',
     hash: commitment.hash.hex(),
@@ -61,11 +75,12 @@ async function tokenise(items) {
     const publicData = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 3,
+      circuitHash,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       numberNullifiers: VK_IDS.tokenise.numberNullifiers,
       numberCommitments: VK_IDS.tokenise.numberCommitments,
+      isOnlyL2: true,
     });
 
     const privateData = {
@@ -117,12 +132,13 @@ async function tokenise(items) {
     const optimisticTokeniseTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 3,
+      circuitHash,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
       numberNullifiers: VK_IDS.tokenise.numberNullifiers,
       numberCommitments: VK_IDS.tokenise.numberCommitments,
+      isOnlyL2: true,
     });
 
     logger.debug({

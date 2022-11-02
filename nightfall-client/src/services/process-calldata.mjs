@@ -42,7 +42,7 @@ async function getProposeBlockCalldata(eventData) {
     const [
       value,
       fee,
-      transactionType,
+      circuitHash,
       tokenType,
       historicRootBlockNumberL2,
       tokenId,
@@ -56,7 +56,7 @@ async function getProposeBlockCalldata(eventData) {
     const transaction = {
       value,
       fee,
-      transactionType,
+      circuitHash,
       tokenType,
       historicRootBlockNumberL2,
       tokenId,

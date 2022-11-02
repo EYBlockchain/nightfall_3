@@ -51,7 +51,10 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
 
     const storeCommitments = [];
     const tempTransactionStore = [];
-    if (Number(transaction.transactionType) === 1 && countOfNonZeroCommitments === 0) {
+    if (
+      (transaction.compressedSecrets[0] !== 0 || transaction.compressedSecrets[1] !== 0) &&
+      !countOfNonZeroCommitments
+    ) {
       zkpPrivateKeys.forEach((key, i) => {
         // decompress the secrets first and then we will decryp t the secrets from this
         const { zkpPublicKey } = ZkpKeys.calculateZkpPublicKey(generalise(key));

@@ -235,19 +235,6 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "enum Structures.TransactionTypes",
-        "name": "txType",
-        "type": "uint8"
-      }
-    ],
-    "name": "VkChanged",
-    "type": "event"
-  },
-  {
     "inputs": [],
     "name": "_owner",
     "outputs": [
@@ -290,6 +277,20 @@
       }
     ],
     "name": "advancedWithdrawals",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "challengesAddress",
     "outputs": [
       {
         "internalType": "address",
@@ -349,14 +350,9 @@
         "internalType": "address",
         "name": "tokenAddr",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "transactionType",
-        "type": "uint256"
       }
     ],
-    "name": "getRestriction",
+    "name": "getRestrictionDeposit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -371,17 +367,37 @@
   {
     "inputs": [
       {
-        "internalType": "enum Structures.TransactionTypes",
-        "name": "txType",
-        "type": "uint8"
+        "internalType": "address",
+        "name": "tokenAddr",
+        "type": "address"
       }
     ],
-    "name": "getVerificationKey",
+    "name": "getRestrictionWithdraw",
     "outputs": [
       {
-        "internalType": "uint256[]",
+        "internalType": "uint256",
         "name": "",
-        "type": "uint256[]"
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isEscrowed",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -422,24 +438,6 @@
     "stateMutability": "view",
     "type": "function",
     "constant": true
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "_vk",
-        "type": "uint256[]"
-      },
-      {
-        "internalType": "enum Structures.TransactionTypes",
-        "name": "_txType",
-        "type": "uint8"
-      }
-    ],
-    "name": "registerVerificationKey",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
   },
   {
     "inputs": [
@@ -546,6 +544,26 @@
   {
     "inputs": [
       {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "transactionEthFees",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "newOwner",
         "type": "address"
@@ -562,31 +580,6 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "enum Structures.TransactionTypes",
-        "name": "",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "vks",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function",
-    "constant": true
   },
   {
     "inputs": [
@@ -618,6 +611,59 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_challengesAddress",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "transactionHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getTransactionEscrowed",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "transactionHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getTransactionEthFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
         "components": [
           {
             "internalType": "uint112",
@@ -625,14 +671,14 @@
             "type": "uint112"
           },
           {
-            "internalType": "uint112",
+            "internalType": "uint96",
             "name": "fee",
-            "type": "uint112"
+            "type": "uint96"
           },
           {
-            "internalType": "enum Structures.TransactionTypes",
-            "name": "transactionType",
-            "type": "uint8"
+            "internalType": "uint40",
+            "name": "circuitHash",
+            "type": "uint40"
           },
           {
             "internalType": "enum Structures.TokenType",
@@ -640,9 +686,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[4]",
+            "internalType": "uint64[]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[4]"
+            "type": "uint64[]"
           },
           {
             "internalType": "bytes32",
@@ -660,14 +706,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[3]",
+            "internalType": "bytes32[]",
             "name": "commitments",
-            "type": "bytes32[3]"
+            "type": "bytes32[]"
           },
           {
-            "internalType": "bytes32[4]",
+            "internalType": "bytes32[]",
             "name": "nullifiers",
-            "type": "bytes32[4]"
+            "type": "bytes32[]"
           },
           {
             "internalType": "bytes32[2]",
@@ -722,6 +768,11 @@
           },
           {
             "internalType": "bytes32",
+            "name": "frontierHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
             "name": "transactionHashesRoot",
             "type": "bytes32"
           }
@@ -735,6 +786,31 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "blockHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "blockNumberL2",
+        "type": "uint256"
+      }
+    ],
+    "name": "isBlockPaymentPending",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -840,6 +916,11 @@
           },
           {
             "internalType": "bytes32",
+            "name": "frontierHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
             "name": "transactionHashesRoot",
             "type": "bytes32"
           }
@@ -856,14 +937,14 @@
             "type": "uint112"
           },
           {
-            "internalType": "uint112",
+            "internalType": "uint96",
             "name": "fee",
-            "type": "uint112"
+            "type": "uint96"
           },
           {
-            "internalType": "enum Structures.TransactionTypes",
-            "name": "transactionType",
-            "type": "uint8"
+            "internalType": "uint40",
+            "name": "circuitHash",
+            "type": "uint40"
           },
           {
             "internalType": "enum Structures.TokenType",
@@ -871,9 +952,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[4]",
+            "internalType": "uint64[]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[4]"
+            "type": "uint64[]"
           },
           {
             "internalType": "bytes32",
@@ -891,14 +972,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[3]",
+            "internalType": "bytes32[]",
             "name": "commitments",
-            "type": "bytes32[3]"
+            "type": "bytes32[]"
           },
           {
-            "internalType": "bytes32[4]",
+            "internalType": "bytes32[]",
             "name": "nullifiers",
-            "type": "bytes32[4]"
+            "type": "bytes32[]"
           },
           {
             "internalType": "bytes32[2]",
@@ -921,9 +1002,9 @@
         "type": "uint256"
       },
       {
-        "internalType": "bytes32[6]",
+        "internalType": "bytes32[]",
         "name": "siblingPath",
-        "type": "bytes32[6]"
+        "type": "bytes32[]"
       }
     ],
     "name": "isValidWithdrawal",
@@ -969,6 +1050,11 @@
           },
           {
             "internalType": "bytes32",
+            "name": "frontierHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
             "name": "transactionHashesRoot",
             "type": "bytes32"
           }
@@ -985,14 +1071,14 @@
             "type": "uint112"
           },
           {
-            "internalType": "uint112",
+            "internalType": "uint96",
             "name": "fee",
-            "type": "uint112"
+            "type": "uint96"
           },
           {
-            "internalType": "enum Structures.TransactionTypes",
-            "name": "transactionType",
-            "type": "uint8"
+            "internalType": "uint40",
+            "name": "circuitHash",
+            "type": "uint40"
           },
           {
             "internalType": "enum Structures.TokenType",
@@ -1000,9 +1086,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[4]",
+            "internalType": "uint64[]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[4]"
+            "type": "uint64[]"
           },
           {
             "internalType": "bytes32",
@@ -1020,14 +1106,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[3]",
+            "internalType": "bytes32[]",
             "name": "commitments",
-            "type": "bytes32[3]"
+            "type": "bytes32[]"
           },
           {
-            "internalType": "bytes32[4]",
+            "internalType": "bytes32[]",
             "name": "nullifiers",
-            "type": "bytes32[4]"
+            "type": "bytes32[]"
           },
           {
             "internalType": "bytes32[2]",
@@ -1050,9 +1136,9 @@
         "type": "uint256"
       },
       {
-        "internalType": "bytes32[6]",
+        "internalType": "bytes32[]",
         "name": "siblingPath",
-        "type": "bytes32[6]"
+        "type": "bytes32[]"
       }
     ],
     "name": "finaliseWithdrawal",
@@ -1070,14 +1156,14 @@
             "type": "uint112"
           },
           {
-            "internalType": "uint112",
+            "internalType": "uint96",
             "name": "fee",
-            "type": "uint112"
+            "type": "uint96"
           },
           {
-            "internalType": "enum Structures.TransactionTypes",
-            "name": "transactionType",
-            "type": "uint8"
+            "internalType": "uint40",
+            "name": "circuitHash",
+            "type": "uint40"
           },
           {
             "internalType": "enum Structures.TokenType",
@@ -1085,9 +1171,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[4]",
+            "internalType": "uint64[]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[4]"
+            "type": "uint64[]"
           },
           {
             "internalType": "bytes32",
@@ -1105,14 +1191,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[3]",
+            "internalType": "bytes32[]",
             "name": "commitments",
-            "type": "bytes32[3]"
+            "type": "bytes32[]"
           },
           {
-            "internalType": "bytes32[4]",
+            "internalType": "bytes32[]",
             "name": "nullifiers",
-            "type": "bytes32[4]"
+            "type": "bytes32[]"
           },
           {
             "internalType": "bytes32[2]",
@@ -1166,6 +1252,11 @@
           },
           {
             "internalType": "bytes32",
+            "name": "frontierHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
             "name": "transactionHashesRoot",
             "type": "bytes32"
           }
@@ -1182,14 +1273,14 @@
             "type": "uint112"
           },
           {
-            "internalType": "uint112",
+            "internalType": "uint96",
             "name": "fee",
-            "type": "uint112"
+            "type": "uint96"
           },
           {
-            "internalType": "enum Structures.TransactionTypes",
-            "name": "transactionType",
-            "type": "uint8"
+            "internalType": "uint40",
+            "name": "circuitHash",
+            "type": "uint40"
           },
           {
             "internalType": "enum Structures.TokenType",
@@ -1197,9 +1288,9 @@
             "type": "uint8"
           },
           {
-            "internalType": "uint64[4]",
+            "internalType": "uint64[]",
             "name": "historicRootBlockNumberL2",
-            "type": "uint64[4]"
+            "type": "uint64[]"
           },
           {
             "internalType": "bytes32",
@@ -1217,14 +1308,14 @@
             "type": "bytes32"
           },
           {
-            "internalType": "bytes32[3]",
+            "internalType": "bytes32[]",
             "name": "commitments",
-            "type": "bytes32[3]"
+            "type": "bytes32[]"
           },
           {
-            "internalType": "bytes32[4]",
+            "internalType": "bytes32[]",
             "name": "nullifiers",
-            "type": "bytes32[4]"
+            "type": "bytes32[]"
           },
           {
             "internalType": "bytes32[2]",
@@ -1247,9 +1338,9 @@
         "type": "uint256"
       },
       {
-        "internalType": "bytes32[6]",
+        "internalType": "bytes32[]",
         "name": "siblingPath",
-        "type": "bytes32[6]"
+        "type": "bytes32[]"
       }
     ],
     "name": "setAdvanceWithdrawalFee",

@@ -75,20 +75,20 @@ export async function countNullifiers(nullifiers) {
 }
 
 // function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
-export async function countWithdrawTransactionHashes(transactionHashes) {
+export async function countTransactionHashesBelongCircuit(transactionHashes, circuitHash) {
   const connection = await mongo.connection(MONGO_URL);
   const query = {
     transactionHash: { $in: transactionHashes },
-    nullifierTransactionType: '2',
+    nullifierCircuitHash: circuitHash,
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
 
 // function to get if the transaction hash belongs to a withdraw transaction
-export async function isTransactionHashWithdraw(transactionHash) {
+export async function isTransactionHashBelongCircuit(transactionHash, circuitHash) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash, nullifierTransactionType: '2' };
+  const query = { transactionHash, nullifierCircuitHash: circuitHash };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
@@ -135,7 +135,7 @@ export async function markNullified(commitment, transaction) {
     $set: {
       isPendingNullification: false,
       isNullified: true,
-      nullifierTransactionType: BigInt(transaction.transactionType).toString(),
+      nullifierCircuitHash: transaction.circuitHash,
       transactionHash: transaction.transactionHash,
     },
   };
@@ -514,12 +514,12 @@ export async function getWalletCommitments(compressedZkpPublicKeyList, ercList) 
 }
 
 // function to get the withdraw commitments for each ERC address of a zkp public key
-export async function getWithdrawCommitments() {
+export async function getCommitmentsByCircuitHash(circuitHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = {
     isNullified: true,
-    nullifierTransactionType: '2',
+    nullifierCircuitHash: circuitHash,
     isNullifiedOnChain: { $gte: 0 },
   };
   // Get associated nullifiers of commitments that have been spent on-chain and are used for withdrawals.
