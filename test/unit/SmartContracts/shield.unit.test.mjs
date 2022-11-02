@@ -7,11 +7,7 @@ import {
   calculateTransactionHash,
   createBlockAndTransactions,
 } from '../utils/utils.mjs';
-import {
-  setAdvancedWithdrawal,
-  setTransactionInfo,
-  setWhitelist,
-} from '../utils/shieldStorage.mjs';
+import { setAdvancedWithdrawal, setWhitelist } from '../utils/shieldStorage.mjs';
 import {
   setBlockData,
   setBlockPaymentClaimed,
@@ -145,34 +141,15 @@ describe('Testing Shield Contract', function () {
     blockStake = await StateInstance.getBlockStake();
 
     ShieldInstance.setMaticAddress(erc20MockAddress);
+
+    await StateInstance.registerVerificationKey(0, [], true, false);
+    await StateInstance.registerVerificationKey(1, [], false, false);
+    await StateInstance.registerVerificationKey(2, [], false, true);
   });
 
   afterEach(async () => {
     // clear down the test network after each test
     await hardhat.network.provider.send('hardhat_reset');
-  });
-
-  describe('getTransactionEscrowed', async () => {
-    it('returns true if a transaction is escrowed', async function () {
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, true, false, 0);
-      const isEscrowed = await ShieldInstance.getTransactionEscrowed(withdrawTransactionHash);
-      expect(isEscrowed).to.equal(true);
-    });
-
-    it('returns false if a transaction is not escrowed', async function () {
-      const isEscrowed = await ShieldInstance.getTransactionEscrowed(withdrawTransactionHash);
-      expect(isEscrowed).to.equal(false);
-    });
-  });
-
-  describe('getTransactionEthFee', async () => {
-    it('returns eth fee for a transaction', async function () {
-      await setTransactionInfo(shieldAddress, depositTransactionHash, true, false, 15);
-      const getTransactionEthFee = await ShieldInstance.getTransactionEthFee(
-        depositTransactionHash,
-      );
-      expect(getTransactionEthFee).to.equal(15);
-    });
   });
 
   describe('submitTransaction', async function () {
@@ -184,10 +161,11 @@ describe('Testing Shield Contract', function () {
         value: 15,
       });
 
-      expect((await ShieldInstance.txInfo(depositTransactionHash)).isEscrowed).to.equal(true);
+      console.log(await StateInstance.txInfo(depositTransactionHash));
+      expect((await StateInstance.txInfo(depositTransactionHash)).isEscrowed).to.equal(true);
       expect(await Erc20MockInstance.balanceOf(await owner[0].address)).to.equal(99999990);
       expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(10);
-      expect((await ShieldInstance.txInfo(depositTransactionHash)).ethFee).to.equal(15);
+      expect((await StateInstance.txInfo(depositTransactionHash)).ethFee).to.equal(15);
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 
@@ -201,7 +179,7 @@ describe('Testing Shield Contract', function () {
       const depositTransactionERC721 = {
         value: '0',
         fee: '0',
-        transactionType: '0',
+        circuitHash: '0',
         tokenType: '1',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -236,8 +214,7 @@ describe('Testing Shield Contract', function () {
       };
       const tx = await ShieldInstance.submitTransaction(depositTransactionERC721);
       expect(
-        (await ShieldInstance.txInfo(calculateTransactionHash(depositTransactionERC721)))
-          .isEscrowed,
+        (await StateInstance.txInfo(calculateTransactionHash(depositTransactionERC721))).isEscrowed,
       ).to.equal(true);
       expect(
         await Erc721MockInstance.ownerOf(
@@ -252,7 +229,7 @@ describe('Testing Shield Contract', function () {
       const depositTransactionERC1155 = {
         value: '5',
         fee: '0',
-        transactionType: '0',
+        circuitHash: '0',
         tokenType: '2',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -287,7 +264,7 @@ describe('Testing Shield Contract', function () {
       };
       const tx = await ShieldInstance.submitTransaction(depositTransactionERC1155);
       expect(
-        (await ShieldInstance.txInfo(calculateTransactionHash(depositTransactionERC1155)))
+        (await StateInstance.txInfo(calculateTransactionHash(depositTransactionERC1155)))
           .isEscrowed,
       ).to.equal(true);
       expect(await Erc1155MockInstance.balanceOf(await owner[0].address, 0)).to.equal(1099995);
@@ -297,22 +274,65 @@ describe('Testing Shield Contract', function () {
 
     it('succeeds for a non deposit transaction', async function () {
       const tx = await ShieldInstance.submitTransaction(withdrawTransaction);
-      expect((await ShieldInstance.txInfo(withdrawTransactionHash)).isEscrowed).to.equal(false);
+      expect((await StateInstance.txInfo(withdrawTransactionHash)).isEscrowed).to.equal(false);
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 
     it('fails if user is not whitelisted and whitelisting is active', async function () {
       await setWhitelist(shieldAddress);
       await expect(ShieldInstance.submitTransaction(withdrawTransaction)).to.be.revertedWith(
-        'You are not authorised to transact using Nightfall',
+        'Shield: You are not authorised to transact using Nightfall',
       );
+    });
+
+    it('fails to submit deposit transaction if fee > 0 and msg.value > 0 ', async function () {
+      const depositTransactionInvalid = {
+        value: '10',
+        fee: '10',
+        circuitHash: '0',
+        tokenType: '0',
+        historicRootBlockNumberL2: [
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ],
+        tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
+        recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
+        commitments: [
+          '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ],
+        nullifiers: [
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ],
+        compressedSecrets: [
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ],
+        proof: [
+          '0x2e608465669d24b9f8f0cf93b76d68e10e2ab6d5e24a6097217334960088b63',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+        ],
+      };
+
+      await expect(
+        ShieldInstance.submitTransaction(depositTransactionInvalid, { value: 15 }),
+      ).to.be.revertedWith('Shield: Fee cannot be paid in both tokens');
     });
 
     it('fails to submit deposit transaction if ercAddress is invalid', async function () {
       const depositTransactionInvalid = {
         value: '10',
         fee: '0',
-        transactionType: '0',
+        circuitHash: '0',
         tokenType: '0',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -358,7 +378,7 @@ describe('Testing Shield Contract', function () {
       const depositTransactionInvalid = {
         value: '10',
         fee: '0',
-        transactionType: '0',
+        circuitHash: '0',
         tokenType: '0',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -408,7 +428,7 @@ describe('Testing Shield Contract', function () {
       const depositTransactionInvalid = {
         value: '100000',
         fee: '0',
-        transactionType: '0',
+        circuitHash: '0',
         tokenType: '0',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -451,7 +471,7 @@ describe('Testing Shield Contract', function () {
       const depositTransactionInvalid = {
         value: '1',
         fee: '0',
-        transactionType: '0',
+        circuitHash: '0',
         tokenType: '1',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -494,7 +514,7 @@ describe('Testing Shield Contract', function () {
       const depositTransactionInvalid = {
         value: '1',
         fee: '0',
-        transactionType: '0',
+        circuitHash: '0',
         tokenType: '5',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -715,7 +735,13 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
+      await setAdvancedWithdrawal(
+        shieldAddress,
+        withdrawTransactionHash,
+        owner[1].address,
+        1,
+        true,
+      );
 
       await expect(
         ShieldInstance.isValidWithdrawal(block, withdrawTransaction, index, siblingPath),
@@ -755,7 +781,9 @@ describe('Testing Shield Contract', function () {
       expect(advancedWithdrawal.currentOwner).to.equal(
         '0x0000000000000000000000000000000000000000',
       );
-      expect((await ShieldInstance.txInfo(withdrawTransactionHash)).isWithdrawn).to.equal(true);
+      expect(
+        (await ShieldInstance.advancedWithdrawals(withdrawTransactionHash)).isWithdrawn,
+      ).to.equal(true);
       expect(advancedWithdrawal.advanceFee).to.equal(0n);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
@@ -780,14 +808,13 @@ describe('Testing Shield Contract', function () {
       expect(await Erc20MockInstance.balanceOf(await owner[0].address)).to.equal(99999900);
       expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(100);
       expect(await Erc20MockInstance.balanceOf(stateAddress)).to.equal(0);
-      expect((await ShieldInstance.txInfo(withdrawTransactionHash)).isWithdrawn).to.equal(true);
+      expect(
+        (await ShieldInstance.advancedWithdrawals(withdrawTransactionHash)).isWithdrawn,
+      ).to.equal(true);
       expect(await ethers.provider.getBalance(shieldAddress)).to.equal(0);
       expect(await ethers.provider.getBalance(stateAddress)).to.equal(15);
-      const advancedWithdrawal = await ShieldInstance.advancedWithdrawals(withdrawTransactionHash);
-      expect(advancedWithdrawal.currentOwner).to.equal(
-        '0x0000000000000000000000000000000000000000',
-      );
-      expect(advancedWithdrawal.advanceFee).to.equal(0n);
+      await ShieldInstance.advancedWithdrawals(withdrawTransactionHash);
+
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(15);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
     });
@@ -797,7 +824,7 @@ describe('Testing Shield Contract', function () {
       const withdrawERC721 = {
         value: '0',
         fee: '0',
-        transactionType: '2',
+        circuitHash: '2',
         tokenType: '1',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000009',
@@ -872,7 +899,8 @@ describe('Testing Shield Contract', function () {
       );
       expect(advancedWithdrawal.advanceFee).to.equal(0n);
       expect(
-        (await ShieldInstance.txInfo(calculateTransactionHash(withdrawERC721))).isWithdrawn,
+        (await ShieldInstance.advancedWithdrawals(calculateTransactionHash(withdrawERC721)))
+          .isWithdrawn,
       ).to.equal(true);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
@@ -883,7 +911,7 @@ describe('Testing Shield Contract', function () {
       const withdrawERC1155 = {
         value: '25',
         fee: '0',
-        transactionType: '2',
+        circuitHash: '2',
         tokenType: '2',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000009',
@@ -955,7 +983,8 @@ describe('Testing Shield Contract', function () {
       );
       expect(advancedWithdrawal.advanceFee).to.equal(0n);
       expect(
-        (await ShieldInstance.txInfo(calculateTransactionHash(withdrawERC1155))).isWithdrawn,
+        (await ShieldInstance.advancedWithdrawals(calculateTransactionHash(withdrawERC1155)))
+          .isWithdrawn,
       ).to.equal(true);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
@@ -989,8 +1018,13 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
-
+      await setAdvancedWithdrawal(
+        shieldAddress,
+        withdrawTransactionHash,
+        owner[1].address,
+        1,
+        true,
+      );
       await expect(
         ShieldInstance.finaliseWithdrawal(block, withdrawTransaction, index, siblingPath),
       ).to.be.revertedWith('Shield: This transaction has already paid out');
@@ -1000,7 +1034,7 @@ describe('Testing Shield Contract', function () {
       const withdrawalTransactionInvalid = {
         value: '10',
         fee: '0',
-        transactionType: '2',
+        circuitHash: '2',
         tokenType: '0',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000009',
@@ -1104,7 +1138,7 @@ describe('Testing Shield Contract', function () {
       const withdrawalTransactionInvalid = {
         value: '10',
         fee: '0',
-        transactionType: '2',
+        circuitHash: '2',
         tokenType: '0',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000009',
@@ -1180,7 +1214,7 @@ describe('Testing Shield Contract', function () {
       const withdrawalTransactionInvalid = {
         value: '100000000',
         fee: '0',
-        transactionType: '2',
+        circuitHash: '2',
         tokenType: '0',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000009',
@@ -1255,7 +1289,7 @@ describe('Testing Shield Contract', function () {
       const withdrawalTransactionInvalid = {
         value: '5',
         fee: '0',
-        transactionType: '2',
+        circuitHash: '2',
         tokenType: '1',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000009',
@@ -1329,7 +1363,7 @@ describe('Testing Shield Contract', function () {
       const withdrawalTransactionInvalid = {
         value: '5',
         fee: '0',
-        transactionType: '2',
+        circuitHash: '2',
         tokenType: '5',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000009',
@@ -1461,7 +1495,13 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setAdvancedWithdrawal(shieldAddress, withdrawTransactionHash, owner[1].address, 1);
+      await setAdvancedWithdrawal(
+        shieldAddress,
+        withdrawTransactionHash,
+        owner[1].address,
+        1,
+        true,
+      );
 
       await time.increase(86400 * 7 + 1);
 
@@ -1476,10 +1516,21 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setAdvancedWithdrawal(shieldAddress, withdrawTransactionHash, owner[1].address, 1);
+      await setAdvancedWithdrawal(
+        shieldAddress,
+        withdrawTransactionHash,
+        owner[1].address,
+        1,
+        true,
+      );
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
-
+      await setAdvancedWithdrawal(
+        shieldAddress,
+        withdrawTransactionHash,
+        owner[1].address,
+        1,
+        true,
+      );
       await expect(
         ShieldInstance.advanceWithdrawal(block, withdrawTransaction, index, siblingPath),
       ).to.be.revertedWith('Shield: This transaction has already paid out');
@@ -1550,7 +1601,7 @@ describe('Testing Shield Contract', function () {
       const withdrawTransactionERC721 = {
         value: '10',
         fee: '0',
-        transactionType: '2',
+        circuitHash: '2',
         tokenType: '1',
         historicRootBlockNumberL2: [
           '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -1643,8 +1694,13 @@ describe('Testing Shield Contract', function () {
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;
 
-      await setTransactionInfo(shieldAddress, withdrawTransactionHash, false, true, 0);
-
+      await setAdvancedWithdrawal(
+        shieldAddress,
+        withdrawTransactionHash,
+        owner[1].address,
+        1,
+        true,
+      );
       await expect(
         ShieldInstance.setAdvanceWithdrawalFee(block, withdrawTransaction, index, siblingPath, {
           value: ethers.utils.parseEther('1'),
@@ -1655,7 +1711,13 @@ describe('Testing Shield Contract', function () {
     it('fails if trying to set a fee for a withdrawal that is not yours', async function () {
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
-      await setAdvancedWithdrawal(shieldAddress, withdrawTransactionHash, owner[1].address, 1);
+      await setAdvancedWithdrawal(
+        shieldAddress,
+        withdrawTransactionHash,
+        owner[1].address,
+        1,
+        false,
+      );
 
       const siblingPath = [block.transactionHashesRoot, depositTransactionHash];
       const index = 0;

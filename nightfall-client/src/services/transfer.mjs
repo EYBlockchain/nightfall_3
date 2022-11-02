@@ -76,11 +76,25 @@ async function transfer(transferParams) {
     // Compress the public key as it will be put on-chain
     const compressedEPub = edwardsCompress(ePublic);
 
+    const responseCircuitHash = await axios.get(
+      `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
+      {
+        params: { circuit: 'transfer' },
+      },
+    );
+
+    logger.trace({
+      msg: 'Received response from get-circuit-hash',
+      response: responseCircuitHash.data,
+    });
+
+    const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
+
     // now we have everything we need to create a Witness and compute a proof
     const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 1,
+      circuitHash,
       ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
       tokenId: compressedSecrets[1], // this is the encrypted tokenID
       recipientAddress: compressedEPub,
@@ -89,6 +103,7 @@ async function transfer(transferParams) {
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
       numberNullifiers: VK_IDS.transfer.numberNullifiers,
       numberCommitments: VK_IDS.transfer.numberCommitments,
+      isOnlyL2: true,
     });
 
     const privateData = {
@@ -141,7 +156,7 @@ async function transfer(transferParams) {
     const optimisticTransferTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 1,
+      circuitHash,
       ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
       tokenId: compressedSecrets[1], // this is the encrypted tokenID
       recipientAddress: compressedEPub,
@@ -151,6 +166,7 @@ async function transfer(transferParams) {
       proof,
       numberNullifiers: VK_IDS.transfer.numberNullifiers,
       numberCommitments: VK_IDS.transfer.numberCommitments,
+      isOnlyL2: true,
     });
 
     logger.debug({

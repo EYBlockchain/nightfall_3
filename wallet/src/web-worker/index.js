@@ -32,7 +32,7 @@ export default async function fetchCircuitFileAndStoreInIndexedDB() {
       !(await checkIndexDBForCircuitHash(circuit))
     ) {
       console.log('Updating', circuit);
-      const { abi, abih, program, programh, pk, pkh } = await fetchCircuit(circuit, {
+      const { abi, abih, program, programh, pk, pkh, hash, hashh } = await fetchCircuit(circuit, {
         utilApiServerUrl,
         isLocalRun,
         AWS: { s3Bucket },
@@ -40,6 +40,7 @@ export default async function fetchCircuitFileAndStoreInIndexedDB() {
       await storeCircuit(`${circuit.name}-abi`, abi, abih);
       await storeCircuit(`${circuit.name}-program`, program, programh);
       await storeCircuit(`${circuit.name}-pk`, pk, pkh);
+      await storeCircuit(`${circuit.name}-hash`, hash, hashh);
     }
   }
 }

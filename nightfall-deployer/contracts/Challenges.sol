@@ -8,18 +8,16 @@ grounds.
 
 pragma solidity ^0.8.0;
 
-import './Key_Registry.sol';
 import './Utils.sol';
 import './ChallengesUtil.sol';
 import './Config.sol';
 import './Stateful.sol';
 
-contract Challenges is Stateful, Key_Registry, Config {
+contract Challenges is Stateful, Config {
     mapping(bytes32 => address) public committers;
 
-    function initialize() public override(Stateful, Key_Registry, Config) initializer {
+    function initialize() public override(Stateful, Config) initializer {
         Stateful.initialize();
-        Key_Registry.initialize();
         Config.initialize();
     }
 
@@ -244,7 +242,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction.transaction,
             extraPublicInputs,
             uncompressedProof,
-            vks[transaction.transaction.transactionType]
+            state.getVerificationKey(transaction.transaction.circuitHash)
         );
         challengeAccepted(transaction.blockL2);
     }
@@ -282,7 +280,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         // State.sol because Timber gets confused if its events come from two
         // different contracts (it uses the contract name as part of the db
         // connection - we need to change that).
-        state.emitRollback(badBlock.blockNumberL2);
+        emit Rollback(badBlock.blockNumberL2);
         // we need to remove the block that has been successfully
         // challenged from the linked list of blocks and all of the subsequent
         // blocks

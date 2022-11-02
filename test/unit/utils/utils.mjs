@@ -24,8 +24,8 @@ export function calculateTransactionHash(tx) {
   const encodedTx = ethers.utils.defaultAbiCoder.encode(
     [
       'uint112',
-      'uint112',
-      'uint8',
+      'uint96',
+      'uint40',
       'uint8',
       'uint64[]',
       'bytes32',
@@ -39,7 +39,7 @@ export function calculateTransactionHash(tx) {
     [
       tx.value,
       tx.fee,
-      tx.transactionType,
+      tx.circuitHash,
       tx.tokenType,
       tx.historicRootBlockNumberL2,
       tx.tokenId,
@@ -59,8 +59,8 @@ export function calculateTransactionHash(tx) {
 export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
   const withdrawTransaction = {
     value: '10',
-    fee: '0',
-    transactionType: '2',
+    fee: '1',
+    circuitHash: '2',
     tokenType: '0',
     historicRootBlockNumberL2: [
       '0x0000000000000000000000000000000000000000000000000000000000000009',
@@ -96,7 +96,7 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
   const depositTransaction = {
     value: '10',
     fee: '0',
-    transactionType: '0',
+    circuitHash: '0',
     tokenType: '0',
     historicRootBlockNumberL2: [],
     tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
