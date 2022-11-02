@@ -11,14 +11,29 @@ export const web3 = Web3.connection();
 
 const options = config.WEB3_OPTIONS;
 
-export const contractPath = contractName => {
+let cachedContracts = {};
+
+const contractPath = contractName => {
   return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;
 };
 
-export async function getContractInterface(contractName) {
+/**
+ * Function returns the interface of a contract. First time interface is retrieved, it is cached.
+ * @param {String} contractName - Name of Smart Contract
+ * @returns {String} - contract interface
+ */
+async function getContractInterface(contractName) {
+  if (contractName in cachedContracts) {
+    return cachedContracts[contractName];
+  }
   const path = contractPath(contractName);
   const contractInterface = JSON.parse(fs.readFileSync(path, 'utf8'));
+  cachedContracts[contractName] = contractInterface;
   return contractInterface;
+}
+
+export async function clearCachedContracts() {
+  cachedContracts = {};
 }
 
 export async function getContractAddress(contractName) {
@@ -66,7 +81,7 @@ export async function getContractInstance(contractName, deployedAddress) {
   return contractInstance;
 }
 
-export async function getContractBytecode(contractName) {
+async function getContractBytecode(contractName) {
   const contractInterface = await getContractInterface(contractName);
   return contractInterface.evm.bytecode.object;
 }
@@ -113,7 +128,11 @@ export async function waitForContract(contractName) {
     try {
       error = undefined;
       const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
-      if (address === undefined) throw new Error(`${contractName} contract address was undefined`);
+      if (address === undefined) {
+        // contract was cached when retrieving address, so we need to clear
+        delete cachedContracts[contractName];
+        throw new Error(`${contractName} contract address was undefined`);
+      }
       instance = await getContractInstance(contractName, address); // eslint-disable-line no-await-in-loop
       return instance;
     } catch (err) {

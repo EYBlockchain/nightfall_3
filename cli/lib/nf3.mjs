@@ -1039,6 +1039,9 @@ class Nf3 {
         });
         logger.debug(`queued ${type} ${txDataToSign}`);
       }
+      if (type === 'rollback') {
+        challengeEmitter.emit('rollback', 'rollback complete');
+      }
       return null;
     };
     connection.onerror = () => logger.error('websocket connection error');

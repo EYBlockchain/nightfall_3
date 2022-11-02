@@ -13,6 +13,7 @@ import {
   getTransactionsByTransactionHashes,
   deleteTransactionsByTransactionHashes,
   deleteTreeByBlockNumberL2,
+  getAllRegisteredProposersCount,
 } from '../services/database.mjs';
 import {
   checkDuplicateCommitmentsWithinBlock,
@@ -20,7 +21,11 @@ import {
 } from '../services/check-block.mjs';
 import Block from '../classes/block.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
-import { signalRollbackCompleted } from '../services/block-assembler.mjs';
+import { signalRollbackCompleted as signalRollbackCompletedToProposer } from '../services/block-assembler.mjs';
+import {
+  signalRollbackCompleted as signalRollbackCompletedToChallenger,
+  isMakeChallengesEnable,
+} from '../services/challenges.mjs';
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -39,6 +44,7 @@ async function rollbackEventHandler(data) {
   */
   // Get all blocks that need to be deleted
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(blockNumberL2);
+  logger.info(`Rollback - rollback layer 2 blocks ${JSON.stringify(blocksToBeDeleted, null, 2)}`);
 
   const invalidTransactions = [];
   // For valid transactions that have made it to this point, we run them through our transaction checker for validity
@@ -47,10 +53,9 @@ async function rollbackEventHandler(data) {
     const transactionHashesInBlock = blocksToBeDeleted[i].transactionHashes.flat(Infinity);
     // Use the transaction hashes to grab the actual transactions filtering out deposits - In Order.
     // eslint-disable-next-line no-await-in-loop
-    const blockTransactions = (await getTransactionsByTransactionHashes(transactionHashesInBlock)) // TODO move this to getTransactionsByTransactionHashes by l2 block number because transaction hash is not unique and might not pull the right l2 block number
-      .filter(t => t.transactionType !== '0');
-
+    const blockTransactions = await getTransactionsByTransactionHashes(transactionHashesInBlock); // TODO move this to getTransactionsByTransactionHashes by l2 block number because transaction hash is not unique and might not pull the right l2 block number
     logger.info({
+      msg: 'Rollback - blockTransactions to check:',
       blockTransactions,
     });
 
@@ -62,7 +67,7 @@ async function rollbackEventHandler(data) {
         });
       } catch (error) {
         logger.error({
-          msg: `Invalid checkTransaction: ${blockTransactions[j].transactionHash}`,
+          msg: `Rollback - Invalid checkTransaction: ${blockTransactions[j].transactionHash}`,
           error,
         });
 
@@ -74,7 +79,7 @@ async function rollbackEventHandler(data) {
       checkDuplicateNullifiersWithinBlock(blocksToBeDeleted[i], blockTransactions);
     } catch (error) {
       const { transaction2: transaction } = error.metadata; // TODO pick transaction to delete based on which transaction pays more to proposer
-      logger.debug(`Invalid checkTransaction: ${transaction.transactionHash}`);
+      logger.debug(`Rollback - Invalid transaction: ${transaction.transactionHash}`);
       invalidTransactions.push(transaction.transactionHash);
     }
   }
@@ -86,13 +91,21 @@ async function rollbackEventHandler(data) {
       .flat(1),
   );
 
-  logger.debug(`Deleting transactions: ${invalidTransactions}`);
+  logger.debug(`Rollback - Deleting transactions: ${invalidTransactions}`);
   await deleteTransactionsByTransactionHashes(invalidTransactions);
 
   await dequeueEvent(2); // Remove an event from the stopQueue.
   // A Rollback triggers a NewCurrentProposer event which shoudl trigger queue[0].end()
   // But to be safe we enqueue a helper event to guarantee queue[0].end() runs.
-  await enqueueEvent(() => signalRollbackCompleted(), 0);
+
+  // if optimist has a register proposer, signal rollback to
+  // that proposer websocket client
+  if ((await getAllRegisteredProposersCount()) > 0)
+    await enqueueEvent(() => signalRollbackCompletedToProposer(), 0);
+
+  // assumption is if optimist has makeChallenges ON there is challenger
+  // websocket client waiting for signal rollback
+  if (isMakeChallengesEnable()) await enqueueEvent(() => signalRollbackCompletedToChallenger(), 0);
 }
 
 export default rollbackEventHandler;

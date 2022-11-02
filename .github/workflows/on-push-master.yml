@@ -19,3 +19,9 @@ jobs:
           if [ $(npm diff | wc -w) -gt 0 ]; then npm version patch && npm publish && echo "✨ The @polygon-nightfall/common-files package sucessfully published to npm"; else echo "✨ The @polygon-nightfall/common-files package is up to date"; fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Patching common-files version
+          commit_options: '--no-verify'
+          file_pattern: 'common-files/package.json'

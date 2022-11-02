@@ -6,11 +6,8 @@
 import WebSocket from 'ws';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import {
-  getContractInstance,
-  getContractAddress,
-} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 
 const {
   PROPOSERS_CONTRACT_NAME,
@@ -18,7 +15,7 @@ const {
   CHALLENGES_CONTRACT_NAME,
   STATE_CONTRACT_NAME,
 } = constants;
-const { RETRIES, WEBSOCKET_PORT, WEBSOCKET_PING_TIME } = config;
+const { WEBSOCKET_PORT, WEBSOCKET_PING_TIME } = config;
 const wss = new WebSocket.Server({ port: WEBSOCKET_PORT });
 
 /**
@@ -53,44 +50,6 @@ function setupWebsocketEvents(ws, socketName) {
     logger.debug(`CLOSE ${socketName} ${err}`);
     clearInterval(intervalID);
   });
-}
-
-/**
- * Function that tries to get a (named) contract instance and, if it fails, will
- * retry after 3 seconds.  After RETRIES attempts, it will give up and throw.
- * This is useful in case nightfall-optimist comes up before the contract
- * is fully deployed.
- */
-export async function waitForContract(contractName) {
-  let errorCount = 0;
-  let error;
-  let instance;
-  while (errorCount < RETRIES) {
-    try {
-      error = undefined;
-      const address = await getContractAddress(contractName);
-
-      if (address === undefined) {
-        throw new Error(`${contractName} contract address was undefined`);
-      }
-
-      instance = getContractInstance(contractName, address);
-
-      return instance;
-    } catch (err) {
-      error = err;
-      errorCount++;
-
-      logger.warn({
-        msg: 'Unable to get a contract instance will try again in 3 secs',
-        contractName,
-      });
-
-      await new Promise(resolve => setTimeout(() => resolve(), 3000));
-    }
-  }
-  if (error) throw error;
-  return instance;
 }
 
 /**

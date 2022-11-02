@@ -10,8 +10,8 @@ Here are the things that could be wrong with a transaction:
 import config from 'config';
 import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
 import {
   getBlockByBlockNumberL2,
   getL2TransactionByCommitment,
@@ -45,7 +45,8 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txB
         const blockL2 = await getBlockByBlockNumberL2(transactionL2.blockNumberL2);
 
         if (blockL2 !== null) {
-          const siblingPath2 = await getTransactionHashSiblingInfo(transactionL2.transactionHash);
+          const siblingPath2 = (await getTransactionHashSiblingInfo(transactionL2.transactionHash))
+            .transactionHashSiblingPath;
           throw new TransactionError(
             `The transaction has a duplicate commitment ${commitment}`,
             0,
@@ -84,7 +85,8 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBl
       if (transactionL2 !== null) {
         const blockL2 = await getBlockByBlockNumberL2(transactionL2.blockNumberL2);
         if (blockL2 !== null) {
-          const siblingPath2 = await getTransactionHashSiblingInfo(transactionL2.transactionHash);
+          const siblingPath2 = (await getTransactionHashSiblingInfo(transactionL2.transactionHash))
+            .transactionHashSiblingPath;
           throw new TransactionError(
             `The transaction has a duplicate nullifier ${nullifier}`,
             1,

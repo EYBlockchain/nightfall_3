@@ -28,6 +28,7 @@
     "unit-test": "npx hardhat test --bail test/unit/SmartContracts/*",
     "unit-test-kyc": "npx hardhat test --bail test/unit/SmartContracts/kyc.unit.test.mjs",
     "unit-test-shield": "npx hardhat test --bail test/unit/SmartContracts/shield.unit.test.mjs",
+    "unit-test-proposers": "npx hardhat test --bail test/unit/SmartContracts/proposers.unit.test.mjs",
     "prune": "docker system prune -a && docker volume prune"
   },
   "repository": {
@@ -94,7 +95,7 @@
     "minimist": "^1.2.6",
     "mocha": "^10.0.0",
     "mongodb": "^4.7.0",
-    "nightfall-sdk": "^0.1.1",
+    "nightfall-sdk": "^1.0.0",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "queue": "^6.0.2",
@@ -108,7 +109,7 @@
     "ws": "^7.5.0"
   },
   "dependencies": {
-    "@polygon-nightfall/common-files": "^0.0.5",
+    "@polygon-nightfall/common-files": "*",
     "async-mutex": "^0.4.0",
     "docker-compose": "^0.23.13",
     "general-number": "^1.0.1",
