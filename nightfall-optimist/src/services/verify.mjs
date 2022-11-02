@@ -22,7 +22,6 @@ export default async function verify({
   proof,
   inputs,
   provingScheme = 'g16',
-  backend = 'bellman',
   curve = 'bn128',
 }) {
   let combinedProof = { scheme: provingScheme, curve, proof };

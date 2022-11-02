@@ -62,7 +62,7 @@ async function initWorkers() {
       cluster.fork();
     }
 
-    cluster.on('exit', (worker, code, signal) => {
+    cluster.on('exit', worker => {
       console.log(`worker ${worker.process.pid} died`);
       console.log("Let's fork another worker!");
       cluster.fork();
@@ -71,11 +71,11 @@ async function initWorkers() {
     const app = express();
     console.log(`Worker ${process.pid} started`);
 
-    app.get('/healthcheck', async (req, res, next) => {
+    app.get('/healthcheck', async (req, res) => {
       res.sendStatus(200);
     });
 
-    app.get('/tx-submitted', async (req, res, next) => {
+    app.get('/tx-submitted', async (req, res) => {
       const { tx, proposerFlag, enable } = req.query;
       try {
         const response = submitTransaction(

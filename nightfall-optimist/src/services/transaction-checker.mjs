@@ -10,7 +10,7 @@ Here are the things that could be wrong with a transaction:
 import config from 'config';
 import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-//import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+// import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { waitForContract } from '../../../common-files/utils/contract.mjs';
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import {
@@ -122,7 +122,6 @@ async function checkHistoricRootBlockNumber(transaction) {
 }
 
 async function verifyProof(transaction) {
-
   // we'll need the verification key.  That's actually stored in the b/c
   const challengeInstance = await waitForContract(CHALLENGES_CONTRACT_NAME);
   const vkArray = await challengeInstance.methods

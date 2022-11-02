@@ -58,7 +58,7 @@
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-//import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+// import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { waitForContract } from '../../../common-files/utils/contract.mjs';
 import {
   clearBlockNumberL1ForBlock,

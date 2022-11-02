@@ -1,7 +1,7 @@
 /**
 Module containing functions relating to proposers and their registration
 */
-//import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+// import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
