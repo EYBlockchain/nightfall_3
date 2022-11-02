@@ -7,7 +7,10 @@ import express from 'express';
 import config from 'config';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  getContractInstance,
+  waitForContract,
+} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Block from '../classes/block.mjs';
@@ -21,7 +24,6 @@ import {
   findBlocksByProposer,
   getBlockByBlockHash,
 } from '../services/database.mjs';
-import { waitForContract } from '../event-handlers/subscribe.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import getProposers from '../services/proposer.mjs';
 
