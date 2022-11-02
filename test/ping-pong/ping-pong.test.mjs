@@ -124,9 +124,12 @@ describe('Ping-pong tests', () => {
           pi => pi.proposer === p.proposer,
         );
         const pBlocks = proposersStats.proposersBlocks.find(pb => pb.proposer === p.proposer);
-        expect(Number(p.stake.challengeLocked)).to.be.equal(
-          Number(pInitial.stake.challengeLocked) + Number(pBlocks.blocks) * Number(blockStake),
-        );
+        if (pBlocks) {
+          // only if this proposer has proposed blocks
+          expect(Number(p.stake.challengeLocked)).to.be.equal(
+            Number(pInitial.stake.challengeLocked) + Number(pBlocks.blocks) * Number(blockStake),
+          );
+        }
       }
       console.log(`  - SPRINTS: ${proposersStats.sprints}`);
 
