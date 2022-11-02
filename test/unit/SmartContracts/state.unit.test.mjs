@@ -671,6 +671,20 @@ describe('State contract State functions', function () {
         1,
       ),
     ).to.equal(10);
+
+    const siblingPath = [
+      transactionsCreated.block.transactionHashesRoot,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+    ];
+    const index = 0;
+    expect(
+      await state.areBlockAndTransactionReal(
+        transactionsCreated.block,
+        transactionsCreated.withdrawTransaction,
+        index,
+        siblingPath,
+      ),
+    ).to.equal(calculateTransactionHash(transactionsCreated.withdrawTransaction));
   });
 
   it('should not proposeBlock: funds not escrowed', async function () {
@@ -760,82 +774,6 @@ describe('State contract State functions', function () {
         { value: 10 },
       ),
     ).to.be.reverted;
-  });
-
-  it('should not proposeBlock: State: Proposer does not have enough funds staked', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-    const amount = 0;
-    const challengeLocked = 5;
-
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr1.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setCurrentProposer(addr1.address);
-    await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      false,
-    );
-    await expect(
-      state.proposeBlock(
-        transactionsCreated.block,
-        [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
-        { value: 10 },
-      ),
-    ).to.be.revertedWith('State: Proposer does not have enough funds staked');
-  });
-
-  it('should not proposeBlock: Proposer does not have enough funds staked', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-    const amount = 1;
-    const challengeLocked = 5;
-
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr1.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setCurrentProposer(addr1.address);
-    await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      false,
-    );
-    await expect(
-      state.proposeBlock(
-        transactionsCreated.block,
-        [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
-        { value: 10 },
-      ),
-    ).to.be.revertedWith("Proposer doesn't have enough funds staked");
   });
 
   it('should not proposeBlock: The block has too many transactions', async function () {
@@ -931,43 +869,6 @@ describe('State contract State functions', function () {
         { value: 10 },
       ),
     ).to.be.revertedWith('State: Block flawed or out of order');
-  });
-
-  it('should not proposeBlock Stake payment is incorrect', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-    const amount = 100;
-    const challengeLocked = 5;
-
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr1.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setCurrentProposer(addr1.address);
-    await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      false,
-    );
-    await expect(
-      state.proposeBlock(transactionsCreated.block, [
-        transactionsCreated.withdrawTransaction,
-        transactionsCreated.depositTransaction,
-      ]),
-    ).to.be.revertedWith('State: Stake payment is incorrect');
   });
 
   it('should not proposeBlock Proposer address is not the sender', async function () {
