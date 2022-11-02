@@ -129,17 +129,19 @@ export async function transactionSubmittedEventHandler(eventParams) {
 
   // If TX WORKERS enabled or not responsive, route transaction requests to main thread
   if (txWorkerCount) {
-    try {
-      axios.get(`${txWorkerUrl}/tx-submitted`, {
+    axios
+      .get(`${txWorkerUrl}/tx-submitted`, {
         params: {
           tx: transaction,
           proposerFlag: fromBlockProposer === true,
           enable: _submitTransactionEnable === true,
         },
+      })
+      .catch(function (error) {
+        if (error.request) {
+          submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
+        }
       });
-    } catch {
-      submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
-    }
   } else {
     submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
   }

@@ -28,15 +28,22 @@ router.post('/tx-submitted-enable', async (req, res) => {
   if (enable) {
     submitTransactionEnable(true);
     const transactions = await findAndDeleteAllBufferedTransactions();
+
     if (txWorkerCount) {
       transactions.forEach(async tx =>
-        axios.get(`${txWorkerUrl}/tx-submitted`, {
-          params: {
-            tx,
-            proposerFlag: false,
-            enable: true,
-          },
-        }),
+        axios
+          .get(`${txWorkerUrl}/tx-submitted`, {
+            params: {
+              tx,
+              proposerFlag: false,
+              enable: true,
+            },
+          })
+          .catch(function (error) {
+            if (error.request) {
+              submitTransaction(tx, false, true);
+            }
+          }),
       );
     } else {
       transactions.forEach(async tx => submitTransaction(tx, false, true));
