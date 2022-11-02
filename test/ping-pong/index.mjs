@@ -8,12 +8,7 @@ import config from 'config';
 import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import {
-  waitForSufficientBalance,
-  retrieveL2Balance,
-  topicEventMapping,
-  Web3Client,
-} from '../utils.mjs';
+import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
 import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
@@ -145,16 +140,6 @@ export async function userTest(IS_TEST_RUNNER) {
 }
 
 /**
-Get contract instance
-*/
-const getContractInstance = async (contractName, nf3) => {
-  const abi = await nf3.getContractAbi(contractName);
-  const contractAddress = await nf3.getContractAddress(contractName);
-  const contractInstance = new nf3.web3.eth.Contract(abi, contractAddress);
-  return contractInstance;
-};
-
-/**
 Set the block stake parameter for the proposers
 */
 const setBlockStake = async amount => {
@@ -227,11 +212,11 @@ export async function setParametersConfig() {
   const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
   await nf3Proposer.init(mnemonics.proposer3);
 
-  const stateContract = await getContractInstance('State', nf3Proposer);
-  const proposersContract = await getContractInstance('Proposers', nf3Proposer);
-  const challengesContract = await getContractInstance('Challenges', nf3Proposer);
-  shieldContract = await getContractInstance('Shield', nf3Proposer);
-  multisigContract = await getContractInstance('SimpleMultiSig', nf3Proposer);
+  const stateContract = await nf3Proposer.getContractInstance('State');
+  const proposersContract = await nf3Proposer.getContractInstance('Proposers');
+  const challengesContract = await nf3Proposer.getContractInstance('Challenges');
+  shieldContract = await nf3Proposer.getContractInstance('Shield');
+  multisigContract = await nf3Proposer.getContractInstance('SimpleMultiSig');
 
   nfMultiSig = new NightfallMultiSig(
     nf3Proposer.web3,
@@ -255,16 +240,11 @@ export async function setParametersConfig() {
 /**
 Proposer test for checking different points for the PoS
 */
-export async function proposerTest(optimistUrls, proposersStats) {
+export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
   console.log('OPTIMISTURLS', optimistUrls);
-  const web3Client = new Web3Client();
-  // we must set the URL from the point of view of the client container
-  const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
-  await nf3Proposer.init(mnemonics.proposer3);
 
   try {
-    const stateContract = await getContractInstance('State', nf3Proposer);
-
+    const stateContract = await nf3Proposer.getContractInstance('State');
     const stateAddress = stateContract.options.address;
 
     const getCurrentProposer = async () => {
@@ -282,15 +262,13 @@ export async function proposerTest(optimistUrls, proposersStats) {
       return stakeAccount;
     };
 
-    // eslint-disable-next-line no-param-reassign
-    const eventLogs = [];
     const proposersBlocks = [];
     // eslint-disable-next-line no-param-reassign
     proposersStats.proposersBlocks = proposersBlocks;
     // eslint-disable-next-line no-param-reassign
     proposersStats.sprints = 0;
+
     let currentProposer = await getCurrentProposer();
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
       let proposerBlock = proposersBlocks.find(
@@ -361,7 +339,7 @@ export async function proposerTest(optimistUrls, proposersStats) {
 
         const url = optimistUrls.find(
           // eslint-disable-next-line no-loop-func
-          o => o.proposer === currentProposer.thisAddress.toUpperCase(),
+          o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
         ).optimistUrl;
 
         let res = await axios.get(`${url}/proposer/mempool`);
@@ -371,8 +349,6 @@ export async function proposerTest(optimistUrls, proposersStats) {
             console.log('     Make block...');
             await axios.get(`${url}/block/make-now`);
             console.log('     Waiting for block to be created');
-            // await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-            // console.log('     Event blockProposed');
             await new Promise(resolve => setTimeout(resolve, 20000));
             res = await axios.get(`${url}/proposer/mempool`);
           }
