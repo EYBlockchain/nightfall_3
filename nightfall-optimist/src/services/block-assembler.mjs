@@ -166,4 +166,6 @@ export async function conditionalMakeBlock(proposer) {
       }
     }
   }
+  // Let's slow down here so we don't slam the database.
+  await waitForTimeout(3000);
 }
