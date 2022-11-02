@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import hardhat from 'hardhat';
 import { calculateTransactionHash, createBlockAndTransactions } from '../utils/utils.mjs';
-import { setTransactionInfo } from '../utils/shieldStorage.mjs';
+import { setTransactionInfo } from '../utils/stateStorage.mjs';
 
 const { ethers, upgrades } = hardhat;
 
@@ -90,6 +90,10 @@ describe('State contract State functions', function () {
     await state.deployed();
 
     await ProposersInstance.setStateContract(state.address);
+
+    await state.registerVerificationKey(0, [], true, false);
+    await state.registerVerificationKey(1, [], false, false);
+    await state.registerVerificationKey(2, [], false, true);
   });
 
   afterEach(async () => {
@@ -116,7 +120,7 @@ describe('State contract State functions', function () {
           false,
           0,
         ]),
-    ).to.be.revertedWith('Only proposer contract is authorized');
+    ).to.be.revertedWith('State: Only proposer contract is authorized');
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -166,8 +170,8 @@ describe('State contract State functions', function () {
     const amountEth = 100;
     const amountMatic = 0;
     await state.addPendingWithdrawal(addr1.address, amountEth, amountMatic);
-    expect(await state.pendingWithdrawals(addr1.address, 0)).to.equal(amountEth);
-    expect(await state.pendingWithdrawals(addr1.address, 1)).to.equal(amountMatic);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesEth).to.equal(amountEth);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesMatic).to.equal(amountMatic);
   });
 
   it('should withdraw', async function () {
@@ -180,15 +184,15 @@ describe('State contract State functions', function () {
     const amountMatic = 0;
 
     await state.addPendingWithdrawal(addr1.address, amountEth, amountMatic);
-    expect(await state.pendingWithdrawals(addr1.address, 0)).to.equal(amountEth);
-    expect(await state.pendingWithdrawals(addr1.address, 1)).to.equal(amountMatic);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesEth).to.equal(amountEth);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesMatic).to.equal(amountMatic);
 
     const balanceContract = await ethers.provider.getBalance(state.address);
 
     await state.withdraw();
 
-    expect(await state.pendingWithdrawals(addr1.address, 0)).to.equal(0);
-    expect(await state.pendingWithdrawals(addr1.address, 1)).to.equal(0);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesEth).to.equal(0);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesMatic).to.equal(0);
 
     expect(await ethers.provider.getBalance(state.address)).to.equal(
       balanceContract.sub(amountEth),
@@ -198,15 +202,15 @@ describe('State contract State functions', function () {
   it('should setProposerStartBlock', async function () {
     const newBlock = 10;
     await state.setProposerStartBlock(newBlock);
-    expect(await state.getProposerStartBlock()).to.equal(newBlock);
+    expect(await state.proposerStartBlock()).to.equal(newBlock);
 
-    const actualProposerStartBlock = await state.getProposerStartBlock();
+    const actualProposerStartBlock = await state.proposerStartBlock();
     const newProposerStartBlock = 100;
 
     await state.setProposerStartBlock(newProposerStartBlock);
 
-    expect(await state.getProposerStartBlock()).to.equal(newProposerStartBlock);
-    expect(await state.getProposerStartBlock()).not.equal(actualProposerStartBlock);
+    expect(await state.proposerStartBlock()).to.equal(newProposerStartBlock);
+    expect(await state.proposerStartBlock()).not.equal(actualProposerStartBlock);
   });
 
   it('should setNumProposers', async function () {
@@ -603,34 +607,33 @@ describe('State contract State functions', function () {
         ),
     ).to.be.revertedWith('State: Only current proposer authorised');
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
+
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      10,
     );
+
     await state.proposeBlock(
       transactionsCreated.block,
       [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
       { value: 10 },
     );
-    expect(
-      await state.feeBook(
-        ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
-        0,
+
+    const proposerBlockHash = ethers.utils.keccak256(
+      ethers.utils.solidityPack(
+        ['address', 'uint256'],
+        [transactionsCreated.block.proposer, transactionsCreated.block.blockNumberL2],
       ),
-    ).to.equal(10);
-    expect(
-      await state.feeBook(
-        ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
-        1,
-      ),
-    ).to.equal(10);
+    );
+
+    expect((await state.feeBookBlocks(proposerBlockHash)).feesEth).to.equal(10);
+    expect((await state.feeBookBlocks(proposerBlockHash)).feesMatic).to.equal(1);
 
     const siblingPath = [
       transactionsCreated.block.transactionHashesRoot,
@@ -674,9 +677,8 @@ describe('State contract State functions', function () {
         ),
     ).to.be.revertedWith('State: Only current proposer authorised');
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await expect(
@@ -685,7 +687,7 @@ describe('State contract State functions', function () {
         [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
         { value: 10 },
       ),
-    ).to.be.reverted;
+    ).to.be.revertedWithCustomError(shield, 'DepositNotEscrowed');
   });
 
   it('should not proposeBlock: transaction hashes root', async function () {
@@ -716,16 +718,15 @@ describe('State contract State functions', function () {
     ).to.be.revertedWith('State: Only current proposer authorised');
     transactionsCreated.block.transactionHashesRoot = ethers.constants.HashZero;
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      34,
     );
     await expect(
       state.proposeBlock(
@@ -733,7 +734,7 @@ describe('State contract State functions', function () {
         [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
         { value: 10 },
       ),
-    ).to.be.reverted;
+    ).to.be.revertedWithCustomError(shield, 'InvalidTransactionHash');
   });
 
   it('should not proposeBlock: The block has too many transactions', async function () {
@@ -757,23 +758,22 @@ describe('State contract State functions', function () {
     const transactions = new Array(33);
     transactions.fill(transactionsCreated.withdrawTransaction);
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      34,
     );
     await expect(
       state.proposeBlock(transactionsCreated.block, transactions, { value: 10 }),
     ).to.be.revertedWith('State: The block has too many transactions');
   });
 
-  it('should resetFeeBookInfo', async function () {
+  it('should not proposeBlock: Block flawed or out of order', async function () {
     const newUrl = 'url';
     const newFee = 100;
     const amount = await state.getMinimumStake();
@@ -791,16 +791,15 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      10,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -808,18 +807,15 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    expect(
-      await state.feeBook(
-        ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
-        0,
+    const proposerBlockHash = ethers.utils.keccak256(
+      ethers.utils.solidityPack(
+        ['address', 'uint256'],
+        [transactionsCreated.block.proposer, transactionsCreated.block.blockNumberL2],
       ),
-    ).to.equal(10);
-    expect(
-      await state.feeBook(
-        ethers.utils.solidityKeccak256(['address', 'uint256'], [addr1.address, 0]),
-        1,
-      ),
-    ).to.equal(10);
+    );
+
+    expect((await state.feeBookBlocks(proposerBlockHash)).feesEth).to.equal(10);
+    expect((await state.feeBookBlocks(proposerBlockHash)).feesMatic).to.equal(1);
 
     transactionsCreated.block.blockNumberL2 = 1;
     await expect(
@@ -859,16 +855,15 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      34,
     );
     await expect(
       state.proposeBlock(
@@ -876,21 +871,7 @@ describe('State contract State functions', function () {
         [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
         { value: 10 },
       ),
-    ).to.be.revertedWith('State: Proposer address is not the sender');
-  });
-
-  it('should emit rollback', async function () {
-    const blockNumber = 5;
-    await expect(state.connect(addr2).emitRollback(blockNumber)).to.be.revertedWith(
-      'State: Not authorised to call this function',
-    );
-    const tx = await state.emitRollback(blockNumber);
-    const receipt = await tx.wait();
-
-    const eventRollback = receipt.events.find(event => event.event === 'Rollback');
-    const [blockNumberL2] = eventRollback.args;
-
-    expect(blockNumberL2).to.equal(blockNumber);
+    ).to.be.revertedWith('State: The sender is not the proposer');
   });
 
   it('should popBlockData', async function () {
@@ -911,16 +892,15 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      34,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -932,7 +912,9 @@ describe('State contract State functions', function () {
 
     expect(lastBlockHashes.time).to.above(0);
     expect(await state.getNumberOfL2Blocks()).to.equal(1);
-    await expect(state.popBlockData()).to.be.revertedWith('Only challenger contract is authorized');
+    await expect(state.popBlockData()).to.be.revertedWith(
+      'State: Only challenger contract is authorized',
+    );
     await state.connect(addressC).popBlockData();
     expect(await state.getNumberOfL2Blocks()).to.equal(0);
 
@@ -953,7 +935,7 @@ describe('State contract State functions', function () {
     const transaction1 = {
       value: '100000000000000',
       fee: '10',
-      transactionType: '0',
+      circuitHash: '0',
       tokenType: '0',
       historicRootBlockNumberL2: [
         '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -1004,16 +986,15 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      34,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1024,25 +1005,19 @@ describe('State contract State functions', function () {
       (await state.getBlockData(0)).blockHash,
     );
     await expect(state.isBlockReal(wrongBlockNumber)).to.be.revertedWith(
-      'This block does not exist',
+      'State: Block does not exist',
     );
 
-    expect(
-      await state.areBlockAndTransactionsReal(transactionsCreated.block, [
-        transactionsCreated.withdrawTransaction,
-        transactionsCreated.depositTransaction,
-      ]),
-    ).to.equal((await state.getBlockData(0)).blockHash);
     await expect(
       state.areBlockAndTransactionsReal(wrongBlockNumber, [
         transactionsCreated.withdrawTransaction,
         transactionsCreated.depositTransaction,
       ]),
-    ).to.be.revertedWith('State: This block does not exist');
+    ).to.be.revertedWith('State: Block does not exist');
 
     await expect(
       state.areBlockAndTransactionsReal(transactionsCreated.block, [transaction1]),
-    ).to.be.revertedWith('State: Some of these transactions are not in this block');
+    ).to.be.revertedWith('State: Transaction hashes root does not match');
   });
 
   it('should setBlockStakeWithdrawn', async function () {
@@ -1063,16 +1038,15 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      34,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1081,9 +1055,9 @@ describe('State contract State functions', function () {
     );
 
     const { blockHash } = await state.blockHashes(0);
-    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(false);
-    await state.setBlockStakeWithdrawn(blockHash);
-    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(true);
+    expect(await state.claimedBlockStakes(blockHash)).to.equal(false);
+    await state.connect(addressC).setBlockStakeWithdrawn(blockHash);
+    expect(await state.claimedBlockStakes(blockHash)).to.equal(true);
   });
 
   it('should rewardChallenger', async function () {
@@ -1115,16 +1089,15 @@ describe('State contract State functions', function () {
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await state.setStakeAccount(addr2.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      34,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1145,111 +1118,9 @@ describe('State contract State functions', function () {
     expect(stakeAccount.amount).to.equal(amount);
     expect(stakeAccount.time).to.equal(0);
     expect(stakeAccount.challengeLocked).to.equal(challengeLocked - amount);
-    expect(await state.pendingWithdrawals(addressC.address, 0)).to.equal(badBlock.blockStake);
-    expect(await state.pendingWithdrawals(addressC.address, 1)).to.equal(0);
-  });
-
-  it('should setBlockStakeWithdrawn', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-    const amount = 100;
-    const challengeLocked = 5;
-
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr1.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setCurrentProposer(addr1.address);
-    await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
+    expect((await state.pendingWithdrawalsFees(addressC.address)).feesEth).to.equal(
+      badBlock.blockStake,
     );
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      false,
-    );
-    await state.proposeBlock(
-      transactionsCreated.block,
-      [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
-      { value: 10 },
-    );
-
-    const { blockHash } = await state.blockHashes(0);
-    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(false);
-    await state.setBlockStakeWithdrawn(blockHash);
-    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(true);
-  });
-
-  it('should rewardChallenger', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-    const amount = 100;
-    const challengeLocked = 300;
-
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr1.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setProposer(addr2.address, [
-      addr2.address,
-      addr2.address,
-      addr2.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setNumProposers(2);
-    await state.setCurrentProposer(addr1.address);
-    await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.setStakeAccount(addr2.address, amount, challengeLocked);
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      false,
-    );
-    await state.proposeBlock(
-      transactionsCreated.block,
-      [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
-      { value: 10 },
-    );
-
-    const badBlock = {
-      blockHash: (await state.blockHashes(0)).blockHash,
-      time: (await ethers.provider.getBlock(await ethers.provider.getBlockNumber())).timestamp,
-      proposer: addr2.address,
-      blockStake: amount,
-    };
-
-    await state.connect(addressC).rewardChallenger(addressC.address, addr2.address, [badBlock]);
-
-    const stakeAccount = await state.getStakeAccount(addr2.address);
-    expect(stakeAccount.amount).to.equal(amount);
-    expect(stakeAccount.time).to.equal(0);
-    expect(stakeAccount.challengeLocked).to.equal(challengeLocked - amount);
-    expect(await state.pendingWithdrawals(addressC.address, 0)).to.equal(badBlock.blockStake);
-    expect(await state.pendingWithdrawals(addressC.address, 1)).to.equal(0);
+    expect((await state.pendingWithdrawalsFees(addressC.address)).feesMatic).to.equal(0);
   });
 });

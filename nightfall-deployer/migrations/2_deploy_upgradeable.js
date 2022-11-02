@@ -45,7 +45,11 @@ module.exports = async function (deployer) {
   await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
-  await deployProxy(Shield, [X509.address], { deployer, unsafeAllowLinkedLibraries: true, initializer: 'initializeState' });
+  await deployProxy(Shield, [X509.address], {
+    deployer,
+    unsafeAllowLinkedLibraries: true,
+    initializer: 'initializeState',
+  });
   await deployProxy(State, [Proposers.address, Challenges.address, Shield.address], {
     deployer,
     unsafeAllowLinkedLibraries: true,
@@ -81,11 +85,11 @@ module.exports = async function (deployer) {
   ).address;
   await shield.setMaticAddress(maticAddress.toLowerCase());
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
-  if (process.env.WHITELISTING==='enable') await x509.enableWhitelisting(true);
+  if (process.env.WHITELISTING === 'enable') await x509.enableWhitelisting(true);
   // set a trusted RSA root public key for X509 certificate checks
   console.log('setting trusted public key');
   for (publicKey of RSA_TRUST_ROOTS) {
     const { modulus, exponent, authorityKeyIdentifier } = publicKey;
-    await x509.setTrustedPublicKey({ modulus, exponent }, authorityKeyIdentifier );
+    await x509.setTrustedPublicKey({ modulus, exponent }, authorityKeyIdentifier);
   }
 };

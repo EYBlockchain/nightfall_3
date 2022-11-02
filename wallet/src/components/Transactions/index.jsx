@@ -78,7 +78,7 @@ const Transactions = () => {
     const blocks = await findBlocksFromBlockNumberL2(-1);
     // TODO: MODIFY
     const promisedTxs = transactions.map(async tx => {
-      const safeTransactionType = BigInt(tx.transactionType).toString();
+      const safeTransactionType = BigInt(tx.circuitHash).toString();
       let value = BigInt(tx.value);
       // The value of transfers need to be derived from the components making up the transfer
       // Add sum nullifiers in transactions

@@ -21,7 +21,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
      */
     function registerProposer(string calldata url, uint256 fee) external payable nonReentrant {
         require(
-            state.getNumProposers() < maxProposers,
+            state.numProposers() < maxProposers,
             'Proposers: Max number of registered proposers'
         );
         TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
@@ -78,7 +78,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
                 }
                 state.setProposer(proposersCurrent.thisAddress, proposersCurrent);
                 state.setProposer(msg.sender, proposer);
-                state.setNumProposers(state.getNumProposers() + 1);
+                state.setNumProposers(state.numProposers() + 1);
             }
         }
         state.setCurrentProposer(currentProposer.thisAddress);

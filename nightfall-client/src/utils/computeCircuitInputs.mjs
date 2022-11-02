@@ -17,7 +17,7 @@ const computePublicInputs = (tx, rootsOldCommitments, maticAddress, numberNullif
   return [
     transaction.value.field(BN128_GROUP_ORDER),
     transaction.fee.field(BN128_GROUP_ORDER),
-    transaction.transactionType.field(BN128_GROUP_ORDER),
+    transaction.circuitHash.field(BN128_GROUP_ORDER),
     transaction.tokenType.field(BN128_GROUP_ORDER),
     transaction.historicRootBlockNumberL2.map(h => h.field(BN128_GROUP_ORDER)),
     transaction.tokenId.limbs(32, 8),

@@ -4,14 +4,16 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
 import getTimeByBlock from '@polygon-nightfall/common-files/utils/block-info.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import axios from 'axios';
+import gen from 'general-number';
 import {
   markNullifiedOnChain,
   markOnChain,
   countCommitments,
   countNullifiers,
   setSiblingInfo,
-  countWithdrawTransactionHashes,
-  isTransactionHashWithdraw,
+  countTransactionHashesBelongCircuit,
+  isTransactionHashBelongCircuit,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import { zkpPrivateKeys, nullifierKeys } from '../services/keys.mjs';
@@ -24,8 +26,10 @@ import {
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE, PROTOCOL, ZOKRATES_WORKER_HOST } = config;
 const { ZERO } = constants;
+
+const { generalise } = gen;
 
 /**
  * This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -155,7 +159,19 @@ async function blockProposedEventHandler(data, syncing) {
   // 2. Save transactions hash of the transactions in this L2 block that contains withdraw transactions for this client
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
-  if ((await countWithdrawTransactionHashes(block.transactionHashes)) > 0) {
+
+  const responseCircuitHash = await axios.get(
+    `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
+    {
+      params: { circuit: 'withdraw' },
+    },
+  );
+
+  const withdrawCircuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(32);
+
+  if (
+    (await countTransactionHashesBelongCircuit(block.transactionHashes, withdrawCircuitHash)) > 0
+  ) {
     const transactionHashesTimber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
     const updatedTransactionHashesTimber = Timber.statelessUpdate(
       transactionHashesTimber,
@@ -167,7 +183,7 @@ async function blockProposedEventHandler(data, syncing) {
     await Promise.all(
       // eslint-disable-next-line consistent-return
       block.transactionHashes.map(async (transactionHash, i) => {
-        if (await isTransactionHashWithdraw(transactionHash)) {
+        if (await isTransactionHashBelongCircuit(transactionHash, withdrawCircuitHash)) {
           const siblingPathTransactionHash =
             updatedTransactionHashesTimber.getSiblingPath(transactionHash);
           return setTransactionHashSiblingInfo(
