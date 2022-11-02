@@ -21,7 +21,7 @@ router.get('/counters', async (req, res, next) => {
   }
 });
 
-router.post('/tx-submitted-enable', async (req, res, next) => {
+router.post('/tx-submitted-enable', async (req, res) => {
   const { enable } = req.body;
 
   // If we enable  submitTransactions, we process al events in the buffer
