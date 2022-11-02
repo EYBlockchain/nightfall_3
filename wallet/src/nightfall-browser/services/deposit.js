@@ -12,7 +12,7 @@
 import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 
-import computeCircuitInputs from '@Nightfall/utils/compute-witness';
+import computeCircuitInputs from '@Nightfall/utils/computeCircuitInputs';
 import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
@@ -47,10 +47,11 @@ async function deposit(items, shieldContractAddress) {
 
   if (!(await checkIndexDBForCircuit(circuitName)))
     throw Error('Some circuit data are missing from IndexedDB');
-  const [abiData, programData, pkData] = await Promise.all([
+  const [abiData, programData, pkData, circuitHashData] = await Promise.all([
     getStoreCircuit(`${circuitName}-abi`),
     getStoreCircuit(`${circuitName}-program`),
     getStoreCircuit(`${circuitName}-pk`),
+    getStoreCircuit(`${circuitName}-hash`),
   ]);
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
@@ -60,6 +61,7 @@ async function deposit(items, shieldContractAddress) {
   const abi = abiData.data;
   const program = programData.data;
   const pk = pkData.data;
+  const circuitHash = circuitHashData.data;
 
   const salt = await randValueLT(BN128_GROUP_ORDER);
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
@@ -67,7 +69,7 @@ async function deposit(items, shieldContractAddress) {
   // now we can compute a Witness so that we can generate the proof
   const publicData = new Transaction({
     fee: 0,
-    transactionType: 0,
+    circuitHash,
     tokenType: items.tokenType,
     tokenId,
     value,
@@ -75,6 +77,7 @@ async function deposit(items, shieldContractAddress) {
     commitments: [commitment],
     numberNullifiers: VK_IDS.deposit.numberNullifiers,
     numberCommitments: VK_IDS.deposit.numberCommitments,
+    isOnlyL2: false,
   });
 
   const privateData = {
@@ -114,7 +117,7 @@ async function deposit(items, shieldContractAddress) {
     // next we need to compute the optimistic Transaction object
     const optimisticDepositTransaction = new Transaction({
       fee: 0,
-      transactionType: 0,
+      circuitHash,
       tokenType: items.tokenType,
       tokenId,
       value,
@@ -123,6 +126,7 @@ async function deposit(items, shieldContractAddress) {
       proof,
       numberNullifiers: VK_IDS.deposit.numberNullifiers,
       numberCommitments: VK_IDS.deposit.numberCommitments,
+      isOnlyL2: false,
     });
     logger.trace(
       `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,

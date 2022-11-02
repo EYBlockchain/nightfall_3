@@ -85,13 +85,16 @@ async function setupCircuits() {
   }
 
   const vks = (await Promise.all(resp)).map(r => r.data.vk);
+  const circuitHashes = [];
+  const oldCircuitHashes = [];
 
   // some or all of the vks will be undefined, so we need to run a trusted setup on these
   for (let i = 0; i < vks.length; i++) {
     const circuit = circuitsToSetup[i];
 
     const fileBuffer = fs.readFileSync(`./circuits/${circuit}`);
-    const hcircuit = crypto.createHash('md5').update(fileBuffer).digest('hex');
+    const hcircuit = `0x${crypto.createHash('md5').update(fileBuffer).digest('hex')}`;
+    circuitHashes[i] = hcircuit.slice(0, 12);
 
     const checkHash = await axios.post(
       `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/check-circuit-hash`,
@@ -101,8 +104,11 @@ async function setupCircuits() {
       },
     );
 
-    if (checkHash.data || !vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
+    if (checkHash.data.differentHash || !vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
       try {
+        if (checkHash.data.differentHash && checkHash.data.previousHash) {
+          oldCircuitHashes.push(`0x${checkHash.data.previousHash.slice(0, 10)}`);
+        }
         logger.info({
           msg: 'No existing verification key. Fear not, I will make a new one: calling generate keys',
           circuit,
@@ -129,7 +135,7 @@ async function setupCircuits() {
     }
   }
 
-  const keyRegistry = await waitForContract('Challenges');
+  const keyRegistry = await waitForContract('State');
 
   // we should register the vk now
   for (let i = 0; i < vks.length; i++) {
@@ -145,9 +151,18 @@ async function setupCircuits() {
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
       const folderpath = circuit.slice(0, -4); // remove the .zok extension
 
+      // The selector will be the first 40 bits of the hash
+      const circuitHash = circuitHashes[i];
+
+      logger.info({
+        msg: `The circuit ${folderpath} has the following hash: ${circuitHash}`,
+      });
+
       const call = keyRegistry.methods.registerVerificationKey(
+        BigInt(circuitHash),
         vkArray,
-        config.VK_IDS[folderpath].txType,
+        config.VK_IDS[folderpath].isEscrowRequired,
+        config.VK_IDS[folderpath].isWithdrawing,
       );
 
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
@@ -162,8 +177,38 @@ async function setupCircuits() {
           gasPrice: config.WEB3_OPTIONS.gasPrice,
         };
 
-        const signed = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
-        await web3.eth.sendSignedTransaction(signed.rawTransaction);
+        const signedTx = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
+        await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+      } else {
+        call.send();
+      }
+    } catch (err) {
+      logger.error(err);
+      throw err;
+    }
+  }
+
+  // Delete deprecated verification keys
+  for (let i = 0; i < oldCircuitHashes.length; ++i) {
+    const oldCircuitHash = oldCircuitHashes[i];
+    logger.info(`Removing deprecated verification key for ${oldCircuitHash}`);
+    try {
+      const call = keyRegistry.methods.deleteVerificationKey(BigInt(oldCircuitHash));
+
+      // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
+      // on networks like Edge, there's no account management so we need to encodeABI()
+      // since methods like send() don't work
+      if (config.ETH_PRIVATE_KEY) {
+        const tx = {
+          from: process.env.FROM_ADDRESS,
+          to: keyRegistry.options.address,
+          data: call.encodeABI(),
+          gas: config.WEB3_OPTIONS.gas,
+          gasPrice: config.WEB3_OPTIONS.gasPrice,
+        };
+
+        const signedTx = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
+        await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
       } else {
         call.send();
       }

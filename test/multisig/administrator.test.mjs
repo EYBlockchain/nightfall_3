@@ -355,10 +355,10 @@ describe(`Testing Administrator`, () => {
 
       await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
       const restrictionDeposit = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 0)
+        .getRestrictionDeposit(nf3User.ethereumAddress)
         .call();
       const restrictionWithdraw = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 1)
+        .getRestrictionWithdraw(nf3User.ethereumAddress)
         .call();
 
       expect(Number(restrictionDeposit)).to.be.equal(amount1);
@@ -383,10 +383,10 @@ describe(`Testing Administrator`, () => {
 
       await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
       const restrictionDeposit = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 0)
+        .getRestrictionDeposit(nf3User.ethereumAddress)
         .call();
       const restrictionWithdraw = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 1)
+        .getRestrictionWithdraw(nf3User.ethereumAddress)
         .call();
 
       expect(Number(restrictionDeposit)).to.be.equal(0);
@@ -553,10 +553,10 @@ describe(`Testing Administrator`, () => {
         .setRestriction(nf3User.ethereumAddress, amount1, amount2)
         .send({ from: nf3User.ethereumAddress });
       const restrictionDeposit = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 0)
+        .getRestrictionDeposit(nf3User.ethereumAddress)
         .call();
       const restrictionWithdraw = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 1)
+        .getRestrictionWithdraw(nf3User.ethereumAddress)
         .call();
 
       expect(Number(restrictionDeposit)).to.be.equal(amount1);
@@ -568,10 +568,10 @@ describe(`Testing Administrator`, () => {
         .removeRestriction(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
       const restrictionDeposit = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 0)
+        .getRestrictionDeposit(nf3User.ethereumAddress)
         .call();
       const restrictionWithdraw = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 1)
+        .getRestrictionWithdraw(nf3User.ethereumAddress)
         .call();
 
       expect(Number(restrictionDeposit)).to.be.equal(0);

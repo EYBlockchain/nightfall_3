@@ -100,26 +100,36 @@ module.exports = {
       txType: 0,
       numberNullifiers: 0,
       numberCommitments: 1,
+      isEscrowRequired: true,
+      isWithdrawing: false,
     },
     transfer: {
       txType: 1,
       numberNullifiers: 4,
       numberCommitments: 3,
+      isEscrowRequired: false,
+      isWithdrawing: false,
     },
     withdraw: {
       txType: 2,
       numberNullifiers: 4,
       numberCommitments: 2,
+      isEscrowRequired: false,
+      isWithdrawing: true,
     },
     tokenise: {
       txType: 3,
       numberNullifiers: 2,
       numberCommitments: 2,
+      isEscrowRequired: false,
+      isWithdrawing: true,
     },
     burn: {
       txType: 4,
       numberNullifiers: 3,
       numberCommitments: 2,
+      isEscrowRequired: false,
+      isWithdrawing: true,
     },
   }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   MPC: {
@@ -497,12 +507,12 @@ module.exports = {
   SIGNATURES: {
     BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32, bytes32)',
     TRANSACTION:
-      '(uint112,uint112,uint8,uint8,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
+      '(uint112,uint96,uint40,uint8,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
     PROPOSE_BLOCK: [
       '(uint48,address,bytes32,uint256,bytes32,bytes32,bytes32)',
-      '(uint112,uint112,uint8,uint8,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])[]',
+      '(uint112,uint96,uint40,uint8,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])[]',
     ],
     SUBMIT_TRANSACTION:
-      '(uint112,uint112,uint8,uint8,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
+      '(uint112,uint96,uint40,uint8,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
   },
 };

@@ -9,14 +9,6 @@ contract Structures {
     error InvalidTransactionHash();
     error DepositNotEscrowed(bytes32 depositHash);
 
-    enum TransactionTypes {
-        DEPOSIT,
-        TRANSFER,
-        WITHDRAW,
-        TOKENISE,
-        BURN
-    }
-
     enum TokenType {
         ERC20,
         ERC721,
@@ -53,8 +45,8 @@ contract Structures {
     // nullifiers for a Deposit transaction.
     struct Transaction {
         uint112 value;
-        uint112 fee;
-        TransactionTypes transactionType;
+        uint96 fee;
+        uint40 circuitHash;
         TokenType tokenType;
         uint64[] historicRootBlockNumberL2;
         bytes32 tokenId;
@@ -133,12 +125,17 @@ contract Structures {
 
     struct AdvanceWithdrawal {
         address currentOwner;
-        uint96 advanceFee;
+        uint88 advanceFee;
+        bool isWithdrawn;
     }
 
     struct TransactionInfo {
+        uint248 ethFee;
         bool isEscrowed;
-        bool isWithdrawn;
-        uint240 ethFee;
+    }
+
+    struct CircuitInfo {
+        bool isWithdrawing;
+        bool isEscrowRequired;
     }
 }
