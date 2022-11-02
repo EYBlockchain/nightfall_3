@@ -6,4 +6,8 @@ then
   while ! nc -z ${BLOCKCHAIN_WS_HOST} ${BLOCKCHAIN_PORT}; do sleep 3; done
 fi
 
+if [ "${TX_WORKER_COUNT}" ]; then
+  mkdir -f /tmp
+  node /app/src/workers/transaction-submitted-app.mjs > /tmp/worker.txt &
+fi
 exec "$@"

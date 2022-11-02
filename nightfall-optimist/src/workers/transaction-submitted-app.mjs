@@ -13,8 +13,7 @@ import fs from 'fs';
 
 import { submitTransaction } from '../event-handlers/transaction-submitted.mjs';
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const { txWorkerCount } = config.TX_WORKER_PARAMS;
+const { txWorkerCount, txWorkerOptimistApiUrl } = config.TX_WORKER_PARAMS;
 
 //  ip addr show docker0
 async function initWorkers() {
@@ -26,13 +25,13 @@ async function initWorkers() {
     while (true) {
       try {
         shieldInterface = await axios.get(
-          `${environment.optimistApiUrl}/contract-abi/interface/Shield`,
+          `${txWorkerOptimistApiUrl}/contract-abi/interface/Shield`,
           {
             timeout: 10000,
           },
         );
         challengesInterface = await axios.get(
-          `${environment.optimistApiUrl}/contract-abi/interface/Challenges`,
+          `${txWorkerOptimistApiUrl}/contract-abi/interface/Challenges`,
           {
             timeout: 10000,
           },

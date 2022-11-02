@@ -44,6 +44,7 @@ module.exports = {
   TX_WORKER_PARAMS: {
     txWorkerCount: process.env.TX_WORKER_COUNT || 100,
     txWorkerUrl: process.env.TX_WORKER_URL || 'http://172.17.0.1:3000',
+    txWorkerOptimistApiUrl: process.env.TX_WORKER_OPTIMIST_API_URL || 'http://localhost:80',
   },
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
