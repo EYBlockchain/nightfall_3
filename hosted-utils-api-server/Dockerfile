@@ -11,6 +11,8 @@ COPY entrypoint.sh entrypoint.sh
 
 RUN npm ci
 
+EXPOSE 80 9229
+
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 CMD ["npm", "start"]

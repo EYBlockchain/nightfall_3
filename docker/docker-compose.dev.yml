@@ -34,6 +34,9 @@ services:
       - type: bind
         source: ../config/default.js
         target: /config/default.js
+    ports:
+      - 9239:9229
+    command: ['npm', 'run', 'start:debug']
 
   deployer:
     build:
@@ -79,6 +82,9 @@ services:
       - type: bind
         source: ../config/default.js
         target: /app/config/default.js
+    ports:
+      - 9229:9229
+    command: ['npm', 'run', 'start:debug']
 
   worker:
     build:
@@ -100,4 +106,9 @@ services:
     ports:
       # to use with postman and etc
       - 8091:80
-    entrypoint: [ "npm", "run", "start" ]
+    entrypoint: ['npm', 'run', 'start']
+
+  hosted-utils-api-server:
+    ports:
+      - 9249:9229
+    command: ['npm', 'run', 'start:debug']
