@@ -58,7 +58,7 @@ async function checkBlockRoot(block) {
       });
 
       // eslint-disable-next-line no-await-in-loop
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
 

@@ -45,7 +45,8 @@
     "safe-buffer": "^5.2.1",
     "tar": "^6.1.11",
     "web3": "^1.7.5",
-    "ws": "^7.4.3"
+    "ws": "^7.4.3",
+    "zokrates-js": "^1.1.4"
   },
   "devDependencies": {
     "mocha": "^10.0.0",

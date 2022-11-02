@@ -20,7 +20,7 @@ import {
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
-import transactionSubmittedEventHandler from './transaction-submitted.mjs';
+import { transactionSubmittedEventHandler } from './transaction-submitted.mjs';
 
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
 const { ZERO } = constants;

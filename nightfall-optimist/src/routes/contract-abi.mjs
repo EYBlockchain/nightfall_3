@@ -1,16 +1,26 @@
-/**
-Route for depositing (minting) a crypto commitment.
-This code assumes that the Shield contract already has approval to spend
-funds on a zkp deposit
-*/
 import express from 'express';
 import {
   getContractAbi,
   clearCachedContracts,
-} from '@polygon-nightfall/common-files/utils/contract.mjs';
+  getContractInterface,
+} from '../../../common-files/utils/contract.mjs';
+//} from '@polygon-nightfall/common-files/utils/contract.mjs';
 
 const router = express.Router();
 
+router.get('/interface/:contract', async (req, res, next) => {
+  const { contract } = req.params;
+  try {
+    const _interface = await getContractInterface(contract);
+    if (_interface) {
+      res.json({ interface: _interface });
+    } else {
+      res.sendStatus(404);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
 router.get('/:contract', async (req, res, next) => {
   const { contract } = req.params;
   try {

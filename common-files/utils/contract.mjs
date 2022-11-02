@@ -22,7 +22,7 @@ const contractPath = contractName => {
  * @param {String} contractName - Name of Smart Contract
  * @returns {String} - contract interface
  */
-async function getContractInterface(contractName) {
+export async function getContractInterface(contractName) {
   if (contractName in cachedContracts) {
     return cachedContracts[contractName];
   }

@@ -11,6 +11,7 @@ module.exports = {
   PROPOSER_COLLECTION: 'proposers',
   CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
+  BUFFERED_TRANSACTIONS_COLLECTION: 'transactions_buffered',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   INVALID_BLOCKS_COLLECTION: 'invalid_blocks',
   COMMIT_COLLECTION: 'commits',
@@ -19,7 +20,7 @@ module.exports = {
   CIRCUIT_COLLECTION: 'circuit_storage',
   CIRCUIT_HASH_COLLECTION: 'circuit_hash_storage',
   KEYS_COLLECTION: 'keys',
-  CONTRACT_ARTIFACTS: '/app/build/contracts',
+  CONTRACT_ARTIFACTS: process.env.CONTRACT_ARTIFACTS || '/app/build/contracts',
   EXCLUDE_DIRS: 'common',
   MAX_QUEUE: 5,
   TIMBER_HEIGHT: 32,
@@ -40,6 +41,10 @@ module.exports = {
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
+  TX_WORKER_PARAMS: {
+    txWorkerCount: process.env.TX_WORKER_COUNT || 100,
+    txWorkerUrl: process.env.TX_WORKER_URL || 'http://172.17.0.1:3000',
+  },
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
     APPROVERS: process.env.MULTISIG_APPROVERS
@@ -199,6 +204,7 @@ module.exports = {
     MINIMUM_STAKE: process.env.MINIMUM_STAKE || 1000000, // 1000000 wei
     ROTATE_PROPOSER_BLOCKS: 20,
     txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
+    NUMBER_L2_BLOCKS: process.env.NUMBER_L2_BLOCKS || 4,
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||
