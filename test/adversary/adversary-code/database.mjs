@@ -1,4 +1,5 @@
 /* ignore unused exports */
+/* eslint-disable import/first, import/no-unresolved, import/order */
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
@@ -14,26 +15,37 @@ let error = process.env.BAD_TX_SEQUENCE
       'ValidTransaction',
       'ValidTransaction',
       // 'IncorrectTreeRoot',
-      // 'ValidTransaction',
-      'IncorrectLeafCount',
+      // 'IncorrectLeafCount',
+      'DuplicateCommitmentTransfer',
+      'DuplicateCommitmentDeposit',
+      'DuplicateNullifierTransfer',
+      'IncorrectProofDeposit',
+      'IncorrectProofTransfer',
+      'IncorrectPublicInputDepositCommitment',
+      'IncorrectPublicInputTransferCommitment',
+      'IncorrectPublicInputTransferNullifier',
       'ValidTransaction',
-      'DuplicateCommitment',
+      'DuplicateNullifierWithdraw',
+      'IncorrectProofWithdraw',
+      'IncorrectPublicInputWithdrawNullifier',
+      'IncorrectHistoricRoot', // TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
       'ValidTransaction',
-      'DuplicateNullifier',
-      'ValidTransaction',
-      'HistoricRootError',
-      'ValidTransaction',
-      // 'IncorrectProof',
-      // 'ValidTransaction',
     ];
 
 let resetErrorIdx = false;
 let indexOffset = 0;
 
-// eslint-disable-next-line import/first, import/no-unresolved
+import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import { Transaction } from '../classes/index.mjs';
 
-const duplicateCommitment = async number => {
+const { BN128_GROUP_ORDER } = constants;
+
+// Duplicate Commitment -> { mempool: false, transactionType: [0,1] } -> overwrite with a duplicate spent commitment
+// Duplicate Nullifier -> { mempool: false, transactionType: [1,2] } -> overwrite with a duplicate spent nullifier
+// Incorrect Proof -> { mempool: true, transactionType: [0,1,2] } -> overwrite with incorrect proof
+// Incorrect public input -> { mempool: true, transactionType: [0,1,2] } -> overwrite with incorrect specific public input (commitment/nullifier)
+
+const duplicateCommitment = async (number, transactionType) => {
   logger.debug('Creating Transaction with Duplicate Commitment');
   let modifiedTransactions;
   try {
@@ -44,7 +56,7 @@ const duplicateCommitment = async number => {
       .find({ transactionType: { $in: ['0', '1'] } })
       .toArray();
     const spentTransaction = res.filter(t => t.mempool === false);
-    const unspentTransaction = res.filter(t => t.mempool);
+    const unspentTransaction = res.filter(t => t.mempool && t.transactionType === transactionType);
     if (unspentTransaction.length <= 0 || spentTransaction.length <= 0) {
       logger.error('Could not create duplicate commitment');
       return db
@@ -53,6 +65,11 @@ const duplicateCommitment = async number => {
         .toArray();
     }
     const { commitments: spentCommitments } = spentTransaction[0];
+    logger.debug({
+      msg: 'Transaction before modification',
+      transaction: unspentTransaction[0],
+    });
+    logger.debug(`transactionType for transaction to be modified ${transactionType}`);
     const { commitments: unspentCommitments, ...unspentRes } = unspentTransaction[0];
     const modifiedTransaction = {
       commitments: [spentCommitments[0], unspentCommitments[1], ZERO],
@@ -70,6 +87,10 @@ const duplicateCommitment = async number => {
 
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
+    logger.debug({
+      msg: 'Transfer after modification',
+      transaction: modifiedTransaction,
+    });
 
     modifiedTransactions = transactions.slice(0, number - 1);
     modifiedTransactions.push(modifiedTransaction);
@@ -79,7 +100,7 @@ const duplicateCommitment = async number => {
   return modifiedTransactions;
 };
 
-const duplicateNullifier = async number => {
+const duplicateNullifier = async (number, transactionType) => {
   logger.debug('Creating Transaction with Duplicate Nullifier');
   let modifiedTransactions;
   try {
@@ -90,7 +111,7 @@ const duplicateNullifier = async number => {
       .find({ transactionType: { $in: ['1', '2'] } })
       .toArray();
     const spentTransaction = res.filter(t => t.mempool === false);
-    const unspentTransaction = res.filter(t => t.mempool);
+    const unspentTransaction = res.filter(t => t.mempool && t.transactionType === transactionType);
     if (unspentTransaction.length <= 0 || spentTransaction.length <= 0) {
       logger.error('Could not create duplicate nullifier');
       return db
@@ -99,6 +120,10 @@ const duplicateNullifier = async number => {
         .toArray();
     }
     const { nullifiers: spentNullifiers } = spentTransaction[0];
+    logger.debug(
+      `Transaction before modification ${JSON.stringify(unspentTransaction[0], null, 2)}`,
+    );
+    logger.debug(`transactionType for transaction to be modified ${transactionType}`);
     const { nullifiers: unspentNullifiers, ...unspentRes } = unspentTransaction[0];
     const modifiedTransaction = {
       nullifiers: [spentNullifiers[0], unspentNullifiers[1], ZERO, ZERO],
@@ -116,6 +141,7 @@ const duplicateNullifier = async number => {
 
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
+    logger.debug(`Transfer after modification ${JSON.stringify(modifiedTransaction[0], null, 2)}`);
 
     modifiedTransactions = transactions.slice(0, number - 1);
     modifiedTransactions.push(modifiedTransaction);
@@ -125,15 +151,19 @@ const duplicateNullifier = async number => {
   return modifiedTransactions;
 };
 
-const incorrectProof = async number => {
+const incorrectProof = async (number, transactionType) => {
   logger.debug('Creating Transaction with Incorrect Proof');
   try {
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
     const [{ proof, ...rest }, ...transactions] = await db
       .collection(TRANSACTIONS_COLLECTION)
-      .find({ mempool: true }, { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } })
+      .find(
+        { mempool: true, transactionType },
+        { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } },
+      )
       .toArray();
+    logger.debug(`Transaction before modification ${JSON.stringify({ proof, ...rest }, null, 2)}`);
     const incorrectProofTx = {
       // proof contains G1 and G2 points. Any invalid proof passed should still
       // be valid points
@@ -152,6 +182,67 @@ const incorrectProof = async number => {
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     incorrectProofTx.transactionHash = Transaction.calcHash(incorrectProofTx);
     transactions.push(incorrectProofTx);
+    logger.debug(`Transaction after modification ${JSON.stringify(incorrectProofTx, null, 2)}`);
+
+    return transactions;
+  } catch (err) {
+    logger.debug(err);
+  }
+  return null;
+};
+
+const incorrectPublicInput = async (number, transactionType, publicInputType) => {
+  logger.debug('Creating Transaction with Incorrect Public Input');
+  try {
+    const connection = await mongo.connection(MONGO_URL);
+    const db = connection.db(OPTIMIST_DB);
+    const [{ commitments, nullifiers, ...rest }, ...transactions] = await db
+      .collection(TRANSACTIONS_COLLECTION)
+      .find(
+        { mempool: true, transactionType },
+        { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } },
+      )
+      .toArray();
+
+    logger.debug(
+      `Transaction before modification ${JSON.stringify(
+        { commitments, nullifiers, ...rest },
+        null,
+        2,
+      )}`,
+    );
+
+    let incorrectPublicInputTx;
+    switch (publicInputType) {
+      case 'commitment': {
+        commitments[0] = (await randValueLT(BN128_GROUP_ORDER)).hex(32);
+        incorrectPublicInputTx = {
+          commitments,
+          nullifiers,
+          ...rest,
+        };
+        break;
+      }
+      case 'nullifier': {
+        nullifiers[0] = (await randValueLT(BN128_GROUP_ORDER)).hex(32);
+        incorrectPublicInputTx = {
+          commitments,
+          nullifiers,
+          ...rest,
+        };
+        break;
+      }
+      default: {
+        logger.error('Cannot create incorrect public input of type', publicInputType);
+        break;
+      }
+    }
+    // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
+    incorrectPublicInputTx.transactionHash = Transaction.calcHash(incorrectPublicInputTx);
+    transactions.push(incorrectPublicInputTx);
+    logger.debug(
+      `Transaction after modification ${JSON.stringify(incorrectPublicInputTx, null, 2)}`,
+    );
 
     return transactions;
   } catch (err) {
@@ -202,13 +293,29 @@ export async function getMostProfitableTransactions(number, errorIndex) {
   const badTxType = error[errorIndex - indexOffset];
   logger.debug(`Creating a transaction of type ${badTxType}`);
   switch (badTxType) {
-    case 'DuplicateCommitment':
-      return duplicateCommitment(number);
-    case 'DuplicateNullifier':
-      return duplicateNullifier(number);
-    case 'IncorrectProof':
-      return incorrectProof(number);
-    case 'HistoricRootError':
+    case 'DuplicateCommitmentDeposit':
+      return duplicateCommitment(number, '0');
+    case 'DuplicateCommitmentTransfer':
+      return duplicateCommitment(number, '1');
+    case 'DuplicateNullifierTransfer':
+      return duplicateNullifier(number, '1');
+    case 'DuplicateNullifierWithdraw':
+      return duplicateNullifier(number, '2');
+    case 'IncorrectProofDeposit':
+      return incorrectProof(number, '0');
+    case 'IncorrectProofTransfer':
+      return incorrectProof(number, '1');
+    case 'IncorrectProofWithdraw':
+      return incorrectProof(number, '2');
+    case 'IncorrectPublicInputDepositCommitment':
+      return incorrectPublicInput(number, '0', 'commitment');
+    case 'IncorrectPublicInputTransferCommitment':
+      return incorrectPublicInput(number, '1', 'commitment');
+    case 'IncorrectPublicInputTransferNullifier':
+      return incorrectPublicInput(number, '1', 'nullifier');
+    case 'IncorrectPublicInputWithdrawNullifier':
+      return incorrectPublicInput(number, '2', 'nullifier');
+    case 'IncorrectHistoricRoot':
       return historicRootError(number);
     default: {
       const connection = await mongo.connection(MONGO_URL);
@@ -220,7 +327,3 @@ export async function getMostProfitableTransactions(number, errorIndex) {
     }
   }
 }
-// Duplicate Tx -> { mempool: false }
-// Duplicate Nullifier -> { mempool: false, transactionType: 1 } -> overwrite nullifier
-// Incorrect Proof -> { mempool: true } -> overwrite proof
-// Historic Root Error -> { mempool: true } -> overwrite historic root number

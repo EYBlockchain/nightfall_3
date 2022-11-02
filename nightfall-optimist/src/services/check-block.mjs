@@ -228,7 +228,30 @@ export async function checkBlock(block, transactions) {
     }
   } catch (err) {
     if (err.code + 2 === 2 || err.code + 2 === 3) {
-      const siblingPath1 = await getTransactionHashSiblingInfo(transaction.transactionHash);
+      let siblingPath1 = (await getTransactionHashSiblingInfo(transaction.transactionHash))
+        .transactionHashSiblingPath;
+      // case when block.build never was called
+      // may be this optimist never ran as proposer
+      // or more likely since this tx is bad tx from a bad proposer.
+      // prposer hosted in this optimist never build any block with this bad tx in it
+      if (siblingPath1 === undefined) {
+        await Block.calcTransactionHashesRoot(transactions);
+        siblingPath1 = (await getTransactionHashSiblingInfo(transaction.transactionHash))
+          .transactionHashSiblingPath;
+      }
+      // case when block.build never was called
+      // may be this optimist never ran as proposer
+      if (err.metadata.siblingPath2 === undefined) {
+        await Block.calcTransactionHashesRoot(
+          err.metadata.block2.transactionHashes.map(transactionHash => {
+            return { transactionHash };
+          }),
+        );
+        err.metadata.siblingPath2 = (
+          await getTransactionHashSiblingInfo(err.metadata.transaction2.transactionHash)
+        ).transactionHashSiblingPath;
+      }
+
       err.metadata = {
         ...err.metadata,
         block1: block,

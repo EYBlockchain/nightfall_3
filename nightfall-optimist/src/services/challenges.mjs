@@ -20,11 +20,35 @@ const { CHALLENGES_CONTRACT_NAME, ZERO } = constants;
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
 let ws;
 
+export function isMakeChallengesEnable() {
+  return makeChallenges;
+}
+
 export function setChallengeWebSocketConnection(_ws) {
   ws = _ws;
 }
 
+/**
+Function to indicate to a listening challenger that a rollback has been completed.
+*/
+export async function signalRollbackCompleted(data) {
+  // check that the websocket exists (it should) and its readyState is OPEN
+  // before sending. If not wait until the challenger reconnects
+  let tryCount = 0;
+  while (!ws || ws.readyState !== WebSocket.OPEN) {
+    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+    logger.warn(
+      `Websocket to challenger is closed for rollback complete. Waiting for challenger to reconnect`,
+    );
+    if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
+  }
+  logger.debug('Rollback completed');
+  ws.send(JSON.stringify({ type: 'rollback', data }));
+}
+
 export function startMakingChallenges() {
+  if (process.env.IS_CHALLENGER !== 'true')
+    throw Error('Connot start challenger as this optimist never intend to be a challenger');
   logger.info(`Challenges ON`);
   makeChallenges = true;
 }
@@ -95,6 +119,7 @@ export async function createChallenge(block, transactions, err) {
   switch (err.code) {
     // challenge incorrect leaf count
     case 0: {
+      logger.debug(`Challenging incorrect leaf count for block ${JSON.stringify(block, null, 2)}`);
       const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
       txDataToSign = await challengeContractInstance.methods
         .challengeLeafCountCorrect(
@@ -108,7 +133,7 @@ export async function createChallenge(block, transactions, err) {
     }
     // Challenge wrong root
     case 1: {
-      logger.debug('Challenging incorrect root');
+      logger.debug(`Challenging incorrect root`);
 
       const tree = await getTreeByRoot(block.root);
       // We need to pad our frontier as we don't store them with the trailing zeroes.
@@ -123,6 +148,15 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate commitment
     case 2: {
+      logger.debug({
+        msg: 'Challenging duplicate commitment for block',
+        block,
+      });
+      logger.debug({
+        msg: 'Challenging duplicate commitment for block transactions',
+        transactions,
+      });
+
       const {
         block1,
         transaction1,
@@ -158,6 +192,15 @@ export async function createChallenge(block, transactions, err) {
     }
     // challenge duplicate nullifier
     case 3: {
+      logger.debug({
+        msg: 'Challenging duplicate nullifier for block',
+        block,
+      });
+      logger.debug({
+        msg: 'Challenging duplicate nullifier for block transactions',
+        transactions,
+      });
+
       const {
         block1,
         transaction1,
@@ -193,6 +236,15 @@ export async function createChallenge(block, transactions, err) {
     }
     // proof does not verify
     case 4: {
+      logger.debug({
+        msg: 'Challenging proof verification for block',
+        block,
+      });
+      logger.debug({
+        msg: 'Challenging proof verification for block transactions',
+        transactions,
+      });
+
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
       const uncompressedProof = transactions[transactionIndex].proof;
@@ -206,9 +258,20 @@ export async function createChallenge(block, transactions, err) {
         }),
       );
 
-      const transactionSiblingPath = await getTransactionHashSiblingInfo(
-        transactions[transactionIndex].transactionHash,
-      );
+      let transactionSiblingPath = (
+        await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+      ).transactionHashSiblingPath;
+
+      // case when block.build never was called
+      // may be this optimist never ran as proposer
+      // or more likely since this tx is bad tx from a bad proposer.
+      // prposer hosted in this optimist never build any block with this bad tx in it
+      if (transactionSiblingPath === undefined) {
+        await Block.calcTransactionHashesRoot(transactions);
+        transactionSiblingPath = (
+          await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+        ).transactionHashSiblingPath;
+      }
 
       txDataToSign = await challengeContractInstance.methods
         .challengeProofVerification(
