@@ -120,6 +120,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         bytes32 blockHash;
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
 
+
         assembly {
             //Function that calculates the height of the Merkle Tree
             function getTreeHeight(leaves) -> _height {
@@ -179,15 +180,11 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 )
 
                 // We need to check if circuit requires to escrow funds
-                mstore(
-                    x,
-                    calldataload(
-                        add(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))), mul(0x20, 2))
-                    )
-                )
+                mstore(x, shr(216,calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))))))
                 mstore(add(x, 0x20), circuitInfo.slot)
+                
                 let isEscrowRequired := shr(8, sload(keccak256(x, mul(0x20, 2))))
-
+                let fee := shr(160,shl(40,calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))))))
 
                 switch isEscrowRequired
                 case true {
@@ -223,28 +220,14 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                     }
             
                     // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
-                    if iszero(
-                        calldataload(
-                            add(
-                                add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
-                                mul(0x20, 1)
-                            )
-                        )
-                    ) {
+                    if iszero(fee) {
                         //mstore(feePayments, add(mload(add(x, mul(2, 0x20))), mload(feePayments)))
                         mstore(feePayments, add(shr(8,shl(8,transactionInfo)), mload(feePayments)))
                     }
                 }
                 case false {
                     // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
-                    if iszero(
-                        calldataload(
-                            add(
-                                add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
-                                mul(0x20, 1)
-                            )
-                        )
-                    ) {
+                    if iszero(fee) {
                         mstore(x, mload(add(transactionHashesPos, mul(0x20, i))))
                         mstore(add(x, 0x20), txInfo.slot)
                         mstore(feePayments, add(shr(8,shl(8,sload(keccak256(x, mul(0x20, 2))))), mload(feePayments)))
@@ -269,28 +252,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 }
 
                 // If the transaction fee is not zero, update the MATIC fee payments
-                if eq(
-                    iszero(
-                        calldataload(
-                            add(
-                                add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
-                                mul(0x20, 1)
-                            )
-                        )
-                    ),
-                    0
-                ) {
+                if eq(iszero(fee),0) {
                     mstore(
                         add(feePayments, 0x20),
-                        add(
-                            calldataload(
-                                add(
-                                    add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
-                                    mul(0x20, 1)
-                                )
-                            ),
-                            mload(add(feePayments, 0x20))
-                        )
+                        add(fee,mload(add(feePayments, 0x20)))
                     )
                 }
             }

@@ -37,8 +37,11 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             isWhitelisted(msg.sender),
             'Shield: You are not authorised to transact using Nightfall'
         );
-        require(msg.value == 0 || t.fee == 0, 'Shield: Fee cannot be paid in both tokens');
-        (, bool isEscrowRequired) = state.circuitInfo(t.circuitHash);
+        require(
+            msg.value == 0 || uint96(t.packedInfo >> 120) == 0,
+            'Shield: Fee cannot be paid in both tokens'
+        );
+        (, bool isEscrowRequired) = state.circuitInfo(uint40(t.packedInfo >> 216));
         if (isEscrowRequired || msg.value > 0) {
             bytes32 transactionHash = Utils.hashTransaction(t);
             state.setTransactionInfo(transactionHash, isEscrowRequired, uint248(msg.value));
@@ -143,7 +146,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         // check this block is a real one, in the queue, not something made up.
         bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
         // check that the block has been finalised
-        (bool isWithdrawing, ) = state.circuitInfo(t.circuitHash);
+        (bool isWithdrawing, ) = state.circuitInfo(uint40(t.packedInfo >> 216));
         require(isWithdrawing, 'Shield: Transaction is not a valid withdraw');
         require(
             state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
@@ -179,7 +182,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to withdraw funds from this block'
         );
-        (bool isWithdrawing, ) = state.circuitInfo(t.circuitHash);
+        (bool isWithdrawing, ) = state.circuitInfo(uint40(t.packedInfo >> 216));
         require(isWithdrawing, 'Shield: Transaction is not a valid withdraw');
         require(
             !advancedWithdrawals[transactionHash].isWithdrawn,
@@ -255,7 +258,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         IERC20Upgradeable(tokenAddress).safeTransferFrom(
             address(msg.sender),
             currentOwner,
-            uint256(t.value)
+            uint256(uint112(t.packedInfo >> 8))
         );
     }
 
@@ -269,7 +272,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
 
         // The transaction is a withdrawal transaction
-        (bool isWithdrawing, ) = state.circuitInfo(t.circuitHash);
+        (bool isWithdrawing, ) = state.circuitInfo(uint40(t.packedInfo >> 216));
         require(isWithdrawing, 'Shield: Can only advance withdrawals');
 
         require(msg.value > 0, 'Shield: Advance fee cannot be zero');
@@ -281,7 +284,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         );
 
         require(
-            t.tokenType == TokenType.ERC20 && t.tokenId == ZERO,
+            TokenType(uint8(t.packedInfo)) == TokenType.ERC20 && t.tokenId == ZERO,
             'Shield: Can only advance withdrawals for fungible tokens'
         );
 
@@ -319,14 +322,17 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         );
         address addr = address(uint160(uint256(t.ercAddress)));
 
-        if (t.tokenType == TokenType.ERC20) {
+        uint112 value = uint112(t.packedInfo >> 8);
+
+        TokenType tokenType = TokenType(uint8(t.packedInfo));
+        if (tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
                 revert('Shield: ERC20 withdrawal should have tokenId equal to ZERO');
-            if (t.value > super.getRestrictionWithdraw(addr))
+            if (value > super.getRestrictionWithdraw(addr))
                 revert('Shield: Value is above current restrictions for withdrawals');
-            else IERC20Upgradeable(addr).safeTransfer(recipientAddress, uint256(t.value));
-        } else if (t.tokenType == TokenType.ERC721) {
-            if (t.value != 0)
+            else IERC20Upgradeable(addr).safeTransfer(recipientAddress, uint256(value));
+        } else if (tokenType == TokenType.ERC721) {
+            if (value != 0)
                 // value should always be equal to 0
                 revert('Shield: Invalid inputs for ERC721 withdrawal');
             else
@@ -336,12 +342,12 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
                     uint256(t.tokenId),
                     ''
                 );
-        } else if (t.tokenType == TokenType.ERC1155) {
+        } else if (tokenType == TokenType.ERC1155) {
             IERC1155(addr).safeTransferFrom(
                 address(this),
                 recipientAddress,
                 uint256(t.tokenId),
-                uint256(t.value),
+                uint256(value),
                 ''
             );
         }
@@ -356,29 +362,28 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         );
         address addr = address(uint160(addrNum));
 
-        if (t.tokenType == TokenType.ERC20) {
+        uint112 value = uint112(t.packedInfo >> 8);
+        TokenType tokenType = TokenType(uint8(t.packedInfo));
+
+        if (tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
                 revert('Shield: ERC20 deposit should have tokenId equal to ZERO');
             uint256 check = super.getRestrictionDeposit(addr);
             require(check > 0, 'Shield: Cannot have restrictions of zero value');
-            if (t.value > check) revert('Shield: Value is above current restrictions for deposits');
+            if (value > check) revert('Shield: Value is above current restrictions for deposits');
             else
-                IERC20Upgradeable(addr).safeTransferFrom(
-                    msg.sender,
-                    address(this),
-                    uint256(t.value)
-                );
-        } else if (t.tokenType == TokenType.ERC721) {
-            if (t.value != 0)
+                IERC20Upgradeable(addr).safeTransferFrom(msg.sender, address(this), uint256(value));
+        } else if (tokenType == TokenType.ERC721) {
+            if (value != 0)
                 // value should always be equal to 0
                 revert('Shield: Invalid inputs for ERC721 deposit');
             else IERC721(addr).safeTransferFrom(msg.sender, address(this), uint256(t.tokenId), '');
-        } else if (t.tokenType == TokenType.ERC1155) {
+        } else if (tokenType == TokenType.ERC1155) {
             IERC1155(addr).safeTransferFrom(
                 msg.sender,
                 address(this),
                 uint256(t.tokenId),
-                uint256(t.value),
+                uint256(value),
                 ''
             );
         }

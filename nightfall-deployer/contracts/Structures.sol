@@ -44,10 +44,7 @@ contract Structures {
     // will hold default values for any specific tranaction, e.g. there are no
     // nullifiers for a Deposit transaction.
     struct Transaction {
-        uint112 value;
-        uint96 fee;
-        uint40 circuitHash;
-        TokenType tokenType;
+        uint256 packedInfo;
         uint64[] historicRootBlockNumberL2;
         bytes32 tokenId;
         bytes32 ercAddress;

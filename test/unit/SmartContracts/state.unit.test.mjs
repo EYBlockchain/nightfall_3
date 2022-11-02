@@ -1,6 +1,10 @@
 import { expect } from 'chai';
 import hardhat from 'hardhat';
-import { calculateTransactionHash, createBlockAndTransactions } from '../utils/utils.mjs';
+import {
+  calculateTransactionHash,
+  createBlockAndTransactions,
+  packInfoTransaction,
+} from '../utils/utils.mjs';
 import { setTransactionInfo } from '../utils/stateStorage.mjs';
 
 const { ethers, upgrades } = hardhat;
@@ -972,12 +976,9 @@ describe('State contract State functions', function () {
       frontierHash: '0xa2f1ec04a89542d6f1e04449398052422c7b1057df8606db047f48047bb7ab72',
       transactionHashesRoot: '0x0487da81cb1d53536928de44fa55de0accf9a8bc9f42739a80f69584970d572f',
     };
-
+    const packedInfo = packInfoTransaction(100000000000000, 10, 0, 0);
     const transaction1 = {
-      value: '100000000000000',
-      fee: '10',
-      circuitHash: '0',
-      tokenType: '0',
+      packedInfo,
       historicRootBlockNumberL2: [
         '0x0000000000000000000000000000000000000000000000000000000000000000',
         '0x0000000000000000000000000000000000000000000000000000000000000000',

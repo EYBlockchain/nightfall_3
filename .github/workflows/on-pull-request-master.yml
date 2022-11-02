@@ -2,7 +2,7 @@ name: Check PR
 
 on:
   pull_request:
-    branches: [master, tokenisation-l2]
+    branches: [master, tokenisation-l2, RogerTaule/circuitHash]
 
 jobs:
   dependency-review:
