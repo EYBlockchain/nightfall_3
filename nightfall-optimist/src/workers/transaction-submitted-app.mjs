@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+// ignore unused exports default
 /*
 CONTRACT_ARTIFACTS=/tmp/nf/contracts/ NODE_CONFIG_DIR=../../../config BLOCKCHAIN_URL=ws://localhost:8546 node transaction-submitted-app.mjs 
 */
