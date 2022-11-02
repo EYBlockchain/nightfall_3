@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/EYBlockchain/nightfall-client#readme",
   "dependencies": {
-    "@polygon-nightfall/common-files": "^0.0.5",
+    "@polygon-nightfall/common-files": "*",
     "amqplib": "^0.8.0",
     "async-mutex": "^0.3.1",
     "axios": "^0.21.4",
