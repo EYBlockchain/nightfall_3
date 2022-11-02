@@ -79,16 +79,14 @@ contract Config is Ownable, Structures {
         return maticAddress;
     }
 
-    /**
-     * @dev Get restricting tokens.
-     * transactionType 0 for deposit and 1 for withdraw
-     */
-    function getRestriction(address tokenAddr, uint256 transactionType)
-        public
-        view
-        returns (uint256)
-    {
-        return erc20limit[tokenAddr][transactionType];
+    // restricting tokens for deposit
+    function getRestrictionDeposit(address tokenAddr) public view returns (uint256) {
+        return erc20limit[tokenAddr][0];
+    }
+
+    // restricting tokens for deposit
+    function getRestrictionWithdraw(address tokenAddr) public view returns (uint256) {
+        return erc20limit[tokenAddr][1];
     }
 
     /**

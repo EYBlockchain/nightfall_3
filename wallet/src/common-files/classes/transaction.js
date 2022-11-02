@@ -28,7 +28,7 @@ function keccak(preimage) {
   const {
     value,
     fee,
-    transactionType,
+    circuitHash,
     tokenType,
     historicRootBlockNumberL2,
     tokenId,
@@ -43,7 +43,7 @@ function keccak(preimage) {
   const transaction = [
     value,
     fee,
-    transactionType,
+    circuitHash,
     tokenType,
     historicRootBlockNumberL2,
     tokenId,
@@ -68,7 +68,7 @@ class Transaction {
   constructor({
     fee,
     historicRootBlockNumberL2: _historicRoot,
-    transactionType,
+    circuitHash,
     tokenType,
     tokenId,
     value,
@@ -80,6 +80,7 @@ class Transaction {
     proof, // this must be a proof object, as computed by zokrates worker
     numberNullifiers,
     numberCommitments,
+    isOnlyL2,
   }) {
     let compressedSecrets;
     let flatProof;
@@ -96,13 +97,13 @@ class Transaction {
       compressedSecrets = [0, 0];
     else compressedSecrets = _compressedSecrets;
 
-    if ((transactionType === 0 || transactionType === 2) && TOKEN_TYPES[tokenType] === undefined)
+    if (!isOnlyL2 && TOKEN_TYPES[tokenType] === undefined)
       throw new Error('Unrecognized token type');
     // convert everything to hex(32) for interfacing with web3
     const preimage = generalise({
       value: value || 0,
       fee: fee || 0,
-      transactionType: transactionType || 0,
+      circuitHash: circuitHash || 0,
       tokenType: TOKEN_TYPES[tokenType] || 0, // tokenType does not matter for transfer
       historicRootBlockNumberL2,
       tokenId: tokenId || 0,
@@ -136,7 +137,7 @@ class Transaction {
       value,
       fee,
       historicRootBlockNumberL2,
-      transactionType,
+      circuitHash,
       tokenType,
       tokenId,
       ercAddress,
@@ -149,7 +150,7 @@ class Transaction {
     return {
       value,
       fee,
-      transactionType,
+      circuitHash,
       tokenType,
       historicRootBlockNumberL2,
       tokenId,

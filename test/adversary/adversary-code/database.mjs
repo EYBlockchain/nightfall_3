@@ -53,10 +53,7 @@ const duplicateCommitment = async (number, transactionType) => {
   try {
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
-    const res = await db
-      .collection(TRANSACTIONS_COLLECTION)
-      .find({ transactionType: { $in: ['0', '1'] } })
-      .toArray();
+    const res = await db.collection(TRANSACTIONS_COLLECTION).find().toArray();
     const spentTransaction = res.filter(t => t.mempool === false);
     const unspentTransaction = res.filter(t => t.mempool && t.transactionType === transactionType);
     if (unspentTransaction.length <= 0 || spentTransaction.length <= 0) {
@@ -134,10 +131,7 @@ const duplicateNullifier = async (number, transactionType) => {
   try {
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
-    const res = await db
-      .collection(TRANSACTIONS_COLLECTION)
-      .find({ transactionType: { $in: ['1', '2'] } })
-      .toArray();
+    const res = await db.collection(TRANSACTIONS_COLLECTION).find().toArray();
     const spentTransaction = res.filter(t => t.mempool === false);
     const unspentTransaction = res.filter(t => t.mempool && t.transactionType === transactionType);
     if (unspentTransaction.length <= 0 || spentTransaction.length <= 0) {

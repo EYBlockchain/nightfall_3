@@ -13,11 +13,13 @@ pragma solidity ^0.8.0;
 import './Utils.sol';
 import './Config.sol';
 import './Pausable.sol';
+import './Key_Registry.sol';
 
-contract State is ReentrancyGuardUpgradeable, Pausable, Config {
+contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // global state variables
+    mapping(bytes32 => TransactionInfo) public txInfo;
     BlockData[] public blockHashes; // array containing mainly blockHashes
     mapping(address => FeeTokens) public pendingWithdrawalsFees;
     mapping(address => LinkedAddress) public proposers;
@@ -36,8 +38,9 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     ProposerSet[] public proposersSet; // proposer set for next span
     uint256 public currentSprint; // the current sprint of the span
 
-    function initialize() public override(Pausable, Config) {
+    function initialize() public override(Pausable, Key_Registry, Config) {
         Pausable.initialize();
+        Key_Registry.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     }
@@ -53,28 +56,18 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         initialize();
     }
 
-    modifier onlyRegistered() {
-        require(
-            msg.sender == proposersAddress ||
-                msg.sender == challengesAddress ||
-                msg.sender == shieldAddress,
-            'State: Not authorised to call this function'
-        );
-        _;
-    }
-
     modifier onlyShield() {
-        require(msg.sender == shieldAddress, 'Only shield contract is authorized');
+        require(msg.sender == shieldAddress, 'State: Only shield contract is authorized');
         _;
     }
 
     modifier onlyProposer() {
-        require(msg.sender == proposersAddress, 'Only proposer contract is authorized');
+        require(msg.sender == proposersAddress, 'State: Only proposer contract is authorized');
         _;
     }
 
     modifier onlyChallenger() {
-        require(msg.sender == challengesAddress, 'Only challenger contract is authorized');
+        require(msg.sender == challengesAddress, 'State: Only challenger contract is authorized');
         _;
     }
 
@@ -104,21 +97,23 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         whenNotPaused
     {
         require(b.blockNumberL2 == blockHashes.length, 'State: Block out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
-        if (blockHashes.length != 0)
+        if (blockHashes.length != 0) {
             require(
                 b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash,
                 'State: Block flawed or out of order'
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
-
-        TimeLockedStake memory stake = getStakeAccount(msg.sender);
+        }
         require(blockStake <= msg.value, 'State: Stake payment is incorrect');
-        require(b.proposer == msg.sender, 'State: Proposer address is not the sender');
+        require(b.proposer == msg.sender, 'State: The sender is not the proposer');
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
-        require(stake.amount >= blockStake, 'State: Proposer does not have enough funds staked');
-        stake.amount -= blockStake;
-        stake.challengeLocked += blockStake;
-        stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
+        require(
+            stakeAccounts[msg.sender].amount >= blockStake,
+            'State: Proposer does not have enough funds staked'
+        );
+        stakeAccounts[msg.sender].amount -= blockStake;
+        stakeAccounts[msg.sender].challengeLocked += blockStake;
+        stakeAccounts[msg.sender].time = 0;
 
         FeeTokens memory feePayments = FeeTokens(0, 0);
 
@@ -139,7 +134,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             }
 
             let x := mload(0x40) //Gets the first free memory pointer
-            let transactionHashesPos := add(x, mul(0x20, 2)) // calculate memory location of the transaction hashes
+            let transactionHashesPos := add(x, mul(0x20, 3)) // calculate memory location of the transaction hashes
             let transactionPos := add(
                 transactionHashesPos,
                 mul(0x20, exp(2, getTreeHeight(t.length)))
@@ -183,29 +178,42 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                     keccak256(transactionPos, mul(0x20, add(transactionSlots, 1)))
                 )
 
-                // If the transactionType is zero (aka deposit), we need to check if the funds were escrowed
-                if iszero(
+                // We need to check if circuit requires to escrow funds
+                mstore(
+                    x,
                     calldataload(
                         add(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))), mul(0x20, 2))
                     )
-                ) {
-                    mstore(x, 0x16ab930800000000000000000000000000000000000000000000000000000000) //Store the signature of the getTransactionEscrowed(bytes 32) function in x
-                    mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
-                    pop(
-                        call(
-                            // Call getTransactionEscrowed function to see if funds has been deposited
-                            gas(),
-                            sload(shieldAddress.slot),
-                            0, //No value
-                            x, //Inputs are stored at location x
-                            add(0x04, 0x20), //Inputs are 36 bytes long
-                            x, //Store output over input (saves space)
-                            0x20 //Outputs are 32 bytes long
-                        )
-                    )
+                )
+                mstore(add(x, 0x20), circuitInfo.slot)
+                let isEscrowRequired := shr(8, sload(keccak256(x, mul(0x20, 2))))
+
+
+                switch isEscrowRequired
+                case true {
+                    mstore(x, mload(add(transactionHashesPos, mul(0x20, i))))
+                    mstore(add(x, 0x20), txInfo.slot)
+                    let transactionInfo := sload(keccak256(x, mul(0x20, 2)))
+                    
+                    //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
+                    if iszero(shr(248,transactionInfo)) {
+
+                    // mstore(x, 0x49e6b62c00000000000000000000000000000000000000000000000000000000) //Store the signature of the getTransactionInfo(bytes32) function in x
+                    // mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
+                    // pop(
+                    //     staticcall(
+                    //         // Call getTransactionInfo function to see if funds has been deposited
+                    //         gas(),
+                    //         sload(shieldAddress.slot), //To addr
+                    //         x, //Inputs are stored at location x
+                    //         add(0x04, 0x20), //Inputs are 36 bytes long
+                    //         x, //Store output over input (saves space)
+                    //         mul(3, 0x20) //Outputs are 96 bytes long
+                    //     )
+                    // )
 
                     //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
-                    if iszero(mload(x)) {
+                    //if iszero(mload(x)) {
                         mstore(
                             0,
                             0xd96541f500000000000000000000000000000000000000000000000000000000 //Custom error DepositNotEscrowed
@@ -213,29 +221,51 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                         mstore(0x04, mload(add(transactionHashesPos, mul(0x20, i))))
                         revert(0, 36)
                     }
-                }
-
-                // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
-                if iszero(
-                    calldataload(
-                        add(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))), mul(0x20, 1))
-                    )
-                ) {
-                    mstore(x, 0x6f0b7d3100000000000000000000000000000000000000000000000000000000) //Store the signature of the getTransactionEthFee(bytes 32) function in x
-                    mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
-                    pop(
-                        call(
-                            // Call getTransactionFeesEth function to see if funds has been deposited
-                            gas(),
-                            sload(shieldAddress.slot), //To addr
-                            0, //No value
-                            x, //Inputs are stored at location x
-                            add(0x04, 0x20), //Inputs are 36 bytes long
-                            x, //Store output over input (saves space)
-                            0x20 //Outputs are 32 bytes long
+            
+                    // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
+                    if iszero(
+                        calldataload(
+                            add(
+                                add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
+                                mul(0x20, 1)
+                            )
                         )
-                    )
-                    mstore(feePayments, add(mload(x), mload(feePayments)))
+                    ) {
+                        //mstore(feePayments, add(mload(add(x, mul(2, 0x20))), mload(feePayments)))
+                        mstore(feePayments, add(shr(8,shl(8,transactionInfo)), mload(feePayments)))
+                    }
+                }
+                case false {
+                    // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
+                    if iszero(
+                        calldataload(
+                            add(
+                                add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
+                                mul(0x20, 1)
+                            )
+                        )
+                    ) {
+                        mstore(x, mload(add(transactionHashesPos, mul(0x20, i))))
+                        mstore(add(x, 0x20), txInfo.slot)
+                        mstore(feePayments, add(shr(8,shl(8,sload(keccak256(x, mul(0x20, 2))))), mload(feePayments)))
+                        // mstore(
+                        //     x,
+                        //     0x49e6b62c00000000000000000000000000000000000000000000000000000000
+                        // ) //Store the signature of the getTransactionInfo(bytes 32) function in x
+                        // mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
+                        // pop(
+                        //     staticcall(
+                        //         // Call getTransactionInfo function to see if funds has been deposited
+                        //         gas(),
+                        //         sload(shieldAddress.slot), //To addr
+                        //         x, //Inputs are stored at location x
+                        //         add(0x04, 0x20), //Inputs are 36 bytes long
+                        //         x, //Store output over input (saves space)
+                        //         0x20 //Outputs are 32 bytes long
+                        //     )
+                        // )
+                        // mstore(feePayments, add(mload(add(x, mul(2, 0x20))), mload(feePayments)))
+                    }
                 }
 
                 // If the transaction fee is not zero, update the MATIC fee payments
@@ -276,16 +306,12 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                 } lt(j, exp(2, sub(i, 1))) {
                     j := add(j, 1)
                 } {
-                    let left := mload(add(transactionHashesPos, mul(mul(0x20, j), 2)))
-                    let right := mload(add(transactionHashesPos, add(mul(mul(0x20, j), 2), 0x20)))
-                    if eq(and(iszero(left), iszero(right)), 1) {
+                    let leftPos := add(transactionHashesPos, mul(mul(0x20, j), 2))
+                    if eq(and(iszero(mload(leftPos)), iszero(mload(add(leftPos, 0x20)))), 1) {
                         mstore(add(transactionHashesPos, mul(0x20, j)), 0)
                     }
-                    if eq(and(iszero(left), iszero(right)), 0) {
-                        mstore(
-                            add(transactionHashesPos, mul(0x20, j)),
-                            keccak256(add(transactionHashesPos, mul(mul(0x20, j), 2)), 0x40)
-                        )
+                    if eq(and(iszero(mload(leftPos)), iszero(mload(add(leftPos, 0x20)))), 0) {
+                        mstore(add(transactionHashesPos, mul(0x20, j)), keccak256(leftPos, 0x40))
                     }
                 }
             }
@@ -330,12 +356,9 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         emit BlockProposed();
     }
 
-    // function to signal a rollback. Note that we include the block hash because
-    // it's uinque, although technically not needed (Optimist consumes the
-    // block number and Timber the leaf count). It's helpful when testing to make
-    // sure we have the correct event.
-    function emitRollback(uint256 blockNumberL2ToRollbackTo) public onlyRegistered {
-        emit Rollback(blockNumberL2ToRollbackTo);
+    function setTransactionInfo(bytes32 transactionHash, bool isEscrowed, uint248 ethFee) public onlyShield {
+        txInfo[transactionHash].isEscrowed = isEscrowed;
+        txInfo[transactionHash].ethFee = ethFee;
     }
 
     function setProposer(address addr, LinkedAddress calldata proposer) public onlyProposer {
@@ -386,7 +409,11 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         address addr,
         uint256 feesEth,
         uint256 feesMatic
-    ) public onlyRegistered {
+    ) public {
+        require(msg.sender == proposersAddress ||
+                msg.sender == shieldAddress,
+            'State: Not authorised to call this function');
+
         pendingWithdrawalsFees[addr].feesEth += feesEth;
         pendingWithdrawalsFees[addr].feesMatic += feesMatic;
     }
@@ -414,11 +441,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         proposerStartBlock = sb;
     }
 
-    function getProposerStartBlock() public view returns (uint256) {
-        return proposerStartBlock;
-    }
-
-    function setNumProposers(uint256 np) public onlyRegistered {
+    function setNumProposers(uint256 np) public onlyProposer {
         numProposers = np;
     }
 
@@ -426,9 +449,12 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         return numProposers;
     }
 
-    function removeProposer(address proposer) public onlyRegistered {
+    function removeProposer(address proposer) public {
+         require(msg.sender == proposersAddress ||
+                msg.sender == challengesAddress,
+            'State: Not authorised to call this function');
         _removeProposer(proposer);
-        if (proposer == currentProposer.thisAddress) {
+        if (proposer == currentProposer.thisAddress || currentProposer.thisAddress == address(0)) {
             currentProposer = proposers[currentProposer.nextAddress]; // we need to refresh the current proposer before the change
             proposerStartBlock = 0;
             changeCurrentProposer();
@@ -467,12 +493,12 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         require(
             b.blockNumberL2 < blockHashes.length &&
                 blockHashes[b.blockNumberL2].blockHash == blockHash,
-            'State: This block does not exist'
+            'State: Block does not exist'
         );
         bytes32 tranasactionHashesRoot = Utils.hashTransactionHashes(ts);
         require(
             b.transactionHashesRoot == tranasactionHashesRoot,
-            'State: Some of these transactions are not in this block'
+            'State: Transaction hashes root does not match'
         );
     }
 
@@ -484,7 +510,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         require(
             b.blockNumberL2 < blockHashes.length &&
                 blockHashes[b.blockNumberL2].blockHash == blockHash,
-            'This block does not exist'
+            'State: Block does not exist'
         );
 
         return blockHash;
@@ -503,11 +529,11 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         require(
             b.blockNumberL2 < blockHashes.length &&
                 blockHashes[b.blockNumberL2].blockHash == blockHash,
-            'State: This block does not exist'
+            'State: Block does not exist'
         );
         require(
             b.transactionHashesRoot == siblingPath[0],
-            'State: This transaction hashes root is incorrect'
+            'State: Transaction hashes root is incorrect'
         );
         bytes32 transactionHash = Utils.hashTransaction(t);
         bool valid = Utils.checkPath(siblingPath, index, transactionHash);
@@ -522,7 +548,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         address addr,
         uint256 amount,
         uint256 challengeLocked
-    ) public onlyRegistered {
+    ) public {
+         require(msg.sender == proposersAddress ||
+                msg.sender == shieldAddress,
+            'State: Not authorised to call this function');
         stakeAccounts[addr] = TimeLockedStake(amount, challengeLocked, 0);
     }
 
@@ -556,20 +585,13 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     }
 
     function updateStakeAccountTime(address addr, uint256 time) public onlyProposer {
-        _updateStakeAccountTime(addr, time);
+        stakeAccounts[addr].time = time;
     }
 
-    function _updateStakeAccountTime(address addr, uint256 time) internal {
-        TimeLockedStake memory stake = stakeAccounts[addr];
-        stake.time = time;
-        stakeAccounts[addr] = stake;
-    }
-
-    function isBlockStakeWithdrawn(bytes32 blockHash) public view returns (bool) {
-        return claimedBlockStakes[blockHash];
-    }
-
-    function setBlockStakeWithdrawn(bytes32 blockHash) public onlyRegistered {
+    function setBlockStakeWithdrawn(bytes32 blockHash) public {
+         require(msg.sender == challengesAddress ||
+                msg.sender == shieldAddress,
+            'State: Not authorised to call this function');
         claimedBlockStakes[blockHash] = true;
     }
 
@@ -594,7 +616,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             while (numProposers > 1) {
                 _removeProposer(selectedProposer);
                 // The selectedProposer has to wait a CHALLENGE_PERIOD from current block.timestamp
-                _updateStakeAccountTime(selectedProposer, block.timestamp);
+                stakeAccounts[selectedProposer].time = block.timestamp;
                 selectedProposer = currentProposer.nextAddress;
             }
         }
@@ -646,15 +668,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
      * @dev Initialize a new span
      */
     function initializeSpan() internal {
-        fillSlots(); // 1) initialize slots based on the stake and valuePerSlot
-        shuffleSlots(); // 2) shuffle the slots
-        spanProposerSet(); // 3) pop the proposer set from shuffled slots
-    }
-
-    /**
-     * @dev Fill slots based on the weight
-     */
-    function fillSlots() public {
+        // 1) initialize slots based on the stake and valuePerSlot
         require(
             currentProposer.thisAddress != address(0),
             'State: Current proposer not initialized'
@@ -687,12 +701,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                 slots.push(p.thisAddress);
             }
         }
-    }
 
-    /**
-     * @dev Shuffle the slots of all proposers
-     */
-    function shuffleSlots() internal {
+        // 2) shuffle the slots
         for (uint256 i = 0; i < slots.length; i++) {
             uint256 n = i +
                 (uint256(keccak256(abi.encodePacked(block.timestamp))) % (slots.length - i));
@@ -700,12 +710,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             slots[n] = slots[i];
             slots[i] = temp;
         }
-    }
 
-    /**
-     * @dev Pop the proposer set for next Span
-     */
-    function spanProposerSet() internal {
+        // 3) pop the proposer set from shuffled slots
         for (uint256 i = 0; i < proposersSet.length; i++) {
             proposers[proposersSet[i].thisAddress].inProposerSet = false;
             proposers[proposersSet[i].thisAddress].indexProposerSet = 0;
@@ -715,15 +721,15 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
 
         // add proposersSet
         for (uint256 i = 0; i < proposerSetCount; i++) {
-            LinkedAddress memory p = proposers[slots[i]];
+            LinkedAddress memory prop = proposers[slots[i]];
             if (p.inProposerSet == false) {
                 p.inProposerSet = true;
                 p.indexProposerSet = proposersSet.length;
-                ProposerSet memory ps = ProposerSet(p.thisAddress, 1, 0, 0);
+                ProposerSet memory ps = ProposerSet(prop.thisAddress, 1, 0, 0);
                 proposersSet.push(ps);
-                proposers[slots[i]] = p;
+                proposers[slots[i]] = prop;
             } else {
-                proposersSet[p.indexProposerSet].weight += 1;
+                proposersSet[prop.indexProposerSet].weight += 1;
             }
         }
 

@@ -90,7 +90,7 @@ export async function countWithdrawTransactionHashes(transactionHashes) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '2';
+    return transactionHashes.includes(tx.transactionHash) && tx.nullifierCircuitHash === '2';
   });
   // const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
   return filtered.length;
@@ -101,7 +101,7 @@ export async function isTransactionHashWithdraw(transactionHash) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '2';
+    return tx.transactionHash === transactionHash && tx.nullifierCircuitHash === '2';
   });
   return filtered.length;
 }
@@ -174,19 +174,14 @@ export async function markPending(commitment) {
 // function to mark a commitment as nullified for a mongo db
 export async function markNullified(commitment, transaction) {
   const db = await connectDB();
-  const {
-    isPendingNullification,
-    isNullified,
-    nullifierTransactionType,
-    transactionHash,
-    ...rest
-  } = await db.get(COMMITMENTS_COLLECTION, commitment.hash.hex(32));
+  const { isPendingNullification, isNullified, nullifierCircuitHash, transactionHash, ...rest } =
+    await db.get(COMMITMENTS_COLLECTION, commitment.hash.hex(32));
   return db.put(
     COMMITMENTS_COLLECTION,
     {
       isPendingNullification: false,
       isNullified: true,
-      nullifierTransactionType: BigInt(transaction.transactionType).toString(),
+      nullifierCircuitHash: transaction.circuitHash,
       transactionHash: transaction.transactionHash,
       ...rest,
     },
@@ -533,7 +528,7 @@ export async function getWithdrawCommitments() {
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const withdraws =
     Object.keys(vals).length > 0
-      ? vals.filter(v => v.isNullified && v.isOnChain >= 0 && v.nullifierTransactionType === '2')
+      ? vals.filter(v => v.isNullified && v.isOnChain >= 0 && v.nullifierCircuitHash === '2')
       : [];
 
   // To check validity we need the withdrawal transaction, the block the transaction is in and all other

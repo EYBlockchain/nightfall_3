@@ -55,11 +55,25 @@ async function withdraw(withdrawParams) {
   });
 
   try {
+    const responseCircuitHash = await axios.get(
+      `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
+      {
+        params: { circuit: 'withdraw' },
+      },
+    );
+
+    logger.trace({
+      msg: 'Received response from get-circuit-hash',
+      response: responseCircuitHash.data,
+    });
+
+    const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
+
     // now we have everything we need to create a Witness and compute a proof
     const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
+      circuitHash,
       tokenType: items.tokenType,
       tokenId,
       value,
@@ -69,6 +83,7 @@ async function withdraw(withdrawParams) {
       nullifiers: commitmentsInfo.nullifiers,
       numberNullifiers: VK_IDS.withdraw.numberNullifiers,
       numberCommitments: VK_IDS.withdraw.numberCommitments,
+      isOnlyL2: false,
     });
 
     const privateData = {
@@ -118,7 +133,7 @@ async function withdraw(withdrawParams) {
     const optimisticWithdrawTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
+      circuitHash,
       tokenType: items.tokenType,
       tokenId,
       value,
@@ -129,6 +144,7 @@ async function withdraw(withdrawParams) {
       proof,
       numberNullifiers: VK_IDS.withdraw.numberNullifiers,
       numberCommitments: VK_IDS.withdraw.numberCommitments,
+      isOnlyL2: false,
     });
 
     logger.debug({

@@ -23,7 +23,7 @@ import {
 
 const { generalise } = gen;
 const { PROVING_SCHEME, CURVE } = config;
-const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
+const { ZERO, STATE_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
 async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
   // Note: There is no need to check the duplicate commitment in the same transaction since this is already checked in the circuit
@@ -123,10 +123,8 @@ async function checkHistoricRootBlockNumber(transaction) {
 
 async function verifyProof(transaction) {
   // we'll need the verification key.  That's actually stored in the b/c
-  const challengeInstance = await waitForContract(CHALLENGES_CONTRACT_NAME);
-  const vkArray = await challengeInstance.methods
-    .getVerificationKey(transaction.transactionType)
-    .call();
+  const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
+  const vkArray = await stateInstance.methods.getVerificationKey(transaction.circuitHash).call();
 
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
@@ -149,7 +147,7 @@ async function verifyProof(transaction) {
     [
       transaction.value,
       transaction.fee,
-      transaction.transactionType,
+      transaction.circuitHash,
       transaction.tokenType,
       transaction.historicRootBlockNumberL2,
       generalise(transaction.tokenId).limbs(32, 8),

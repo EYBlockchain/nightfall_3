@@ -20,7 +20,6 @@ import './KYC.sol';
 
 contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    mapping(bytes32 => TransactionInfo) public txInfo;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
 
     function initialize() public override(Stateful, Config, Pausable, KYC) initializer {
@@ -31,23 +30,21 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         KYC.initialize();
     }
 
-    function getTransactionEscrowed(bytes32 transactionHash) public view returns (bool) {
-        return txInfo[transactionHash].isEscrowed;
-    }
-
-    function getTransactionEthFee(bytes32 transactionHash) public view returns (uint256) {
-        return txInfo[transactionHash].ethFee;
-    }
-
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
-        require(isWhitelisted(msg.sender), 'You are not authorised to transact using Nightfall');
-        if (t.transactionType == TransactionTypes.DEPOSIT) {
+        require(
+            isWhitelisted(msg.sender),
+            'Shield: You are not authorised to transact using Nightfall'
+        );
+        require(msg.value == 0 || t.fee == 0, 'Shield: Fee cannot be paid in both tokens');
+        (, bool isEscrowRequired) = state.circuitInfo(t.circuitHash);
+        if (isEscrowRequired || msg.value > 0) {
             bytes32 transactionHash = Utils.hashTransaction(t);
-            txInfo[transactionHash].isEscrowed = true;
-            txInfo[transactionHash].ethFee = uint240(msg.value);
-            payIn(t);
+            state.setTransactionInfo(transactionHash, isEscrowRequired, uint248(msg.value));
+            if (isEscrowRequired) {
+                payIn(t);
+            }
         }
     }
 
@@ -65,7 +62,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         );
         require(b.proposer == msg.sender, 'Shield: Not the proposer of this block');
         require(
-            !state.isBlockStakeWithdrawn(blockHash),
+            !state.claimedBlockStakes(blockData.blockHash),
             'Shield: Block stake for this block already claimed'
         );
         state.setBlockStakeWithdrawn(blockHash);
@@ -105,7 +102,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             'Shield: Too soon to get paid for this block'
         );
         require(
-            !state.isBlockStakeWithdrawn(blockData.blockHash),
+            !state.claimedBlockStakes(blockData.blockHash),
             'Shield: Block stake for this block already claimed'
         );
 
@@ -146,17 +143,15 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         // check this block is a real one, in the queue, not something made up.
         bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
         // check that the block has been finalised
-        require(
-            t.transactionType == TransactionTypes.WITHDRAW,
-            'Shield: Transaction is not a valid withdraw'
-        );
+        (bool isWithdrawing, ) = state.circuitInfo(t.circuitHash);
+        require(isWithdrawing, 'Shield: Transaction is not a valid withdraw');
         require(
             state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to withdraw funds from this block'
         );
 
         require(
-            !txInfo[transactionHash].isWithdrawn,
+            !advancedWithdrawals[transactionHash].isWithdrawn,
             'Shield: This transaction has already paid out'
         );
 
@@ -184,15 +179,13 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to withdraw funds from this block'
         );
+        (bool isWithdrawing, ) = state.circuitInfo(t.circuitHash);
+        require(isWithdrawing, 'Shield: Transaction is not a valid withdraw');
         require(
-            t.transactionType == TransactionTypes.WITHDRAW,
-            'Shield: Transaction is not a valid withdraw'
-        );
-        require(
-            !txInfo[transactionHash].isWithdrawn,
+            !advancedWithdrawals[transactionHash].isWithdrawn,
             'Shield: This transaction has already paid out'
         );
-        txInfo[transactionHash].isWithdrawn = true;
+        advancedWithdrawals[transactionHash].isWithdrawn = true;
 
         AdvanceWithdrawal memory advancedWithdrawal = advancedWithdrawals[transactionHash];
         address originalRecipientAddress = address(uint160(uint256(t.recipientAddress)));
@@ -200,8 +193,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         address recipientAddress = advancedWithdrawal.currentOwner == address(0)
             ? originalRecipientAddress
             : advancedWithdrawal.currentOwner;
-
-        delete advancedWithdrawals[transactionHash];
 
         if (advancedWithdrawal.advanceFee > 0) {
             (bool success, ) = payable(address(state)).call{
@@ -240,7 +231,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
 
         // The withdrawal has not been withdrawn
         require(
-            !txInfo[transactionHash].isWithdrawn,
+            !advancedWithdrawals[transactionHash].isWithdrawn,
             'Shield: This transaction has already paid out'
         );
 
@@ -278,10 +269,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
 
         // The transaction is a withdrawal transaction
-        require(
-            t.transactionType == TransactionTypes.WITHDRAW,
-            'Shield: Can only advance withdrawals'
-        );
+        (bool isWithdrawing, ) = state.circuitInfo(t.circuitHash);
+        require(isWithdrawing, 'Shield: Can only advance withdrawals');
 
         require(msg.value > 0, 'Shield: Advance fee cannot be zero');
 
@@ -298,7 +287,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
 
         // The withdrawal has not been withdrawn
         require(
-            !txInfo[transactionHash].isWithdrawn,
+            !advancedWithdrawals[transactionHash].isWithdrawn,
             'Shield: This transaction has already paid out'
         );
         AdvanceWithdrawal memory advancedWithdrawal = advancedWithdrawals[transactionHash];
@@ -313,7 +302,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             'Shield: You are not the current owner of this withdrawal'
         );
 
-        advancedWithdrawal.advanceFee += uint96(msg.value);
+        advancedWithdrawal.advanceFee += uint88(msg.value);
         advancedWithdrawals[transactionHash] = advancedWithdrawal;
         emit InstantWithdrawalRequested(transactionHash, msg.sender, advancedWithdrawal.advanceFee);
     }
@@ -333,7 +322,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         if (t.tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
                 revert('Shield: ERC20 withdrawal should have tokenId equal to ZERO');
-            if (t.value > super.getRestriction(addr, 1))
+            if (t.value > super.getRestrictionWithdraw(addr))
                 revert('Shield: Value is above current restrictions for withdrawals');
             else IERC20Upgradeable(addr).safeTransfer(recipientAddress, uint256(t.value));
         } else if (t.tokenType == TokenType.ERC721) {
@@ -370,7 +359,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         if (t.tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
                 revert('Shield: ERC20 deposit should have tokenId equal to ZERO');
-            uint256 check = super.getRestriction(addr, 0);
+            uint256 check = super.getRestrictionDeposit(addr);
             require(check > 0, 'Shield: Cannot have restrictions of zero value');
             if (t.value > check) revert('Shield: Value is above current restrictions for deposits');
             else

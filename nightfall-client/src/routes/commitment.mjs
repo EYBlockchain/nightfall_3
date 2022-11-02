@@ -3,20 +3,27 @@
  */
 
 import express from 'express';
+import config from 'config';
+import axios from 'axios';
+import gen from 'general-number';
 import {
   getCommitmentBySalt,
   getWalletBalance,
   getWalletBalanceUnfiltered,
   getWalletCommitments,
-  getWithdrawCommitments,
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
   getCommitments,
   getCommitmentsByCompressedZkpPublicKeyList,
   insertCommitmentsAndResync,
+  getCommitmentsByCircuitHash,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
+
+const { generalise } = gen;
+
+const { PROTOCOL, ZOKRATES_WORKER_HOST } = config;
 
 router.get('/salt', async (req, res, next) => {
   try {
@@ -117,7 +124,16 @@ router.get('/', async (req, res, next) => {
 
 router.get('/withdraws', async (req, res, next) => {
   try {
-    const commitments = await getWithdrawCommitments();
+    const responseCircuitHash = await axios.get(
+      `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
+      {
+        params: { circuit: 'withdraw' },
+      },
+    );
+
+    const withdrawCircuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(32);
+
+    const commitments = await getCommitmentsByCircuitHash(withdrawCircuitHash);
     res.json({ commitments });
   } catch (err) {
     next(err);
