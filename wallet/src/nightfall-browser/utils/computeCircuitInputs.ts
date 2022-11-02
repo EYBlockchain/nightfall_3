@@ -13,7 +13,7 @@ const NULL_COMMITMENT = {
 type PublicInputs = {
   value: string;
   fee: string;
-  transactionType: string;
+  circuitHash: string;
   tokenType: string;
   historicRootBlockNumberL2: string[];
   tokenId: string[];
@@ -52,7 +52,7 @@ const computePublicInputs = (
   const publicTx: PublicInputs = {
     value: transaction.value.field(BN128_GROUP_ORDER),
     fee: transaction.fee.field(BN128_GROUP_ORDER),
-    transactionType: transaction.transactionType.field(BN128_GROUP_ORDER),
+    circuitHash: transaction.circuitHash.field(BN128_GROUP_ORDER),
     tokenType: transaction.tokenType.field(BN128_GROUP_ORDER),
     historicRootBlockNumberL2: transaction.historicRootBlockNumberL2.map((h: any) =>
       h.field(BN128_GROUP_ORDER),

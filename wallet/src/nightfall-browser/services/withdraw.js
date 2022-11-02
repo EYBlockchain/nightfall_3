@@ -11,7 +11,7 @@ import gen from 'general-number';
 import { initialize } from 'zokrates-js';
 import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
-import computeCircuitInputs from '../utils/compute-witness';
+import computeCircuitInputs from '../utils/computeCircuitInputs';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -43,10 +43,11 @@ async function withdraw(withdrawParams, shieldContractAddress) {
 
   if (!(await checkIndexDBForCircuit(circuitName)))
     throw Error('Some circuit data are missing from IndexedDB');
-  const [abiData, programData, pkData] = await Promise.all([
+  const [abiData, programData, pkData, circuitHashData] = await Promise.all([
     getStoreCircuit(`${circuitName}-abi`),
     getStoreCircuit(`${circuitName}-program`),
     getStoreCircuit(`${circuitName}-pk`),
+    getStoreCircuit(`${circuitName}-hash`),
   ]);
 
   const lastTree = await getLatestTree();
@@ -57,6 +58,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
   const abi = abiData.data;
   const program = programData.data;
   const pk = pkData.data;
+  const circuitHash = circuitHashData.data;
 
   const shieldContractInstance = await getContractInstance(
     SHIELD_CONTRACT_NAME,
@@ -85,7 +87,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
+      circuitHash,
       tokenType: withdrawParams.tokenType,
       tokenId,
       value,
@@ -95,6 +97,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       nullifiers: commitmentsInfo.nullifiers,
       numberNullifiers: VK_IDS.withdraw.numberNullifiers,
       numberCommitments: VK_IDS.withdraw.numberCommitments,
+      isOnlyL2: false,
     });
 
     const privateData = {
@@ -133,7 +136,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     const optimisticWithdrawTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
+      circuitHash,
       tokenType: withdrawParams.tokenType,
       tokenId,
       value,
@@ -144,6 +147,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       proof,
       numberNullifiers: VK_IDS.withdraw.numberNullifiers,
       numberCommitments: VK_IDS.withdraw.numberCommitments,
+      isOnlyL2: false,
     });
     try {
       const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);

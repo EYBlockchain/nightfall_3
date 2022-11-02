@@ -20,6 +20,20 @@ async function burn(burnParams) {
   const { providedCommitments, ...items } = burnParams;
   const { rootKey, value, fee, ercAddress, tokenId } = generalise(items);
 
+  const responseCircuitHash = await axios.get(
+    `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
+    {
+      params: { circuit: 'burn' },
+    },
+  );
+
+  logger.trace({
+    msg: 'Received response from get-circuit-hash',
+    response: responseCircuitHash.data,
+  });
+
+  const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
+
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
@@ -53,11 +67,12 @@ async function burn(burnParams) {
     const publicData = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 4,
+      circuitHash,
       commitments: newCommitmentsCircuit,
       nullifiers: commitmentsInfo.nullifiers,
       numberNullifiers: VK_IDS.burn.numberNullifiers,
       numberCommitments: VK_IDS.burn.numberCommitments,
+      isOnlyL2: true,
     });
 
     const privateData = {
@@ -109,12 +124,13 @@ async function burn(burnParams) {
     const optimisticBurnTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 4,
+      circuitHash,
       commitments: newCommitmentsCircuit,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
       numberNullifiers: VK_IDS.burn.numberNullifiers,
       numberCommitments: VK_IDS.burn.numberCommitments,
+      isOnlyL2: true,
     });
 
     logger.debug({

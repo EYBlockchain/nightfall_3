@@ -92,6 +92,7 @@ export async function checkIndexDBForCircuit(circuit) {
     getStoreCircuit(`${circuit}-abi`),
     getStoreCircuit(`${circuit}-program`),
     getStoreCircuit(`${circuit}-pk`),
+    getStoreCircuit(`${circuit}-hash`),
   ]);
   return record.every(r => typeof r !== 'undefined');
 }
@@ -106,13 +107,15 @@ export async function checkIndexDBForCircuitHash(circuitInfo) {
     getStoreCircuitHash(`${circuitName}-abi`),
     getStoreCircuitHash(`${circuitName}-program`),
     getStoreCircuitHash(`${circuitName}-pk`),
+    getStoreCircuitHash(`${circuitName}-hash`),
   ]);
   if (record.every(r => typeof r !== 'undefined')) {
     return record.every(
       r =>
         r.dataHash === circuitInfo.abih ||
         r.dataHash === circuitInfo.programh ||
-        r.dataHash === circuitInfo.pkh,
+        r.dataHash === circuitInfo.pkh ||
+        r.dataHash === circuitInfo.hashh,
     );
   }
   return false;

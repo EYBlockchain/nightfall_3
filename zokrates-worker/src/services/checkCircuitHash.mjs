@@ -14,6 +14,7 @@ export default async function checkCircuitHash({ filepath, hash }) {
   const resultData = JSON.parse(resultBuffer.toString().trim());
 
   let differentHash;
+  let previousHash;
   let exist = false;
 
   for (const element of resultData) {
@@ -23,6 +24,7 @@ export default async function checkCircuitHash({ filepath, hash }) {
     } else if (element.circuitName === circuitNameWext && element.circuitHash !== hash) {
       differentHash = true;
       exist = true;
+      previousHash = element.circuitHash;
       element.circuitHash = hash;
     }
   }
@@ -36,5 +38,5 @@ export default async function checkCircuitHash({ filepath, hash }) {
     fs.writeFileSync(filePath, JSON.stringify(resultData));
   }
 
-  return differentHash;
+  return { differentHash, previousHash };
 }

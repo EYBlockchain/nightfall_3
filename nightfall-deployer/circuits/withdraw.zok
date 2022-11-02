@@ -15,7 +15,6 @@ def main(\
     assert(withdraw_generic::<numberNullifiers,numberCommitments>(\
         tx.value,\
         tx.fee,\
-	tx.transactionType,\
 	tx.tokenType,\
         tx.historicRootBlockNumberL2,\
 	tx.tokenId,\

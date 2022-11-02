@@ -114,7 +114,7 @@ library Utils {
         uint256 count = 0;
         inputs[count++] = uint256(ts.value);
         inputs[count++] = uint256(ts.fee);
-        inputs[count++] = uint256(ts.transactionType);
+        inputs[count++] = uint256(ts.circuitHash);
         inputs[count++] = uint256(ts.tokenType);
         for (uint256 i = 0; i < ts.historicRootBlockNumberL2.length; ++i) {
             inputs[count++] = ts.historicRootBlockNumberL2[i];

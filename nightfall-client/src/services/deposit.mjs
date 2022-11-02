@@ -44,9 +44,23 @@ async function deposit(items) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
+  const responseCircuitHash = await axios.get(
+    `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
+    {
+      params: { circuit: 'deposit' },
+    },
+  );
+
+  logger.trace({
+    msg: 'Received response from get-circuit-hash',
+    response: responseCircuitHash.data,
+  });
+
+  const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
+
   const publicData = new Transaction({
     fee: 0,
-    transactionType: 0,
+    circuitHash,
     tokenType: items.tokenType,
     tokenId,
     value,
@@ -54,6 +68,7 @@ async function deposit(items) {
     commitments: [commitment],
     numberNullifiers: VK_IDS.deposit.numberNullifiers,
     numberCommitments: VK_IDS.deposit.numberCommitments,
+    isOnlyL2: false,
   });
 
   const privateData = {
@@ -94,7 +109,7 @@ async function deposit(items) {
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({
     fee: 0,
-    transactionType: 0,
+    circuitHash,
     tokenType: items.tokenType,
     tokenId,
     value,
@@ -103,6 +118,7 @@ async function deposit(items) {
     proof,
     numberNullifiers: VK_IDS.deposit.numberNullifiers,
     numberCommitments: VK_IDS.deposit.numberCommitments,
+    isOnlyL2: false,
   });
 
   logger.trace({

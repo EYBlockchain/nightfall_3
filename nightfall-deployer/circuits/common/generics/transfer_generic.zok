@@ -15,7 +15,6 @@ from "utils/pack/u32/nonStrictUnpack256.zok" import main as field_to_u32_8;
 def transfer_generic<N,C>(\
     field value,\
     field fee,\
-	field transactionType,\
 	field tokenType,\
 	field[N] historicRootBlockNumberL2,\
 	u32[8] tokenId,\

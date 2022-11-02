@@ -13,7 +13,7 @@ import { initialize } from 'zokrates-js';
 
 import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
-import computeCircuitInputs from '../utils/compute-witness';
+import computeCircuitInputs from '../utils/computeCircuitInputs';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -104,11 +104,24 @@ async function transfer(transferParams, shieldContractAddress) {
       // Compress the public key as it will be put on-chain
       const compressedEPub = edwardsCompress(ePublic);
 
+      if (!(await checkIndexDBForCircuit(circuitName)))
+        throw Error('Some circuit data are missing from IndexedDB');
+      const [abiData, programData, pkData, circuitHashData] = await Promise.all([
+        getStoreCircuit(`${circuitName}-abi`),
+        getStoreCircuit(`${circuitName}-program`),
+        getStoreCircuit(`${circuitName}-pk`),
+        getStoreCircuit(`${circuitName}-hash`),
+      ]);
+      const abi = abiData.data;
+      const program = programData.data;
+      const pk = pkData.data;
+      const circuitHash = circuitHashData.data;
+
       // now we have everything we need to create a Witness and compute a proof
       const transaction = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-        transactionType: 1,
+        circuitHash,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
         tokenId: compressedSecrets[1], // this is the encrypted tokenID
         recipientAddress: compressedEPub,
@@ -117,6 +130,7 @@ async function transfer(transferParams, shieldContractAddress) {
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
         numberNullifiers: VK_IDS.transfer.numberNullifiers,
         numberCommitments: VK_IDS.transfer.numberCommitments,
+        isOnlyL2: true,
       });
 
       const privateData = {
@@ -147,17 +161,6 @@ async function transfer(transferParams, shieldContractAddress) {
       // call a zokrates worker to generate the proof
       // This is (so far) the only place where we need to get specific about the
       // circuit
-      if (!(await checkIndexDBForCircuit(circuitName)))
-        throw Error('Some circuit data are missing from IndexedDB');
-      const [abiData, programData, pkData] = await Promise.all([
-        getStoreCircuit(`${circuitName}-abi`),
-        getStoreCircuit(`${circuitName}-program`),
-        getStoreCircuit(`${circuitName}-pk`),
-      ]);
-      const abi = abiData.data;
-      const program = programData.data;
-      const pk = pkData.data;
-
       const zokratesProvider = await initialize();
       const artifacts = { program: new Uint8Array(program), abi };
       const keypair = { pk: new Uint8Array(pk) };
@@ -175,7 +178,7 @@ async function transfer(transferParams, shieldContractAddress) {
       const optimisticTransferTransaction = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-        transactionType: 1,
+        circuitHash,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
         tokenId: compressedSecrets[1], // this is the encrypted tokenID
         recipientAddress: compressedEPub,
@@ -185,6 +188,7 @@ async function transfer(transferParams, shieldContractAddress) {
         proof,
         numberNullifiers: VK_IDS.transfer.numberNullifiers,
         numberCommitments: VK_IDS.transfer.numberCommitments,
+        isOnlyL2: true,
       });
 
       const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
