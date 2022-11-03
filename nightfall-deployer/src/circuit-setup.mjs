@@ -10,6 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
+import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import crypto from 'crypto';
 
@@ -107,7 +108,7 @@ async function setupCircuits() {
     if (checkHash.data.differentHash || !vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
       try {
         if (checkHash.data.differentHash && checkHash.data.previousHash) {
-          oldCircuitHashes.push(`0x${checkHash.data.previousHash.slice(0, 10)}`);
+          oldCircuitHashes.push(utils.ensure0x(checkHash.data.previousHash).slice(0, 12));
         }
         logger.info({
           msg: 'No existing verification key. Fear not, I will make a new one: calling generate keys',

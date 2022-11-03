@@ -42,10 +42,7 @@ export async function getProposeBlockCalldata(eventData) {
   };
   const transactions = transactionsData.map(t => {
     const [
-      value,
-      fee,
-      circuitHash,
-      tokenType,
+      packedInfo,
       historicRootBlockNumberL2,
       tokenId,
       ercAddress,
@@ -55,6 +52,9 @@ export async function getProposeBlockCalldata(eventData) {
       compressedSecrets,
       proof,
     ] = t;
+
+    const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedInfo);
+
     const transaction = {
       value,
       fee,
@@ -94,10 +94,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const transactionData = web3.eth.abi.decodeParameter(SIGNATURES.SUBMIT_TRANSACTION, abiBytecode);
   const [
-    value,
-    fee,
-    circuitHash,
-    tokenType,
+    packedInfo,
     historicRootBlockNumberL2,
     tokenId,
     ercAddress,
@@ -107,9 +104,12 @@ export async function getTransactionSubmittedCalldata(eventData) {
     compressedSecrets,
     proof,
   ] = transactionData;
+
+  const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedInfo);
+
   const transaction = {
-    fee,
     value,
+    fee,
     circuitHash,
     tokenType,
     historicRootBlockNumberL2,

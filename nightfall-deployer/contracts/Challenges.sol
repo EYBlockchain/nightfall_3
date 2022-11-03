@@ -242,7 +242,7 @@ contract Challenges is Stateful, Config {
             transaction.transaction,
             extraPublicInputs,
             uncompressedProof,
-            state.getVerificationKey(transaction.transaction.circuitHash)
+            state.getVerificationKey(uint40(transaction.transaction.packedInfo >> 216))
         );
         challengeAccepted(transaction.blockL2);
     }
