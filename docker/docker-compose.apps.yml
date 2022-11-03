@@ -9,8 +9,8 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      AUTOSTART_RETRIES: 100
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
+      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
     volumes:
       - type: bind
         source: ../apps/proposer/src
