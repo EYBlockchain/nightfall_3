@@ -4,6 +4,8 @@ import config from 'config';
 import {
   submitTransactionEnable,
   submitTransaction,
+  workerEnableSet,
+  workerEnableGet,
 } from '../event-handlers/transaction-submitted.mjs';
 import { getDebugCounters } from '../services/debug-counters.mjs';
 import { findAndDeleteAllBufferedTransactions } from '../services/database.mjs';
@@ -21,6 +23,19 @@ router.get('/counters', async (req, res, next) => {
   }
 });
 
+/**
+ * Enable/Disable tx workers
+ */
+router.post('/tx-worker-enable', async (req, res) => {
+  const { enable } = req.body;
+  workerEnableSet(enable);
+  res.sendStatus(200);
+});
+
+/**
+ * Enable/Disable tx processing. If disabled, transactions will be stored in a temporary collection. When
+ * processing is enabled back, tmp collection is emptied and transactions processed
+ */
 router.post('/tx-submitted-enable', async (req, res) => {
   const { enable } = req.body;
 
@@ -29,7 +44,7 @@ router.post('/tx-submitted-enable', async (req, res) => {
     submitTransactionEnable(true);
     const transactions = await findAndDeleteAllBufferedTransactions();
 
-    if (txWorkerCount) {
+    if (txWorkerCount && workerEnableGet()) {
       transactions.forEach(async tx =>
         axios
           .get(`${txWorkerUrl}/tx-submitted`, {

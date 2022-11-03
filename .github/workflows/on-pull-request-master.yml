@@ -725,6 +725,7 @@ jobs:
         env:
           TRANSACTIONS_PER_BLOCK: 32
           CONFIRMATIONS: 1
+          TX_WORKER_COUNT: 100
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11

@@ -38,8 +38,51 @@ const web3Client = new Web3Client();
 let erc20Address;
 let stateAddress;
 const eventLogs = [];
+let txPerSecondWorkersOn;
 
-describe('Stress test', () => {
+const generateNTransactions = async () => {
+  const initTx = txPerBlock * NUMBER_L2_BLOCKS;
+  // disable worker processing and store transactions in tmp collection
+  await axios.post(`${environment.optimistApiUrl}/debug/tx-submitted-enable`, {
+    enable: false,
+  });
+  // We create enough transactions to fill blocks full of deposits.
+  await depositNTransactions(
+    nf3Users[0],
+    initTx,
+    erc20Address,
+    tokenType,
+    transferValue,
+    tokenId,
+    0,
+  );
+
+  let nTx = 0;
+  let nTx1 = 0;
+  // Wait until all transactions are generated
+  while (nTx < initTx) {
+    nTx = await numberOfBufferedTransactions();
+    console.log('N buffered transactions', nTx);
+    await waitForTimeout(1000);
+  }
+  nTx = 0;
+  console.log('Start transaction processing...');
+  // enable worker processing and process transactions in tmp
+  axios.post(`${environment.optimistApiUrl}/debug/tx-submitted-enable`, { enable: true });
+  const startTimeTx = new Date().getTime();
+  // while unprocessed transactions (nTx) is less than number of transactions generated (initTx),
+  // and number of transactions increases (first block is generated)
+  while (nTx >= nTx1 && nTx < initTx) {
+    nTx1 = nTx;
+    nTx = await numberOfUnprocessedTransactions();
+    console.log('N Unprocessed transactions', nTx);
+    await waitForTimeout(100);
+  }
+  const endTimeTx = new Date().getTime();
+  return (nTx * 1000) / (endTimeTx - startTimeTx);
+};
+
+describe('Tx worker test', () => {
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
     await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
@@ -62,6 +105,11 @@ describe('Stress test', () => {
     it('Initialize tx worker', async function () {
       const totalCPUs = Math.min(os.cpus().length, txWorkerCount);
       const initTx = totalCPUs * 2;
+      // enable workers
+      await axios.post(`${environment.optimistApiUrl}/debug/tx-worker-enable`, {
+        enable: true,
+      });
+      // disable worker processing and store transactions in tmp collection
       await axios.post(`${environment.optimistApiUrl}/debug/tx-submitted-enable`, {
         enable: false,
       });
@@ -84,6 +132,7 @@ describe('Stress test', () => {
         await waitForTimeout(1000);
       }
       console.log('Start transaction processing...');
+      // enable worker processing and process transactions in tmp
       axios.post(`${environment.optimistApiUrl}/debug/tx-submitted-enable`, { enable: true });
       // leave some time for transaction processing
       await waitForTimeout(10000);
@@ -91,51 +140,49 @@ describe('Stress test', () => {
 
     /**
      * In this test, we generate and buffer transactions, and measure how long it takes to
-     * process them all at once.
+     * process them all at once with workers.
      */
-    it('Generate transactions and measure transaction processing and block assembly time', async function () {
+    it('Generate transactions and measure transaction processing and block assembly time with workers on', async function () {
+      const expectedMinTxPerSecond = 50;
       let pendingBlocks = NUMBER_L2_BLOCKS;
       const blockTimestamp = [];
       let startTime;
-      const initTx = txPerBlock * NUMBER_L2_BLOCKS;
-      await axios.post(`${environment.optimistApiUrl}/debug/tx-submitted-enable`, {
+      // enable workers
+      await axios.post(`${environment.optimistApiUrl}/debug/tx-worker-enable`, {
+        enable: true,
+      });
+      txPerSecondWorkersOn = await generateNTransactions();
+      console.log('Transactions per second', txPerSecondWorkersOn);
+      // check that we can process more than 50 transactions per second. In reality, it should be more.
+      expect(txPerSecondWorkersOn).to.be.greaterThan(expectedMinTxPerSecond);
+
+      // In this second part, measure time it takes to generate blocks
+      while (pendingBlocks) {
+        console.log('Pending L2 blocks', pendingBlocks);
+        startTime = new Date().getTime();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        blockTimestamp.push(new Date().getTime() - startTime);
+        pendingBlocks -= 1;
+      }
+      console.log('Block times', blockTimestamp);
+    });
+
+    /**
+     * In this test, we generate and buffer transactions, and measure how long it takes to
+     * process them all at once without workers.
+     */
+    it('Generate transactions and measure transaction processing and block assembly time with workers off', async function () {
+      let pendingBlocks = NUMBER_L2_BLOCKS;
+      const blockTimestamp = [];
+      let startTime;
+      // disable workers
+      await axios.post(`${environment.optimistApiUrl}/debug/tx-worker-enable`, {
         enable: false,
       });
-      // We create enough transactions to fill blocks full of deposits.
-      await depositNTransactions(
-        nf3Users[0],
-        initTx,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        0,
-      );
-
-      let nTx = 0;
-      let nTx1 = 0;
-      // Wait until all transactions are generated
-      while (nTx < initTx) {
-        nTx = await numberOfBufferedTransactions();
-        console.log('N buffered transactions', nTx);
-        await waitForTimeout(1000);
-      }
-      nTx = 0;
-      console.log('Start transaction processing...');
-      axios.post(`${environment.optimistApiUrl}/debug/tx-submitted-enable`, { enable: true });
-      const startTimeTx = new Date().getTime();
-      // while unprocessed transactions (nTx) is less than number of transactions generated (initTx),
-      // and number of transactions increases (first block is generated)
-      while (nTx >= nTx1 && nTx < initTx) {
-        nTx1 = nTx;
-        nTx = await numberOfUnprocessedTransactions();
-        console.log('N Unprocessed transactions', nTx);
-        await waitForTimeout(100);
-      }
-      const endTimeTx = new Date().getTime();
-      console.log('TIME', endTimeTx - startTimeTx, nTx);
+      const txPerSecond = await generateNTransactions();
+      console.log('Transactions per second', txPerSecond);
       // check that we can process more than 50 transactions per second. In reality, it should be more.
-      expect((nTx / (endTimeTx - startTimeTx)) * 1000).to.be.greaterThan(50);
+      expect(txPerSecond).to.be.greaterThan(txPerSecondWorkersOn);
 
       // In this second part, measure time it takes to generate blocks
       while (pendingBlocks) {

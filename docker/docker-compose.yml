@@ -120,6 +120,7 @@ services:
       TX_WORKER_COUNT: ${TX_WORKER_COUNT:-100}
       TX_WORKER_URL: ${TX_WORKER_URL:-http://localhost:3000}
       TX_WORKER_OPTIMIST_API_URL: ${TX_WORKER_OPTIMIST_API_URL:-http://localhost:80}
+      FROM_ADDRESS: "0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0"
     command: ['npm', 'run', 'dev']
 
   rabbitmq:

@@ -20,7 +20,15 @@ const { txWorkerUrl, txWorkerCount } = config.TX_WORKER_PARAMS;
 
 // Flag to enable/disable submitTransaction processing
 let _submitTransactionEnable = true;
+// Flag to enable/disable worker processing
+let _workerEnable = true;
 
+export function workerEnableSet(flag) {
+  _workerEnable = flag;
+}
+export function workerEnableGet() {
+  return _workerEnable;
+}
 /**
  * It's possible this is a replay or a re-mine of a transaction that's already
  * in a block. Check for this.  This is not part of the general transaction
@@ -128,7 +136,7 @@ export async function transactionSubmittedEventHandler(eventParams) {
   }
 
   // If TX WORKERS enabled or not responsive, route transaction requests to main thread
-  if (txWorkerCount) {
+  if (txWorkerCount && _workerEnable) {
     axios
       .get(`${txWorkerUrl}/tx-submitted`, {
         params: {
