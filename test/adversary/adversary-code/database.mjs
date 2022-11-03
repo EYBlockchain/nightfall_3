@@ -1,5 +1,5 @@
 /* ignore unused exports */
-/* eslint-disable import/first, import/no-unresolved, import/order */
+/* eslint-disable import/first, import/no-unresolved, import/order, import/no-cycle */
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
@@ -36,9 +36,11 @@ let resetErrorIdx = false;
 let indexOffset = 0;
 
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { Transaction } from '../classes/index.mjs';
+import { ws as proposerWebSocket } from './block-assembler.mjs'; // eslint-disable-line import/named
 
-const { BN128_GROUP_ORDER } = constants;
+const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME } = constants;
 
 // Duplicate Commitment -> { mempool: false, transactionType: [0,1] } -> overwrite with a duplicate spent commitment
 // Duplicate Nullifier -> { mempool: false, transactionType: [1,2] } -> overwrite with a duplicate spent nullifier
@@ -92,6 +94,31 @@ const duplicateCommitment = async (number, transactionType) => {
       transaction: modifiedTransaction,
     });
 
+    if (transactionType === '0') {
+      // submit modified tx to blockchain
+      const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+      const rawTransaction = await shieldContractInstance.methods
+        .submitTransaction(Transaction.buildSolidityStruct(modifiedTransaction))
+        .encodeABI();
+
+      await proposerWebSocket.send(
+        JSON.stringify({
+          type: 'submit-transaction',
+          txDataToSign: rawTransaction,
+          transactions: [modifiedTransaction],
+        }),
+      );
+
+      // while loop basically wait for transaction to be submit and
+      // then wait for transactionSumitEventHandler to complete its job and save tx in db
+      let isModifiedTransactionInDB = false;
+      while (isModifiedTransactionInDB === false) {
+        isModifiedTransactionInDB =
+          (await getTransactionByTransactionHash(modifiedTransaction.transactionHash)) === null; // eslint-disable-line no-await-in-loop, no-undef
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
     modifiedTransactions = transactions.slice(0, number - 1);
     modifiedTransactions.push(modifiedTransaction);
   } catch (err) {
@@ -183,7 +210,31 @@ const incorrectProof = async (number, transactionType) => {
     incorrectProofTx.transactionHash = Transaction.calcHash(incorrectProofTx);
     transactions.push(incorrectProofTx);
     logger.debug(`Transaction after modification ${JSON.stringify(incorrectProofTx, null, 2)}`);
+    if (transactionType === '0') {
+      // submit modified tx to blockchain
+      const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+      const rawTransaction = await shieldContractInstance.methods
+        .submitTransaction(Transaction.buildSolidityStruct(incorrectProofTx))
+        .encodeABI();
 
+      await proposerWebSocket.send(
+        JSON.stringify({
+          type: 'submit-transaction',
+          txDataToSign: rawTransaction,
+          transactions: [incorrectProofTx],
+        }),
+      );
+
+      // while loop basically wait for transaction to be submit and
+      // then wait for transactionSumitEventHandler to complete its job and save tx in db
+      let isModifiedTransactionInDB = false;
+      while (isModifiedTransactionInDB === false) {
+        isModifiedTransactionInDB =
+          (await getTransactionByTransactionHash(incorrectProofTx.transactionHash)) === null; // eslint-disable-line no-await-in-loop, no-undef
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
     return transactions;
   } catch (err) {
     logger.debug(err);
@@ -244,6 +295,31 @@ const incorrectPublicInput = async (number, transactionType, publicInputType) =>
       `Transaction after modification ${JSON.stringify(incorrectPublicInputTx, null, 2)}`,
     );
 
+    if (transactionType === '0') {
+      // submit modified tx to blockchain
+      const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+      const rawTransaction = await shieldContractInstance.methods
+        .submitTransaction(Transaction.buildSolidityStruct(incorrectPublicInputTx))
+        .encodeABI();
+
+      await proposerWebSocket.send(
+        JSON.stringify({
+          type: 'submit-transaction',
+          txDataToSign: rawTransaction,
+          transactions: [incorrectPublicInputTx],
+        }),
+      );
+
+      // while loop basically wait for transaction to be submit and
+      // then wait for transactionSumitEventHandler to complete its job and save tx in db
+      let isModifiedTransactionInDB = false;
+      while (isModifiedTransactionInDB === false) {
+        isModifiedTransactionInDB =
+          (await getTransactionByTransactionHash(incorrectPublicInputTx.transactionHash)) === null; // eslint-disable-line no-await-in-loop, no-undef
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
     return transactions;
   } catch (err) {
     logger.debug(err);

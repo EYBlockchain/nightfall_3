@@ -1,4 +1,4 @@
-/* eslint-disable no-await-in-loop, no-unused-vars */
+/* eslint-disable no-await-in-loop, no-unused-vars, import/no-cycle */
 
 /**
 This module does all of the heaving lifting for a Proposer: It assembles blocks
