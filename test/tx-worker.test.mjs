@@ -27,7 +27,7 @@ const {
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
-  MINIMUM_STAKE,
+  MINIMUM_STAKE = 1000000,
   NUMBER_L2_BLOCKS,
 } = config.TEST_OPTIONS;
 
