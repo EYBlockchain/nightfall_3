@@ -21,13 +21,11 @@ const { txWorkerCount } = config.TX_WORKER_PARAMS;
 // we need require here to import jsons
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-console.log("XXXXXXXXXXXXXXX", environment, config.TEST_OPTIONS)
 const {
   transferValue,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
-  MINIMUM_STAKE = 1000000,
   NUMBER_L2_BLOCKS,
 } = config.TEST_OPTIONS;
 
@@ -87,15 +85,8 @@ const generateNTransactions = async () => {
 describe('Tx worker test', () => {
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
-    console.log("MINIMUM STAKE", MINIMUM_STAKE, config.TEST_OPTIONS)
-    await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
-    });
+    await nf3Proposer1.registerProposer('http://optimist', await nf3Proposer1.getMinimumStake());
+    await nf3Proposer1.startProposer();
 
     // Proposer listening for incoming events
     await nf3Users[0].init(mnemonics.user1);
