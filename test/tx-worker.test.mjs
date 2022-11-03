@@ -87,7 +87,7 @@ const generateNTransactions = async () => {
 describe('Tx worker test', () => {
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
-    console.log("MINIMUM STAKE", MINIMUM_STAKE)
+    console.log("MINIMUM STAKE", MINIMUM_STAKE, config.TEST_OPTIONS)
     await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
