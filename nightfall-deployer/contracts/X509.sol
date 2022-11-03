@@ -5,19 +5,29 @@ pragma solidity ^0.8.9;
 // This contract can parse  a suitably encoded SSL certificate
 import './DerParser.sol';
 import './Ownable.sol';
+import './Whitelist.sol';
 
 contract X509 is DERParser, Ownable {
     uint256 constant SECONDS_PER_DAY = 24 * 60 * 60;
     int256 constant OFFSET19700101 = 2440588;
+    Whitelist whitelist;
 
     struct RSAPublicKey {
         bytes modulus;
         uint256 exponent;
     }
-    mapping(bytes32 => RSAPublicKey) trustedPublicKeys;
 
-    function initialize() public override initializer {
+    mapping(address => uint256) expires;
+    mapping(bytes32 => RSAPublicKey) trustedPublicKeys;
+    mapping(bytes32 => bool) revokedKeys;
+    mapping(address => bytes32) keysByUser;
+
+    function initialize() public override(Ownable) initializer {
         Ownable.initialize();
+    }
+
+    function setWhitelistContractAddress(address whitelistAddress) external onlyOwner {
+        whitelist = Whitelist(whitelistAddress);
     }
 
     function setTrustedPublicKey(
@@ -68,10 +78,10 @@ contract X509 is DERParser, Ownable {
     /*
     Validate the decrypted signature and returns the message hash
     */
-    function validateAndExtractPayload(bytes memory decrypt, uint256 tlvLength)
+    function validateSignatureAndExtractMessageHash(bytes memory decrypt, uint256 tlvLength)
         private
         view
-        returns (DecodedTlv[] memory)
+        returns (bytes memory)
     {
         DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         require(
@@ -89,7 +99,13 @@ contract X509 is DERParser, Ownable {
         }
         i++;
         tlvs = this.parseDER(decrypt, i, tlvLength);
-        return tlvs;
+        require(
+            tlvs[4].depth == 1 && tlvs[4].tag.tagType == 0x04,
+            'Incorrect tag or position for decrypted hash data'
+        );
+        bytes memory messageHashFromSignature = tlvs[4].value;
+
+        return messageHashFromSignature;
     }
 
     // note: this function is from an MIT licensed library, with appreciation to
@@ -122,7 +138,7 @@ contract X509 is DERParser, Ownable {
 
     // this function finds and checks the Not Before and Not After tlvs
     // TODO this and the subsequent function loop over the tlvs twice - this is inefficient - refactor code
-    function checkDates(DecodedTlv[] memory tlvs) private view {
+    function checkDates(DecodedTlv[] memory tlvs) private view returns (uint256) {
         // The Not Before and Not After dates are the third SEQUENCE at depth 2
         uint256 i;
         uint256 j;
@@ -136,10 +152,9 @@ contract X509 is DERParser, Ownable {
             block.timestamp > timestampFromDate(tlvs[i + 1].value),
             'It is too early to use this certificate'
         );
-        require(
-            block.timestamp < timestampFromDate(tlvs[i + 2].value),
-            'This certificate has expired'
-        );
+        uint256 expiry = timestampFromDate(tlvs[i + 2].value);
+        require(block.timestamp < expiry, 'This certificate has expired');
+        return expiry;
     }
 
     function extractPublicKey(DecodedTlv[] memory tlvs) private view returns (RSAPublicKey memory) {
@@ -209,38 +224,80 @@ contract X509 is DERParser, Ownable {
         return akid;
     }
 
-    function validateCertificate(bytes calldata certificate, uint256 tlvLength) external {
-        DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
-        tlvs = walkDerTree(certificate, 0, tlvLength);
-        bytes32 authorityKeyIdentifier = extractAuthorityKeyIdentifier(tlvs);
-        bytes memory signature = getSignature(tlvs, tlvLength);
-        bytes memory message = getMessage(tlvs);
-        RSAPublicKey memory publicKey = trustedPublicKeys[authorityKeyIdentifier];
+    // functin to check the signature over a message
+    function checkSignature(
+        bytes memory signature,
+        bytes memory message,
+        RSAPublicKey memory publicKey
+    ) private view {
         bytes memory signatureDecrypt = modExp(signature, publicKey.exponent, publicKey.modulus);
-        DecodedTlv[] memory payload = validateAndExtractPayload(signatureDecrypt, 5);
-        require(
-            payload[4].depth == 1 && payload[4].tag.tagType == 0x04,
-            'Incorrect tag or position for decrypted hash data'
+        bytes memory messageHashFromSignature = validateSignatureAndExtractMessageHash(
+            signatureDecrypt,
+            5
         );
-        bytes memory messageHashFromSignature = payload[4].value;
         // we use the keccak hash here as a low cost way to check equality of bytes data
         require(
             keccak256(messageHashFromSignature) == keccak256(abi.encode(sha256(message))),
             'Signature is invalid'
         );
-        checkDates(tlvs);
-        RSAPublicKey memory certificatePublicKey = extractPublicKey(tlvs);
-        bytes32 subjectKeyIdentifier = extractSubjectKeyIdentifier(tlvs);
-        // The certificate is valid and linked to a root we trust, so now we trust the certificate's public key too.
-        trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
     }
 
-    // test function, for modExp
-    function testModExp(
-        bytes memory b,
-        uint256 e,
-        bytes memory m
-    ) external view returns (bytes memory) {
-        return modExp(b, e, m);
+    /**
+    This function is the main one in the module. It calls all of the subsidiary functions necessary to validate an RSA cert
+    If the validation is successful (and addAddress is true), it will add the sender to the whitelist contract, provided they
+    are able to sign their ethereum address with the private key corresponding to the certificate.
+     */
+    function validateCertificate(
+        bytes calldata certificate,
+        uint256 tlvLength,
+        bytes calldata addressSignature,
+        bool addAddress
+    ) external {
+        DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
+        // decode the DER encoded binary certificate data into an array of Tag-Length-Value structs
+        tlvs = walkDerTree(certificate, 0, tlvLength);
+        // extract the data from the certificate necessary for checking the signature and (hopefully) find the Authority public key in
+        // the smart contract's list of trusted keys
+        bytes32 authorityKeyIdentifier = extractAuthorityKeyIdentifier(tlvs);
+        bytes memory signature = getSignature(tlvs, tlvLength);
+        bytes memory message = getMessage(tlvs);
+        RSAPublicKey memory publicKey = trustedPublicKeys[authorityKeyIdentifier];
+        // validate the cert's signature and check that the cert is in date, record the expiry date against msg.sender
+        checkSignature(signature, message, publicKey);
+        uint256 expiry = checkDates(tlvs);
+        // The certificate is valid and linked to a root we trust, so now we trust the certificate's public key too. Let's add it to our list of trusted keys
+        RSAPublicKey memory certificatePublicKey = extractPublicKey(tlvs);
+        bytes32 subjectKeyIdentifier = extractSubjectKeyIdentifier(tlvs);
+        require(!revokedKeys[subjectKeyIdentifier], 'The key of this certificate has been revoked');
+        trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
+        // finally, before we can whitelist msg.sender, we should check that they are indeed the owner of the cert (certs are public, after all)
+        // we do that by getting them to sign msg.sender with the private key corresponding to their certificate public key
+        if (!addAddress) return; // we may want to add an intermediate cert to the contract but not add an address.
+        checkSignature(
+            addressSignature,
+            abi.encodePacked(uint160(msg.sender)),
+            certificatePublicKey
+        );
+        expires[msg.sender] = expiry;
+        keysByUser[msg.sender] = subjectKeyIdentifier;
+        whitelist.addUserToWhitelist(msg.sender); // all checks have passed, so they are free to trade for now.
+        // TODO whitelisting should be removed on the revocation or expiry of the certificate.
+    }
+
+    // performs an ongoing KYC check (is the user still in the whitelist? Has the public key been revoked? Is the cert in date?)
+    // We could also remove the user in this function, but that would burn more gas.
+    function kycCheck(address user) external view {
+        require(!revokedKeys[keysByUser[user]], 'The key for this user has been revoked');
+        require(expires[user] > block.timestamp, 'Certificate has expired, consider revoking');
+        require(whitelist.isWhitelisted(user), 'User is not whitelisted');
+    }
+
+    // allows a key to be revoked. this cannot be undone!
+    function revokeKey(bytes32 subjectKeyIdentifier) external {
+        require(
+            keysByUser[msg.sender] == subjectKeyIdentifier,
+            'You are not the owner of this key'
+        );
+        revokedKeys[subjectKeyIdentifier] = true;
     }
 }
