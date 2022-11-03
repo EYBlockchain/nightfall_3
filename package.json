@@ -25,7 +25,7 @@
     "test-all-adversary": "for CHALLENGE_TYPE in IncorrectTreeRoot IncorrectLeafCount IncorrectTreeRoot IncorrectLeafCount; do CHALLENGE_TYPE=${CHALLENGE_TYPE} npm run test-adversary; sleep 5; done",
     "test-general-stuff": "npx hardhat test --bail --no-compile test/kem-dem.test.mjs test/timber.test.mjs",
     "test-kyc": "LOG_LEVEL=silent npx hardhat test --bail --no-compile test/kyc.test.mjs",
-    "test-stress": "npx hardhat test --no-compile --bail test/stress-test.mjs ",
+    "test-tx-worker": "npx hardhat test --no-compile --bail test/tx-worker-test.mjs ",
     "unit-test": "npx hardhat test --bail test/unit/SmartContracts/*",
     "unit-test-kyc": "npx hardhat test --bail test/unit/SmartContracts/kyc.unit.test.mjs",
     "unit-test-shield": "npx hardhat test --bail test/unit/SmartContracts/shield.unit.test.mjs",

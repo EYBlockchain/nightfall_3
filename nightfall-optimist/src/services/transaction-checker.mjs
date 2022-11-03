@@ -25,6 +25,11 @@ const { generalise } = gen;
 const { PROVING_SCHEME, BACKEND, CURVE } = config;
 const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
+// cache _vkArray and _maticAddress to avoid having to retrieve them in every call.
+// This caching saves substantial processing time.
+const _vkArray = {};
+let _maticAddress = null;
+
 async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
   // Note: There is no need to check the duplicate commitment in the same transaction since this is already checked in the circuit
   // check if any commitment in the transaction is already part of an L2 block
@@ -120,12 +125,32 @@ async function checkHistoricRootBlockNumber(transaction) {
   });
 }
 
+/**
+ * Stores vkArray so that it easily accessible in future
+ */
+async function getVkArray(transactionType) {
+  const challengeInstance = await waitForContract(CHALLENGES_CONTRACT_NAME, true);
+  const vkArray = await challengeInstance.methods.getVerificationKey(transactionType).call();
+  _vkArray[transactionType] = vkArray;
+  return vkArray;
+}
+
+/**
+ * Stores MATIC address so that it easily accessible in future
+ */
+async function getMaticAddress() {
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME, true);
+  const maticAddress = (
+    await shieldContractInstance.methods.getMaticAddress().call()
+  ).toLowerCase();
+  _maticAddress = maticAddress;
+  return maticAddress;
+}
+
 async function verifyProof(transaction) {
   // we'll need the verification key.  That's actually stored in the b/c
-  const challengeInstance = await waitForContract(CHALLENGES_CONTRACT_NAME);
-  const vkArray = await challengeInstance.methods
-    .getVerificationKey(transaction.transactionType)
-    .call();
+  const vkArray =
+    _vkArray[transaction.transactionType] ?? (await getVkArray(transaction.transactionType));
   // to verify a proof, we make use of a zokrates-worker, which has an offchain
   // verifier capability
   const historicRootFirst =
@@ -149,12 +174,7 @@ async function verifyProof(transaction) {
       : (await getBlockByBlockNumberL2(transaction.historicRootBlockNumberL2[3])) ?? {
           root: ZERO,
         };
-
-  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-
-  const maticAddress = (
-    await shieldContractInstance.methods.getMaticAddress().call()
-  ).toLowerCase();
+  const maticAddress = _maticAddress ?? (await getMaticAddress());
 
   const inputs = generalise(
     [

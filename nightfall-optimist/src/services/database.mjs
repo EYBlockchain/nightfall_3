@@ -366,6 +366,14 @@ export async function findAndDeleteAllBufferedTransactions() {
 }
 
 /**
+How many transactions in BUFFERED TRANSACTIONS COLLECTION
+*/
+export async function numberOfBufferedTransactions() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(BUFFERED_TRANSACTIONS_COLLECTION).countDocuments();
+}
+/**
 Function to add a set of transactions from the layer 2 mempool once a block has been rolled back
 */
 export async function addTransactionsToMemPool(block) {
