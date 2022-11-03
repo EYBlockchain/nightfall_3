@@ -23,6 +23,15 @@ const arrayEquality = (as, bs) => {
   return false;
 };
 
+const packInfo = (value, fee, circuitHash, tokenType) => {
+  const valuePacked = generalise(value).hex(14).slice(2);
+  const feePacked = generalise(fee).hex(12).slice(2);
+  const circuitHashPacked = generalise(circuitHash).hex(5).slice(2);
+  const tokenTypePacked = generalise(tokenType).hex(1).slice(2);
+
+  return '0x'.concat(circuitHashPacked, feePacked, valuePacked, tokenTypePacked);
+};
+
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
   const web3 = new Web3();
@@ -41,11 +50,11 @@ function keccak(preimage) {
   } = preimage;
   let { proof } = preimage;
   proof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof);
+
+  const packedInfo = packInfo(value, fee, circuitHash, tokenType);
+
   const transaction = [
-    value,
-    fee,
-    circuitHash,
-    tokenType,
+    packedInfo,
     historicRootBlockNumberL2,
     tokenId,
     ercAddress,
@@ -135,6 +144,17 @@ class Transaction {
     return transactionHash;
   }
 
+  static unpackInfo(packedInfo) {
+    const packedInfoHex = generalise(packedInfo).hex(32).slice(2);
+
+    const circuitHash = generalise(`0x${packedInfoHex.slice(0, 10)}`).hex(5);
+    const fee = generalise(`0x${packedInfoHex.slice(10, 34)}`).hex(12);
+    const value = generalise(`0x${packedInfoHex.slice(34, 62)}`).hex(14);
+    const tokenType = generalise(`0x${packedInfoHex.slice(62, 64)}`).hex(1);
+
+    return { value, fee, circuitHash, tokenType };
+  }
+
   static buildSolidityStruct(transaction) {
     // return a version without properties that are not sent to the blockchain
     const {
@@ -151,11 +171,11 @@ class Transaction {
       compressedSecrets,
       proof,
     } = transaction;
+
+    const packedInfo = packInfo(value, fee, circuitHash, tokenType);
+
     return {
-      value,
-      fee,
-      circuitHash,
-      tokenType,
+      packedInfo,
       historicRootBlockNumberL2,
       tokenId,
       ercAddress,

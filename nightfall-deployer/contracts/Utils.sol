@@ -112,10 +112,10 @@ library Utils {
             ts.commitments.length;
         uint256[] memory inputs = new uint256[](transactionSlots);
         uint256 count = 0;
-        inputs[count++] = uint256(ts.value);
-        inputs[count++] = uint256(ts.fee);
-        inputs[count++] = uint256(ts.circuitHash);
-        inputs[count++] = uint256(ts.tokenType);
+        inputs[count++] = uint256(uint112(ts.packedInfo >> 8));
+        inputs[count++] = uint256(uint96(ts.packedInfo >> 120));
+        inputs[count++] = uint256(uint40(ts.packedInfo >> 216));
+        inputs[count++] = uint256(uint8(ts.packedInfo));
         for (uint256 i = 0; i < ts.historicRootBlockNumberL2.length; ++i) {
             inputs[count++] = ts.historicRootBlockNumberL2[i];
         }
