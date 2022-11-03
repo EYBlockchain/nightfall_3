@@ -1,5 +1,6 @@
 /* eslint-disable no-empty-function */
 import hardhat from 'hardhat';
+import { packInfo } from '../../../common-files/classes/transaction.mjs';
 
 const { ethers } = hardhat;
 
@@ -20,22 +21,11 @@ export function calculateBlockHash(b) {
   return ethers.utils.keccak256(encodedBlock);
 }
 
-export function packInfoTransaction(value, fee, circuitHash, tokenType) {
-  return ethers.utils.hexValue(
-    ethers.utils.concat([
-      ethers.utils.hexZeroPad(ethers.utils.hexlify(circuitHash), 5),
-      ethers.utils.hexZeroPad(ethers.utils.hexlify(fee), 12),
-      ethers.utils.hexZeroPad(ethers.utils.hexlify(value), 14),
-      ethers.utils.hexZeroPad(ethers.utils.hexlify(tokenType), 1),
-    ]),
-  );
-}
-
 export function calculateTransactionHash(tx) {
   const encodedTx = ethers.utils.defaultAbiCoder.encode(
     [
       'uint256',
-      'uint64[]',
+      'uint256[]',
       'bytes32',
       'bytes32',
       'bytes32',
@@ -62,7 +52,7 @@ export function calculateTransactionHash(tx) {
 }
 
 export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
-  const packedInfoWithdraw = packInfoTransaction(10, 1, 2, 0);
+  const packedInfoWithdraw = packInfo(10, 1, 2, 0);
 
   const withdrawTransaction = {
     packedInfo: packedInfoWithdraw,
@@ -97,7 +87,7 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
     ],
   };
 
-  const packedInfoDeposit = packInfoTransaction(10, 0, 0, 0);
+  const packedInfoDeposit = packInfo(10, 0, 0, 0);
 
   const depositTransaction = {
     packedInfo: packedInfoDeposit,
