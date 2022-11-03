@@ -1,7 +1,4 @@
-import Web3 from 'web3';
 import crypto from 'crypto';
-
-const web3 = new Web3();
 
 const derMapping = [
   'End_of_Content',

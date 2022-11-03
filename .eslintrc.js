@@ -20,7 +20,7 @@ module.exports = {
   settings: {
     'import/resolver': {
       node: {
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        extensions: ['.js', '.jsx', '.ts', '.tsx', 'mjs'],
         moduleDirectory: ['./wallet/node_modules', './wallet/src/'],
       },
     },
