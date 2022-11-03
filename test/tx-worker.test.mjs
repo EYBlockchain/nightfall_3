@@ -5,7 +5,6 @@ import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import axios from 'axios';
 import os from 'os';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { depositNTransactions, Web3Client, waitForTimeout } from './utils.mjs';
 import {
