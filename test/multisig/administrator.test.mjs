@@ -17,7 +17,7 @@ chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys, addresses, MINIMUM_STAKE } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
 const amount1 = 10;
 const amount2 = 100;
 const value1 = 1;
@@ -38,6 +38,8 @@ describe(`Testing Administrator`, () => {
   let challengesContract;
   let multisigContract;
   let nfMultiSig;
+  let minimumStakeDef;
+
   const proposers = [
     new Nf3(signingKeys.proposer1, environment),
     new Nf3(signingKeys.proposer2, environment),
@@ -51,6 +53,7 @@ describe(`Testing Administrator`, () => {
     await proposers[0].init(mnemonics.proposer);
     await proposers[1].init(mnemonics.proposer);
 
+    minimumStakeDef = await proposers[0].getMinimumStake();
     stateContract = await getContractInstance('State', nf3User);
     proposersContract = await getContractInstance('Proposers', nf3User);
     shieldContract = await getContractInstance('Shield', nf3User);
@@ -236,7 +239,7 @@ describe(`Testing Administrator`, () => {
 
     it('Allowing register first proposer', async () => {
       if (process.env.ENVIRONMENT !== 'aws') {
-        const res = await proposers[0].registerProposer('http://optimist', MINIMUM_STAKE);
+        const res = await proposers[0].registerProposer('http://optimist', minimumStakeDef);
         expectTransaction(res);
       }
     });
@@ -244,7 +247,7 @@ describe(`Testing Administrator`, () => {
     it('Not allowing register second proposer', async () => {
       let error = null;
       try {
-        const res = await proposers[1].registerProposer('http://optimist', MINIMUM_STAKE);
+        const res = await proposers[1].registerProposer('http://optimist', minimumStakeDef);
         expectTransaction(res);
       } catch (err) {
         error = err;
@@ -276,7 +279,7 @@ describe(`Testing Administrator`, () => {
     });
 
     it('Allowing register second proposer', async () => {
-      const res = await proposers[1].registerProposer('http://optimist', MINIMUM_STAKE);
+      const res = await proposers[1].registerProposer('http://optimist', minimumStakeDef);
       expectTransaction(res);
     });
 

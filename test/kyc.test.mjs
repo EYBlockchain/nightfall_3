@@ -21,7 +21,6 @@ const {
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
-  MINIMUM_STAKE,
 } = config.TEST_OPTIONS;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
@@ -37,7 +36,7 @@ describe('KYC tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist', MINIMUM_STAKE);
+    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
