@@ -20,7 +20,7 @@ const txPerBlock =
 
 const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
 
-const TEST_LENGTH = 4000;
+const TEST_LENGTH = 4;
 /**
 Does the preliminary setup and starts listening on the websocket
 */

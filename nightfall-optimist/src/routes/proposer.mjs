@@ -12,8 +12,7 @@ import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import {
   getContractInstance,
   waitForContract,
-  // } from '@polygon-nightfall/common-files/utils/contract.mjs';
-} from '../../../common-files/utils/contract.mjs';
+} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {

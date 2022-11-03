@@ -11,8 +11,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   getContractInstance,
   waitForContract,
-  // } from '@polygon-nightfall/common-files/utils/contract.mjs';
-} from '../../../common-files/utils/contract.mjs';
+} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import { transactionSubmittedEventHandler } from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
