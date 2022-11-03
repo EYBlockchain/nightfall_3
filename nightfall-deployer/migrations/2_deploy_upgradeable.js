@@ -44,7 +44,7 @@ module.exports = async function (deployer) {
 
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
-  await deployProxy(Shield, { deployer, unsafeAllowLinkedLibraries: true });
+  await deployProxy(Shield, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(State, [Proposers.address, Challenges.address, Shield.address], {
     deployer,
     unsafeAllowLinkedLibraries: true,
@@ -83,5 +83,5 @@ module.exports = async function (deployer) {
     await shield.createWhitelistManager(whitelistManager.groupId, whitelistManager.address);
   }
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
-  if (process.env.WHITELISTING==='enable') await shield.enableWhitelisting(true);
+  if (process.env.WHITELISTING === 'enable') await shield.enableWhitelisting(true);
 };

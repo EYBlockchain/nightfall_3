@@ -8,9 +8,6 @@ import { Mutex } from 'async-mutex';
 import gen from 'general-number';
 import { openDB } from 'idb';
 import { Commitment, Nullifier } from '../classes/index';
-// eslint-disable-next-line import/no-cycle
-import { isValidWithdrawal } from './valid-withdrawal';
-import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database';
 
 const {
   COMMITMENTS_DB,
@@ -86,22 +83,24 @@ export async function countTransactionHashes(transactionHashes) {
 }
 
 // function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
-export async function countWithdrawTransactionHashes(transactionHashes) {
+export async function countTransactionHashesBelongCircuit(transactionHashes, circuitHash) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return transactionHashes.includes(tx.transactionHash) && tx.nullifierCircuitHash === '2';
+    return (
+      transactionHashes.includes(tx.transactionHash) && tx.nullifierCircuitHash === circuitHash
+    );
   });
   // const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
   return filtered.length;
 }
 
 // function to get if the transaction hash belongs to a withdraw transaction
-export async function isTransactionHashWithdraw(transactionHash) {
+export async function isTransactionHashBelongCircuit(transactionHash, circuitHash) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return tx.transactionHash === transactionHash && tx.nullifierCircuitHash === '2';
+    return tx.transactionHash === transactionHash && tx.nullifierCircuitHash === circuitHash;
   });
   return filtered.length;
 }
@@ -520,59 +519,6 @@ export async function getWalletCommitments() {
       acc[e.compressedZkpPublicKey][e.ercAddress].push(e);
       return acc;
     }, {});
-}
-
-// function to get the withdraw commitments for each ERC address of a compressedZkpPublicKey
-export async function getWithdrawCommitments() {
-  const db = await connectDB();
-  const vals = await db.getAll(COMMITMENTS_COLLECTION);
-  const withdraws =
-    Object.keys(vals).length > 0
-      ? vals.filter(v => v.isNullified && v.isOnChain >= 0 && v.nullifierCircuitHash === '2')
-      : [];
-
-  // To check validity we need the withdrawal transaction, the block the transaction is in and all other
-  // transactions in the block. We need this for on-chain validity checks.
-  const blockTxs = await Promise.all(
-    withdraws.map(async w => {
-      const block = await getBlockByBlockNumberL2(w.isNullifiedOnChain);
-      const transactions = await Promise.all(
-        block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
-      );
-      const index = block.transactionHashes.findIndex(t => t === w.transactionHash);
-      return {
-        block,
-        transactions,
-        index,
-        compressedZkpPublicKey: w.compressedZkpPublicKey,
-        ercAddress: `0x${BigInt(w.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to be a correct address length
-        balance: w.preimage.tokenId ? 1 : w.preimage.value,
-      };
-    }),
-  );
-
-  // Run the validity check for each of the potential withdraws we have.
-  const withdrawsDetailsValid = await Promise.all(
-    blockTxs.map(async wt => {
-      const { block, transactions, index } = wt;
-      // TODO isValidWithdrawal is called with wrong parameters
-      const valid = await isValidWithdrawal(block, transactions, index);
-      return {
-        compressedZkpPublicKey: wt.compressedZkpPublicKey,
-        ercAddress: wt.ercAddress,
-        balance: wt.balance,
-        valid,
-      };
-    }),
-  );
-
-  return withdrawsDetailsValid.reduce((acc, e) => {
-    if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
-    if (!acc[e.compressedZkpPublicKey][e.ercAddress])
-      acc[e.compressedZkpPublicKey][e.ercAddress] = [];
-    acc[e.compressedZkpPublicKey][e.ercAddress].push(e);
-    return acc;
-  }, {});
 }
 
 // as above, but removes output commitments
