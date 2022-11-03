@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import hardhat from 'hardhat';
 import { calculateTransactionHash, createBlockAndTransactions } from '../utils/utils.mjs';
 import { setTransactionInfo } from '../utils/stateStorage.mjs';
+import { packHistoricRoots, packInfo } from '../../../common-files/classes/transaction.mjs';
 
 const { ethers, upgrades } = hardhat;
 
@@ -641,7 +642,7 @@ describe('State contract State functions', function () {
 
     const proposerBlockHash = ethers.utils.keccak256(
       ethers.utils.solidityPack(
-        ['address', 'uint256'],
+        ['address', 'uint64'],
         [transactionsCreated.block.proposer, transactionsCreated.block.blockNumberL2],
       ),
     );
@@ -823,7 +824,7 @@ describe('State contract State functions', function () {
 
     const proposerBlockHash = ethers.utils.keccak256(
       ethers.utils.solidityPack(
-        ['address', 'uint256'],
+        ['address', 'uint64'],
         [transactionsCreated.block.proposer, transactionsCreated.block.blockNumberL2],
       ),
     );
@@ -945,18 +946,20 @@ describe('State contract State functions', function () {
       frontierHash: '0xa2f1ec04a89542d6f1e04449398052422c7b1057df8606db047f48047bb7ab72',
       transactionHashesRoot: '0x0487da81cb1d53536928de44fa55de0accf9a8bc9f42739a80f69584970d572f',
     };
+    const packedInfo = packInfo(100000000000000, 10, 0, 0);
+
+    const historicRootBlockNumberL2 = [
+      '0x0000000000000000000000000000000000000000000000000000000000000009',
+      '0x0000000000000000000000000000000000000000000000000000000000000002',
+      '0x0000000000000000000000000000000000000000000000000000000000000000',
+      '0x0000000000000000000000000000000000000000000000000000000000000000',
+    ];
+
+    const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
 
     const transaction1 = {
-      value: '100000000000000',
-      fee: '10',
-      circuitHash: '0',
-      tokenType: '0',
-      historicRootBlockNumberL2: [
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-      ],
+      packedInfo,
+      historicRootBlockNumberL2: packedHistoricRootBlockNumber,
       tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
       ercAddress: '0x000000000000000000000000499d11e0b6eac7c0593d8fb292dcbbf815fb29ae',
       recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
