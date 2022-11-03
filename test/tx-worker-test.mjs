@@ -182,7 +182,7 @@ describe('Tx worker test', () => {
       const txPerSecond = await generateNTransactions();
       console.log('Transactions per second', txPerSecond);
       // check that we can process more than 50 transactions per second. In reality, it should be more.
-      expect(txPerSecond).to.be.greaterThan(txPerSecondWorkersOn);
+      expect(txPerSecondWorkersOn).to.be.greaterThan(txPerSecond);
 
       // In this second part, measure time it takes to generate blocks
       while (pendingBlocks) {
