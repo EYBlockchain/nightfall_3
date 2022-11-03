@@ -21,7 +21,7 @@ const { txWorkerCount } = config.TX_WORKER_PARAMS;
 // we need require here to import jsons
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-console.log("XXXXXXXXXXXXXXX", environment)
+console.log("XXXXXXXXXXXXXXX", environment, config.TEST_OPTIONS)
 const {
   transferValue,
   tokenConfigs: { tokenType, tokenId },
