@@ -1,5 +1,6 @@
 /* eslint-disable no-empty-function */
 import hardhat from 'hardhat';
+import { packInfo } from '../../../common-files/classes/transaction.mjs';
 
 const { ethers } = hardhat;
 
@@ -23,11 +24,8 @@ export function calculateBlockHash(b) {
 export function calculateTransactionHash(tx) {
   const encodedTx = ethers.utils.defaultAbiCoder.encode(
     [
-      'uint112',
-      'uint96',
-      'uint40',
-      'uint8',
-      'uint64[]',
+      'uint256',
+      'uint256[]',
       'bytes32',
       'bytes32',
       'bytes32',
@@ -37,10 +35,7 @@ export function calculateTransactionHash(tx) {
       'uint256[4]',
     ],
     [
-      tx.value,
-      tx.fee,
-      tx.circuitHash,
-      tx.tokenType,
+      tx.packedInfo,
       tx.historicRootBlockNumberL2,
       tx.tokenId,
       tx.ercAddress,
@@ -57,11 +52,10 @@ export function calculateTransactionHash(tx) {
 }
 
 export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
+  const packedInfoWithdraw = packInfo(10, 1, 2, 0);
+
   const withdrawTransaction = {
-    value: '10',
-    fee: '1',
-    circuitHash: '2',
-    tokenType: '0',
+    packedInfo: packedInfoWithdraw,
     historicRootBlockNumberL2: [
       '0x0000000000000000000000000000000000000000000000000000000000000009',
       '0x0000000000000000000000000000000000000000000000000000000000000002',
@@ -93,11 +87,10 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
     ],
   };
 
+  const packedInfoDeposit = packInfo(10, 0, 0, 0);
+
   const depositTransaction = {
-    value: '10',
-    fee: '0',
-    circuitHash: '0',
-    tokenType: '0',
+    packedInfo: packedInfoDeposit,
     historicRootBlockNumberL2: [],
     tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
     ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),

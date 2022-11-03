@@ -22,6 +22,28 @@ const arrayEquality = (as, bs) => {
   return false;
 };
 
+export const packInfo = (value, fee, circuitHash, tokenType) => {
+  const valuePacked = generalise(value).hex(14).slice(2);
+  const feePacked = generalise(fee).hex(12).slice(2);
+  const circuitHashPacked = generalise(circuitHash).hex(5).slice(2);
+  const tokenTypePacked = generalise(tokenType).hex(1).slice(2);
+
+  return '0x'.concat(circuitHashPacked, feePacked, valuePacked, tokenTypePacked);
+};
+
+export const packHistoricRoots = historicRootBlockNumberL2 => {
+  const historicRootsHex = historicRootBlockNumberL2
+    .map(h => generalise(h).hex(8).slice(2))
+    .join('');
+
+  const historicRootsPacked = [];
+  for (let i = 0; i < historicRootsHex.length; i += 64) {
+    historicRootsPacked.push(`0x${historicRootsHex.substring(i, i + 64)}`);
+  }
+
+  return historicRootsPacked;
+};
+
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
   const web3 = Web3.connection();
@@ -40,12 +62,14 @@ function keccak(preimage) {
   } = preimage;
   let { proof } = preimage;
   proof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof);
+
+  const packedInfo = packInfo(value, fee, circuitHash, tokenType);
+
+  const historicRootsPacked = packHistoricRoots(historicRootBlockNumberL2);
+
   const transaction = [
-    value,
-    fee,
-    circuitHash,
-    tokenType,
-    historicRootBlockNumberL2,
+    packedInfo,
+    historicRootsPacked,
     tokenId,
     ercAddress,
     recipientAddress,
@@ -131,6 +155,32 @@ class Transaction {
     return transactionHash;
   }
 
+  static unpackInfo(packedInfo) {
+    const packedInfoHex = generalise(packedInfo).hex(32).slice(2);
+
+    const circuitHash = generalise(`0x${packedInfoHex.slice(0, 10)}`).hex(5);
+    const fee = generalise(`0x${packedInfoHex.slice(10, 34)}`).hex(12);
+    const value = generalise(`0x${packedInfoHex.slice(34, 62)}`).hex(14);
+    const tokenType = generalise(`0x${packedInfoHex.slice(62, 64)}`).hex(1);
+
+    return { value, fee, circuitHash, tokenType };
+  }
+
+  static unpackHistoricRoot(nRoots, historicRootsPacked) {
+    const historicRootPackedHex = historicRootsPacked
+      .map(h => generalise(h).hex(32).slice(2))
+      .join('');
+
+    const historicRootBlockNumberL2 = [];
+
+    for (let i = 0; i < historicRootPackedHex.length; i += 16) {
+      if (historicRootBlockNumberL2.length === nRoots) break;
+      historicRootBlockNumberL2.push(`0x${historicRootPackedHex.substring(i, i + 16)}`);
+    }
+
+    return historicRootBlockNumberL2;
+  }
+
   static buildSolidityStruct(transaction) {
     // return a version without properties that are not sent to the blockchain
     const {
@@ -147,12 +197,14 @@ class Transaction {
       compressedSecrets,
       proof,
     } = transaction;
+
+    const packedInfo = packInfo(value, fee, circuitHash, tokenType);
+
+    const historicRootsPacked = packHistoricRoots(historicRootBlockNumberL2);
+
     return {
-      value,
-      fee,
-      circuitHash,
-      tokenType,
-      historicRootBlockNumberL2,
+      packedInfo,
+      historicRootsPacked,
       tokenId,
       ercAddress,
       recipientAddress,
