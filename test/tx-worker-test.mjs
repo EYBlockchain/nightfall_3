@@ -85,6 +85,7 @@ const generateNTransactions = async () => {
 describe('Tx worker test', () => {
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
+    console.log("MINIMUM STAKE", MINIMUM_STAKE)
     await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
     await nf3Proposer1.startProposer();
 
