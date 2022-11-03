@@ -5,6 +5,7 @@ import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import axios from 'axios';
 import os from 'os';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { depositNTransactions, Web3Client, waitForTimeout } from './utils.mjs';
 import {
@@ -20,6 +21,7 @@ const { txWorkerCount } = config.TX_WORKER_PARAMS;
 // we need require here to import jsons
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
+console.log("XXXXXXXXXXXXXXX", environment)
 const {
   transferValue,
   tokenConfigs: { tokenType, tokenId },
@@ -87,7 +89,13 @@ describe('Tx worker test', () => {
     await nf3Proposer1.init(mnemonics.proposer);
     console.log("MINIMUM STAKE", MINIMUM_STAKE)
     await nf3Proposer1.registerProposer('http://optimist', MINIMUM_STAKE);
-    await nf3Proposer1.startProposer();
+    // Proposer listening for incoming events
+    const newGasBlockEmitter = await nf3Proposer1.startProposer();
+    newGasBlockEmitter.on('gascost', async gasUsed => {
+      logger.debug(
+        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+      );
+    });
 
     // Proposer listening for incoming events
     await nf3Users[0].init(mnemonics.user1);
