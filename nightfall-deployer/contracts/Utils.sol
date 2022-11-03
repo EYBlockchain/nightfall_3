@@ -106,8 +106,7 @@ library Utils {
         address maticAddress
     ) internal pure returns (uint256[] memory) {
         uint256 transactionSlots = 24 +
-            ts.nullifiers.length +
-            ts.historicRootBlockNumberL2.length +
+            2*ts.nullifiers.length +
             roots.length +
             ts.commitments.length;
         uint256[] memory inputs = new uint256[](transactionSlots);
@@ -116,8 +115,10 @@ library Utils {
         inputs[count++] = uint256(uint96(ts.packedInfo >> 120));
         inputs[count++] = uint256(uint40(ts.packedInfo >> 216));
         inputs[count++] = uint256(uint8(ts.packedInfo));
-        for (uint256 i = 0; i < ts.historicRootBlockNumberL2.length; ++i) {
-            inputs[count++] = ts.historicRootBlockNumberL2[i];
+        for (uint256 i = 0; i < ts.nullifiers.length; ++i) {
+            uint256 slot = uint256(uint(i) / 4);
+            uint256 position = 64 * (3 - (i % 4));
+            inputs[count++] = uint256(uint64(ts.historicRootBlockNumberL2[slot] >> position));
         }
         inputs[count++] = uint32(uint256(ts.tokenId) >> 224);
         inputs[count++] = uint32(uint256(ts.tokenId) >> 192);

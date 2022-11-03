@@ -98,7 +98,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     /**
      * @dev Check if a block has been paid to the proposer
      */
-    function isBlockPaymentPending(uint256 blockNumberL2) external view returns (bool) {
+    function isBlockPaymentPending(uint64 blockNumberL2) external view returns (bool) {
         BlockData memory blockData = state.getBlockData(blockNumberL2);
         require(
             blockData.time + CHALLENGE_PERIOD < block.timestamp,

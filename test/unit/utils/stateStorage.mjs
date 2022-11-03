@@ -42,7 +42,7 @@ export async function setBlockPaymentClaimed(stateAddress, blockHash) {
 
 export async function setFeeBookInfo(stateAddress, block, feePaymentsEth, feePaymentsMatic) {
   const proposerBlockHash = ethers.utils.keccak256(
-    ethers.utils.solidityPack(['address', 'uint256'], [block.proposer, block.blockNumberL2]),
+    ethers.utils.solidityPack(['address', 'uint64'], [block.proposer, block.blockNumberL2]),
   );
 
   const index = ethers.utils.solidityKeccak256(

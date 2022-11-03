@@ -493,12 +493,12 @@ module.exports = {
   SIGNATURES: {
     BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32, bytes32)',
     TRANSACTION:
-      '(uint256,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
+      '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
     PROPOSE_BLOCK: [
       '(uint48,address,bytes32,uint256,bytes32,bytes32,bytes32)',
-      '(uint256,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])[]',
+      '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])[]',
     ],
     SUBMIT_TRANSACTION:
-      '(uint256,uint64[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
+      '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
   },
 };
