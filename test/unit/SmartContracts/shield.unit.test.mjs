@@ -14,6 +14,7 @@ import {
   setFeeBookInfo,
   setStakeAccount,
 } from '../utils/stateStorage.mjs';
+import { packHistoricRoots, packInfo } from '../../../common-files/classes/transaction.mjs';
 
 const { ethers, upgrades } = hardhat;
 
@@ -161,7 +162,6 @@ describe('Testing Shield Contract', function () {
         value: 15,
       });
 
-      console.log(await StateInstance.txInfo(depositTransactionHash));
       expect((await StateInstance.txInfo(depositTransactionHash)).isEscrowed).to.equal(true);
       expect(await Erc20MockInstance.balanceOf(await owner[0].address)).to.equal(99999990);
       expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(10);
@@ -176,17 +176,21 @@ describe('Testing Shield Contract', function () {
         shieldAddress,
         '28948022309329048855892746252171976963317496166410141009864396001978282409986',
       );
+
+      const packedInfo = packInfo(0, 0, 0, 1);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const depositTransactionERC721 = {
-        value: '0',
-        fee: '0',
-        circuitHash: '0',
-        tokenType: '1',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x4000000000000000000000000000000000000000000000000000000000000002',
         ercAddress: ethers.utils.hexZeroPad(erc721MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -226,17 +230,21 @@ describe('Testing Shield Contract', function () {
 
     it('succeeds and sets is Escrowed to true for a deposit transaction of an ERC1155 token', async function () {
       await Erc1155MockInstance.setApprovalForAll(shieldAddress, true);
+
+      const packedInfo = packInfo(5, 0, 0, 2);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const depositTransactionERC1155 = {
-        value: '5',
-        fee: '0',
-        circuitHash: '0',
-        tokenType: '2',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
         ercAddress: ethers.utils.hexZeroPad(erc1155MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -286,17 +294,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails to submit deposit transaction if fee > 0 and msg.value > 0 ', async function () {
+      const packedInfo = packInfo(10, 10, 0, 0);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const depositTransactionInvalid = {
-        value: '10',
-        fee: '10',
-        circuitHash: '0',
-        tokenType: '0',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -329,17 +340,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails to submit deposit transaction if ercAddress is invalid', async function () {
+      const packedInfo = packInfo(10, 0, 0, 0);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const depositTransactionInvalid = {
-        value: '10',
-        fee: '0',
-        circuitHash: '0',
-        tokenType: '0',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
         ercAddress: ethers.utils.hexZeroPad(
           ethers.utils.hexlify(1461501637330902918203684832716283019655932542976n),
@@ -375,17 +389,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails to submit deposit transaction if tokenType is ERC20 and tokenId not zero', async function () {
+      const packedInfo = packInfo(10, 0, 0, 0);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const depositTransactionInvalid = {
-        value: '10',
-        fee: '0',
-        circuitHash: '0',
-        tokenType: '0',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -425,17 +442,20 @@ describe('Testing Shield Contract', function () {
 
     it('fails to submit deposit transaction if tokenType is ERC20 and trying to deposit more than allowed', async function () {
       await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
+      const packedInfo = packInfo(100000, 0, 0, 0);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const depositTransactionInvalid = {
-        value: '100000',
-        fee: '0',
-        circuitHash: '0',
-        tokenType: '0',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -468,17 +488,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails to submit deposit transaction if tokenType is ERC721 and value is invalid', async function () {
+      const packedInfo = packInfo(1, 0, 0, 1);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const depositTransactionInvalid = {
-        value: '1',
-        fee: '0',
-        circuitHash: '0',
-        tokenType: '1',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -511,17 +534,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if tokenType is unknown', async function () {
+      const packedInfo = packInfo(1, 0, 0, 5);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const depositTransactionInvalid = {
-        value: '1',
-        fee: '0',
-        circuitHash: '0',
-        tokenType: '5',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -821,17 +847,20 @@ describe('Testing Shield Contract', function () {
 
     it('succeeds to finalise withdrawal for an ERC721 token', async function () {
       await Erc721MockInstance.awardItem(shieldAddress, `https://erc721mock/item-id.json`);
+      const packedInfo = packInfo(0, 0, 2, 1);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000009',
+        '0x0000000000000000000000000000000000000000000000000000000000000002',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const withdrawERC721 = {
-        value: '0',
-        fee: '0',
-        circuitHash: '2',
-        tokenType: '1',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000009',
-          '0x0000000000000000000000000000000000000000000000000000000000000002',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x4000000000000000000000000000000000000000000000000000000000000002',
         ercAddress: ethers.utils.hexZeroPad(erc721MockAddress, 32),
         recipientAddress: ethers.utils.hexZeroPad(owner[0].address, 32),
@@ -908,17 +937,20 @@ describe('Testing Shield Contract', function () {
 
     it('succeeds to finalise withdrawal for an ERC1155 token', async function () {
       await Erc1155MockInstance.safeTransferFrom(owner[0].address, shieldAddress, 1, 25, []);
+      const packedInfo = packInfo(25, 0, 2, 2);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000009',
+        '0x0000000000000000000000000000000000000000000000000000000000000002',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const withdrawERC1155 = {
-        value: '25',
-        fee: '0',
-        circuitHash: '2',
-        tokenType: '2',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000009',
-          '0x0000000000000000000000000000000000000000000000000000000000000002',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
         ercAddress: ethers.utils.hexZeroPad(erc1155MockAddress, 32),
         recipientAddress: ethers.utils.hexZeroPad(owner[0].address, 32),
@@ -1031,17 +1063,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if ercAddress is invalid', async function () {
+      const packedInfo = packInfo(10, 0, 2, 0);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000009',
+        '0x0000000000000000000000000000000000000000000000000000000000000002',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const withdrawalTransactionInvalid = {
-        value: '10',
-        fee: '0',
-        circuitHash: '2',
-        tokenType: '0',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000009',
-          '0x0000000000000000000000000000000000000000000000000000000000000002',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
         ercAddress: ethers.utils.concat([
           ethers.utils.hexlify(1),
@@ -1135,17 +1170,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails to finalise withdrawal if tokenType is ERC20 and tokenId not zero', async function () {
+      const packedInfo = packInfo(10, 0, 2, 0);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000009',
+        '0x0000000000000000000000000000000000000000000000000000000000000002',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const withdrawalTransactionInvalid = {
-        value: '10',
-        fee: '0',
-        circuitHash: '2',
-        tokenType: '0',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000009',
-          '0x0000000000000000000000000000000000000000000000000000000000000002',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -1211,17 +1249,20 @@ describe('Testing Shield Contract', function () {
 
     it('fails to finalise withdrawal if tokenType is ERC20 and trying to withdraw more than allowed', async function () {
       await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
+      const packedInfo = packInfo(100000000, 0, 2, 0);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000009',
+        '0x0000000000000000000000000000000000000000000000000000000000000002',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const withdrawalTransactionInvalid = {
-        value: '100000000',
-        fee: '0',
-        circuitHash: '2',
-        tokenType: '0',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000009',
-          '0x0000000000000000000000000000000000000000000000000000000000000002',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -1286,17 +1327,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails to finalise withdrawal if tokenType is ERC721 and value is invalid', async function () {
+      const packedInfo = packInfo(5, 0, 2, 1);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000009',
+        '0x0000000000000000000000000000000000000000000000000000000000000002',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const withdrawalTransactionInvalid = {
-        value: '5',
-        fee: '0',
-        circuitHash: '2',
-        tokenType: '1',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000009',
-          '0x0000000000000000000000000000000000000000000000000000000000000002',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -1360,17 +1404,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails to finalise withdrawal if tokenType is unknown', async function () {
+      const packedInfo = packInfo(5, 0, 2, 5);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000009',
+        '0x0000000000000000000000000000000000000000000000000000000000000002',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const withdrawalTransactionInvalid = {
-        value: '5',
-        fee: '0',
-        circuitHash: '2',
-        tokenType: '5',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000009',
-          '0x0000000000000000000000000000000000000000000000000000000000000002',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000001',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -1598,17 +1645,20 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if trying to advance withdraw for a non ERC 20 token', async function () {
+      const packedInfo = packInfo(10, 0, 2, 1);
+
+      const historicRootBlockNumberL2 = [
+        '0x0000000000000000000000000000000000000000000000000000000000000009',
+        '0x0000000000000000000000000000000000000000000000000000000000000002',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+        '0x0000000000000000000000000000000000000000000000000000000000000000',
+      ];
+
+      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
+
       const withdrawTransactionERC721 = {
-        value: '10',
-        fee: '0',
-        circuitHash: '2',
-        tokenType: '1',
-        historicRootBlockNumberL2: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
+        packedInfo,
+        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
         tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
         ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
         recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
