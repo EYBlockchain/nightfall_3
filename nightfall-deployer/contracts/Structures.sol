@@ -15,7 +15,7 @@ contract Structures {
         ERC1155
     }
 
-    event Rollback(uint256 blockNumberL2);
+    event Rollback(uint64 blockNumberL2);
 
     event BlockProposed();
 
@@ -44,11 +44,8 @@ contract Structures {
     // will hold default values for any specific tranaction, e.g. there are no
     // nullifiers for a Deposit transaction.
     struct Transaction {
-        uint112 value;
-        uint96 fee;
-        uint40 circuitHash;
-        TokenType tokenType;
-        uint64[] historicRootBlockNumberL2;
+        uint256 packedInfo;
+        uint256[] historicRootBlockNumberL2;
         bytes32 tokenId;
         bytes32 ercAddress;
         bytes32 recipientAddress;
@@ -62,7 +59,7 @@ contract Structures {
         uint48 leafCount; // note this is defined to be the number of leaves AFTER the commitments in this block are added
         address proposer;
         bytes32 root; // the 'output' commmitment root after adding all commitments
-        uint256 blockNumberL2;
+        uint64 blockNumberL2;
         bytes32 previousBlockHash;
         bytes32 frontierHash;
         bytes32 transactionHashesRoot; // This variable needs to be the last one in order proposeBlock to work
@@ -89,11 +86,6 @@ contract Structures {
         uint256 amount; // The amount held
         uint256 challengeLocked; // The amount locked by block proposed still in CHALLENGE_PERIOD and not claimed
         uint256 time; // The time the funds were locked from
-    }
-
-    struct Fee {
-        address proposer;
-        uint256 blockNumberL2;
     }
 
     struct FeeTokens {

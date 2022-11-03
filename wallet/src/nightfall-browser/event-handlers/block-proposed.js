@@ -1,6 +1,7 @@
 // ignore unused exports default
 
 import { ZkpKeys } from '@Nightfall/services/keys';
+import axios from 'axios';
 import { Commitment } from '@Nightfall/classes';
 import { decrypt, packSecrets } from '@Nightfall/services/kem-dem';
 import { generalise } from 'general-number';
@@ -13,8 +14,8 @@ import {
   countCommitments,
   setSiblingInfo,
   countTransactionHashes,
-  countWithdrawTransactionHashes,
-  isTransactionHashWithdraw,
+  countTransactionHashesBelongCircuit,
+  isTransactionHashBelongCircuit,
 } from '../services/commitment-storage';
 import {
   getTreeByBlockNumberL2,
@@ -26,7 +27,8 @@ import {
 } from '../services/database';
 import { edwardsDecompress } from '../../common-files/utils/curve-maths/curves';
 
-const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = global.config;
+const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE, ZOKRATES_WORKER_HOST, PROTOCOL } =
+  global.config;
 const { ZERO } = global.nightfallConstants;
 
 /**
@@ -162,13 +164,18 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
     ++height;
   }
 
+  // TODO: Is this the best way?
+  const circuitHash = await axios.get(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`, {
+    params: { circuit: 'withdraw' },
+  });
+
   // If this L2 block contains withdraw transactions known to this client,
   // the following needs to be saved for later to be used during finalise/instant withdraw
   // 1. Save sibling path for the withdraw transaction hash that is present in transaction hashes timber tree
   // 2. Save transactions hash of the transactions in this L2 block that contains withdraw transactions for this client
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
-  if ((await countWithdrawTransactionHashes(block.transactionHashes)) > 0) {
+  if ((await countTransactionHashesBelongCircuit(block.transactionHashes, circuitHash)) > 0) {
     const transactionHashesTimber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
 
     const updatedTransactionHashesTimber = Timber.statelessUpdate(
@@ -181,7 +188,7 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
     await Promise.all(
       // eslint-disable-next-line consistent-return
       block.transactionHashes.map(async (transactionHash, i) => {
-        if (await isTransactionHashWithdraw(transactionHash)) {
+        if (await isTransactionHashBelongCircuit(transactionHash, circuitHash)) {
           const siblingPathTransactionHash =
             updatedTransactionHashesTimber.getSiblingPath(transactionHash);
           return setTransactionHashSiblingInfo(
