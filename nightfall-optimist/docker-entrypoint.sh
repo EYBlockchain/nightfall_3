@@ -7,7 +7,7 @@ then
 fi
 
 if [ "${TX_WORKER_COUNT}" ]; then
-  mkdir -f /tmp
+  mkdir -p /tmp
   node /app/src/workers/transaction-submitted-app.mjs > /tmp/worker.txt &
 fi
 exec "$@"
