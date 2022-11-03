@@ -16,7 +16,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const {
   mnemonics,
   signingKeys,
-  MINIMUM_STAKE,
   ROTATE_PROPOSER_BLOCKS,
   fee,
   transferValue,
@@ -44,6 +43,7 @@ let stateABI;
 let stateAddress;
 const eventLogs = [];
 let erc20Address;
+let minimumStake;
 
 const getStakeAccount = async ethAccount => {
   const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
@@ -93,6 +93,7 @@ describe('Basic Proposer tests', () => {
     await secondProposer.init(mnemonics.proposer);
     await thirdProposer.init(mnemonics.proposer);
 
+    minimumStake = await bootProposer.getMinimumStake();
     stateAddress = await bootProposer.getContractAddress('State');
     stateABI = await nf3User.getContractAbi('State');
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
@@ -128,41 +129,35 @@ describe('Basic Proposer tests', () => {
 
   it('should register the boot proposer', async () => {
     const stakeAccount1 = await getStakeAccount(bootProposer.ethereumAddress);
-    const res = await bootProposer.registerProposer(testProposersUrl[0], MINIMUM_STAKE);
+    const res = await bootProposer.registerProposer(testProposersUrl[0], minimumStake);
     expectTransaction(res);
     const stakeAccount2 = await getStakeAccount(bootProposer.ethereumAddress);
     const { proposers } = await bootProposer.getProposers();
     const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
-    expect(Number(stakeAccount2.amount)).equal(
-      Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
-    );
+    expect(Number(stakeAccount2.amount)).equal(Number(stakeAccount1.amount) + Number(minimumStake));
   });
 
   it('should allow to register a second proposer other than the boot proposer', async () => {
     const stakeAccount1 = await getStakeAccount(secondProposer.ethereumAddress);
-    const res = await secondProposer.registerProposer(testProposersUrl[0], MINIMUM_STAKE);
+    const res = await secondProposer.registerProposer(testProposersUrl[0], minimumStake);
     expectTransaction(res);
     const stakeAccount2 = await getStakeAccount(secondProposer.ethereumAddress);
     const { proposers } = await secondProposer.getProposers();
     const thisProposer = proposers.filter(p => p.thisAddress === secondProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
-    expect(Number(stakeAccount2.amount)).equal(
-      Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
-    );
+    expect(Number(stakeAccount2.amount)).equal(Number(stakeAccount1.amount) + Number(minimumStake));
   });
 
   it('should allow to register a third proposer other than the boot proposer', async () => {
     const stakeAccount1 = await getStakeAccount(thirdProposer.ethereumAddress);
-    const res = await thirdProposer.registerProposer(testProposersUrl[0], MINIMUM_STAKE);
+    const res = await thirdProposer.registerProposer(testProposersUrl[0], minimumStake);
     expectTransaction(res);
     const stakeAccount2 = await getStakeAccount(thirdProposer.ethereumAddress);
     const { proposers } = await thirdProposer.getProposers();
     const thisProposer = proposers.filter(p => p.thisAddress === thirdProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
-    expect(Number(stakeAccount2.amount)).equal(
-      Number(stakeAccount1.amount) + Number(MINIMUM_STAKE),
-    );
+    expect(Number(stakeAccount2.amount)).equal(Number(stakeAccount1.amount) + Number(minimumStake));
   });
 
   it('should update proposer url', async () => {
@@ -179,11 +174,11 @@ describe('Basic Proposer tests', () => {
 
   it('should increment the stake of the proposer', async () => {
     const initialStake = await getStakeAccount(bootProposer.ethereumAddress);
-    const res = await bootProposer.updateProposer(testProposersUrl[0], MINIMUM_STAKE, 0);
+    const res = await bootProposer.updateProposer(testProposersUrl[0], minimumStake, 0);
     expectTransaction(res);
     const finalStake = await getStakeAccount(bootProposer.ethereumAddress);
     expect(Number(finalStake.amount)).to.be.equal(
-      Number(initialStake.amount) + Number(MINIMUM_STAKE),
+      Number(initialStake.amount) + Number(minimumStake),
     );
   });
 
@@ -199,7 +194,7 @@ describe('Basic Proposer tests', () => {
   });
 
   it('should fail to register a proposer twice', async () => {
-    const res = await bootProposer.registerProposer(testProposersUrl[2], MINIMUM_STAKE);
+    const res = await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
     // eslint-disable-next-line @babel/no-unused-expressions
     expect(res).to.be.false;
   });
