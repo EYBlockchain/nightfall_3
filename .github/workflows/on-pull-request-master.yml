@@ -1,8 +1,8 @@
 name: Check PR
 
 on:
-  pull_request:
-    branches: [master]
+  push:
+    branches: [liju.jose/adversary-make-proposer-submit-bad-tx-test-1]
 
 jobs:
   dependency-review:
