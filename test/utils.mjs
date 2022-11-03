@@ -8,7 +8,6 @@ import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random
 
 const { expect } = chai;
 const { WEB3_PROVIDER_OPTIONS } = config;
-const { MINIMUM_STAKE } = config.TEST_OPTIONS;
 
 const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -447,7 +446,7 @@ export const retrieveL2Balance = async (client, ercAddress) => {
 */
 export const registerProposerOnNoProposer = async proposer => {
   if ((await proposer.getCurrentProposer()) === '0x0000000000000000000000000000000000000000') {
-    await proposer.registerProposer('http://optimist', MINIMUM_STAKE);
+    await proposer.registerProposer('http://optimist', await proposer.getMinimumStake());
   }
 };
 
