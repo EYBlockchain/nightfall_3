@@ -1,3 +1,8 @@
+import Web3 from 'web3';
+import crypto from 'crypto';
+
+const web3 = new Web3();
+
 const derMapping = [
   'End_of_Content',
   'BOOLEAN',
@@ -34,7 +39,7 @@ const derMapping = [
   'TIME_OF_DAY',
   'DATE_TIME',
   'DURATION',
-  '[OID_IRI',
+  'OID_IRI',
   'RELATIVE_OID_IRI',
 ];
 
@@ -43,7 +48,7 @@ Function to take an Ethers 'representation' of a Solidity Decoded TLV struct and
 well-structured TLV object
 */
 
-function makeTlv(struct) {
+export function makeTlv(struct) {
   const {
     start: _start,
     headerLength: _headerLength,
@@ -66,4 +71,11 @@ function makeTlv(struct) {
   return tlv;
 }
 
-export default makeTlv;
+export function signEthereumAddress(derPrivateKey, address) {
+  const privateKey = crypto.createPrivateKey({ key: derPrivateKey, format: 'der', type: 'pkcs1' });
+  const signature = crypto.sign('sha256', Buffer.from(address.toLowerCase().slice(2), 'hex'), {
+    key: privateKey,
+    padding: crypto.constants.RSA_PKCS1_PADDING,
+  });
+  return signature;
+}
