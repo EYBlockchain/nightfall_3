@@ -4,7 +4,6 @@ import { setStorageAt } from '@nomicfoundation/hardhat-network-helpers';
 
 const { ethers } = hardhat;
 
-const whitelistSlot = 22;
 const txInfoSlot = 163;
 const advancedWithdrawalSlot = 164;
 
