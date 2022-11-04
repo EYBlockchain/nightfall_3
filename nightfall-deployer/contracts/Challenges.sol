@@ -213,8 +213,7 @@ contract Challenges is Stateful, Config {
         );
 
         require(
-            blockL2ContainingHistoricRoot.length ==
-                transaction.transaction.nullifiers.length,
+            blockL2ContainingHistoricRoot.length == transaction.transaction.nullifiers.length,
             'Invalid number of blocks L2 containing historic root'
         );
 
@@ -227,12 +226,13 @@ contract Challenges is Stateful, Config {
             if (uint256(transaction.transaction.nullifiers[i]) != 0) {
                 state.isBlockReal(blockL2ContainingHistoricRoot[i]);
 
-                uint256 slot = uint256(uint(i) / 4);
-                uint256 position = 64 * (3 - (i % 4));
+                uint64 historicblockNumberL2 = Utils.getHistoricRoot(
+                    transaction.transaction.historicRootBlockNumberL2,
+                    i
+                );
 
                 require(
-                    uint64(transaction.transaction.historicRootBlockNumberL2[slot] >> position) ==
-                        blockL2ContainingHistoricRoot[i].blockNumberL2,
+                    historicblockNumberL2 == blockL2ContainingHistoricRoot[i].blockNumberL2,
                     'Incorrect historic root block'
                 );
 
@@ -245,7 +245,7 @@ contract Challenges is Stateful, Config {
             transaction.transaction,
             extraPublicInputs,
             uncompressedProof,
-            state.getVerificationKey(uint40(transaction.transaction.packedInfo >> 216))
+            state.getVerificationKey(Utils.getCircuitHash(transaction.transaction.packedInfo))
         );
         challengeAccepted(transaction.blockL2);
     }
@@ -260,12 +260,12 @@ contract Challenges is Stateful, Config {
         );
 
         for (uint256 i = 0; i < transaction.transaction.nullifiers.length; ++i) {
-            uint256 slot = uint256(uint(i) / 4);
-            uint256 position = 64 * (i % 4);
+            uint64 historicblockNumberL2 = Utils.getHistoricRoot(
+                transaction.transaction.historicRootBlockNumberL2,
+                i
+            );
 
-            if (
-                uint256(uint64(transaction.transaction.historicRootBlockNumberL2[slot] >> position)) >= state.getNumberOfL2Blocks()
-            ) {
+            if (uint256(historicblockNumberL2) >= state.getNumberOfL2Blocks()) {
                 challengeAccepted(transaction.blockL2);
                 return;
             }
@@ -303,7 +303,10 @@ contract Challenges is Stateful, Config {
             state.setBlockStakeWithdrawn(blockData.blockHash);
             badBlocks[i] = blockData;
         }
-        require(state.getNumberOfL2Blocks() == uint256(blockNumberL2), 'Number remaining not as expected.');
+        require(
+            state.getNumberOfL2Blocks() == uint256(blockNumberL2),
+            'Number remaining not as expected.'
+        );
         return badBlocks;
     }
 
