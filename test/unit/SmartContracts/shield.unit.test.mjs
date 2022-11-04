@@ -23,6 +23,7 @@ const { ethers, upgrades } = hardhat;
 
 describe('Testing Shield Contract', function () {
   let x509Address;
+  let X509Instance;
 
   let ShieldInstance;
   let shieldAddress;
@@ -75,8 +76,8 @@ describe('Testing Shield Contract', function () {
     erc1155MockAddress = erc1155MockInstance.address;
 
     const X509Deployer = await ethers.getContractFactory('X509');
-    const X509Instance = await upgrades.deployProxy(X509Deployer);
-    x509Address = (await X509Instance.deployed()).address;
+    X509Instance = await upgrades.deployProxy(X509Deployer);
+    x509Address = X509Instance.address;
 
     const ShieldDeployer = await ethers.getContractFactory('Shield');
     ShieldInstance = await upgrades.deployProxy(ShieldDeployer, [x509Address], {
@@ -297,7 +298,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if user is not whitelisted and whitelisting is active', async function () {
-      await setWhitelist(x509Address);
+      await X509Instance.enableWhitelisting(true);
       await expect(ShieldInstance.submitTransaction(withdrawTransaction)).to.be.revertedWith(
         'You are not authorised to transact using Nightfall',
       );
@@ -1072,7 +1073,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if user is not whitelisted and whitelisting is active', async function () {
-      await setWhitelist(x509Address);
+      await X509Instance.enableWhitelisting(true);
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
       await time.increase(86400 * 7 + 1);
@@ -1082,7 +1083,7 @@ describe('Testing Shield Contract', function () {
 
       await expect(
         ShieldInstance.finaliseWithdrawal(block, withdrawTransaction, index, siblingPath),
-      ).to.be.revertedWith('Shield: You are not authorised to withdraw funds');
+      ).to.be.revertedWith('You are not authorised to transact using Nightfall');
     });
 
     it('fails to finalise withdrawal if tokenType is ERC20 and tokenId not zero', async function () {
