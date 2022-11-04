@@ -38,10 +38,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             'Shield: You are not authorised to transact using Nightfall'
         );
         require(
-            msg.value == 0 || uint96(t.packedInfo >> 120) == 0,
+            msg.value == 0 || Utils.getFee(t.packedInfo) == 0,
             'Shield: Fee cannot be paid in both tokens'
         );
-        (, bool isEscrowRequired) = state.circuitInfo(uint40(t.packedInfo >> 216));
+        (, bool isEscrowRequired) = state.circuitInfo(Utils.getCircuitHash(t.packedInfo));
         if (isEscrowRequired || msg.value > 0) {
             bytes32 transactionHash = Utils.hashTransaction(t);
             state.setTransactionInfo(transactionHash, isEscrowRequired, uint248(msg.value));
@@ -98,7 +98,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     /**
      * @dev Check if a block has been paid to the proposer
      */
-    function isBlockPaymentPending(uint256 blockNumberL2) external view returns (bool) {
+    function isBlockPaymentPending(uint64 blockNumberL2) external view returns (bool) {
         BlockData memory blockData = state.getBlockData(blockNumberL2);
         require(
             blockData.time + CHALLENGE_PERIOD < block.timestamp,
@@ -146,7 +146,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         // check this block is a real one, in the queue, not something made up.
         bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
         // check that the block has been finalised
-        (bool isWithdrawing, ) = state.circuitInfo(uint40(t.packedInfo >> 216));
+        (bool isWithdrawing, ) = state.circuitInfo(Utils.getCircuitHash(t.packedInfo));
         require(isWithdrawing, 'Shield: Transaction is not a valid withdraw');
         require(
             state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
@@ -182,7 +182,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to withdraw funds from this block'
         );
-        (bool isWithdrawing, ) = state.circuitInfo(uint40(t.packedInfo >> 216));
+        (bool isWithdrawing, ) = state.circuitInfo(Utils.getCircuitHash(t.packedInfo));
         require(isWithdrawing, 'Shield: Transaction is not a valid withdraw');
         require(
             !advancedWithdrawals[transactionHash].isWithdrawn,
@@ -258,7 +258,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         IERC20Upgradeable(tokenAddress).safeTransferFrom(
             address(msg.sender),
             currentOwner,
-            uint256(uint112(t.packedInfo >> 8))
+            uint256(Utils.getValue(t.packedInfo))
         );
     }
 
@@ -272,7 +272,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
 
         // The transaction is a withdrawal transaction
-        (bool isWithdrawing, ) = state.circuitInfo(uint40(t.packedInfo >> 216));
+        (bool isWithdrawing, ) = state.circuitInfo(Utils.getCircuitHash(t.packedInfo));
         require(isWithdrawing, 'Shield: Can only advance withdrawals');
 
         require(msg.value > 0, 'Shield: Advance fee cannot be zero');
@@ -284,7 +284,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         );
 
         require(
-            TokenType(uint8(t.packedInfo)) == TokenType.ERC20 && t.tokenId == ZERO,
+            Utils.getTokenType(t.packedInfo) == TokenType.ERC20 && t.tokenId == ZERO,
             'Shield: Can only advance withdrawals for fungible tokens'
         );
 
@@ -322,9 +322,9 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         );
         address addr = address(uint160(uint256(t.ercAddress)));
 
-        uint112 value = uint112(t.packedInfo >> 8);
+        uint112 value = Utils.getValue(t.packedInfo);
 
-        TokenType tokenType = TokenType(uint8(t.packedInfo));
+        TokenType tokenType = Utils.getTokenType(t.packedInfo);
         if (tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
                 revert('Shield: ERC20 withdrawal should have tokenId equal to ZERO');
@@ -362,8 +362,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         );
         address addr = address(uint160(addrNum));
 
-        uint112 value = uint112(t.packedInfo >> 8);
-        TokenType tokenType = TokenType(uint8(t.packedInfo));
+        uint112 value = Utils.getValue(t.packedInfo);
+        TokenType tokenType = Utils.getTokenType(t.packedInfo);
 
         if (tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)

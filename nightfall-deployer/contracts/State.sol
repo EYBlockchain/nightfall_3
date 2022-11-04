@@ -342,7 +342,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         return currentProposer;
     }
 
-    function getFeeBookBlocksInfo(address proposer, uint256 blockNumberL2)
+    function getFeeBookBlocksInfo(address proposer, uint64 blockNumberL2)
         public
         view
         returns (FeeTokens memory)
@@ -350,7 +350,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         return (feeBookBlocks[keccak256(abi.encodePacked(proposer, blockNumberL2))]);
     }
 
-    function resetFeeBookBlocksInfo(address proposer, uint256 blockNumberL2) public onlyShield {
+    function resetFeeBookBlocksInfo(address proposer, uint64 blockNumberL2) public onlyShield {
         delete feeBookBlocks[keccak256(abi.encodePacked(proposer, blockNumberL2))];
     }
 
@@ -361,7 +361,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         return popped;
     }
 
-    function getBlockData(uint256 blockNumberL2) public view returns (BlockData memory) {
+    function getBlockData(uint64 blockNumberL2) public view returns (BlockData memory) {
         require(blockNumberL2 < blockHashes.length, 'State: Invalid block number L2');
         return blockHashes[blockNumberL2];
     }

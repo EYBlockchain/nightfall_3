@@ -41,7 +41,7 @@ async function getProposeBlockCalldata(eventData) {
   const transactions = transactionsData.map(t => {
     const [
       packedInfo,
-      historicRootBlockNumberL2,
+      historicRootBlockNumberL2Packed,
       tokenId,
       ercAddress,
       recipientAddress,
@@ -52,6 +52,11 @@ async function getProposeBlockCalldata(eventData) {
     ] = t;
 
     const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedInfo);
+
+    const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
+      nullifiers.length,
+      historicRootBlockNumberL2Packed,
+    );
 
     const transaction = {
       value,
