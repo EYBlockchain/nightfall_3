@@ -7,11 +7,7 @@ import {
   calculateTransactionHash,
   createBlockAndTransactions,
 } from '../utils/utils.mjs';
-import {
-  setAdvancedWithdrawal,
-  setTransactionInfo,
-  setWhitelist,
-} from '../utils/shieldStorage.mjs';
+import { setAdvancedWithdrawal, setTransactionInfo } from '../utils/shieldStorage.mjs';
 import {
   setBlockData,
   setBlockPaymentClaimed,
