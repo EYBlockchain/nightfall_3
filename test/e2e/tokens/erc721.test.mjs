@@ -89,7 +89,7 @@ describe('ERC721 tests', () => {
     await emptyL2();
   });
 
-  describe.skip('Deposit', () => {
+  describe('Deposit', () => {
     it('should deposit some ERC721 crypto into a ZKP commitment', async function () {
       const tokenToDeposit = availableTokenIds.shift();
 
