@@ -27,14 +27,6 @@ export async function setTransactionInfo(shieldAddress, transactionHash, isEscro
   await setStorageAt(shieldAddress, index, txInfoStruct);
 }
 
-export async function setWhitelist(x509Address) {
-  await setStorageAt(
-    x509Address,
-    ethers.utils.hexlify(whitelistSlot),
-    ethers.utils.hexlify(ethers.utils.zeroPad(1, 32)),
-  );
-}
-
 export async function setAdvancedWithdrawal(
   shieldAddress,
   withdrawTransactionHash,
