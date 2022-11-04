@@ -12,11 +12,7 @@ import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 
-import {
-  DEFAULT_FEE_ETH,
-  DEFAULT_FEE_MATIC,
-  WEBSOCKET_PING_TIME,
-} from './constants.mjs';
+import { DEFAULT_FEE_ETH, DEFAULT_FEE_MATIC, WEBSOCKET_PING_TIME } from './constants.mjs';
 
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
 // then there will only be one queue here. The constructor does not need to initialise clientBaseUrl
