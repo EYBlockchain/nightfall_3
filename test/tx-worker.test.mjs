@@ -5,7 +5,6 @@ import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import axios from 'axios';
 import os from 'os';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { depositNTransactions, Web3Client, waitForTimeout } from './utils.mjs';
 import {
@@ -143,7 +142,6 @@ describe('Tx worker test', () => {
      * process them all at once with workers.
      */
     it('Generate transactions and measure transaction processing and block assembly time with workers on', async function () {
-      const expectedMinTxPerSecond = 50;
       let pendingBlocks = NUMBER_L2_BLOCKS;
       const blockTimestamp = [];
       let startTime;
@@ -153,8 +151,6 @@ describe('Tx worker test', () => {
       });
       txPerSecondWorkersOn = await generateNTransactions();
       console.log('Transactions per second', txPerSecondWorkersOn);
-      // check that we can process more than 50 transactions per second. In reality, it should be more.
-      expect(txPerSecondWorkersOn).to.be.greaterThan(expectedMinTxPerSecond);
 
       // In this second part, measure time it takes to generate blocks
       while (pendingBlocks) {
