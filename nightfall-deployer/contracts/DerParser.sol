@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: CC0-1.0
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.3;
 
 // This contract can parse a DER object, such as a suitably encoded SSL certificate
 import 'hardhat/console.sol';
