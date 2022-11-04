@@ -64,7 +64,6 @@ export function submitTransactionEnable(enable) {
   _submitTransactionEnable = enable;
 }
 export async function submitTransaction(_transaction, fromBlockProposer, txEnable) {
-  const startTime = new Date().getTime();
   logger.info({
     msg: 'Transaction Handler - New transaction received.',
     _transaction,
@@ -79,35 +78,21 @@ export async function submitTransaction(_transaction, fromBlockProposer, txEnabl
   try {
     const transaction = await checkAlreadyInBlock(_transaction);
     // save transaction if not in block
-    const startTimeSaveBP = new Date().getTime();
     if (fromBlockProposer) {
       saveTransaction({ ...transaction }).catch(function (err) {
         logger.error(err);
       });
     }
-    const endTimeSaveBP = new Date().getTime();
 
-    const startTimeCheck = new Date().getTime();
     await checkTransaction(transaction, true);
     logger.info('Transaction checks passed');
-    const endTimeCheck = new Date().getTime();
 
     // save it
-    const startTimeSaveNBP = new Date().getTime();
     if (!fromBlockProposer) {
       saveTransaction({ ...transaction }).catch(function (err) {
         logger.error(err);
       });
     }
-    const endTimeSaveNBP = new Date().getTime();
-    const endTime = new Date().getTime();
-    console.log(
-      'TX TIME',
-      endTime - startTime,
-      endTimeSaveBP - startTimeSaveBP,
-      endTimeCheck - startTimeCheck,
-      endTimeSaveNBP - startTimeSaveNBP,
-    );
   } catch (err) {
     if (err instanceof TransactionError) {
       logger.warn(

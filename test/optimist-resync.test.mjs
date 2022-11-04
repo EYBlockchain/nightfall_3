@@ -178,7 +178,9 @@ describe('Optimist synchronisation tests', () => {
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
       await waitForTimeout(5000);
+      await nf3Challenger.close();
       await restartOptimist(false);
+      await nf3Challenger.init(mnemonics.challenger);
 
       // we need to remind optimist which proposer it's connected to
       await nf3Proposer1.registerProposer('http://optimist', minimumStake);
@@ -225,7 +227,9 @@ describe('Optimist synchronisation tests', () => {
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
+      await nf3Challenger.close();
       await restartOptimist();
+      await nf3Challenger.init(mnemonics.challenger);
 
       // we need to remind optimist which proposer it's connected to
       await nf3Proposer1.registerProposer('http://optimist', minimumStake);
@@ -304,7 +308,9 @@ describe('Optimist synchronisation tests', () => {
       logger.debug('bad block submitted');
       const r = rollbackPromise();
       // Now we have a bad block, let's force Optimist to re-sync by turning it off and on again!
+      await nf3Challenger.close();
       await restartOptimist();
+      await nf3Challenger.init(mnemonics.challenger);
 
       logger.debug('waiting for rollback to complete');
       await r;
