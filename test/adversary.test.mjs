@@ -24,7 +24,6 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const { TRANSACTIONS_PER_BLOCK } = config;
-const { MINIMUM_STAKE } = config.TEST_OPTIONS;
 const TX_WAIT = 12000;
 const TEST_LENGTH = 3;
 
@@ -101,7 +100,10 @@ describe('Testing with an adversary', () => {
     startBalance = await retrieveL2Balance(nf3User);
 
     // Proposer registration
-    await nf3AdversarialProposer.registerProposer('http://optimist', MINIMUM_STAKE);
+    await nf3AdversarialProposer.registerProposer(
+      'http://optimist',
+      await nf3AdversarialProposer.getMinimumStake(),
+    );
     // Proposer listening for incoming events
     const blockProposeEmitter = await nf3AdversarialProposer.startProposer();
     blockProposeEmitter

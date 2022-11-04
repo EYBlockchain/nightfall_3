@@ -21,11 +21,13 @@ export default {
       });
       connection[url] = await client.connect();
     } else {
-      const options = {
-        serverSelectionTimeoutMS: 10000,
+      const client = await new MongoClient(url, {
         useUnifiedTopology: true,
-      };
-      const client = await new MongoClient(url, options);
+        // connectTimeoutMS: 30000,
+        // keepAlive: true,
+        // serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 3000,
+      });
       connection[url] = await client.connect();
     }
     return connection[url];

@@ -11,5 +11,4 @@ module.exports = {
   BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'localhost',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || 8546,
   BLOCKCHAIN_PATH: process.env.BLOCKCHAIN_PATH || '',
-  MINIMUM_STAKE: process.env.MINIMUM_STAKE || 100,
 };

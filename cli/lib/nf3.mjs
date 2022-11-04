@@ -13,8 +13,6 @@ import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 
 import {
-  DEFAULT_BLOCK_STAKE,
-  DEFAULT_PROPOSER_BOND,
   DEFAULT_FEE_ETH,
   DEFAULT_FEE_MATIC,
   WEBSOCKET_PING_TIME,
@@ -61,6 +59,8 @@ class Nf3 {
 
   stateContractAddress;
 
+  stateContract;
+
   ethereumSigningKey;
 
   ethereumAddress;
@@ -70,10 +70,6 @@ class Nf3 {
   defaultFeeEth = DEFAULT_FEE_ETH;
 
   defaultFeeMatic = DEFAULT_FEE_MATIC;
-
-  PROPOSER_BOND = DEFAULT_PROPOSER_BOND;
-
-  BLOCK_STAKE = DEFAULT_BLOCK_STAKE;
 
   latestWithdrawHash;
 
@@ -117,12 +113,15 @@ class Nf3 {
     switch (contractAddressProvider) {
       case undefined:
         this.contractGetter = this.getContractAddress;
+        this.contractAbiGetter = this.getContractAbi;
         break;
       case 'client':
         this.contractGetter = this.getContractAddress;
+        this.contractAbiGetter = this.getContractAbi;
         break;
       case 'optimist':
         this.contractGetter = this.getContractAddressOptimist;
+        this.contractAbiGetter = this.getContractAbiOptimist;
         break;
       default:
         throw new Error('Unknown contract address server');
@@ -132,6 +131,8 @@ class Nf3 {
     this.proposersContractAddress = await this.contractGetter('Proposers');
     this.challengesContractAddress = await this.contractGetter('Challenges');
     this.stateContractAddress = await this.contractGetter('State');
+    this.stateContract = await this.getContractInstance('State');
+
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
       this.ethereumAddress = await this.getAccounts();
@@ -140,6 +141,18 @@ class Nf3 {
     if (typeof mnemonic !== 'undefined') {
       await this.setZkpKeysFromMnemonic(mnemonic, 0);
     }
+  }
+
+  /**
+    Get contract instance.
+    @method
+    @param {string} contractName - name of the contract instance to get.
+    */
+  async getContractInstance(contractName) {
+    const abi = await this.contractAbiGetter(contractName);
+    const contractAddress = await this.contractGetter(contractName);
+    const contractInstance = new this.web3.eth.Contract(abi, contractAddress);
+    return contractInstance;
   }
 
   /**
@@ -343,6 +356,19 @@ class Nf3 {
     */
   async getContractAbi(contractName) {
     const res = await axios.get(`${this.clientBaseUrl}/contract-abi/${contractName}`);
+    return res.data.abi;
+  }
+
+  /**
+    Returns the abi of a Nightfall_3 contract calling the optimist.
+    @method
+    @async
+    @param {string} contractName - the name of the smart contract in question. Possible
+    values are 'Shield', 'State', 'Proposers', 'Challengers'.
+    @returns {Promise} Resolves into the Ethereum ABI of the contract
+  */
+  async getContractAbiOptimist(contractName) {
+    const res = await axios.get(`${this.optimistBaseUrl}/contract-abi/${contractName}`);
     return res.data.abi;
   }
 
@@ -908,6 +934,26 @@ class Nf3 {
   }
 
   /**
+    Get block stake
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum call.
+    */
+  async getBlockStake() {
+    return this.stateContract.methods.getBlockStake().call();
+  }
+
+  /**
+      Get minimum stake
+      @method
+      @async
+      @returns {array} A promise that resolves to the Ethereum call.
+      */
+  async getMinimumStake() {
+    return this.stateContract.methods.getMinimumStake().call();
+  }
+
+  /**
     Starts a Proposer that listens for blocks and submits block proposal
     transactions to the blockchain.
     @method
@@ -944,7 +990,7 @@ class Nf3 {
         const tx = await this._signTransaction(
           txDataToSign,
           this.stateContractAddress,
-          this.BLOCK_STAKE,
+          await this.getBlockStake(), // the block stake could have changed, so we get it from the blockchain
         );
         proposerQueue.push(async () => {
           try {

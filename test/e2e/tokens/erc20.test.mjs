@@ -28,7 +28,6 @@ const {
   mnemonics,
   signingKeys,
   restrictions: { erc20default },
-  MINIMUM_STAKE,
 } = config.TEST_OPTIONS;
 
 const {
@@ -73,7 +72,7 @@ describe('ERC20 tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist', MINIMUM_STAKE);
+    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
@@ -133,8 +132,6 @@ describe('ERC20 tests', () => {
 
       await emptyL2();
 
-      // stateBalance += fee * txPerBlock + BLOCK_STAKE;
-
       const afterBalances = await getBalances();
 
       expect(afterBalances[0] - beforeBalances[0]).to.be.equal(-(transferValue + fee));
@@ -158,8 +155,6 @@ describe('ERC20 tests', () => {
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
 
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
-
-      // stateBalance += fee * txPerBlock + BLOCK_STAKE;
       expect(after - before).to.be.equal(-fee);
     });
   });
