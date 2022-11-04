@@ -2,11 +2,9 @@ import { expect } from 'chai';
 import hardhat from 'hardhat';
 import fs from 'fs';
 import crypto from 'crypto';
-
 import { makeTlv, signEthereumAddress } from '../utils/x509.mjs';
 
 const { ethers } = hardhat;
-const { BigNumber } = ethers;
 
 describe('DerParser contract functions', function () {
   const authorityKeyIdentifier = `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(
@@ -24,19 +22,16 @@ describe('DerParser contract functions', function () {
   const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user.der');
   const certChain = []; // contains the certificate to verify chain, lowest index is lowest cert in chain (i.e. [0] = end user)
   before(async () => {
+    const accounts = await ethers.getSigners();
+    addressToSign = accounts[0].address;
     const X509Deployer = await ethers.getContractFactory('X509');
-    const ShieldDeployer = await ethers.getContractFactory('Shield');
     let derBuffer;
     let tlvLength;
     X509Instance = await X509Deployer.deploy();
-    const ShieldInstance = await ShieldDeployer.deploy();
-    await ShieldInstance.initialize();
-    await ShieldInstance.enableWhitelisting(true);
-    await ShieldInstance.createWhitelistManager(101, X509Instance.address);
     await X509Instance.initialize();
-    await X509Instance.setWhitelistContractAddress(ShieldInstance.address);
-    //await X509Instance.setWhitelistAddress(WhitelistInstance.address);
     await X509Instance.setTrustedPublicKey(nightfallRootPublicKey, authorityKeyIdentifier);
+    await X509Instance.enableWhitelisting(true);
+    await X509Instance.createWhitelistManager(100, addressToSign);
     derBuffer = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     certChain[1] = {
@@ -48,9 +43,7 @@ describe('DerParser contract functions', function () {
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     certChain[0] = { derBuffer, tlvLength };
     // sign the ethereum address
-    const accounts = await ethers.getSigners();
-    addressToSign = accounts[0].address;
-    signature = signEthereumAddress(derPrivateKey, addressToSign)
+    signature = signEthereumAddress(derPrivateKey, addressToSign);
   });
   it('Should parse the intermediate CA cert DER encoding', async function () {
     const intermediateCaCert = certChain[0];
@@ -82,39 +75,51 @@ describe('DerParser contract functions', function () {
     expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
     // console.log(tlvs);
   });
-   it('Should verify the signature over the users ethereum address', async function () {
-    const publicKey = crypto.createPublicKey({ key: derPrivateKey, format: 'der', type: 'pkcs1' })
+  it('Should verify the signature over the users ethereum address', async function () {
+    const publicKey = crypto.createPublicKey({ key: derPrivateKey, format: 'der', type: 'pkcs1' });
     const isVerified = crypto.verify(
-      "sha256",
+      'sha256',
       Buffer.from(addressToSign.toLowerCase().slice(2), 'hex'),
       {
         key: publicKey,
         padding: crypto.constants.RSA_PKCS1_PADDING,
       },
-      signature
+      signature,
     );
     expect(isVerified).to.equal(true);
   });
   it('Should fail to validate the user certificate until it has validated the intermediate CA cert', async function () {
     // presenting the end user cert should fail because the smart contract doesn't have the intermediate CA cert
     try {
-      await X509Instance.validateCertificate(certChain[0].derBuffer, certChain[0].tlvLength, signature, true);
+      await X509Instance.validateCertificate(
+        certChain[0].derBuffer,
+        certChain[0].tlvLength,
+        signature,
+        true,
+      );
       expect.fail('The certificate check passed, but it should have failed');
     } catch (err) {
       expect(err.message.includes('VM Exception')).to.equal(true);
     }
     // a kyc check should also fail
-    try {
-      await X509Instance.kycCheck(addressToSign);
-      expect.fail('The KYC check passed, but it should have failed');
-    } catch (err) {
-       expect(err.message.includes('VM Exception')).to.equal(true);
-    }
+    let result = await X509Instance.kycCheck(addressToSign);
+    expect(result).to.equal(false);
     // presenting the Intermediate CA cert should work because the smart contact trusts the root public key
-    await X509Instance.validateCertificate(certChain[1].derBuffer, certChain[1].tlvLength, 0, false);
+    await X509Instance.validateCertificate(
+      certChain[1].derBuffer,
+      certChain[1].tlvLength,
+      0,
+      false,
+    );
     // now presenting the end user cert should work because the smart contract now trusts the Intermediate CA public key
-    await X509Instance.validateCertificate(certChain[0].derBuffer, certChain[0].tlvLength, signature, true);
+    await X509Instance.validateCertificate(
+      certChain[0].derBuffer,
+      certChain[0].tlvLength,
+      signature,
+      true,
+    );
     // we should now be able to pass a KYC check for this address
-    await X509Instance.kycCheck(addressToSign);
+    result = await X509Instance.kycCheck(addressToSign);
+    expect(result).to.equal(true);
   });
 });

@@ -4,13 +4,12 @@ pragma solidity ^0.8.9;
 
 // This contract can parse  a suitably encoded SSL certificate
 import './DerParser.sol';
-import './Ownable.sol';
 import './Whitelist.sol';
+import './KYCInterface.sol';
 
-contract X509 is DERParser, Ownable {
+contract X509 is DERParser, Whitelist, KYCInterface {
     uint256 constant SECONDS_PER_DAY = 24 * 60 * 60;
     int256 constant OFFSET19700101 = 2440588;
-    Whitelist whitelist;
 
     struct RSAPublicKey {
         bytes modulus;
@@ -22,12 +21,8 @@ contract X509 is DERParser, Ownable {
     mapping(bytes32 => bool) revokedKeys;
     mapping(address => bytes32) keysByUser;
 
-    function initialize() public override(Ownable) initializer {
-        Ownable.initialize();
-    }
-
-    function setWhitelistContractAddress(address whitelistAddress) external onlyOwner {
-        whitelist = Whitelist(whitelistAddress);
+    function initialize() public override(Whitelist) initializer {
+        Whitelist.initialize();
     }
 
     function setTrustedPublicKey(
@@ -280,16 +275,21 @@ contract X509 is DERParser, Ownable {
         );
         expires[msg.sender] = expiry;
         keysByUser[msg.sender] = subjectKeyIdentifier;
-        whitelist.addUserToWhitelist(msg.sender); // all checks have passed, so they are free to trade for now.
+        addUserToWhitelist(msg.sender); // all checks have passed, so they are free to trade for now.
+        console.log(msg.sender);
         // TODO whitelisting should be removed on the revocation or expiry of the certificate.
     }
 
     // performs an ongoing KYC check (is the user still in the whitelist? Has the public key been revoked? Is the cert in date?)
     // We could also remove the user in this function, but that would burn more gas.
-    function kycCheck(address user) external view {
-        require(!revokedKeys[keysByUser[user]], 'The key for this user has been revoked');
-        require(expires[user] > block.timestamp, 'Certificate has expired, consider revoking');
-        require(whitelist.isWhitelisted(user), 'User is not whitelisted');
+    function kycCheck(address user) external view returns (bool) {
+        if (
+            !whitelisting ||
+            (!revokedKeys[keysByUser[user]] &&
+                expires[user] > block.timestamp &&
+                isWhitelisted(user))
+        ) return true;
+        return false;
     }
 
     // allows a key to be revoked. this cannot be undone!

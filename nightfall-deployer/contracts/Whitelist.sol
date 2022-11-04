@@ -16,7 +16,7 @@ contract Whitelist is Ownable {
         Ownable.initialize();
     }
 
-    function addUserToWhitelist(address _user) external {
+    function addUserToWhitelist(address _user) public {
         // if a non-manager calls this, they will just assign someone to the zero group, which is the null value and has no effect
         users[_user] = managers[msg.sender];
     }

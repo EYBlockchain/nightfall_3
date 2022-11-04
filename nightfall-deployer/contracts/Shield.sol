@@ -16,21 +16,26 @@ import './Utils.sol';
 import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
-import './Whitelist.sol';
+import './KYCInterface.sol';
 
-contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, Whitelist {
+contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => TransactionInfo) public txInfo;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
 
     address public challengesAddress;
+    KYCInterface kyc;
 
-    function initialize() public override(Stateful, Config, Pausable, Whitelist) initializer {
+    function initializeState(address kycAddress) public initializer {
+        kyc = KYCInterface(kycAddress);
+        initialize();
+    }
+
+    function initialize() public override(Stateful, Config, Pausable) onlyInitializing {
         Stateful.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
-        Whitelist.initialize();
     }
 
     function getTransactionEscrowed(bytes32 transactionHash) public view returns (bool) {
@@ -40,7 +45,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, White
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
-        require(isWhitelisted(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(kyc.kycCheck(msg.sender), 'You are not authorised to transact using Nightfall');
         if (t.transactionType == TransactionTypes.DEPOSIT) {
             txInfo[Utils.hashTransaction(t)].isEscrowed = true;
             require(uint256(t.fee) == msg.value);
@@ -212,7 +217,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, White
 
             state.addPendingWithdrawal(recipientAddress, uint256(advancedWithdrawal.advanceFee), 0);
         }
-        require(isWhitelisted(msg.sender), 'Shield: You are not authorised to withdraw funds');
+        require(kyc.kycCheck(msg.sender), 'You are not authorised to transact using Nightfall');
         payOut(t, recipientAddress);
     }
 
