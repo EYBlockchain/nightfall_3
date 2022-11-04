@@ -695,69 +695,6 @@ jobs:
           name: test-gas-logs
           path: ./test-gas.log
 
-  test-tx-worker:
-    env:
-      CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    name: check time to build 128 transactions
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16.17.0'
-
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          npm ci
-          cd ..
-
-      - name: Start Containers with ganache
-        run: |
-          ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> test-tx-worker.log &disown
-        env:
-          TRANSACTIONS_PER_BLOCK: 32
-          CONFIRMATIONS: 1
-          TX_WORKER_COUNT: 100
-
-      - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait nightfall_3_deployer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
-      - name: Debug logs - after container startup
-        if: always()
-        run: cat test-tx-worker.log
-
-      - name: Run tx-worker.mjs test suites
-        run: |
-          VERBOSE=true npm run test-tx-worker
-
-      - name: Debug logs - after integration test run
-        if: always()
-        run: cat test-tx-worker.log
-
-      - name: If integration test failed, shutdown the Containers
-        if: failure()
-        run: npm run nightfall-down
-
-      - name: If integration test failed, upload logs files as artifacts
-        if: failure()
-        uses: actions/upload-artifact@master
-        with:
-          name: test-tx-worker-logs
-          path: ./test-tx-worker.log
-
   test-apps:
     name: check apps for liveliness
     runs-on: ubuntu-20.04
