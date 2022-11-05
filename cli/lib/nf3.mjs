@@ -1103,7 +1103,7 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          connection._ws.ping();
+          connection._ws.ping().catch(err => console.log(err));
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
