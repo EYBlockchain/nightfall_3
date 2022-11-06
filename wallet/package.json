@@ -141,6 +141,7 @@
     "@types/mocha": "^9.1.1",
     "@types/react-router-dom": "^5.3.3",
     "@types/styled-components": "^5.1.24",
+    "big-integer": "^1.6.51",
     "chai": "^4.3.6",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-cypress": "^2.12.1",
