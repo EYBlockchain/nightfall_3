@@ -79,9 +79,7 @@ export async function submitTransaction(_transaction, fromBlockProposer, txEnabl
     const transaction = await checkAlreadyInBlock(_transaction);
     // save transaction if not in block
     if (fromBlockProposer) {
-      saveTransaction({ ...transaction }).catch(function (err) {
-        logger.error(err);
-      });
+      await saveTransaction({ ...transaction });
     }
 
     await checkTransaction(transaction, true);
@@ -89,9 +87,7 @@ export async function submitTransaction(_transaction, fromBlockProposer, txEnabl
 
     // save it
     if (!fromBlockProposer) {
-      saveTransaction({ ...transaction }).catch(function (err) {
-        logger.error(err);
-      });
+      await saveTransaction({ ...transaction });
     }
   } catch (err) {
     if (err instanceof TransactionError) {
@@ -122,6 +118,14 @@ export async function transactionSubmittedEventHandler(eventParams) {
 
   // If TX WORKERS enabled or not responsive, route transaction requests to main thread
   if (txWorkerCount && _workerEnable) {
+    logger.debug({
+      msg: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx tx-submitted',
+      params: {
+        tx: transaction,
+        proposerFlag: fromBlockProposer === true,
+        enable: _submitTransactionEnable === true,
+      },
+    });
     axios
       .get(`${txWorkerUrl}/tx-submitted`, {
         params: {
