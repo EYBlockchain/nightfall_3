@@ -114,7 +114,7 @@ const duplicateCommitment = async (number, transactionType) => {
       let isModifiedTransactionInDB = false;
       while (isModifiedTransactionInDB === false) {
         isModifiedTransactionInDB =
-          (await getTransactionByTransactionHash(modifiedTransaction.transactionHash)) === null; // eslint-disable-line no-await-in-loop, no-undef
+          (await getTransactionByTransactionHash(modifiedTransaction.transactionHash)) !== null; // eslint-disable-line no-await-in-loop, no-undef
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
