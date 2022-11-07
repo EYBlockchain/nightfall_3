@@ -1188,7 +1188,6 @@ describe('State contract State functions', function () {
     expect(await state.pendingWithdrawals(addressC.address, 0)).to.equal(badBlock.blockStake);
     expect(await state.pendingWithdrawals(addressC.address, 1)).to.equal(0);
   });
-<<<<<<< HEAD
 
   it('should setBlockStakeWithdrawn', async function () {
     const newUrl = 'url';
@@ -1293,6 +1292,4 @@ describe('State contract State functions', function () {
     expect(await state.pendingWithdrawals(addressC.address, 0)).to.equal(badBlock.blockStake);
     expect(await state.pendingWithdrawals(addressC.address, 1)).to.equal(0);
   });
-=======
->>>>>>> fa14480e (fix: eslint)
 });
