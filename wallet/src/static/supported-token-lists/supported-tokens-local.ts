@@ -5,7 +5,7 @@ const tokensList = {
       name: 'Ether - ERC20 Mock',
       symbol: 'ETH',
       decimals: 9,
-      address: '0xa8473bEF03cBE50229a39718CBDC1fdee2F26b1a',
+      address: '0xe721F2D97c58b1D1ccd0C80B88256a152d27f0Fe',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/eth.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx'],
       id: 'ethereum',
