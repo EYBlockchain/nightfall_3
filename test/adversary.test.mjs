@@ -112,6 +112,11 @@ describe('Testing with an adversary', () => {
           `L2 Block with L2 block number ${block.blockNumberL2} was proposed. The L1 transaction hash is ${receipt.transactionHash}`,
         );
       })
+      .on('submit-transaction-receipt', (receipt, transactions) => {
+        logger.debug(
+          `bad transaction submitted, transactionHash is ${transactions[0].transactionHash}`,
+        );
+      })
       .on('error', (error, block) => {
         logger.error(
           `Proposing L2 Block with L2 block number ${block.blockNumberL2} failed due to error: ${error} `,
