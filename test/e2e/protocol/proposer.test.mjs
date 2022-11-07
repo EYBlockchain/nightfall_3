@@ -129,6 +129,20 @@ describe('Basic Proposer tests', () => {
     }
   });
 
+  it('should fail to register a proposer without a valid API key', async () => {
+    try {
+      bootProposer.setApiKey('test');
+      const res = await bootProposer.registerProposer(testProposersUrl[2], MINIMUM_STAKE);
+      // eslint-disable-next-line @babel/no-unused-expressions
+      console.log(res);
+      expect.fail();
+    } catch (err) {
+      expect(err);
+    } finally {
+      bootProposer.setApiKey(environment.AUTH_TOKEN);
+    }
+  });
+
   it('should register the boot proposer', async () => {
     const stakeAccount1 = await getStakeAccount(bootProposer.ethereumAddress);
     const res = await bootProposer.registerProposer(testProposersUrl[0], minimumStake);

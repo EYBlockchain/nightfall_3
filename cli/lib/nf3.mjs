@@ -108,6 +108,15 @@ class Nf3 {
   }
 
   /**
+   * TODO This one should go it's merry way once the Nightfall Node is up
+   * as the only reason it is here is to allow for testing the optimist routes
+   * with a wrong API key
+   */
+  async setApiKey(key) {
+    axios.defaults.headers.common['X-APP-TOKEN'] = key;
+  }
+
+  /**
     Initialises the Nf_3 object so that it can communicate with Nightfall_3 and the
     blockchain.
     @returns {Promise}
