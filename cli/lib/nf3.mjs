@@ -1101,11 +1101,13 @@ class Nf3 {
     this.websockets.push(connection); // save so we can close it properly later
     connection.onopen = () => {
       // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-        }, WEBSOCKET_PING_TIME),
-      );
+      if (connection._ws && connection._ws.readyState === WebSocket.OPEN) {
+        this.intervalIDs.push(
+          setInterval(() => {
+            connection._ws.ping();
+          }, WEBSOCKET_PING_TIME),
+        );
+      }
       // and a listener for the pong
       logger.debug('Challenge websocket connection opened');
       connection.send('challenge');
