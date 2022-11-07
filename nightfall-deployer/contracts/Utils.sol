@@ -20,20 +20,36 @@ library Utils {
         return keccak256(abi.encode(frontier));
     }
 
-    function getValue(uint256 packedInfo) internal pure returns (uint112) {
-        return uint112(packedInfo >> 8);
+    function getValue(uint256 packedTransactionInfo) internal pure returns (uint112) {
+        return uint112(packedTransactionInfo >> 8);
     }
 
-    function getCircuitHash(uint256 packedInfo) internal pure returns (uint40) {
-        return uint40(packedInfo >> 216);
+    function getCircuitHash(uint256 packedTransactionInfo) internal pure returns (uint40) {
+        return uint40(packedTransactionInfo >> 216);
     }
 
-    function getFee(uint256 packedInfo) internal pure returns (uint96) {
-        return uint96(packedInfo >> 120);
+    function getFee(uint256 packedTransactionInfo) internal pure returns (uint96) {
+        return uint96(packedTransactionInfo >> 120);
     }
 
-    function getTokenType(uint256 packedInfo) internal pure returns (Structures.TokenType) {
-        return Structures.TokenType(uint8(packedInfo));
+    function getTokenType(uint256 packedTransactionInfo)
+        internal
+        pure
+        returns (Structures.TokenType)
+    {
+        return Structures.TokenType(uint8(packedTransactionInfo));
+    }
+
+    function getProposer(uint256 packedBlockInfo) internal pure returns (address) {
+        return address(uint160(packedBlockInfo));
+    }
+
+    function getLeafCount(uint256 packedBlockInfo) internal pure returns (uint32) {
+        return uint32(packedBlockInfo >> 224);
+    }
+
+    function getBlockNumberL2(uint256 packedBlockInfo) internal pure returns (uint64) {
+        return uint64(packedBlockInfo >> 160);
     }
 
     function getHistoricRoot(uint256[] calldata historicRootBlockNumberL2, uint256 position)

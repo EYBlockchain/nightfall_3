@@ -136,8 +136,8 @@ if [ ! -z "${DEPLOYMENT}" ]; then
     -e BLOCKCHAIN_URL=${BLOCKCHAIN_URL} \
     -e HASH_TYPE=poseidon \
     -e LOG_LEVEL=debug \
-    -e TRANSACTIONS_PER_BLOCK=32 \
     -e AUTOSTART_RETRIES=10000 \
+    -e MAX_BLOCK_SIZE=50000 \
     nightfall-optimist:latest
 else
   docker run --rm -d \
@@ -152,7 +152,7 @@ else
     -e BLOCKCHAIN_URL=${BLOCKCHAIN_URL} \
     -e HASH_TYPE=poseidon \
     -e LOG_LEVEL=debug \
-    -e TRANSACTIONS_PER_BLOCK=32 \
     -e AUTOSTART_RETRIES=10000 \
+    -e MAX_BLOCK_SIZE=50000 \
     nightfall-optimist:latest
 fi

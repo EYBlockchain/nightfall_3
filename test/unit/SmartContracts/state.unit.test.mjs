@@ -1,8 +1,16 @@
 import { expect } from 'chai';
 import hardhat from 'hardhat';
-import { calculateTransactionHash, createBlockAndTransactions } from '../utils/utils.mjs';
+import {
+  calculateBlockHash,
+  calculateTransactionHash,
+  createBlockAndTransactions,
+} from '../utils/utils.mjs';
 import { setTransactionInfo } from '../utils/stateStorage.mjs';
-import { packHistoricRoots, packInfo } from '../../../common-files/classes/transaction.mjs';
+import {
+  packHistoricRoots,
+  packInfo as packTransactionInfo,
+} from '../../../common-files/classes/transaction.mjs';
+import { packInfo as packBlockInfo } from '../../../nightfall-optimist/src/services/block-utils.mjs';
 
 const { ethers, upgrades } = hardhat;
 
@@ -14,6 +22,7 @@ describe('State contract State functions', function () {
   let addressC;
   let transactionsCreated;
   let shield;
+  let blockHash;
 
   beforeEach(async () => {
     [addr1, addr2, addressC] = await ethers.getSigners();
@@ -28,6 +37,9 @@ describe('State contract State functions', function () {
       '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
       '10',
     );
+
+    blockHash = calculateBlockHash(transactionsCreated.block);
+
     const Proposers = await ethers.getContractFactory('Proposers');
     ProposersInstance = await upgrades.deployProxy(Proposers, []);
     await ProposersInstance.deployed();
@@ -626,15 +638,8 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    const proposerBlockHash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(
-        ['address', 'uint64'],
-        [transactionsCreated.block.proposer, transactionsCreated.block.blockNumberL2],
-      ),
-    );
-
-    expect((await state.feeBookBlocks(proposerBlockHash)).feesEth).to.equal(10);
-    expect((await state.feeBookBlocks(proposerBlockHash)).feesMatic).to.equal(1);
+    expect((await state.blockInfo(blockHash)).feesEth).to.equal(10);
+    expect((await state.blockInfo(blockHash)).feesMatic).to.equal(1);
 
     const siblingPath = [
       transactionsCreated.block.transactionHashesRoot,
@@ -738,7 +743,7 @@ describe('State contract State functions', function () {
     ).to.be.revertedWithCustomError(shield, 'InvalidTransactionHash');
   });
 
-  it('should not proposeBlock: The block has too many transactions', async function () {
+  it('should not proposeBlock: The block has an invalid size', async function () {
     const newUrl = 'url';
     const newFee = 100;
     const amount = await state.getMinimumStake();
@@ -756,8 +761,10 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
 
-    const transactions = new Array(33);
-    transactions.fill(transactionsCreated.withdrawTransaction);
+    transactionsCreated.withdrawTransaction.nullifiers = Array(2500).fill(
+      '0x0000000000000000000000000000000000000000000000000000000000000000',
+    );
+
     await setTransactionInfo(
       state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
@@ -770,8 +777,10 @@ describe('State contract State functions', function () {
       34,
     );
     await expect(
-      state.proposeBlock(transactionsCreated.block, transactions, { value: 10 }),
-    ).to.be.revertedWith('State: The block has too many transactions');
+      state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction], {
+        value: 10,
+      }),
+    ).to.be.revertedWithCustomError(state, 'InvalidBlockSize');
   });
 
   it('should not proposeBlock: Block flawed or out of order', async function () {
@@ -808,17 +817,12 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    const proposerBlockHash = ethers.utils.keccak256(
-      ethers.utils.solidityPack(
-        ['address', 'uint64'],
-        [transactionsCreated.block.proposer, transactionsCreated.block.blockNumberL2],
-      ),
-    );
+    expect((await state.blockInfo(blockHash)).feesEth).to.equal(10);
+    expect((await state.blockInfo(blockHash)).feesMatic).to.equal(1);
 
-    expect((await state.feeBookBlocks(proposerBlockHash)).feesEth).to.equal(10);
-    expect((await state.feeBookBlocks(proposerBlockHash)).feesMatic).to.equal(1);
+    const packedInfoBlock = packBlockInfo(1, 1, addr1.address);
 
-    transactionsCreated.block.blockNumberL2 = 1;
+    transactionsCreated.block.packedInfo = packedInfoBlock;
     await expect(
       state.proposeBlock(
         transactionsCreated.block,
@@ -829,11 +833,11 @@ describe('State contract State functions', function () {
   });
 
   it('should not proposeBlock Proposer address is not the sender', async function () {
+    const packedInfoBlock = packBlockInfo(0, 700, addr2.address);
+
     const wrongBlock = [
-      700,
-      addr2.address,
+      packedInfoBlock,
       '0x2bcd2b4a55cf968f9f3dd85b3dbdd3da19e44d11a0053b221c9b5dfaf9792127',
-      0,
       '0x01b3dd9607d81663fc1437e08423f028070afd2006a2679b3c674f64176fd934',
       '0xa2f1ec04a89542d6f1e04449398052422c7b1057df8606db047f48047bb7ab72',
       '0x0487da81cb1d53536928de44fa55de0accf9a8bc9f42739a80f69584970d572f',
@@ -923,16 +927,16 @@ describe('State contract State functions', function () {
   });
 
   it('should be a real block', async function () {
+    const packedInfoBlock = packBlockInfo(5, 700, addr1.address);
+
     const wrongBlockNumber = {
-      leafCount: 700,
-      proposer: addr1.address,
+      packedInfo: packedInfoBlock,
       root: '0x2bcd2b4a55cf968f9f3dd85b3dbdd3da19e44d11a0053b221c9b5dfaf9792127',
-      blockNumberL2: 5,
       previousBlockHash: '0x01b3dd9607d81663fc1437e08423f028070afd2006a2679b3c674f64176fd934',
       frontierHash: '0xa2f1ec04a89542d6f1e04449398052422c7b1057df8606db047f48047bb7ab72',
       transactionHashesRoot: '0x0487da81cb1d53536928de44fa55de0accf9a8bc9f42739a80f69584970d572f',
     };
-    const packedInfo = packInfo(100000000000000, 10, 0, 0);
+    const packedInfo = packTransactionInfo(100000000000000, 10, 0, 0);
 
     const historicRootBlockNumberL2 = [
       '0x0000000000000000000000000000000000000000000000000000000000000009',
@@ -1057,10 +1061,9 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    const { blockHash } = await state.blockHashes(0);
-    expect(await state.claimedBlockStakes(blockHash)).to.equal(false);
+    expect((await state.blockInfo(blockHash)).stakeClaimed).to.equal(false);
     await state.connect(addressC).setBlockStakeWithdrawn(blockHash);
-    expect(await state.claimedBlockStakes(blockHash)).to.equal(true);
+    expect((await state.blockInfo(blockHash)).stakeClaimed).to.equal(true);
   });
 
   it('should rewardChallenger', async function () {

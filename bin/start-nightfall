@@ -87,5 +87,5 @@ if [ ! -z "$DEV" ]; then
   cd common-files && npm ci && cd ..
 fi
 
-docker-compose $FILE $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans
-docker-compose -p 'nightfall_3' $FILE $DEV $ADVERSARY logs -f
+docker-compose $FILE  $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }
+docker-compose -p 'nightfall_3' $FILE $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_START//,/ }
