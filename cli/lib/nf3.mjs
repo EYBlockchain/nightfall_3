@@ -112,6 +112,7 @@ class Nf3 {
    * as the only reason it is here is to allow for testing the optimist routes
    * with a wrong API key
    */
+  // eslint-disable-next-line class-methods-use-this
   async setApiKey(key) {
     axios.defaults.headers.common['X-APP-TOKEN'] = key;
   }
