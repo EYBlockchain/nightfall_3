@@ -6,7 +6,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { expectTransaction, Web3Client } from './utils.mjs';
+import { emptyL2, expectTransaction, Web3Client } from './utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -18,7 +18,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const {
   fee,
   transferValue,
-  txPerBlock,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
@@ -41,13 +40,7 @@ describe('x509 tests', () => {
     // we must set the URL from the point of view of the client container
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
-    });
+    await nf3Proposer.startProposer();
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
@@ -82,8 +75,7 @@ describe('x509 tests', () => {
       logger.debug('doing whitelisted account');
       const res = await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       expectTransaction(res);
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
       logger.debug('Working deposit done');
     });
   });
@@ -104,10 +96,11 @@ describe('x509 tests', () => {
         nf3Users[0].ethereumAddress,
         fee,
       );
+
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+
       logger.debug('Getting withdrawal hash');
       withdrawal = await nf3Users[0].getLatestWithdrawHash();
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       // timejump is the client supports it (basically Ganache)
       await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
     });

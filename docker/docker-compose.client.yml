@@ -56,7 +56,7 @@ services:
     volumes:
       - type: volume
         source: mongodb
-        target: /data/db
+        target: /data/db 
 
   worker:
     image: public.ecr.aws/m0t3e1j9/nightfall-worker:testnet

@@ -2,6 +2,7 @@
 An optimistic layer 2 Block class
 */
 import config from 'config';
+import gen from 'general-number';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import {
@@ -17,6 +18,7 @@ import {
 
 const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
 const { ZERO } = constants;
+const { generalise } = gen;
 
 /**
 This Block class does not have the Block components that are computed on-chain.
@@ -175,6 +177,16 @@ class Block {
 
   static checkHash(block) {
     return this.calcHash(block) === block.blockHash;
+  }
+
+  static unpackInfo(packedInfo) {
+    const packedInfoHex = generalise(packedInfo).hex(32).slice(2);
+
+    const leafCount = generalise(`0x${packedInfoHex.slice(0, 8)}`).hex(4);
+    const blockNumberL2 = generalise(`0x${packedInfoHex.slice(8, 24)}`).hex(8);
+    const proposer = generalise(`0x${packedInfoHex.slice(24, 64)}`).hex(20);
+
+    return { leafCount, blockNumberL2, proposer };
   }
 
   static async calcTransactionHashesRoot(transactions) {
