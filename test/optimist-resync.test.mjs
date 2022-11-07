@@ -8,7 +8,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
 import Transaction from '../common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { depositNTransactions, Web3Client, waitForTimeout } from './utils.mjs';
+import { depositNTransactions, Web3Client, waitForTimeout, emptyL2 } from './utils.mjs';
 import { buildBlockSolidityStruct } from '../nightfall-optimist/src/services/block-utils.mjs';
 
 // so we can use require with mjs file
@@ -170,12 +170,13 @@ describe('Optimist synchronisation tests', () => {
         tokenId,
         fee,
       );
+
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block } = await p;
       const firstBlock = { ...block };
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
       await waitForTimeout(5000);
       await restartOptimist(false);
@@ -197,11 +198,12 @@ describe('Optimist synchronisation tests', () => {
         tokenId,
         fee,
       );
+
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
@@ -218,12 +220,13 @@ describe('Optimist synchronisation tests', () => {
         tokenId,
         fee,
       );
+
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block } = await p;
       const firstBlock = { ...block };
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
       await restartOptimist();
 
@@ -243,11 +246,12 @@ describe('Optimist synchronisation tests', () => {
         tokenId,
         fee,
       );
+
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
@@ -264,12 +268,15 @@ describe('Optimist synchronisation tests', () => {
         tokenId,
         fee,
       );
+
+      await nf3Users[0].makeBlockNow();
+
+      ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block, transactions } = await p;
       const firstBlock = { ...block };
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // turn off challenging.  We're going to make a bad block and we don't want it challenged
       await nf3Challenger.challengeEnable(false);
       // update the block so we can submit it again
@@ -325,11 +332,14 @@ describe('Optimist synchronisation tests', () => {
         tokenId,
         fee,
       );
+
+      await nf3Users[0].makeBlockNow();
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+
+      ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
   });

@@ -11,6 +11,7 @@ import {
   Web3Client,
   expectTransaction,
   waitForTimeout,
+  emptyL2,
 } from './utils.mjs';
 
 // so we can use require with mjs file
@@ -28,8 +29,8 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
-const txPerBlock = process.env.TRANSACTIONS_PER_BLOCK || 32;
-const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
+const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, VK_IDS } = config;
+
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
 
@@ -37,13 +38,14 @@ const web3Client = new Web3Client();
 
 let erc20Address;
 let stateAddress;
-let eventLogs = [];
+const eventLogs = [];
 
 const averageL1GasCost = receipts =>
   receipts.map(receipt => receipt.gasUsed).reduce((acc, el) => acc + el) / receipts.length;
 
 describe('Gas test', () => {
-  let gasCost = 0;
+  let gasCost;
+  let txPerBlock;
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
     await nf3Proposer1.registerProposer('http://optimist', await nf3Proposer1.getMinimumStake());
@@ -68,6 +70,20 @@ describe('Gas test', () => {
   });
 
   describe('Deposits', () => {
+    before(() => {
+      const txSize =
+        (MINIMUM_TRANSACTION_SLOTS +
+          VK_IDS.deposit.numberNullifiers +
+          Math.ceil(VK_IDS.deposit.numberNullifiers / 4) +
+          VK_IDS.deposit.numberCommitments) *
+        32;
+      txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
+    });
+
+    after(async () => {
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+    });
+
     // we need more deposits because we won't have enough input transactions until
     // after this block is made, by which time it's too late.
     // also,the first  block costs more due to one-off setup costs.
@@ -84,11 +100,12 @@ describe('Gas test', () => {
       );
 
       await waitForTimeout(10000);
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
     });
 
     it('should be a reasonable gas cost', async function () {
+      console.log(`Creating a block with ${txPerBlock - 1} deposits`);
+
       // We create enough transactions to fill blocks full of deposits.
       const receipts = await depositNTransactions(
         nf3Users[0],
@@ -99,14 +116,33 @@ describe('Gas test', () => {
         tokenId,
         0,
       );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Deposit L1 average gas used was', averageL1GasCost(receipts));
     });
   });
 
   describe('Transfers', () => {
+    before(() => {
+      const txSize =
+        (MINIMUM_TRANSACTION_SLOTS +
+          VK_IDS.transfer.numberNullifiers +
+          Math.ceil(VK_IDS.transfer.numberNullifiers / 4) +
+          VK_IDS.transfer.numberCommitments) *
+        32;
+      txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
+    });
+
+    after(async () => {
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+    });
+
     it('should be a reasonable gas cost', async function () {
+      console.log(`Creating a block with ${txPerBlock - 1} transfers`);
+
       // We create enough transactions to fill blocks full of deposits.
       const receipts = await transferNTransactions(
         nf3Users[0],
@@ -118,14 +154,35 @@ describe('Gas test', () => {
         nf3Users[0].zkpKeys.compressedZkpPublicKey,
         0,
       );
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+
+      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Transfer L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
     });
   });
 
   describe('Withdraws', () => {
+    before(() => {
+      const txSize =
+        (MINIMUM_TRANSACTION_SLOTS +
+          VK_IDS.withdraw.numberNullifiers +
+          Math.ceil(VK_IDS.withdraw.numberNullifiers / 4) +
+          VK_IDS.withdraw.numberCommitments) *
+        32;
+      txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
+    });
+
+    after(async () => {
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+    });
+
     it('should be a reasonable gas cost', async function () {
+      console.log(`Creating a block with ${txPerBlock - 1} withdraws`);
+
       // We create enough transactions to fill blocks full of deposits.
       const receipts = await withdrawNTransactions(
         nf3Users[0],
@@ -137,8 +194,10 @@ describe('Gas test', () => {
         nf3Users[0].ethereumAddress,
         0,
       );
-      await nf3Users[0].makeBlockNow();
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Withdraw L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
     });
@@ -151,9 +210,6 @@ describe('Gas test', () => {
         waitForTimeout(10000);
         const startBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-        await nf3Users[0].makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        await waitForTimeout(10000);
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
         const commitments = await nf3Users[0].getPendingWithdraws();
         expect(
@@ -170,7 +226,7 @@ describe('Gas test', () => {
         expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
         console.log('The gas used for finalise withdraw, back to L1, was', res.gasUsed);
       } else {
-        console.log('     Not using a time-jump capable test client so this test is skipped');
+        console.log('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
     });

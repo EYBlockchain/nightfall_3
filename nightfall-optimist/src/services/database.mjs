@@ -289,21 +289,6 @@ export async function getAllRegisteredProposersCount() {
 }
 
 /**
-Function to return 'number' transactions, ordered by the highest fee. If there
-are fewer than 'number' transactions, all are returned.
-*/
-export async function getMostProfitableTransactions(number) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  return db
-    .collection(TRANSACTIONS_COLLECTION)
-    .find({ mempool: true }, { _id: 0 })
-    .sort({ fee: -1 })
-    .limit(number)
-    .toArray();
-}
-
-/**
 Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
@@ -403,10 +388,14 @@ export async function removeNullifiersFromMemPool(nullifiers) {
 /**
 How many transactions are waiting to be processed into a block?
 */
-export async function numberOfUnprocessedTransactions() {
+export async function getSortedMempoolTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TRANSACTIONS_COLLECTION).countDocuments({ mempool: true });
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find({ mempool: true }, { _id: 0 })
+    .sort({ fee: -1 })
+    .toArray();
 }
 
 /**

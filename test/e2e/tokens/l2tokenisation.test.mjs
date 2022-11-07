@@ -9,7 +9,7 @@ import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import gen from 'general-number';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { /* expectTransaction, */ Web3Client } from '../../utils.mjs';
+import { /* expectTransaction, */ emptyL2, Web3Client } from '../../utils.mjs';
 import Commitment from '../../../nightfall-client/src/classes/commitment.mjs';
 
 // so we can use require with mjs file
@@ -48,18 +48,6 @@ const eventLogs = [];
   L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
   of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
 */
-const emptyL2 = async () => {
-  let count = await nf3Users[0].unprocessedTransactionCount();
-
-  while (count !== 0) {
-    await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    count = await nf3Users[0].unprocessedTransactionCount();
-  }
-
-  await nf3Users[0].makeBlockNow();
-  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-};
 
 describe('L2 Tokenisation tests', () => {
   before(async () => {
@@ -90,7 +78,7 @@ describe('L2 Tokenisation tests', () => {
 
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
 
-    await emptyL2();
+    await emptyL2(nf3Users[0], web3Client, eventLogs);
   });
 
   after(async () => {
@@ -116,7 +104,7 @@ describe('L2 Tokenisation tests', () => {
 
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
 
-      await emptyL2();
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
@@ -146,7 +134,7 @@ describe('L2 Tokenisation tests', () => {
       const commitmentHash = commitment.hash.hex(32);
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
 
-      await emptyL2();
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
 
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
@@ -157,7 +145,7 @@ describe('L2 Tokenisation tests', () => {
 
       await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [commitmentHash], 1);
 
-      await emptyL2();
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
@@ -184,7 +172,7 @@ describe('L2 Tokenisation tests', () => {
       const commitmentHash = commitment.hash.hex(32);
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
 
-      await emptyL2();
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
 
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
@@ -195,7 +183,7 @@ describe('L2 Tokenisation tests', () => {
 
       await nf3Users[0].burn(l2Address, value, privateTokenId, [commitmentHash], 1);
 
-      await emptyL2();
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;

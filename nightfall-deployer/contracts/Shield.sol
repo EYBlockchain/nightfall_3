@@ -49,6 +49,14 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
                 payIn(t);
             }
         }
+
+        uint256 maxBlockSize = MAX_BLOCK_SIZE;
+        assembly {
+            if lt(maxBlockSize, sub(calldatasize(), 36)) {
+                mstore(0, 0x1dd1c73100000000000000000000000000000000000000000000000000000000) //Custom error InvalidTransactionSize
+                revert(0, 4)
+            }
+        }
     }
 
     // function to enable a proposer to get paid for proposing a block

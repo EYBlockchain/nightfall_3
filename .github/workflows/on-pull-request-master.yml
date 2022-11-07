@@ -2,7 +2,7 @@ name: Check PR
 
 on:
   pull_request:
-    branches: [master, RogerTaule/circuitHash, tokenisation-l2]
+    branches: [master, tokenisation-l2]
 
 jobs:
   dependency-review:
@@ -684,7 +684,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    name: check gas for 32 transactions per block
+    name: check gas transactions per block
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -708,7 +708,7 @@ jobs:
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-gas.log &disown
         env:
-          TRANSACTIONS_PER_BLOCK: 32
+          MAX_BLOCK_SIZE: 50000
           CONFIRMATIONS: 1
 
       - name: Wait for images to be ready
@@ -746,7 +746,6 @@ jobs:
     name: check apps for liveliness
     runs-on: ubuntu-20.04
     env:
-      TRANSACTIONS_PER_BLOCK: 32
       NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
     steps:
       - uses: actions/checkout@v3
