@@ -132,7 +132,7 @@ describe('Basic Proposer tests', () => {
   it('should fail to register a proposer without a valid API key', async () => {
     try {
       bootProposer.setApiKey('test');
-      const res = await bootProposer.registerProposer(testProposersUrl[2], MINIMUM_STAKE);
+      const res = await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
       // eslint-disable-next-line @babel/no-unused-expressions
       console.log(res);
       expect.fail();
