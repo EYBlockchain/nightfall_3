@@ -30,7 +30,6 @@ COPY ./zokrates-worker/circuits ./circuits
 COPY ./zokrates-worker/start-script ./start-script
 COPY ./zokrates-worker/start-dev ./start-dev
 
-RUN npm link @polygon-nightfall/common-files
 RUN npm ci
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes
