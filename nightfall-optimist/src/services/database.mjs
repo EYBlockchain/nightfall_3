@@ -343,8 +343,11 @@ export async function saveTransaction(_transaction) {
 
     return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
   }
+  
+  if(!transaction.mempool) {
+    db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  }
 
-  db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
   throw new Error('Attempted to replay existing transaction');
 }
 
