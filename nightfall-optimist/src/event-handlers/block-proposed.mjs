@@ -94,7 +94,13 @@ async function blockProposedEventHandler(data) {
 
     // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
+    logger.debug({
+      msg: 'REMOVE TX',
+    });
     await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2); // TODO is await needed?
+    logger.debug({
+      msg: 'REMOVE TX DONE',
+    });
     const blockCommitments = transactions
       .map(t => t.commitments.filter(c => c !== ZERO))
       .flat(Infinity);
