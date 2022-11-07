@@ -24,8 +24,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     mapping(address => FeeTokens) public pendingWithdrawalsFees;
     mapping(address => LinkedAddress) public proposers;
     mapping(address => TimeLockedStake) public stakeAccounts;
-    mapping(bytes32 => FeeTokens) public feeBookBlocks;
-    mapping(bytes32 => bool) public claimedBlockStakes;
+    mapping(bytes32 => BlockInfo) public blockInfo;
     LinkedAddress public currentProposer; // who can propose a new shield state
     uint256 public proposerStartBlock; // L1 block where currentProposer became current
     // local state variables
@@ -96,7 +95,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         onlyCurrentProposer
         whenNotPaused
     {
-        require(b.blockNumberL2 == blockHashes.length, 'State: Block out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
+        require(Utils.getBlockNumberL2(b.packedInfo) == blockHashes.length, 'State: Block out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
         if (blockHashes.length != 0) {
             require(
                 b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash,
@@ -104,21 +103,18 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
         }
         require(blockStake <= msg.value, 'State: Stake payment is incorrect');
-        require(b.proposer == msg.sender, 'State: The sender is not the proposer');
-        // set the maximum tx/block to prevent unchallengably large blocks
-        require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
-        require(
-            stakeAccounts[msg.sender].amount >= blockStake,
-            'State: Proposer does not have enough funds staked'
-        );
+        require(Utils.getProposer(b.packedInfo) == msg.sender, 'State: The sender is not the proposer');
+        require(stakeAccounts[msg.sender].amount >= blockStake, 'State: Proposer does not have enough funds staked');
         stakeAccounts[msg.sender].amount -= blockStake;
         stakeAccounts[msg.sender].challengeLocked += blockStake;
         stakeAccounts[msg.sender].time = 0;
 
-        FeeTokens memory feePayments = FeeTokens(0, 0);
+        uint120 feesMatic = 0;
+        uint120 feesEth = 0;
 
         bytes32 blockHash;
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
+        uint256 maxBlockSize = MAX_BLOCK_SIZE;
 
 
         assembly {
@@ -132,6 +128,11 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 } {
                     _height := add(_height, 1)
                 }
+            }
+		
+            if lt(maxBlockSize, sub(calldatasize(), add(t.offset, calldataload(t.offset)))) {
+                mstore(0, 0x41c918e600000000000000000000000000000000000000000000000000000000) //Custom error InvalidBlockSize
+                revert(0, 4)
             }
 
             let x := mload(0x40) //Gets the first free memory pointer
@@ -194,23 +195,6 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                     
                     //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
                     if iszero(shr(248,transactionInfo)) {
-
-                    // mstore(x, 0x49e6b62c00000000000000000000000000000000000000000000000000000000) //Store the signature of the getTransactionInfo(bytes32) function in x
-                    // mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
-                    // pop(
-                    //     staticcall(
-                    //         // Call getTransactionInfo function to see if funds has been deposited
-                    //         gas(),
-                    //         sload(shieldAddress.slot), //To addr
-                    //         x, //Inputs are stored at location x
-                    //         add(0x04, 0x20), //Inputs are 36 bytes long
-                    //         x, //Store output over input (saves space)
-                    //         mul(3, 0x20) //Outputs are 96 bytes long
-                    //     )
-                    // )
-
-                    //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
-                    //if iszero(mload(x)) {
                         mstore(
                             0,
                             0xd96541f500000000000000000000000000000000000000000000000000000000 //Custom error DepositNotEscrowed
@@ -221,8 +205,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
             
                     // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
                     if iszero(fee) {
-                        //mstore(feePayments, add(mload(add(x, mul(2, 0x20))), mload(feePayments)))
-                        mstore(feePayments, add(shr(8,shl(8,transactionInfo)), mload(feePayments)))
+                        feesEth := add(feesEth, shr(8,shl(8,transactionInfo)))
                     }
                 }
                 case false {
@@ -230,33 +213,13 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                     if iszero(fee) {
                         mstore(x, mload(add(transactionHashesPos, mul(0x20, i))))
                         mstore(add(x, 0x20), txInfo.slot)
-                        mstore(feePayments, add(shr(8,shl(8,sload(keccak256(x, mul(0x20, 2))))), mload(feePayments)))
-                        // mstore(
-                        //     x,
-                        //     0x49e6b62c00000000000000000000000000000000000000000000000000000000
-                        // ) //Store the signature of the getTransactionInfo(bytes 32) function in x
-                        // mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
-                        // pop(
-                        //     staticcall(
-                        //         // Call getTransactionInfo function to see if funds has been deposited
-                        //         gas(),
-                        //         sload(shieldAddress.slot), //To addr
-                        //         x, //Inputs are stored at location x
-                        //         add(0x04, 0x20), //Inputs are 36 bytes long
-                        //         x, //Store output over input (saves space)
-                        //         0x20 //Outputs are 32 bytes long
-                        //     )
-                        // )
-                        // mstore(feePayments, add(mload(add(x, mul(2, 0x20))), mload(feePayments)))
+                        feesEth := add(feesEth, shr(8,shl(8,sload(keccak256(x, mul(0x20, 2))))))
                     }
                 }
 
                 // If the transaction fee is not zero, update the MATIC fee payments
                 if eq(iszero(fee),0) {
-                    mstore(
-                        add(feePayments, 0x20),
-                        add(fee,mload(add(feePayments, 0x20)))
-                    )
+                    feesMatic := add(feesMatic, fee)
                 }
             }
 
@@ -304,15 +267,16 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
 
         // Store block fees
-        feeBookBlocks[keccak256(abi.encodePacked(b.proposer, b.blockNumberL2))] = feePayments;
-
+        blockInfo[blockHash].feesMatic = feesMatic;
+        blockInfo[blockHash].feesEth = feesEth;
+        
         // blockHash is hash of all block data and hash of all the transactions data.
         blockHashes.push(
             BlockData({
                 blockHash: blockHash,
                 time: block.timestamp,
                 blockStake: blockStake,
-                proposer: b.proposer
+                proposer: Utils.getProposer(b.packedInfo)
             })
         );
         // Timber will listen for the BlockProposed event as well as
@@ -342,16 +306,9 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         return currentProposer;
     }
 
-    function getFeeBookBlocksInfo(address proposer, uint64 blockNumberL2)
-        public
-        view
-        returns (FeeTokens memory)
-    {
-        return (feeBookBlocks[keccak256(abi.encodePacked(proposer, blockNumberL2))]);
-    }
-
-    function resetFeeBookBlocksInfo(address proposer, uint64 blockNumberL2) public onlyShield {
-        delete feeBookBlocks[keccak256(abi.encodePacked(proposer, blockNumberL2))];
+    function resetFeeBookBlocksInfo(bytes32 blockHash) public onlyShield {
+        blockInfo[blockHash].feesEth = 0;
+        blockInfo[blockHash].feesMatic = 0;
     }
 
     function popBlockData() public onlyChallenger returns (BlockData memory) {
@@ -372,8 +329,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
 
     function addPendingWithdrawal(
         address addr,
-        uint256 feesEth,
-        uint256 feesMatic
+        uint120 feesEth,
+        uint120 feesMatic
     ) public {
         require(msg.sender == proposersAddress ||
                 msg.sender == shieldAddress,
@@ -455,9 +412,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     // block).
     function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts) public view {
         bytes32 blockHash = Utils.hashBlock(b);
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(b.packedInfo);
         require(
-            b.blockNumberL2 < blockHashes.length &&
-                blockHashes[b.blockNumberL2].blockHash == blockHash,
+           blockNumberL2 < blockHashes.length &&
+                blockHashes[blockNumberL2].blockHash == blockHash,
             'State: Block does not exist'
         );
         bytes32 tranasactionHashesRoot = Utils.hashTransactionHashes(ts);
@@ -472,9 +430,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     // block).
     function isBlockReal(Block calldata b) public view returns (bytes32) {
         bytes32 blockHash = Utils.hashBlock(b);
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(b.packedInfo);
         require(
-            b.blockNumberL2 < blockHashes.length &&
-                blockHashes[b.blockNumberL2].blockHash == blockHash,
+            blockNumberL2 < blockHashes.length &&
+                blockHashes[blockNumberL2].blockHash == blockHash,
             'State: Block does not exist'
         );
 
@@ -491,9 +450,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         bytes32[] calldata siblingPath
     ) public view returns (bytes32) {
         bytes32 blockHash = Utils.hashBlock(b);
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(b.packedInfo);
         require(
-            b.blockNumberL2 < blockHashes.length &&
-                blockHashes[b.blockNumberL2].blockHash == blockHash,
+            blockNumberL2 < blockHashes.length &&
+                blockHashes[blockNumberL2].blockHash == blockHash,
             'State: Block does not exist'
         );
         require(
@@ -517,7 +477,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
          require(msg.sender == proposersAddress ||
                 msg.sender == shieldAddress,
             'State: Not authorised to call this function');
-        stakeAccounts[addr] = TimeLockedStake(amount, challengeLocked, 0);
+        stakeAccounts[addr] = TimeLockedStake(uint112(amount), uint112(challengeLocked), 0);
     }
 
     /**
@@ -534,7 +494,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     ) public onlyChallenger {
         removeProposer(proposer);
 
-        uint256 rewardedStake = 0;
+        uint120 rewardedStake = 0;
         for (uint256 i = 0; i < badBlocks.length; ++i) {
             TimeLockedStake memory stake = stakeAccounts[badBlocks[i].proposer];
             // Give reward to challenger from the stake locked for challenges
@@ -550,14 +510,14 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     }
 
     function updateStakeAccountTime(address addr, uint256 time) public onlyProposer {
-        stakeAccounts[addr].time = time;
+        stakeAccounts[addr].time = uint32(time);
     }
 
     function setBlockStakeWithdrawn(bytes32 blockHash) public {
          require(msg.sender == challengesAddress ||
                 msg.sender == shieldAddress,
             'State: Not authorised to call this function');
-        claimedBlockStakes[blockHash] = true;
+        blockInfo[blockHash].stakeClaimed = true;
     }
 
     /**
@@ -581,7 +541,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
             while (numProposers > 1) {
                 _removeProposer(selectedProposer);
                 // The selectedProposer has to wait a CHALLENGE_PERIOD from current block.timestamp
-                stakeAccounts[selectedProposer].time = block.timestamp;
+                stakeAccounts[selectedProposer].time = uint32(block.timestamp);
                 selectedProposer = currentProposer.nextAddress;
             }
         }

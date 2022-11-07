@@ -1,7 +1,6 @@
 // ignore unused exports default
 
 import { ZkpKeys } from '@Nightfall/services/keys';
-import axios from 'axios';
 import { Commitment } from '@Nightfall/classes';
 import { decrypt, packSecrets } from '@Nightfall/services/kem-dem';
 import { generalise } from 'general-number';
@@ -24,11 +23,11 @@ import {
   saveBlock,
   setTransactionHashSiblingInfo,
   updateTransactionTime,
+  getStoreCircuit,
 } from '../services/database';
 import { edwardsDecompress } from '../../common-files/utils/curve-maths/curves';
 
-const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE, ZOKRATES_WORKER_HOST, PROTOCOL } =
-  global.config;
+const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = global.config;
 const { ZERO } = global.nightfallConstants;
 
 /**
@@ -164,10 +163,9 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
     ++height;
   }
 
-  // TODO: Is this the best way?
-  const circuitHash = await axios.get(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`, {
-    params: { circuit: 'withdraw' },
-  });
+  const circuitHashData = await getStoreCircuit(`withdraw-hash`);
+
+  const circuitHash = circuitHashData.data;
 
   // If this L2 block contains withdraw transactions known to this client,
   // the following needs to be saved for later to be used during finalise/instant withdraw

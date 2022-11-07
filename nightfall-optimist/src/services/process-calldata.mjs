@@ -22,15 +22,10 @@ export async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [
-    leafCount,
-    proposer,
-    root,
-    blockNumberL2,
-    previousBlockHash,
-    frontierHash,
-    transactionHashesRoot,
-  ] = blockData;
+  const [packedBlockInfo, root, previousBlockHash, frontierHash, transactionHashesRoot] = blockData;
+
+  const { proposer, leafCount, blockNumberL2 } = Block.unpackInfo(packedBlockInfo);
+
   const block = {
     proposer,
     root,
@@ -40,9 +35,10 @@ export async function getProposeBlockCalldata(eventData) {
     frontierHash,
     transactionHashesRoot,
   };
+
   const transactions = transactionsData.map(t => {
     const [
-      packedInfo,
+      packedTransactionInfo,
       historicRootBlockNumberL2Packed,
       tokenId,
       ercAddress,
@@ -53,7 +49,7 @@ export async function getProposeBlockCalldata(eventData) {
       proof,
     ] = t;
 
-    const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedInfo);
+    const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedTransactionInfo);
 
     const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
       nullifiers.length,
@@ -99,7 +95,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const transactionData = web3.eth.abi.decodeParameter(SIGNATURES.SUBMIT_TRANSACTION, abiBytecode);
   const [
-    packedInfo,
+    packedTransactionInfo,
     historicRootBlockNumberL2Packed,
     tokenId,
     ercAddress,
@@ -110,7 +106,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
     proof,
   ] = transactionData;
 
-  const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedInfo);
+  const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedTransactionInfo);
 
   const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
     nullifiers.length,
