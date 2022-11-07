@@ -124,8 +124,12 @@ async function blockProposedEventHandler(data) {
     // Instead, what happens now is that any good/bad blocks on top of the first bad block
     // will get saved and eventually all these blocks will be removed as part of the rollback
     // of the first bad block
-    if (queues[2].length === 0) await checkBlock(block, transactions);
-    logger.info('Block Checker - Block was valid');
+    if (queues[2].length === 0) {
+      await checkBlock(block, transactions);
+      logger.info('Block Checker - Block was valid');
+    } else {
+      logger.info('Block not Checked');
+    }
   } catch (err) {
     if (err instanceof BlockError) {
       logger.warn(`Block Checker - Block invalid, with code ${err.code}! ${err.message}`);
