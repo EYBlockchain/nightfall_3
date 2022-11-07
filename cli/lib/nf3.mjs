@@ -228,7 +228,7 @@ class Nf3 {
 
   /**
   Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
-  until it has TRANSACTIONS_PER_BLOCK of them
+  until the block is full
   @method
   @async
   */

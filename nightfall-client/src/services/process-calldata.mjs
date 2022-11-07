@@ -7,8 +7,10 @@ import config from 'config';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
 import Transaction from '@polygon-nightfall/common-files/classes/transaction.mjs';
 import { decompressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
+import gen from 'general-number';
 
 const { SIGNATURES } = config;
+const { generalise } = gen;
 
 async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -19,15 +21,13 @@ async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [
-    leafCount,
-    proposer,
-    root,
-    blockNumberL2,
-    previousBlockHash,
-    frontierHash,
-    transactionHashesRoot,
-  ] = blockData;
+  const [packedBlockInfo, root, previousBlockHash, frontierHash, transactionHashesRoot] = blockData;
+
+  const packedInfoHex = generalise(packedBlockInfo).hex(32).slice(2);
+
+  const leafCount = generalise(`0x${packedInfoHex.slice(0, 8)}`).hex(4);
+  const blockNumberL2 = generalise(`0x${packedInfoHex.slice(8, 24)}`).hex(8);
+  const proposer = generalise(`0x${packedInfoHex.slice(24, 64)}`).hex(20);
 
   const block = {
     proposer,
@@ -40,7 +40,7 @@ async function getProposeBlockCalldata(eventData) {
   };
   const transactions = transactionsData.map(t => {
     const [
-      packedInfo,
+      packedTransactionInfo,
       historicRootBlockNumberL2Packed,
       tokenId,
       ercAddress,
@@ -51,7 +51,7 @@ async function getProposeBlockCalldata(eventData) {
       proof,
     ] = t;
 
-    const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedInfo);
+    const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedTransactionInfo);
 
     const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
       nullifiers.length,

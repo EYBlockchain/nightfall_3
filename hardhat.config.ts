@@ -5,6 +5,7 @@ import 'hardhat-contract-sizer';
 import 'hardhat-storage-layout';
 import '@openzeppelin/hardhat-upgrades';
 import 'solidity-coverage';
+import 'hardhat-gas-reporter';
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -16,6 +17,7 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  gasReporter: { enabled: true },
   paths: {
     sources: './nightfall-deployer/contracts',
     tests: './test/unit/SmartContracts',

@@ -4,7 +4,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { Web3Client, expectTransaction, pendingCommitmentCount } from '../../utils.mjs';
+import { Web3Client, expectTransaction, emptyL2 } from '../../utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -69,21 +69,6 @@ const getCurrentSprint = async () => {
   const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   const currentSprint = await stateContractInstance.methods.currentSprint().call();
   return currentSprint;
-};
-
-const emptyL2 = async () => {
-  await new Promise(resolve => setTimeout(resolve, 6000));
-  let count = await pendingCommitmentCount(nf3User);
-  while (count !== 0) {
-    await nf3User.makeBlockNow();
-    try {
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      count = await pendingCommitmentCount(nf3User);
-    } catch (err) {
-      break;
-    }
-  }
-  await new Promise(resolve => setTimeout(resolve, 6000));
 };
 
 describe('Basic Proposer tests', () => {
@@ -218,7 +203,7 @@ describe('Basic Proposer tests', () => {
     await bootProposer.startProposer(); // start proposer to listen making blocks
 
     await nf3User.deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
-    await emptyL2();
+    await emptyL2(nf3User, web3Client, eventLogs);
 
     const currentZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
@@ -227,7 +212,7 @@ describe('Basic Proposer tests', () => {
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
     }
 
-    await emptyL2();
+    await emptyL2(nf3User, web3Client, eventLogs);
 
     const afterZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;

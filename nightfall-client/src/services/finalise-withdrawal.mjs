@@ -4,10 +4,12 @@ address.
 */
 import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import gen from 'general-number';
 import { Transaction } from '../classes/index.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
 
 const { SHIELD_CONTRACT_NAME } = constants;
+const { generalise } = gen;
 
 // TODO move classes to their own folder so this is not needed (it's already a
 // static function in the Block class)
@@ -21,11 +23,16 @@ export function buildSolidityStruct(block) {
     frontierHash,
     transactionHashesRoot,
   } = block;
+
+  const blockNumberL2Packed = generalise(blockNumberL2).hex(8).slice(2);
+  const leafCountPacked = generalise(leafCount).hex(4).slice(2);
+  const proposerPacked = generalise(proposer).hex(20).slice(2);
+
+  const packedInfo = '0x'.concat(leafCountPacked, blockNumberL2Packed, proposerPacked);
+
   return {
-    proposer,
+    packedInfo,
     root,
-    leafCount: Number(leafCount),
-    blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
     frontierHash,
     transactionHashesRoot,

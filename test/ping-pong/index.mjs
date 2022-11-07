@@ -8,7 +8,13 @@ import config from 'config';
 import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
+import {
+  waitForSufficientBalance,
+  retrieveL2Balance,
+  topicEventMapping,
+  emptyL2,
+  Web3Client,
+} from '../utils.mjs';
 import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
@@ -38,6 +44,9 @@ Does the preliminary setup and starts listening on the websocket
 */
 export async function userTest(IS_TEST_RUNNER) {
   logger.info('Starting local test...');
+  const eventLogs = [];
+  const web3Client = new Web3Client();
+
   const tokenType = 'ERC20';
   const value = 1;
   const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
@@ -48,6 +57,9 @@ export async function userTest(IS_TEST_RUNNER) {
   else throw new Error('Healthcheck failed');
 
   const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress('ERC20Mock'));
+
+  const stateAddress = await nf3.stateContractAddress;
+  web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
   const startBalance = await retrieveL2Balance(nf3, ercAddress);
   console.log('start balance', startBalance);
@@ -62,6 +74,8 @@ export async function userTest(IS_TEST_RUNNER) {
       logger.warn(`Error in deposit ${err}`);
     }
   }
+
+  await emptyL2(nf3, web3Client, eventLogs);
 
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
@@ -107,6 +121,8 @@ export async function userTest(IS_TEST_RUNNER) {
     } catch (err) {
       console.warn('Error deposit', err);
     }
+
+    await emptyL2(nf3, web3Client, eventLogs);
   }
 
   // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use

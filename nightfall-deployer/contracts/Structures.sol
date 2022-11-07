@@ -8,6 +8,8 @@ pragma solidity ^0.8.0;
 contract Structures {
     error InvalidTransactionHash();
     error DepositNotEscrowed(bytes32 depositHash);
+    error InvalidBlockSize();
+    error InvalidTransactionSize();
 
     enum TokenType {
         ERC20,
@@ -56,10 +58,8 @@ contract Structures {
     }
 
     struct Block {
-        uint48 leafCount; // note this is defined to be the number of leaves AFTER the commitments in this block are added
-        address proposer;
+        uint256 packedInfo;
         bytes32 root; // the 'output' commmitment root after adding all commitments
-        uint64 blockNumberL2;
         bytes32 previousBlockHash;
         bytes32 frontierHash;
         bytes32 transactionHashesRoot; // This variable needs to be the last one in order proposeBlock to work
@@ -83,14 +83,9 @@ contract Structures {
     }
 
     struct TimeLockedStake {
-        uint256 amount; // The amount held
-        uint256 challengeLocked; // The amount locked by block proposed still in CHALLENGE_PERIOD and not claimed
-        uint256 time; // The time the funds were locked from
-    }
-
-    struct FeeTokens {
-        uint256 feesEth;
-        uint256 feesMatic;
+        uint112 amount; // The amount held
+        uint112 challengeLocked; // The amount locked by block proposed still in CHALLENGE_PERIOD and not claimed
+        uint32 time; // The time the funds were locked from
     }
 
     struct PublicInputs {
@@ -124,6 +119,17 @@ contract Structures {
     struct TransactionInfo {
         uint248 ethFee;
         bool isEscrowed;
+    }
+
+    struct BlockInfo {
+        uint120 feesEth;
+        uint120 feesMatic;
+        bool stakeClaimed;
+    }
+
+    struct FeeTokens {
+        uint120 feesEth;
+        uint120 feesMatic;
     }
 
     struct CircuitInfo {
