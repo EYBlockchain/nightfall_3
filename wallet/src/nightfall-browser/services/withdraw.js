@@ -69,7 +69,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
 
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: withdrawValue,
-    fee,
+    fee: fee.bigInt,
     ercAddress,
     maticAddress,
     tokenId,
@@ -115,7 +115,10 @@ async function withdraw(withdrawParams, shieldContractAddress) {
 
     // call a zokrates worker to generate the proof
     const zokratesProvider = await initialize();
-    const artifacts = { program: new Uint8Array(program), abi };
+    const artifacts = {
+      program: new Uint8Array(program),
+      abi: { inputs: abi.inputs, outputs: [abi.output] },
+    };
     const keypair = { pk: new Uint8Array(pk) };
     // computation
     const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);

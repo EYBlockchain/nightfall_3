@@ -74,7 +74,7 @@ async function transfer(transferParams, shieldContractAddress) {
     const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
     const commitmentsInfo = await getCommitmentInfo({
       totalValueToSend,
-      fee,
+      fee: fee.bigInt,
       recipientZkpPublicKeysArray: recipientZkpPublicKeys,
       ercAddress,
       maticAddress,
@@ -151,7 +151,10 @@ async function transfer(transferParams, shieldContractAddress) {
       const pk = pkData.data;
 
       const zokratesProvider = await initialize();
-      const artifacts = { program: new Uint8Array(program), abi };
+      const artifacts = {
+        program: new Uint8Array(program),
+        abi: { inputs: abi.inputs, outputs: [abi.output] },
+      };
       const keypair = { pk: new Uint8Array(pk) };
       console.log('Computing witness');
       const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
