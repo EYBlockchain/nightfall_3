@@ -55,10 +55,10 @@ export function calculateTransactionHash(tx) {
   return ethers.utils.keccak256(encodedTx);
 }
 
-export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
+export function createBlockAndTransactions(erc20MockAddress, ownerAddress, feeAmount = 0) {
   const withdrawTransaction = {
     value: '10',
-    fee: '0',
+    fee: feeAmount,
     transactionType: '2',
     tokenType: '0',
     historicRootBlockNumberL2: [
@@ -95,7 +95,7 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
 
   const depositTransaction = {
     value: '10',
-    fee: '0',
+    fee: feeAmount,
     transactionType: '0',
     tokenType: '0',
     historicRootBlockNumberL2: [
