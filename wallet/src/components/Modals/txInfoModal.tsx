@@ -75,7 +75,7 @@ export default function TxInfoModal(props: TxModalProps): JSX.Element {
         </div>
       </Modal.Body>
       <Modal.Footer>
-        {props.withdrawready && props.txtype === '3' ? (
+        {props.withdrawready && props.txtype === '2' ? (
           <Button
             style={{
               background: '#7B3FE4',
