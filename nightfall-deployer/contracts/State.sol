@@ -368,7 +368,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
 
     function removeProposer(address proposer) public onlyRegistered {
         _removeProposer(proposer);
-        if (proposer == currentProposer.thisAddress) {
+        if (proposer == currentProposer.thisAddress || currentProposer.thisAddress == address(0)) {
             currentProposer = proposers[currentProposer.nextAddress]; // we need to refresh the current proposer before the change
             proposerStartBlock = 0;
             changeCurrentProposer();
