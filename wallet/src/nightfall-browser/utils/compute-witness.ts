@@ -38,7 +38,6 @@ type CommitmentPreimage = {
 };
 
 type Nullifier = {
-  rootKey: string;
   oldCommitments: CommitmentPreimage;
   paths: string[][];
   orders: string[];
@@ -102,7 +101,6 @@ const computePrivateInputsNullifiers = (
   oldCommitmentPreimage: Record<string, GeneralNumber>[],
   paths: GeneralNumber[][],
   orders: GeneralNumber[],
-  rootKey: GeneralNumber,
 ): Nullifier => {
   const paddedOldCommitmentPreimage: Record<string, GeneralNumber>[] = padArray(
     oldCommitmentPreimage,
@@ -113,7 +111,6 @@ const computePrivateInputsNullifiers = (
   const paddedOrders: GeneralNumber[] = padArray(orders, 0, 4);
 
   return {
-    rootKey: rootKey.field(BN128_GROUP_ORDER),
     oldCommitments: {
       value: paddedOldCommitmentPreimage.map(commitment => commitment.value.limbs(8, 31)),
       salt: paddedOldCommitmentPreimage.map(commitment => commitment.salt.field(BN128_GROUP_ORDER)),
@@ -190,7 +187,8 @@ const computeCircuitInputs = (
     const isTransfer = Number(txObject.transactionType) === 1;
     witness = [
       ...publicInputs,
-      computePrivateInputsNullifiers(oldCommitmentPreimage, paths, orders, rootKey),
+      rootKey.field(BN128_GROUP_ORDER),
+      computePrivateInputsNullifiers(oldCommitmentPreimage, paths, orders),
       computePrivateInputsCommitments(newCommitmentPreimage, recipientPublicKeys, isTransfer),
     ];
 

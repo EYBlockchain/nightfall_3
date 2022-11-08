@@ -111,7 +111,9 @@
     "start:mainnet": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=mainnet env-cmd -f .mainnet.env node scripts/start.js",
     "start:internal": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' USE_STUBS=false REACT_APP_MODE=internal env-cmd -f .internal.env node scripts/start.js",
     "build": "LOCAL_PROPOSER=false USE_STUBS=false REACT_APP_MODE=production PUBLIC_URL='https://wallet.testnet.polygon-nightfall.technology/' node scripts/build.js",
+    "build:testnet": "LOCAL_PROPOSER=false USE_STUBS=false REACT_APP_MODE=testnet PUBLIC_URL='https://wallet.testnet.polygon-nightfall.technology/' node scripts/build.js",
     "deploy": "npm run build && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
+    "deploy:testnet": "npm run build:testnet && aws s3 sync build s3://pnf-dev-browser --cache-control max-age=172800 --delete && aws configure set preview.cloudfront true && aws cloudfront create-invalidation --distribution-id ENV3X13MLR5YT --paths \"/*\"",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/unit/**/*.js'",
     "test:web": "jest",
     "e2e-test": "npx synpress run --env TRANSACTIONS_PER_BLOCK=2"
@@ -141,6 +143,7 @@
     "@types/mocha": "^9.1.1",
     "@types/react-router-dom": "^5.3.3",
     "@types/styled-components": "^5.1.24",
+    "big-integer": "^1.6.51",
     "chai": "^4.3.6",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-cypress": "^2.12.1",

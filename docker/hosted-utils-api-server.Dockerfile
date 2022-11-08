@@ -5,9 +5,9 @@ RUN apt-get install -y md5deep
 
 WORKDIR /app
 
-COPY src src
-COPY package.json package-lock.json ./
-COPY entrypoint.sh entrypoint.sh
+COPY hosted-utils-api-server/src src
+COPY hosted-utils-api-server/package.json package-lock.json ./
+COPY hosted-utils-api-server/entrypoint.sh entrypoint.sh
 
 RUN npm ci
 
