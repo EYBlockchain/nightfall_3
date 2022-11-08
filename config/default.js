@@ -487,11 +487,11 @@ module.exports = {
   // is running in local machine
   isLocalRun: process.env.LOCAL_PROPOSER === 'true',
   SIGNATURES: {
-    BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32, bytes32)',
+    BLOCK: '(uint256,bytes32,bytes32,bytes32, bytes32)',
     TRANSACTION:
       '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
     PROPOSE_BLOCK: [
-      '(uint48,address,bytes32,uint256,bytes32,bytes32,bytes32)',
+      '(uint256,bytes32,bytes32,bytes32,bytes32)',
       '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])[]',
     ],
     SUBMIT_TRANSACTION:

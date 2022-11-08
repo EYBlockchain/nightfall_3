@@ -9,7 +9,7 @@ contract Config is Ownable, Structures {
     uint256 constant CHALLENGE_PERIOD = 1 weeks;
     bytes32 constant ZERO = bytes32(0);
     uint256 constant MAX_BLOCK_SIZE = 50000;
-    uint256 constant BLOCK_STRUCTURE_SLOTS = 7;
+    uint256 constant BLOCK_STRUCTURE_SLOTS = 5;
 
     uint96 minimumStake;
     uint96 blockStake;

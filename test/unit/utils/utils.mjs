@@ -1,21 +1,25 @@
 /* eslint-disable no-empty-function */
 import hardhat from 'hardhat';
-import { packInfo } from '../../../common-files/classes/transaction.mjs';
+import gen from 'general-number';
+import { packInfo as packTransactionInfo } from '../../../common-files/classes/transaction.mjs';
+import { packInfo as packBlockInfo } from '../../../nightfall-optimist/src/services/block-utils.mjs';
 
 const { ethers } = hardhat;
+const { generalise } = gen;
 
+export function unpackBlockInfo(packedBlockInfo) {
+  const packedInfoHex = generalise(packedBlockInfo).hex(32).slice(2);
+
+  const leafCount = generalise(`0x${packedInfoHex.slice(0, 8)}`).hex(4);
+  const blockNumberL2 = generalise(`0x${packedInfoHex.slice(8, 24)}`).hex(8);
+  const proposer = generalise(`0x${packedInfoHex.slice(24, 64)}`).hex(20);
+
+  return { leafCount, blockNumberL2, proposer };
+}
 export function calculateBlockHash(b) {
   const encodedBlock = ethers.utils.defaultAbiCoder.encode(
-    ['uint48', 'address', 'bytes32', 'uint256', 'bytes32', 'bytes32', 'bytes32'],
-    [
-      b.leafCount,
-      b.proposer,
-      b.root,
-      b.blockNumberL2,
-      b.previousBlockHash,
-      b.frontierHash,
-      b.transactionHashesRoot,
-    ],
+    ['uint256', 'bytes32', 'bytes32', 'bytes32', 'bytes32'],
+    [b.packedInfo, b.root, b.previousBlockHash, b.frontierHash, b.transactionHashesRoot],
   );
 
   return ethers.utils.keccak256(encodedBlock);
@@ -52,7 +56,7 @@ export function calculateTransactionHash(tx) {
 }
 
 export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
-  const packedInfoWithdraw = packInfo(10, 1, 2, 0);
+  const packedInfoWithdraw = packTransactionInfo(10, 1, 2, 0);
 
   const withdrawTransaction = {
     packedInfo: packedInfoWithdraw,
@@ -87,7 +91,7 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
     ],
   };
 
-  const packedInfoDeposit = packInfo(10, 0, 0, 0);
+  const packedInfoDeposit = packTransactionInfo(10, 0, 0, 0);
 
   const depositTransaction = {
     packedInfo: packedInfoDeposit,
@@ -114,11 +118,11 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress) {
     [calculateTransactionHash(withdrawTransaction), calculateTransactionHash(depositTransaction)],
   );
 
+  const packedInfoBlock = packBlockInfo(0, 1, ownerAddress);
+
   const block = {
-    leafCount: 1,
-    proposer: ownerAddress,
+    packedInfo: packedInfoBlock,
     root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-    blockNumberL2: 0,
     previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
     frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
     transactionHashesRoot,

@@ -66,7 +66,9 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     function requestBlockPayment(Block calldata b) external {
         bytes32 blockHash = Utils.hashBlock(b);
 
-        BlockData memory blockData = state.getBlockData(b.blockNumberL2);
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(b.packedInfo);
+        address proposer = Utils.getProposer(b.packedInfo);
+        BlockData memory blockData = state.getBlockData(blockNumberL2);
         require(blockData.blockHash == blockHash, 'Shield: This block does not exist');
 
         // check that the block has been finalised
@@ -74,27 +76,25 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             blockData.time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to get paid for this block'
         );
-        require(b.proposer == msg.sender, 'Shield: Not the proposer of this block');
-        require(
-            !state.claimedBlockStakes(blockData.blockHash),
-            'Shield: Block stake for this block already claimed'
+
+        (uint120 feesEth, uint120 feesMatic, bool stakeClaimed) = state.blockInfo(
+            blockData.blockHash
         );
+        require(proposer == msg.sender, 'Shield: Not the proposer of this block');
+        require(!stakeClaimed, 'Shield: Block stake for this block already claimed');
         state.setBlockStakeWithdrawn(blockHash);
 
         //Request fees
-        FeeTokens memory feePayments = state.getFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
-        state.resetFeeBookBlocksInfo(b.proposer, b.blockNumberL2);
 
-        if (feePayments.feesEth > 0) {
-            (bool success, ) = payable(address(state)).call{value: feePayments.feesEth}('');
+        state.resetFeeBookBlocksInfo(blockHash);
+
+        if (feesEth > 0) {
+            (bool success, ) = payable(address(state)).call{value: feesEth}('');
             require(success, 'Shield: Transfer failed.');
         }
 
-        if (feePayments.feesMatic > 0) {
-            IERC20Upgradeable(super.getMaticAddress()).safeTransfer(
-                address(state),
-                feePayments.feesMatic
-            );
+        if (feesMatic > 0) {
+            IERC20Upgradeable(super.getMaticAddress()).safeTransfer(address(state), feesMatic);
         }
 
         // recover the stake for that block
@@ -103,7 +103,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         stake.challengeLocked -= blockData.blockStake;
         state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
 
-        state.addPendingWithdrawal(msg.sender, feePayments.feesEth, feePayments.feesMatic);
+        state.addPendingWithdrawal(msg.sender, feesEth, feesMatic);
     }
 
     /**
@@ -115,10 +115,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             blockData.time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to get paid for this block'
         );
-        require(
-            !state.claimedBlockStakes(blockData.blockHash),
-            'Shield: Block stake for this block already claimed'
-        );
+        (, , bool stakeClaimed) = state.blockInfo(blockData.blockHash);
+        require(!stakeClaimed, 'Shield: Block stake for this block already claimed');
 
         return true;
     }
@@ -160,7 +158,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         (bool isWithdrawing, ) = state.circuitInfo(Utils.getCircuitHash(t.packedInfo));
         require(isWithdrawing, 'Shield: Transaction is not a valid withdraw');
         require(
-            state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
+            state.getBlockData(Utils.getBlockNumberL2(b.packedInfo)).time + CHALLENGE_PERIOD <
+                block.timestamp,
             'Shield: Too soon to withdraw funds from this block'
         );
 
@@ -190,7 +189,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
         // check that the block has been finalised
         require(
-            state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD < block.timestamp,
+            state.getBlockData(Utils.getBlockNumberL2(b.packedInfo)).time + CHALLENGE_PERIOD <
+                block.timestamp,
             'Shield: Too soon to withdraw funds from this block'
         );
         (bool isWithdrawing, ) = state.circuitInfo(Utils.getCircuitHash(t.packedInfo));
@@ -214,7 +214,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
             }('');
             require(success, 'Shield: Transfer failed.');
 
-            state.addPendingWithdrawal(recipientAddress, uint256(advancedWithdrawal.advanceFee), 0);
+            state.addPendingWithdrawal(recipientAddress, advancedWithdrawal.advanceFee, 0);
         }
         require(isWhitelisted(msg.sender), 'Shield: You are not authorised to withdraw funds');
         payOut(t, recipientAddress);
@@ -239,7 +239,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
 
         //Check that the withdrawal is still challengeable
         require(
-            state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD >= block.timestamp,
+            state.getBlockData(Utils.getBlockNumberL2(b.packedInfo)).time + CHALLENGE_PERIOD >=
+                block.timestamp,
             'Shield: The block has already been finalized'
         );
 
@@ -256,7 +257,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
         address currentOwner = advancedWithdrawals[transactionHash].currentOwner == address(0)
             ? originalRecipientAddress
             : advancedWithdrawals[transactionHash].currentOwner;
-        uint256 advanceFee = advancedWithdrawals[transactionHash].advanceFee;
+        uint120 advanceFee = advancedWithdrawals[transactionHash].advanceFee;
 
         // set new owner of transaction, settign fee to zero.
         advancedWithdrawals[transactionHash].advanceFee = 0;
@@ -290,7 +291,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
 
         //Check that the withdrawal is still challengeable
         require(
-            state.getBlockData(b.blockNumberL2).time + CHALLENGE_PERIOD >= block.timestamp,
+            state.getBlockData(Utils.getBlockNumberL2(b.packedInfo)).time + CHALLENGE_PERIOD >=
+                block.timestamp,
             'Shield: The block has already been finalized'
         );
 
