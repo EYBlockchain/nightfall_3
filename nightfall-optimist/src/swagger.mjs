@@ -95,4 +95,4 @@ const swaggerDocument = {
   },
 };
 
-export default swaggerDocument;
+export { swaggerDocument };

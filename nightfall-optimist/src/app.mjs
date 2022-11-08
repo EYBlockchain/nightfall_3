@@ -12,7 +12,7 @@ import {
   debug,
 } from './routes/index.mjs';
 import swaggerUi from 'swagger-ui-express';
-import swaggerDocument from '../swagger.mjs';
+import { swaggerDocument } from './swagger.mjs';
 
 const app = express();
 
