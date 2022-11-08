@@ -182,7 +182,6 @@ describe('Optimist synchronisation tests', () => {
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
-      await waitForTimeout(5000);
       await restartOptimist(false);
       await waitForTimeout(10000);
 
