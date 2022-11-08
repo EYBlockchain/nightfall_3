@@ -50,7 +50,7 @@ const { BN128_GROUP_ORDER, SHIELD_CONTRACT_NAME } = constants;
 // Incorrect Proof -> { mempool: true, circuit: [deposit,transfer,withdraw] } -> overwrite with incorrect proof
 // Incorrect public input -> { mempool: true, circuit: [deposit,transfer,withdraw] } -> overwrite with incorrect specific public input (commitment/nullifier)
 
-const duplicateCommitment = async (number, circuitHash) => {
+const duplicateCommitment = async circuitHash => {
   logger.debug('Creating Transaction with Duplicate Commitment');
   let modifiedTransactions;
   try {
@@ -63,7 +63,7 @@ const duplicateCommitment = async (number, circuitHash) => {
       logger.error('Could not create duplicate commitment');
       return db
         .collection(TRANSACTIONS_COLLECTION)
-        .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+        .find({ mempool: true }, { sort: { fee: -1 }, projection: { _id: 0 } })
         .toArray();
     }
     const { commitments: spentCommitments } = spentTransaction[0];
@@ -129,15 +129,14 @@ const duplicateCommitment = async (number, circuitHash) => {
       }
     }
 
-    modifiedTransactions = transactions.slice(0, number - 1);
-    modifiedTransactions.push(modifiedTransaction);
+    modifiedTransactions = transactions.push(modifiedTransaction);
   } catch (err) {
     logger.debug(err);
   }
   return modifiedTransactions;
 };
 
-const duplicateNullifier = async (number, circuitHash) => {
+const duplicateNullifier = async circuitHash => {
   logger.debug('Creating Transaction with Duplicate Nullifier');
   let modifiedTransactions;
   try {
@@ -150,7 +149,7 @@ const duplicateNullifier = async (number, circuitHash) => {
       logger.error('Could not create duplicate nullifier');
       return db
         .collection(TRANSACTIONS_COLLECTION)
-        .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+        .find({ mempool: true }, { sort: { fee: -1 }, projection: { _id: 0 } })
         .toArray();
     }
     const { nullifiers: spentNullifiers } = spentTransaction[0];
@@ -177,25 +176,21 @@ const duplicateNullifier = async (number, circuitHash) => {
     modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
     logger.debug(`Transfer after modification ${JSON.stringify(modifiedTransaction[0], null, 2)}`);
 
-    modifiedTransactions = transactions.slice(0, number - 1);
-    modifiedTransactions.push(modifiedTransaction);
+    modifiedTransactions = transactions.push(modifiedTransaction);
   } catch (err) {
     logger.debug(err);
   }
   return modifiedTransactions;
 };
 
-const incorrectProof = async (number, circuitHash) => {
+const incorrectProof = async circuitHash => {
   logger.debug('Creating Transaction with Incorrect Proof');
   try {
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
     const [{ proof, ...rest }, ...transactions] = await db
       .collection(TRANSACTIONS_COLLECTION)
-      .find(
-        { mempool: true, circuitHash },
-        { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } },
-      )
+      .find({ mempool: true, circuitHash }, { sort: { fee: -1 }, projection: { _id: 0 } })
       .toArray();
     logger.debug(`Transaction before modification ${JSON.stringify({ proof, ...rest }, null, 2)}`);
     const incorrectProofTx = {
@@ -260,17 +255,14 @@ const incorrectProof = async (number, circuitHash) => {
   return null;
 };
 
-const incorrectPublicInput = async (number, circuitHash, publicInputType) => {
+const incorrectPublicInput = async (circuitHash, publicInputType) => {
   logger.debug('Creating Transaction with Incorrect Public Input');
   try {
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
     const [{ commitments, nullifiers, ...rest }, ...transactions] = await db
       .collection(TRANSACTIONS_COLLECTION)
-      .find(
-        { mempool: true, circuitHash },
-        { limit: number - 1, sort: { fee: -1 }, projection: { _id: 0 } },
-      )
+      .find({ mempool: true, circuitHash }, { sort: { fee: -1 }, projection: { _id: 0 } })
       .toArray();
 
     logger.debug(
@@ -355,14 +347,14 @@ const incorrectPublicInput = async (number, circuitHash, publicInputType) => {
   return null;
 };
 
-const historicRootError = async number => {
-  logger.debug('Creating Block with Historic Root Error', number);
+const historicRootError = async () => {
+  logger.debug('Creating Block with Historic Root Error');
   try {
     const connection = await mongo.connection(MONGO_URL);
     const db = connection.db(OPTIMIST_DB);
     const [incorrectHistoricRoot, ...transactions] = await db
       .collection(TRANSACTIONS_COLLECTION)
-      .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+      .find({ mempool: true }, { sort: { fee: -1 }, projection: { _id: 0 } })
       .toArray();
     incorrectHistoricRoot.historicRootBlockNumberL2 = [
       (Math.floor(Math.random() * 100) + 10).toString(),
@@ -385,11 +377,10 @@ export const addTx = txType => {
 };
 
 /**
-Function to return 'number' transactions, ordered by the highest fee. If there
-are fewer than 'number' transactions, all are returned.
+Function to return transactions, ordered by the highest fee. 
 */
 // eslint-disable-next-line import/prefer-default-export
-export async function getMostProfitableTransactions(number, errorIndex) {
+export async function getSortedByFeeMempoolTransactions(errorIndex) {
   if (resetErrorIdx) {
     resetErrorIdx = false;
     indexOffset = errorIndex;
@@ -426,35 +417,35 @@ export async function getMostProfitableTransactions(number, errorIndex) {
   logger.debug(`Creating a transaction of type ${badTxType}`);
   switch (badTxType) {
     case 'DuplicateCommitmentDeposit':
-      return duplicateCommitment(number, depositHash);
+      return duplicateCommitment(depositHash);
     case 'DuplicateCommitmentTransfer':
-      return duplicateCommitment(number, transferHash);
+      return duplicateCommitment(transferHash);
     case 'DuplicateNullifierTransfer':
-      return duplicateNullifier(number, transferHash);
+      return duplicateNullifier(transferHash);
     case 'DuplicateNullifierWithdraw':
-      return duplicateNullifier(number, withdrawHash);
+      return duplicateNullifier(withdrawHash);
     case 'IncorrectProofDeposit':
-      return incorrectProof(number, depositHash);
+      return incorrectProof(depositHash);
     case 'IncorrectProofTransfer':
-      return incorrectProof(number, transferHash);
+      return incorrectProof(transferHash);
     case 'IncorrectProofWithdraw':
-      return incorrectProof(number, withdrawHash);
+      return incorrectProof(withdrawHash);
     case 'IncorrectPublicInputDepositCommitment':
-      return incorrectPublicInput(number, depositHash, 'commitment');
+      return incorrectPublicInput(depositHash, 'commitment');
     case 'IncorrectPublicInputTransferCommitment':
-      return incorrectPublicInput(number, transferHash, 'commitment');
+      return incorrectPublicInput(transferHash, 'commitment');
     case 'IncorrectPublicInputTransferNullifier':
-      return incorrectPublicInput(number, transferHash, 'nullifier');
+      return incorrectPublicInput(transferHash, 'nullifier');
     case 'IncorrectPublicInputWithdrawNullifier':
-      return incorrectPublicInput(number, withdrawHash, 'nullifier');
+      return incorrectPublicInput(withdrawHash, 'nullifier');
     case 'IncorrectHistoricRoot':
-      return historicRootError(number);
+      return historicRootError();
     default: {
       const connection = await mongo.connection(MONGO_URL);
       const db = connection.db(OPTIMIST_DB);
       return db
         .collection(TRANSACTIONS_COLLECTION)
-        .find({ mempool: true }, { limit: number, sort: { fee: -1 }, projection: { _id: 0 } })
+        .find({ mempool: true }, { sort: { fee: -1 }, projection: { _id: 0 } })
         .toArray();
     }
   }

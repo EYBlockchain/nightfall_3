@@ -73,7 +73,6 @@ export async function conditionalMakeBlock(proposer) {
     or we're no-longer the proposer (boo).
    */
 
-  console.log(MAX_BLOCK_SIZE);
   if (proposer.isMe) {
     // Get all the mempool transactions sorted by fee
     const mempoolTransactions = await getSortedByFeeMempoolTransactions();

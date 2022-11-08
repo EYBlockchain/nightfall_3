@@ -29,11 +29,11 @@ export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS:
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
-    console.log(await fetch(`${utilApiServerUrl}/circuithash.txt`));
-    hash = await fetch(`${utilApiServerUrl}/circuithash.txt`).then(response => {
-      const hashFile = response.json();
-      return `0x${hashFile.find(h => h.circuitName === circuit.name).slice(0, 10)}`;
-    });
+    hash = await fetch(`${utilApiServerUrl}/circuithash.txt`)
+      .then(response => response.json())
+      .then(hashFile =>
+        hashFile.find(e => e.circuitName === circuit.name).circuitHash.slice(0, 12),
+      );
   } else {
     abi = JSON.parse(new TextDecoder().decode(await fetchAWSfiles(s3Bucket, abi)));
     program = await fetchAWSfiles(s3Bucket, program);

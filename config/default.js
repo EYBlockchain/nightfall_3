@@ -89,7 +89,7 @@ module.exports = {
   CURVE: process.env.CURVE || 'bn128',
 
   MINIMUM_TRANSACTION_SLOTS: 16,
-  MAX_BLOCK_SIZE: Number(process.env.MAX_BLOCK_SIZE) || 25000,
+  MAX_BLOCK_SIZE: Number(process.env.MAX_BLOCK_SIZE) || 50000,
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 100,
   VK_IDS: {
     deposit: {
