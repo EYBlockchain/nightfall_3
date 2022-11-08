@@ -388,7 +388,7 @@ export async function removeNullifiersFromMemPool(nullifiers) {
 /**
 How many transactions are waiting to be processed into a block?
 */
-export async function getSortedMempoolTransactions() {
+export async function getSortedByFeeMempoolTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db

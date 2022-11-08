@@ -8,7 +8,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
 import Transaction from '../common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { depositNTransactions, Web3Client, waitForTimeout, emptyL2 } from './utils.mjs';
+import { depositNTransactions, Web3Client, waitForTimeout } from './utils.mjs';
 import { buildBlockSolidityStruct } from '../nightfall-optimist/src/services/block-utils.mjs';
 
 // so we can use require with mjs file
@@ -171,7 +171,8 @@ describe('Optimist synchronisation tests', () => {
         fee,
       );
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
@@ -199,7 +200,8 @@ describe('Optimist synchronisation tests', () => {
         fee,
       );
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
@@ -221,7 +223,8 @@ describe('Optimist synchronisation tests', () => {
         fee,
       );
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
@@ -247,7 +250,8 @@ describe('Optimist synchronisation tests', () => {
         fee,
       );
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.

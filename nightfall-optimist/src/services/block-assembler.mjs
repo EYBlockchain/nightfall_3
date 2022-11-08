@@ -9,7 +9,7 @@ import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import { getSortedMempoolTransactions, removeTransactionsFromMemPool } from './database.mjs';
+import { getSortedByFeeMempoolTransactions, removeTransactionsFromMemPool } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import {
@@ -72,9 +72,11 @@ export async function conditionalMakeBlock(proposer) {
     transaction. If not, we must wait until either we have enough (hooray)
     or we're no-longer the proposer (boo).
    */
+
+  console.log(MAX_BLOCK_SIZE);
   if (proposer.isMe) {
     // Get all the mempool transactions sorted by fee
-    const mempoolTransactions = await getSortedMempoolTransactions();
+    const mempoolTransactions = await getSortedByFeeMempoolTransactions();
 
     // Map each mempool transaction to their byte size
     const mempoolTransactionSizes = mempoolTransactions.map(tx => {
@@ -109,7 +111,7 @@ export async function conditionalMakeBlock(proposer) {
         }
       }
 
-      if (bytesSum > 0 && makeNow) {
+      if (transactionBatches.length === 0 && makeNow) {
         transactionBatches.push(mempoolTransactionSizes.length);
       }
     }
@@ -135,7 +137,7 @@ export async function conditionalMakeBlock(proposer) {
         // we retrieve un-processed transactions from our local database, relying on
         // the transaction service to keep the database current
 
-        const start = !i ? 0 : transactionBatches[i - 1];
+        const start = i === 0 ? 0 : transactionBatches[i - 1];
         const end = transactionBatches[i];
 
         const transactions = mempoolTransactions.slice(start, end);
