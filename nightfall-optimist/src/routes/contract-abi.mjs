@@ -8,10 +8,11 @@ import {
   getContractAbi,
   clearCachedContracts,
 } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import auth from '../utils/auth.mjs';
 
 const router = express.Router();
 
-router.get('/:contract', async (req, res, next) => {
+router.get('/:contract', auth, async (req, res, next) => {
   const { contract } = req.params;
   try {
     const abi = await getContractAbi(contract);
@@ -25,7 +26,7 @@ router.get('/:contract', async (req, res, next) => {
   }
 });
 
-router.get('/clear', async (req, res, next) => {
+router.get('/clear', auth, async (req, res, next) => {
   try {
     await clearCachedContracts();
     res.sendStatus(200);

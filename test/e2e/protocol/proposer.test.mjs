@@ -132,15 +132,32 @@ describe('Basic Proposer tests', () => {
   it('should fail to register a proposer without a valid API key', async () => {
     try {
       bootProposer.setApiKey('test');
-      const res = await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
-      // eslint-disable-next-line @babel/no-unused-expressions
-      console.log(res);
+      await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
       expect.fail();
     } catch (err) {
       expect(err);
     } finally {
       bootProposer.setApiKey(environment.AUTH_TOKEN);
     }
+  });
+
+  it('should fail to register a proposer without an API key', async () => {
+    try {
+      bootProposer.resetApiKey();
+      await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
+      expect.fail();
+    } catch (err) {
+      expect(err);
+    } finally {
+      bootProposer.setApiKey(environment.AUTH_TOKEN);
+    }
+  });
+
+  it('should access any public route with any API key', async () => {
+    bootProposer.resetApiKey();
+    await bootProposer.unprocessedTransactionCount();
+    bootProposer.setApiKey(environment.AUTH_TOKEN);
+    await bootProposer.unprocessedTransactionCount();
   });
 
   it('should register the boot proposer', async () => {

@@ -118,6 +118,17 @@ class Nf3 {
   }
 
   /**
+   * TODO This one should go it's merry way once the Nightfall Node is up
+   * as the only reason it is here is to allow for testing the optimist routes
+   * with an empty API key
+   */
+
+  // eslint-disable-next-line class-methods-use-this
+  async resetApiKey() {
+    delete axios.defaults.headers.common['X-APP-TOKEN'];
+  }
+
+  /**
     Initialises the Nf_3 object so that it can communicate with Nightfall_3 and the
     blockchain.
     @returns {Promise}
