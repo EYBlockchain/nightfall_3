@@ -603,8 +603,8 @@ async function verifyEnoughCommitments(
   ercAddressFee,
   fee,
 ) {
-  const connection = await connectDB();
-  const db = connection.db(COMMITMENTS_DB);
+  const db = await connectDB();
+  const vals = await db.getAll(COMMITMENTS_COLLECTION);
 
   let fc = 0; // Number of fee commitments
   let minFc = 0; // Minimum number of fee commitments required to pay the fee
@@ -615,16 +615,14 @@ async function verifyEnoughCommitments(
   // would need to pay for the fee
   if (fee.bigInt > 0n) {
     // Get the fee commitments from the database
-    const commitmentArrayFee = await db
-      .collection(COMMITMENTS_COLLECTION)
-      .find({
-        compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-        'preimage.ercAddress': ercAddressFee.hex(32),
-        'preimage.tokenId': generalise(0).hex(32),
-        isNullified: false,
-        isPendingNullification: false,
-      })
-      .toArray();
+    const commitmentArrayFee = vals.filter(
+      v =>
+        v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
+        v.preimage.ercAddress === ercAddressFee.hex(32) &&
+        v.preimage.tokenId === generalise(0).hex(32) &&
+        !v.isNullified &&
+        !v.isPendingNullification,
+    );
 
     // If not commitments are found, the fee cannot be paid, so return null
     if (commitmentArrayFee === []) return null;
@@ -665,16 +663,14 @@ async function verifyEnoughCommitments(
   }
 
   // Get the commitments from the database
-  const commitmentArray = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .find({
-      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-      'preimage.ercAddress': ercAddress.hex(32),
-      'preimage.tokenId': tokenId.hex(32),
-      isNullified: false,
-      isPendingNullification: false,
-    })
-    .toArray();
+  const commitmentArray = vals.filter(
+    v =>
+      v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
+      v.preimage.ercAddress === ercAddressFee.hex(32) &&
+      v.preimage.tokenId === tokenId.hex(32) &&
+      !v.isNullified &&
+      !v.isPendingNullification,
+  );
 
   // If not commitments are found, the transfer/withdrawal cannot be paid, so return null
   if (commitmentArray === []) return null;
