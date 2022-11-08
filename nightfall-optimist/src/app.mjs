@@ -2,9 +2,9 @@
 
 import express from 'express';
 import config from 'config';
+import { web3 } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { setupHttpDefaults } from '@polygon-nightfall/common-files/utils/httputils.mjs';
-import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
 import {
   proposer,
   block,
@@ -15,16 +15,16 @@ import {
   debug,
 } from './routes/index.mjs';
 
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+logger.debug(`********* Optimist environment vars ${JSON.stringify(environment)}`); // TODO review logs
+
 const app = express();
 
-const web3Websocket = Web3.connection();
-const ethAddress = config.ETH_ADDRESS;
-const ethPrivateKey = config.ETH_PRIVATE_KEY;
-logger.debug(`********* ethAddress ${ethAddress}`); // TODO rm, rm import
+const ethPrivateKey = environment.PROPOSER_KEY;
+const { address } = web3.eth.accounts.privateKeyToAccount(ethPrivateKey);
 
-app.set('web3Websocket', web3Websocket);
-app.set('ethAddress', ethAddress);
 app.set('ethPrivateKey', ethPrivateKey);
+app.set('ethAddress', address);
 
 setupHttpDefaults(
   app,

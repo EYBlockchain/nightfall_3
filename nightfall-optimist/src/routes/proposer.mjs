@@ -11,6 +11,7 @@ import {
   getContractAddress,
   getContractInstance,
   waitForContract,
+  web3,
 } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
@@ -44,7 +45,6 @@ export function setProposer(p) {
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
 router.post('/register', async (req, res, next) => {
-  const web3Websocket = req.app.get('web3Websocket');
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
 
@@ -82,8 +82,8 @@ router.post('/register', async (req, res, next) => {
         value: stake,
         gas: 8000000,
       };
-      const signedTx = await web3Websocket.eth.accounts.signTransaction(tx, ethPrivateKey);
-      receipt = await web3Websocket.eth.sendSignedTransaction(signedTx.rawTransaction);
+      const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+      receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
       logger.debug(`Transaction receipt ${receipt}`);
     } else {
       logger.warn('Proposer was already registered, registration attempt ignored!');

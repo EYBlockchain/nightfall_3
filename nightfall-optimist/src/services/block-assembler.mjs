@@ -8,7 +8,11 @@ import WebSocket from 'ws';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  getContractAddress,
+  waitForContract,
+  web3,
+} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   removeTransactionsFromMemPool,
   getMostProfitableTransactions,
@@ -16,13 +20,16 @@ import {
 } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
-import {
-  increaseProposerWsFailed,
-  increaseProposerWsClosed,
-  increaseProposerBlockNotSent,
-} from './debug-counters.mjs';
+// import {
+//   increaseProposerWsFailed,
+//   increaseProposerWsClosed,
+//   increaseProposerBlockNotSent,
+// } from './debug-counters.mjs';
 
-const { TRANSACTIONS_PER_BLOCK } = config;
+const { TRANSACTIONS_PER_BLOCK, ENVIRONMENTS } = config;
+const environment = ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const ethPrivateKey = environment.PROPOSER_KEY;
+
 const { STATE_CONTRACT_NAME } = constants;
 
 let ws;
@@ -69,11 +76,13 @@ async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
 
 /**
  * This function will make a block iff I am the proposer and there are enough
- * transactions in the database to assembke a block from. It loops until told to
+ * transactions in the database to assemble a block from. It loops until told to
  * stop making blocks. It is called from the 'main()' routine to start it, and
  * should not be called from anywhere else because we only want one instance ever
  */
 export async function conditionalMakeBlock(proposer) {
+  const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+  const stateContractAddress = await getContractAddress(STATE_CONTRACT_NAME);
   /*
     if we are the current proposer, and there are enough transactions waiting
     to be processed, we can assemble a block and create a proposal
@@ -116,46 +125,56 @@ export async function conditionalMakeBlock(proposer) {
         });
 
         // propose this block to the Shield contract here
-        const unsignedProposeBlockTransaction = await (
-          await waitForContract(STATE_CONTRACT_NAME)
-        ).methods
+        const txDataToSign = await stateContractInstance.methods
           .proposeBlock(
             Block.buildSolidityStruct(block),
             transactions.map(t => Transaction.buildSolidityStruct(t)),
           )
           .encodeABI();
+        const { address } = web3.eth.accounts.privateKeyToAccount(ethPrivateKey);
+        const blockStake = await stateContractInstance.methods.getBlockStake().call();
+        const tx = {
+          from: address,
+          to: stateContractAddress,
+          data: txDataToSign,
+          value: blockStake,
+          gas: 8000000,
+        };
+        const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+        const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        logger.debug(`Transaction receipt ${receipt}`);
 
         // check that the websocket exists (it should) and its readyState is OPEN
         // before sending Proposed block. If not wait until the proposer reconnects
-        let tryCount = 0;
-        while (!ws || ws.readyState !== WebSocket.OPEN) {
-          await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+        // let tryCount = 0;
+        // while (!ws || ws.readyState !== WebSocket.OPEN) {
+        //   await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
 
-          logger.warn(`Websocket to proposer is closed.  Waiting for proposer to reconnect`);
+        //   logger.warn(`Websocket to proposer is closed.  Waiting for proposer to reconnect`);
 
-          increaseProposerWsClosed();
-          if (tryCount++ > 100) {
-            increaseProposerWsFailed();
-            throw new Error(`Websocket to proposer has failed`);
-          }
-        }
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          await ws.send(
-            JSON.stringify({
-              type: 'block',
-              txDataToSign: unsignedProposeBlockTransaction,
-              block,
-              transactions,
-            }),
-          );
-          logger.debug('Send unsigned block-assembler transactions to ws client');
-        } else if (ws) {
-          increaseProposerBlockNotSent();
-          logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
-        } else {
-          increaseProposerBlockNotSent();
-          logger.debug('Block not sent. Uinitialized socket');
-        }
+        //   increaseProposerWsClosed();
+        //   if (tryCount++ > 100) {
+        //     increaseProposerWsFailed();
+        //     throw new Error(`Websocket to proposer has failed`);
+        //   }
+        // }
+        // if (ws && ws.readyState === WebSocket.OPEN) {
+        //   await ws.send(
+        //     JSON.stringify({
+        //       type: 'block',
+        //       txDataToSign: unsignedProposeBlockTransaction,
+        //       block,
+        //       transactions,
+        //     }),
+        //   );
+        //   logger.debug('Send unsigned block-assembler transactions to ws client');
+        // } else if (ws) {
+        //   increaseProposerBlockNotSent();
+        //   logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
+        // } else {
+        //   increaseProposerBlockNotSent();
+        //   logger.debug('Block not sent. Uinitialized socket');
+        // }
         // remove the transactions from the mempool so we don't keep making new
         // blocks with them
         await removeTransactionsFromMemPool(block.transactionHashes);
