@@ -11,6 +11,8 @@ import {
   getContractAbi,
   debug,
 } from './routes/index.mjs';
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from '../swagger.mjs';
 
 const app = express();
 
@@ -24,6 +26,7 @@ setupHttpDefaults(
     app.use('/contract-address', getContractAddress);
     app.use('/contract-abi', getContractAbi);
     app.use('/debug', debug);
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   },
   true,
   false,
