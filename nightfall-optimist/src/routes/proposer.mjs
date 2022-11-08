@@ -8,6 +8,7 @@ import config from 'config';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
+  getContractAddress,
   getContractInstance,
   waitForContract,
 } from '@polygon-nightfall/common-files/utils/contract.mjs';
@@ -43,22 +44,49 @@ export function setProposer(p) {
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
 router.post('/register', async (req, res, next) => {
+  const web3Websocket = req.app.get('web3Websocket');
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
+
+  const { url = '', stake = 0, fee = 0 } = req.body;
+
   try {
-    const { address, url = '', fee = 0 } = req.body;
+    // Recreate Proposer, State contracts
+    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+    const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+
+    // Validate url, stake
     if (url === '') {
       throw new Error('Rest API URL not provided');
     }
-    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
-    // the first thing to do is to check if the proposer is already registered on the blockchain
-    const proposers = (await getProposers()).map(p => p.thisAddress);
-    // if not, let's register it
+
+    const minimumStake = await stateContractInstance.methods.getMinimumStake().call();
+    if (stake < minimumStake) {
+      throw new Error(`Given stake is below ${minimumStake} Wei`);
+    }
+
+    // Check if the proposer is already registered on the blockchain
+    const proposerAddresses = (await getProposers()).map(p => p.thisAddress);
+    const isRegistered = proposerAddresses.includes(ethAddress);
+
     let txDataToSign = '';
-    if (!proposers.includes(address)) {
+    let receipt;
+    if (!isRegistered) {
+      logger.debug('Register new proposer...');
       txDataToSign = await proposersContractInstance.methods.registerProposer(url, fee).encodeABI();
+      const tx = {
+        from: ethAddress,
+        to: proposersContractAddress,
+        data: txDataToSign,
+        value: stake,
+        gas: 8000000,
+      };
+      const signedTx = await web3Websocket.eth.accounts.signTransaction(tx, ethPrivateKey);
+      receipt = await web3Websocket.eth.sendSignedTransaction(signedTx.rawTransaction);
+      logger.debug(`Transaction receipt ${receipt}`);
     } else {
-      logger.warn(
-        'Proposer was already registered on the blockchain - registration attempt ignored',
-      );
+      logger.warn('Proposer was already registered, registration attempt ignored!');
     }
 
     /*
@@ -66,9 +94,9 @@ router.post('/register', async (req, res, next) => {
       or we're just about to register them. We may or may not be registed locally
       with optimist though. Let's check and fix that if needed.
      */
-    if (!(await isRegisteredProposerAddressMine(address))) {
+    if (!(await isRegisteredProposerAddressMine(ethAddress))) {
       logger.debug('Registering proposer locally');
-      await setRegisteredProposerAddress(address, url); // save the registration address
+      await setRegisteredProposerAddress(ethAddress, url); // save the registration address
 
       /*
         We've just registered with optimist but if we were already registered on the blockchain,
@@ -79,15 +107,14 @@ router.post('/register', async (req, res, next) => {
         logger.warn(
           'Proposer was already registered on the blockchain but not with this Optimist instance - registering locally',
         );
-        const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
         const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
-        if (address === currentProposer.thisAddress) {
+        if (ethAddress === currentProposer.thisAddress) {
           proposer.isMe = true;
           await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
         }
       }
     }
-    res.json({ txDataToSign });
+    res.json({ receipt });
   } catch (err) {
     next(err);
   }
