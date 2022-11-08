@@ -40,6 +40,7 @@ let stateAddress;
 let eventLogs = [];
 let eventsSeen;
 let minimumStake;
+let lastL2BlockNumber = 0;
 
 describe('Optimist synchronisation tests', () => {
   let blockProposeEmitter;
@@ -204,6 +205,7 @@ describe('Optimist synchronisation tests', () => {
       console.log('Second block', secondBlock);
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      lastL2BlockNumber = secondBlock.blockNumberL2;
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
@@ -225,6 +227,7 @@ describe('Optimist synchronisation tests', () => {
       const { block } = await p;
       const firstBlock = { ...block };
       console.log('First block', firstBlock);
+      expect(firstBlock.blockNumberL2).to.be.equal(lastL2BlockNumber+1)
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!

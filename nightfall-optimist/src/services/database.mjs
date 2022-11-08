@@ -343,8 +343,8 @@ export async function saveTransaction(_transaction) {
 
     return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
   }
-  
-  if(!transaction.mempool) {
+
+  if (!transaction.mempool) {
     db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
   }
 

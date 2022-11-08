@@ -40,12 +40,20 @@ export function workerEnableGet() {
 async function checkAlreadyInBlock(_transaction) {
   const transaction = { ..._transaction };
   const [block] = await getBlockByTransactionHash(transaction.transactionHash);
-  if (!block) return transaction; // all ok, we've not seen this before
+  if (!block){
+    logger.debug({
+      msg: 'Not seen before',
+    });
+    return transaction; // all ok, we've not seen this before
+  }
 
   const storedTransaction = await getTransactionByTransactionHash(transaction.transactionHash);
 
   if (storedTransaction?.blockNumber) {
     // it's a re-play of an existing transaction that's in a block
+    logger.debug({
+      msg: 'Reply of existing transaction',
+    });
     throw new TransactionError('This transaction has been processed previously', 6);
   }
 
