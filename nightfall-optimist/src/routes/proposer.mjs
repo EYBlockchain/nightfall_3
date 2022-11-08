@@ -130,7 +130,7 @@ router.post('/update', auth, async (req, res, next) => {
 /**
  * Returns the current proposer
  */
-router.get('/current-proposer', auth, async (req, res, next) => {
+router.get('/current-proposer', async (req, res, next) => {
   try {
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     const { thisAddress: currentProposer } = await stateContractInstance.methods
@@ -146,7 +146,7 @@ router.get('/current-proposer', auth, async (req, res, next) => {
 /**
  * Returns a list of the registered proposers
  */
-router.get('/proposers', auth, async (req, res, next) => {
+router.get('/proposers', async (req, res, next) => {
   try {
     const proposers = await getProposers();
 

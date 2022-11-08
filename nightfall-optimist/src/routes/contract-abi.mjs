@@ -12,7 +12,7 @@ import auth from '../utils/auth.mjs';
 
 const router = express.Router();
 
-router.get('/:contract', auth, async (req, res, next) => {
+router.get('/:contract', async (req, res, next) => {
   const { contract } = req.params;
   try {
     const abi = await getContractAbi(contract);
