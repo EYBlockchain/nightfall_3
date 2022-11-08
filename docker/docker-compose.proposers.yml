@@ -2,6 +2,8 @@ version: '3.5'
 # Use this script for running up 2 independent proposers with optimist and mongodb services.
 services:
   proposer_optimist_1:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     build:
       dockerfile: docker/optimist.standalone.Dockerfile
       context: ..
@@ -30,6 +32,8 @@ services:
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     build:
       dockerfile: docker/optimist.standalone.Dockerfile
       context: ..
@@ -86,6 +90,8 @@ services:
         target: /data/db
 
   proposer_1:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
@@ -115,6 +121,8 @@ services:
         target: /app/src
 
   proposer_2:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
