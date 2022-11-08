@@ -402,13 +402,8 @@ export async function removeTransactionsFromMemPool(
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  // const query = { transactionHash: { $in: transactionHashes }, blockNumberL2: -1 };
   const query = { transactionHash: { $in: transactionHashes }, blockNumberL2 };
   const update = { $set: { mempool: false, blockNumberL2, timeBlockL2 } };
-  logger.debug({
-    msg: 'REMOVE TRANSACTION FROM MEMPOL',
-    tx: await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray(),
-  });
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 

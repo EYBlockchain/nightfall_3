@@ -94,13 +94,7 @@ async function blockProposedEventHandler(data) {
 
     // mark transactions so that they are out of the mempool,
     // so we don't try to use them in a block which we're proposing.
-    logger.debug({
-      msg: 'REMOVE TX',
-    });
     await removeTransactionsFromMemPool(block.transactionHashes, block.blockNumberL2); // TODO is await needed?
-    logger.debug({
-      msg: 'REMOVE TX DONE',
-    });
     const blockCommitments = transactions
       .map(t => t.commitments.filter(c => c !== ZERO))
       .flat(Infinity);
@@ -130,12 +124,7 @@ async function blockProposedEventHandler(data) {
     // Instead, what happens now is that any good/bad blocks on top of the first bad block
     // will get saved and eventually all these blocks will be removed as part of the rollback
     // of the first bad block
-    if (queues[2].length === 0) {
-      await checkBlock(block, transactions);
-      logger.info('Block Checker - Block was valid');
-    } else {
-      logger.info('Block not Checked');
-    }
+    if (queues[2].length === 0) await checkBlock(block, transactions);
   } catch (err) {
     if (err instanceof BlockError) {
       logger.warn(`Block Checker - Block invalid, with code ${err.code}! ${err.message}`);

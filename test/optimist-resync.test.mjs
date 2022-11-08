@@ -175,8 +175,10 @@ describe('Optimist synchronisation tests', () => {
       // The promise resolves once the block is on-chain.
       const { block } = await p;
       const firstBlock = { ...block };
-      console.log('First Block', firstBlock);
-      lastL2BlockNumber = firstBlock.blockNumberL2;
+      logger.debug({
+        msg: 'First Block',
+        firstBlock,
+      });
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
@@ -203,11 +205,9 @@ describe('Optimist synchronisation tests', () => {
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
-      console.log('Second block', secondBlock);
+      logger.debug({ msg: 'Second block', secondBlock });
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-      lastL2BlockNumber = secondBlock.blockNumberL2;
-      expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
     it('Resync optimist after making a good block dropping Db', async function () {
@@ -227,8 +227,8 @@ describe('Optimist synchronisation tests', () => {
       // The promise resolves once the block is on-chain.
       const { block } = await p;
       const firstBlock = { ...block };
-      console.log('First block', firstBlock);
-      expect(firstBlock.blockNumberL2).to.be.equal(lastL2BlockNumber + 1);
+      logger.debug({ msg: 'First block', firstBlock });
+      lastL2BlockNumber = firstBlock.blockNumberL2;
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
@@ -254,7 +254,7 @@ describe('Optimist synchronisation tests', () => {
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
-      console.log('Second block', secondBlock);
+      logger.debug({ msg: 'Second block', secondBlock });
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       lastL2BlockNumber = secondBlock.blockNumberL2;
@@ -278,7 +278,7 @@ describe('Optimist synchronisation tests', () => {
       // The promise resolves once the block is on-chain.
       const { block, transactions } = await p;
       const firstBlock = { ...block };
-      console.log('First block', firstBlock);
+      logger.debug({ msg: 'First block', firstBlock });
       expect(firstBlock.blockNumberL2).to.be.equal(lastL2BlockNumber + 1);
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
@@ -341,7 +341,7 @@ describe('Optimist synchronisation tests', () => {
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
-      console.log('Second block', secondBlock);
+      logger.debug({ msg: 'Second block', secondBlock });
       lastL2BlockNumber = secondBlock.blockNumberL2;
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
