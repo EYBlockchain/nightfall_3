@@ -1016,7 +1016,9 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          connection._ws.ping();
+          if (connection._ws && connection._ws.readyState === WebSocket.OPEN) {
+            connection._ws.ping();
+          }
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
@@ -1025,45 +1027,48 @@ class Nf3 {
     };
 
     connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign, block, transactions, data } = msg;
+      if (connection._ws && connection._ws.readyState === WebSocket.OPEN) {
+        const msg = JSON.parse(message.data);
+        const { type, txDataToSign, block, transactions, data } = msg;
 
-      logger.debug(`Proposer received websocket message of type ${type}`);
+        logger.debug(`Proposer received websocket message of type ${type}`);
 
-      if (type === 'block') {
-        // First sign transaction, and send it within asynchronous queue. This will
-        // ensure that blockProposed events are emitted in order and with the correct nonce.
-        const tx = await this._signTransaction(
-          txDataToSign,
-          this.stateContractAddress,
-          await this.getBlockStake(), // the block stake could have changed, so we get it from the blockchain
-        );
-        proposerQueue.push(async () => {
-          try {
-            const receipt = await this._sendTransaction(tx);
-            proposeEmitter.emit('receipt', receipt, block, transactions);
-          } catch (err) {
-            logger.error({
-              msg: 'Error while trying to submit a block',
-              err,
-            });
-
-            // block proposed is reverted. Send transactions back to mempool
+        if (type === 'block') {
+          // First sign transaction, and send it within asynchronous queue. This will
+          // ensure that blockProposed events are emitted in order and with the correct nonce.
+          const tx = await this._signTransaction(
+            txDataToSign,
+            this.stateContractAddress,
+            await this.getBlockStake(), // the block stake could have changed, so we get it from the blockchain
+          );
+          proposerQueue.push(async () => {
             try {
-              await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
-            } catch (errorResetLocalBlock) {
+              const receipt = await this._sendTransaction(tx);
+              proposeEmitter.emit('receipt', receipt, block, transactions);
+            } catch (err) {
               logger.error({
-                msg: 'Error while trying to reset local block',
-                errorResetLocalBlock,
+                msg: 'Error while trying to submit a block',
+                err,
               });
+
+              // block proposed is reverted. Send transactions back to mempool
+              try {
+                await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+              } catch (errorResetLocalBlock) {
+                logger.error({
+                  msg: 'Error while trying to reset local block',
+                  errorResetLocalBlock,
+                });
+              }
+              proposeEmitter.emit('error', err, block, transactions);
             }
-            proposeEmitter.emit('error', err, block, transactions);
-          }
-        });
+          });
+        }
+
+        if (type === 'rollback') proposeEmitter.emit('rollback', data);
+
+        return null;
       }
-
-      if (type === 'rollback') proposeEmitter.emit('rollback', data);
-
       return null;
     };
 

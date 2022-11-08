@@ -40,7 +40,7 @@ let stateAddress;
 let eventLogs = [];
 let eventsSeen;
 let minimumStake;
-let lastL2BlockNumber = 0;
+let lastL2BlockNumber;
 
 describe('Optimist synchronisation tests', () => {
   let blockProposeEmitter;
@@ -176,6 +176,7 @@ describe('Optimist synchronisation tests', () => {
       const { block } = await p;
       const firstBlock = { ...block };
       console.log('First Block', firstBlock);
+      lastL2BlockNumber = firstBlock.blockNumberL2;
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
@@ -227,7 +228,7 @@ describe('Optimist synchronisation tests', () => {
       const { block } = await p;
       const firstBlock = { ...block };
       console.log('First block', firstBlock);
-      expect(firstBlock.blockNumberL2).to.be.equal(lastL2BlockNumber+1)
+      expect(firstBlock.blockNumberL2).to.be.equal(lastL2BlockNumber + 1);
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
@@ -255,6 +256,7 @@ describe('Optimist synchronisation tests', () => {
       console.log('Second block', secondBlock);
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+      lastL2BlockNumber = secondBlock.blockNumberL2;
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
@@ -276,6 +278,7 @@ describe('Optimist synchronisation tests', () => {
       const { block, transactions } = await p;
       const firstBlock = { ...block };
       console.log('First block', firstBlock);
+      expect(firstBlock.blockNumberL2).to.be.equal(lastL2BlockNumber + 1);
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // turn off challenging.  We're going to make a bad block and we don't want it challenged
@@ -337,6 +340,7 @@ describe('Optimist synchronisation tests', () => {
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
       console.log('Second block', secondBlock);
+      lastL2BlockNumber = secondBlock.blockNumberL2;
       // we still need to clean the 'BlockProposed' event from the  test logs though.
       ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);

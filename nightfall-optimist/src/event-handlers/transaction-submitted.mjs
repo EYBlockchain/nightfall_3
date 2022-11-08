@@ -40,7 +40,7 @@ export function workerEnableGet() {
 async function checkAlreadyInBlock(_transaction) {
   const transaction = { ..._transaction };
   const [block] = await getBlockByTransactionHash(transaction.transactionHash);
-  if (!block){
+  if (!block) {
     logger.debug({
       msg: 'Not seen before',
     });
