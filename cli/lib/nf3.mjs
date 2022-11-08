@@ -104,7 +104,10 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
-    axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
+    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
+      .createHash('sha256')
+      .update(environment.PROPOSER_KEY, 'hex')
+      .digest('hex');
   }
 
   /**
