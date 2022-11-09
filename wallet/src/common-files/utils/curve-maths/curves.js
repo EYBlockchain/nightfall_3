@@ -172,9 +172,12 @@ TODO - probably simpler to use integer arithmetic rather than binary manipulatio
 export function edwardsCompress(p) {
   const px = p[0];
   const py = p[1];
-  const xBits = px.toString(2).padStart(256, '0');
   const yBits = py.toString(2).padStart(256, '0');
-  const sign = xBits[255] === '1' ? '1' : '0';
+  const sign =
+    generalise(px).bigInt >
+    10944121435919637611123202872628637544274182200208017171849102093287904247808n
+      ? '1'
+      : '0';
   const yBitsC = sign.concat(yBits.slice(1)); // add in the sign bit
   const y = utils.ensure0x(BigInt('0b'.concat(yBitsC)).toString(16).padStart(64, '0')); // put yBits into hex
   return y;
@@ -188,14 +191,20 @@ export function edwardsDecompress(y) {
   // 168700.x^2 + y^2 = 1 + 168696.x^2.y^2
   const y2 = mulMod([yfield, yfield], Fp);
   const x2 = modDivide(
-    addMod([y2, BigInt(-1)], Fp),
-    addMod([mulMod([JUBJUBD, y2], Fp), -JUBJUBA], Fp),
+    addMod([-y2, 1n], Fp),
+    addMod([mulMod([-JUBJUBD, y2], Fp), JUBJUBA], Fp),
     Fp,
   );
   if (x2 === 0n && sign === '0') return BABYJUBJUB.INFINITY;
   let xfield = squareRootModPrime(x2, Fp);
-  const px = BigInt(xfield).toString(2).padStart(256, '0');
-  if (px[255] !== sign) xfield = Fp - xfield;
+  const signField =
+    generalise(xfield).bigInt >
+    10944121435919637611123202872628637544274182200208017171849102093287904247808n
+      ? '1'
+      : '0';
+  if (signField !== sign) {
+    xfield = Fp - xfield;
+  }
   const p = [xfield, yfield];
   if (!isOnCurve(p)) throw new Error('The computed point was not on the Babyjubjub curve');
   return p;
