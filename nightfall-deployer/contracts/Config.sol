@@ -8,7 +8,7 @@ import './Structures.sol';
 contract Config is Ownable, Structures {
     uint256 constant CHALLENGE_PERIOD = 1 weeks;
     bytes32 constant ZERO = bytes32(0);
-    uint256 constant TRANSACTIONS_PER_BLOCK = 32;
+    uint256 constant MAX_BLOCK_SIZE = 50000;
     uint256 constant BLOCK_STRUCTURE_SLOTS = 7;
 
     uint96 minimumStake;

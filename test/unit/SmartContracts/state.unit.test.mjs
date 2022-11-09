@@ -779,7 +779,7 @@ describe('State contract State functions', function () {
     ).to.be.revertedWithCustomError(shield, 'InvalidTransactionHash');
   });
 
-  it('should not proposeBlock: The block has too many transactions', async function () {
+  it('should not proposeBlock: The block has an invalid size', async function () {
     const newUrl = 'url';
     const newFee = 100;
     const amount = 100;
@@ -797,8 +797,10 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
 
-    const transactions = new Array(33);
-    transactions.fill(transactionsCreated.withdrawTransaction);
+    transactionsCreated.withdrawTransaction.nullifiers = Array(2500).fill(
+      '0x0000000000000000000000000000000000000000000000000000000000000000',
+    );
+
     await setTransactionInfo(
       state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
@@ -811,8 +813,10 @@ describe('State contract State functions', function () {
       34,
     );
     await expect(
-      state.proposeBlock(transactionsCreated.block, transactions, { value: 10 }),
-    ).to.be.revertedWith('State: The block has too many transactions');
+      state.proposeBlock(transactionsCreated.block, [transactionsCreated.withdrawTransaction], {
+        value: 10,
+      }),
+    ).to.be.revertedWithCustomError(state, 'InvalidBlockSize');
   });
 
   it('should not proposeBlock: Block flawed or out of order', async function () {

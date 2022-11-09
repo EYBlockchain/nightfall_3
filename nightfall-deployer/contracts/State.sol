@@ -105,12 +105,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         }
         require(blockStake <= msg.value, 'State: Stake payment is incorrect');
         require(b.proposer == msg.sender, 'State: The sender is not the proposer');
-        // set the maximum tx/block to prevent unchallengably large blocks
-        require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
-        require(
-            stakeAccounts[msg.sender].amount >= blockStake,
-            'State: Proposer does not have enough funds staked'
-        );
+        require(stakeAccounts[msg.sender].amount >= blockStake, 'State: Proposer does not have enough funds staked');
         stakeAccounts[msg.sender].amount -= blockStake;
         stakeAccounts[msg.sender].challengeLocked += blockStake;
         stakeAccounts[msg.sender].time = 0;
@@ -119,6 +114,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
 
         bytes32 blockHash;
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
+        uint256 maxBlockSize = MAX_BLOCK_SIZE;
 
 
         assembly {
@@ -132,6 +128,11 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 } {
                     _height := add(_height, 1)
                 }
+            }
+		
+            if lt(maxBlockSize, sub(calldatasize(), add(t.offset, calldataload(t.offset)))) {
+                mstore(0, 0x41c918e600000000000000000000000000000000000000000000000000000000) //Custom error InvalidBlockSize
+                revert(0, 4)
             }
 
             let x := mload(0x40) //Gets the first free memory pointer

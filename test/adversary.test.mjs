@@ -23,7 +23,7 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const { TRANSACTIONS_PER_BLOCK } = config;
+const { txPerBlock } = config.TEST_OPTIONS;
 const TX_WAIT = 12000;
 const TEST_LENGTH = 3;
 
@@ -62,7 +62,7 @@ describe('Testing with an adversary', () => {
 
   before(async () => {
     console.log(`CHALLENGE_TYPE: ${process.env.CHALLENGE_TYPE}`);
-    console.log(`TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK}`);
+    console.log(`TRANSACTIONS_PER_BLOCK: ${txPerBlock}`);
     console.log('ENV:\n', environment);
     nf3User = new Nf3(ethereumSigningKeyUser, environment);
 
@@ -172,17 +172,14 @@ describe('Testing with an adversary', () => {
       // enough balance for a lot of transfers with low value.
       console.log('Starting balance :', startBalance);
       expectedBalance = startBalance;
-      for (let j = 0; j < TRANSACTIONS_PER_BLOCK; j++) {
+      for (let j = 0; j < txPerBlock; j++) {
         await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
         nDeposits++;
         expectedBalance += value2;
       }
       console.log('Number of deposits', nDeposits);
       for (let i = 0; i < TEST_LENGTH; i++) {
-        await waitForSufficientBalance(
-          nf3User,
-          startBalance + (i + 1) * (TRANSACTIONS_PER_BLOCK - 1) * value2,
-        );
+        await waitForSufficientBalance(nf3User, startBalance + (i + 1) * (txPerBlock - 1) * value2);
         try {
           await nf3User.transfer(
             false,
@@ -217,7 +214,7 @@ describe('Testing with an adversary', () => {
           }
         }
         console.log('Number of transfers', nTransfers);
-        for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
+        for (let k = 0; k < txPerBlock - 1; k++) {
           await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
           nDeposits++;
           expectedBalance += value2;
@@ -263,7 +260,7 @@ describe('Testing with an adversary', () => {
           expectedBalance -= value2;
         }
       }
-      for (let k = 0; k < TRANSACTIONS_PER_BLOCK - 1; k++) {
+      for (let k = 0; k < txPerBlock - 1; k++) {
         await nf3User.deposit(ercAddress, tokenType, value2, tokenId, fee);
         nDeposits++;
         expectedBalance += value2;

@@ -21,7 +21,7 @@ module.exports = {
   KEYS_COLLECTION: 'keys',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   EXCLUDE_DIRS: 'common',
-  MAX_QUEUE: 5,
+  MAX_QUEUE: 10,
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
   CONFIRMATION_POLL_TIME: 1000,
@@ -88,7 +88,8 @@ module.exports = {
   BACKEND: process.env.BACKEND || 'bellman',
   CURVE: process.env.CURVE || 'bn128',
 
-  TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
+  MINIMUM_TRANSACTION_SLOTS: 16,
+  MAX_BLOCK_SIZE: Number(process.env.MAX_BLOCK_SIZE) || 50000,
   RETRIES: Number(process.env.AUTOSTART_RETRIES) || 100,
   VK_IDS: {
     deposit: {
@@ -226,7 +227,7 @@ module.exports = {
     gasCosts: 80000000000000000,
     fee: 1,
     ROTATE_PROPOSER_BLOCKS: 20,
-    txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
+    txPerBlock: 2,
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||

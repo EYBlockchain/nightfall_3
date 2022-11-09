@@ -47,7 +47,7 @@ export const getCommitmentInfo = async txInfo => {
   let value = totalValueToSend + addedFee;
   const feeValue = fee.bigInt - addedFee;
 
-  logger.debug(`using user provided commitments: ${providedCommitments !== undefined}`);
+  logger.debug(`using user provided commitments: ${providedCommitments.length > 0}`);
 
   const spentCommitments = [];
   try {

@@ -8,6 +8,8 @@ pragma solidity ^0.8.0;
 contract Structures {
     error InvalidTransactionHash();
     error DepositNotEscrowed(bytes32 depositHash);
+    error InvalidBlockSize();
+    error InvalidTransactionSize();
 
     enum TokenType {
         ERC20,

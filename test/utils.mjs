@@ -368,6 +368,8 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
     depositTransactions.push(res);
     await waitForTimeout(1000);
   }
+  await new Promise(resolve => setTimeout(resolve, 6000));
+
   return depositTransactions;
 };
 
@@ -395,6 +397,8 @@ export const transferNTransactions = async (
     expectTransaction(res);
     transferTransactions.push(res);
   }
+  await new Promise(resolve => setTimeout(resolve, 6000));
+
   return transferTransactions;
 };
 
@@ -422,6 +426,7 @@ export const withdrawNTransactions = async (
     expectTransaction(res);
     withdrawTransactions.push(res);
   }
+  await new Promise(resolve => setTimeout(resolve, 6000));
   return withdrawTransactions;
 };
 
@@ -495,4 +500,19 @@ export const pendingCommitmentCount = async client => {
   const pendingCommitments = Object.keys(pendingDeposit).length + Object.keys(pendingSpent).length;
 
   return pendingCommitments;
+};
+
+export const emptyL2 = async (nf3User, web3Client, eventLogs) => {
+  await new Promise(resolve => setTimeout(resolve, 6000));
+  let count = await pendingCommitmentCount(nf3User);
+  while (count !== 0) {
+    await nf3User.makeBlockNow();
+    try {
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      count = await pendingCommitmentCount(nf3User);
+    } catch (err) {
+      break;
+    }
+  }
+  await new Promise(resolve => setTimeout(resolve, 6000));
 };
