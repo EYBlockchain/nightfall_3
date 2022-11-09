@@ -555,18 +555,23 @@ async function verifyEnoughCommitments(
   let commitments = [];
 
   if (!onlyFee) {
+    console.log(vals);
+    console.log('VALUE', value);
+
     // Get the commitments from the database
     const commitmentArray = vals.filter(
       v =>
         v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
-        v.preimage.ercAddress === ercAddressFee.hex(32) &&
+        v.preimage.ercAddress === ercAddress.hex(32) &&
         v.preimage.tokenId === tokenId.hex(32) &&
         !v.isNullified &&
         !v.isPendingNullification,
     );
 
+    console.log('commitmentArray', commitmentArray);
     // If not commitments are found, the transfer/withdrawal cannot be paid, so throw an error
-    if (commitmentArray === []) throw new Error('no commitment for the actual transfer found');
+    if (commitmentArray.length === 0)
+      throw new Error('no commitment for the actual transfer found');
 
     // Turn the fee commitments into real commitment object and sort it
     commitments = commitmentArray
@@ -576,6 +581,7 @@ async function verifyEnoughCommitments(
 
     const c = commitments.length; // Store the number of commitments
 
+    console.log('C', c);
     // At most, we can use (maxNumberNullifiers - number of fee commitments needed) commitments to pay for the
     // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
     // Therefore, the maximum number of commitments the user will be able to use is the minimum between
@@ -584,6 +590,8 @@ async function verifyEnoughCommitments(
     const minimumFeeCommits = fee.bigInt > 0n ? 1 : 0;
     const maxPossibleCommitments = Math.min(c, maxNumberNullifiers - minimumFeeCommits);
 
+    console.log('MIN FEE', minimumFeeCommits);
+    console.log('MAX', maxPossibleCommitments);
     let j = 1;
     let sumHighestCommitments = 0n;
     // We try to find the minimum number of commitments whose sum is higher than the value sent.
@@ -864,19 +872,18 @@ export async function findUsableCommitmentsMutex(
 }
 
 export async function getCommitmentsByHash(hashes, compressedZkpPublicKey, ercAddress, tokenId) {
-  const connection = await connectDB();
-  const db = connection.db(COMMITMENTS_DB);
-  const commitment = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .find({
-      _id: { $in: hashes },
-      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-      'preimage.ercAddress': generalise(ercAddress).hex(32),
-      'preimage.tokenId': generalise(tokenId).hex(32),
-      isNullified: false,
-      isPendingNullification: false,
-    })
-    .toArray();
+  const db = await connectDB();
+  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const commitment = vals.filter(
+    v =>
+      hashes.includes(v._id) &&
+      v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
+      v.preimage.ercAddress === generalise(ercAddress).hex(32) &&
+      v.preimage.tokenId === generalise(tokenId).hex(32) &&
+      !v.isNullified &&
+      !v.isPendingNullification,
+  );
+
   return commitment;
 }
 

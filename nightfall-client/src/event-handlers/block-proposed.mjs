@@ -26,7 +26,7 @@ import {
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE, PROTOCOL, ZOKRATES_WORKER_HOST } = config;
+const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE, PROTOCOL, CIRCOM_WORKER_HOST } = config;
 const { ZERO } = constants;
 
 const { generalise } = gen;
@@ -160,12 +160,9 @@ async function blockProposedEventHandler(data, syncing) {
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
 
-  const responseCircuitHash = await axios.get(
-    `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
-    {
-      params: { circuit: 'withdraw' },
-    },
-  );
+  const responseCircuitHash = await axios.get(`${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`, {
+    params: { circuit: 'withdraw' },
+  });
 
   const withdrawCircuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(32);
 
