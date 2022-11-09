@@ -1,5 +1,6 @@
 import Web3 from 'web3';
 import config from 'config';
+import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
@@ -9,6 +10,15 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 const { SIGNATURES } = config;
 const { ZERO } = constants;
+const { generalise } = gen;
+
+export const packInfo = (blockNumberL2, leafCount, proposer) => {
+  const blockNumberL2Packed = generalise(blockNumberL2).hex(8).slice(2);
+  const leafCountPacked = generalise(leafCount).hex(4).slice(2);
+  const proposerPacked = generalise(proposer).hex(20).slice(2);
+
+  return '0x'.concat(leafCountPacked, blockNumberL2Packed, proposerPacked);
+};
 
 export function calcBlockHash(block) {
   const web3 = new Web3();
@@ -21,15 +31,10 @@ export function calcBlockHash(block) {
     frontierHash,
     transactionHashesRoot,
   } = block;
-  const blockArray = [
-    leafCount,
-    proposer,
-    root,
-    blockNumberL2,
-    previousBlockHash,
-    frontierHash,
-    transactionHashesRoot,
-  ];
+
+  const packedInfo = packInfo(blockNumberL2, leafCount, proposer);
+
+  const blockArray = [packedInfo, root, previousBlockHash, frontierHash, transactionHashesRoot];
 
   logger.debug({
     msg: 'Encoding parameters',
@@ -53,11 +58,12 @@ export function buildBlockSolidityStruct(block) {
     frontierHash,
     transactionHashesRoot,
   } = block;
+
+  const packedInfo = packInfo(blockNumberL2, leafCount, proposer);
+
   return {
-    leafCount: Number(leafCount),
-    proposer,
+    packedInfo,
     root,
-    blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
     frontierHash,
     transactionHashesRoot,

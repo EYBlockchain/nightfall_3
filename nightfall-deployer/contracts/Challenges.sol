@@ -37,12 +37,13 @@ contract Challenges is Stateful, Config {
         state.areBlockAndTransactionsReal(blockL2, transactions);
 
         require(
-            priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2,
+            Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 ==
+                Utils.getBlockNumberL2(blockL2.packedInfo),
             'Blocks needs to be subsequent'
         );
         ChallengesUtil.libChallengeLeafCountCorrect(
-            priorBlockL2.leafCount,
-            blockL2.leafCount,
+            Utils.getLeafCount(priorBlockL2.packedInfo),
+            Utils.getLeafCount(blockL2.packedInfo),
             transactions
         );
         challengeAccepted(blockL2);
@@ -61,7 +62,8 @@ contract Challenges is Stateful, Config {
         state.areBlockAndTransactionsReal(blockL2, transactions);
 
         require(
-            priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2,
+            Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 ==
+                Utils.getBlockNumberL2(blockL2.packedInfo),
             'Blocks needs to be subsequent'
         );
 
@@ -126,7 +128,10 @@ contract Challenges is Stateful, Config {
             transaction2.transactionSiblingPath
         );
 
-        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+        uint64 blockL2NumberTx1 = Utils.getBlockNumberL2(transaction1.blockL2.packedInfo);
+        uint64 blockL2NumberTx2 = Utils.getBlockNumberL2(transaction2.blockL2.packedInfo);
+
+        if (blockL2NumberTx1 == blockL2NumberTx2) {
             require(
                 transaction1.transactionIndex != transaction2.transactionIndex,
                 'Cannot be the same transactionIndex'
@@ -141,7 +146,7 @@ contract Challenges is Stateful, Config {
         );
 
         // Delete the latest block of the two
-        if (transaction1.blockL2.blockNumberL2 > transaction2.blockL2.blockNumberL2) {
+        if (blockL2NumberTx1 > blockL2NumberTx2) {
             challengeAccepted(transaction1.blockL2);
         } else {
             challengeAccepted(transaction2.blockL2);
@@ -176,7 +181,10 @@ contract Challenges is Stateful, Config {
             transaction2.transactionSiblingPath
         );
 
-        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+        uint64 blockL2NumberTx1 = Utils.getBlockNumberL2(transaction1.blockL2.packedInfo);
+        uint64 blockL2NumberTx2 = Utils.getBlockNumberL2(transaction2.blockL2.packedInfo);
+
+        if (blockL2NumberTx1 == blockL2NumberTx2) {
             require(
                 transaction1.transactionIndex != transaction2.transactionIndex,
                 'Cannot be the same transactionIndex'
@@ -191,7 +199,7 @@ contract Challenges is Stateful, Config {
         );
 
         // Delete the latest block of the two
-        if (transaction1.blockL2.blockNumberL2 > transaction2.blockL2.blockNumberL2) {
+        if (blockL2NumberTx1 > blockL2NumberTx2) {
             challengeAccepted(transaction1.blockL2);
         } else {
             challengeAccepted(transaction2.blockL2);
@@ -232,7 +240,8 @@ contract Challenges is Stateful, Config {
                 );
 
                 require(
-                    historicblockNumberL2 == blockL2ContainingHistoricRoot[i].blockNumberL2,
+                    historicblockNumberL2 ==
+                        Utils.getBlockNumberL2(blockL2ContainingHistoricRoot[i].packedInfo),
                     'Incorrect historic root block'
                 );
 
@@ -277,8 +286,9 @@ contract Challenges is Stateful, Config {
     // This gets called when a challenge succeeds
     function challengeAccepted(Block calldata badBlock) private {
         // Check to ensure that the block being challenged is less than a week old
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(badBlock.packedInfo);
         require(
-            state.getBlockData(badBlock.blockNumberL2).time >= (block.timestamp - 7 days),
+            state.getBlockData(blockNumberL2).time >= (block.timestamp - 7 days),
             'Cannot challenge block'
         );
         // emit the leafCount where the bad block was added. Timber will pick this
@@ -286,13 +296,13 @@ contract Challenges is Stateful, Config {
         // State.sol because Timber gets confused if its events come from two
         // different contracts (it uses the contract name as part of the db
         // connection - we need to change that).
-        emit Rollback(badBlock.blockNumberL2);
+        emit Rollback(blockNumberL2);
         // we need to remove the block that has been successfully
         // challenged from the linked list of blocks and all of the subsequent
         // blocks
-        BlockData[] memory badBlocks = removeBlockHashes(badBlock.blockNumberL2);
+        BlockData[] memory badBlocks = removeBlockHashes(blockNumberL2);
         // remove the proposer and give the proposer's block stake to the challenger
-        state.rewardChallenger(msg.sender, badBlock.proposer, badBlocks);
+        state.rewardChallenger(msg.sender, Utils.getProposer(badBlock.packedInfo), badBlocks);
     }
 
     function removeBlockHashes(uint64 blockNumberL2) internal returns (BlockData[] memory) {

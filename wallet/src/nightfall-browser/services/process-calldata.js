@@ -5,11 +5,13 @@ Function to retreive calldata associated with a blockchain event.
 This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
+import gen from 'general-number';
 import Web3 from '../../common-files/utils/web3';
 import Transaction from '../../common-files/classes/transaction';
 import { decompressProof } from '../../common-files/utils/curve-maths/curves';
 
 const { SIGNATURES } = global.config;
+const { generalise } = gen;
 
 async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -20,14 +22,21 @@ async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root, blockNumberL2, previousBlockHash, transactionHashesRoot] =
-    blockData;
+  const [packedBlockInfo, root, previousBlockHash, frontierHash, transactionHashesRoot] = blockData;
+
+  const packedInfoHex = generalise(packedBlockInfo).hex(32).slice(2);
+
+  const leafCount = generalise(`0x${packedInfoHex.slice(0, 8)}`).hex(4);
+  const blockNumberL2 = generalise(`0x${packedInfoHex.slice(8, 24)}`).hex(8);
+  const proposer = generalise(`0x${packedInfoHex.slice(24, 64)}`).hex(20);
+
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
     blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
+    frontierHash,
     transactionHashesRoot,
   };
   const transactions = transactionsData.map(t => {

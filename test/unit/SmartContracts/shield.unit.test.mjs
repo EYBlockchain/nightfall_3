@@ -6,18 +6,15 @@ import {
   calculateBlockHash,
   calculateTransactionHash,
   createBlockAndTransactions,
+  unpackBlockInfo,
 } from '../utils/utils.mjs';
 import { setAdvancedWithdrawal, setWhitelist } from '../utils/shieldStorage.mjs';
-import {
-  setBlockData,
-  setBlockPaymentClaimed,
-  setFeeBookInfo,
-  setStakeAccount,
-} from '../utils/stateStorage.mjs';
+import { setBlockData, setBlockInfo, setStakeAccount } from '../utils/stateStorage.mjs';
 import {
   packHistoricRoots,
   packInfo as packInfoTransaction,
 } from '../../../common-files/classes/transaction.mjs';
+import { packInfo as packBlockInfo } from '../../../nightfall-optimist/src/services/block-utils.mjs';
 
 const { ethers, upgrades } = hardhat;
 
@@ -625,7 +622,7 @@ describe('Testing Shield Contract', function () {
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
       await time.increase(86400 * 7 + 1);
-      await setFeeBookInfo(stateAddress, block, 15, 20);
+      await setBlockInfo(stateAddress, blockHash, 15, 20, false);
 
       await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
       await Erc20MockInstance.approve(shieldAddress, '10');
@@ -646,13 +643,15 @@ describe('Testing Shield Contract', function () {
 
       await ShieldInstance.requestBlockPayment(block);
 
-      expect(await StateInstance.claimedBlockStakes(blockHash)).to.equal(true);
+      const { proposer, blockNumberL2 } = unpackBlockInfo(block.packedInfo);
+
+      expect((await StateInstance.blockInfo(blockHash)).stakeClaimed).to.equal(true);
       const proposerBlockHash = ethers.utils.keccak256(
-        ethers.utils.solidityPack(['address', 'uint256'], [block.proposer, block.blockNumberL2]),
+        ethers.utils.solidityPack(['address', 'uint256'], [proposer, blockNumberL2]),
       );
 
-      expect((await StateInstance.feeBookBlocks(proposerBlockHash)).feesEth).to.equal(0);
-      expect((await StateInstance.feeBookBlocks(proposerBlockHash)).feesMatic).to.equal(0);
+      expect((await StateInstance.blockInfo(proposerBlockHash)).feesEth).to.equal(0);
+      expect((await StateInstance.blockInfo(proposerBlockHash)).feesMatic).to.equal(0);
 
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(15);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(20);
@@ -671,11 +670,11 @@ describe('Testing Shield Contract', function () {
     it("fails if block doesn't exist", async function () {
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
+      const packedInfoBlock = packBlockInfo(0, 1, owner[1].address);
+
       const blockFake = {
-        leafCount: 1,
-        proposer: owner[1].address,
+        packedInfo: packedInfoBlock,
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-        blockNumberL2: 0,
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
         transactionHashesRoot: ethers.utils.solidityKeccak256(
@@ -715,7 +714,7 @@ describe('Testing Shield Contract', function () {
 
       await time.increase(86400 * 7 + 1);
 
-      await setBlockPaymentClaimed(stateAddress, blockHash);
+      await setBlockInfo(stateAddress, blockHash, 15, 20, true);
 
       await expect(ShieldInstance.requestBlockPayment(block)).to.be.revertedWith(
         'Shield: Block stake for this block already claimed',
@@ -749,7 +748,7 @@ describe('Testing Shield Contract', function () {
     it('fails if block payment has been claimed', async function () {
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
-      await setBlockPaymentClaimed(stateAddress, blockHash);
+      await setBlockInfo(stateAddress, blockHash, 15, 20, true);
 
       await time.increase(86400 * 7 + 1);
 
@@ -933,11 +932,11 @@ describe('Testing Shield Contract', function () {
         [calculateTransactionHash(withdrawERC721), ethers.utils.hexZeroPad(0, 32)],
       );
 
+      const packedInfoBlock = packBlockInfo(0, 1, owner[0].address);
+
       const blockERC721 = {
-        leafCount: 1,
-        proposer: owner[0].address,
+        packedInfo: packedInfoBlock,
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-        blockNumberL2: 0,
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
         transactionHashesRoot,
@@ -1023,11 +1022,11 @@ describe('Testing Shield Contract', function () {
         [calculateTransactionHash(withdrawERC1155), ethers.utils.hexZeroPad(0, 32)],
       );
 
+      const packedInfoBlock = packBlockInfo(0, 1, owner[0].address);
+
       const blockERC1155 = {
-        leafCount: 1,
-        proposer: owner[0].address,
+        packedInfo: packedInfoBlock,
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-        blockNumberL2: 0,
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
         transactionHashesRoot,
@@ -1152,11 +1151,11 @@ describe('Testing Shield Contract', function () {
         [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
       );
 
+      const packedInfoBlock = packBlockInfo(0, 1, owner[0].address);
+
       const blockWithdrawalInvalid = {
-        leafCount: 1,
-        proposer: owner[0].address,
+        packedInfo: packedInfoBlock,
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-        blockNumberL2: 0,
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
         transactionHashesRoot,
@@ -1256,11 +1255,11 @@ describe('Testing Shield Contract', function () {
         [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
       );
 
+      const packedInfoBlock = packBlockInfo(0, 1, owner[0].address);
+
       const blockWithdrawalInvalid = {
-        leafCount: 1,
-        proposer: owner[0].address,
+        packedInfo: packedInfoBlock,
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-        blockNumberL2: 0,
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
         transactionHashesRoot,
@@ -1335,11 +1334,11 @@ describe('Testing Shield Contract', function () {
         [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
       );
 
+      const packedInfoBlock = packBlockInfo(0, 1, owner[0].address);
+
       const blockWithdrawalInvalid = {
-        leafCount: 1,
-        proposer: owner[0].address,
+        packedInfo: packedInfoBlock,
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-        blockNumberL2: 0,
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
         transactionHashesRoot,
@@ -1413,11 +1412,11 @@ describe('Testing Shield Contract', function () {
         [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
       );
 
+      const packedInfoBlock = packBlockInfo(0, 1, owner[0].address);
+
       const blockWithdrawalInvalid = {
-        leafCount: 1,
-        proposer: owner[0].address,
+        packedInfo: packedInfoBlock,
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-        blockNumberL2: 0,
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
         transactionHashesRoot,
@@ -1490,11 +1489,11 @@ describe('Testing Shield Contract', function () {
         [calculateTransactionHash(withdrawalTransactionInvalid), ethers.utils.hexZeroPad(0, 32)],
       );
 
+      const packedInfoBlock = packBlockInfo(0, 1, owner[0].address);
+
       const blockWithdrawalInvalid = {
-        leafCount: 1,
-        proposer: owner[0].address,
+        packedInfo: packedInfoBlock,
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-        blockNumberL2: 0,
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
         transactionHashesRoot,
@@ -1731,11 +1730,11 @@ describe('Testing Shield Contract', function () {
         [calculateTransactionHash(withdrawTransactionERC721), ethers.utils.hexZeroPad(0, 32)],
       );
 
+      const packedInfoBlock = packBlockInfo(0, 1, owner[0].address);
+
       const blockERC721 = {
-        leafCount: 1,
-        proposer: owner[0].address,
+        packedInfo: packedInfoBlock,
         root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-        blockNumberL2: 0,
         previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
         frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
         transactionHashesRoot,
