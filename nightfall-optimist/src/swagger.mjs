@@ -299,13 +299,12 @@ const swaggerDocument = {
      */
     '/proposer/pending-payments': {
       get: {
-        summary: 'Pending Payment',
+        summary: 'Pending Payments',
         description: 'Get pending blocks payments for a proposer',
         tags: ['Proposer'],
-
         responses: {
           500: {
-            description: 'Rest API URL not provided',
+            description: 'Some error occured',
           },
           200: {
             description: 'OK',
@@ -316,10 +315,11 @@ const swaggerDocument = {
                   $ref: '#/components/schemas/PendingPaymentsResponse',
                 },
                 examples: {
-                  updateProposerResponse: {
+                  PendingPaymentsResponse: {
                     value: {
-                      txDataToSign:
+                      blockHash:
                         '0x0d602201000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000018687474703a2f2f70726f706f736572746573743a383030300000000000000000',
+                      challengePeriod: false,
                     },
                   },
                 },
@@ -336,20 +336,19 @@ const swaggerDocument = {
       post: {
         summary: 'Payment',
         description:
-          'Withdraw funds owing to an account, made by a successful challenge or proposed block.  This just provides the tx data, the user will need to call the blockchain client.',
+          'Function to get payment for proposing a L2 block.  This should be called only after the block is finalised. It will authorise the payment as a pending withdrawal and then /withdraw needs to be called to recover the money.',
         tags: ['Proposer'],
         requestBody: {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/UpdateProposerRequest',
+                $ref: '#/components/schemas/requestPayment',
               },
               examples: {
-                updateProposerRequest: {
+                requestPayment: {
                   value: {
                     address: '0x0A2798E08B66A1a4188F4B239651C015aC587Bf8',
-                    url: 'http://test-proposer1',
-                    fee: 0,
+                    blockHash: '0x7fe911936f773030ecaa1cf417b8c24e47cbf5e05b003b8f155bb10b0066956d',
                   },
                 },
               },
@@ -366,13 +365,12 @@ const swaggerDocument = {
               'application/json': {
                 schema: {
                   type: 'object',
-                  $ref: '#/components/schemas/UpdateProposerResponse',
+                  $ref: '#/components/schemas/TxDataToSign',
                 },
                 examples: {
-                  updateProposerResponse: {
+                  paymentResponse: {
                     value: {
-                      blockHash:
-                        '0x0d602201000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000018687474703a2f2f70726f706f736572746573743a383030300000000000000000',
+                      txDataToSign: '0xbed9d861',
                     },
                   },
                 },
@@ -391,27 +389,9 @@ const swaggerDocument = {
         description:
           'Withdraw funds owing to an account, made by a successful challenge or proposed block.  This just provides the tx data, the user will need to call the blockchain client.',
         tags: ['Proposer'],
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/UpdateProposerRequest',
-              },
-              examples: {
-                updateProposerRequest: {
-                  value: {
-                    address: '0x0A2798E08B66A1a4188F4B239651C015aC587Bf8',
-                    url: 'http://test-proposer1',
-                    fee: 0,
-                  },
-                },
-              },
-            },
-          },
-        },
         responses: {
           500: {
-            description: 'Rest API URL not provided',
+            description: 'Some error occured',
           },
           200: {
             description: 'OK',
@@ -419,10 +399,10 @@ const swaggerDocument = {
               'application/json': {
                 schema: {
                   type: 'object',
-                  $ref: '#/components/schemas/UpdateProposerResponse',
+                  $ref: '#/components/schemas/TxDataToSign',
                 },
                 examples: {
-                  pendingPaymentsResponse: {
+                  withdrawResponse: {
                     value: {
                       txDataToSign:
                         '0x0d602201000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000018687474703a2f2f70726f706f736572746573743a383030300000000000000000',
@@ -444,7 +424,6 @@ const swaggerDocument = {
         description:
           'Function to change the current proposer (assuming their time has elapsed). This just provides the tx data, the user will need to call the blockchain client.',
         tags: ['Proposer'],
-
         responses: {
           500: {
             description: 'Rest API URL not provided',
@@ -455,10 +434,10 @@ const swaggerDocument = {
               'application/json': {
                 schema: {
                   type: 'object',
-                  $ref: '#/components/schemas/UpdateProposerResponse',
+                  $ref: '#/components/schemas/TxDataToSign',
                 },
                 examples: {
-                  updateProposerResponse: {
+                  changeProposerResponse: {
                     value: {
                       txDataToSign: '0x77603f4a',
                     },
@@ -476,26 +455,8 @@ const swaggerDocument = {
     '/proposer/mempool': {
       get: {
         summary: 'Get Mempool',
-        description: 'Get the mempool of a connected proposer',
+        description: 'Get the transaction of the mempool that proposer is connected to',
         tags: ['Proposer'],
-        requestBody: {
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/UpdateProposerRequest',
-              },
-              examples: {
-                updateProposerRequest: {
-                  value: {
-                    address: '0x0A2798E08B66A1a4188F4B239651C015aC587Bf8',
-                    url: 'http://test-proposer1',
-                    fee: 0,
-                  },
-                },
-              },
-            },
-          },
-        },
         responses: {
           500: {
             description: 'Rest API URL not provided',
@@ -506,13 +467,12 @@ const swaggerDocument = {
               'application/json': {
                 schema: {
                   type: 'object',
-                  $ref: '#/components/schemas/UpdateProposerResponse',
+                  $ref: '#/components/schemas/mempoolResponse',
                 },
                 examples: {
                   updateProposerResponse: {
                     value: {
-                      txDataToSign:
-                        '0x0d602201000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000018687474703a2f2f70726f706f736572746573743a383030300000000000000000',
+                      result: [],
                     },
                   },
                 },
@@ -737,7 +697,33 @@ const swaggerDocument = {
           },
         },
       },
-
+      proposerAddress: {
+        type: 'object',
+        properties: {
+          address: {
+            type: 'string',
+          },
+        },
+      },
+      requestPayment: {
+        type: 'object',
+        properties: {
+          address: {
+            type: 'string',
+          },
+          blockHash: {
+            type: 'string',
+          },
+        },
+      },
+      mempoolResponse: {
+        type: 'object',
+        properties: {
+          result: {
+            type: 'array',
+          },
+        },
+      },
       PendingPaymentsResponse: {
         type: 'object',
         properties: {
@@ -757,8 +743,6 @@ const swaggerDocument = {
           },
         },
       },
-      withdrawRequest: {},
-      withdrawResponse: {},
     },
   },
 };
