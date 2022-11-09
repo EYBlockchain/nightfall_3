@@ -254,8 +254,8 @@ Whitehat and Wanseob Lim and their
 [zkopru](https://ethresear.ch/t/zkopru-zk-optimistic-rollup-for-private-transactions/7717)
 application.
 
-We make use of the [ZoKrates](https://zokrates.github.io/) compiler, which removes much of the hard
-work of developing ZKP circuits.
+We make use of the [Circom](https://docs.circom.io/) compiler, which removes much of the hard work
+of developing ZKP circuits.
 
 We hope that we have credited everyone who contributed significantly to this project but please let
 us know if we have missed you out and we'll add you here!

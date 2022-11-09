@@ -34,8 +34,6 @@ while [ -n "$1" ]; do
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
                                     ;;
-      -mpc)                         export MPC="true"
-                                    ;;
       * )                           usage
                               exit 1
     esac

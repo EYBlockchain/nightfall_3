@@ -58,6 +58,32 @@ jobs:
           cd ../
           npm run unit-test
 
+  unit-test-circuits:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+      - name: Install Circom
+        run: |
+          curl https://sh.rustup.rs -sSf -o rust.sh
+          bash -f rust.sh -y
+          git clone https://github.com/iden3/circom.git
+          cd circom
+          cargo build --release
+          cargo install --path circom
+
+      - name: Unit Circuit Tests
+        run: |
+          npm ci
+          cd common-files
+          npm ci
+          cd ../nightfall-deployer
+          npm ci
+          cd ../
+          npm run unit-test-circuits
+
   circuits-test:
     env:
       CONFIRMATIONS: 1

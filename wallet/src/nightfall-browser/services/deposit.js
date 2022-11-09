@@ -10,8 +10,6 @@
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
-
 import computeCircuitInputs from '@Nightfall/utils/computeCircuitInputs';
 import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
@@ -21,9 +19,9 @@ import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
-import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
+import { checkIndexDBForCircuit, getLatestTree, getMaxBlock, getStoreCircuit } from './database';
 
-const { VK_IDS } = global.config;
+const { VK_IDS, utilApiServerUrl } = global.config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.nightfallConstants;
 const { generalise } = gen;
 const circuitName = 'deposit';
@@ -45,22 +43,12 @@ async function deposit(items, shieldContractAddress) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
-  if (!(await checkIndexDBForCircuit(circuitName)))
-    throw Error('Some circuit data are missing from IndexedDB');
-  const [abiData, programData, pkData, circuitHashData] = await Promise.all([
-    getStoreCircuit(`${circuitName}-abi`),
-    getStoreCircuit(`${circuitName}-program`),
-    getStoreCircuit(`${circuitName}-pk`),
-    getStoreCircuit(`${circuitName}-hash`),
-  ]);
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
   await confirmBlock(lastBlockNumber, lastTree);
 
-  const abi = abiData.data;
-  const program = programData.data;
-  const pk = pkData.data;
+  const circuitHashData = await getStoreCircuit(`deposit-hash`);
   const circuitHash = circuitHashData.data;
 
   const salt = await randValueLT(BN128_GROUP_ORDER);
@@ -85,7 +73,7 @@ async function deposit(items, shieldContractAddress) {
     recipientPublicKeys: [zkpPublicKey],
   };
 
-  const witnessInput = computeCircuitInputs(
+  const witness = computeCircuitInputs(
     publicData,
     privateData,
     [],
@@ -95,20 +83,25 @@ async function deposit(items, shieldContractAddress) {
   );
 
   try {
-    const zokratesProvider = await initialize();
-    const artifacts = {
-      program: new Uint8Array(program),
-      abi: { inputs: abi.inputs, outputs: [abi.output] },
-    };
-    const keypair = { pk: new Uint8Array(pk) };
+    if (!(await checkIndexDBForCircuit(circuitName)))
+      throw Error('Some circuit data are missing from IndexedDB');
+    // const [wasmData, zkeyData] = await Promise.all([
+    //   getStoreCircuit(`${circuitName}-wasm`),
+    //   getStoreCircuit(`${circuitName}-zkey`),
+    // ]);
 
-    // computation
-    console.log('Computing Witness');
-    const witnessInfo = zokratesProvider.computeWitness(artifacts, witnessInput, { snarkjs: true });
+    // const wasmFile = new File(wasmData.data, 'circuit.wasm');
+    // const zkeyFile = new File(zkeyData.data, 'circuit.zkey');
+
+    // const wasmFilePath = `circuit.wasm`;
+    // const zkeyFilePath = `circuit.zkey`;
+
+    const wasmFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}_js/${circuitName}.wasm`;
+    const zkeyFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}.zkey`;
+
     // generate proof
-    console.log('Generate Proof');
-    const prove = await snarkjs.groth16.prove(keypair, witnessInfo.snarkjs.witness); // zkey, witness
-    const { proof } = prove;
+    const { proof } = await snarkjs.groth16.fullProve(witness, wasmFilePath, zkeyFilePath); // zkey, witness
+
     const shieldContractInstance = await getContractInstance(
       SHIELD_CONTRACT_NAME,
       shieldContractAddress,
@@ -139,9 +132,10 @@ async function deposit(items, shieldContractAddress) {
     // store the commitment on successful computation of the transaction
     commitment.isDeposited = true;
     await storeCommitment(commitment, nullifierKey);
-    // await saveTransaction(optimisticDepositTransaction);
+
     return { rawTransaction, transaction: optimisticDepositTransaction };
   } catch (err) {
+    console.log('ERR', err);
     throw new Error(err); // let the caller handle the error
   }
 }

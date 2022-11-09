@@ -126,8 +126,6 @@ async function verifyProof(transaction) {
   const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
   const vkArray = await stateInstance.methods.getVerificationKey(transaction.circuitHash).call();
 
-  // to verify a proof, we make use of a zokrates-worker, which has an offchain
-  // verifier capability
   const historicRoots = await Promise.all(
     Array.from({ length: transaction.nullifiers.length }, () => 0).map((value, index) => {
       if (transaction.nullifiers[index] === ZERO) return { root: ZERO };
@@ -150,9 +148,9 @@ async function verifyProof(transaction) {
       transaction.circuitHash,
       transaction.tokenType,
       transaction.historicRootBlockNumberL2,
-      generalise(transaction.tokenId).limbs(32, 8),
       transaction.ercAddress,
-      generalise(transaction.recipientAddress).limbs(32, 8),
+      generalise(transaction.tokenId).limbs(32, 8).reverse(),
+      transaction.recipientAddress,
       transaction.commitments,
       transaction.nullifiers,
       transaction.compressedSecrets,

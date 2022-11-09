@@ -18,7 +18,7 @@ import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
+const { CIRCOM_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
 const { generalise } = gen;
 
@@ -44,12 +44,9 @@ async function deposit(items) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
-  const responseCircuitHash = await axios.get(
-    `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
-    {
-      params: { circuit: 'deposit' },
-    },
-  );
+  const responseCircuitHash = await axios.get(`${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`, {
+    params: { circuit: 'deposit' },
+  });
 
   logger.trace({
     msg: 'Received response from get-circuit-hash',
@@ -86,11 +83,11 @@ async function deposit(items) {
   );
   logger.debug({
     msg: 'witness input is',
-    witness: witness.join(' '),
+    witness: JSON.stringify(witness, 0, 2),
   });
-  // call a zokrates worker to generate the proof
+  // call a worker to generate the proof
   const folderpath = 'deposit';
-  const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
+  const res = await axios.post(`${PROTOCOL}${CIRCOM_WORKER_HOST}/generate-proof`, {
     folderpath,
     inputs: witness,
     provingScheme: PROVING_SCHEME,

@@ -20,8 +20,8 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-local}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
-      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}      
-      ZOKRATES_WORKER_HOST: worker
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      CIRCOM_WORKER_HOST: worker
       OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
@@ -73,7 +73,6 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      MPC: ${MPC:-true}
       ETH_NETWORK: ${ETH_NETWORK}
       CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL}
 

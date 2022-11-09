@@ -8,7 +8,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
 import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
 import computeCircuitInputs from '../utils/computeCircuitInputs';
@@ -16,11 +15,11 @@ import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
-import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
+import { checkIndexDBForCircuit, getLatestTree, getMaxBlock, getStoreCircuit } from './database';
 import { ZkpKeys } from './keys';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { VK_IDS } = global.config;
+const { VK_IDS, utilApiServerUrl } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 const circuitName = 'withdraw';
@@ -41,24 +40,10 @@ async function withdraw(withdrawParams, shieldContractAddress) {
 
   const ercAddress = generalise(withdrawParams.ercAddress.toLowerCase());
 
-  if (!(await checkIndexDBForCircuit(circuitName)))
-    throw Error('Some circuit data are missing from IndexedDB');
-  const [abiData, programData, pkData, circuitHashData] = await Promise.all([
-    getStoreCircuit(`${circuitName}-abi`),
-    getStoreCircuit(`${circuitName}-program`),
-    getStoreCircuit(`${circuitName}-pk`),
-    getStoreCircuit(`${circuitName}-hash`),
-  ]);
-
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
   await confirmBlock(lastBlockNumber, lastTree);
-
-  const abi = abiData.data;
-  const program = programData.data;
-  const pk = pkData.data;
-  const circuitHash = circuitHashData.data;
 
   const shieldContractInstance = await getContractInstance(
     SHIELD_CONTRACT_NAME,
@@ -81,6 +66,10 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     maxNumberNullifiers: VK_IDS.withdraw.numberNullifiers,
     providedCommitments,
   });
+
+  const circuitHashData = await getStoreCircuit(`withdraw-hash`);
+
+  const circuitHash = circuitHashData.data;
 
   try {
     // now we have everything  we need to create a Witness and compute a proof
@@ -113,7 +102,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
     };
 
-    const witnessInput = computeCircuitInputs(
+    const witness = computeCircuitInputs(
       transaction,
       privateData,
       commitmentsInfo.roots,
@@ -122,20 +111,20 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       VK_IDS.withdraw.numberCommitments,
     );
 
-    // call a zokrates worker to generate the proof
-    const zokratesProvider = await initialize();
-    const artifacts = {
-      program: new Uint8Array(program),
-      abi: { inputs: abi.inputs, outputs: [abi.output] },
-    };
-    const keypair = { pk: new Uint8Array(pk) };
-    // computation
-    const witnessInfo = zokratesProvider.computeWitness(artifacts, witnessInput, { snarkjs: true });
-    // generate proof
-    const prove = await snarkjs.groth16.prove(keypair, witnessInfo.snarkjs.witness); // zkey, witness
-    const { proof } = prove;
-    // and work out the ABI encoded data that the caller should sign and send to the shield contract
+    if (!(await checkIndexDBForCircuit(circuitName)))
+      throw Error('Some circuit data are missing from IndexedDB');
+    // const [wasmData, zkeyData] = await Promise.all([
+    //   getStoreCircuit(`${circuitName}-wasm`),
+    //   getStoreCircuit(`${circuitName}-zkey`),
+    // ]);
 
+    const wasmFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}_js/${circuitName}.wasm`;
+    const zkeyFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}.zkey`;
+
+    // generate proof
+    const { proof } = await snarkjs.groth16.fullProve(witness, wasmFilePath, zkeyFilePath); // zkey, witness
+
+    // and work out the ABI encoded data that the caller should sign and send to the shield contract
     const optimisticWithdrawTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
@@ -179,6 +168,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       throw new Error(err);
     }
   } catch (err) {
+    console.log('ERR', err);
     throw new Error(err); // let the caller handle the error
   }
 }

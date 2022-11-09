@@ -36,10 +36,10 @@ module.exports = {
   LOG_HTTP_PAYLOAD_ENABLED: process.env.LOG_HTTP_PAYLOAD_ENABLED || 'true',
   LOG_HTTP_FULL_DATA: process.env.LOG_HTTP_FULL_DATA || 'false',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
-  PROTOCOL: 'http://', // connect to zokrates microservice like this
+  PROTOCOL: 'http://',
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
-  ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
+  CIRCOM_WORKER_HOST: process.env.CIRCOM_WORKER_HOST || 'worker',
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
     APPROVERS: process.env.MULTISIG_APPROVERS
@@ -123,10 +123,6 @@ module.exports = {
       isWithdrawing: false,
     },
   }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
-  MPC: {
-    MPC_PARAMS_URL:
-      'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
-  },
   DEPLOYMENT_FILES_URL: {
     DEFAULT_CIRCUIT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
     DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',

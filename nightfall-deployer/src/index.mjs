@@ -5,7 +5,7 @@ import setupContracts from './contract-setup.mjs';
 
 // TODO these can be paralleled
 async function main() {
-  await circuits.waitForZokrates();
+  await circuits.waitForWorker();
   await circuits.setupCircuits();
   try {
     await setupContracts();
