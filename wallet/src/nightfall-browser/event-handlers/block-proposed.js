@@ -62,12 +62,12 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
         try {
           const cipherTexts = [
             transaction.ercAddress,
-            transaction.tokenId,
+            transaction.recipientAddress,
             ...transaction.compressedSecrets,
           ];
           const [packedErc, unpackedTokenID, ...rest] = decrypt(
             generalise(key),
-            generalise(edwardsDecompress(transaction.recipientAddress)),
+            generalise(edwardsDecompress(transaction.tokenId)),
             generalise(cipherTexts),
           );
           const [erc, tokenId] = packSecrets(
@@ -164,7 +164,6 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
   }
 
   const circuitHashData = await getStoreCircuit(`withdraw-hash`);
-
   const circuitHash = circuitHashData.data;
 
   // If this L2 block contains withdraw transactions known to this client,

@@ -69,7 +69,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
   const spentCommitments = [];
   try {
     let validatedProvidedCommitments = [];
-    if (providedCommitments) {
+    if (providedCommitments.length > 0) {
       const commitmentHashes = providedCommitments.map(c => c.toString());
       const rawCommitments = await getCommitmentsByHash(
         commitmentHashes,
@@ -205,8 +205,9 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
       salts,
     };
   } catch (err) {
+    console.log('ERR', err);
     await Promise.all(spentCommitments.map((o: any) => clearPending(o)));
-    throw new Error('Failed getting commitment info');
+    throw err;
   }
 };
 

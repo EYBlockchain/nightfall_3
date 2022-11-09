@@ -147,7 +147,7 @@ library Utils {
         uint256[] memory roots,
         address maticAddress
     ) internal pure returns (uint256[] memory) {
-        uint256 transactionSlots = 24 +
+        uint256 transactionSlots = 17 +
             2 *
             ts.nullifiers.length +
             roots.length +
@@ -161,6 +161,7 @@ library Utils {
         for (uint256 i = 0; i < ts.nullifiers.length; ++i) {
             inputs[count++] = uint256(getHistoricRoot(ts.historicRootBlockNumberL2, i));
         }
+        inputs[count++] = uint256(ts.ercAddress);
         inputs[count++] = uint32(uint256(ts.tokenId) >> 224);
         inputs[count++] = uint32(uint256(ts.tokenId) >> 192);
         inputs[count++] = uint32(uint256(ts.tokenId) >> 160);
@@ -169,14 +170,6 @@ library Utils {
         inputs[count++] = uint32(uint256(ts.tokenId) >> 64);
         inputs[count++] = uint32(uint256(ts.tokenId) >> 32);
         inputs[count++] = uint32(uint256(ts.tokenId));
-        inputs[count++] = uint256(ts.ercAddress);
-        inputs[count++] = uint32(uint256(ts.recipientAddress) >> 224);
-        inputs[count++] = uint32(uint256(ts.recipientAddress) >> 192);
-        inputs[count++] = uint32(uint256(ts.recipientAddress) >> 160);
-        inputs[count++] = uint32(uint256(ts.recipientAddress) >> 128);
-        inputs[count++] = uint32(uint256(ts.recipientAddress) >> 96);
-        inputs[count++] = uint32(uint256(ts.recipientAddress) >> 64);
-        inputs[count++] = uint32(uint256(ts.recipientAddress) >> 32);
         inputs[count++] = uint32(uint256(ts.recipientAddress));
         for (uint256 i = 0; i < ts.commitments.length; ++i) {
             inputs[count++] = uint256(ts.commitments[i]);

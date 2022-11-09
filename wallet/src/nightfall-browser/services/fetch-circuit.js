@@ -15,17 +15,16 @@ export async function fetchAWSfiles(Bucket, Key) {
 }
 
 export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS: { s3Bucket } }) {
-  let { abi, program, pk, hash } = circuit; // keys path in bucket
-  const { abih = null, programh = null, pkh = null, hashh = null } = circuit; // keys hash in bucket
+  let { wasm, zkey, hash } = circuit; // keys path in bucket
+  const { wasmh = null, zkeyh = null, hashh = null } = circuit; // keys hash in bucket
   if (isLocalRun) {
-    abi = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}_abi.json`).then(
-      response => response.json(),
-    );
-    program = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}_out`)
+    wasm = await fetch(
+      `${utilApiServerUrl}/${circuit.name}/${circuit.name}_js/${circuit.name}.wasm`,
+    )
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
-    pk = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}_pk.key`)
+    zkey = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}.zkey`)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
@@ -35,10 +34,9 @@ export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS:
         hashFile.find(e => e.circuitName === circuit.name).circuitHash.slice(0, 12),
       );
   } else {
-    abi = JSON.parse(new TextDecoder().decode(await fetchAWSfiles(s3Bucket, abi)));
-    program = await fetchAWSfiles(s3Bucket, program);
-    pk = await fetchAWSfiles(s3Bucket, pk);
-    await fetchAWSfiles(s3Bucket);
+    wasm = await fetchAWSfiles(s3Bucket, wasm);
+    zkey = await fetchAWSfiles(s3Bucket, zkey);
+    hash = await fetchAWSfiles(s3Bucket, hash);
   }
-  return { abi, abih, program, programh, pk, pkh, hash, hashh };
+  return { wasm, wasmh, zkey, zkeyh, hash, hashh };
 }

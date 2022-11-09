@@ -9,8 +9,6 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
-
 import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
 import computeCircuitInputs from '../utils/computeCircuitInputs';
@@ -22,16 +20,16 @@ import { edwardsCompress } from '../../common-files/utils/curve-maths/curves';
 import { ZkpKeys } from './keys';
 import {
   checkIndexDBForCircuit,
-  getStoreCircuit,
   getLatestTree,
   getMaxBlock,
   emptyStoreBlocks,
   emptyStoreTimber,
+  getStoreCircuit,
 } from './database';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { VK_IDS } = global.config;
+const { VK_IDS, utilApiServerUrl } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 
@@ -104,17 +102,8 @@ async function transfer(transferParams, shieldContractAddress) {
       // Compress the public key as it will be put on-chain
       const compressedEPub = edwardsCompress(ePublic);
 
-      if (!(await checkIndexDBForCircuit(circuitName)))
-        throw Error('Some circuit data are missing from IndexedDB');
-      const [abiData, programData, pkData, circuitHashData] = await Promise.all([
-        getStoreCircuit(`${circuitName}-abi`),
-        getStoreCircuit(`${circuitName}-program`),
-        getStoreCircuit(`${circuitName}-pk`),
-        getStoreCircuit(`${circuitName}-hash`),
-      ]);
-      const abi = abiData.data;
-      const program = programData.data;
-      const pk = pkData.data;
+      const circuitHashData = await getStoreCircuit(`transfer-hash`);
+
       const circuitHash = circuitHashData.data;
 
       // now we have everything we need to create a Witness and compute a proof
@@ -123,8 +112,8 @@ async function transfer(transferParams, shieldContractAddress) {
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
         circuitHash,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-        tokenId: compressedSecrets[1], // this is the encrypted tokenID
-        recipientAddress: compressedEPub,
+        tokenId: compressedEPub,
+        recipientAddress: compressedSecrets[1], // this is the encrypted tokenID
         commitments: commitmentsInfo.newCommitments,
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
@@ -149,7 +138,7 @@ async function transfer(transferParams, shieldContractAddress) {
         ephemeralKey: ePrivate,
       };
 
-      const witnessInput = computeCircuitInputs(
+      const witness = computeCircuitInputs(
         transaction,
         privateData,
         commitmentsInfo.roots,
@@ -158,33 +147,28 @@ async function transfer(transferParams, shieldContractAddress) {
         VK_IDS.transfer.numberCommitments,
       );
 
-      // call a zokrates worker to generate the proof
-      // This is (so far) the only place where we need to get specific about the
-      // circuit
-      const zokratesProvider = await initialize();
-      const artifacts = {
-        program: new Uint8Array(program),
-        abi: { inputs: abi.inputs, outputs: [abi.output] },
-      };
-      const keypair = { pk: new Uint8Array(pk) };
-      console.log('Computing witness');
-      const witnessInfo = zokratesProvider.computeWitness(artifacts, witnessInput, {
-        snarkjs: true,
-      });
+      console.log('WITNESS', witness);
+
+      if (!(await checkIndexDBForCircuit(circuitName)))
+        throw Error('Some circuit data are missing from IndexedDB');
+      // const [wasmData, zkeyData] = await Promise.all([
+      //   getStoreCircuit(`${circuitName}-wasm`),
+      //   getStoreCircuit(`${circuitName}-zkey`),
+      // ]);
+
+      const wasmFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}_js/${circuitName}.wasm`;
+      const zkeyFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}.zkey`;
 
       // generate proof
-      console.log('Generating Proof');
-      const prove = await snarkjs.groth16.prove(keypair, witnessInfo.snarkjs.witness); // zkey, witness
-      const { proof } = prove;
-      console.log('Proof Generated');
-      // and work out the ABI encoded data that the caller should sign and send to the shield contract
+      const { proof } = await snarkjs.groth16.fullProve(witness, wasmFilePath, zkeyFilePath); // zkey, witness
+
       const optimisticTransferTransaction = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
         circuitHash,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-        tokenId: compressedSecrets[1], // this is the encrypted tokenID
-        recipientAddress: compressedEPub,
+        tokenId: compressedEPub, // this is the encrypted tokenID
+        recipientAddress: compressedSecrets[1],
         commitments: commitmentsInfo.newCommitments,
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
@@ -217,6 +201,7 @@ async function transfer(transferParams, shieldContractAddress) {
       throw new Error(err);
     }
   } catch (err) {
+    console.log('ERR', err);
     throw new Error(err); // let the caller handle the error
   }
 }

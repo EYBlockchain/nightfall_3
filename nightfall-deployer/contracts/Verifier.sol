@@ -81,6 +81,9 @@ library Verifier {
         uint256[] memory _publicInputs,
         uint256[] memory _vk
     ) internal view returns (uint256) {
+        if ((_vk.length - 33) % 3 != 0 || (_vk.length - 33) / 3 != _publicInputs.length + 1) {
+            return 3;
+        }
         VerifyingKey memory vk = verifyingKey(_vk, _publicInputs.length);
 
         if (_proof.length != 8) {
@@ -92,9 +95,11 @@ library Verifier {
         proof.B = Pairing.G2Point([_proof[3], _proof[2]], [_proof[5], _proof[4]]);
         proof.C = Pairing.G1Point(_proof[6], _proof[7]);
 
-        if (vk.IC.length != _publicInputs.length + 1) {
-            return 3;
-        }
+        if (
+            !Pairing.checkG1Point(proof.A) ||
+            !Pairing.checkG1Point(proof.C) ||
+            !Pairing.checkG2Point(proof.B)
+        ) return 5;
 
         // Compute the linear combination vk_x
         Pairing.G1Point memory vk_x = Pairing.G1Point(0, 0);
@@ -117,7 +122,9 @@ library Verifier {
                 proof.C,
                 vk.delta2
             )
-        ) return 1;
+        ) {
+            return 1;
+        }
         return 0;
     }
 }

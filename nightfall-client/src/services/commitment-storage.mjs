@@ -614,7 +614,8 @@ async function verifyEnoughCommitments(
       .toArray();
 
     // If not commitments are found, the transfer/withdrawal cannot be paid, so throw an error
-    if (commitmentArray === []) throw new Error('no commitment for the actual transfer found');
+    if (commitmentArray.length === 0)
+      throw new Error('no commitment for the actual transfer found');
 
     // Turn the fee commitments into real commitment object and sort it
     commitments = commitmentArray
@@ -667,7 +668,7 @@ async function verifyEnoughCommitments(
       .toArray();
 
     // If not commitments are found, the fee cannot be paid, so throw an error
-    if (commitmentArrayFee === []) throw new Error('no commitments found');
+    if (commitmentArrayFee.length === 0) throw new Error('no commitments found');
 
     // Turn the fee commitments into real commitment object and sort it
     commitmentsFee = commitmentArrayFee
