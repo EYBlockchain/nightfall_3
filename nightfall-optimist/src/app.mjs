@@ -12,9 +12,13 @@ import {
   debug,
 } from './routes/index.mjs';
 import swaggerUi from 'swagger-ui-express';
-import { swaggerDocument } from './swagger.mjs';
+import { readFileSync } from 'fs';
 
 const app = express();
+const swaggerOutputJson = readFileSync('swagger-output.json', {
+  encoding: 'utf8',
+  flag: 'r',
+});
 
 setupHttpDefaults(
   app,
@@ -26,7 +30,7 @@ setupHttpDefaults(
     app.use('/contract-address', getContractAddress);
     app.use('/contract-abi', getContractAbi);
     app.use('/debug', debug);
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(JSON.parse(swaggerOutputJson)));
   },
   true,
   false,

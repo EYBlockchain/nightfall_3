@@ -43,6 +43,18 @@ export function setProposer(p) {
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
 router.post('/register', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Function to return a raw transaction that registers a proposer. This just
+   * provides the tx data, the user will need to append the registration bond
+   * amount.  The user must post the address being registered.  This is for the
+   * Optimist app to use for it to decide when to start proposing blocks. It is not part of the unsigned blockchain transaction that is returned.'
+   *
+   * #swagger.summary = 'Register Proposer'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/register'
+   *
+   */
+
   try {
     const { address, url = '', fee = 0 } = req.body;
     if (url === '') {
