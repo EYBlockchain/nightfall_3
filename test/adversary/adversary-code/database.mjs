@@ -28,7 +28,7 @@ let error = process.env.BAD_TX_SEQUENCE
       'DuplicateNullifierWithdraw',
       'IncorrectProofWithdraw',
       'IncorrectPublicInputWithdrawNullifier',
-      'IncorrectHistoricRoot', // TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
+      // 'IncorrectHistoricRoot', // TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
       'ValidTransaction',
     ];
 
