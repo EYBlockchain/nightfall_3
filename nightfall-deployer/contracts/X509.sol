@@ -21,10 +21,11 @@ contract X509 is DERParser, Whitelist, KYCInterface {
     mapping(bytes32 => bool) revokedKeys;
     mapping(address => bytes32) keysByUser;
 
-    bytes1 usageBitMask = 0xC0;
+    bytes1 usageBitMask;
 
     function initialize() public override(Whitelist) initializer {
         Whitelist.initialize();
+        usageBitMask = 0xC0;
     }
 
     function setUseageBitMask(bytes1 _usageBitMask) external onlyOwner {
