@@ -57,7 +57,7 @@ describe('Testing with an adversary', () => {
   // const value1 = 1000;
   const value2 = 5;
   let rollbackCount = 0;
-  const expectedRollbacks = 6;
+  const expectedRollbacks = 7;
 
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
