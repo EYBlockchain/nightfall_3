@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-// Implements the Poseidon hash, drawing on the ZoKrates implementation
+// Implements the Poseidon hash
 import gen from 'general-number';
 import poseidonConstants from './poseidon-constants.js';
 import { addMod, mulMod, powerMod } from '../number-theory.js';

@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
 
 /**
-Module to set up all of the circuits contained in circuits/ to a zokrates
-instance. Note, we don't need to deploy the circuits through a zokrates microservice http interface because we're going to create the volume that the zokrates microservice mounts to hold its circuits, so we'll just pop them straight in there. No one will mind.
+Module to set up all of the circuits contained in circuits/ to a worker
+instance. Note, we don't need to deploy the circuits through a worker microservice http interface because we're going to create the volume that the worker microservice mounts to hold its circuits, so we'll just pop them straight in there. No one will mind.
 */
 import axios from 'axios';
 import config from 'config';
@@ -19,19 +19,18 @@ const web3 = Web3.connection();
 const fsPromises = fs.promises;
 
 /**
- * This function will ping the Zokrates service until it is up before attempting
- * to use it. This is because the deployer must start before Zokrates as it needs
- * to populate Zokrates' volumes.  Thus it can't be sure that Zokrates is up yet
+ * This function will ping the Worker service until it is up before attempting
+ * to use it. This is because the deployer must start before Worker as it needs
+ * to populate Worker' volumes.  Thus it can't be sure that Worker is up yet
  */
-async function waitForZokrates() {
-  logger.info('checking for zokrates_worker');
+async function waitForWorker() {
+  logger.info('checking for worker');
   try {
     while (
-      (await axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/healthcheck`)).status !==
-      200
+      (await axios.get(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/healthcheck`)).status !== 200
     ) {
       logger.warn(
-        `No response from zokrates_worker yet.  That's ok. We'll wait three seconds and try again...`,
+        `No response from worker yet.  That's ok. We'll wait three seconds and try again...`,
       );
 
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -40,7 +39,7 @@ async function waitForZokrates() {
     logger.error(err);
     process.exit(1);
   }
-  logger.info('zokrates_worker reports that it is healthy');
+  logger.info('worker reports that it is healthy');
 }
 
 /**
@@ -61,11 +60,11 @@ async function walk(dir) {
   return files
     .reduce((all, folderContents) => all.concat(folderContents), [])
     .map(file => file.replace(config.CIRCUITS_HOME, ''))
-    .filter(file => file.endsWith('.zok'));
+    .filter(file => file.endsWith('.circom'));
 }
 
 /**
- * This calls the /generateKeys endpoint on a zokrates microservice container to do the setup.
+ * This calls the /generateKeys endpoint on a worker microservice container to do the setup.
  */
 async function setupCircuits() {
   // do all the trusted setups needed first, we need to find the circuits we're going to do the setup on
@@ -77,9 +76,9 @@ async function setupCircuits() {
   for (const circuit of circuitsToSetup) {
     logger.debug(`checking for existing setup for ${circuit}`);
 
-    const folderpath = circuit.slice(0, -4); // remove the .zok extension
+    const folderpath = circuit.slice(0, -7); // remove the .circom extension
     resp.push(
-      axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/vk`, {
+      axios.get(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/vk`, {
         params: { folderpath },
       }),
     );
@@ -98,7 +97,7 @@ async function setupCircuits() {
     circuitHashes[i] = hcircuit.slice(0, 12);
 
     const checkHash = await axios.post(
-      `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/check-circuit-hash`,
+      `${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/check-circuit-hash`,
       {
         filepath: circuit,
         hash: hcircuit,
@@ -116,7 +115,7 @@ async function setupCircuits() {
         });
 
         const res2 = await axios.post(
-          `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/generate-keys`,
+          `${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/generate-keys`,
           {
             filepath: circuit,
             curve: config.CURVE,
@@ -150,7 +149,7 @@ async function setupCircuits() {
 
       logger.trace('vk:', vk);
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
-      const folderpath = circuit.slice(0, -4); // remove the .zok extension
+      const folderpath = circuit.slice(0, -7); // remove the .circom extension
 
       // The selector will be the first 40 bits of the hash
       const circuitHash = circuitHashes[i];
@@ -220,4 +219,4 @@ async function setupCircuits() {
   }
 }
 
-export default { setupCircuits, waitForZokrates };
+export default { setupCircuits, waitForWorker };

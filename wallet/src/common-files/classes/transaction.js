@@ -78,7 +78,9 @@ function keccak(preimage) {
     compressedSecrets,
     proof,
   ];
+
   const encodedTransaction = web3.eth.abi.encodeParameters([SIGNATURES.TRANSACTION], [transaction]);
+
   return web3.utils.soliditySha3({
     t: 'bytes',
     v: encodedTransaction,
@@ -101,7 +103,7 @@ class Transaction {
     commitments: _commitments, // this must be an array of objects from the Commitments class
     nullifiers: _nullifiers, // this must be an array of objects from the Nullifier class
     compressedSecrets: _compressedSecrets, // this must be array of objects that are compressed from Secrets class
-    proof, // this must be a proof object, as computed by zokrates worker
+    proof, // this must be a proof object, as computed by circom worker
     numberNullifiers,
     numberCommitments,
     isOnlyL2,
@@ -138,6 +140,7 @@ class Transaction {
       compressedSecrets,
       proof: flatProof,
     }).all.hex(32);
+
     // compute the solidity hash, using suitable type conversions
     preimage.transactionHash = keccak(preimage);
     return preimage;
@@ -204,7 +207,7 @@ class Transaction {
 
     return {
       packedInfo,
-      historicRootsPacked,
+      historicRootBlockNumberL2: historicRootsPacked,
       tokenId,
       ercAddress,
       recipientAddress,

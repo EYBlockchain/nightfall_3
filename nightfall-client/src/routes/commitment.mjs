@@ -23,7 +23,7 @@ const router = express.Router();
 
 const { generalise } = gen;
 
-const { PROTOCOL, ZOKRATES_WORKER_HOST } = config;
+const { PROTOCOL, CIRCOM_WORKER_HOST } = config;
 
 router.get('/salt', async (req, res, next) => {
   try {
@@ -126,7 +126,7 @@ router.get('/', async (req, res, next) => {
 router.get('/withdraws', async (req, res, next) => {
   try {
     const responseCircuitHash = await axios.get(
-      `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
+      `${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`,
       {
         params: { circuit: 'withdraw' },
       },

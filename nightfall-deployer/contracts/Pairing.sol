@@ -96,6 +96,99 @@ library Pairing {
         require(success, 'pairing-mul-failed');
     }
 
+    function invMod(uint256 x, uint256 q) internal pure returns (uint256) {
+        uint256 inv = 0;
+        uint256 newT = 1;
+        uint256 r = q;
+        uint256 t;
+        while (x != 0) {
+            t = r / x;
+            (inv, newT) = (newT, addmod(inv, (q - mulmod(t, newT, q)), q));
+            (r, x) = (x, r - t * x);
+        }
+
+        return inv;
+    }
+
+    function modDivide(
+        uint256 a,
+        uint256 b,
+        uint256 q
+    ) internal pure returns (uint256) {
+        return mulmod(a, invMod(b, q), q);
+    }
+
+    function complexDivMod(
+        uint256[2] memory a,
+        uint256[2] memory b,
+        uint256 q
+    ) internal pure returns (uint256[2] memory) {
+        uint256 denominator = addmod(mulmod(b[0], b[0], q), mulmod(b[1], b[1], q), q);
+        uint256 realNumerator = addmod(mulmod(a[0], b[0], q), mulmod(a[1], b[1], q), q);
+        uint256 imaginaryNumerator = addmod(mulmod(b[0], a[1], q), q - mulmod(b[1], a[0], q), q);
+        return [
+            modDivide(realNumerator, denominator, q),
+            modDivide(imaginaryNumerator, denominator, q)
+        ];
+    }
+
+    function complexAddMod(
+        uint256[2] memory a,
+        uint256[2] memory b,
+        uint256 q
+    ) internal pure returns (uint256[2] memory) {
+        return [addmod(a[0], b[0], q), addmod(a[1], b[1], q)];
+    }
+
+    function complexMulMod(
+        uint256[2] memory a,
+        uint256[2] memory b,
+        uint256 q
+    ) internal pure returns (uint256[2] memory) {
+        return [
+            addmod(mulmod(a[0], b[0], q), q - (mulmod(a[1], b[1], q)), q),
+            addmod(mulmod(a[1], b[0], q), mulmod(a[0], b[1], q), q)
+        ];
+    }
+
+    function checkG1Point(G1Point memory p) internal pure returns (bool) {
+        uint256 q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+
+        if (p.Y > q || p.X > q) return false;
+
+        // check on curve
+        uint256 lhs = mulmod(p.Y, p.Y, q); // y^2
+        uint256 rhs = mulmod(p.X, p.X, q); // x^2
+        rhs = mulmod(rhs, p.X, q); // x^3
+        rhs = addmod(rhs, 3, q); // x^3 + b
+        if (lhs != rhs) {
+            return false;
+        }
+        return true;
+    }
+
+    function checkG2Point(G2Point memory p) internal pure returns (bool) {
+        uint256 q = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+
+        if (p.Y[0] > q || p.X[0] > q || p.Y[1] > q || p.X[1] > q) return false;
+
+        uint256[2] memory X = [p.X[1], p.X[0]];
+        uint256[2] memory Y = [p.Y[1], p.Y[0]];
+
+        // check on curve
+        uint256[2] memory lhs = complexMulMod(Y, Y, q);
+        uint256[2] memory rhs = complexMulMod(X, X, q);
+        rhs = complexMulMod(rhs, X, q);
+        rhs = complexAddMod(rhs, complexDivMod([uint256(3), 0], [uint256(9), 1], q), q);
+        //TODO: Hardcode complex Div?
+        //[ 19485874751759354771024239261021720505790618469301721065564631296452457478373,
+        // 266929791119991161246907387137283842545076965332900288569378510910307636690 ]
+        if (lhs[0] != rhs[0] || lhs[1] != rhs[1]) {
+            return false;
+        }
+        return true;
+    }
+
     /// @return the result of computing the pairing check
     /// e(p1[0], p2[0]) *  .... * e(p1[n], p2[n]) == 1
     /// For example pairing([P1(), P1().negate()], [P2(), P2()]) should

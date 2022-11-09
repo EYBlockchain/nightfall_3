@@ -10,7 +10,7 @@ import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
+const { CIRCOM_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
@@ -20,12 +20,9 @@ async function burn(burnParams) {
   const { providedCommitments, ...items } = burnParams;
   const { rootKey, value, fee, ercAddress, tokenId } = generalise(items);
 
-  const responseCircuitHash = await axios.get(
-    `${PROTOCOL}${ZOKRATES_WORKER_HOST}/get-circuit-hash`,
-    {
-      params: { circuit: 'burn' },
-    },
-  );
+  const responseCircuitHash = await axios.get(`${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`, {
+    params: { circuit: 'burn' },
+  });
 
   logger.trace({
     msg: 'Received response from get-circuit-hash',
@@ -103,11 +100,11 @@ async function burn(burnParams) {
 
     logger.debug({
       msg: 'witness input is',
-      witness: witness.join(' '),
+      witness: JSON.stringify(witness, 0, 2),
     });
 
     const folderpath = 'burn';
-    const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
+    const res = await axios.post(`${PROTOCOL}${CIRCOM_WORKER_HOST}/generate-proof`, {
       folderpath,
       inputs: witness,
       provingScheme: PROVING_SCHEME,
