@@ -36,10 +36,10 @@ module.exports = {
   LOG_HTTP_PAYLOAD_ENABLED: process.env.LOG_HTTP_PAYLOAD_ENABLED || 'true',
   LOG_HTTP_FULL_DATA: process.env.LOG_HTTP_FULL_DATA || 'false',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
-  PROTOCOL: 'http://', // connect to zokrates microservice like this
+  PROTOCOL: 'http://',
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
-  ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
+  CIRCOM_WORKER_HOST: process.env.CIRCOM_WORKER_HOST || 'worker',
   SANCTIONS_CONTRACT:
     process.env.TEST_SANCTIONS_CONTRACT || '0x40C57923924B5c5c5455c48D93317139ADDaC8fb',
   MULTISIG: {

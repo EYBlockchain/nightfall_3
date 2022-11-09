@@ -105,7 +105,7 @@ class Transaction {
     commitments: _commitments, // this must be an array of objects from the Commitments class
     nullifiers: _nullifiers, // this must be an array of objects from the Nullifier class
     compressedSecrets: _compressedSecrets, // this must be array of objects that are compressed from Secrets class
-    proof, // this must be a proof object, as computed by zokrates worker
+    proof, // this must be a proof object, as computed by circom worker
     numberNullifiers,
     numberCommitments,
     isOnlyL2,
