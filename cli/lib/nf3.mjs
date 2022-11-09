@@ -905,7 +905,7 @@ class Nf3 {
   async getProposerPendingPayments() {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
       params: {
-        proposer: this.ethereumAddress,
+        proposerAddress: this.ethereumAddress,
       },
     });
     return res.data.pendingPayments;
@@ -920,7 +920,7 @@ class Nf3 {
   async getProposerStake() {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`, {
       params: {
-        proposer: this.ethereumAddress,
+        proposerAddress: this.ethereumAddress,
       },
     });
     return res.data;
