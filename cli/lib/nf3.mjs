@@ -4,6 +4,7 @@ import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
+import crypto from 'crypto';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
@@ -133,6 +134,7 @@ class Nf3 {
         throw new Error('Unknown contract address server');
     }
     // once we know where to ask, we can get the contract addresses
+    this.kycContractAddress = await this.contractGetter('X509');
     this.shieldContractAddress = await this.contractGetter('Shield');
     this.proposersContractAddress = await this.contractGetter('Proposers');
     this.challengesContractAddress = await this.contractGetter('Challenges');
@@ -1422,7 +1424,7 @@ class Nf3 {
       address,
     });
     const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign);
+    return this.submitTransaction(txDataToSign, this.kycContractAddress);
   }
 
   /**
@@ -1433,7 +1435,7 @@ class Nf3 {
       address,
     });
     const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign);
+    return this.submitTransaction(txDataToSign, this.kycContractAddress);
   }
 
   /**
@@ -1446,6 +1448,36 @@ class Nf3 {
       },
     });
     return res.data.isWhitelisted;
+  }
+
+  /**
+   Validates an X509 (RSA) certificate
+   */
+  async validateCertificate(certificate, ethereumAddress, derPrivateKey) {
+    // sign the ethereum address
+    let ethereumAddressSignature = null;
+    if (derPrivateKey) {
+      const privateKey = crypto.createPrivateKey({
+        key: derPrivateKey,
+        format: 'der',
+        type: 'pkcs1',
+      });
+      ethereumAddressSignature = crypto.sign(
+        'sha256',
+        Buffer.from(ethereumAddress.toLowerCase().slice(2), 'hex'),
+        {
+          key: privateKey,
+          padding: crypto.constants.RSA_PKCS1_PADDING,
+        },
+      );
+    }
+    // now validate the cert
+    const res = await axios.post(`${this.clientBaseUrl}/whitelist/validate`, {
+      certificate,
+      ethereumAddressSignature,
+    });
+    const txDataToSign = res.data;
+    return this.submitTransaction(txDataToSign, this.kycContractAddress);
   }
 }
 

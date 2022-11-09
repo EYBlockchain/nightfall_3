@@ -14,7 +14,7 @@ const X509 = artifacts.require('X509.sol');
 
 const config = require('config');
 
-const { RESTRICTIONS, MULTISIG, WHITELIST_MANAGERS } = config;
+const { RESTRICTIONS, MULTISIG, WHITELIST_MANAGERS, RSA_TRUST_ROOTS } = config;
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
@@ -42,7 +42,7 @@ module.exports = async function (deployer) {
   await deployer.link(ChallengesUtil, Challenges);
   await deployer.deploy(SimpleMultiSig, SIGNATURE_THRESHOLD, sortedOwners, network_id);
 
-  await deployProxy(X509, []);
+  await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Shield, [X509.address], { deployer, unsafeAllowLinkedLibraries: true, initializer: 'initializeState' });
@@ -86,4 +86,10 @@ module.exports = async function (deployer) {
   }
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING==='enable') await x509.enableWhitelisting(true);
+  // set a trusted RSA root public key for KYC certificate checks
+  console.log('setting trusted public key');
+  for (publicKey of RSA_TRUST_ROOTS) {
+    const { modulus, exponent, authorityKeyIdentifier } = publicKey;
+    await x509.setTrustedPublicKey({ modulus, exponent }, authorityKeyIdentifier );
+  }
 };

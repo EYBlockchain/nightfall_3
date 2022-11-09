@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import chai from 'chai';
 import chaiHttp from 'chai-http';
+import fs from 'fs';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
@@ -22,7 +23,6 @@ const {
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
-
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
@@ -31,6 +31,9 @@ const web3Client = new Web3Client();
 let erc20Address;
 let stateAddress;
 const eventLogs = [];
+const intermediateCaCert = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
+const endUserCert = fs.readFileSync('test/unit/utils/Nightfall_end_user.cer');
+const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user.der');
 
 describe('Whitelist tests', () => {
   before(async () => {
@@ -59,6 +62,7 @@ describe('Whitelist tests', () => {
     } catch (err) {
       logger.debug('user was already delisted');
     }
+    // setup the KYC
   });
 
   describe('Deposits from a non-whitelisted then whitelisted account', () => {
@@ -82,7 +86,15 @@ describe('Whitelist tests', () => {
       logger.debug('Check whitelist status');
       expect(await nf3Users[0].isWhitelisted(nf3Users[0].ethereumAddress)).to.be.equal(false);
       // nf3Users[0] is a whitelist manager (set up config) and so can whitelist themselves to group 1
-      await nf3Users[0].addUserToWhitelist(1, nf3Users[0].ethereumAddress);
+      // await nf3Users[0].addUserToWhitelist(1, nf3Users[0].ethereumAddress);
+      // we whitelist the account by passing in a certificate chain which X509.sol will accept.
+      // once this is done, we can stil whitelist and dewhitelist the user
+      await nf3Users[0].validateCertificate(intermediateCaCert);
+      await nf3Users[0].validateCertificate(
+        endUserCert,
+        nf3Users[0].ethereumAddress,
+        derPrivateKey,
+      );
       expect(await nf3Users[0].isWhitelisted(nf3Users[0].ethereumAddress)).to.be.equal(true);
     });
     it('deposits from  a whitelisted account should work', async function () {

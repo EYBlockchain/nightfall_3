@@ -4,7 +4,12 @@
 
 import express from 'express';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { addUserToWhitelist, removeUserFromWhitelist, isWhitelisted } from '../services/kyc.mjs';
+import {
+  addUserToWhitelist,
+  removeUserFromWhitelist,
+  isWhitelisted,
+  validateCertificate,
+} from '../services/kyc.mjs';
 
 const router = express.Router();
 
@@ -39,6 +44,25 @@ router.post('/remove', async (req, res, next) => {
   const { address } = req.body;
   try {
     const response = await removeUserFromWhitelist(address);
+    res.json(response);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ Validate a certificate (which will also add the user to the whitelist if the certificate is valid and the signature over
+ their ethereum address checks out). The signature can be falsey if we don't want to whitelist the address but are just validating
+ the certificate.  We might want to do this for an intermediate certificate for example.
+ */
+router.post('/validate', async (req, res, next) => {
+  const { certificate, ethereumAddressSignature } = req.body;
+  if (!certificate.type === 'Buffer') next(new Error('Certificate is not a buffer'));
+  try {
+    const response = await validateCertificate(
+      Buffer.from(certificate.data),
+      ethereumAddressSignature ? Buffer.from(ethereumAddressSignature) : null,
+    );
     res.json(response);
   } catch (err) {
     next(err);
