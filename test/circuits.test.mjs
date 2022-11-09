@@ -60,6 +60,10 @@ describe('General Circuit Test', () => {
     await nf3Users[0].makeBlockNow();
   });
 
+  after(async () => {
+    await nf3Proposer.deregisterProposer();
+  });
+
   it.skip('Test that matic transfers pays the fee from the same transfer commitment', async () => {
     async function getBalance() {
       return Promise.all([
