@@ -175,14 +175,30 @@ router.get('/proposers', async (req, res, next) => {
  * provides the tx data. The user has to call the blockchain client.
  */
 router.post('/de-register', async (req, res, next) => {
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
+
   try {
-    const { address = '' } = req.body;
+    // Recreate Proposer contract
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+
+    // Remove the proposer by updating the blockchain state
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
+    const tx = {
+      from: ethAddress,
+      to: proposersContractAddress,
+      data: txDataToSign,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    logger.debug(`Transaction receipt ${receipt}`);
 
-    await deleteRegisteredProposerAddress(address);
+    // Update db
+    await deleteRegisteredProposerAddress(ethAddress);
 
-    res.json({ txDataToSign });
+    res.json({ receipt });
   } catch (err) {
     next(err);
   }
