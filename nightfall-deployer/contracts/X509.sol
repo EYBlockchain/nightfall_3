@@ -21,8 +21,14 @@ contract X509 is DERParser, Whitelist, KYCInterface {
     mapping(bytes32 => bool) revokedKeys;
     mapping(address => bytes32) keysByUser;
 
+    bytes1 usageBitMask = 0xC0;
+
     function initialize() public override(Whitelist) initializer {
         Whitelist.initialize();
+    }
+
+    function setUseageBitMask(bytes1 _usageBitMask) external onlyOwner {
+        usageBitMask = _usageBitMask;
     }
 
     function setTrustedPublicKey(
@@ -219,7 +225,29 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         return akid;
     }
 
-    // functin to check the signature over a message
+    function checkKeyUsage(DecodedTlv[] memory tlvs, bytes1 _usageBitMask) private view {
+        // // The key usage sequence begins after the Key Usage OID at depth 5
+        uint256 i;
+        for (i = 0; i < tlvs.length; i++) {
+            if (tlvs[i].depth != 5) continue;
+            if (
+                bytes32(tlvs[i].value) ==
+                bytes32((0x551d0f0000000000000000000000000000000000000000000000000000000000))
+            ) break; // OID for the AKID
+        }
+        require(i < tlvs.length, 'OID for Key Usage not found');
+        bytes memory usageBytes = tlvs[i + 1].value;
+        DecodedTlv[] memory usageTlvs = new DecodedTlv[](1);
+        usageTlvs = this.parseDER(usageBytes, 0, 1);
+        require(usageTlvs[0].length == 2, 'Key usage bytes must be of 2 bytes');
+        // decoding of flags encoded as DER is strange. The first byte tells us how many bits to ignore in the second byte
+        bytes1 usageFlags = (usageTlvs[0].value[1] >> uint8(usageTlvs[0].value[0])) <<
+            uint8(usageTlvs[0].value[0]);
+        // this is little endian and so must our mask be therefore
+        require((usageFlags & _usageBitMask) == _usageBitMask, 'Key usage is not as required');
+    }
+
+    // function to check the signature over a message
     function checkSignature(
         bytes memory signature,
         bytes memory message,
@@ -264,10 +292,19 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         RSAPublicKey memory certificatePublicKey = extractPublicKey(tlvs);
         bytes32 subjectKeyIdentifier = extractSubjectKeyIdentifier(tlvs);
         require(!revokedKeys[subjectKeyIdentifier], 'The key of this certificate has been revoked');
-        trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
         // finally, before we can whitelist msg.sender, we should check that they are indeed the owner of the cert (certs are public, after all)
         // we do that by getting them to sign msg.sender with the private key corresponding to their certificate public key
-        if (!addAddress) return; // we may want to add an intermediate cert to the contract but not add an address.
+        if (!addAddress) {
+            // if we're not adding an address, check that this certificate can sign certificates (because it must be an intermediate one)
+            checkKeyUsage(tlvs, 0x06);
+            // if yes, we'll trust it
+            trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
+            return; // we may want to add an intermediate cert to the contract but not add an address.
+        }
+        // as we are trying to add an address, this certificate should be an end user certificate, created for digital signature
+        // and non-repudiation (or possibly other things - we can change this).
+        checkKeyUsage(tlvs, usageBitMask);
+        trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
         checkSignature(
             addressSignature,
             abi.encodePacked(uint160(msg.sender)),
@@ -276,8 +313,6 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         expires[msg.sender] = expiry;
         keysByUser[msg.sender] = subjectKeyIdentifier;
         addUserToWhitelist(msg.sender); // all checks have passed, so they are free to trade for now.
-        console.log(msg.sender);
-        // TODO whitelisting should be removed on the revocation or expiry of the certificate.
     }
 
     // performs an ongoing KYC check (is the user still in the whitelist? Has the public key been revoked? Is the cert in date?)

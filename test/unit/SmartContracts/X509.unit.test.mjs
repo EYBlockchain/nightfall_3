@@ -46,7 +46,7 @@ describe('DerParser contract functions', function () {
     signature = signEthereumAddress(derPrivateKey, addressToSign);
   });
   it('Should parse the intermediate CA cert DER encoding', async function () {
-    const intermediateCaCert = certChain[0];
+    const intermediateCaCert = certChain[1];
     const result = await X509Instance.parseDER(
       intermediateCaCert.derBuffer,
       0,
@@ -60,10 +60,9 @@ describe('DerParser contract functions', function () {
     expect(tlvs[1].depth).to.equal(1);
     expect(tlvs[intermediateCaCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
     expect(tlvs[intermediateCaCert.tlvLength - 1].depth).to.equal(1);
-    // console.log(tlvs);
   });
   it('Should parse the end-user cert DER encoding', async function () {
-    const endUserCert = certChain[1];
+    const endUserCert = certChain[0];
     const result = await X509Instance.parseDER(endUserCert.derBuffer, 0, endUserCert.tlvLength);
     const tlvs = result.map(tlv => makeTlv(tlv));
     // make a few checks on the output
@@ -73,7 +72,6 @@ describe('DerParser contract functions', function () {
     expect(tlvs[1].depth).to.equal(1);
     expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
     expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
-    // console.log(tlvs);
   });
   it('Should verify the signature over the users ethereum address', async function () {
     const publicKey = crypto.createPublicKey({ key: derPrivateKey, format: 'der', type: 'pkcs1' });
