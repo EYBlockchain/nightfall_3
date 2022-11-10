@@ -57,7 +57,7 @@ describe('Testing with an adversary', () => {
   // const value1 = 1000;
   const value2 = 5;
   let rollbackCount = 0;
-  const expectedRollbacks = 7;
+  const minExpectedRollbacks = 6;
 
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
@@ -282,8 +282,8 @@ describe('Testing with an adversary', () => {
         `N deposits: ${nDeposits} - N Transfers: ${nTransfers} - N Withdraws: ${nWithdraws}`,
       );
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
-      // also wait for required no. of rollbacks
-      while (rollbackCount < expectedRollbacks) {
+      // also wait for minimun required no. of rollbacks
+      while (rollbackCount < minExpectedRollbacks) {
         await new Promise(resolve => setTimeout(resolve, 3000));
       }
       await waitForSufficientBalance(nf3User, expectedBalance);
