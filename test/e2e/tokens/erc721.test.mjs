@@ -94,7 +94,10 @@ describe('ERC721 tests', () => {
 
       const myPublicKey = nf3Users[0].zkpKeys.compressedZkpPublicKey;
       const balanceBefore = (await nf3Users[0].getLayer2Balances())[erc721Address]?.length || 0;
-      const unspentCommitmentsBefore = await nf3Users[0].getLayer2Commitments([erc721Address], true);
+      const unspentCommitmentsBefore = await nf3Users[0].getLayer2Commitments(
+        [erc721Address],
+        true,
+      );
       let nUnspentCommitmentsBefore = 0;
       if (myPublicKey in unspentCommitmentsBefore && unspentCommitmentsBefore[myPublicKey]) {
         nUnspentCommitmentsBefore = unspentCommitmentsBefore[myPublicKey][erc721Address].length;
