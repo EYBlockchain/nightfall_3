@@ -37,10 +37,123 @@ export function setProposer(p) {
 }
 
 /**
- * Function to return a raw transaction that registers a proposer.  This just
- * provides the tx data, the user will need to append the registration bond
- * amount.  The user must post the address being registered.  This is for the
- * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
+ * @openapi
+ *  components:
+ *    schemas:
+ *      Proposer:
+ *        type: object
+ *        properties:
+ *          url:
+ *            type: string
+ *            description: The proposer's url.
+ *          stake:
+ *            type: string
+ *            description: The proposer's stake.
+ *          fee:
+ *            type: integer
+ *            description: The proposer's fee.
+ *        example:
+ *           url: http://proposer1:8587
+ *           stake: 0
+ *           fee: 0
+ *      TxDataToSign:
+ *        type: object
+ *        properties:
+ *          txDataToSign:
+ *            type: string
+ *            description: The current proposer address.
+ *        example:
+ *           txDataToSign: "0x0d6022010000000000000"
+ *      ProposersList:
+ *        type: array
+ *        items:
+ *          type: object
+ *          properties:
+ *            0:
+ *              type: string
+ *              description: Current proposer address.
+ *            1:
+ *              type: string
+ *              description: Previous proposer address.
+ *            2:
+ *              type: string
+ *              description: Next proposer address.
+ *            3:
+ *              type: string
+ *              description: Proposer's url.
+ *            4:
+ *              type: string
+ *              description: Proposer's fee.
+ *            5:
+ *              type: boolean
+ *              description: Proposer in.
+ *            6:
+ *              type: string
+ *              description: Proposer index.
+ *            thisAddress:
+ *              type: integer
+ *              description: Current proposer address.
+ *            previousAddress:
+ *              type: string
+ *              description: Previous proposer address.
+ *            nextAddress:
+ *              type: string
+ *              description: Next proposer address.
+ *            url:
+ *              type: string
+ *              description: Proposer's url.
+ *            fee:
+ *              type: string
+ *              description: Proposer's fee.
+ *            inProposerSet:
+ *              type: boolean
+ *              description: Proposer in.
+ *            indexProposerSet:
+ *              type: string
+ *              description: Proposer index.
+ *        example:
+ *          proposers: [{
+ *            0: "0x0000000000000000000000000000000000000000",
+ *            1: "0x0000000000000000000000000000000000000000",
+ *            2: "0x0000000000000000000000000000000000000000",
+ *            3: "",
+ *            4: "0",
+ *            5: false,
+ *            6: "0",
+ *            thisAddress: "0x0000000000000000000000000000000000000000",
+ *            previousAddress: "0x0000000000000000000000000000000000000000",
+ *            nextAddress: "0x0000000000000000000000000000000000000000",
+ *            url: "",
+ *            fee: "0",
+ *            inProposerSet: false,
+ *            indexProposerSet: "0"
+ *          }]
+ */
+
+/**
+ * @openapi
+ *  /proposer/register:
+ *    post:
+ *      summary: Register a proposer.
+ *      description: Route to return a raw transaction that registers a proposer. This just
+ *        provides the tx data, the user will need to append the registration bond
+ *        amount. The user must post the address being registered.  This is for the
+ *        Optimist app to use for it to decide when to start proposing blocks.  It is not
+ *        part of the unsigned blockchain transaction that is returned.
+ *      requestBody:
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/Proposer'
+ *      responses:
+ *        200:
+ *          description: Proposer updated.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                $ref: '#/components/schemas/TxDataToSign'
+ *        500:
+ *          description: Some error ocurred.
  */
 router.post('/register', async (req, res, next) => {
   try {
@@ -94,7 +207,25 @@ router.post('/register', async (req, res, next) => {
 });
 
 /**
- * Function to update proposer's URL
+ * @openapi
+ *  /proposer/update:
+ *    post:
+ *      summary: Update a proposer.
+ *      description: Route to update proposer's URL.
+ *      requestBody:
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/Proposer'
+ *      responses:
+ *        200:
+ *          description: Proposer updated.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                $ref: '#/components/schemas/TxDataToSign'
+ *        500:
+ *          description: Some error ocurred.
  */
 router.post('/update', async (req, res, next) => {
   try {
@@ -116,12 +247,19 @@ router.post('/update', async (req, res, next) => {
 
 /**
  * @openapi
- * /:
- *   get:
- *     description: Returns the current proposer
- *     responses:
- *       200:
- *         description: Returns a mysterious string.
+ *  /proposer/current-proposer:
+ *    get:
+ *      summary: Current proposer.
+ *      description: Returns the current proposer.
+ *      responses:
+ *        200:
+ *          description: Proposer updated.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                $ref: '#/components/schemas/TxDataToSign'
+ *        500:
+ *          description: Some error ocurred.
  */
 router.get('/current-proposer', async (req, res, next) => {
   try {
@@ -137,7 +275,22 @@ router.get('/current-proposer', async (req, res, next) => {
 });
 
 /**
- * Returns a list of the registered proposers
+ * @openapi
+ *  /proposer/proposers:
+ *    get:
+ *      summary: Current proposer.
+ *      description: Returns the current proposer.
+ *      responses:
+ *        200:
+ *          description: Proposer updated.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: array
+ *                items:
+ *                  $ref: '#/components/schemas/ProposersList'
+ *        500:
+ *          description: Some error ocurred.
  */
 router.get('/proposers', async (req, res, next) => {
   try {
@@ -150,8 +303,20 @@ router.get('/proposers', async (req, res, next) => {
 });
 
 /**
- * Function to return a raw transaction that de-registers a proposer.  This just
- * provides the tx data. The user has to call the blockchain client.
+ * @openapi
+ *  /proposer/de-register:
+ *    post:
+ *      summary: Deregister a proposer.
+ *      description: Route that deregister a proposer.
+ *      responses:
+ *        200:
+ *          description: Proposer deregistered.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                $ref: '#/components/schemas/TxDataToSign'
+ *        500:
+ *          description: Some error ocurred.
  */
 router.post('/de-register', async (req, res, next) => {
   try {
@@ -168,9 +333,21 @@ router.post('/de-register', async (req, res, next) => {
 });
 
 /**
- * Function to withdraw stake for a de-registered proposer
+ * @openapi
+ *  /proposer/withdrawStake:
+ *    post:
+ *      summary: Withdraw stake.
+ *      description: Route to withdraw stake for a de-registered proposer.
+ *      responses:
+ *        200:
+ *          description: Stake withdraw.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                $ref: '#/components/schemas/TxDataToSign'
+ *        500:
+ *          description: Some error ocurred.
  */
-
 router.post('/withdrawStake', async (req, res, next) => {
   try {
     const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);

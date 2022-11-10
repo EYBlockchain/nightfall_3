@@ -27,8 +27,8 @@ const options = {
         url: 'http://localhost:8081',
       },
     ],
-    apis: ['./routes/*.mjs'],
   },
+  apis: ['src/routes/**/*.mjs'],
 };
 
 const spec = swaggerJsDoc(options);

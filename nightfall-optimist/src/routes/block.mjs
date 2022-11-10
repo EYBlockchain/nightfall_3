@@ -16,6 +16,11 @@ import { setMakeNow } from '../services/block-assembler.mjs';
 
 const router = express.Router();
 
+/**
+ * Checks the block's properties.  It will return the first inconsistency it finds
+ * @param {object} block - the block being checked
+ * @param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
+ */
 router.post('/check', async (req, res, next) => {
   try {
     const { block, transactions } = req.body;
