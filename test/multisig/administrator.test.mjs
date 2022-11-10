@@ -21,7 +21,6 @@ const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
 const amount1 = 10;
 const amount2 = 100;
 const value1 = 1;
-const value2 = 100;
 
 const getContractInstance = async (contractName, nf3) => {
   const abi = await nf3.getContractAbi(contractName);
@@ -42,7 +41,7 @@ describe(`Testing Administrator`, () => {
 
   const proposers = [
     new Nf3(signingKeys.proposer1, environment),
-    new Nf3(signingKeys.proposer2, environment),
+    // new Nf3(signingKeys.proposer2, environment),
   ];
 
   before(async () => {
@@ -51,7 +50,7 @@ describe(`Testing Administrator`, () => {
     await nf3User.init(mnemonics.user1);
 
     await proposers[0].init(mnemonics.proposer);
-    await proposers[1].init(mnemonics.proposer);
+    // await proposers[1].init(mnemonics.proposer);
 
     minimumStakeDef = await proposers[0].getMinimumStake();
     stateContract = await getContractInstance('State', nf3User);
@@ -77,7 +76,7 @@ describe(`Testing Administrator`, () => {
   });
 
   describe(`Basic tests`, () => {
-    it('Owner of the State, Proposers, Shield and Challenges contract should be the multisig', async function () {
+    it('Owner of State, Proposers, Shield and Challenges contracts should be the multisig', async function () {
       const ownerState = await stateContract.methods.owner().call();
       const ownerShield = await shieldContract.methods.owner().call();
       const ownerProposers = await proposersContract.methods.owner().call();
@@ -237,50 +236,26 @@ describe(`Testing Administrator`, () => {
       expect(Number(maxProposers)).to.be.equal(value1);
     });
 
-    it('Allowing register first proposer', async () => {
+    it('Can register first proposer', async () => {
       if (process.env.ENVIRONMENT !== 'aws') {
         const res = await proposers[0].registerProposer('http://optimist', minimumStakeDef);
-        expectTransaction(res);
+        const { receipt } = res.data;
+        expectTransaction(receipt);
       }
     });
 
-    it('Not allowing register second proposer', async () => {
+    it.skip('Not allowing register second proposer', async () => {
       let error = null;
       try {
         const res = await proposers[1].registerProposer('http://optimist', minimumStakeDef);
-        expectTransaction(res);
+        const { receipt } = res.data;
+        expectTransaction(receipt);
       } catch (err) {
         error = err;
       }
       expect(error.message).to.satisfy(message =>
         message.includes('Transaction has been reverted by the EVM'),
       );
-    });
-
-    it(`Set maximum number of proposers ${value2} in PoS with the multisig`, async () => {
-      const transactions = await nfMultiSig.setMaxProposers(
-        value2,
-        signingKeys.user1,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        [],
-      );
-      const approved = await nfMultiSig.setMaxProposers(
-        value2,
-        signingKeys.user2,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        transactions,
-      );
-      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const maxProposers = await shieldContract.methods.getMaxProposers().call();
-
-      expect(Number(maxProposers)).to.be.equal(value2);
-    });
-
-    it('Allowing register second proposer', async () => {
-      const res = await proposers[1].registerProposer('http://optimist', minimumStakeDef);
-      expectTransaction(res);
     });
 
     it('Set boot proposer with the multisig', async () => {
@@ -302,34 +277,6 @@ describe(`Testing Administrator`, () => {
       const bootProposer = await shieldContract.methods.getBootProposer().call();
 
       expect(bootProposer.toUpperCase()).to.be.equal(addresses.proposer1.toUpperCase());
-    });
-
-    it(`Set maximum number of proposers ${value1} in PoS with the multisig and change to boot proposer`, async () => {
-      const transactions = await nfMultiSig.setMaxProposers(
-        value1,
-        signingKeys.user1,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        [],
-      );
-      const approved = await nfMultiSig.setMaxProposers(
-        value1,
-        signingKeys.user2,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        transactions,
-      );
-      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const maxProposers = await stateContract.methods.getMaxProposers().call();
-
-      expect(Number(maxProposers)).to.be.equal(value1);
-
-      const numberProposers1 = await stateContract.methods.getNumProposers().call();
-      const res = await proposers[1].changeCurrentProposer();
-      expectTransaction(res);
-      const numberProposers2 = await stateContract.methods.getNumProposers().call();
-      expect(Number(numberProposers1)).to.be.equal(2);
-      expect(Number(numberProposers2)).to.be.equal(1);
     });
 
     it('Set boot challenger with the multisig', async () => {
@@ -354,7 +301,7 @@ describe(`Testing Administrator`, () => {
       expect(bootChallenger.toUpperCase()).to.be.equal(addresses.challenger.toUpperCase());
     });
 
-    it('Set restriction with the multisig', async () => {
+    it('Set tx restrictions with the multisig', async () => {
       const transactions = await nfMultiSig.setTokenRestrictions(
         nf3User.ethereumAddress, // simulate a token address
         amount1,
@@ -386,7 +333,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(amount2);
     });
 
-    it('Remove restriction with the multisig', async () => {
+    it('Remove tx restrictions with the multisig', async () => {
       const transactions = await nfMultiSig.removeTokenRestrictions(
         nf3User.ethereumAddress, // simulate a token address
         signingKeys.user1,
@@ -436,7 +383,7 @@ describe(`Testing Administrator`, () => {
       expect(maticAddress.toUpperCase()).to.be.equal(addresses.user1.toUpperCase());
     });
 
-    it('Pause contracts with the multisig', async () => {
+    it('Pause State contract with the multisig', async () => {
       const paused1 = await stateContract.methods.paused().call();
       const transactions = await nfMultiSig.pauseContracts(
         signingKeys.user1,
@@ -459,7 +406,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(true);
     });
 
-    it('Unpause contracts with the multisig', async () => {
+    it('Unpause State contract with the multisig', async () => {
       const paused1 = await stateContract.methods.paused().call();
       const transactions = await nfMultiSig.unpauseContracts(
         signingKeys.user1,
@@ -482,7 +429,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(false);
     });
 
-    it('Be able to transfer ownership of contracts from multisig to a specific one', async () => {
+    it('Can transfer ownership of contracts from multisig to a specific address', async () => {
       const transactions = await nfMultiSig.transferOwnership(
         signingKeys.user1,
         signingKeys.user1,
@@ -576,7 +523,7 @@ describe(`Testing Administrator`, () => {
       expect(bootChallenger.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
     });
 
-    it('Set restriction without multisig', async () => {
+    it('Set tx restrictions without multisig', async () => {
       await shieldContract.methods
         .setRestriction(nf3User.ethereumAddress, amount1, amount2)
         .send({ from: nf3User.ethereumAddress });
@@ -591,7 +538,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(amount2);
     });
 
-    it('Remove restriction without multisig', async () => {
+    it('Remove tx restrictions without multisig', async () => {
       await shieldContract.methods
         .removeRestriction(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
@@ -685,6 +632,6 @@ describe(`Testing Administrator`, () => {
       await proposers[0].deregisterProposer();
     }
     proposers[0].close();
-    proposers[1].close();
+    // proposers[1].close();
   });
 });
