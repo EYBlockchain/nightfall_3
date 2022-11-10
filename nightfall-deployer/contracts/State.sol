@@ -111,14 +111,13 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
 
         TimeLockedStake memory stake = getStakeAccount(msg.sender);
-        require(blockStake <= msg.value, 'State: Stake payment is incorrect');
         require(b.proposer == msg.sender, 'State: Proposer address is not the sender');
         // set the maximum tx/block to prevent unchallengably large blocks
         require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
-        require(stake.amount >= blockStake, 'State: Proposer does not have enough funds staked');
-        stake.amount -= blockStake;
-        require(stake.amount >= blockStake, "Proposer doesn't have enough funds staked");
-        stake.challengeLocked += blockStake;
+        stake.amount += msg.value; // the staked sent by the proposer
+        require(stake.amount >= blockStake, "State: Proposer doesn't have enough funds staked");
+        stake.amount -= blockStake; // the block stake in case of an invalid block
+        stake.challengeLocked += blockStake; // the block stake in case of an invalid block
         stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
 
         bytes32 input = keccak256(abi.encodePacked(b.proposer, b.blockNumberL2));

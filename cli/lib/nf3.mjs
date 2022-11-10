@@ -905,7 +905,22 @@ class Nf3 {
   async getProposerPendingPayments() {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
       params: {
-        proposer: this.ethereumAddress,
+        proposerAddress: this.ethereumAddress,
+      },
+    });
+    return res.data.pendingPayments;
+  }
+
+  /**
+    Get all the proposer stake.
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum transaction receipt.
+    */
+  async getProposerStake() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`, {
+      params: {
+        proposerAddress: this.ethereumAddress,
       },
     });
     return res.data;
@@ -1033,11 +1048,7 @@ class Nf3 {
       if (type === 'block') {
         // First sign transaction, and send it within asynchronous queue. This will
         // ensure that blockProposed events are emitted in order and with the correct nonce.
-        const tx = await this._signTransaction(
-          txDataToSign,
-          this.stateContractAddress,
-          await this.getBlockStake(), // the block stake could have changed, so we get it from the blockchain
-        );
+        const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0); // we don't send more stake
         proposerQueue.push(async () => {
           try {
             const receipt = await this._sendTransaction(tx);
