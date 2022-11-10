@@ -10,8 +10,6 @@ services:
     container_name: proposer_optimist_1
     depends_on:
       - optimist_mongodb_1
-    networks:
-      - nightfall_network
     ports:
       - 9091:80
       # websocket port for Optimist is on localhost:9090
@@ -24,11 +22,13 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
-      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://optimist_mongodb_1:27017}
+      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://host.docker.internal:27019}
       HASH_TYPE: poseidon
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      OPTIMIST_PORT: 9091
+      OPTIMIST_WS_PORT: 9090
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
@@ -40,8 +40,6 @@ services:
     container_name: proposer_optimist_2
     depends_on:
       - optimist_mongodb_2
-    networks:
-      - nightfall_network
     ports:
       - 9093:80
       # websocket port for Optimist is on localhost:9090
@@ -54,11 +52,13 @@ services:
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
-      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://optimist_mongodb_2:27017}
+      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://host.docker.internal:27020}
       HASH_TYPE: poseidon
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
+      OPTIMIST_PORT: 9093
+      OPTIMIST_WS_PORT: 9092
     command: ['npm', 'run', 'dev']
 
   optimist_mongodb_1:
@@ -67,8 +67,6 @@ services:
     container_name: optimist_mongodb_1
     ports:
       - 27019:27017
-    networks:
-      - nightfall_network
     command: --quiet
     volumes:
       - type: volume
@@ -81,8 +79,6 @@ services:
     container_name: optimist_mongodb_2
     ports:
       - 27020:27017
-    networks:
-      - nightfall_network
     command: --quiet
     volumes:
       - type: volume
@@ -105,16 +101,14 @@ services:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
       BLOCKCHAIN_PORT: 8546
       ENABLE_QUEUE: 1
-      OPTIMIST_HOST: proposer_optimist_1
-      OPTIMIST_PORT: 80
-      OPTIMIST_WS_PORT: 8080
-      CLIENT_HOST: client
+      OPTIMIST_HOST: host.docker.internal
+      OPTIMIST_PORT: 9091
+      OPTIMIST_WS_PORT: 9090
+      CLIENT_HOST: host.docker.internal
       CLIENT_PORT: 8080
-      PROPOSER_HOST: proposer_1
+      PROPOSER_HOST: host.docker.internal
       PROPOSER_PORT: 8092
       PROPOSER_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d'
-    networks:
-      - nightfall_network
     volumes:
       - type: bind
         source: ../apps/proposer/src
@@ -136,16 +130,14 @@ services:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
       BLOCKCHAIN_PORT: 8546
       ENABLE_QUEUE: 1
-      OPTIMIST_HOST: proposer_optimist_2
-      OPTIMIST_PORT: 80
-      OPTIMIST_WS_PORT: 8080
-      CLIENT_HOST: client
+      OPTIMIST_HOST: host.docker.internal
+      OPTIMIST_PORT: 9093
+      OPTIMIST_WS_PORT: 9092
+      CLIENT_HOST: host.docker.internal
       CLIENT_PORT: 8080
-      PROPOSER_HOST: proposer_2
+      PROPOSER_HOST: host.docker.internal
       PROPOSER_PORT: 8093
       PROPOSER_KEY: '0xabf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce'
-    networks:
-      - nightfall_network
     volumes:
       - type: bind
         source: ../apps/proposer/src
@@ -155,11 +147,3 @@ volumes:
   optimist_mongodb_1:
   optimist_mongodb_2:
   build:
-networks:
-  nightfall_network:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.16.238.0/24
-          gateway: 172.16.238.1
