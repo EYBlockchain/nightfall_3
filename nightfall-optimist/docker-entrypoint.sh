@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-node swagger.js
 
 if [ -z "${USE_EXTERNAL_NODE}" ];
 then

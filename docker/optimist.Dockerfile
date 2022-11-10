@@ -27,7 +27,7 @@ RUN npm link
 
 WORKDIR /app
 COPY nightfall-optimist/src src
-COPY nightfall-optimist/docker-entrypoint.sh nightfall-optimist/package*.json ./
+COPY nightfall-optimist/docker-entrypoint.sh nightfall-optimist/package*.json nightfall-optimist/swagger.js ./
 COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /root/.zokrates/stdlib
 COPY --from=builder /app/ZoKrates/target/release/zokrates /app/
 

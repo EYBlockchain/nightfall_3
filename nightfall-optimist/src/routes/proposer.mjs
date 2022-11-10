@@ -36,26 +36,23 @@ export function setProposer(p) {
   proposer = p;
 }
 
-/**
- * Function to return a raw transaction that registers a proposer.  This just
- * provides the tx data, the user will need to append the registration bond
- * amount.  The user must post the address being registered.  This is for the
- * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
- */
 router.post('/register', async (req, res, next) => {
   /**
-   * #swagger.description = 'Function to return a raw transaction that registers a proposer. This just
-   * provides the tx data, the user will need to append the registration bond
-   * amount.  The user must post the address being registered.  This is for the
-   * Optimist app to use for it to decide when to start proposing blocks. It is not part of the unsigned blockchain transaction that is returned.'
-   *
-   * #swagger.summary = 'Register Proposer'
-   * #swagger.tags = ['Proposer']
-   * #swagger.path = '/proposer/register'
-   *
+   * @swagger
+     #swagger.description = 'This route returns a raw transaction that registers a proposer. This just
+     provides the tx data, the user will need to append the registration bond
+     amount.  The user must post the address being registered.  This is for the
+     Optimist app to use for it to decide when to start proposing blocks. It is not part of the unsigned blockchain transaction that is returned.'
+    
+     #swagger.summary = 'Register Proposer.'
+     #swagger.tags = ['Proposer']
+     #swagger.path = '/proposer/register'    
    */
 
   try {
+    /*	#swagger.requestBody = {            
+            schema: { $ref: "#/definitions/Proposer" }
+    } */
     const { address, url = '', fee = 0 } = req.body;
     if (url === '') {
       throw new Error('Rest API URL not provided');
@@ -99,17 +96,39 @@ router.post('/register', async (req, res, next) => {
         }
       }
     }
+
+    /* 
+      swagger.responses[200] = {
+        description: 'Proposer registered',
+        content: {
+            "application/json": {
+                schema: { $ref: "#/definitions/Proposer" }
+            }           
+        }
+      }      
+    */
     res.json({ txDataToSign });
   } catch (err) {
     next(err);
   }
 });
 
-/**
- * Function to update proposer's URL
- */
 router.post('/update', async (req, res, next) => {
+  /**
+   * #swagger.description = 'This route returns a raw transaction that update the proposer's URL. This just
+   * provides the tx data, the user will need to append the registration bond
+   * amount.  The user must post the address being registered.  This is for the
+   * Optimist app to use for it to decide when to start proposing blocks. It is not part of the unsigned blockchain transaction that is returned.'
+   *
+   * #swagger.summary = 'Update Proposer.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/update'
+   *
+   */
   try {
+    /*	#swagger.requestBody = {            
+            schema: { $ref: "#/definitions/Proposer" }
+    } */
     const { address, url = '', fee = 0 } = req.body;
     if (url === '') {
       throw new Error('Rest API URL not provided');
@@ -119,6 +138,21 @@ router.post('/update', async (req, res, next) => {
       .updateProposer(url, fee)
       .encodeABI();
 
+    /* 
+      swagger.responses[200] = {
+        description: 'Proposer registered',
+        content: {
+            "application/json": {
+                schema:{
+                    $ref: '#/definitions/TxDataToSign'
+                }
+            }           
+        }
+      }
+      swagger.responses[500] = {
+        description: 'Rest API URL not provided'
+      }
+    */
     res.json({ txDataToSign });
     setRegisteredProposerAddress(address, url); // save the registration address and URL
   } catch (err) {
@@ -126,40 +160,87 @@ router.post('/update', async (req, res, next) => {
   }
 });
 
-/**
- * Returns the current proposer
- */
 router.get('/current-proposer', async (req, res, next) => {
+  /**
+   * #swagger.description = 'This route returns the current proposer.'
+   *
+   * #swagger.summary = 'Current proposer.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/current-proposer'
+   *
+   */
+
   try {
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     const { thisAddress: currentProposer } = await stateContractInstance.methods
       .currentProposer()
       .call();
 
+    /* 
+      swagger.responses[200] = {
+        description: 'Proposer registered',
+        content: {
+            "application/json": {
+                schema:{
+                    $ref: '#/definitions/CurrentProposerResponse'
+                }
+            }           
+        }
+      }
+      swagger.responses[500] = {
+        description: 'Some error ocurred.'
+      }
+    */
     res.json({ currentProposer });
   } catch (err) {
     next(err);
   }
 });
 
-/**
- * Returns a list of the registered proposers
- */
 router.get('/proposers', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Returns a list of the registered proposers'
+   *
+   * #swagger.summary = 'List of proposers'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/proposers'
+   *
+   */
   try {
     const proposers = await getProposers();
 
+    /* 
+      swagger.responses[200] = {
+        description: 'Proposer registered',
+        content: {
+            "application/json": {
+                schema:{
+                    $ref: '#/definitions/AllProposers'
+                }
+            }           
+        }
+      }
+      swagger.responses[500] = {
+        description: 'Some error ocurred.'
+      }
+    */
     res.json({ proposers });
   } catch (err) {
     next(err);
   }
 });
 
-/**
- * Function to return a raw transaction that de-registers a proposer.  This just
- * provides the tx data. The user has to call the blockchain client.
- */
 router.post('/de-register', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Route that will return a raw transaction that de-registers a proposer. This just
+   * provides the tx data. The user has to call the blockchain client.'
+   *
+   * #swagger.summary = 'Deregister a proposer.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/de-register'
+   *
+   */
+
   try {
     const { address = '' } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
@@ -167,6 +248,21 @@ router.post('/de-register', async (req, res, next) => {
 
     await deleteRegisteredProposerAddress(address);
 
+    /* 
+      swagger.responses[200] = {
+        description: 'Proposer registered',
+        content: {
+            "application/json": {
+                schema:{
+                    $ref: '#/definitions/CurrentProposerResponse'
+                }
+            }           
+        }
+      }
+      swagger.responses[500] = {
+        description: 'Some error ocurred.'
+      }
+    */
     res.json({ txDataToSign });
   } catch (err) {
     next(err);
@@ -178,19 +274,49 @@ router.post('/de-register', async (req, res, next) => {
  */
 
 router.post('/withdrawStake', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Route to withdraw stake for a de-registered proposer.'
+   *
+   * #swagger.summary = 'Deregistered proposer withdraw'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/withdrawStake'
+   *
+   */
   try {
     const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposerContractInstance.methods.withdrawStake().encodeABI();
+
+    /* 
+      swagger.responses[200] = {
+        description: 'Proposer registered',
+        content: {
+            "application/json": {
+                schema:{
+                    $ref: '#/definitions/CurrentProposerResponse'
+                }
+            }           
+        }
+      }
+      swagger.responses[500] = {
+        description: 'Some error ocurred.'
+      }
+    */
     res.json({ txDataToSign });
   } catch (error) {
     next(error);
   }
 });
 
-/**
- * Function to get pending blocks payments for a proposer.
- */
 router.get('/pending-payments', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Route to get pending blocks payments for a proposer.'
+   *
+   * #swagger.summary = 'Pending payments for a proposer.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/pending-payments'
+   *
+   */
+
   const { proposerPayments = proposer } = req.query;
   const pendingPayments = [];
   // get blocks by proposer
@@ -219,18 +345,25 @@ router.get('/pending-payments', async (req, res, next) => {
         pendingPayments.push({ blockHash: blocks[i].blockHash, challengePeriod });
       }
     }
+
     res.json({ pendingPayments });
   } catch (err) {
     next(err);
   }
 });
 
-/**
- * Function to withdraw funds owing to an account.  This could be profits made
- * Through a successful challenge or proposing state updates. This just
- * provides the tx data, the user will need to call the blockchain client.
- */
 router.get('/withdraw', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Route to withdraw funds owing to an account. This could be profits made
+   * Through a successful challenge or proposing state updates. This just
+   * provides the tx data, the user will need to call the blockchain client.'
+   *
+   * #swagger.summary = 'Withdraw funds.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/withdraw'
+   *
+   */
+
   try {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
@@ -241,12 +374,17 @@ router.get('/withdraw', async (req, res, next) => {
   }
 });
 
-/**
- * Function to get payment for proposing a L2 block.  This should be called only
- * after the block is finalised. It will authorise the payment as a pending
- * withdrawal and then /withdraw needs to be called to recover the money.
- */
 router.post('/payment', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Route to get payment for proposing a L2 block.  This should be called only
+   * after the block is finalised. It will authorise the payment as a pending
+   * withdrawal and then /withdraw needs to be called to recover the money.'
+   *
+   * #swagger.summary = 'Payment for proposer a L2 block.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/payment'
+   *
+   */
   const { blockHash } = req.body;
   try {
     const block = await getBlockByBlockHash(blockHash);
@@ -261,14 +399,20 @@ router.post('/payment', async (req, res, next) => {
   }
 });
 
-/**
- * Function to change the current proposer (assuming their time has elapsed).
- * This just provides the tx data, the user will need to call the blockchain
- * client.  It is a convenience function, because the unsigned transaction is
- * for a parameterless function - therefore it's a constant and could be pre-
- * computed by the app that calls this endpoint.
- */
 router.get('/change', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Route to change the current proposer (assuming their time has elapsed).
+   * This just provides the tx data, the user will need to call the blockchain
+   * client. It is a convenience function, because the unsigned transaction is
+   * for a parameterless function - therefore it's a constant and could be pre-
+   * computed by the app that calls this endpoint.'
+   *
+   * #swagger.summary = 'Change current proposer.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/change'
+   *
+   */
+
   try {
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
@@ -283,6 +427,15 @@ router.get('/change', async (req, res, next) => {
  * Function to get mempool of a connected proposer
  */
 router.get('/mempool', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Route to get mempool of a connected proposer.'
+   *
+   * #swagger.summary = 'Mempool of a connected proposer.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/mempool'
+   *
+   */
+
   try {
     const mempool = await getMempoolTransactions();
     res.json({ result: mempool });
@@ -292,6 +445,15 @@ router.get('/mempool', async (req, res, next) => {
 });
 
 router.post('/encode', async (req, res, next) => {
+  /**
+   * #swagger.description = 'Route to encode.'
+   *
+   * #swagger.summary = 'Encode.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer/encode'
+   *
+   */
+
   try {
     const { transactions, block } = req.body;
 
@@ -358,6 +520,15 @@ router.post('/encode', async (req, res, next) => {
 });
 
 router.post('/offchain-transaction', async (req, res) => {
+  /**
+   * #swagger.description = 'Route to process offchain transactions.'
+   *
+   * #swagger.summary = 'Offchain transaction.'
+   * #swagger.tags = ['Proposer']
+   * #swagger.path = '/proposer//offchain-transaction'
+   *
+   */
+
   const { transaction } = req.body;
   /*
     When a transaction is built by client, they are generalised into hex(32) interfacing with web3

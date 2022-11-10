@@ -4,8 +4,8 @@
   "description": "A container for optimistic proposals and challenges",
   "main": "index.mjs",
   "scripts": {
-    "start": "node src/index.mjs",
-    "start:debug": "node --inspect=0.0.0.0:9229 src/index.mjs",
+    "start": "node ./swagger.js",
+    "start:debug": "node --inspect=0.0.0.0:9229 ./swagger.js",
     "dev": "nodemon src/index.mjs"
   },
   "repository": {
