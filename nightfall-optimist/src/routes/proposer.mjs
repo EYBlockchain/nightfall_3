@@ -115,7 +115,13 @@ router.post('/update', async (req, res, next) => {
 });
 
 /**
- * Returns the current proposer
+ * @openapi
+ * /:
+ *   get:
+ *     description: Returns the current proposer
+ *     responses:
+ *       200:
+ *         description: Returns a mysterious string.
  */
 router.get('/current-proposer', async (req, res, next) => {
   try {
