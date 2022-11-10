@@ -23,6 +23,8 @@ const {
   tokenConfigs: { tokenType, tokenId },
 } = config.TEST_OPTIONS;
 
+const { TEST_ERC20_ADDRESS } = process.env;
+
 const bootProposer = new Nf3(signingKeys.proposer1, environment);
 const secondProposer = new Nf3(signingKeys.proposer2, environment);
 const thirdProposer = new Nf3(signingKeys.proposer3, environment);
@@ -96,7 +98,9 @@ describe('Basic Proposer tests', () => {
     minimumStake = await bootProposer.getMinimumStake();
     stateAddress = await bootProposer.getContractAddress('State');
     stateABI = await nf3User.getContractAbi('State');
-    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+
+    erc20Address = TEST_ERC20_ADDRESS || (await nf3User.getContractAddress('ERC20Mock'));
+
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     let proposer = await getProposer(secondProposer.ethereumAddress);

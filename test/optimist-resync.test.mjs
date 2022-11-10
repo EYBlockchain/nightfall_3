@@ -27,6 +27,8 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
+const { TEST_ERC20_ADDRESS } = process.env;
+
 const { PROPOSE_BLOCK } = config.SIGNATURES;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
@@ -72,7 +74,8 @@ describe('Optimist synchronisation tests', () => {
     );
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
+
+    erc20Address = TEST_ERC20_ADDRESS || (await nf3Users[0].getContractAddress('ERC20Mock'));
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });

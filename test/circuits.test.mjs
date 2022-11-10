@@ -21,6 +21,8 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
+const { TEST_ERC20_ADDRESS } = process.env;
+
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
@@ -38,21 +40,24 @@ let eventLogs = [];
 */
 describe('General Circuit Test', () => {
   before(async () => {
-    await nf3Proposer.init(mnemonics.proposer);
-    // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
+    if(process.env.ENVIRONMENT !== 'aws') {
+      await nf3Proposer.init(mnemonics.proposer);
+      // we must set the URL from the point of view of the client container
+      await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
-    });
+      // Proposer listening for incoming events
+      const newGasBlockEmitter = await nf3Proposer.startProposer();
+      newGasBlockEmitter.on('gascost', async gasUsed => {
+        logger.debug(
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+        );
+      });
+    }
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
+
+    erc20Address = TEST_ERC20_ADDRESS || (await nf3Users[0].getContractAddress('ERC20Mock'));
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
@@ -274,5 +279,16 @@ describe('General Circuit Test', () => {
 
     const finalBalance = await getBalance();
     expect(finalBalance - initialBalance).to.be.equal(0);
+  });
+
+  after(async () => {
+    if(process.env.ENVIRONMENT !== 'aws') {
+      await nf3Proposer.deregisterProposer();
+      await nf3Proposer.close();
+    }
+
+    await nf3Users[0].close();
+    await nf3Users[1].close();
+    await web3Client.closeWeb3();
   });
 });

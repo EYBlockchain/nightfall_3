@@ -26,6 +26,7 @@ chai.use(chaiAsPromised);
 const { TRANSACTIONS_PER_BLOCK } = config;
 const TX_WAIT = 12000;
 const TEST_LENGTH = 3;
+const { TEST_ERC20_ADDRESS } = process.env;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -61,9 +62,6 @@ describe('Testing with an adversary', () => {
   const fee = 1;
 
   before(async () => {
-    console.log(`CHALLENGE_TYPE: ${process.env.CHALLENGE_TYPE}`);
-    console.log(`TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK}`);
-    console.log('ENV:\n', environment);
     nf3User = new Nf3(ethereumSigningKeyUser, environment);
 
     const {
@@ -96,7 +94,7 @@ describe('Testing with an adversary', () => {
     if (!(await nf3Challenger.healthcheck('optimist'))) throw new Error('Healthcheck failed');
 
     // retrieve initial balance
-    ercAddress = await nf3User.getContractAddress('ERC20Mock');
+    ercAddress = TEST_ERC20_ADDRESS || (await nf3User.getContractAddress('ERC20Mock'));
     startBalance = await retrieveL2Balance(nf3User);
 
     // Proposer registration
