@@ -29,7 +29,7 @@ import {
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { VK_IDS, utilApiServerUrl } = global.config;
+const { VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 
@@ -151,16 +151,13 @@ async function transfer(transferParams, shieldContractAddress) {
 
       if (!(await checkIndexDBForCircuit(circuitName)))
         throw Error('Some circuit data are missing from IndexedDB');
-      // const [wasmData, zkeyData] = await Promise.all([
-      //   getStoreCircuit(`${circuitName}-wasm`),
-      //   getStoreCircuit(`${circuitName}-zkey`),
-      // ]);
-
-      const wasmFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}_js/${circuitName}.wasm`;
-      const zkeyFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}.zkey`;
+      const [wasmData, zkeyData] = await Promise.all([
+        getStoreCircuit(`${circuitName}-wasm`),
+        getStoreCircuit(`${circuitName}-zkey`),
+      ]);
 
       // generate proof
-      const { proof } = await snarkjs.groth16.fullProve(witness, wasmFilePath, zkeyFilePath); // zkey, witness
+      const { proof } = await snarkjs.groth16.fullProve(witness, wasmData.data, zkeyData.data); // zkey, witness
 
       const optimisticTransferTransaction = new Transaction({
         fee,

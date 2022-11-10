@@ -191,17 +191,18 @@ export function edwardsDecompress(y) {
   // 168700.x^2 + y^2 = 1 + 168696.x^2.y^2
   const y2 = mulMod([yfield, yfield], Fp);
   const x2 = modDivide(
-    addMod([y2, BigInt(-1)], Fp),
-    addMod([mulMod([JUBJUBD, y2], Fp), -JUBJUBA], Fp),
+    addMod([-y2, 1n], Fp),
+    addMod([mulMod([-JUBJUBD, y2], Fp), JUBJUBA], Fp),
     Fp,
   );
   if (x2 === 0n && sign === '0') return BABYJUBJUB.INFINITY;
   let xfield = squareRootModPrime(x2, Fp);
-  if (
+  const signField =
     generalise(xfield).bigInt >
-      10944121435919637611123202872628637544274182200208017171849102093287904247808n ===
-    sign
-  ) {
+    10944121435919637611123202872628637544274182200208017171849102093287904247808n
+      ? '1'
+      : '0';
+  if (signField !== sign) {
     xfield = Fp - xfield;
   }
   const p = [xfield, yfield];

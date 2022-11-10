@@ -21,7 +21,7 @@ import { storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
 import { checkIndexDBForCircuit, getLatestTree, getMaxBlock, getStoreCircuit } from './database';
 
-const { VK_IDS, utilApiServerUrl } = global.config;
+const { VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.nightfallConstants;
 const { generalise } = gen;
 const circuitName = 'deposit';
@@ -85,22 +85,13 @@ async function deposit(items, shieldContractAddress) {
   try {
     if (!(await checkIndexDBForCircuit(circuitName)))
       throw Error('Some circuit data are missing from IndexedDB');
-    // const [wasmData, zkeyData] = await Promise.all([
-    //   getStoreCircuit(`${circuitName}-wasm`),
-    //   getStoreCircuit(`${circuitName}-zkey`),
-    // ]);
-
-    // const wasmFile = new File(wasmData.data, 'circuit.wasm');
-    // const zkeyFile = new File(zkeyData.data, 'circuit.zkey');
-
-    // const wasmFilePath = `circuit.wasm`;
-    // const zkeyFilePath = `circuit.zkey`;
-
-    const wasmFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}_js/${circuitName}.wasm`;
-    const zkeyFilePath = `${utilApiServerUrl}/${circuitName}/${circuitName}.zkey`;
+    const [wasmData, zkeyData] = await Promise.all([
+      getStoreCircuit(`${circuitName}-wasm`),
+      getStoreCircuit(`${circuitName}-zkey`),
+    ]);
 
     // generate proof
-    const { proof } = await snarkjs.groth16.fullProve(witness, wasmFilePath, zkeyFilePath); // zkey, witness
+    const { proof } = await snarkjs.groth16.fullProve(witness, wasmData.data, zkeyData.data); // zkey, witness
 
     const shieldContractInstance = await getContractInstance(
       SHIELD_CONTRACT_NAME,
