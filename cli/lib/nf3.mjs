@@ -1286,7 +1286,7 @@ class Nf3 {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`, {
       params: {
         compressedZkpPublicKey:
-          filterByCompressedZkpPublicKey === true ? this.zkpKeys.compressedZkpPublicKey : null,
+          filterByCompressedZkpPublicKey === true ? [this.zkpKeys.compressedZkpPublicKey] : [],
         ercList,
       },
     });
