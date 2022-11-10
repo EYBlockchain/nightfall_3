@@ -51,7 +51,6 @@ async function deposit(items, shieldContractAddress) {
     getStoreCircuit(`${circuitName}-program`),
     getStoreCircuit(`${circuitName}-pk`),
   ]);
-
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
@@ -81,7 +80,10 @@ async function deposit(items, shieldContractAddress) {
 
   try {
     const zokratesProvider = await initialize();
-    const artifacts = { program: new Uint8Array(program), abi };
+    const artifacts = {
+      program: new Uint8Array(program),
+      abi: { inputs: abi.inputs, outputs: [abi.output] },
+    };
     const keypair = { pk: new Uint8Array(pk) };
 
     // computation

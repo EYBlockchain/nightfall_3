@@ -81,7 +81,8 @@ services:
 
   hosted-utils-api-server:
     build:
-      context: ../hosted-utils-api-server
+      dockerfile: docker/hosted-utils-api-server.Dockerfile
+      context: ..
     depends_on:
       - worker
     ports:
