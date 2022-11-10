@@ -58,7 +58,7 @@ async function transfer(transferParams) {
     maticAddress,
     tokenId,
     rootKey,
-    maxNumberNullifiers: VK_IDS.transfer.numberNullifiers,
+    maxNullifiers: VK_IDS.transfer.numberNullifiers,
     providedCommitments,
   });
 

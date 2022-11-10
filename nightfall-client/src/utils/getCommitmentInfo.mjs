@@ -30,7 +30,7 @@ export const getCommitmentInfo = async txInfo => {
     providedCommitments = [],
   } = txInfo;
 
-  let { maxNumberNullifiers, onlyFee = false } = txInfo;
+  let { maxNullifiers, maxNonFeeNullifiers = undefined } = txInfo;
 
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
@@ -46,6 +46,10 @@ export const getCommitmentInfo = async txInfo => {
 
   let value = totalValueToSend + addedFee;
   const feeValue = fee.bigInt - addedFee;
+
+  if (maxNonFeeNullifiers === undefined) {
+    maxNonFeeNullifiers = feeValue > 0n ? maxNullifiers - 1 : maxNullifiers;
+  }
 
   logger.debug(`using user provided commitments: ${providedCommitments.length > 0}`);
 
@@ -89,10 +93,10 @@ export const getCommitmentInfo = async txInfo => {
         // we need to set the value here instead of the feeValue
         value = providedValue >= value ? 0n : value - providedValue;
       } else {
-        onlyFee = true;
+        maxNonFeeNullifiers = 0;
       }
 
-      maxNumberNullifiers -= validatedProvidedCommitments.length;
+      maxNullifiers -= validatedProvidedCommitments.length;
 
       await Promise.all(validatedProvidedCommitments.map(c => markPending(c)));
       spentCommitments.push(...validatedProvidedCommitments);
@@ -105,8 +109,8 @@ export const getCommitmentInfo = async txInfo => {
       maticAddress,
       value,
       feeValue,
-      maxNumberNullifiers,
-      onlyFee,
+      maxNullifiers,
+      maxNonFeeNullifiers,
     );
     logger.debug({ commitments });
     const { oldCommitments, oldCommitmentsFee } = commitments;
