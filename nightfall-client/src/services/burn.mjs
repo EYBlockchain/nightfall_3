@@ -45,8 +45,8 @@ async function burn(burnParams) {
     tokenId,
     maticAddress,
     rootKey,
-    maxNumberNullifiers: VK_IDS.burn.numberNullifiers,
-    onlyFee: true,
+    maxNullifiers: VK_IDS.burn.numberNullifiers,
+    maxNonFeeNullifiers: 1,
     providedCommitments,
   });
 

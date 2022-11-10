@@ -116,7 +116,7 @@ describe('L2 Tokenisation tests', () => {
   });
 
   describe('Burn tests', () => {
-    it('should partially burn a l2 token successfully', async function () {
+    it('should partially burn a l2 commitment successfully', async function () {
       const value = 5;
       const valueBurnt = 4;
       const privateTokenId = 11;
@@ -155,7 +155,7 @@ describe('L2 Tokenisation tests', () => {
       expect(erc20AddressBalanceAfter - erc20AddressBalanceBefore).to.be.equal(-1);
     });
 
-    it('should fully burn a l2 token successfully', async function () {
+    it('should fully burn a l2 commitment successfully', async function () {
       const value = 5;
       const privateTokenId = 11;
       const salt = await randValueLT(BN128_GROUP_ORDER);
@@ -190,6 +190,36 @@ describe('L2 Tokenisation tests', () => {
         afterBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
       expect(l2AddressBalanceAfter - l2AddressBalanceBefore).to.be.equal(-value);
+      expect(erc20AddressBalanceAfter - erc20AddressBalanceBefore).to.be.equal(-1);
+    });
+
+    it('should burn a l2 commitment without specifying the commitment hash successfully', async function () {
+      const value = 5;
+      const valueBurnt = 4;
+      const privateTokenId = 11;
+      const salt = await randValueLT(BN128_GROUP_ORDER);
+
+      await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
+
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+
+      const beforeBalance = await nf3Users[0].getLayer2Balances();
+
+      const erc20AddressBalanceBefore = beforeBalance[erc20Address]?.[0].balance || 0;
+      const l2AddressBalanceBefore =
+        beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
+          ?.balance || 0;
+
+      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [], 1);
+
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+
+      const afterBalance = await nf3Users[0].getLayer2Balances();
+      const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
+      const l2AddressBalanceAfter =
+        afterBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
+          ?.balance || 0;
+      expect(l2AddressBalanceAfter - l2AddressBalanceBefore).to.be.equal(-valueBurnt);
       expect(erc20AddressBalanceAfter - erc20AddressBalanceBefore).to.be.equal(-1);
     });
   });

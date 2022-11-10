@@ -26,16 +26,10 @@ async function deposit(items) {
   logger.info('Creating a deposit transaction');
 
   // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
-  const { tokenId, value, compressedZkpPublicKey, nullifierKey } = generalise(items);
+  const { tokenId, value, fee, compressedZkpPublicKey, nullifierKey } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const salt = await randValueLT(BN128_GROUP_ORDER);
-  const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
-
-  logger.debug({
-    msg: 'Hash of new commitment',
-    hash: commitment.hash.hex(),
-  });
 
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
@@ -43,6 +37,30 @@ async function deposit(items) {
   const maticAddress = generalise(
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
+
+  let valueNewCommitment = value;
+  if (fee.bigInt > 0) {
+    if (maticAddress.hex(32) === ercAddress.hex(32)) {
+      valueNewCommitment = generalise(value.bigInt - fee.bigInt);
+    } else {
+      throw new Error('When depositing, fee can only be paid in L2 if transferring MATIC');
+    }
+  }
+
+  if (valueNewCommitment.bigInt < 0) throw new Error('Invalid value and fee');
+
+  const commitment = new Commitment({
+    ercAddress,
+    tokenId,
+    value: valueNewCommitment,
+    zkpPublicKey,
+    salt,
+  });
+
+  logger.debug({
+    msg: 'Hash of new commitment',
+    hash: commitment.hash.hex(),
+  });
 
   const responseCircuitHash = await axios.get(`${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`, {
     params: { circuit: 'deposit' },
@@ -56,7 +74,7 @@ async function deposit(items) {
   const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
 
   const publicData = new Transaction({
-    fee: 0,
+    fee,
     circuitHash,
     tokenType: items.tokenType,
     tokenId,
@@ -69,7 +87,7 @@ async function deposit(items) {
   });
 
   const privateData = {
-    newCommitmentPreimage: [{ value, salt }],
+    newCommitmentPreimage: [{ value: valueNewCommitment, salt }],
     recipientPublicKeys: [zkpPublicKey],
   };
 
@@ -105,7 +123,7 @@ async function deposit(items) {
 
   // next we need to compute the optimistic Transaction object
   const optimisticDepositTransaction = new Transaction({
-    fee: 0,
+    fee,
     circuitHash,
     tokenType: items.tokenType,
     tokenId,

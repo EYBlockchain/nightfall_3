@@ -30,7 +30,7 @@ async function deposit(items, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { tokenId, value, compressedZkpPublicKey, nullifierKey } = generalise(items);
+  const { tokenId, value, fee, compressedZkpPublicKey, nullifierKey } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
@@ -43,6 +43,17 @@ async function deposit(items, shieldContractAddress) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
+  let valueNewCommitment = value;
+  if (fee.bigInt > 0) {
+    if (maticAddress.hex(32) === ercAddress.hex(32)) {
+      valueNewCommitment = generalise(value.bigInt - fee.bigInt);
+    } else {
+      throw new Error('When depositing, fee can only be paid in L2 if transferring MATIC');
+    }
+  }
+
+  if (valueNewCommitment.bigInt < 0) throw new Error('Invalid value and fee');
+
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
@@ -52,11 +63,17 @@ async function deposit(items, shieldContractAddress) {
   const circuitHash = circuitHashData.data;
 
   const salt = await randValueLT(BN128_GROUP_ORDER);
-  const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
+  const commitment = new Commitment({
+    ercAddress,
+    tokenId,
+    value: valueNewCommitment,
+    zkpPublicKey,
+    salt,
+  });
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
   // now we can compute a Witness so that we can generate the proof
   const publicData = new Transaction({
-    fee: 0,
+    fee,
     circuitHash,
     tokenType: items.tokenType,
     tokenId,
@@ -69,7 +86,7 @@ async function deposit(items, shieldContractAddress) {
   });
 
   const privateData = {
-    newCommitmentPreimage: [{ value, salt }],
+    newCommitmentPreimage: [{ value: valueNewCommitment, salt }],
     recipientPublicKeys: [zkpPublicKey],
   };
 
@@ -100,7 +117,7 @@ async function deposit(items, shieldContractAddress) {
 
     // next we need to compute the optimistic Transaction object
     const optimisticDepositTransaction = new Transaction({
-      fee: 0,
+      fee,
       circuitHash,
       tokenType: items.tokenType,
       tokenId,

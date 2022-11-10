@@ -61,8 +61,8 @@ async function tokenise(items) {
     ercAddress: generalise(0),
     maticAddress,
     rootKey,
-    maxNumberNullifiers: VK_IDS.tokenise.numberNullifiers,
-    onlyFee: true,
+    maxNullifiers: VK_IDS.tokenise.numberNullifiers,
+    maxNonFeeNullifiers: 0,
   });
 
   // Prepend the new tokenised commitment
