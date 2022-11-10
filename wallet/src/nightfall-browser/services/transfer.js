@@ -80,7 +80,7 @@ async function transfer(transferParams, shieldContractAddress) {
       maticAddress,
       tokenId,
       rootKey,
-      maxNumberNullifiers: VK_IDS.transfer.numberNullifiers,
+      maxNullifiers: VK_IDS.transfer.numberNullifiers,
       providedCommitments,
     });
 
@@ -146,8 +146,6 @@ async function transfer(transferParams, shieldContractAddress) {
         VK_IDS.transfer.numberNullifiers,
         VK_IDS.transfer.numberCommitments,
       );
-
-      console.log('WITNESS', witness);
 
       if (!(await checkIndexDBForCircuit(circuitName)))
         throw Error('Some circuit data are missing from IndexedDB');

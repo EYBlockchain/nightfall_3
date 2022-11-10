@@ -50,7 +50,7 @@ async function withdraw(withdrawParams) {
     maticAddress,
     tokenId,
     rootKey,
-    maxNumberNullifiers: VK_IDS.withdraw.numberNullifiers,
+    maxNullifiers: VK_IDS.withdraw.numberNullifiers,
     providedCommitments,
   });
 

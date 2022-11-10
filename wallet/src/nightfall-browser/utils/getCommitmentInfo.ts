@@ -35,8 +35,8 @@ type TxInfo = {
   maticAddress: GeneralNumber;
   tokenId: GeneralNumber;
   rootKey: any;
-  maxNumberNullifiers: number;
-  onlyFee: boolean;
+  maxNullifiers: number;
+  maxNonFeeNullifiers: number | undefined;
   providedCommitments: string[];
 };
 
@@ -52,7 +52,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
     providedCommitments = [],
   } = txInfo;
 
-  let { maxNumberNullifiers, onlyFee = false } = txInfo;
+  let { maxNullifiers, maxNonFeeNullifiers = undefined } = txInfo;
 
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
@@ -64,7 +64,11 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
   const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee : 0n;
 
   let value = totalValueToSend + addedFee;
-  let feeValue = fee - addedFee;
+  const feeValue = fee - addedFee;
+
+  if (maxNonFeeNullifiers === undefined) {
+    maxNonFeeNullifiers = feeValue > 0n ? maxNullifiers - 1 : maxNullifiers;
+  }
 
   const spentCommitments = [];
   try {
@@ -98,18 +102,16 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
       // transform the hashes retrieved from the DB to well formed commitments
       validatedProvidedCommitments = rawCommitments.map((ct: any) => new Commitment(ct.preimage));
 
-      // the user provieded enough commitments to cover the value but not the fee
-      // this can only happen when the token to send is the fee token
-      onlyFee = true;
-      value = 0n;
-      maxNumberNullifiers -= validatedProvidedCommitments.length;
-
       if (maticAddress.hex(32) === ercAddress.hex(32)) {
-        feeValue = providedValue > value ? 0n : value - providedValue;
+        // the user provided enough commitments to cover the value but not the fee
+        // this can only happen when the token to send is the fee token
+        // we need to set the value here instead of the feeValue
+        value = providedValue >= value ? 0n : value - providedValue;
       } else {
-        feeValue = fee;
+        maxNonFeeNullifiers = 0;
       }
 
+      maxNullifiers -= validatedProvidedCommitments.length;
       await Promise.all(validatedProvidedCommitments.map((c: Commitment) => markPending(c)));
       spentCommitments.push(...validatedProvidedCommitments);
     }
@@ -121,8 +123,8 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
       maticAddress,
       value,
       feeValue,
-      maxNumberNullifiers,
-      onlyFee,
+      maxNullifiers,
+      maxNonFeeNullifiers,
     );
 
     const { oldCommitments, oldCommitmentsFee } = commitments;
