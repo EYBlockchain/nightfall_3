@@ -520,7 +520,14 @@ class Nf3 {
     @param {object} keys - The ZKP private key set.
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
-  async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFeeEth) {
+  async deposit(
+    ercAddress,
+    tokenType,
+    value,
+    tokenId,
+    fee = this.defaultFeeEth,
+    feePaidL2 = false,
+  ) {
     let txDataToSign;
     try {
       txDataToSign = await approve(
@@ -541,6 +548,10 @@ class Nf3 {
         return this.submitTransaction(txDataToSign, ercAddress, 0);
       });
     }
+
+    const feeL1 = feePaidL2 ? 0 : fee;
+    const feeL2 = feePaidL2 ? fee : 0;
+
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
@@ -548,7 +559,7 @@ class Nf3 {
       value,
       compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
       nullifierKey: this.zkpKeys.nullifierKey,
-      fee: 0,
+      fee: feeL2,
     });
     return new Promise((resolve, reject) => {
       userQueue.push(async () => {
@@ -556,7 +567,7 @@ class Nf3 {
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.shieldContractAddress,
-            fee,
+            feeL1,
           );
           resolve(receipt);
         } catch (err) {

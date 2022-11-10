@@ -78,7 +78,7 @@ template Deposit(N,C) {
     }
 
     // Check that the commitments sum is equal to the value
-    commitmentsSum === value;
+    commitmentsSum + fee === value;
 
     // Calculate the token Id remainder without the 4 top bytes
     component idRemainder = Bits2Num(224);

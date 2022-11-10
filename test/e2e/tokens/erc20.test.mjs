@@ -88,7 +88,7 @@ describe('ERC20 tests', () => {
   });
 
   describe('Deposits', () => {
-    it('should increment the balance after deposit some ERC20 crypto', async function () {
+    it('should increment the balance after deposit some ERC20 crypto and pay fee in L1', async function () {
       const currentZkpPublicKeyBalance =
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
@@ -97,6 +97,19 @@ describe('ERC20 tests', () => {
       const afterZkpPublicKeyBalance =
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(transferValue);
+    });
+
+    it('should increment the balance after deposit some ERC20 crypto and pay fee in L2', async function () {
+      const currentZkpPublicKeyBalance =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee, true);
+
+      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      const afterZkpPublicKeyBalance =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+      expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
+        transferValue - fee,
+      );
     });
   });
 
