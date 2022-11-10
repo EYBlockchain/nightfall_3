@@ -21,15 +21,21 @@ contract X509 is DERParser, Whitelist, KYCInterface {
     mapping(bytes32 => bool) revokedKeys;
     mapping(address => bytes32) keysByUser;
 
-    bytes1 usageBitMask;
+    bytes1 usageBitMaskEndUser;
+    bytes1 usageBitMaskIntermediate;
 
     function initialize() public override(Whitelist) initializer {
         Whitelist.initialize();
-        usageBitMask = 0xC0;
+        usageBitMaskEndUser = 0xC0;
+        usageBitMaskIntermediate = 0x06;
     }
 
-    function setUseageBitMask(bytes1 _usageBitMask) external onlyOwner {
-        usageBitMask = _usageBitMask;
+    function setUseageBitMaskEndUser(bytes1 _usageBitMask) external onlyOwner {
+        usageBitMaskEndUser = _usageBitMask;
+    }
+
+    function setUseageBitMasIntermediate(bytes1 _usageBitMask) external onlyOwner {
+        usageBitMaskIntermediate = _usageBitMask;
     }
 
     function setTrustedPublicKey(
@@ -297,14 +303,14 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         // we do that by getting them to sign msg.sender with the private key corresponding to their certificate public key
         if (!addAddress) {
             // if we're not adding an address, check that this certificate can sign certificates (because it must be an intermediate one)
-            checkKeyUsage(tlvs, 0x06);
+            checkKeyUsage(tlvs, usageBitMaskIntermediate);
             // if yes, we'll trust it
             trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
             return; // we may want to add an intermediate cert to the contract but not add an address.
         }
         // as we are trying to add an address, this certificate should be an end user certificate, created for digital signature
         // and non-repudiation (or possibly other things - we can change this).
-        checkKeyUsage(tlvs, usageBitMask);
+        checkKeyUsage(tlvs, usageBitMaskEndUser);
         trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
         checkSignature(
             addressSignature,
@@ -331,7 +337,7 @@ contract X509 is DERParser, Whitelist, KYCInterface {
     // allows a key to be revoked. this cannot be undone!
     function revokeKey(bytes32 subjectKeyIdentifier) external {
         require(
-            keysByUser[msg.sender] == subjectKeyIdentifier,
+            keysByUser[msg.sender] == subjectKeyIdentifier || msg.sender == owner(),
             'You are not the owner of this key'
         );
         revokedKeys[subjectKeyIdentifier] = true;
