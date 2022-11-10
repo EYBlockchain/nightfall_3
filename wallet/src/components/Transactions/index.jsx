@@ -109,12 +109,7 @@ const Transactions = () => {
       });
 
       let withdrawReady = false;
-      if (
-        safeTransactionType === '2' &&
-        tx.isOnChain > 0 &&
-        tx.withdrawState !== 'finalised' &&
-        Math.floor(Date.now() / 1000) - tx.createdTime > 3600 * 24 * 7
-      ) {
+      if (safeTransactionType === '2' && tx.isOnChain > 0 && tx.withdrawState !== 'finalised') {
         withdrawReady = await isValidWithdrawal(tx._id, shieldContractAddress);
       }
       if (tx.withdrawState === 'instant') {
@@ -370,7 +365,7 @@ const Transactions = () => {
                     </a>
                   </div>
                 </Row>
-                {tx.txType === '3' && tx.isOnChain > 0 && !tx.withdrawState ? (
+                {tx.txType === '2' && tx.isOnChain > 0 && !tx.withdrawState ? (
                   <WithdrawTransaction
                     withdrawready={tx.withdrawReady}
                     transactionhash={tx.transactionHash}
