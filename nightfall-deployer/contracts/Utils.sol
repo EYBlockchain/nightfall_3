@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import './Structures.sol';
-import 'hardhat/console.sol';
 
 library Utils {
     bytes32 public constant ZERO = bytes32(0);
@@ -163,14 +162,14 @@ library Utils {
             inputs[count++] = uint256(getHistoricRoot(ts.historicRootBlockNumberL2, i));
         }
         inputs[count++] = uint256(ts.ercAddress);
-        inputs[count++] = uint32(uint256(ts.tokenId));
-        inputs[count++] = uint32(uint256(ts.tokenId) >> 32);
-        inputs[count++] = uint32(uint256(ts.tokenId) >> 64);
-        inputs[count++] = uint32(uint256(ts.tokenId) >> 96);
-        inputs[count++] = uint32(uint256(ts.tokenId) >> 128);
-        inputs[count++] = uint32(uint256(ts.tokenId) >> 160);
-        inputs[count++] = uint32(uint256(ts.tokenId) >> 192);
         inputs[count++] = uint32(uint256(ts.tokenId) >> 224);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 192);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 160);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 128);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 96);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 64);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 32);
+        inputs[count++] = uint32(uint256(ts.tokenId));
         inputs[count++] = uint32(uint256(ts.recipientAddress));
         for (uint256 i = 0; i < ts.commitments.length; ++i) {
             inputs[count++] = uint256(ts.commitments[i]);

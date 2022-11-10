@@ -113,7 +113,7 @@ template Withdraw(N,C) {
 
     // Calculate the packed erc address by packing the top 4 bytes of the token id into the ercAddress field
     // (address only uses 160 bits and the Shield contract prevents creation of something with more than 160 bits
-    var packedErcAddress = ercAddress + tokenId[7] * 1461501637330902918203684832716283019655932542976;
+    var packedErcAddress = ercAddress + tokenId[0] * 1461501637330902918203684832716283019655932542976;
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
     var nullifierKeys, zkpPublicKeys[2];

@@ -57,7 +57,7 @@ const computePublicInputs = (
       h.field(BN128_GROUP_ORDER),
     ),
     ercAddress: transaction.ercAddress.field(BN128_GROUP_ORDER),
-    tokenId: transaction.tokenId.limbs(32, 8).reverse(),
+    tokenId: transaction.tokenId.limbs(32, 8),
     recipientAddress: transaction.recipientAddress.field(BN128_GROUP_ORDER),
     commitments: transaction.commitments.map((c: any) => c.field(BN128_GROUP_ORDER)),
     nullifiers: transaction.nullifiers.map((n: any) => n.field(BN128_GROUP_ORDER)),

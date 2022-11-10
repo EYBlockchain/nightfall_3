@@ -149,7 +149,7 @@ async function verifyProof(transaction) {
       transaction.tokenType,
       transaction.historicRootBlockNumberL2,
       transaction.ercAddress,
-      generalise(transaction.tokenId).limbs(32, 8).reverse(),
+      generalise(transaction.tokenId).limbs(32, 8),
       transaction.recipientAddress,
       transaction.commitments,
       transaction.nullifiers,

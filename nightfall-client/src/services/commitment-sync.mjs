@@ -27,12 +27,12 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
     try {
       const cipherTexts = [
         transaction.ercAddress,
-        transaction.recipientAddress,
+        transaction.recipientAddress, // It contains the tokenID encrypted (which is a field)
         ...transaction.compressedSecrets,
       ];
       const [packedErc, unpackedTokenID, ...rest] = decrypt(
         generalise(key),
-        generalise(edwardsDecompress(transaction.tokenId)),
+        generalise(edwardsDecompress(transaction.tokenId)), // Compressed public key is stored in token ID
         generalise(cipherTexts),
       );
       const [erc, tokenId] = packSecrets(generalise(packedErc), generalise(unpackedTokenID), 2, 0);
