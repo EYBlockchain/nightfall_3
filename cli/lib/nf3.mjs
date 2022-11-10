@@ -1276,12 +1276,20 @@ class Nf3 {
     Returns the commitments of tokens held in layer 2
     @method
     @async
+    @param {Array} ercList - list of erc contract addresses to filter.
+    @param {Boolean} filterByCompressedZkpPublicKey- flag to indicate if request is filtered
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
     value of each propery is an array of commitments originating from that contract.
     */
-  async getLayer2Commitments() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
+  async getLayer2Commitments(ercList, filterByCompressedZkpPublicKey) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`, {
+      params: {
+        compressedZkpPublicKey:
+          filterByCompressedZkpPublicKey === true ? this.zkpKeys.compressedZkpPublicKey : null,
+        ercList,
+      },
+    });
     return res.data.commitments;
   }
 
