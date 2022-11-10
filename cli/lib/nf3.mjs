@@ -792,12 +792,11 @@ class Nf3 {
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
   async registerProposer(url, stake, fee) {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
+    return axios.post(`${this.optimistBaseUrl}/proposer/register`, {
       stake,
       url,
       fee,
     });
-    logger.debug(`Proposer register response ${res}`);
     // if (res.data.txDataToSign === '') return false; // already registered
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
