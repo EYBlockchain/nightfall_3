@@ -25,10 +25,8 @@ const router = express.Router();
  *        properties:
  *          block:
  *            type: object
- *            description: Block to be checked.
  *          transactions:
  *            type: array
- *            description: Block transactions.
  */
 
 /**
@@ -39,7 +37,7 @@ const router = express.Router();
  *      - Block
  *      summary: Current proposer.
  *      description: Returns the current proposer.
-        requestBody:
+ *      requestBody:
  *        content:
  *          application/json:
  *            schema:
@@ -60,6 +58,20 @@ router.post('/check', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ *  /block/make-now:
+ *    get:
+ *      tags:
+ *      - Block
+ *      summary: Make block.
+ *      description: Responsible to call the function that will generate a new block.
+ *      responses:
+ *        200:
+ *          description: Making short block.
+ *        500:
+ *          description: Some inconsistency was found.
+ */
 router.get('/make-now', async (req, res, next) => {
   try {
     setMakeNow();
@@ -69,6 +81,53 @@ router.get('/make-now', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ *  /block/transaction-hash/{transactionHash}:
+ *    get:
+ *      tags:
+ *      - Block
+ *      summary: Block by transaction hash.
+ *      description: Returns the block, its transaction and the index by transaction hash.
+ *      parameters:
+ *        - in: path
+ *          name: transactionHash
+ *          required: true
+ *          schema:
+ *            type: string
+ *            description: Transaction hash
+ *      responses:
+ *        200:
+ *          description: Block and transactions returned.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                oneOf:
+ *                  - type: object
+ *                    properties:
+ *                      block:
+ *                        type: object
+ *                        example: {}
+ *                      transactions:
+ *                        type: array
+ *                        example: []
+ *                      index:
+ *                        type: number
+ *                        example: 1
+ *                  - type: object
+ *                    properties:
+ *                      block:
+ *                        type: object
+ *                        example: null
+ *                      transactions:
+ *                        type: array
+ *                        example: null
+ *                      index:
+ *                        type: number
+ *                        example: null
+ *        500:
+ *          description: Some error ocurred.
+ */
 router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
   try {
     const { transactionHash } = req.params;
@@ -90,6 +149,38 @@ router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ *  /block/root/{root}:
+ *    get:
+ *      tags:
+ *      - Block
+ *      summary: Block by root.
+ *      description: Returns the block and its transaction by the root.
+ *      parameters:
+ *        - in: path
+ *          name: root
+ *          required: true
+ *          schema:
+ *            type: string
+ *            description: Transactions root.
+ *      responses:
+ *        200:
+ *          description: Block obtained.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  block:
+ *                    type: object
+ *                    example: {}
+ *                  transactions:
+ *                    type: array
+ *                    example: []
+ *        500:
+ *          description: Some error ocurred.
+ */
 router.get('/root/:root', async (req, res, next) => {
   try {
     const { root } = req.params;
@@ -120,6 +211,28 @@ router.get('/root/:root', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ *  /block/reset-localblock:
+ *    get:
+ *      tags:
+ *      - Block
+ *      summary: Reset local block.
+ *      description: Route that reset a local block.
+ *      responses:
+ *        200:
+ *          description: Block reseted.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  block:
+ *                    resetstatus: boolean
+ *                    example: true
+ *        500:
+ *          description: Some error ocurred.
+ */
 router.get('/reset-localblock', async (req, res, next) => {
   try {
     await Block.rollback();
