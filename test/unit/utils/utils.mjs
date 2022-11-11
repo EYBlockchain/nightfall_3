@@ -63,10 +63,11 @@ export function createBlockAndTransactions(
   leafCount = 1,
   frontierHash = '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
   root = '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
+  fee = '0',
 ) {
   const withdrawTransaction = {
     value: '10',
-    fee: '0',
+    fee,
     transactionType: '2',
     tokenType: '0',
     historicRootBlockNumberL2: [
@@ -103,7 +104,7 @@ export function createBlockAndTransactions(
 
   const depositTransaction = {
     value: '10',
-    fee: '0',
+    fee,
     transactionType: '0',
     tokenType: '0',
     historicRootBlockNumberL2: [

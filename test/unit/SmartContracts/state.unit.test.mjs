@@ -20,6 +20,11 @@ describe('State contract State functions', function () {
     transactionsCreated = createBlockAndTransactions(
       '0x000000000000000000000000499d11e0b6eac7c0593d8fb292dcbbf815fb29ae',
       addr1.address,
+      0,
+      '0x0000000000000000000000000000000000000000000000000000000000000000',
+      1,
+      '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
+      '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
       '10',
     );
     const Proposers = await ethers.getContractFactory('Proposers');
