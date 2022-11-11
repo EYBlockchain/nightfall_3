@@ -253,11 +253,15 @@ router.post('/update', async (req, res, next) => {
  *      description: Returns the current proposer.
  *      responses:
  *        200:
- *          description: Proposer updated.
+ *          description: Current proposer returned.
  *          content:
  *            application/json:
  *              schema:
- *                $ref: '#/components/schemas/TxDataToSign'
+ *                type: object
+ *                properties:
+ *                  currentProposer:
+ *                    type: string
+ *                    example: "0x0A2798E08B66A1a4188F4B239651C015aC587Bf8"
  *        500:
  *          description: Some error ocurred.
  */

@@ -17,9 +17,38 @@ import { setMakeNow } from '../services/block-assembler.mjs';
 const router = express.Router();
 
 /**
- * Checks the block's properties.  It will return the first inconsistency it finds
- * @param {object} block - the block being checked
- * @param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
+ * @openapi
+ *  components:
+ *    schemas:
+ *      BlockToBeChecked:
+ *        type: object
+ *        properties:
+ *          block:
+ *            type: object
+ *            description: Block to be checked.
+ *          transactions:
+ *            type: array
+ *            description: Block transactions.
+ */
+
+/**
+ * @openapi
+ *  /block/check:
+ *    post:
+ *      tags:
+ *      - Block
+ *      summary: Current proposer.
+ *      description: Returns the current proposer.
+        requestBody:
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/BlockToBeChecked'
+ *      responses:
+ *        200:
+ *          description: Block without inconsistency.
+ *        500:
+ *          description: Some inconsistency was found.
  */
 router.post('/check', async (req, res, next) => {
   try {
