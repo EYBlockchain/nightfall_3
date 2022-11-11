@@ -45,6 +45,8 @@ const eventLogs = [];
 let erc20Address;
 let minimumStake;
 
+const CHANGE_PROPOSER_NO_TIMES = 8;
+
 const getStakeAccount = async ethAccount => {
   const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   const stakeAccount = await stateContractInstance.methods.getStakeAccount(ethAccount).call();
@@ -235,7 +237,8 @@ describe('Basic Proposer tests', () => {
   });
 
   it('Should create a valid changeCurrentProposer (because blocks has passed)', async function () {
-    for (let i = 0; i < 8; i++) {
+    let numChanges = 0;
+    for (let i = 0; i < CHANGE_PROPOSER_NO_TIMES; i++) {
       try {
         // eslint-disable-next-line no-await-in-loop
         const currentSprint = await getCurrentSprint();
@@ -256,10 +259,12 @@ describe('Basic Proposer tests', () => {
 
         const res = await secondProposer.changeCurrentProposer();
         expectTransaction(res);
+        numChanges++;
       } catch (err) {
         console.log(err);
       }
     }
+    expect(numChanges).to.be.equal(CHANGE_PROPOSER_NO_TIMES);
   });
 
   it('should unregister the third proposer', async () => {
