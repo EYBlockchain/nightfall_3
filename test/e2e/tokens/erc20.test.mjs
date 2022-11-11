@@ -99,7 +99,7 @@ describe('ERC20 tests', () => {
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
-    await nf3Users[2].init(mnemonics.santionedUser);
+    await nf3Users[2].init(mnemonics.sanctionedUser);
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
 
     stateAddress = await nf3Users[0].stateContractAddress;
@@ -122,6 +122,18 @@ describe('ERC20 tests', () => {
       const afterZkpPublicKeyBalance =
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(transferValue);
+    });
+    it('should fail to deposit if the user is sanctioned', async function () {
+      try {
+        // user 2 is sanctioned
+        await nf3Users[2].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+        expect.fail('Transaction has not been reverted by the EVM');
+      } catch (err) {
+        console.log(err);
+        expect(err.message).to.satisfy(message =>
+          message.includes('Transaction has been reverted by the EVM'),
+        );
+      }
     });
   });
 

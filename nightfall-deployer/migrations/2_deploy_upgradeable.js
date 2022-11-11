@@ -53,6 +53,7 @@ module.exports = async function (deployer) {
   if (!web3.utils.isAddress(SANCTIONS_CONTRACT)) { 
     await deployer.deploy(SanctionsListMock, sanctionedUser);
     sanctionsContractAddress = SanctionsListMock.address;
+    console.log('SANTIONED', sanctionsContractAddress, sanctionedUser);
   }
   await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
