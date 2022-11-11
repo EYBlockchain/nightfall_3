@@ -247,7 +247,7 @@ describe('State contract State functions', function () {
   });
 
   it('should set stake account', async function () {
-    const amount = 10;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
@@ -519,7 +519,7 @@ describe('State contract State functions', function () {
   it('should change current proposer with numProposers > 1', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 50;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
@@ -567,10 +567,10 @@ describe('State contract State functions', function () {
     expect(await state.currentSprint()).to.equal(prevSprint + 1);
   });
 
-  it('should not change current proposer with numProposers > 1 and 49 wei in stake', async function () {
+  it('should not change current proposer with numProposers > 1 and getMinimumStake() / getValuePerSlot() -1 wei in stake', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 49;
+    const amount = (await state.getMinimumStake()).div(await state.getValuePerSlot()).sub(1);
     const challengeLocked = 5;
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
@@ -619,7 +619,7 @@ describe('State contract State functions', function () {
   it('should proposeBlock', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -690,7 +690,7 @@ describe('State contract State functions', function () {
   it('should not proposeBlock: funds not escrowed', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -731,7 +731,7 @@ describe('State contract State functions', function () {
   it('should not proposeBlock: transaction hashes root', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -779,7 +779,7 @@ describe('State contract State functions', function () {
   it('should not proposeBlock: The block has too many transactions', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -816,7 +816,7 @@ describe('State contract State functions', function () {
   it('should resetFeeBookInfo', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -884,7 +884,7 @@ describe('State contract State functions', function () {
 
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -936,7 +936,7 @@ describe('State contract State functions', function () {
   it('should popBlockData', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -1029,7 +1029,7 @@ describe('State contract State functions', function () {
 
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -1088,7 +1088,7 @@ describe('State contract State functions', function () {
   it('should setBlockStakeWithdrawn', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
