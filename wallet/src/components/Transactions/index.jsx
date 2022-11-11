@@ -365,7 +365,7 @@ const Transactions = () => {
                     </a>
                   </div>
                 </Row>
-                {tx.txType === '3' && tx.isOnChain > 0 && !tx.withdrawState ? (
+                {tx.txType === '2' && tx.isOnChain > 0 && !tx.withdrawState ? (
                   <WithdrawTransaction
                     withdrawready={tx.withdrawReady}
                     transactionhash={tx.transactionHash}

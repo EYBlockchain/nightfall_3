@@ -30,7 +30,7 @@ contract Config is Ownable, Structures {
         minimumStake = 1000000 wei;
         blockStake = 1 wei;
         rotateProposerBlocks = 20;
-        valuePerSlot = 10;
+        valuePerSlot = minimumStake / 10;
         proposerSetCount = 5;
         sprintsInSpan = 5;
         maxProposers = 100;
