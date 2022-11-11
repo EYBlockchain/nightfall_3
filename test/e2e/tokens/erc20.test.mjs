@@ -36,7 +36,11 @@ const {
   },
 } = config;
 
-const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
+const nf3Users = [
+  new Nf3(signingKeys.user1, environment),
+  new Nf3(signingKeys.user2, environment),
+  new Nf3(signingKeys.sanctionedUser, environment),
+];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
@@ -95,6 +99,7 @@ describe('ERC20 tests', () => {
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
+    await nf3Users[2].init(mnemonics.santionedUser);
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
 
     stateAddress = await nf3Users[0].stateContractAddress;

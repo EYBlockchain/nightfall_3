@@ -67,6 +67,8 @@ services:
       - type: bind
         source: ../nightfall-deployer/entrypoint.sh
         target: /app/entrypoint.sh
+    environment:
+      TEST_SANCTIONS_CONTRACT: 'mock'
 
   optimist:
     build:

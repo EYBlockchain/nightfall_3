@@ -14,7 +14,12 @@ const X509 = artifacts.require('X509.sol');
 
 const config = require('config');
 
-const { RESTRICTIONS, MULTISIG, RSA_TRUST_ROOTS } = config;
+const KYC = artifacts.require('KYC.sol');
+const SanctionsListMock = artifacts.require('SanctionsListMock.sol');
+
+const config = require('config');
+
+const { RESTRICTIONS, MULTISIG, SANCTIONS_CONTRACT, TEST_OPTIONS:{ addresses: { sanctionedUser} } } = config;
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
@@ -42,10 +47,21 @@ module.exports = async function (deployer) {
   await deployer.link(ChallengesUtil, Challenges);
   await deployer.deploy(SimpleMultiSig, SIGNATURE_THRESHOLD, sortedOwners, network_id);
 
+  // if we're just testing, we want to deploy a mock sanctions list. We do it here because
+  // we need to know the address to give to the Shield contract
+  let sanctionsContractAddress = SANCTIONS_CONTRACT;
+  if (!web3.utils.isAddress(SANCTIONS_CONTRACT)) { 
+    await deployer.deploy(SanctionsListMock, sanctionedUser);
+    sanctionsContractAddress = SanctionsListMock.address;
+  }
   await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
-  await deployProxy(Shield, [X509.address], { deployer, unsafeAllowLinkedLibraries: true, initializer: 'initializeState' });
+  await deployProxy(Shield, [sanctionsContractAddress, X509.address], {
+    deployer,
+    unsafeAllowLinkedLibraries: true,
+    initializer: 'initializeState',
+  });
   await deployProxy(State, [Proposers.address, Challenges.address, Shield.address], {
     deployer,
     unsafeAllowLinkedLibraries: true,

@@ -37,6 +37,7 @@ describe('Testing Shield Contract', function () {
   let erc1155MockAddress;
 
   let owner;
+  let sanctionedSigner;
 
   let challengesAddress;
   let proposerAddress;
@@ -53,6 +54,7 @@ describe('Testing Shield Contract', function () {
 
   before(async () => {
     owner = await ethers.getSigners();
+    [, , , , sanctionedSigner] = owner;
   });
 
   beforeEach(async () => {
@@ -75,10 +77,20 @@ describe('Testing Shield Contract', function () {
     X509Instance = await upgrades.deployProxy(X509Deployer);
     x509Address = X509Instance.address;
 
+    const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
+    const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
+      sanctionedSigner.address,
+    );
+    const sanctionsListAddress = sanctionsListMockInstance.address;
+
     const ShieldDeployer = await ethers.getContractFactory('Shield');
-    ShieldInstance = await upgrades.deployProxy(ShieldDeployer, [x509Address], {
-      initializer: 'initializeState',
-    });
+    ShieldInstance = await upgrades.deployProxy(
+      ShieldDeployer,
+      [sanctionsListAddress, x509Address],
+      {
+        initializer: 'initializeState',
+      },
+    );
     shieldAddress = (await ShieldInstance.deployed()).address;
 
     const PoseidonDeployer = await ethers.getContractFactory('Poseidon');
@@ -181,6 +193,14 @@ describe('Testing Shield Contract', function () {
       expect(await Erc20MockInstance.balanceOf(await owner[0].address)).to.equal(99999990);
       expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(10);
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
+    });
+
+    it('Fails when a sanctioned user tries to deposit transaction an ERC20 token', async function () {
+      await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
+      await Erc20MockInstance.approve(shieldAddress, '10');
+      expect(
+        ShieldInstance.connect(sanctionedSigner).submitTransaction(depositTransaction),
+      ).to.be.revertedWith('You are on the Chainalysis sanctions list');
     });
 
     it('succeeds and sets is Escrowed to true for a deposit transaction of an ERC721 token', async function () {

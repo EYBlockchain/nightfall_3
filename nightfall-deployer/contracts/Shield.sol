@@ -17,6 +17,7 @@ import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
 import './X509Interface.sol';
+import './SanctionsListInterface.sol';
 
 contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -25,13 +26,15 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
 
     address public challengesAddress;
     X509Interface x509;
+    SanctionsListInterface sanctionsList;
 
     function initializeState(address x509Address) public initializer {
+        sanctionsList = SanctionsListInterface(sanctionsListAddress);
         x509 = X509Interface(x509Address);
         initialize();
     }
 
-    function initialize() public override(Stateful, Config, Pausable) onlyInitializing {
+    function initialize() public override(Stateful, Config, Pausable, KYC) onlyInitializing {
         Stateful.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -46,6 +49,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         // let everyone know what you did
         emit TransactionSubmitted();
         require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(
+            !sanctionsList.isSanctioned(msg.sender),
+            'You are on the Chainalysis sanctions list'
+        );
         if (t.transactionType == TransactionTypes.DEPOSIT) {
             txInfo[Utils.hashTransaction(t)].isEscrowed = true;
             require(uint256(t.fee) == msg.value);
@@ -218,6 +225,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
             state.addPendingWithdrawal(recipientAddress, uint256(advancedWithdrawal.advanceFee), 0);
         }
         require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(
+            !sanctionsList.isSanctioned(msg.sender),
+            'You are on the Chainalysis sanctions list'
+        );
         payOut(t, recipientAddress);
     }
 

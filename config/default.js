@@ -40,6 +40,8 @@ module.exports = {
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
+  SANCTIONS_CONTRACT:
+    process.env.TEST_SANCTIONS_CONTRACT || '0x40C57923924B5c5c5455c48D93317139ADDaC8fb',
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
     APPROVERS: process.env.MULTISIG_APPROVERS
@@ -227,6 +229,9 @@ module.exports = {
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_KEY ||
         '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+      sanctionedUser:
+        process.env.SANCTIONED_USER ||
+        '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
     },
     addresses: {
       walletTest: process.env.WALLET_TEST_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
@@ -239,6 +244,7 @@ module.exports = {
         process.env.BOOT_CHALLENGER_ADDRESS || '0xFFF578cDdc48792522F4a7Fdc3973Ec0d41A831f',
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+      sanctionedUser: process.env.SANCTIONED_USER || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
     zkpPublicKeys: {
       user1:
@@ -263,6 +269,9 @@ module.exports = {
         'crush power outer gadget enter maze advance rather divert monster indoor axis',
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_MNEMONIC ||
+        'smart base soup sister army address member poem point quick save penalty',
+      sanctionedUser:
+        process.env.SANCTIONED_USER_MNEMONIC ||
         'smart base soup sister army address member poem point quick save penalty',
     },
     restrictions: {
