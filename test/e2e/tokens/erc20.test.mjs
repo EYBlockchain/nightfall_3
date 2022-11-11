@@ -124,32 +124,20 @@ describe('ERC20 tests', () => {
 
       const beforeBalances = await getBalances();
 
-      logger.info({ msg: 'Balances', beforeBalances} );
+      logger.info({ msg: 'Balances', beforeBalances});
 
-      while(true) {
-        try {
-          const res = await nf3Users[0].transfer(
-            false,
-            erc20Address,
-            tokenType,
-            transferValue,
-            tokenId,
-            nf3Users[1].zkpKeys.compressedZkpPublicKey,
-            fee,
-          );
-          expectTransaction(res);
-          break;
-        } catch (err) {
-          if (err.message.includes('No suitable commitments')) {
-            // if we get here, it's possible that a block we are waiting for has not been proposed yet
-            // let's wait 10x normal and then try again
-            logger.warn(
-              `No suitable commitments were found for transfer. I will wait 10s`,
-            );
-            await new Promise(resolve => setTimeout(resolve, 10000));
-          }
-        }
-      }
+      await new Promise(resolve => setTimeout(resolve, 300000));
+
+      const res = await nf3Users[0].transfer(
+        false,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3Users[1].zkpKeys.compressedZkpPublicKey,
+        fee,
+      );
+      expectTransaction(res);
 
       await emptyL2();
 
