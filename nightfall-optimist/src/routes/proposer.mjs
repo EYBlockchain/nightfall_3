@@ -40,6 +40,18 @@ export function setProposer(p) {
  * @openapi
  *  components:
  *    schemas:
+ *      PendingPayments:
+ *        type: array
+ *        items:
+ *          type: object
+ *          properties:
+ *            blockHash:
+ *              type: string
+ *            challengePeriod:
+ *              type: boolean
+ *        example:
+ *           blockHash: "0x0d602201000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000018687474703a2f2f70726f706f736572746573743a383030300000000000000000"
+ *           challengePeriod: false
  *      Proposer:
  *        type: object
  *        properties:
@@ -134,7 +146,9 @@ export function setProposer(p) {
  * @openapi
  *  /proposer/register:
  *    post:
- *      summary: Register a proposer.
+ *      tags:
+ *      - Proposer
+ *      summary: Register Proposer.
  *      description: Route to return a raw transaction that registers a proposer. This just
  *        provides the tx data, the user will need to append the registration bond
  *        amount. The user must post the address being registered.  This is for the
@@ -210,7 +224,9 @@ router.post('/register', async (req, res, next) => {
  * @openapi
  *  /proposer/update:
  *    post:
- *      summary: Update a proposer.
+ *      tags:
+ *      - Proposer
+ *      summary: Update Proposer.
  *      description: Route to update proposer's URL.
  *      requestBody:
  *        content:
@@ -249,15 +265,21 @@ router.post('/update', async (req, res, next) => {
  * @openapi
  *  /proposer/current-proposer:
  *    get:
- *      summary: Current proposer.
+ *      tags:
+ *      - Proposer
+ *      summary: Current Proposer.
  *      description: Returns the current proposer.
  *      responses:
  *        200:
- *          description: Proposer updated.
+ *          description: Current proposer returned.
  *          content:
  *            application/json:
  *              schema:
- *                $ref: '#/components/schemas/TxDataToSign'
+ *                type: object
+ *                properties:
+ *                  currentProposer:
+ *                    type: string
+ *                    example: "0x0A2798E08B66A1a4188F4B239651C015aC587Bf8"
  *        500:
  *          description: Some error ocurred.
  */
@@ -278,7 +300,9 @@ router.get('/current-proposer', async (req, res, next) => {
  * @openapi
  *  /proposer/proposers:
  *    get:
- *      summary: Current proposer.
+ *      tags:
+ *      - Proposer
+ *      summary: Proposers List.
  *      description: Returns the current proposer.
  *      responses:
  *        200:
@@ -306,7 +330,9 @@ router.get('/proposers', async (req, res, next) => {
  * @openapi
  *  /proposer/de-register:
  *    post:
- *      summary: Deregister a proposer.
+ *      tags:
+ *      - Proposer
+ *      summary: Deregister Proposer.
  *      description: Route that deregister a proposer.
  *      responses:
  *        200:
@@ -336,7 +362,9 @@ router.post('/de-register', async (req, res, next) => {
  * @openapi
  *  /proposer/withdrawStake:
  *    post:
- *      summary: Withdraw stake.
+ *      tags:
+ *      - Proposer
+ *      summary: Withdraw Stake.
  *      description: Route to withdraw stake for a de-registered proposer.
  *      responses:
  *        200:
@@ -359,7 +387,24 @@ router.post('/withdrawStake', async (req, res, next) => {
 });
 
 /**
- * Function to get pending blocks payments for a proposer.
+ * @openapi
+ *  /proposer/pending-payments:
+ *    get:
+ *      tags:
+ *      - Proposer
+ *      summary: Pending Payments.
+ *      description: Function to get pending blocks payments for a proposer.
+ *      responses:
+ *        200:
+ *          description: Pending payments recieved.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: array
+ *                items:
+ *                  $ref: '#/components/schemas/PendingPayments'
+ *        500:
+ *          description: Some error ocurred.
  */
 router.get('/pending-payments', async (req, res, next) => {
   const { proposerPayments = proposer } = req.query;
@@ -397,9 +442,24 @@ router.get('/pending-payments', async (req, res, next) => {
 });
 
 /**
- * Function to withdraw funds owing to an account.  This could be profits made
- * Through a successful challenge or proposing state updates. This just
- * provides the tx data, the user will need to call the blockchain client.
+ * @openapi
+ *  /proposer/withdraw:
+ *    get:
+ *      tags:
+ *      - Proposer
+ *      summary: Finalise Withdraw.
+ *      description: Function to withdraw funds owing to an account.  This could be profits made Through a successful challenge or proposing state updates. This just provides the tx data, the user will need to call the blockchain client.
+ *      responses:
+ *        200:
+ *          description: Withdrawal created.
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: array
+ *                items:
+ *                  $ref: '#/components/schemas/TxDataToSign'
+ *        500:
+ *          description: Some error ocurred.
  */
 router.get('/withdraw', async (req, res, next) => {
   try {
@@ -413,9 +473,33 @@ router.get('/withdraw', async (req, res, next) => {
 });
 
 /**
- * Function to get payment for proposing a L2 block.  This should be called only
- * after the block is finalised. It will authorise the payment as a pending
- * withdrawal and then /withdraw needs to be called to recover the money.
+ * @openapi
+ * /proposer/payment:
+ *   post:
+ *     tags:
+ *     - Proposer
+ *     summary: Initiate Withdraw Payment.
+ *     description: Function to get payment for proposing L2 block.  This should be called only after the block is finalised. It will authorise the payment as a pending withdrawal and then /withdraw needs to be called to recover the money.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               address:
+ *                 type: string
+ *                 description: Proposer address
+ *                 example: '0x0A2798E08B66A1a4188F4B239651C015aC587Bf8'
+ *               blockHash:
+ *                 type: string
+ *                 description: Hash of the payment
+ *                 example: '0x7fe911936f773030ecaa1cf417b8c24e47cbf5e05b003b8f155bb10b0066956d'
+ *     responses:
+ *       200:
+ *         description: OK
+ *       500:
+ *         description: An error occured
  */
 router.post('/payment', async (req, res, next) => {
   const { blockHash } = req.body;
@@ -433,11 +517,18 @@ router.post('/payment', async (req, res, next) => {
 });
 
 /**
- * Function to change the current proposer (assuming their time has elapsed).
- * This just provides the tx data, the user will need to call the blockchain
- * client.  It is a convenience function, because the unsigned transaction is
- * for a parameterless function - therefore it's a constant and could be pre-
- * computed by the app that calls this endpoint.
+ * @openapi
+ * /proposer/change:
+ *   get:
+ *     tags:
+ *     - Proposer
+ *     summary: Change Current Proposer.
+ *     description: Function to change the current proposer (assuming their time has elapsed). This just provides the tx data, the user will need to call the blockchain client.
+ *     responses:
+ *       200:
+ *         description: OK
+ *       500:
+ *         description: An error occured
  */
 router.get('/change', async (req, res, next) => {
   try {
@@ -451,7 +542,18 @@ router.get('/change', async (req, res, next) => {
 });
 
 /**
- * Function to get mempool of a connected proposer
+ * @openapi
+ * /proposer/mempool:
+ *   get:
+ *     tags:
+ *     - Proposer
+ *     summary: Get Mempool of Transactions.
+ *     description: Get the transactions of the mempool that the proposer is connected to.
+ *     responses:
+ *       200:
+ *         description: OK
+ *       500:
+ *         description: An error occured
  */
 router.get('/mempool', async (req, res, next) => {
   try {
@@ -461,7 +563,20 @@ router.get('/mempool', async (req, res, next) => {
     next(err);
   }
 });
-
+/**
+ * @openapi
+ * /proposer/encode:
+ *   post:
+ *     tags:
+ *     - Proposer
+ *     summary: Encode.
+ *     description:
+ *     responses:
+ *       200:
+ *         description: OK
+ *       500:
+ *         description: An error occured
+ */
 router.post('/encode', async (req, res, next) => {
   try {
     const { transactions, block } = req.body;
@@ -527,7 +642,20 @@ router.post('/encode', async (req, res, next) => {
     next(err);
   }
 });
-
+/**
+ * @openapi
+ * /proposer/offchain-transaction:
+ *   post:
+ *     tags:
+ *     - Proposer
+ *     summary: Offchain Transaction.
+ *     description: Offchain transaction executed by a client.
+ *     responses:
+ *       200:
+ *         description: OK
+ *       500:
+ *         description: An error occured
+ */
 router.post('/offchain-transaction', async (req, res) => {
   const { transaction } = req.body;
   /*
@@ -570,5 +698,4 @@ router.post('/offchain-transaction', async (req, res) => {
     res.sendStatus(400);
   }
 });
-
 export default router;
