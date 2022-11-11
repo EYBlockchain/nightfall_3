@@ -55,10 +55,18 @@ export function calculateTransactionHash(tx) {
   return ethers.utils.keccak256(encodedTx);
 }
 
-export function createBlockAndTransactions(erc20MockAddress, ownerAddress, feeAmount = 0) {
+export function createBlockAndTransactions(
+  erc20MockAddress,
+  ownerAddress,
+  blockNumberL2 = 0,
+  previousBlockHash = '0x0000000000000000000000000000000000000000000000000000000000000000',
+  leafCount = 1,
+  frontierHash = '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
+  root = '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
+) {
   const withdrawTransaction = {
     value: '10',
-    fee: feeAmount,
+    fee: '0',
     transactionType: '2',
     tokenType: '0',
     historicRootBlockNumberL2: [
@@ -95,7 +103,7 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress, feeAm
 
   const depositTransaction = {
     value: '10',
-    fee: feeAmount,
+    fee: '0',
     transactionType: '0',
     tokenType: '0',
     historicRootBlockNumberL2: [
@@ -136,12 +144,12 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress, feeAm
   );
 
   const block = {
-    leafCount: 1,
+    leafCount,
     proposer: ownerAddress,
-    root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-    blockNumberL2: 0,
-    previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
+    root,
+    blockNumberL2,
+    previousBlockHash,
+    frontierHash,
     transactionHashesRoot,
   };
 
