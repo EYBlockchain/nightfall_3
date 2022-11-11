@@ -222,11 +222,12 @@ router.post('/withdrawStake', async (req, res, next) => {
  * Function to get pending blocks payments for a proposer.
  */
 router.get('/pending-payments', async (req, res, next) => {
-  const { proposerPayments = proposer } = req.query;
+  const { proposerAddress } = req.query;
+
   const pendingPayments = [];
   // get blocks by proposer
   try {
-    const blocks = await findBlocksByProposer(proposerPayments);
+    const blocks = await findBlocksByProposer(proposerAddress);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
     for (let i = 0; i < blocks.length; i++) {
@@ -252,6 +253,31 @@ router.get('/pending-payments', async (req, res, next) => {
     }
     res.json({ pendingPayments });
   } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * Function to get stake for a proposer.
+ */
+router.get('/stake', async (req, res, next) => {
+  logger.debug(`stake endpoint received GET`);
+  const { proposerAddress } = req.query;
+  logger.debug(`requested stake for proposer ${proposerAddress}`);
+
+  try {
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const stakeAccount = await stateContractInstance.methods
+      .getStakeAccount(proposerAddress)
+      .call();
+
+    res.json({
+      amount: Number(stakeAccount[0]),
+      challengeLocked: Number(stakeAccount[1]),
+      time: Number(stakeAccount[2]),
+    });
+  } catch (err) {
+    logger.error(err);
     next(err);
   }
 });

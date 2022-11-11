@@ -905,7 +905,22 @@ class Nf3 {
   async getProposerPendingPayments() {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
       params: {
-        proposer: this.ethereumAddress,
+        proposerAddress: this.ethereumAddress,
+      },
+    });
+    return res.data.pendingPayments;
+  }
+
+  /**
+    Get all the proposer stake.
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum transaction receipt.
+    */
+  async getProposerStake() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`, {
+      params: {
+        proposerAddress: this.ethereumAddress,
       },
     });
     return res.data;
