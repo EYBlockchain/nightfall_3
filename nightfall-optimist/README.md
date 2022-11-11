@@ -1,4 +1,4 @@
-[![openapi friendly](https://img.shields.io/badge/openapi-friendly)]
+[![openapi friendly](https://img.shields.io/badge/openapi-friendly)](https://swagger.io/specification/)
 
 # Optimist
 
