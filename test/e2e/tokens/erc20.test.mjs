@@ -96,8 +96,10 @@ describe('ERC20 tests', () => {
   });
 
   beforeEach(async () => {
+    logger.info('Performing deposit...');
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
     await emptyL2();
+    logger.info('Deposit finished!');
   });
 
   describe('Deposits', () => {
