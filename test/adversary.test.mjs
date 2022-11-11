@@ -10,7 +10,13 @@ import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import Nf3 from '../cli/lib/nf3.mjs';
+
+// instead of our usual cli we need to import
+// adversary transpiled version of cli.
+// please do not forget to run `npm run build-adversary`
+// eslint-disable-next-line import/no-unresolved
+import Nf3 from './adversary/adversary-cli/lib/nf3.mjs';
+
 import {
   waitForSufficientBalance,
   registerProposerOnNoProposer,
