@@ -122,20 +122,40 @@ router.post('/register', async (req, res, next) => {
 
 /**
  * Function to update proposer's URL
+ * TODO endpoint could just update params according to the given info (should PATCH instead of update all)
  */
 router.post('/update', async (req, res, next) => {
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
+
+  const { url = '', stake = 0, fee = 0 } = req.body;
+
   try {
-    const { address, url = '', fee = 0 } = req.body;
+    // Recreate Proposer contracts
+    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+
+    // Validate url
     if (url === '') {
       throw new Error('Rest API URL not provided');
     }
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+
     const txDataToSign = await proposersContractInstance.methods
       .updateProposer(url, fee)
       .encodeABI();
+    const tx = {
+      from: ethAddress,
+      to: proposersContractAddress,
+      data: txDataToSign,
+      value: stake,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    res.json({ receipt });
 
-    res.json({ txDataToSign });
-    setRegisteredProposerAddress(address, url); // save the registration address and URL
+    // Update db
+    await setRegisteredProposerAddress(ethAddress, url); // save the registration address and URL
   } catch (err) {
     next(err);
   }
