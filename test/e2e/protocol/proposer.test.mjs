@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 /* eslint-disable @babel/no-unused-expressions */
 /* eslint-disable no-await-in-loop */
 import chai from 'chai';
@@ -47,6 +48,11 @@ const getCurrentProposer = async () => {
 //   return stateContractInstance.methods.getProposer(proposerAddress).call();
 // };
 
+const filterByThisProposer = async proposer => {
+  const { proposers } = await proposer.getProposers();
+  return proposers.filter(p => p.thisAddress === proposer.ethereumAddress);
+};
+
 const getCurrentSprint = async () => {
   const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   return stateContractInstance.methods.currentSprint().call();
@@ -70,6 +76,7 @@ const emptyL2 = async () => {
 describe('Basic Proposer tests', () => {
   const bootProposer = new Nf3(signingKeys.proposer1, environment);
   const testProposersUrl = ['http://test-proposer1', 'http://test-proposer2'];
+  const feeDefault = 0;
   let minimumStake;
   let erc20Address;
 
@@ -92,67 +99,123 @@ describe('Basic Proposer tests', () => {
 
   it('Should register the boot proposer', async () => {
     // Before registering proposer
-    const stakeAccount1 = await getStakeAccount(bootProposer.ethereumAddress);
-    let result = await bootProposer.getProposers();
-    const proposersBeforeRegister = result.proposers.filter(
-      p => p.thisAddress === bootProposer.ethereumAddress,
-    );
+    const proposersBeforeRegister = await filterByThisProposer(bootProposer);
+    console.log('*************proposersBeforeRegister', proposersBeforeRegister);
+    const stakeBeforeRegister = await getStakeAccount(bootProposer.ethereumAddress);
+    console.log('*************stakeBeforeRegister', stakeBeforeRegister);
 
     // Register proposer
-    await bootProposer.registerProposer(testProposersUrl[0], minimumStake);
+    const url = testProposersUrl[0];
+    await bootProposer.registerProposer(url, minimumStake, feeDefault);
 
     // After registering proposer
-    const stakeAccount2 = await getStakeAccount(bootProposer.ethereumAddress);
-    result = await bootProposer.getProposers();
-    const proposersAfterRegister = result.proposers.filter(
-      p => p.thisAddress === bootProposer.ethereumAddress,
-    );
+    const proposersAfterRegister = await filterByThisProposer(bootProposer);
+    console.log('*************proposersAfterRegister', proposersAfterRegister);
+    const stakeAfterRegister = await getStakeAccount(bootProposer.ethereumAddress);
+    console.log('*************stakeAfterRegister', stakeAfterRegister);
 
-    // Assertions before registering
-    // expect(Number(stakeAccount1.amount)).to.be.equal(0); // Fails when not running with clean nf
+    // Assertions, before registering
     expect(proposersBeforeRegister).to.be.an('array').that.is.empty;
-
-    // Assertions after registering
-    expect(Number(stakeAccount2.amount)).equal(Number(stakeAccount1.amount) + Number(minimumStake));
+    // After
     expect(proposersAfterRegister).to.have.lengthOf(1);
+    expect(proposersAfterRegister[0].url).to.be.equal(url);
+    expect(Number(proposersAfterRegister[0].fee)).to.be.equal(feeDefault);
+    const amountAfterRegister = Number(stakeBeforeRegister.amount) + Number(minimumStake);
+    expect(Number(stakeAfterRegister.amount)).equal(amountAfterRegister);
   });
 
-  it.skip('Should update the proposer url', async () => {
-    let proposers;
-    ({ proposers } = await bootProposer.getProposers());
-    // we have to pay stake to be registered
-    const res = await bootProposer.updateProposer(testProposersUrl[3], 0, 0);
-    expectTransaction(res);
-    ({ proposers } = await bootProposer.getProposers());
-    const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
-    expect(thisProposer.length).to.be.equal(1);
-    expect(thisProposer[0].url).to.be.equal(testProposersUrl[3]);
+  it('Should update the proposer fee', async () => {
+    // Before updating proposer
+    const proposersBeforeUpdate = await filterByThisProposer(bootProposer);
+    console.log('*************proposersBeforeUpdate', proposersBeforeUpdate);
+    const stakeBeforeUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    console.log('*************stakeBeforeUpdate', stakeBeforeUpdate);
+    expect(proposersBeforeUpdate).to.have.lengthOf(1);
+
+    // Update proposer fee
+    const currentUrl = proposersBeforeUpdate[0].url; // Need to pass current value
+    const stake = 0; // Contract adds given value to existing amount
+    const newFee = fee;
+    await bootProposer.updateProposer(currentUrl, stake, newFee);
+
+    // After updating proposer
+    const proposersAfterUpdate = await filterByThisProposer(bootProposer);
+    console.log('*************proposersAfterUpdate', proposersAfterUpdate);
+    const stakeAfterUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    console.log('*************stakeAfterUpdate', stakeAfterUpdate);
+
+    // Assertions, before updating fee
+    expect(Number(proposersBeforeUpdate[0].fee)).to.be.equal(feeDefault);
+    // After - url and stake remain the same
+    expect(proposersAfterUpdate).to.have.lengthOf(1);
+    expect(Number(proposersAfterUpdate[0].fee)).to.be.equal(newFee);
+
+    expect(proposersAfterUpdate[0].url).to.be.equal(currentUrl);
+    expect(Number(stakeAfterUpdate.amount)).to.be.equal(Number(stakeBeforeUpdate.amount));
   });
 
-  it.skip('Should update the proposer stake', async () => {
-    const initialStake = await getStakeAccount(bootProposer.ethereumAddress);
-    const res = await bootProposer.updateProposer(testProposersUrl[0], minimumStake, 0);
-    expectTransaction(res);
-    const finalStake = await getStakeAccount(bootProposer.ethereumAddress);
-    expect(Number(finalStake.amount)).to.be.equal(
-      Number(initialStake.amount) + Number(minimumStake),
-    );
+  it('Should update the proposer url', async () => {
+    // Before updating proposer
+    const proposersBeforeUpdate = await filterByThisProposer(bootProposer);
+    console.log('*************proposersBeforeUpdate', proposersBeforeUpdate);
+    const stakeBeforeUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    console.log('*************stakeBeforeUpdate', stakeBeforeUpdate);
+    expect(proposersBeforeUpdate).to.have.lengthOf(1);
+
+    // Update proposer url
+    const newUrl = testProposersUrl[1];
+    const stake = 0; // Contract adds given value to existing amount
+    const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
+    await bootProposer.updateProposer(newUrl, stake, currentFee);
+
+    // After updating proposer
+    const proposersAfterUpdate = await filterByThisProposer(bootProposer);
+    console.log('*************proposersAfterUpdate', proposersAfterUpdate);
+    const stakeAfterUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    console.log('*************stakeAfterUpdate', stakeAfterUpdate);
+
+    // Assertions, before updating url
+    expect(proposersBeforeUpdate[0].url).to.be.equal(testProposersUrl[0]);
+    // After - fee and stake remain the same
+    expect(proposersAfterUpdate).to.have.lengthOf(1);
+    expect(proposersAfterUpdate[0].url).to.be.equal(newUrl);
+
+    expect(Number(proposersAfterUpdate[0].fee)).to.be.equal(fee);
+    expect(Number(stakeAfterUpdate.amount)).to.be.equal(Number(stakeBeforeUpdate.amount));
   });
 
-  it.skip('Should update the proposer fee', async () => {
-    let proposers;
-    ({ proposers } = await bootProposer.getProposers());
-    // we have to pay stake to be registered
-    const res = await bootProposer.updateProposer(testProposersUrl[3], 0, fee);
-    expectTransaction(res);
-    ({ proposers } = await bootProposer.getProposers());
-    const thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
-    expect(Number(thisProposer[0].fee)).to.be.equal(fee);
+  it('Should update the proposer stake', async () => {
+    // Before updating proposer
+    const proposersBeforeUpdate = await filterByThisProposer(bootProposer);
+    console.log('*************proposersBeforeUpdate', proposersBeforeUpdate);
+    const stakeBeforeUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    console.log('*************stakeBeforeUpdate', stakeBeforeUpdate);
+    expect(proposersBeforeUpdate).to.have.lengthOf(1);
+
+    // Update proposer url
+    const currentUrl = proposersBeforeUpdate[0].url;
+    const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
+    await bootProposer.updateProposer(currentUrl, minimumStake, currentFee);
+
+    // After updating proposer
+    const proposersAfterUpdate = await filterByThisProposer(bootProposer);
+    console.log('*************proposersAfterUpdate', proposersAfterUpdate);
+    const stakeAfterUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    console.log('*************stakeAfterUpdate', stakeAfterUpdate);
+
+    // Assertions - url and fee remain the same
+    expect(proposersAfterUpdate).to.have.lengthOf(1);
+    const amountAfterUpdate = Number(stakeBeforeUpdate.amount) + Number(minimumStake);
+    expect(Number(stakeAfterUpdate.amount)).to.be.equal(amountAfterUpdate);
+
+    expect(proposersAfterUpdate[0].url).to.be.equal(currentUrl);
+    expect(Number(proposersAfterUpdate[0].fee)).to.be.equal(currentFee);
   });
 
-  it.skip('Should fail to register a proposer twice', async () => {
-    const res = await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
-    expect(res).to.be.false;
+  it('Should fail to register a proposer twice', async () => {
+    const res = await bootProposer.registerProposer('potato', minimumStake);
+    // Registration attempt will be ignored at the endpoint since the Eth address will be the same
+    expect(res.data).to.be.an('object').that.is.empty;
   });
 
   it.skip('Should fail to change current proposer because insufficient blocks have passed', async () => {
