@@ -10,7 +10,13 @@ import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import Nf3 from '../cli/lib/nf3.mjs';
+
+// instead of our usual cli we need to import
+// adversary transpiled version of cli.
+// please do not forget to run `npm run build-adversary`
+// eslint-disable-next-line import/no-unresolved
+import Nf3 from './adversary/adversary-cli/lib/nf3.mjs';
+
 import {
   waitForSufficientBalance,
   registerProposerOnNoProposer,
@@ -56,6 +62,8 @@ describe('Testing with an adversary', () => {
   // const value = 10;
   // const value1 = 1000;
   const value2 = 5;
+  let rollbackCount = 0;
+  const minExpectedRollbacks = 6;
 
   // this is what we pay the proposer for incorporating a transaction
   const fee = 1;
@@ -139,6 +147,12 @@ describe('Testing with an adversary', () => {
       .on('error', (error, type) => {
         logger.error(
           `Challenge transaction to the blochain of type ${type} failed due to error: ${error} `,
+        );
+      })
+      .on('rollback', () => {
+        rollbackCount += 1;
+        logger.debug(
+          `Challenger received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
         );
       });
 
@@ -274,6 +288,10 @@ describe('Testing with an adversary', () => {
         `N deposits: ${nDeposits} - N Transfers: ${nTransfers} - N Withdraws: ${nWithdraws}`,
       );
       await new Promise(resolve => setTimeout(resolve, 20 * TX_WAIT));
+      // also wait for minimun required no. of rollbacks
+      while (rollbackCount < minExpectedRollbacks) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
       await waitForSufficientBalance(nf3User, expectedBalance);
       const endBalance = await retrieveL2Balance(nf3User);
       console.log(`Completed startBalance`, startBalance);
