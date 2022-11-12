@@ -194,7 +194,7 @@ module.exports = {
     privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
     gas: 10000000,
     gasCosts: 80000000000000000,
-    fee: 1,
+    fee: process.env.FEE || 1,
     ROTATE_PROPOSER_BLOCKS: 20,
     txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
     signingKeys: {

@@ -128,8 +128,6 @@ describe('ERC20 tests', () => {
 
       logger.info({ msg: 'Balances', beforeBalances});
 
-      await new Promise(resolve => setTimeout(resolve, 300000));
-
       const res = await nf3Users[0].transfer(
         false,
         erc20Address,
