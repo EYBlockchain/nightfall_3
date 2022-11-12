@@ -10,6 +10,7 @@ wallet/build
 wallet/cli
 __pycache__
 test/adversary/nightfall-adversary
+test/adversary/adversary-cli
 wallet/tests/e2e/videos
 wallet/tests/e2e/screenshots
 typechain-types/
