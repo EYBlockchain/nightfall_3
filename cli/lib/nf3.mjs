@@ -1075,36 +1075,6 @@ class Nf3 {
 
       if (type === 'rollback') proposeEmitter.emit('rollback', data);
 
-      // this is used by adversary proposer for submitting bad transaction.
-      if (type === 'submit-transaction') {
-        try {
-          const ercAddress = await this.getContractAddressOptimist('ERC20Mock');
-          const approvetxDataToSign = await approve(
-            ercAddress,
-            this.ethereumAddress,
-            this.shieldContractAddress,
-            (transactions[0].tokenType === '0' && 'ERC20') ||
-              (transactions[0].tokenType === '1' && 'ERC721') ||
-              (transactions[0].tokenType === '2' && 'ERC1155'),
-            transactions[0].value,
-            this.web3,
-            !!this.ethereumSigningKey,
-          );
-          if (approvetxDataToSign) await this.submitTransaction(approvetxDataToSign, ercAddress, 0);
-          const receipt = await this.submitTransaction(
-            txDataToSign,
-            this.shieldContractAddress,
-            Number(transactions[0].fee),
-          );
-          proposeEmitter.emit('submit-transaction-receipt', receipt, transactions);
-        } catch (err) {
-          logger.error({
-            msg: 'Error while trying to submit a submit-transaction',
-            err,
-          });
-        }
-      }
-
       return null;
     };
 
@@ -1287,12 +1257,20 @@ class Nf3 {
     Returns the commitments of tokens held in layer 2
     @method
     @async
+    @param {Array} ercList - list of erc contract addresses to filter.
+    @param {Boolean} filterByCompressedZkpPublicKey- flag to indicate if request is filtered
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
     value of each propery is an array of commitments originating from that contract.
     */
-  async getLayer2Commitments() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
+  async getLayer2Commitments(ercList, filterByCompressedZkpPublicKey) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`, {
+      params: {
+        compressedZkpPublicKey:
+          filterByCompressedZkpPublicKey === true ? [this.zkpKeys.compressedZkpPublicKey] : [],
+        ercList,
+      },
+    });
     return res.data.commitments;
   }
 

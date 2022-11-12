@@ -461,7 +461,11 @@ export async function getWalletPendingSpentBalance(compressedZkpPublicKey, ercLi
 }
 
 // function to get the commitments for each ERC address of a zkp public key
-export async function getWalletCommitments() {
+export async function getWalletCommitments(compressedZkpPublicKeyList, ercList) {
+  let ercAddressList = ercList || [];
+  ercAddressList = ercAddressList.map(e => e.toUpperCase());
+  let compressedPublicKeyList = compressedZkpPublicKeyList || [];
+  compressedPublicKeyList = compressedPublicKeyList.map(e => e.toUpperCase());
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
@@ -487,11 +491,18 @@ export async function getWalletCommitments() {
       tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: Number(BigInt(e.preimage.value)),
     }))
-    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
+    .filter(
+      e =>
+        (e.tokenId || e.value > 0) && // there should be no commitments with tokenId and value of ZERO
+        (compressedPublicKeyList.length === 0 ||
+          compressedPublicKeyList.includes(e.compressedZkpPublicKey.toUpperCase())) &&
+        (ercAddressList.length === 0 || ercAddressList.includes(e.ercAddress.toUpperCase())),
+    )
     .map(e => ({
       compressedZkpPublicKey: e.compressedZkpPublicKey,
       ercAddress: e.ercAddress,
       balance: e.value,
+      tokenId: e.tokenId,
     }))
     .reduce((acc, e) => {
       if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
@@ -911,7 +922,7 @@ async function findUsableCommitments(
   const { commitments, minC, minFc, commitmentsFee } = commitmentsVerification;
 
   logger.debug(
-    `The user has ${commitments.length} commitments and needs to use at least ${minC} commitments to perform the transfer`,
+    `The user has ${commitments.length} commitments and needs to use at least ${minC} commitments to perform the transaction`,
   );
 
   if (fee.bigInt > 0n) {
