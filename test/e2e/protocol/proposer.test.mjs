@@ -6,7 +6,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { Web3Client, expectTransaction, pendingCommitmentCount } from '../../utils.mjs';
+import { Web3Client, pendingCommitmentCount } from '../../utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -48,9 +48,9 @@ const getCurrentProposer = async () => {
 //   return stateContractInstance.methods.getProposer(proposerAddress).call();
 // };
 
-const filterByThisProposer = async proposer => {
-  const { proposers } = await proposer.getProposers();
-  return proposers.filter(p => p.thisAddress === proposer.ethereumAddress);
+const filterByThisProposer = async nf3proposer => {
+  const { proposers } = await nf3proposer.getProposers();
+  return proposers.filter(p => p.thisAddress === nf3proposer.ethereumAddress);
 };
 
 const getCurrentSprint = async () => {
@@ -220,15 +220,13 @@ describe('Basic Proposer tests', () => {
 
   it.skip('Should fail to change current proposer because insufficient blocks have passed', async () => {
     // SKIP Call fails as expected but revert reason `State: Too soon to rotate proposer` is not captured
-    // TODO We should be able to assert that it is actually soon
+    // TODO We should be able to assert that it is actually too soon
 
     // Note that the test operates with one proposer, which is why we use the current proposer
     // to call `changeCurrentProposer`, in reality this proposer would be the least interested
     let error = null;
     try {
-      // const res = await secondProposer.changeCurrentProposer();
-      const res = await bootProposer.changeCurrentProposer();
-      expectTransaction(res);
+      await bootProposer.changeCurrentProposer();
     } catch (err) {
       error = err;
     }
@@ -279,8 +277,7 @@ describe('Basic Proposer tests', () => {
           currentBlock = await web3.eth.getBlockNumber();
         }
 
-        const res = await bootProposer.changeCurrentProposer();
-        expectTransaction(res);
+        await bootProposer.changeCurrentProposer();
         // numChanges++;
       } catch (err) {
         console.log(err);
@@ -294,8 +291,7 @@ describe('Basic Proposer tests', () => {
     ({ proposers } = await bootProposer.getProposers());
     let thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(1);
-    const res = await bootProposer.deregisterProposer();
-    expectTransaction(res);
+    await bootProposer.deregisterProposer();
     ({ proposers } = await bootProposer.getProposers());
     thisProposer = proposers.filter(p => p.thisAddress === bootProposer.ethereumAddress);
     expect(thisProposer.length).to.be.equal(0);
@@ -319,8 +315,7 @@ describe('Basic Proposer tests', () => {
   it.skip('Should be able to withdraw stake', async () => {
     if ((await web3Client.getInfo()).includes('TestRPC')) await web3Client.timeJump(3600 * 24 * 10); // jump in time by 7 days
     if ((await web3Client.getInfo()).includes('TestRPC')) {
-      const res = await bootProposer.withdrawStake();
-      expectTransaction(res);
+      await bootProposer.withdrawStake();
     } else {
       let error = null;
       try {
