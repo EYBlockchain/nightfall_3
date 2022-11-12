@@ -27,10 +27,12 @@ async function newCurrentProposerEventHandler(data, args) {
 
     // If we were the last proposer return any transactions that were removed from the mempool
     // because they were included in proposed blocks that did not eventually make it on chain.
+    /*
     if (weWereLastProposer) {
       Block.rollback();
       await resetUnsuccessfulBlockProposedTransactions();
     }
+    */
 
     // !! converts this to a "is not null" check - i.e. false if is null
     // are we the next proposer?
