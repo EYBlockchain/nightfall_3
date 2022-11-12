@@ -219,6 +219,11 @@ describe('Basic Proposer tests', () => {
   });
 
   it.skip('Should fail to change current proposer because insufficient blocks have passed', async () => {
+    // SKIP Call fails as expected but revert reason `State: Too soon to rotate proposer` is not captured
+    // TODO We should be able to assert that it is actually soon
+
+    // Note that the test operates with one proposer, which is why we use the current proposer
+    // to call `changeCurrentProposer`, in reality this proposer would be the least interested
     let error = null;
     try {
       // const res = await secondProposer.changeCurrentProposer();

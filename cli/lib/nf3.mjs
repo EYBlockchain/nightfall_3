@@ -792,11 +792,13 @@ class Nf3 {
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
   async registerProposer(url, stake, fee) {
-    return axios.post(`${this.optimistBaseUrl}/proposer/register`, {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
       stake,
       url,
       fee,
     });
+    logger.debug(`Proposer /register response ${res}`);
+    return res;
     // if (res.data.txDataToSign === '') return false; // already registered
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
@@ -824,7 +826,7 @@ class Nf3 {
     */
   async deregisterProposer() {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`);
-    logger.debug(`Proposer de-register response ${res}`);
+    logger.debug(`Proposer /de-register response ${res}`);
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
     //     try {
@@ -850,23 +852,22 @@ class Nf3 {
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
   async changeCurrentProposer() {
-    const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`, {
-      address: this.ethereumAddress,
-    });
-    return new Promise((resolve, reject) => {
-      proposerQueue.push(async () => {
-        try {
-          const receipt = await this.submitTransaction(
-            res.data.txDataToSign,
-            this.stateContractAddress,
-            0,
-          );
-          resolve(receipt);
-        } catch (err) {
-          reject(err);
-        }
-      });
-    });
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`);
+    logger.debug(`Proposer /change response ${res}`);
+    // return new Promise((resolve, reject) => {
+    //   proposerQueue.push(async () => {
+    //     try {
+    //       const receipt = await this.submitTransaction(
+    //         res.data.txDataToSign,
+    //         this.stateContractAddress,
+    //         0,
+    //       );
+    //       resolve(receipt);
+    //     } catch (err) {
+    //       reject(err);
+    //     }
+    //   });
+    // });
   }
 
   /**
@@ -972,12 +973,12 @@ class Nf3 {
     @returns {array} A promise that resolves to the Ethereum transaction receipt.
     */
   async updateProposer(url, stake, fee) {
-    await axios.post(`${this.optimistBaseUrl}/proposer/update`, {
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/update`, {
       stake,
       url,
       fee,
     });
-    logger.debug(`Proposer updated`);
+    logger.debug(`Proposer /update response ${res}`);
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
     //     try {

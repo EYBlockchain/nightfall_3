@@ -346,11 +346,27 @@ router.post('/payment', async (req, res, next) => {
  * computed by the app that calls this endpoint.
  */
 router.get('/change', async (req, res, next) => {
-  try {
-    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
 
-    res.json({ txDataToSign });
+  try {
+    // Recreate State contract
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const stateContractAddress = await getContractAddress(STATE_CONTRACT_NAME);
+
+    // Attempt to rotate proposer currently proposing blocks
+    const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
+    const tx = {
+      from: ethAddress,
+      to: stateContractAddress,
+      data: txDataToSign,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    logger.debug(`Transaction receipt ${receipt}`);
+
+    res.json({ receipt });
   } catch (err) {
     next(err);
   }
