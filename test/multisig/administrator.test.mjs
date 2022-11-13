@@ -67,7 +67,7 @@ describe(`Testing Administrator`, () => {
   });
 
   describe(`Basic tests`, () => {
-    it('Owner of State, Proposers, Shield and Challenges contracts should be the multisig', async function () {
+    it('Owner of State, Proposers, Shield and Challenges contracts should be the multisig', async () => {
       const ownerState = await stateContract.methods.owner().call();
       const ownerShield = await shieldContract.methods.owner().call();
       const ownerProposers = await proposersContract.methods.owner().call();
