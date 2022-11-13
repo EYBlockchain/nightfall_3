@@ -235,7 +235,7 @@ describe(`Testing Administrator`, () => {
       );
 
       // Register proposer
-      // CHECK why other tests do not have this env check
+      // CHECK Why other tests do not have this env check
       if (process.env.ENVIRONMENT !== 'aws') {
         await nf3Proposer.registerProposer('http://optimist', minimumStake);
       }

@@ -63,21 +63,16 @@ describe('Basic Proposer tests', () => {
     await bootProposer.init(mnemonics.proposer);
 
     minimumStake = await bootProposer.getMinimumStake();
-    console.log('*************minimumStake', minimumStake);
     stateAddress = await bootProposer.getContractAddress('State');
-    console.log('*************stateAddress', stateAddress);
     stateABI = await bootProposer.getContractAbi('State');
     erc20Address = await bootProposer.getContractAddress('ERC20Mock');
-    console.log('*************erc20Address', erc20Address);
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
   it('Should register the boot proposer', async () => {
     // Before registering proposer
     const proposersBeforeRegister = await filterByThisProposer(bootProposer);
-    console.log('*************proposersBeforeRegister', proposersBeforeRegister);
     const stakeBeforeRegister = await getStakeAccount(bootProposer.ethereumAddress);
-    console.log('*************stakeBeforeRegister', stakeBeforeRegister);
 
     // Register proposer
     const url = testProposersUrl[0];
@@ -85,16 +80,16 @@ describe('Basic Proposer tests', () => {
 
     // After registering proposer
     const proposersAfterRegister = await filterByThisProposer(bootProposer);
-    console.log('*************proposersAfterRegister', proposersAfterRegister);
     const stakeAfterRegister = await getStakeAccount(bootProposer.ethereumAddress);
-    console.log('*************stakeAfterRegister', stakeAfterRegister);
 
     // Assertions, before registering
     expect(proposersBeforeRegister).to.be.an('array').that.is.empty;
     // After
     expect(proposersAfterRegister).to.have.lengthOf(1);
+
     expect(proposersAfterRegister[0].url).to.be.equal(url);
     expect(Number(proposersAfterRegister[0].fee)).to.be.equal(feeDefault);
+
     const amountAfterRegister = Number(stakeBeforeRegister.amount) + Number(minimumStake);
     expect(Number(stakeAfterRegister.amount)).equal(amountAfterRegister);
   });
@@ -102,10 +97,8 @@ describe('Basic Proposer tests', () => {
   it('Should update the proposer fee', async () => {
     // Before updating proposer
     const proposersBeforeUpdate = await filterByThisProposer(bootProposer);
-    console.log('*************proposersBeforeUpdate', proposersBeforeUpdate);
     const stakeBeforeUpdate = await getStakeAccount(bootProposer.ethereumAddress);
-    console.log('*************stakeBeforeUpdate', stakeBeforeUpdate);
-    expect(proposersBeforeUpdate).to.have.lengthOf(1);
+    expect(proposersBeforeUpdate).to.have.lengthOf(1); // Leave here to safely access array by idx
 
     // Update proposer fee
     const currentUrl = proposersBeforeUpdate[0].url; // Need to pass current value
@@ -115,9 +108,7 @@ describe('Basic Proposer tests', () => {
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
-    console.log('*************proposersAfterUpdate', proposersAfterUpdate);
     const stakeAfterUpdate = await getStakeAccount(bootProposer.ethereumAddress);
-    console.log('*************stakeAfterUpdate', stakeAfterUpdate);
 
     // Assertions, before updating fee
     expect(Number(proposersBeforeUpdate[0].fee)).to.be.equal(feeDefault);
@@ -132,10 +123,8 @@ describe('Basic Proposer tests', () => {
   it('Should update the proposer url', async () => {
     // Before updating proposer
     const proposersBeforeUpdate = await filterByThisProposer(bootProposer);
-    console.log('*************proposersBeforeUpdate', proposersBeforeUpdate);
     const stakeBeforeUpdate = await getStakeAccount(bootProposer.ethereumAddress);
-    console.log('*************stakeBeforeUpdate', stakeBeforeUpdate);
-    expect(proposersBeforeUpdate).to.have.lengthOf(1);
+    expect(proposersBeforeUpdate).to.have.lengthOf(1); // Leave here to safely access array by idx
 
     // Update proposer url
     const newUrl = testProposersUrl[1];
@@ -145,9 +134,7 @@ describe('Basic Proposer tests', () => {
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
-    console.log('*************proposersAfterUpdate', proposersAfterUpdate);
     const stakeAfterUpdate = await getStakeAccount(bootProposer.ethereumAddress);
-    console.log('*************stakeAfterUpdate', stakeAfterUpdate);
 
     // Assertions, before updating url
     expect(proposersBeforeUpdate[0].url).to.be.equal(testProposersUrl[0]);
@@ -162,10 +149,8 @@ describe('Basic Proposer tests', () => {
   it('Should update the proposer stake', async () => {
     // Before updating proposer
     const proposersBeforeUpdate = await filterByThisProposer(bootProposer);
-    console.log('*************proposersBeforeUpdate', proposersBeforeUpdate);
     const stakeBeforeUpdate = await getStakeAccount(bootProposer.ethereumAddress);
-    console.log('*************stakeBeforeUpdate', stakeBeforeUpdate);
-    expect(proposersBeforeUpdate).to.have.lengthOf(1);
+    expect(proposersBeforeUpdate).to.have.lengthOf(1); // Leave here to safely access array by idx
 
     // Update proposer url
     const currentUrl = proposersBeforeUpdate[0].url;
@@ -174,12 +159,11 @@ describe('Basic Proposer tests', () => {
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
-    console.log('*************proposersAfterUpdate', proposersAfterUpdate);
     const stakeAfterUpdate = await getStakeAccount(bootProposer.ethereumAddress);
-    console.log('*************stakeAfterUpdate', stakeAfterUpdate);
 
     // Assertions - url and fee remain the same
     expect(proposersAfterUpdate).to.have.lengthOf(1);
+
     const amountAfterUpdate = Number(stakeBeforeUpdate.amount) + Number(minimumStake);
     expect(Number(stakeAfterUpdate.amount)).to.be.equal(amountAfterUpdate);
 
@@ -212,9 +196,9 @@ describe('Basic Proposer tests', () => {
 
   it.skip('Should be able to make a block any time as soon as there are txs in the mempool', async () => {
     // SKIP The test passes but needs a new vs 1.0.1 of the sdk
+    // TODO Enable after publishing+updating sdk
     // User balance in L2 before making deposit
     const balancesBeforeBlockProposed = await user.checkNightfallBalances();
-    console.log('*************balances1', balancesBeforeBlockProposed);
 
     // Make deposit, then make block to settle the deposit
     const value = String(transferValue * 2);
@@ -227,14 +211,14 @@ describe('Basic Proposer tests', () => {
     // Wait before checking user balance in L2 again
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     const balancesAfterBlockProposed = await user.checkNightfallBalances();
-    console.log('*************balances2', balancesAfterBlockProposed);
 
     // Assertions
     expect(balancesBeforeBlockProposed).to.be.an('object').that.is.empty;
     expect(balancesAfterBlockProposed).to.have.property(erc20Address);
+
     const erc20balances = balancesAfterBlockProposed[erc20Address];
     expect(erc20balances).to.have.lengthOf(1);
-    expect(String(erc20balances[0].balance)).to.have.string(value);
+    expect(String(erc20balances[0].balance)).to.have.string(value); // Balance is in Wei, so we compare strings
   });
 
   it.skip('Should change the current proposer', async function () {
@@ -271,18 +255,14 @@ describe('Basic Proposer tests', () => {
   it('Should de-register the proposer even when it is current proposer', async () => {
     // Before de-registering proposer
     const proposersBeforeDeregister = await filterByThisProposer(bootProposer);
-    console.log('*************proposersBeforeDeregister', proposersBeforeDeregister);
-    const { currentProposer: currentBeforeDeregister } = await getCurrentProposer();
-    console.log('*************currentBeforeDeregister', currentBeforeDeregister);
+    // const { currentProposer: currentBeforeDeregister } = await getCurrentProposer(); // TODO enable after enabling make block
 
     // De-register proposer
     await bootProposer.deregisterProposer();
 
     // After de-registering proposer
     const proposersAfterDeregister = await filterByThisProposer(bootProposer);
-    console.log('*************proposersAfterDeregister', proposersAfterDeregister);
-    const { currentProposer: currentAfterDeregister } = await getCurrentProposer();
-    console.log('*************currentAfterDeregister', currentAfterDeregister);
+    // const { currentProposer: currentAfterDeregister } = await getCurrentProposer();
 
     // Assertions, before de-registering
     expect(proposersBeforeDeregister).to.have.lengthOf(1);
