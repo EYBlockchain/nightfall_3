@@ -11,8 +11,13 @@ import {
   getContractAbi,
   debug,
 } from './routes/index.mjs';
+import config from 'config';
+
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
+
+const { optimistApiUrl } =
+  config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const options = {
   definition: {
@@ -24,9 +29,30 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:8081',
+        url: `${optimistApiUrl}`,
       },
     ],
+    components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: 'apiKey',
+          name: 'X-API-KEY',
+          in: 'header',
+        },
+      },
+      responses: {
+        UnauthorizedError: {
+          description: 'API key is missing or invalid',
+          headers: {
+            WWW_Authenticate: {
+              schema: {
+                type: 'string',
+              },
+            },
+          },
+        },
+      },
+    },
   },
   apis: ['src/routes/**/*.mjs'],
 };

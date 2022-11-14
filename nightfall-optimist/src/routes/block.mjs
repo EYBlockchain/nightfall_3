@@ -1,6 +1,3 @@
-/**
- * Routes for checking that a block is valid.
- */
 import express from 'express';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { flushQueue } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
@@ -20,6 +17,39 @@ const router = express.Router();
  * @openapi
  *  components:
  *    schemas:
+ *      Block:
+ *        type: object
+ *        properties:
+ *          _id:
+ *            type: string
+ *          blockHash:
+ *            type: string
+ *          blockNumber:
+ *            type: number
+ *          blockNumberL2:
+ *            type: number
+ *          frontierHash:
+ *            type: string
+ *          leafCount:
+ *            type: number
+ *          nCommitments:
+ *            type: number
+ *          previousBlockHash:
+ *            type: string
+ *          proposer:
+ *            type: string
+ *          root:
+ *            type: string
+ *          timeBlockL2:
+ *            type: string
+ *          transactionHashL1:
+ *            type: string
+ *          transactionHashes:
+ *            type: array
+ *            items:
+ *              type: string
+ *          transactionHashesRoot:
+ *            type: string
  *      BlockToBeChecked:
  *        type: object
  *        properties:
@@ -27,16 +57,76 @@ const router = express.Router();
  *            type: object
  *          transactions:
  *            type: array
+ *      Transaction:
+ *        type: object
+ *        properties:
+ *          value:
+ *            type: string
+ *          fee:
+ *            type: string
+ *          transactionType:
+ *            type: string
+ *          tokenType:
+ *            type: string
+ *          historicRootBlockNumberL2:
+ *            type: array
+ *            items:
+ *              type: string
+ *          historicRootBlockNumberL2Fee:
+ *            type: array
+ *            items:
+ *              type: string
+ *          tokenId:
+ *            type: string
+ *          ercAddress:
+ *            type: string
+ *          recipientAddress:
+ *            type: string
+ *          commitments:
+ *            type: array
+ *            items:
+ *              type: string
+ *          nullifiers:
+ *            type: array
+ *            items:
+ *              type: string
+ *          commitmentFee:
+ *            type: array
+ *            items:
+ *              type: string
+ *          nullifiersFee:
+ *            type: array
+ *            items:
+ *              type: string
+ *          compressedSecrets:
+ *            type: array
+ *            items:
+ *              type: string
+ *          proof:
+ *            type: array
+ *            items:
+ *              type: string
+ *          transactionHash:
+ *            type: string
  */
 
 /**
  * @openapi
  *  /block/check:
  *    post:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Block
  *      summary: Current proposer.
  *      description: Returns the current proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      requestBody:
  *        content:
  *          application/json:
@@ -45,6 +135,8 @@ const router = express.Router();
  *      responses:
  *        200:
  *          description: Block without inconsistency.
+ *        401:
+ *          $ref: '#/components/responses/UnauthorizedError'
  *        500:
  *          description: Some inconsistency was found.
  */
@@ -62,13 +154,24 @@ router.post('/check', async (req, res, next) => {
  * @openapi
  *  /block/make-now:
  *    get:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Block
  *      summary: Make block.
  *      description: Responsible to call the function that will generate a new block.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      responses:
  *        200:
  *          description: Making short block.
+ *        401:
+ *          $ref: '#/components/responses/UnauthorizedError'
  *        500:
  *          description: Some inconsistency was found.
  */
@@ -85,11 +188,19 @@ router.get('/make-now', async (req, res, next) => {
  * @openapi
  *  /block/transaction-hash/{transactionHash}:
  *    get:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Block
  *      summary: Block by transaction hash.
  *      description: Returns the block, its transaction and the index by transaction hash.
  *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *        - in: path
  *          name: transactionHash
  *          required: true
@@ -106,11 +217,11 @@ router.get('/make-now', async (req, res, next) => {
  *                  - type: object
  *                    properties:
  *                      block:
- *                        type: object
- *                        example: {}
+ *                        $ref: '#/components/schemas/Block'
  *                      transactions:
  *                        type: array
- *                        example: []
+ *                        items:
+ *                          $ref: '#/components/schemas/Transaction'
  *                      index:
  *                        type: number
  *                        example: 1
@@ -125,6 +236,8 @@ router.get('/make-now', async (req, res, next) => {
  *                      index:
  *                        type: number
  *                        example: null
+ *        401:
+ *          $ref: '#/components/responses/UnauthorizedError'
  *        500:
  *          description: Some error ocurred.
  */
@@ -132,8 +245,6 @@ router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
   try {
     const { transactionHash } = req.params;
     logger.debug(`searching for block containing transaction hash ${transactionHash}`);
-
-    // get data to return
     const [block] = await getBlockByTransactionHash(transactionHash);
 
     if (block) {
@@ -153,11 +264,19 @@ router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
  * @openapi
  *  /block/root/{root}:
  *    get:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Block
  *      summary: Block by root.
  *      description: Returns the block and its transaction by the root.
  *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *        - in: path
  *          name: root
  *          required: true
@@ -173,18 +292,19 @@ router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
  *                type: object
  *                properties:
  *                  block:
- *                    type: object
- *                    example: {}
+ *                    $ref: '#/components/schemas/Block'
  *                  transactions:
  *                    type: array
- *                    example: []
+ *                    items:
+ *                      $ref: '#/components/schemas/Transaction'
+ *        401:
+ *          $ref: '#/components/responses/UnauthorizedError'
  *        500:
  *          description: Some error ocurred.
  */
 router.get('/root/:root', async (req, res, next) => {
   try {
     const { root } = req.params;
-    // get data to return
     let block = await getBlockByRoot(root);
     /*
       if we don't get a block, it's possible that the corresponding 'BlockProposed'
@@ -215,10 +335,19 @@ router.get('/root/:root', async (req, res, next) => {
  * @openapi
  *  /block/reset-localblock:
  *    get:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Block
  *      summary: Reset local block.
  *      description: Route that reset a local block.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      responses:
  *        200:
  *          description: Block reseted.
@@ -230,6 +359,8 @@ router.get('/root/:root', async (req, res, next) => {
  *                  block:
  *                    resetstatus: boolean
  *                    example: true
+ *        401:
+ *          $ref: '#/components/responses/UnauthorizedError'
  *        500:
  *          description: Some error ocurred.
  */
