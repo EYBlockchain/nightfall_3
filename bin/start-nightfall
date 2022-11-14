@@ -11,6 +11,7 @@ usage()
   echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
   echo "  -h or --help; to print this message"
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
+  echo "  -p or --proposers; to start 2 additional proposers"
 }
 
 # select a Geth or Ganache client
@@ -37,6 +38,9 @@ while [ -n "$1" ]; do
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
                                     ;;
+      -p  | --proposers)            PROPOSERS="-f docker/docker-compose.proposers.yml"
+                                    PROPOSER_SERVICES="proposer_optimist_1 proposer_optimist_2 optimist_mongodb_1 optimist_mongodb_2 proposer_1 proposer_2"
+                                    ;;
       -mpc)                         export MPC="true"
                                     ;;
       * )                           usage
@@ -51,11 +55,16 @@ if [ -z "$FILE" ]; then
   exit 1
 fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+trap "docker-compose $FILE $STUBS $DEV $ADVERSARY $PROPOSERS -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker/docker-compose.yml $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans
+docker-compose -f docker/docker-compose.yml $FILE $STUBS $DEV $ADVERSARY $PROPOSERS -p 'nightfall_3' down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_optimist_mongodb) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_optimist_mongodb
+fi
+
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
   echo -n 'Removing '
   docker volume rm nightfall_3_mongodb
@@ -90,5 +99,5 @@ if [ ! -z "$DEV" ]; then
   cd common-files && npm ci && cd ..
 fi
 
-docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }
-docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_START//,/ }
+docker-compose $FILE $STUBS $DEV $ADVERSARY $PROPOSERS -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ } ${PROPOSER_SERVICES}
+docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY $PROPOSERS logs -f ${NF_SERVICES_TO_START//,/ } ${PROPOSER_SERVICES}

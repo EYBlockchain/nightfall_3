@@ -1,8 +1,5 @@
 /* eslint-disable no-await-in-loop */
 // ignore unused exports default
-/*
-CONTRACT_ARTIFACTS=/tmp/nf/contracts/ NODE_CONFIG_DIR=../../../config BLOCKCHAIN_URL=ws://localhost:8546 node transaction-submitted-app.mjs 
-*/
 
 import express from 'express';
 import cluster from 'cluster';
@@ -78,6 +75,7 @@ async function initWorkers() {
       res.sendStatus(200);
     });
 
+    // End point to submit transaction to tx worker
     app.get('/tx-submitted', async (req, res) => {
       const { tx, proposerFlag, enable } = req.query;
       try {
