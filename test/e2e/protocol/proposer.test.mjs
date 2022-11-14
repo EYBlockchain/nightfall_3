@@ -3,6 +3,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import axios from 'axios';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { Web3Client, expectTransaction, pendingCommitmentCount } from '../../utils.mjs';
 
@@ -155,9 +156,14 @@ describe('Basic Proposer tests', () => {
 
   it('should access any public route with any API key', async () => {
     bootProposer.resetApiKey();
-    await bootProposer.unprocessedTransactionCount();
+    const { status } = await axios.get(`${environment.optimistApiUrl}/proposer/mempool`);
+    expect(status).to.equal(200);
+  });
+
+  it('should access any public route with the correct API key', async () => {
     bootProposer.setApiKey(environment.AUTH_TOKEN);
-    await bootProposer.unprocessedTransactionCount();
+    const { status } = await axios.get(`${environment.optimistApiUrl}/proposer/mempool`);
+    expect(status).to.equal(200);
   });
 
   it('should register the boot proposer', async () => {

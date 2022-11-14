@@ -43,13 +43,7 @@ export function setProposer(p) {
  * amount.  The user must post the address being registered.  This is for the
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
-<<<<<<< HEAD
-router.post('/register', async (req, res, next) => {
-=======
 router.post('/register', auth, async (req, res, next) => {
-  logger.debug({ msg: '/register endpoint', payload: JSON.stringify(req.body, null, 2) });
-
->>>>>>> b0867d6a (feat: adding api authentication using an uuid)
   try {
     const { address, url = '', fee = 0 } = req.body;
     if (url === '') {
@@ -103,13 +97,7 @@ router.post('/register', auth, async (req, res, next) => {
 /**
  * Function to update proposer's URL
  */
-<<<<<<< HEAD
-router.post('/update', async (req, res, next) => {
-=======
 router.post('/update', auth, async (req, res, next) => {
-  logger.debug({ msg: '/update endpoint', payload: JSON.stringify(req.body, null, 2) });
-
->>>>>>> b0867d6a (feat: adding api authentication using an uuid)
   try {
     const { address, url = '', fee = 0 } = req.body;
     if (url === '') {
@@ -160,13 +148,7 @@ router.get('/proposers', async (req, res, next) => {
  * Function to return a raw transaction that de-registers a proposer.  This just
  * provides the tx data. The user has to call the blockchain client.
  */
-<<<<<<< HEAD
-router.post('/de-register', async (req, res, next) => {
-=======
 router.post('/de-register', auth, async (req, res, next) => {
-  logger.debug({ msg: '/de-register endpoint', payload: JSON.stringify(req.body, null, 2) });
-
->>>>>>> b0867d6a (feat: adding api authentication using an uuid)
   try {
     const { address = '' } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
@@ -184,12 +166,7 @@ router.post('/de-register', auth, async (req, res, next) => {
  * Function to withdraw stake for a de-registered proposer
  */
 
-<<<<<<< HEAD
-router.post('/withdrawStake', async (req, res, next) => {
-=======
 router.post('/withdrawStake', auth, async (req, res, next) => {
-  logger.debug(`withdrawStake endpoint received GET`);
->>>>>>> b0867d6a (feat: adding api authentication using an uuid)
   try {
     const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposerContractInstance.methods.withdrawStake().encodeABI();
@@ -202,15 +179,9 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
 /**
  * Function to get pending blocks payments for a proposer.
  */
-<<<<<<< HEAD
-router.get('/pending-payments', async (req, res, next) => {
-  const { proposerAddress } = req.query;
-=======
 router.get('/pending-payments', auth, async (req, res, next) => {
-  logger.debug(`pending-payments endpoint received GET`);
-  const { proposerPayments = proposer } = req.query;
+  const { proposerAddress } = req.query;
   logger.debug(`requested pending payments for proposer ${proposer}`);
->>>>>>> b0867d6a (feat: adding api authentication using an uuid)
 
   const pendingPayments = [];
   // get blocks by proposer
@@ -249,7 +220,6 @@ router.get('/pending-payments', auth, async (req, res, next) => {
  * Function to get stake for a proposer.
  */
 router.get('/stake', async (req, res, next) => {
-  logger.debug(`stake endpoint received GET`);
   const { proposerAddress } = req.query;
   logger.debug(`requested stake for proposer ${proposerAddress}`);
 
@@ -275,13 +245,7 @@ router.get('/stake', async (req, res, next) => {
  * Through a successful challenge or proposing state updates. This just
  * provides the tx data, the user will need to call the blockchain client.
  */
-<<<<<<< HEAD
-router.get('/withdraw', async (req, res, next) => {
-=======
 router.get('/withdraw', auth, async (req, res, next) => {
-  logger.debug({ msg: '/withdraw endpoint', payload: JSON.stringify(req.body, null, 2) });
-
->>>>>>> b0867d6a (feat: adding api authentication using an uuid)
   try {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
@@ -297,12 +261,7 @@ router.get('/withdraw', auth, async (req, res, next) => {
  * after the block is finalised. It will authorise the payment as a pending
  * withdrawal and then /withdraw needs to be called to recover the money.
  */
-<<<<<<< HEAD
-router.post('/payment', async (req, res, next) => {
-=======
 router.post('/payment', auth, async (req, res, next) => {
-  logger.debug(`payment endpoint received GET ${JSON.stringify(req.body, null, 2)}`);
->>>>>>> b0867d6a (feat: adding api authentication using an uuid)
   const { blockHash } = req.body;
   try {
     const block = await getBlockByBlockHash(blockHash);
@@ -324,13 +283,7 @@ router.post('/payment', auth, async (req, res, next) => {
  * for a parameterless function - therefore it's a constant and could be pre-
  * computed by the app that calls this endpoint.
  */
-<<<<<<< HEAD
-router.get('/change', async (req, res, next) => {
-=======
 router.get('/change', auth, async (req, res, next) => {
-  logger.debug({ msg: '/change endpoint', payload: JSON.stringify(req.body, null, 2) });
-
->>>>>>> b0867d6a (feat: adding api authentication using an uuid)
   try {
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();

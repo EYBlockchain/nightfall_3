@@ -6,6 +6,7 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { Mutex } from 'async-mutex';
+import crypto from 'crypto';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
@@ -117,7 +118,10 @@ class Nf3 {
    */
   // eslint-disable-next-line class-methods-use-this
   async setApiKey(key) {
-    axios.defaults.headers.common['X-APP-TOKEN'] = key;
+    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
+      .createHash('sha256')
+      .update(key, 'hex')
+      .digest('hex');
   }
 
   /**
