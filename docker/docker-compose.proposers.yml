@@ -3,7 +3,7 @@ version: '3.5'
 services:
   proposer_optimist_1:
     build:
-      dockerfile: docker/optimist.standalone.Dockerfile
+      dockerfile: docker/optimist.Dockerfile
       context: ..
     container_name: proposer_optimist_1
     depends_on:
@@ -26,13 +26,11 @@ services:
       HASH_TYPE: poseidon
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
-      OPTIMIST_PORT: 9091
-      OPTIMIST_WS_PORT: 9090
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
     build:
-      dockerfile: docker/optimist.standalone.Dockerfile
+      dockerfile: docker/optimist.Dockerfile
       context: ..
     container_name: proposer_optimist_2
     depends_on:
@@ -55,8 +53,6 @@ services:
       HASH_TYPE: poseidon
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
-      OPTIMIST_PORT: 9093
-      OPTIMIST_WS_PORT: 9092
     command: ['npm', 'run', 'dev']
 
   optimist_mongodb_1:
