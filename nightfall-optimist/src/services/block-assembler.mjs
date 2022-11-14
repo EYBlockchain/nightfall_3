@@ -164,7 +164,7 @@ export async function conditionalMakeBlock(proposer) {
         await removeCommitmentsFromMemPool(
           transactions.map(transaction => transaction.commitments),
         );
-        await removeNullifiersFromMemPool(transactions.map(transaction => transaction.commitments));
+        await removeNullifiersFromMemPool(transactions.map(transaction => transaction.nullifiers));
       }
     }
   }
