@@ -65,6 +65,17 @@ async function checkAlreadyInBlock(_transaction) {
 export function submitTransactionEnable(enable) {
   _submitTransactionEnable = enable;
 }
+
+/**
+ * Transaction Event Handler processing. It can be processed by main thread
+ * or by worker thread
+ *
+ * @param {Object} _transaction Transaction data
+ * @param {boolean} fromBlockProposer Flag indicating whether this transaction comes from
+ * block proposer (for those transactions that werent picked by current proposer).
+ * @param {bolean} txEnable Flag indicating if transactions should be processed immediatelly (true)
+ * or should be stored in a temporal buffer.
+ */
 export async function submitTransaction(_transaction, fromBlockProposer, txEnable) {
   logger.info({
     msg: 'Transaction Handler - New transaction received.',
@@ -73,6 +84,8 @@ export async function submitTransaction(_transaction, fromBlockProposer, txEnabl
     txEnable,
   });
 
+  // Test mode. If txEnable is true, we process transactions as fast as we can (as usual). If false, then we
+  // store these transactions in a buffer with the idea of processing them back later at once.
   if (!txEnable) {
     saveBufferedTransaction({ ..._transaction });
     return;
@@ -138,11 +151,13 @@ export async function transactionSubmittedEventHandler(eventParams) {
       })
       .catch(function (error) {
         logger.error(`Error submit tx worker ${error}`);
+        // Main thread (no workers)
         if (error.request) {
           submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
         }
       });
   } else {
+    // Main thread (no workers)
     await submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
   }
 }
