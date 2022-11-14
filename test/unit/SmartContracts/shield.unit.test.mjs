@@ -201,6 +201,7 @@ describe('Testing Shield Contract', function () {
       expect(
         ShieldInstance.connect(sanctionedSigner).submitTransaction(depositTransaction),
       ).to.be.revertedWith('You are on the Chainalysis sanctions list');
+      await ShieldInstance.connect(owner[0]);
     });
 
     it('succeeds and sets is Escrowed to true for a deposit transaction of an ERC721 token', async function () {
@@ -316,7 +317,7 @@ describe('Testing Shield Contract', function () {
     it('fails if user is not whitelisted and whitelisting is active', async function () {
       await X509Instance.enableWhitelisting(true);
       await expect(ShieldInstance.submitTransaction(withdrawTransaction)).to.be.revertedWith(
-        'You are not authorised to transact using Nightfall',
+        'Shield: You are not authorised to transact using Nightfall',
       );
     });
 
