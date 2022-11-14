@@ -8,6 +8,12 @@ describe('Proposers contract Proposers functions', function () {
   let addr1;
   let addr2;
   let state;
+  let sanctionedSigner;
+
+  before(async () => {
+    const owner = await ethers.getSigners();
+    [, , , , sanctionedSigner] = owner;
+  });
 
   beforeEach(async () => {
     [addr1, addr2] = await ethers.getSigners();
@@ -55,8 +61,14 @@ describe('Proposers contract Proposers functions', function () {
     const x509 = await upgrades.deployProxy(X509, []);
     await x509.deployed();
 
+    const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
+    const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
+      sanctionedSigner.address,
+    );
+    const sanctionsListAddress = sanctionsListMockInstance.address;
+
     const Shield = await ethers.getContractFactory('Shield');
-    const shield = await upgrades.deployProxy(Shield, [x509.address], {
+    const shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, X509.adress], {
       initializer: 'initializeState',
     });
     await shield.deployed();
