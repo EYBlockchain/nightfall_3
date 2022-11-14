@@ -260,7 +260,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             if (
                 transaction.transaction.historicRootBlockNumberL2[i] >= state.getNumberOfL2Blocks()
             ) {
-                challengeAccepted(transaction.blockL2);
+                return challengeAccepted(transaction.blockL2);
             }
         }
 
