@@ -608,26 +608,46 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         TimeLockedStake memory stake;
         uint256 weight;
 
+        uint256 slotValue;
+        if (numProposers == 1) {
+            stake = getStakeAccount(p.thisAddress);
+            slotValue = stake.amount / 10;
+        } else {
+            while (p.nextAddress != currentProposer.thisAddress) {
+                stake = getStakeAccount(p.thisAddress);
+                if (slotValue < stake.amount / 10) {
+                    slotValue = stake.amount / 10;
+                }
+                p = proposers[p.nextAddress];
+            }
+            stake = getStakeAccount(p.thisAddress);
+            if (slotValue < stake.amount / 10) {
+                slotValue = stake.amount / 10;
+            }
+        }
+
         // 1) remove all slots
         delete slots;
         // 2) assign slots based on the stake of the proposers
         if (numProposers == 1) {
             stake = getStakeAccount(p.thisAddress);
-            weight = stake.amount / valuePerSlot;
+            weight = stake.amount / slotValue;
             for (uint256 i = 0; i < weight; i++) {
                 slots.push(p.thisAddress);
             }
         } else {
             while (p.nextAddress != currentProposer.thisAddress) {
                 stake = getStakeAccount(p.thisAddress);
-                weight = stake.amount / valuePerSlot;
+                weight = stake.amount / slotValue;
+                if (weight < 1) weight = 1;
                 for (uint256 i = 0; i < weight; i++) {
                     slots.push(p.thisAddress);
                 }
                 p = proposers[p.nextAddress];
             }
             stake = getStakeAccount(p.thisAddress);
-            weight = stake.amount / valuePerSlot;
+            weight = stake.amount / slotValue;
+            if (weight < 1) weight = 1;
             for (uint256 i = 0; i < weight; i++) {
                 slots.push(p.thisAddress);
             }
