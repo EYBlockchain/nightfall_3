@@ -1,7 +1,6 @@
 version: '3.5'
 # Use this script for making nightfall_3 use stubs.
 services:
-
   proposer:
     build:
       dockerfile: docker/proposer.Dockerfile
@@ -14,7 +13,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
       OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
@@ -22,6 +21,8 @@ services:
       OPTIMIST_WS_PORT: ${OPTIMIST_WS_PORT:-8080}
       CLIENT_HOST: ${CLIENT_HOST:-client}
       CLIENT_PORT: ${CLIENT_PORT:-8080}
+      PROPOSER_HOST: ${PROPOSER_HOST}
+      PROPOSER_PORT: ${PROPOSER_PORT}
     networks:
       - nightfall_network
     volumes:

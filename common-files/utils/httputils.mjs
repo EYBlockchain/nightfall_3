@@ -23,7 +23,7 @@ const { LOG_HTTP_PAYLOAD_ENABLED, LOG_HTTP_FULL_DATA } = config;
  * Default obfuscation's rules.
  */
 const OBFUSCATION_SETTINGS = {
-  '^(?!.*public).*key(s)?$|.*password.*|.*secret.*|.*mnemonic.*': 'ALL',
+  '^(?!.*public).*key(s)?$|.*password.*|.*secret.*|.*mnemonic.*|.*salt.*': 'ALL',
 };
 
 const doObfuscation = object => {

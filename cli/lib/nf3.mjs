@@ -905,7 +905,22 @@ class Nf3 {
   async getProposerPendingPayments() {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
       params: {
-        proposer: this.ethereumAddress,
+        proposerAddress: this.ethereumAddress,
+      },
+    });
+    return res.data.pendingPayments;
+  }
+
+  /**
+    Get all the proposer stake.
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum transaction receipt.
+    */
+  async getProposerStake() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`, {
+      params: {
+        proposerAddress: this.ethereumAddress,
       },
     });
     return res.data;
@@ -1033,11 +1048,7 @@ class Nf3 {
       if (type === 'block') {
         // First sign transaction, and send it within asynchronous queue. This will
         // ensure that blockProposed events are emitted in order and with the correct nonce.
-        const tx = await this._signTransaction(
-          txDataToSign,
-          this.stateContractAddress,
-          await this.getBlockStake(), // the block stake could have changed, so we get it from the blockchain
-        );
+        const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0); // we don't send more stake
         proposerQueue.push(async () => {
           try {
             const receipt = await this._sendTransaction(tx);
@@ -1063,36 +1074,6 @@ class Nf3 {
       }
 
       if (type === 'rollback') proposeEmitter.emit('rollback', data);
-
-      // this is used by adversary proposer for submitting bad transaction.
-      if (type === 'submit-transaction') {
-        try {
-          const ercAddress = await this.getContractAddressOptimist('ERC20Mock');
-          const approvetxDataToSign = await approve(
-            ercAddress,
-            this.ethereumAddress,
-            this.shieldContractAddress,
-            (transactions[0].tokenType === '0' && 'ERC20') ||
-              (transactions[0].tokenType === '1' && 'ERC721') ||
-              (transactions[0].tokenType === '2' && 'ERC1155'),
-            transactions[0].value,
-            this.web3,
-            !!this.ethereumSigningKey,
-          );
-          if (approvetxDataToSign) await this.submitTransaction(approvetxDataToSign, ercAddress, 0);
-          const receipt = await this.submitTransaction(
-            txDataToSign,
-            this.shieldContractAddress,
-            Number(transactions[0].fee),
-          );
-          proposeEmitter.emit('submit-transaction-receipt', receipt, transactions);
-        } catch (err) {
-          logger.error({
-            msg: 'Error while trying to submit a submit-transaction',
-            err,
-          });
-        }
-      }
 
       return null;
     };
@@ -1276,12 +1257,20 @@ class Nf3 {
     Returns the commitments of tokens held in layer 2
     @method
     @async
+    @param {Array} ercList - list of erc contract addresses to filter.
+    @param {Boolean} filterByCompressedZkpPublicKey- flag to indicate if request is filtered
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
     value of each propery is an array of commitments originating from that contract.
     */
-  async getLayer2Commitments() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
+  async getLayer2Commitments(ercList, filterByCompressedZkpPublicKey) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`, {
+      params: {
+        compressedZkpPublicKey:
+          filterByCompressedZkpPublicKey === true ? [this.zkpKeys.compressedZkpPublicKey] : [],
+        ercList,
+      },
+    });
     return res.data.commitments;
   }
 

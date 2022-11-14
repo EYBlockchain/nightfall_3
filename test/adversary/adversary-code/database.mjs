@@ -28,7 +28,7 @@ let error = process.env.BAD_TX_SEQUENCE
       'DuplicateNullifierWithdraw',
       'IncorrectProofWithdraw',
       'IncorrectPublicInputWithdrawNullifier',
-      'IncorrectHistoricRoot', // TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
+      // 'IncorrectHistoricRoot', // TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
       'ValidTransaction',
     ];
 
@@ -232,7 +232,7 @@ const incorrectProof = async (number, transactionType) => {
       let isModifiedTransactionInDB = false;
       while (isModifiedTransactionInDB === false) {
         isModifiedTransactionInDB =
-          (await getTransactionByTransactionHash(incorrectProofTx.transactionHash)) === null; // eslint-disable-line no-await-in-loop, no-undef
+          (await getTransactionByTransactionHash(incorrectProofTx.transactionHash)) !== null; // eslint-disable-line no-await-in-loop, no-undef
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
@@ -318,7 +318,7 @@ const incorrectPublicInput = async (number, transactionType, publicInputType) =>
       let isModifiedTransactionInDB = false;
       while (isModifiedTransactionInDB === false) {
         isModifiedTransactionInDB =
-          (await getTransactionByTransactionHash(incorrectPublicInputTx.transactionHash)) === null; // eslint-disable-line no-await-in-loop, no-undef
+          (await getTransactionByTransactionHash(incorrectPublicInputTx.transactionHash)) !== null; // eslint-disable-line no-await-in-loop, no-undef
         // eslint-disable-next-line no-await-in-loop
         await new Promise(resolve => setTimeout(resolve, 2000));
       }

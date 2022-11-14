@@ -92,7 +92,16 @@ describe('ERC721 tests', () => {
     it('should deposit some ERC721 crypto into a ZKP commitment', async function () {
       const tokenToDeposit = availableTokenIds.shift();
 
+      const myPublicKey = nf3Users[0].zkpKeys.compressedZkpPublicKey;
       const balanceBefore = (await nf3Users[0].getLayer2Balances())[erc721Address]?.length || 0;
+      const unspentCommitmentsBefore = await nf3Users[0].getLayer2Commitments(
+        [erc721Address],
+        true,
+      );
+      let nUnspentCommitmentsBefore = 0;
+      if (myPublicKey in unspentCommitmentsBefore && unspentCommitmentsBefore[myPublicKey]) {
+        nUnspentCommitmentsBefore = unspentCommitmentsBefore[myPublicKey][erc721Address].length;
+      }
 
       // We create enough transactions to fill blocks full of deposits.
       const res = await nf3Users[0].deposit(erc721Address, tokenTypeERC721, 0, tokenToDeposit, fee);
@@ -101,8 +110,14 @@ describe('ERC721 tests', () => {
       await emptyL2();
 
       const balanceAfter = (await nf3Users[0].getLayer2Balances())[erc721Address]?.length || 0;
+      const unspentCommitmentsAfter = await nf3Users[0].getLayer2Commitments([erc721Address], true);
+      let nUnspentCommitmentsAfter = 0;
+      if (myPublicKey in unspentCommitmentsAfter && unspentCommitmentsAfter[myPublicKey]) {
+        nUnspentCommitmentsAfter = unspentCommitmentsAfter[myPublicKey][erc721Address].length;
+      }
 
       expect(balanceAfter - balanceBefore).to.be.equal(1);
+      expect(nUnspentCommitmentsAfter - nUnspentCommitmentsBefore).to.be.equal(1);
     });
   });
 

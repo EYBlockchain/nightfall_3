@@ -62,7 +62,8 @@ router.get('/pending-spent', async (req, res, next) => {
 
 router.get('/commitments', async (req, res, next) => {
   try {
-    const commitments = await getWalletCommitments();
+    const { compressedZkpPublicKey, ercList } = req.query;
+    const commitments = await getWalletCommitments(compressedZkpPublicKey, ercList);
     res.json({ commitments });
   } catch (err) {
     next(err);
