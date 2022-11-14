@@ -609,17 +609,17 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         uint256 weight;
 
         uint256 slotValue; // we calculate the slotValue depending on the proposer stakes
-        uint256 minimumSlots = 10; // minimum slots we want for the bigger proposer stake
+        uint256 maximumSlots = 10; // maximum slots we want for the bigger proposer stake
         while (p.nextAddress != currentProposer.thisAddress) {
             stake = getStakeAccount(p.thisAddress);
-            if (slotValue < stake.amount / minimumSlots) {
-                slotValue = stake.amount / minimumSlots;
+            if (slotValue < stake.amount / maximumSlots) {
+                slotValue = stake.amount / maximumSlots;
             }
             p = proposers[p.nextAddress];
         }
         stake = getStakeAccount(p.thisAddress);
-        if (slotValue < stake.amount / minimumSlots) {
-            slotValue = stake.amount / minimumSlots;
+        if (slotValue < stake.amount / maximumSlots) {
+            slotValue = stake.amount / maximumSlots;
         }
 
         p = currentProposer;
