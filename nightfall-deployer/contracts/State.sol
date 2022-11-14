@@ -591,7 +591,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
      * @dev Initialize a new span
      */
     function initializeSpan() internal {
-        fillSlots(); // 1) initialize slots based on the stake and valuePerSlot
+        fillSlots(); // 1) initialize slots based on the stake
         shuffleSlots(); // 2) shuffle the slots
         spanProposerSet(); // 3) pop the proposer set from shuffled slots
     }

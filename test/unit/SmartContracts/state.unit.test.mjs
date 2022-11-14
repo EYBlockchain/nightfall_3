@@ -567,55 +567,6 @@ describe('State contract State functions', function () {
     expect(await state.currentSprint()).to.equal(prevSprint + 1);
   });
 
-  it('should not change current proposer with numProposers > 1 and getMinimumStake() / getValuePerSlot() -1 wei in stake', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-    const amount = (await state.getMinimumStake()).div(await state.getValuePerSlot()).sub(1);
-    const challengeLocked = 5;
-
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
-
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr2.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
-    expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
-    expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
-    expect((await state.proposers(addr1.address)).url).to.equal(newUrl);
-    expect((await state.proposers(addr1.address)).fee).to.equal(newFee);
-
-    await state.setProposer(addr2.address, [
-      addr2.address,
-      addr2.address,
-      addr2.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setNumProposers(2);
-    await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.setStakeAccount(addr2.address, amount, challengeLocked);
-    await state.setCurrentProposer(addr1.address);
-
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
-    const prevSprint = await state.currentSprint();
-
-    await expect(state.changeCurrentProposer()).to.be.reverted;
-
-    expect(await state.currentSprint()).to.equal(prevSprint);
-  });
-
   it('should proposeBlock', async function () {
     const newUrl = 'url';
     const newFee = 100;
