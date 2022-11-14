@@ -119,6 +119,13 @@ export async function transactionSubmittedEventHandler(eventParams) {
     transaction.transactionHashL1 = data.transactionHash;
   }
 
+  logger.info({
+    msg: 'Transaction Handler Main Thread - New transaction received.',
+    transaction,
+    txWorkerCount,
+    _workerEnable,
+  });
+
   // If TX WORKERS enabled or not responsive, route transaction requests to main thread
   if (txWorkerCount && _workerEnable) {
     axios
@@ -130,6 +137,7 @@ export async function transactionSubmittedEventHandler(eventParams) {
         },
       })
       .catch(function (error) {
+        logger.error(`Error submit tx worker ${error}`);
         if (error.request) {
           submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
         }
