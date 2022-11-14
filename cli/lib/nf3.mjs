@@ -107,7 +107,7 @@ class Nf3 {
     this.currentEnvironment = environment;
     axios.defaults.headers.common['X-APP-TOKEN'] = crypto
       .createHash('sha256')
-      .update(environment.PROPOSER_KEY, 'hex')
+      .update(environment.PROPOSER_KEY)
       .digest('hex');
   }
 
@@ -120,7 +120,7 @@ class Nf3 {
   async setApiKey(key) {
     axios.defaults.headers.common['X-APP-TOKEN'] = crypto
       .createHash('sha256')
-      .update(key, 'hex')
+      .update(key)
       .digest('hex');
   }
 
