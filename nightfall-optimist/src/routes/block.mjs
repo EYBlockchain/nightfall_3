@@ -13,10 +13,11 @@ import {
   resetUnsuccessfulBlockProposedTransactions,
 } from '../services/database.mjs';
 import { setMakeNow } from '../services/block-assembler.mjs';
+import auth from '../utils/auth.mjs';
 
 const router = express.Router();
 
-router.post('/check', async (req, res, next) => {
+router.post('/check', auth, async (req, res, next) => {
   try {
     const { block, transactions } = req.body;
     const result = await checkBlock(block, transactions);
@@ -26,7 +27,7 @@ router.post('/check', async (req, res, next) => {
   }
 });
 
-router.get('/make-now', async (req, res, next) => {
+router.get('/make-now', auth, async (req, res, next) => {
   try {
     logger.debug(`block make-now endpoint received GET`);
     setMakeNow();
@@ -36,7 +37,7 @@ router.get('/make-now', async (req, res, next) => {
   }
 });
 
-router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
+router.get('/transaction-hash/:transactionHash', auth, async (req, res, next) => {
   try {
     const { transactionHash } = req.params;
     logger.debug(`searching for block containing transaction hash ${transactionHash}`);
@@ -57,7 +58,7 @@ router.get('/transaction-hash/:transactionHash', async (req, res, next) => {
   }
 });
 
-router.get('/root/:root', async (req, res, next) => {
+router.get('/root/:root', auth, async (req, res, next) => {
   try {
     const { root } = req.params;
     // get data to return
@@ -87,7 +88,7 @@ router.get('/root/:root', async (req, res, next) => {
   }
 });
 
-router.get('/reset-localblock', async (req, res, next) => {
+router.get('/reset-localblock', auth, async (req, res, next) => {
   try {
     await Block.rollback();
     await resetUnsuccessfulBlockProposedTransactions();

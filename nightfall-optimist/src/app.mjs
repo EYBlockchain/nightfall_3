@@ -2,6 +2,8 @@
 
 import express from 'express';
 import { setupHttpDefaults } from '@polygon-nightfall/common-files/utils/httputils.mjs';
+import passport from 'passport';
+import { Strategy } from 'passport-http-header-strategy';
 import {
   proposer,
   block,
@@ -12,8 +14,15 @@ import {
   debug,
 } from './routes/index.mjs';
 
+passport.use(
+  new Strategy({ header: 'X-APP-TOKEN', passReqToCallback: true }, (req, token, done) =>
+    done(null, token === process.env.AUTH_TOKEN),
+  ),
+);
+
 const app = express();
 
+app.use(passport.initialize());
 setupHttpDefaults(
   app,
   app => {
