@@ -6,6 +6,9 @@ and Tendermint's proposer selection algorithm, Nightfall will select next propos
 Terminology:
 
 - **Slots**. Units assigned to proposers based on their stake.
+- **Value per slot**. Amount of the stake for each slot to calculate the slots that a proposer will
+  have based on their stake. If a proposer has 10K staked and the value per slot is 1K then the
+  proposer will have 10 slots to calculate their stake power in the weighted round robin algorithm.
 - **Sprint**. The time a proposer is proposing blocks being the current proposer. It will be the
   equivalent as ROTATE_PROPOSER_BLOCKS (L1 blocks).
 - **Span**. Unit composed of various sprints in which we use the same proposer set for the Weighted
@@ -21,8 +24,8 @@ the proposer selection process.
 Similar to Polygon approach we define these initial numbers that could be configured by the multisig
 administrator contract:
 
-- Each proposer slot is 1K MATIC. If a proposer has 10K stake of MATIC then it will have 10 slots
-  assigned. **1 Slot = 1K MATIC**
+- Each proposer slot is 1K MATIC (value per slot = 1K). If a proposer has 10K stake of MATIC then it
+  will have 10 slots assigned. **1 Slot = 1K MATIC**
 - Proposer set for each span will be built from 5 slots after shuffling all the slots. (Random
   shuffling is employed by Ethereum 2.0 too. It helps to mitigate DoS attacks and collusion among
   nodes) **Proposer set = 5 slots**
