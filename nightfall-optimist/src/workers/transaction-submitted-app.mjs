@@ -56,7 +56,7 @@ async function initWorkers() {
       );
     }
 
-    const totalCPUs = Math.min(os.cpus().length, txWorkerCount);
+    const totalCPUs = Math.min(os.cpus().length, Number(txWorkerCount));
 
     console.log(`Number of CPUs is ${totalCPUs}`);
 

@@ -44,7 +44,7 @@ router.post('/tx-submitted-enable', async (req, res) => {
     submitTransactionEnable(true);
     const transactions = await findAndDeleteAllBufferedTransactions();
 
-    if (txWorkerCount && workerEnableGet()) {
+    if (Number(txWorkerCount) && workerEnableGet()) {
       transactions.forEach(async tx =>
         axios
           .get(`${txWorkerUrl}/tx-submitted`, {

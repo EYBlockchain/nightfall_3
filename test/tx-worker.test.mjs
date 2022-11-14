@@ -102,7 +102,7 @@ describe('Tx worker test', () => {
      * speed up the process
      */
     it('Initialize tx worker', async function () {
-      const totalCPUs = Math.min(os.cpus().length, txWorkerCount);
+      const totalCPUs = Math.min(os.cpus().length, Number(txWorkerCount));
       const initTx = totalCPUs * 2;
       // enable workers
       await axios.post(`${environment.optimistApiUrl}/debug/tx-worker-enable`, {
