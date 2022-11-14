@@ -58,6 +58,15 @@ const getOptimistUrls = async () => {
 describe('Ping-pong tests', () => {
   before(async () => {
     await setParametersConfig();
+    console.log('Removing volumes...');
+    const data = await docker.command('volume ls -q');
+    const volumes = data.raw.split('\n').filter(c => c.includes('nightfall_3_optimist_mongodb'));
+    for (const v of volumes) {
+      console.log(`Removing volume ${v}...`);
+      // eslint-disable-next-line no-await-in-loop
+      await docker.command(`volume rm ${v}`);
+    }
+
     console.log('Starting containers...');
     await compose.upAll(dockerComposeOptions);
   });
