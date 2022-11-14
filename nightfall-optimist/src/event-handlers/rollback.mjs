@@ -55,6 +55,7 @@ async function rollbackEventHandler(data) {
     // eslint-disable-next-line no-await-in-loop
     const blockTransactions = await getTransactionsByTransactionHashesByL2Block(
       transactionHashesInBlock,
+      blocksToBeDeleted[i],
     );
     logger.info({
       msg: 'Rollback - blockTransactions to check:',
