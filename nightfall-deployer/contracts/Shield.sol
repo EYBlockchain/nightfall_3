@@ -28,13 +28,13 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     X509Interface x509;
     SanctionsListInterface sanctionsList;
 
-    function initializeState(address x509Address) public initializer {
+    function initializeState(address sanctionsListAddress, address x509Address) public initializer {
         sanctionsList = SanctionsListInterface(sanctionsListAddress);
         x509 = X509Interface(x509Address);
         initialize();
     }
 
-    function initialize() public override(Stateful, Config, Pausable, KYC) onlyInitializing {
+    function initialize() public override(Stateful, Config, Pausable) onlyInitializing {
         Stateful.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
