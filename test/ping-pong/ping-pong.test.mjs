@@ -73,9 +73,9 @@ describe('Ping-pong tests', () => {
 
     userTest(false, optimistUrls);
 
-    const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
-    await nf3Proposer.init(mnemonics.proposer3);
-    const stateContract = await nf3Proposer.getContractInstance('State');
+    const nf3User = new Nf3(signingKeys.liquidityProvider, environment);
+    await nf3User.init(mnemonics.liquidityProvider);
+    const stateContract = await nf3User.getContractInstance('State');
 
     const getStakeAccount = async proposer => {
       const stakeAccount = await stateContract.methods.getStakeAccount(proposer).call();
@@ -91,9 +91,9 @@ describe('Ping-pong tests', () => {
       });
     }
 
-    const blockStake = await nf3Proposer.getBlockStake();
+    const blockStake = await nf3User.getBlockStake();
     console.log('BLOCKSTAKE: ', blockStake);
-    proposerTest(optimistUrls, proposersStats, nf3Proposer);
+    proposerTest(optimistUrls, proposersStats, nf3User);
 
     result = await userTest(true, optimistUrls);
     expect(result).to.be.equal(0);
@@ -135,6 +135,7 @@ describe('Ping-pong tests', () => {
 
       expect(proposersStats.sprints).to.be.greaterThan(0);
     }
+    nf3User.close();
   });
 
   after(async () => {

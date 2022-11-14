@@ -108,7 +108,7 @@ services:
       CLIENT_PORT: 8080
       PROPOSER_HOST: proposer_1
       PROPOSER_PORT: 8092
-      PROPOSER_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d'
+      PROPOSER_KEY: '0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a'
     networks:
       - nightfall_network
     volumes:

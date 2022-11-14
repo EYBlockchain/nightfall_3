@@ -193,42 +193,48 @@ export async function userTest(IS_TEST_RUNNER, optimistUrls) {
 Set the block stake parameter for the proposers
 */
 const setBlockStake = async amount => {
-  const transactions = await nfMultiSig.setBlockStake(
-    amount,
-    signingKeys.user1,
-    addresses.user1,
-    await multisigContract.methods.nonce().call(),
-    [],
-  );
-  const approved = await nfMultiSig.setBlockStake(
-    amount,
-    signingKeys.user2,
-    addresses.user1,
-    await multisigContract.methods.nonce().call(),
-    transactions,
-  );
-  await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-  const blockStake = await shieldContract.methods.getBlockStake().call();
+  let blockStake = await shieldContract.methods.getBlockStake().call();
+  if (Number(blockStake) !== amount) {
+    const transactions = await nfMultiSig.setBlockStake(
+      amount,
+      signingKeys.user1,
+      addresses.user1,
+      await multisigContract.methods.nonce().call(),
+      [],
+    );
+    const approved = await nfMultiSig.setBlockStake(
+      amount,
+      signingKeys.user2,
+      addresses.user1,
+      await multisigContract.methods.nonce().call(),
+      transactions,
+    );
+    await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+    blockStake = await shieldContract.methods.getBlockStake().call();
+  }
   console.log('BLOCK STAKE SET: ', blockStake);
 };
 
 const setMinimumStake = async amount => {
-  const transactions = await nfMultiSig.setMinimumStake(
-    amount,
-    signingKeys.user1,
-    addresses.user1,
-    await multisigContract.methods.nonce().call(),
-    [],
-  );
-  const approved = await nfMultiSig.setMinimumStake(
-    amount,
-    signingKeys.user2,
-    addresses.user1,
-    await multisigContract.methods.nonce().call(),
-    transactions,
-  );
-  await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-  const minimumStake = await shieldContract.methods.getMinimumStake().call();
+  let minimumStake = await shieldContract.methods.getMinimumStake().call();
+  if (Number(minimumStake) !== amount) {
+    const transactions = await nfMultiSig.setMinimumStake(
+      amount,
+      signingKeys.user1,
+      addresses.user1,
+      await multisigContract.methods.nonce().call(),
+      [],
+    );
+    const approved = await nfMultiSig.setMinimumStake(
+      amount,
+      signingKeys.user2,
+      addresses.user1,
+      await multisigContract.methods.nonce().call(),
+      transactions,
+    );
+    await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
+    minimumStake = await shieldContract.methods.getMinimumStake().call();
+  }
   console.log('MINIMUM STAKE SET: ', minimumStake);
 };
 
@@ -236,17 +242,17 @@ const setMinimumStake = async amount => {
 Set parameters config for the test
 */
 export async function setParametersConfig() {
-  const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
-  await nf3Proposer.init(mnemonics.proposer3);
+  const nf3User = new Nf3(signingKeys.liquidityProvider, environment);
+  await nf3User.init(mnemonics.liquidityProvider);
 
-  const stateContract = await nf3Proposer.getContractInstance('State');
-  const proposersContract = await nf3Proposer.getContractInstance('Proposers');
-  const challengesContract = await nf3Proposer.getContractInstance('Challenges');
-  shieldContract = await nf3Proposer.getContractInstance('Shield');
-  multisigContract = await nf3Proposer.getContractInstance('SimpleMultiSig');
+  const stateContract = await nf3User.getContractInstance('State');
+  const proposersContract = await nf3User.getContractInstance('Proposers');
+  const challengesContract = await nf3User.getContractInstance('Challenges');
+  shieldContract = await nf3User.getContractInstance('Shield');
+  multisigContract = await nf3User.getContractInstance('SimpleMultiSig');
 
   nfMultiSig = new NightfallMultiSig(
-    nf3Proposer.web3,
+    nf3User.web3,
     {
       state: stateContract,
       proposers: proposersContract,
@@ -255,7 +261,7 @@ export async function setParametersConfig() {
       multisig: multisigContract,
     },
     2,
-    await nf3Proposer.web3.eth.getChainId(),
+    await nf3User.web3.eth.getChainId(),
     WEB3_OPTIONS.gas,
   );
 
@@ -368,16 +374,22 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
           o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
         ).optimistUrl;
 
-        let res = await axios.get(`${url}/proposer/mempool`);
-        while (res.data.result.length > 0) {
-          console.log(` *** ${res.data.result.length} transactions in the mempool`);
-          if (res.data.result.length > 0) {
-            console.log('     Make block...');
-            await axios.get(`${url}/block/make-now`);
-            console.log('     Waiting for block to be created');
-            await new Promise(resolve => setTimeout(resolve, 20000));
-            res = await axios.get(`${url}/proposer/mempool`);
+        if (url) {
+          let res = await axios.get(`${url}/proposer/mempool`);
+          while (res.data.result.length > 0) {
+            console.log(` *** ${res.data.result.length} transactions in the mempool`);
+            if (res.data.result.length > 0) {
+              console.log('     Make block...');
+              await axios.get(`${url}/block/make-now`);
+              console.log('     Waiting for block to be created');
+              await new Promise(resolve => setTimeout(resolve, 20000));
+              res = await axios.get(`${url}/proposer/mempool`);
+            }
           }
+        } else {
+          console.log(
+            'This current proposer does not have optimist url defined in the compose yml file',
+          );
         }
         console.log('     Change current proposer...');
         await nf3Proposer.changeCurrentProposer();
