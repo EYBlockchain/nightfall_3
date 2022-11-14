@@ -47,6 +47,8 @@ const eventLogs = [];
 const logs = {
   instantWithdraw: 0,
 };
+let rollbackCount = 0;
+
 const waitForTxExecution = async (count, txType) => {
   while (count === logs[txType]) {
     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -76,11 +78,18 @@ describe('ERC20 tests', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
-    });
+    newGasBlockEmitter
+      .on('gascost', async gasUsed => {
+        logger.debug(
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+        );
+      })
+      .on('rollback', () => {
+        rollbackCount += 1;
+        logger.debug(
+          `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
+        );
+      });
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
@@ -105,6 +114,7 @@ describe('ERC20 tests', () => {
       const afterZkpPublicKeyBalance =
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(transferValue);
+      expect(rollbackCount).to.be.equal(0);
     });
   });
 
@@ -136,6 +146,7 @@ describe('ERC20 tests', () => {
 
       expect(afterBalances[0] - beforeBalances[0]).to.be.equal(-(transferValue + fee));
       expect(afterBalances[1] - beforeBalances[1]).to.be.equal(transferValue);
+      expect(rollbackCount).to.be.equal(0);
     });
 
     it('should transfer some ERC20 crypto (back to us) using ZKP', async function () {
@@ -156,6 +167,7 @@ describe('ERC20 tests', () => {
 
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
       expect(after - before).to.be.equal(-fee);
+      expect(rollbackCount).to.be.equal(0);
     });
   });
 
@@ -178,6 +190,7 @@ describe('ERC20 tests', () => {
       logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
       expect(afterBalance - beforeBalance).to.be.equal(-(transferValue / 2 + fee));
+      expect(rollbackCount).to.be.equal(0);
     });
 
     it('Should create a failing finalise-withdrawal (because insufficient time has passed)', async function () {
@@ -208,6 +221,7 @@ describe('ERC20 tests', () => {
             'Returned error: VM Exception while processing transaction: revert It is too soon to withdraw funds from this block',
           ) || message.includes('Transaction has been reverted by the EVM'),
       );
+      expect(rollbackCount).to.be.equal(0);
     });
 
     it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
@@ -247,6 +261,7 @@ describe('ERC20 tests', () => {
 
         const endBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
         expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
+        expect(rollbackCount).to.be.equal(0);
       } else {
         logger.info('Not using a time-jump capable test client so this test is skipped');
         this.skip();
@@ -271,6 +286,7 @@ describe('ERC20 tests', () => {
       logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
       expect(afterBalance - beforeBalance).to.be.equal(-(Math.floor(transferValue / 2) + fee));
+      expect(rollbackCount).to.be.equal(0);
     });
   });
 
@@ -341,6 +357,7 @@ describe('ERC20 tests', () => {
       const endBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
 
       expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
+      expect(rollbackCount).to.be.equal(0);
     });
 
     it('should not allow instant withdraw of non existing withdraw or not in block yet', async function () {
@@ -358,6 +375,7 @@ describe('ERC20 tests', () => {
 
       const res = await nf3Users[0].requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
       expect(res).to.be.equal(null);
+      expect(rollbackCount).to.be.equal(0);
     });
 
     after(async () => {
@@ -392,6 +410,7 @@ describe('ERC20 tests', () => {
           message.includes('Transaction has been reverted by the EVM'),
         );
       }
+      expect(rollbackCount).to.be.equal(0);
     });
 
     it('should restrict withdrawals', async function () {
@@ -473,6 +492,7 @@ describe('ERC20 tests', () => {
             message.includes('Transaction has been reverted by the EVM'),
           );
         }
+        expect(rollbackCount).to.be.equal(0);
       } else {
         console.log('Not using a time-jump capable test client so this test is skipped');
         this.skip();
