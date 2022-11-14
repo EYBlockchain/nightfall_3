@@ -472,18 +472,6 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
-/*
-For added safety we only delete mempool: true, we should never be deleting
-transactions from our local db that have been spent.
-*/
-export async function deleteTransactionsByTransactionHashesL2BlockNumber(transactionHashes) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  // We should not delete from a spent mempool
-  const query = { transactionHash: { $in: transactionHashes }, blockNumberL2: -1, mempool: true };
-  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
-}
-
 /**
  * Function that sets the Transactions's L1 blocknumber to null
  * to indicate that it's back in the L1 mempool (and will probably be re-mined
