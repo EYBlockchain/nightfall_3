@@ -4,6 +4,8 @@ import express from 'express';
 import { setupHttpDefaults } from '@polygon-nightfall/common-files/utils/httputils.mjs';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
+import config from 'config';
+
 import {
   proposer,
   block,
@@ -13,7 +15,6 @@ import {
   getContractAbi,
   debug,
 } from './routes/index.mjs';
-import config from 'config';
 
 const { optimistApiUrl } =
   config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
