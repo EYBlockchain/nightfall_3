@@ -80,18 +80,18 @@ export function setProposer(p) {
  *        type: object
  *        properties:
  *          amount:
- *            type: integer
+ *            type: string
  *            description:The staked amount of funds of the proposer.
  *          challengeLocked:
- *            type: integer
+ *            type: string
  *            description: The block stake in case of an invalid block.
  *          time:
- *            type: integer
+ *            type: string
  *            description: The time interval until the stake can be claimed.
  *        example:
- *           amount: 0
- *           challengeLocked: 0
- *           time: 0
+ *           amount: '10'
+ *           challengeLocked: '10'
+ *           time: '10'
  *      ProposersList:
  *        type: array
  *        items:
