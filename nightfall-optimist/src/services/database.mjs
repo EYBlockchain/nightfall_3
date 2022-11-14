@@ -438,6 +438,28 @@ export async function getTransactionsByTransactionHashes(transactionHashes) {
   return transactions;
 }
 
+/**
+function to find transactions with a transactionHash in the array transactionHashes.
+*/
+export async function getTransactionsByTransactionHashesByL2Block(transactionHashes, block) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = {
+    transactionHash: { $in: transactionHashes },
+    blockNumberL2: { $eq: block.blockNumberL2 },
+  };
+  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  // Create a dictionary where we will store the correct position ordering
+  const positions = {};
+  // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
+  // eslint-disable-next-line no-return-assign
+  transactionHashes.forEach((t, index) => (positions[t] = index));
+  const transactions = returnedTransactions.sort(
+    (a, b) => positions[a.transactionHash] - positions[b.transactionHash],
+  );
+  return transactions;
+}
+
 /*
 For added safety we only delete mempool: true, we should never be deleting
 transactions from our local db that have been spent.
@@ -447,6 +469,18 @@ export async function deleteTransactionsByTransactionHashes(transactionHashes) {
   const db = connection.db(OPTIMIST_DB);
   // We should not delete from a spent mempool
   const query = { transactionHash: { $in: transactionHashes }, mempool: true };
+  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
+}
+
+/*
+For added safety we only delete mempool: true, we should never be deleting
+transactions from our local db that have been spent.
+*/
+export async function deleteTransactionsByTransactionHashesL2BlockNumber(transactionHashes) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  // We should not delete from a spent mempool
+  const query = { transactionHash: { $in: transactionHashes }, blockNumberL2: -1, mempool: true };
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 

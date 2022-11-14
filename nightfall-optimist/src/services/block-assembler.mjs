@@ -11,6 +11,8 @@ import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   removeTransactionsFromMemPool,
+  removeCommitmentsFromMemPool,
+  removeNullifiersFromMemPool,
   getMostProfitableTransactions,
   numberOfUnprocessedTransactions,
 } from './database.mjs';
@@ -159,6 +161,10 @@ export async function conditionalMakeBlock(proposer) {
         // remove the transactions from the mempool so we don't keep making new
         // blocks with them
         await removeTransactionsFromMemPool(block.transactionHashes);
+        await removeCommitmentsFromMemPool(
+          transactions.map(transaction => transaction.commitments),
+        );
+        await removeNullifiersFromMemPool(transactions.map(transaction => transaction.commitments));
       }
     }
   }

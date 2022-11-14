@@ -227,7 +227,7 @@ export async function checkBlock(block, transactions) {
       await checkTransaction(transaction, false, { blockNumberL2: block.blockNumberL2 }); // eslint-disable-line no-await-in-loop
     }
   } catch (err) {
-    if (err.code + 2 === 2 || err.code + 2 === 3) {
+    if (err.code === 0 || err.code === 1) {
       let siblingPath1 = (await getTransactionHashSiblingInfo(transaction.transactionHash))
         .transactionHashSiblingPath;
       // case when block.build never was called
