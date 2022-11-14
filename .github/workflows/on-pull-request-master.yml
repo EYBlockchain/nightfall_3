@@ -1,8 +1,8 @@
 name: Check PR
 
 on:
-  pull_request:
-    branches: [master]
+  push:
+    branches: [liju.jose/good-test-now-count-rollback-counts]
 
 jobs:
   dependency-review:
