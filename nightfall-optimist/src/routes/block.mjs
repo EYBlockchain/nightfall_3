@@ -22,7 +22,6 @@ router.post('/check', auth, async (req, res, next) => {
 
 router.get('/make-now', auth, async (req, res, next) => {
   try {
-    logger.debug(`block make-now endpoint received GET`);
     setMakeNow();
     res.send('Making short block');
   } catch (err) {
