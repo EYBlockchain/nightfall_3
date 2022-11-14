@@ -67,7 +67,9 @@ describe('ERC721 tests', () => {
     newGasBlockEmitter
       .on('gascost', async gasUsed => {
         logger.debug(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
+            gasUsed / txPerBlock
+          }`,
         );
       })
       .on('rollback', () => {
