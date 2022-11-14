@@ -96,7 +96,7 @@ services:
       - proposer_optimist_1
     ports:
       # to use with postman and etc
-      - 8092:8092
+      - 8093:8093
     environment:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: 8546
@@ -107,7 +107,7 @@ services:
       CLIENT_HOST: client
       CLIENT_PORT: 8080
       PROPOSER_HOST: proposer_1
-      PROPOSER_PORT: 8092
+      PROPOSER_PORT: 8093
       PROPOSER_KEY: '0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a'
     networks:
       - nightfall_network
@@ -125,7 +125,7 @@ services:
       - proposer_optimist_2
     ports:
       # to use with postman and etc
-      - 8093:8093
+      - 8094:8094
     environment:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: 8546
@@ -136,7 +136,7 @@ services:
       CLIENT_HOST: client
       CLIENT_PORT: 8080
       PROPOSER_HOST: proposer_2
-      PROPOSER_PORT: 8093
+      PROPOSER_PORT: 8094
       PROPOSER_KEY: '0xabf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce'
     networks:
       - nightfall_network
