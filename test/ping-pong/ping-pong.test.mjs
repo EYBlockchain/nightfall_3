@@ -71,6 +71,8 @@ describe('Ping-pong tests', () => {
       proposersFinalStakes: [],
     }; // initialize stats for the test
 
+    console.log('Wait XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+    await new Promise(resolve => setTimeout(resolve, 300000));
     userTest(false);
 
     const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
