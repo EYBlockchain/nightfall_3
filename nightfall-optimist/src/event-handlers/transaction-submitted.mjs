@@ -69,6 +69,7 @@ export async function submitTransaction(_transaction, fromBlockProposer, txEnabl
   logger.info({
     msg: 'Transaction Handler - New transaction received.',
     _transaction,
+    fromBlockProposer,
     txEnable,
   });
 
@@ -134,6 +135,6 @@ export async function transactionSubmittedEventHandler(eventParams) {
         }
       });
   } else {
-    submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
+    await submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
   }
 }

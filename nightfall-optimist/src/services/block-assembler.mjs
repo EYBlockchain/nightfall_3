@@ -79,7 +79,7 @@ export async function conditionalMakeBlock(proposer) {
     to be processed, we can assemble a block and create a proposal
     transaction. If not, we must wait until either we have enough (hooray)
     or we're no-longer the proposer (boo).
-   */
+  */
   if (proposer.isMe) {
     const unprocessed = await numberOfUnprocessedTransactions();
     let numberOfProposableL2Blocks = Math.floor(unprocessed / TRANSACTIONS_PER_BLOCK);
