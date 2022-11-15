@@ -20,6 +20,11 @@ describe('State contract State functions', function () {
     transactionsCreated = createBlockAndTransactions(
       '0x000000000000000000000000499d11e0b6eac7c0593d8fb292dcbbf815fb29ae',
       addr1.address,
+      0,
+      '0x0000000000000000000000000000000000000000000000000000000000000000',
+      1,
+      '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
+      '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
       '10',
     );
     const Proposers = await ethers.getContractFactory('Proposers');
@@ -247,7 +252,7 @@ describe('State contract State functions', function () {
   });
 
   it('should set stake account', async function () {
-    const amount = 10;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
@@ -519,7 +524,7 @@ describe('State contract State functions', function () {
   it('should change current proposer with numProposers > 1', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 50;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
@@ -567,59 +572,10 @@ describe('State contract State functions', function () {
     expect(await state.currentSprint()).to.equal(prevSprint + 1);
   });
 
-  it('should not change current proposer with numProposers > 1 and 49 wei in stake', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-    const amount = 49;
-    const challengeLocked = 5;
-
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
-      ethers.constants.AddressZero,
-    );
-
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr2.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-
-    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
-    expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
-    expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
-    expect((await state.proposers(addr1.address)).url).to.equal(newUrl);
-    expect((await state.proposers(addr1.address)).fee).to.equal(newFee);
-
-    await state.setProposer(addr2.address, [
-      addr2.address,
-      addr2.address,
-      addr2.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setNumProposers(2);
-    await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await state.setStakeAccount(addr2.address, amount, challengeLocked);
-    await state.setCurrentProposer(addr1.address);
-
-    expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
-    const prevSprint = await state.currentSprint();
-
-    await expect(state.changeCurrentProposer()).to.be.reverted;
-
-    expect(await state.currentSprint()).to.equal(prevSprint);
-  });
-
   it('should proposeBlock', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -690,7 +646,7 @@ describe('State contract State functions', function () {
   it('should not proposeBlock: funds not escrowed', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -731,7 +687,7 @@ describe('State contract State functions', function () {
   it('should not proposeBlock: transaction hashes root', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -779,7 +735,7 @@ describe('State contract State functions', function () {
   it('should not proposeBlock: The block has too many transactions', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -816,7 +772,7 @@ describe('State contract State functions', function () {
   it('should resetFeeBookInfo', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -884,7 +840,7 @@ describe('State contract State functions', function () {
 
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -936,7 +892,7 @@ describe('State contract State functions', function () {
   it('should popBlockData', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -1029,7 +985,7 @@ describe('State contract State functions', function () {
 
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [
@@ -1088,7 +1044,7 @@ describe('State contract State functions', function () {
   it('should setBlockStakeWithdrawn', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
+    const amount = await state.getMinimumStake();
     const challengeLocked = 5;
 
     await state.setProposer(addr1.address, [

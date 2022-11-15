@@ -42,7 +42,7 @@ dependencies.
 ./bin/setup-nightfall
 ```
 
-One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to 
+One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to
 build up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./setup-nightfall`).
 
 ### To start the application
@@ -52,7 +52,8 @@ If running for first time, do the setup as above and then run this script:
 ```sh
 ./bin/start-nightfall -l | -g | -r [-s] [-d]
 ```
-One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to 
+
+One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to
 start up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./start-nightfall`).
 
 This will bring up the application. You can run it either with a Ganache blockchain simulator or a
@@ -95,22 +96,27 @@ this point.
 To stop the application, you can run `npm run nightfall-down` and it should exit cleanly.
 
 ### To export nightfall state
-In some circumstances it may be useful to export nightfall state so that it can be replicated at any point in time. 
-For example, when doing load testing and many thousands of transactions needs to be generated, saving the nightfall state
-at the moment when all transactions have been generated may be benefitial.
+
+In some circumstances it may be useful to export nightfall state so that it can be replicated at any
+point in time. For example, when doing load testing and many thousands of transactions needs to be
+generated, saving the nightfall state at the moment when all transactions have been generated may be
+benefitial.
 
 The exported nightfall state includes:
+
 - blockchain
 - file system (contracts and circuits)
 - client and optimist mondoDbs.
 
 This feature only works with `geth` and not with `ganache`.
 
-To export nightfall state, run `./bin/export-nightfall <folder>` at the point where you want to save the state. 
-Data is backup in `nightfall_3/backup` folder
+To export nightfall state, run `./bin/export-nightfall <folder>` at the point where you want to save
+the state. Data is backup in `nightfall_3/backup` folder
 
 ### To import nightfall state
+
 One can also import a previously exported state. To do so:
+
 ```
 ./bin/geth-standalone -i <FOLDER>
 ./bin/start-nightfall -l -d
@@ -190,13 +196,40 @@ tests are run, once the private Geth blockchain is started, with:
 npm test-chain-reorg
 ```
 
+### Test ping-pong with multi proposers
+
+The ping-pong test uses 2 users and 2 proposers by default to test during a period of time:
+
+- 2 users sending deposit and transfer transactions between them.
+- 2 proposers proposing blocks and rotating between them based on the PoS weighted round robin.
+- checks for the users layer 2 balances.
+- checks for the rotation, stake and statistics for the proposers.
+
+To configure the proposers there is a docker-compose file in `docker/docker-compose.proposers.yml`
+that define the containers `proposer_x`, `proposer_optimist_x` and `optimist_mongodb_x` for each
+proposer and the corresponding parameters for each container. You can add more proposers if needed
+configuring the parameters properly. The test detects the proposers parameters from the `yml` file
+and will run the test with the configured proposers.
+
+To test you can run in a terminal
+
+```sh
+start-nightfall -g -d
+```
+
+And in another terminal once the Nightfall deployer has exited:
+
+```sh
+npm run ping-pong
+```
+
 ## Using a Geth private blockchain
 
-The script `./bin/geth-standalone` will run up a private blockchain consisting of a bootnode, two client
-nodes and two miners. This is required for testing chain reorganisations (Ganache does not simulate
-a chain-reorg) but can be used for other tests or general running. It's slower than using Ganache
-but it does provide a more real-life test. Note also that the private chain exposes a client on
-`host.docker.internal:8546`. On a Mac this will map to `localhost` but it won't work on any other
+The script `./bin/geth-standalone` will run up a private blockchain consisting of a bootnode, two
+client nodes and two miners. This is required for testing chain reorganisations (Ganache does not
+simulate a chain-reorg) but can be used for other tests or general running. It's slower than using
+Ganache but it does provide a more real-life test. Note also that the private chain exposes a client
+on `host.docker.internal:8546`. On a Mac this will map to `localhost` but it won't work on any other
 machine. If you aren't on a Mac then you can do one of these 3 options:
 
 - If you are on a Linux you can edit `/etc/hosts` file and add a map from your private IP address of
@@ -210,8 +243,8 @@ To use the private blockchain:
 
 - Run up the private chain with `./bin/geth-standalone -s`
 - Start terminal logging with `./bin/geth-standalone -l` and wait for the DAG build to complete
-- Start Nightfall in another terminal with the `-l` option (`./bin/start-nightfall -l`) and, optionally,
-  the `-s` option if you want stubbed circuits.
+- Start Nightfall in another terminal with the `-l` option (`./bin/start-nightfall -l`) and,
+  optionally, the `-s` option if you want stubbed circuits.
 
 That's it. You can shut down the geth blockchain with `./bin/geth-standalone -d` or pause/unpause it
 with `-p`, `-u`.

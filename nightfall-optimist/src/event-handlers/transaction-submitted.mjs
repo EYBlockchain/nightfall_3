@@ -72,6 +72,7 @@ async function transactionSubmittedEventHandler(eventParams) {
     }
 
     await checkTransaction(transaction, true);
+
     logger.info('Transaction checks passed');
 
     // save it

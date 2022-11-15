@@ -1,3 +1,5 @@
+/* eslint class-methods-use-this: "off" */
+
 import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
@@ -855,7 +857,22 @@ class Nf3 {
   async getProposerPendingPayments() {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
       params: {
-        proposer: this.ethereumAddress,
+        proposerAddress: this.ethereumAddress,
+      },
+    });
+    return res.data.pendingPayments;
+  }
+
+  /**
+    Get all the proposer stake.
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum transaction receipt.
+    */
+  async getProposerStake() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`, {
+      params: {
+        proposerAddress: this.ethereumAddress,
       },
     });
     return res.data;
@@ -929,6 +946,17 @@ class Nf3 {
     });
   }
 
+  createEmitter() {
+    const emitter = new EventEmitter();
+
+    /*
+      Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
+     */
+    emitter.on('error', error => logger.error({ msg: 'Error caught by emitter', error }));
+
+    return emitter;
+  }
+
   /**
     Get block stake
     @method
@@ -956,12 +984,16 @@ class Nf3 {
     @async
     */
   async startProposer() {
-    const proposeEmitter = new EventEmitter();
+    const proposeEmitter = this.createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
+
     this.websockets.push(connection); // save so we can close it properly later
-    // we can't setup up a ping until the connection is made because the ping function
-    // only exists in the underlying 'ws' object (_ws) and that is undefined until the
-    // websocket is opened, it seems. Hence, we put all this code inside the onopen.
+
+    /*
+      we can't setup up a ping until the connection is made because the ping function
+      only exists in the underlying 'ws' object (_ws) and that is undefined until the
+      websocket is opened, it seems. Hence, we put all this code inside the onopen.
+     */
     connection.onopen = () => {
       // setup a ping every 15s
       this.intervalIDs.push(
@@ -971,6 +1003,7 @@ class Nf3 {
       );
       // and a listener for the pong
       logger.debug('Proposer websocket connection opened');
+
       connection.send('blocks');
     };
 
@@ -983,11 +1016,7 @@ class Nf3 {
       if (type === 'block') {
         // First sign transaction, and send it within asynchronous queue. This will
         // ensure that blockProposed events are emitted in order and with the correct nonce.
-        const tx = await this._signTransaction(
-          txDataToSign,
-          this.stateContractAddress,
-          await this.getBlockStake(), // the block stake could have changed, so we get it from the blockchain
-        );
+        const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0); // we don't send more stake
         proposerQueue.push(async () => {
           try {
             const receipt = await this._sendTransaction(tx);
@@ -1010,38 +1039,8 @@ class Nf3 {
             proposeEmitter.emit('error', err, block, transactions);
           }
         });
-      }
-
-      if (type === 'rollback') proposeEmitter.emit('rollback', data);
-
-      // this is used by adversary proposer for submitting bad transaction.
-      if (type === 'submit-transaction') {
-        try {
-          const ercAddress = await this.getContractAddressOptimist('ERC20Mock');
-          const approvetxDataToSign = await approve(
-            ercAddress,
-            this.ethereumAddress,
-            this.shieldContractAddress,
-            (transactions[0].tokenType === '0' && 'ERC20') ||
-              (transactions[0].tokenType === '1' && 'ERC721') ||
-              (transactions[0].tokenType === '2' && 'ERC1155'),
-            transactions[0].value,
-            this.web3,
-            !!this.ethereumSigningKey,
-          );
-          if (approvetxDataToSign) await this.submitTransaction(approvetxDataToSign, ercAddress, 0);
-          const receipt = await this.submitTransaction(
-            txDataToSign,
-            this.shieldContractAddress,
-            Number(transactions[0].fee),
-          );
-          proposeEmitter.emit('submit-transaction-receipt', receipt, transactions);
-        } catch (err) {
-          logger.error({
-            msg: 'Error while trying to submit a submit-transaction',
-            err,
-          });
-        }
+      } else if (type === 'rollback') {
+        proposeEmitter.emit('rollback', data);
       }
 
       return null;
@@ -1049,6 +1048,7 @@ class Nf3 {
 
     connection.onerror = () => logger.error('Proposer websocket connection error');
     connection.onclosed = () => logger.warn('Proposer websocket connection closed');
+
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return proposeEmitter;
   }
@@ -1226,12 +1226,20 @@ class Nf3 {
     Returns the commitments of tokens held in layer 2
     @method
     @async
+    @param {Array} ercList - list of erc contract addresses to filter.
+    @param {Boolean} filterByCompressedZkpPublicKey- flag to indicate if request is filtered
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
     value of each propery is an array of commitments originating from that contract.
     */
-  async getLayer2Commitments() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
+  async getLayer2Commitments(ercList, filterByCompressedZkpPublicKey) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`, {
+      params: {
+        compressedZkpPublicKey:
+          filterByCompressedZkpPublicKey === true ? [this.zkpKeys.compressedZkpPublicKey] : [],
+        ercList,
+      },
+    });
     return res.data.commitments;
   }
 

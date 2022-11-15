@@ -16,7 +16,6 @@ export const APPROVE_AMOUNT =
 
 export const DEFAULT_FEE_ETH = 10;
 export const DEFAULT_FEE_MATIC = 10;
-
 export const WEBSOCKET_PING_TIME = 15000;
 
 export const GAS_MULTIPLIER = Number(process.env.GAS_MULTIPLIER) || 2;

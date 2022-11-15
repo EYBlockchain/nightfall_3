@@ -30,6 +30,7 @@
     "unit-test-shield": "npx hardhat test --bail test/unit/SmartContracts/shield.unit.test.mjs",
     "unit-test-proposers": "npx hardhat test --bail test/unit/SmartContracts/proposers.unit.test.mjs",
     "unit-test-state": "npx hardhat test --bail test/unit/SmartContracts/state.unit.test.mjs",
+    "unit-test-challenges": "npx hardhat test --bail test/unit/SmartContracts/challenges.unit.test.mjs",
     "prune": "docker system prune -a && docker volume prune"
   },
   "repository": {
@@ -112,8 +113,10 @@
   "dependencies": {
     "@polygon-nightfall/common-files": "*",
     "async-mutex": "^0.4.0",
+    "docker-cli-js": "^2.9.0",
     "docker-compose": "^0.23.13",
     "general-number": "^1.0.1",
+    "js-yaml": "^4.1.0",
     "typescript": "^4.6.2"
   },
   "overrides": {
