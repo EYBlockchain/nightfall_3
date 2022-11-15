@@ -292,7 +292,7 @@ describe('ERC1155 tests', () => {
   });
 
   describe('Rollback checks', () => {
-    it('test should encounter zero rollbacks', function() {
+    it('test should encounter zero rollbacks', function () {
       expect(rollbackCount).to.be.equal(0);
     });
   });
