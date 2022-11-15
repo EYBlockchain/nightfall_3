@@ -4,8 +4,8 @@ import { setStorageAt } from '@nomicfoundation/hardhat-network-helpers';
 
 const { ethers } = hardhat;
 
-const whitelistSlot = 163;
-const advancedWithdrawalSlot = 166;
+const whitelistSlot = 162;
+const advancedWithdrawalSlot = 165;
 
 export async function setWhitelist(shieldAddress) {
   await setStorageAt(

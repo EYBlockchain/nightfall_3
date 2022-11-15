@@ -331,15 +331,14 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
 
     function addPendingWithdrawal(
         address addr,
-        uint120 feesEth,
-        uint120 feesMatic
+        uint256 feesEth,
+        uint256 feesMatic
     ) public {
         require(msg.sender == proposersAddress ||
                 msg.sender == shieldAddress,
             'State: Not authorised to call this function');
 
-        pendingWithdrawalsFees[addr].feesEth += feesEth;
-        pendingWithdrawalsFees[addr].feesMatic += feesMatic;
+        pendingWithdrawalsFees[addr] = FeeTokens(uint120(feesEth), uint120(feesMatic)); 
     }
 
     function withdraw() external nonReentrant whenNotPaused {
@@ -412,35 +411,27 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts) public view {
-        bytes32 blockHash = Utils.hashBlock(b);
+    function isBlockReal(Block calldata b) public view {
         uint64 blockNumberL2 = Utils.getBlockNumberL2(b.packedInfo);
         require(
-           blockNumberL2 < blockHashes.length &&
-                blockHashes[blockNumberL2].blockHash == blockHash,
+            blockNumberL2 < blockHashes.length &&
+                blockHashes[blockNumberL2].blockHash == Utils.hashBlock(b),
             'State: Block does not exist'
-        );
-        bytes32 tranasactionHashesRoot = Utils.hashTransactionHashes(ts);
-        require(
-            b.transactionHashesRoot == tranasactionHashesRoot,
-            'State: Transaction hashes root does not match'
         );
     }
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function isBlockReal(Block calldata b) public view returns (bytes32) {
-        bytes32 blockHash = Utils.hashBlock(b);
-        uint64 blockNumberL2 = Utils.getBlockNumberL2(b.packedInfo);
+    function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts) public view {
+        isBlockReal(b);
         require(
-            blockNumberL2 < blockHashes.length &&
-                blockHashes[blockNumberL2].blockHash == blockHash,
-            'State: Block does not exist'
+            b.transactionHashesRoot == Utils.hashTransactionHashes(ts),
+            'State: Transaction hashes root does not match'
         );
-
-        return blockHash;
     }
+
+   
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
@@ -451,20 +442,13 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         uint256 index,
         bytes32[] calldata siblingPath
     ) public view returns (bytes32) {
-        bytes32 blockHash = Utils.hashBlock(b);
-        uint64 blockNumberL2 = Utils.getBlockNumberL2(b.packedInfo);
-        require(
-            blockNumberL2 < blockHashes.length &&
-                blockHashes[blockNumberL2].blockHash == blockHash,
-            'State: Block does not exist'
-        );
+        isBlockReal(b);
         require(
             b.transactionHashesRoot == siblingPath[0],
             'State: Transaction hashes root is incorrect'
         );
         bytes32 transactionHash = Utils.hashTransaction(t);
-        bool valid = Utils.checkPath(siblingPath, index, transactionHash);
-        require(valid, 'State: Transaction does not exist in block');
+        require(Utils.checkPath(siblingPath, index, transactionHash), 'State: Transaction does not exist in block');
         return transactionHash;
     }
 
@@ -595,7 +579,15 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
      * @dev Initialize a new span
      */
     function initializeSpan() internal {
-        // 1) initialize slots based on the stake and valuePerSlot
+        fillSlots(); // 1) initialize slots based on the stake
+        shuffleSlots(); // 2) shuffle the slots
+        spanProposerSet(); // 3) pop the proposer set from shuffled slots
+    }
+
+    /**
+     * @dev Fill slots based on the weight
+     */
+    function fillSlots() public {
         require(
             currentProposer.thisAddress != address(0),
             'State: Current proposer not initialized'
@@ -638,8 +630,12 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         for (uint256 i = 0; i < weight; i++) {
             slots.push(p.thisAddress);
         }
+    }
 
-        // 2) shuffle the slots
+    /**
+     * @dev Shuffle the slots of all proposers
+     */
+    function shuffleSlots() internal {
         for (uint256 i = 0; i < slots.length; i++) {
             uint256 n = i +
                 (uint256(keccak256(abi.encodePacked(block.timestamp))) % (slots.length - i));
@@ -647,8 +643,12 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
             slots[n] = slots[i];
             slots[i] = temp;
         }
+    }
 
-        // 3) pop the proposer set from shuffled slots
+    /**
+     * @dev Pop the proposer set for next Span
+     */
+    function spanProposerSet() internal {
         for (uint256 i = 0; i < proposersSet.length; i++) {
             proposers[proposersSet[i].thisAddress].inProposerSet = false;
             proposers[proposersSet[i].thisAddress].indexProposerSet = 0;
@@ -658,15 +658,15 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
 
         // add proposersSet
         for (uint256 i = 0; i < proposerSetCount; i++) {
-            LinkedAddress memory prop = proposers[slots[i]];
+            LinkedAddress memory p = proposers[slots[i]];
             if (p.inProposerSet == false) {
                 p.inProposerSet = true;
                 p.indexProposerSet = proposersSet.length;
-                ProposerSet memory ps = ProposerSet(prop.thisAddress, 1, 0, 0);
+                ProposerSet memory ps = ProposerSet(p.thisAddress, 1, 0, 0);
                 proposersSet.push(ps);
-                proposers[slots[i]] = prop;
+                proposers[slots[i]] = p;
             } else {
-                proposersSet[prop.indexProposerSet].weight += 1;
+                proposersSet[p.indexProposerSet].weight += 1;
             }
         }
 
