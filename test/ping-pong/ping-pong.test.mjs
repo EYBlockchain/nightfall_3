@@ -6,12 +6,19 @@ import { Docker } from 'docker-cli-js';
 import Web3 from 'web3';
 import { expect } from 'chai';
 import Nf3 from '../../cli/lib/nf3.mjs';
-import { userTest, proposerTest, setParametersConfig } from './index.mjs';
+import {
+  userTest,
+  proposerTest,
+  setParametersConfig,
+  getStakeAccount,
+  getCurrentProposer,
+} from './index.mjs';
 
 const { mnemonics, signingKeys } = config.TEST_OPTIONS;
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 let result;
+const nf3User = new Nf3(signingKeys.liquidityProvider, environment);
 
 // default options for dockerCommand
 const dockerCommandOptions = {
@@ -55,9 +62,40 @@ const getOptimistUrls = async () => {
   return optimistUrls;
 };
 
+const getInitialProposerStats = async optimistUrls => {
+  const proposersStats = {
+    proposersBlocks: {},
+    sprints: 0,
+    proposersInitialStakes: [],
+    proposersFinalStakes: [],
+  }; // initialize stats for the test
+
+  for (const prop of optimistUrls) {
+    // eslint-disable-next-line no-await-in-loop
+    const stakeAccount = await getStakeAccount(prop.proposer);
+    proposersStats.proposersInitialStakes.push({
+      proposer: prop.proposer.toUpperCase(),
+      stake: stakeAccount,
+    });
+  }
+  return proposersStats;
+};
+
+const waitForCurrentProposer = async () => {
+  let currentProposer = await getCurrentProposer();
+  // let proposers boot and wait until we have the current proposer registered from the services
+  while (currentProposer.thisAddress === '0x0000000000000000000000000000000000000000') {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    // eslint-disable-next-line no-await-in-loop
+    currentProposer = await getCurrentProposer();
+  }
+};
+
 describe('Ping-pong tests', () => {
   before(async () => {
-    await setParametersConfig();
+    await nf3User.init(mnemonics.liquidityProvider);
+    await setParametersConfig(nf3User); // initialize parameters and contracts
     console.log('Removing volumes...');
     const data = await docker.command('volume ls -q');
     const volumes = data.raw.split('\n').filter(c => c.includes('nightfall_3_optimist_mongodb'));
@@ -73,39 +111,16 @@ describe('Ping-pong tests', () => {
 
   it('Runs ping-pong tests', async () => {
     const optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers
-    const proposersStats = {
-      proposersBlocks: {},
-      sprints: 0,
-      proposersInitialStakes: [],
-      proposersFinalStakes: [],
-    }; // initialize stats for the test
-
-    userTest(false, optimistUrls);
-
-    const nf3User = new Nf3(signingKeys.liquidityProvider, environment);
-    await nf3User.init(mnemonics.liquidityProvider);
-    const stateContract = await nf3User.getContractInstance('State');
-
-    const getStakeAccount = async proposer => {
-      const stakeAccount = await stateContract.methods.getStakeAccount(proposer).call();
-      return stakeAccount;
-    };
-
-    for (const prop of optimistUrls) {
-      // eslint-disable-next-line no-await-in-loop
-      const stakeAccount = await getStakeAccount(prop.proposer);
-      proposersStats.proposersInitialStakes.push({
-        proposer: prop.proposer.toUpperCase(),
-        stake: stakeAccount,
-      });
-    }
+    const proposersStats = await getInitialProposerStats(optimistUrls);
+    await waitForCurrentProposer();
 
     const blockStake = await nf3User.getBlockStake();
     console.log('BLOCKSTAKE: ', blockStake);
-    proposerTest(optimistUrls, proposersStats, nf3User);
 
-    result = await userTest(true, optimistUrls);
-    expect(result).to.be.equal(0);
+    userTest(false, optimistUrls); // user 1 sending deposit & transfer operations
+    proposerTest(optimistUrls, proposersStats, nf3User); // user to rotate proposers and get block statistics
+    result = await userTest(true, optimistUrls); // user 2 sending deposit & transfer operations
+    expect(result).to.be.equal(0); // expect 0 success, 1 error
 
     for (const prop of optimistUrls) {
       // eslint-disable-next-line no-await-in-loop
