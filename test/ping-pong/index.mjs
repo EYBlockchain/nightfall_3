@@ -359,6 +359,12 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
         console.log('     Change current proposer...');
         await nf3Proposer.changeCurrentProposer();
       } catch (err) {
+        // containers stopped
+        if (err.message.includes('connection not open')) {
+          console.log('Containers stopped!');
+          return;
+        }
+
         console.log(err);
       }
     }
