@@ -15,7 +15,7 @@ async function initWorkers() {
   if (cluster.isPrimary) {
     // Contact with optimist and download Shield and Challenges jsons. Only necessary is working in
     // non docker mode. In docker mode, contracts are downloaded already
-    const totalCPUs = Math.min(os.cpus().length-1, Number(txWorkerCount));
+    const totalCPUs = Math.min(os.cpus().length - 1, Number(txWorkerCount));
 
     console.log(`Number of CPUs is ${totalCPUs}`);
 
@@ -38,8 +38,8 @@ async function initWorkers() {
     });
 
     // End point to submit transaction to tx worker
-    app.get('/tx-submitted', async (req, res) => {
-      const { tx, proposerFlag } = req.query;
+    app.post('/tx-submitted', async (req, res) => {
+      const { tx, proposerFlag } = req.body;
       try {
         const response = submitTransaction(JSON.parse(tx), proposerFlag === 'true');
         res.json(response);
