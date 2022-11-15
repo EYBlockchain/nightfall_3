@@ -123,7 +123,6 @@ describe('ERC1155 tests', () => {
         )?.balance || 0;
 
       expect(afterBalance - beforeBalance).to.be.equal(transferValue);
-      expect(rollbackCount).to.be.equal(0);
     });
   });
 
@@ -173,7 +172,6 @@ describe('ERC1155 tests', () => {
       expect(afterBalances[0] - beforeBalances[0]).to.be.equal(-transferValue);
       expect(afterBalances[1] - beforeBalances[1]).to.be.equal(transferValue);
       expect(afterBalances[2] - beforeBalances[2]).to.be.equal(-fee);
-      expect(rollbackCount).to.be.equal(0);
     });
   });
 
@@ -222,7 +220,6 @@ describe('ERC1155 tests', () => {
 
       expect(afterBalanceERC1155 - beforeBalanceERC1155).to.be.equal(-transferValue);
       expect(afterBalanceERC20 - beforeBalanceERC20).to.be.equal(-fee);
-      expect(rollbackCount).to.be.equal(0);
     });
 
     it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
@@ -287,12 +284,15 @@ describe('ERC1155 tests', () => {
           (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
         expect(afterBalanceERC1155 - beforeBalanceERC1155).to.be.equal(-transferValue);
         expect(afterBalanceERC20 - beforeBalanceERC20).to.be.equal(-fee);
-        expect(rollbackCount).to.be.equal(0);
       } else {
         logger.info('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
     });
+  });
+
+  it('test should encounter zero rollbacks', function() {
+    expect(rollbackCount).to.be.equal(0);
   });
 
   after(async () => {
