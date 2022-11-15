@@ -3,7 +3,7 @@ import './Ownable.sol';
 
 pragma solidity ^0.8.0;
 
-contract Whitelist is Ownable {
+abstract contract Whitelist is Ownable {
     bool public whitelisting;
     mapping(address => bool) public users;
 
