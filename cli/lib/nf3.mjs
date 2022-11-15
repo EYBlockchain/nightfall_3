@@ -1417,40 +1417,6 @@ class Nf3 {
   }
 
   /**
-   Adds a user to a whitelist (only works of the calling address is that of a Whitelist Manager)
-  */
-  async addUserToWhitelist(groupId, address) {
-    const res = await axios.post(`${this.clientBaseUrl}/whitelist/add`, {
-      address,
-    });
-    const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign, this.kycContractAddress);
-  }
-
-  /**
-   Removes a user from a whitelist (only works of the calling address is that of a Whitelist Manager)
-  */
-  async removeUserFromWhitelist(address) {
-    const res = await axios.post(`${this.clientBaseUrl}/whitelist/remove`, {
-      address,
-    });
-    const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign, this.kycContractAddress);
-  }
-
-  /**
-   checks if a user is whitelisted
-  */
-  async isWhitelisted(address) {
-    const res = await axios.get(`${this.clientBaseUrl}/whitelist/check`, {
-      params: {
-        address,
-      },
-    });
-    return res.data.isWhitelisted;
-  }
-
-  /**
    Validates an X509 (RSA) certificate
    */
   async validateCertificate(certificate, ethereumAddress, derPrivateKey) {
@@ -1472,7 +1438,7 @@ class Nf3 {
       );
     }
     // now validate the cert
-    const res = await axios.post(`${this.clientBaseUrl}/whitelist/validate`, {
+    const res = await axios.post(`${this.clientBaseUrl}/kyc/validate`, {
       certificate,
       ethereumAddressSignature,
     });

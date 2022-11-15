@@ -33,7 +33,7 @@ setupHttpDefaults(
     app.use('/incoming-viewing-key', incomingViewingKey);
     app.use('/set-instant-withdrawal', setInstantWithdrawl);
     app.use('/generate-zkp-keys', generateZkpKeys);
-    app.use('/whitelist', kyc);
+    app.use('/kyc', kyc);
   },
   true,
   false,

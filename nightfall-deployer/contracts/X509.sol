@@ -30,11 +30,11 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         usageBitMaskIntermediate = 0x06;
     }
 
-    function setUseageBitMaskEndUser(bytes1 _usageBitMask) external onlyOwner {
+    function setUsageBitMaskEndUser(bytes1 _usageBitMask) external onlyOwner {
         usageBitMaskEndUser = _usageBitMask;
     }
 
-    function setUseageBitMasIntermediate(bytes1 _usageBitMask) external onlyOwner {
+    function setUsageBitMasIntermediate(bytes1 _usageBitMask) external onlyOwner {
         usageBitMaskIntermediate = _usageBitMask;
     }
 
@@ -52,10 +52,10 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         returns (bytes memory)
     {
         DecodedTlv memory signatureTlv = tlvs[maxId - 1];
-        require(signatureTlv.depth == 1, 'Signature tlv depth is incorrect');
+        require(signatureTlv.depth == 1, 'X509: Signature tlv depth is incorrect');
         require(
             signatureTlv.tag.tagType == 0x03,
-            'Signature tlv should have a tag type of BIT STRING'
+            'X509: Signature tlv should have a tag type of BIT STRING'
         );
         bytes memory signature = signatureTlv.value;
         return signature;
@@ -63,8 +63,11 @@ contract X509 is DERParser, Whitelist, KYCInterface {
 
     function getMessage(DecodedTlv[] memory tlvs) private pure returns (bytes memory) {
         DecodedTlv memory messageTlv = tlvs[1];
-        require(messageTlv.depth == 1, 'Message tlv depth is incorrect');
-        require(messageTlv.tag.tagType == 0x10, 'Message tlv should have a tag type of BIT STRING');
+        require(messageTlv.depth == 1, 'X509: Message tlv depth is incorrect');
+        require(
+            messageTlv.tag.tagType == 0x10,
+            'X509: Message tlv should have a tag type of BIT STRING'
+        );
         bytes memory message = messageTlv.octets;
         return message;
     }
@@ -79,7 +82,7 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         (success, result) = (
             address(5).staticcall(abi.encodePacked(b.length, uint256(32), m.length, b, e, m))
         );
-        require(success, 'modExp error');
+        require(success, 'X509: modExp error');
         return result;
     }
 
@@ -94,11 +97,11 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         require(
             decrypt[0] == 0x00 && decrypt[1] == 0x00,
-            'Decrypt does not have a leading zero octets'
+            'X509: Decrypt does not have a leading zero octets'
         );
         require(
             decrypt[2] == 0x00 || decrypt[2] == 0x01,
-            'Block Type is not a private key operation'
+            'X509: Block Type is not a private key operation'
         );
         // loop through the padding
         uint256 i;
@@ -109,7 +112,7 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         tlvs = this.parseDER(decrypt, i, tlvLength);
         require(
             tlvs[4].depth == 1 && tlvs[4].tag.tagType == 0x04,
-            'Incorrect tag or position for decrypted hash data'
+            'X509: Incorrect tag or position for decrypted hash data'
         );
         bytes memory messageHashFromSignature = tlvs[4].value;
 
@@ -154,14 +157,14 @@ contract X509 is DERParser, Whitelist, KYCInterface {
             if (tlvs[i].tag.tagType == 0x10 && tlvs[i].depth == 2) j++;
             if (j == 3) break;
         }
-        require(tlvs[i + 1].tag.tagType == 0x17, 'First tag was not in fact a UTC time');
-        require(tlvs[i + 2].tag.tagType == 0x17, 'Second tag was not in fact a UTC time');
+        require(tlvs[i + 1].tag.tagType == 0x17, 'X509: First tag was not in fact a UTC time');
+        require(tlvs[i + 2].tag.tagType == 0x17, 'X509: Second tag was not in fact a UTC time');
         require(
             block.timestamp > timestampFromDate(tlvs[i + 1].value),
-            'It is too early to use this certificate'
+            'X509: It is too early to use this certificate'
         );
         uint256 expiry = timestampFromDate(tlvs[i + 2].value);
-        require(block.timestamp < expiry, 'This certificate has expired');
+        require(block.timestamp < expiry, 'X509: This certificate has expired');
         return expiry;
     }
 
@@ -177,7 +180,7 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         require(
             keccak256(tlvs[i + 2].value) ==
                 keccak256(abi.encodePacked(bytes9(0x2a864886f70d010101))),
-            'Only RSA ecryption keys are supported, the OID indicates a different key type'
+            'X509: Only RSA ecryption keys are supported, the OID indicates a different key type'
         );
         bytes memory keyBytes = tlvs[i + 4].value;
         // extract the public key tlvs
@@ -200,9 +203,9 @@ contract X509 is DERParser, Whitelist, KYCInterface {
                 bytes32((0x551d0e0000000000000000000000000000000000000000000000000000000000))
             ) break; // OID for the SKID
         }
-        require(i < tlvs.length, 'OID for Subject Key Identifier not found');
+        require(i < tlvs.length, 'X509: OID for Subject Key Identifier not found');
         bytes memory skidBytes = tlvs[i + 1].value;
-        require(skidBytes.length < 33, 'SKID is too long to encode as a bytes 32');
+        require(skidBytes.length < 33, 'X509: SKID is too long to encode as a bytes 32');
         DecodedTlv[] memory skidTlvs = new DecodedTlv[](1);
         skidTlvs = this.parseDER(skidBytes, 0, 2);
         bytes32 skid = bytes32(skidTlvs[0].value) >> ((32 - skidTlvs[0].length) * 8);
@@ -223,9 +226,9 @@ contract X509 is DERParser, Whitelist, KYCInterface {
                 bytes32((0x551d230000000000000000000000000000000000000000000000000000000000))
             ) break; // OID for the AKID
         }
-        require(i < tlvs.length, 'OID for Authority Key Identifier not found');
+        require(i < tlvs.length, 'X509: OID for Authority Key Identifier not found');
         bytes memory akidBytes = tlvs[i + 1].value;
-        require(akidBytes.length < 33, 'AKID is too long to encode as a bytes 32');
+        require(akidBytes.length < 33, 'X509: AKID is too long to encode as a bytes 32');
         DecodedTlv[] memory akidTlvs = new DecodedTlv[](3);
         akidTlvs = this.parseDER(akidBytes, 0, 2);
         bytes32 akid = bytes32(akidTlvs[1].value) >> ((32 - akidTlvs[1].value.length) * 8);
@@ -242,16 +245,19 @@ contract X509 is DERParser, Whitelist, KYCInterface {
                 bytes32((0x551d0f0000000000000000000000000000000000000000000000000000000000))
             ) break; // OID for the AKID
         }
-        require(i < tlvs.length, 'OID for Key Usage not found');
+        require(i < tlvs.length, 'X509: OID for Key Usage not found');
         bytes memory usageBytes = tlvs[i + 1].value;
         DecodedTlv[] memory usageTlvs = new DecodedTlv[](1);
         usageTlvs = this.parseDER(usageBytes, 0, 1);
-        require(usageTlvs[0].length == 2, 'Key usage bytes must be of 2 bytes');
+        require(usageTlvs[0].length == 2, 'X509: Key usage bytes must be of 2 bytes');
         // decoding of flags encoded as DER is strange. The first byte tells us how many bits to ignore in the second byte
         bytes1 usageFlags = (usageTlvs[0].value[1] >> uint8(usageTlvs[0].value[0])) <<
             uint8(usageTlvs[0].value[0]);
         // this is little endian and so must our mask be therefore
-        require((usageFlags & _usageBitMask) == _usageBitMask, 'Key usage is not as required');
+        require(
+            (usageFlags & _usageBitMask) == _usageBitMask,
+            'X509: Key usage is not as required'
+        );
     }
 
     // function to check the signature over a message
@@ -268,7 +274,7 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         // we use the keccak hash here as a low cost way to check equality of bytes data
         require(
             keccak256(messageHashFromSignature) == keccak256(abi.encode(sha256(message))),
-            'Signature is invalid'
+            'X509: Signature is invalid'
         );
     }
 
@@ -298,7 +304,14 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         // The certificate is valid and linked to a root we trust, so now we trust the certificate's public key too. Let's add it to our list of trusted keys
         RSAPublicKey memory certificatePublicKey = extractPublicKey(tlvs);
         bytes32 subjectKeyIdentifier = extractSubjectKeyIdentifier(tlvs);
-        require(!revokedKeys[subjectKeyIdentifier], 'The key of this certificate has been revoked');
+        require(
+            !revokedKeys[subjectKeyIdentifier],
+            'X509: The subject key of this certificate has been revoked'
+        );
+        require(
+            !revokedKeys[authorityKeyIdentifier],
+            'X509: The authority key of this certificates has been revoked'
+        );
         // finally, before we can whitelist msg.sender, we should check that they are indeed the owner of the cert (certs are public, after all)
         // we do that by getting them to sign msg.sender with the private key corresponding to their certificate public key
         if (!addAddress) {
@@ -338,8 +351,9 @@ contract X509 is DERParser, Whitelist, KYCInterface {
     function revokeKey(bytes32 subjectKeyIdentifier) external {
         require(
             keysByUser[msg.sender] == subjectKeyIdentifier || msg.sender == owner(),
-            'You are not the owner of this key'
+            'X509: You are not the owner of this key'
         );
         revokedKeys[subjectKeyIdentifier] = true;
+        delete trustedPublicKeys[subjectKeyIdentifier];
     }
 }

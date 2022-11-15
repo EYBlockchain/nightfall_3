@@ -38,10 +38,10 @@ contract DERParser {
         bool isConstructed = (tagByte & 0x20) != 0;
         bytes1 tagType = tagByte & 0x1F;
         uint256 headerLength = 0;
-        require(tagType < 0x1F, 'Tag is Long Form, which is not supported');
+        require(tagType < 0x1F, 'DERParser: Tag is Long Form, which is not supported');
         require(
             tagClass == 0 || tagClass == 0x80,
-            'Only the Universal or ContextSpecific tag classes are supported'
+            'DERParser: Only the Universal or ContextSpecific tag classes are supported'
         );
         headerLength++;
         return (Tag(isConstructed, tagType), ++pointer, headerLength);
@@ -68,8 +68,11 @@ contract DERParser {
         uint256 lengthBits = uint256(uint8(derSlice[0] & 0x7F)); // this contains either the length value (shortform) or the number of following octets that contain the length value (long form)
         if (shortForm) return (lengthBits, ++pointer, headerLength); //it's a short form length, so we're done
         // it's not short form so more work to do
-        require(lengthBits != 0, 'Indefinite lengths are not supported');
-        require(lengthBits != 0x7F, 'A value of 0x7F for a long form length is a reserved value');
+        require(lengthBits != 0, 'DERParser: Indefinite lengths are not supported');
+        require(
+            lengthBits != 0x7F,
+            'DERParser: A value of 0x7F for a long form length is a reserved value'
+        );
         uint256 length = 0;
         for (uint256 i = 0; i < lengthBits; i++) {
             length = (length << 8) | uint256(uint8(derSlice[i + 1]));

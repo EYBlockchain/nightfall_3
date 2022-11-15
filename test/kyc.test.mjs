@@ -35,7 +35,7 @@ const intermediateCaCert = fs.readFileSync('test/unit/utils/Nightfall_Intermedia
 const endUserCert = fs.readFileSync('test/unit/utils/Nightfall_end_user.cer');
 const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user.der');
 
-describe('Whitelist tests', () => {
+describe('kyc tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
@@ -56,25 +56,15 @@ describe('Whitelist tests', () => {
     stateAddress = await nf3Users[0].stateContractAddress;
     await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     logger.debug(`User[0] has ethereum address ${nf3Users[0].ethereumAddress}`);
-    // start with the user delisted (they should be anyway)
-    try {
-      await nf3Users[0].removeUserFromWhitelist(nf3Users[0].ethereumAddress);
-    } catch (err) {
-      logger.debug('user was already delisted');
-    }
-    // setup the KYC
   });
 
-  describe('Deposits from a non-whitelisted then whitelisted account', () => {
-    it('deposits from a non-whitelisted should revert', async function () {
-      logger.debug('Remove user from whitelist, they probably already are');
-      // logger.debug('waiting');
-      // await new Promise(resolve => setTimeout(resolve, 30000));
-      expect(await nf3Users[0].isWhitelisted(nf3Users[0].ethereumAddress)).to.equal(false);
+  describe('Deposits from a non-kyc-checked then kyc-checked account', () => {
+    it('deposits from a non-kyc-checked account should revert', async function () {
       logger.debug('Send failing deposit');
       let error;
       try {
         await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+        expect.fail('A deposit that does not pass the KYC check should fail but it did not');
       } catch (err) {
         error = err;
       }
@@ -82,22 +72,13 @@ describe('Whitelist tests', () => {
         message.includes('Transaction has been reverted by the EVM'),
       );
     });
-    it('whitelist the account', async function () {
-      logger.debug('Check whitelist status');
-      expect(await nf3Users[0].isWhitelisted(nf3Users[0].ethereumAddress)).to.be.equal(false);
-      // nf3Users[0] is a whitelist manager (set up config) and so can whitelist themselves to group 1
-      // await nf3Users[0].addUserToWhitelist(1, nf3Users[0].ethereumAddress);
-      // we whitelist the account by passing in a certificate chain which X509.sol will accept.
-      // once this is done, we can stil whitelist and dewhitelist the user
+    it('deposits to a kyc-checked account should work', async function () {
       await nf3Users[0].validateCertificate(intermediateCaCert);
       await nf3Users[0].validateCertificate(
         endUserCert,
         nf3Users[0].ethereumAddress,
         derPrivateKey,
       );
-      expect(await nf3Users[0].isWhitelisted(nf3Users[0].ethereumAddress)).to.be.equal(true);
-    });
-    it('deposits from  a whitelisted account should work', async function () {
       logger.debug('doing whitelisted account');
       const res = await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       expectTransaction(res);
@@ -107,7 +88,7 @@ describe('Whitelist tests', () => {
     });
   });
 
-  describe('Withdrawals from a non-whitelisted then whitelisted account', () => {
+  describe('Withdrawals from a kyc-checked account should work', () => {
     let withdrawal;
     let nodeInfo;
     before(async function () {
@@ -131,26 +112,8 @@ describe('Whitelist tests', () => {
       await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
     });
 
-    it('Should remove the whitelisting and revert', async function () {
-      if (!nodeInfo.includes('TestRPC')) this.skip(); // only works with timejump clients
-      logger.debug('Removing user from whitelist');
-      await nf3Users[0].removeUserFromWhitelist(nf3Users[0].ethereumAddress);
-      expect(await nf3Users[0].isWhitelisted(nf3Users[0].ethereumAddress)).to.equal(false);
-      let error;
-      try {
-        logger.debug('Finalising withdrawal');
-        await nf3Users[0].finaliseWithdrawal(withdrawal);
-      } catch (err) {
-        error = err;
-      }
-      expect(error.message).to.satisfy(message =>
-        message.includes('Transaction has been reverted by the EVM'),
-      );
-    });
-
-    it('Should add the whitelisting and succeed', async function () {
+    it('Should do the kyc check and succeed', async function () {
       if (!nodeInfo.includes('TestRPC')) this.skip();
-      await nf3Users[0].addUserToWhitelist(1, nf3Users[0].ethereumAddress);
       const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
       expectTransaction(res);
     });
