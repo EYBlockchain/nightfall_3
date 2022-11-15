@@ -12,7 +12,6 @@ import {
   waitForSufficientBalance,
   retrieveL2Balance,
   topicEventMapping,
-  emptyL2,
   Web3Client,
 } from '../utils.mjs';
 import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
@@ -21,11 +20,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const { mnemonics, signingKeys, addresses, zkpPublicKeys, ROTATE_PROPOSER_BLOCKS } =
   config.TEST_OPTIONS;
-
-const txPerBlock =
-  process.env.DEPLOYER_ETH_NETWORK === 'mainnet'
-    ? process.env.TEST_LENGTH
-    : config.TEST_OPTIONS.txPerBlock;
 
 const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
 
@@ -42,7 +36,7 @@ const TEST_LENGTH = 4;
 /**
 Does the preliminary setup and starts listening on the websocket
 */
-export async function userTest(IS_TEST_RUNNER) {
+export async function userTest(IS_TEST_RUNNER, optimistUrls) {
   logger.info('Starting local test...');
   const eventLogs = [];
   const web3Client = new Web3Client();
@@ -58,30 +52,77 @@ export async function userTest(IS_TEST_RUNNER) {
 
   const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress('ERC20Mock'));
 
-  const stateAddress = await nf3.stateContractAddress;
+  const stateContract = await nf3.getContractInstance('State');
+  const stateAddress = stateContract.options.address;
   web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
   const startBalance = await retrieveL2Balance(nf3, ercAddress);
   console.log('start balance', startBalance);
 
-  let offchainTx = !!IS_TEST_RUNNER;
-  // Create a block of deposits
-  for (let i = 0; i < txPerBlock; i++) {
-    try {
-      await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
-      await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
-    } catch (err) {
-      logger.warn(`Error in deposit ${err}`);
-    }
+  const getCurrentProposer = async () => {
+    const currentProposer = await stateContract.methods.getCurrentProposer().call();
+    return currentProposer;
+  };
+
+  let currentProposer = await getCurrentProposer();
+
+  while (currentProposer.thisAddress === '0x0000000000000000000000000000000000000000') {
+    await new Promise(resolve => setTimeout(resolve, 10000));
+    console.log('HOLA');
+    currentProposer = await getCurrentProposer();
   }
 
-  await emptyL2(nf3, web3Client, eventLogs);
+  const offchainTx = !!IS_TEST_RUNNER;
+  // Create a block of deposits
+  try {
+    await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
+    await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
+  } catch (err) {
+    logger.warn(`Error in deposit ${err}`);
+  }
+
+  currentProposer = await getCurrentProposer();
+  console.log('CURRENT PROPOSER', currentProposer);
+  let url = optimistUrls.find(
+    // eslint-disable-next-line no-loop-func
+    o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
+  ).optimistUrl;
+
+  let res = await axios.get(`${url}/proposer/mempool`);
+  while (res.data.result.length > 0) {
+    console.log(` *** ${res.data.result.length} transactions in the mempool`);
+    if (res.data.result.length > 0) {
+      console.log('     Make block...');
+      await axios.get(`${url}/block/make-now`);
+      console.log('     Waiting for block to be created');
+      await new Promise(resolve => setTimeout(resolve, 20000));
+      res = await axios.get(`${url}/proposer/mempool`);
+    }
+  }
 
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
     await waitForSufficientBalance(nf3, startBalance + value, ercAddress);
-    for (let j = 0; j < txPerBlock - 1; j++) {
-      try {
+    try {
+      await nf3.transfer(
+        offchainTx,
+        ercAddress,
+        tokenType,
+        value,
+        tokenId,
+        IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
+        0,
+      );
+    } catch (err) {
+      if (err.message.includes('No suitable commitments')) {
+        // if we get here, it's possible that a block we are waiting for has not been proposed yet
+        // let's wait 10x normal and then try again
+        logger.warn(
+          `No suitable commitments were found for transfer. I will wait ${
+            0.01 * TX_WAIT
+          } seconds and try one last time`,
+        );
+        await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
         await nf3.transfer(
           offchainTx,
           ercAddress,
@@ -91,38 +132,31 @@ export async function userTest(IS_TEST_RUNNER) {
           IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
           0,
         );
-      } catch (err) {
-        if (err.message.includes('No suitable commitments')) {
-          // if we get here, it's possible that a block we are waiting for has not been proposed yet
-          // let's wait 10x normal and then try again
-          logger.warn(
-            `No suitable commitments were found for transfer. I will wait ${
-              0.01 * TX_WAIT
-            } seconds and try one last time`,
-          );
-          await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-          await nf3.transfer(
-            offchainTx,
-            ercAddress,
-            tokenType,
-            value,
-            tokenId,
-            IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
-            0,
-          );
-        }
       }
-      offchainTx = !offchainTx;
-    }
-    try {
-      await nf3.deposit(ercAddress, tokenType, value, tokenId);
-      await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
-      console.log(`Completed ${i + 1} pings`);
-    } catch (err) {
-      console.warn('Error deposit', err);
     }
 
-    await emptyL2(nf3, web3Client, eventLogs);
+    await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
+
+    currentProposer = await getCurrentProposer();
+    url = optimistUrls.find(
+      // eslint-disable-next-line no-loop-func
+      o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
+    ).optimistUrl;
+
+    res = await axios.get(`${url}/proposer/mempool`);
+    while (res.data.result.length > 0) {
+      console.log(` *** ${res.data.result.length} transactions in the mempool`);
+      if (res.data.result.length > 0) {
+        console.log('     Make block...');
+        await axios.get(`${url}/block/make-now`);
+        console.log('     Waiting for block to be created');
+        await new Promise(resolve => setTimeout(resolve, 20000));
+        res = await axios.get(`${url}/proposer/mempool`);
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
+    console.log(`Completed ${i + 1} pings`);
   }
 
   // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use
@@ -132,13 +166,13 @@ export async function userTest(IS_TEST_RUNNER) {
   if (IS_TEST_RUNNER) loopMax = 100; // the TEST_RUNNER must finish first so that its exit status is returned to the tester
   do {
     const endBalance = await retrieveL2Balance(nf3, ercAddress);
-    if (endBalance - startBalance === txPerBlock * value + value * TEST_LENGTH && IS_TEST_RUNNER) {
+    if (endBalance - startBalance === value + value * TEST_LENGTH && IS_TEST_RUNNER) {
       logger.info('Test passed');
       logger.info(
-        `Balance of User (txPerBlock*value (txPerBlock*1) + value received) :
+        `Balance of User value + value received) :
         ${endBalance - startBalance}`,
       );
-      logger.info(`Amount sent to other User: ${value * TEST_LENGTH}`);
+      logger.info(`Amount sent to other User: ${value + value * TEST_LENGTH}`);
       nf3.close();
       return 0;
     }
@@ -146,7 +180,7 @@ export async function userTest(IS_TEST_RUNNER) {
     logger.info(
       `The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting:
         Current Transacted Balance is: ${endBalance - startBalance} - Expecting: ${
-        txPerBlock * value + value * TEST_LENGTH
+        value + value * TEST_LENGTH
       } (IS_TEST_RUNNER: ${IS_TEST_RUNNER})`,
     );
     await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well

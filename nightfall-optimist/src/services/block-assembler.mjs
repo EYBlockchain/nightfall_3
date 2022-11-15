@@ -74,6 +74,7 @@ export async function conditionalMakeBlock(proposer) {
     or we're no-longer the proposer (boo).
    */
 
+  logger.info(`I am the current proposer: ${proposer.isMe}`);
   if (proposer.isMe) {
     // Get all the mempool transactions sorted by fee
     const mempoolTransactions = await getSortedByFeeMempoolTransactions();
