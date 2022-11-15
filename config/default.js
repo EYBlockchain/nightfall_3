@@ -11,7 +11,6 @@ module.exports = {
   PROPOSER_COLLECTION: 'proposers',
   CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
-  BUFFERED_TRANSACTIONS_COLLECTION: 'transactions_buffered',
   SUBMITTED_BLOCKS_COLLECTION: 'blocks',
   INVALID_BLOCKS_COLLECTION: 'invalid_blocks',
   COMMIT_COLLECTION: 'commits',
@@ -43,8 +42,7 @@ module.exports = {
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
   TX_WORKER_PARAMS: {
     txWorkerCount: process.env.TX_WORKER_COUNT || 100,
-    txWorkerUrl: process.env.TX_WORKER_URL || 'http://172.17.0.1:3000',
-    txWorkerOptimistApiUrl: process.env.TX_WORKER_OPTIMIST_API_URL || 'http://localhost:80',
+    txWorkerUrl: process.env.TX_WORKER_URL || 'http://locqlhost:3000',
   },
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
@@ -207,7 +205,6 @@ module.exports = {
     fee: 1,
     ROTATE_PROPOSER_BLOCKS: 20,
     txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
-    NUMBER_L2_BLOCKS: process.env.NUMBER_L2_BLOCKS || 4,
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||

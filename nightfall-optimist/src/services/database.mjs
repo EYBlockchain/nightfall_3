@@ -15,7 +15,6 @@ const {
   MONGO_URL,
   OPTIMIST_DB,
   TRANSACTIONS_COLLECTION,
-  BUFFERED_TRANSACTIONS_COLLECTION,
   PROPOSER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   INVALID_BLOCKS_COLLECTION,
@@ -351,32 +350,6 @@ export async function saveTransaction(_transaction) {
   throw new Error('Attempted to replay existing transaction');
 }
 
-export async function saveBufferedTransaction(transaction) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-
-  db.collection(BUFFERED_TRANSACTIONS_COLLECTION).insertOne(transaction);
-}
-
-export async function findAndDeleteAllBufferedTransactions() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const returnedTransactions = await db
-    .collection(BUFFERED_TRANSACTIONS_COLLECTION)
-    .find()
-    .toArray();
-  db.collection(BUFFERED_TRANSACTIONS_COLLECTION).drop();
-  return returnedTransactions;
-}
-
-/**
-How many transactions in BUFFERED TRANSACTIONS COLLECTION
-*/
-export async function numberOfBufferedTransactions() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  return db.collection(BUFFERED_TRANSACTIONS_COLLECTION).countDocuments();
-}
 /**
 Function to add a set of transactions from the layer 2 mempool once a block has been rolled back
 */

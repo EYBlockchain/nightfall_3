@@ -7,7 +7,6 @@ import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   saveTransaction,
-  saveBufferedTransaction,
   getBlockByTransactionHash,
   getTransactionByTransactionHash,
 } from '../services/database.mjs';
@@ -18,16 +17,14 @@ import { getTransactionSubmittedCalldata } from '../services/process-calldata.mj
 
 const { txWorkerUrl, txWorkerCount } = config.TX_WORKER_PARAMS;
 
-// Flag to enable/disable submitTransaction processing
-let _submitTransactionEnable = true;
 // Flag to enable/disable worker processing
-let _workerEnable = true;
+let isWorkerEnable = true;
 
-export function workerEnableSet(flag) {
-  _workerEnable = flag;
+export function setWorkerEnable(flag) {
+  isWorkerEnable = flag;
 }
-export function workerEnableGet() {
-  return _workerEnable;
+export function getWorkerEnable() {
+  return isWorkerEnable;
 }
 /**
  * It's possible this is a replay or a re-mine of a transaction that's already
@@ -62,10 +59,6 @@ async function checkAlreadyInBlock(_transaction) {
   return transaction; // but it's otherwise ok
 }
 
-export function submitTransactionEnable(enable) {
-  _submitTransactionEnable = enable;
-}
-
 /**
  * Transaction Event Handler processing. It can be processed by main thread
  * or by worker thread
@@ -73,23 +66,13 @@ export function submitTransactionEnable(enable) {
  * @param {Object} _transaction Transaction data
  * @param {boolean} fromBlockProposer Flag indicating whether this transaction comes from
  * block proposer (for those transactions that werent picked by current proposer).
- * @param {bolean} txEnable Flag indicating if transactions should be processed immediatelly (true)
- * or should be stored in a temporal buffer.
  */
-export async function submitTransaction(_transaction, fromBlockProposer, txEnable) {
+export async function submitTransaction(_transaction, fromBlockProposer) {
   logger.info({
     msg: 'Transaction Handler - New transaction received.',
     _transaction,
     fromBlockProposer,
-    txEnable,
   });
-
-  // Test mode. If txEnable is true, we process transactions as fast as we can (as usual). If false, then we
-  // store these transactions in a buffer with the idea of processing them back later at once.
-  if (!txEnable) {
-    saveBufferedTransaction({ ..._transaction });
-    return;
-  }
 
   try {
     const transaction = await checkAlreadyInBlock(_transaction);
@@ -137,28 +120,27 @@ export async function transactionSubmittedEventHandler(eventParams) {
     msg: 'Transaction Handler Main Thread - New transaction received.',
     transaction,
     txWorkerCount,
-    _workerEnable,
+    isWorkerEnable,
   });
 
   // If TX WORKERS enabled or not responsive, route transaction requests to main thread
-  if (Number(txWorkerCount) && _workerEnable) {
+  if (Number(txWorkerCount) && isWorkerEnable) {
     axios
       .get(`${txWorkerUrl}/tx-submitted`, {
         params: {
           tx: transaction,
           proposerFlag: fromBlockProposer === true,
-          enable: _submitTransactionEnable === true,
         },
       })
       .catch(function (error) {
         logger.error(`Error submit tx worker ${error}`);
         // Main thread (no workers)
         if (error.request) {
-          submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
+          submitTransaction(transaction, fromBlockProposer);
         }
       });
   } else {
     // Main thread (no workers)
-    await submitTransaction(transaction, fromBlockProposer, _submitTransactionEnable);
+    await submitTransaction(transaction, fromBlockProposer);
   }
 }

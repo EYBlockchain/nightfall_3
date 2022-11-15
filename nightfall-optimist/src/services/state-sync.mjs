@@ -15,7 +15,7 @@ import {
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import {
   transactionSubmittedEventHandler,
-  workerEnableSet,
+  setWorkerEnable,
 } from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
 import committedToChallengeEventHandler from '../event-handlers/challenge-commit.mjs';
@@ -118,7 +118,7 @@ export default async proposer => {
     unpauseQueue(0); // queues are started paused, therefore we need to unpause them before proceeding.
     unpauseQueue(1);
     // enable tx workers
-    workerEnableSet(true);
+    setWorkerEnable(true);
     try {
       startMakingChallenges();
     } catch (err) {
@@ -140,7 +140,7 @@ export default async proposer => {
     await stopMakingChallenges();
     // When syncing, tx workers need to be disabled because otherwise trnsaction and blockproposer
     // processing happen without any order
-    workerEnableSet(false);
+    setWorkerEnable(false);
     for (let i = 0; i < missingBlocks.length; i++) {
       const [fromBlock, toBlock] = missingBlocks[i];
       // Sync the state inbetween these blocks
@@ -154,7 +154,7 @@ export default async proposer => {
      a challenge in the stop queue that was not removed by a rollback.
      If this is the case we'll run the stop queue to challenge the bad block.
     */
-    workerEnableSet(true);
+    setWorkerEnable(true);
     try {
       startMakingChallenges();
     } catch (err) {

@@ -120,7 +120,6 @@ services:
       TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       TX_WORKER_COUNT: ${TX_WORKER_COUNT:-100}
       TX_WORKER_URL: ${TX_WORKER_URL:-http://localhost:3000}
-      TX_WORKER_OPTIMIST_API_URL: ${TX_WORKER_OPTIMIST_API_URL:-http://localhost:80}
     command: ['npm', 'run', 'dev']
 
   rabbitmq:
