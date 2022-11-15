@@ -5,10 +5,10 @@ import { setStorageAt, time } from '@nomicfoundation/hardhat-network-helpers';
 
 const { ethers } = hardhat;
 
-const blockHashesSlot = 162;
-const stakeAccountsSlot = 165;
-const feeBookIndex = 166;
-const claimedBlockStakesSlot = 167;
+const blockHashesSlot = 161;
+const stakeAccountsSlot = 164;
+const feeBookIndex = 165;
+const claimedBlockStakesSlot = 166;
 
 export async function setBlockPaymentClaimed(stateAddress, blockHash) {
   const index = ethers.utils.solidityKeccak256(

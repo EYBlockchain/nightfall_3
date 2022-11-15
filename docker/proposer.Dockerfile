@@ -16,7 +16,6 @@ RUN npm ci
 RUN npm link
 
 WORKDIR /app/cli
-RUN npm link @polygon-nightfall/common-files
 RUN npm ci
 
 WORKDIR /app
@@ -25,7 +24,6 @@ COPY apps/proposer/src src
 COPY apps/proposer/docker-entrypoint.sh docker-entrypoint.sh
 COPY config config
 
-RUN npm link @polygon-nightfall/common-files
 RUN npm ci
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes

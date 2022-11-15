@@ -143,27 +143,6 @@ describe(`Testing Administrator`, () => {
       expect(Number(rotateProposerBlocks)).to.be.equal(amount2);
     });
 
-    it('Should set `valuePerSlot` in PoS with the multisig', async () => {
-      const transactions = await nfMultiSig.setValuePerSlot(
-        amount1,
-        signingKeys.user1,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        [],
-      );
-      const approved = await nfMultiSig.setValuePerSlot(
-        amount1,
-        signingKeys.user2,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        transactions,
-      );
-      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const rotateProposerBlocks = await shieldContract.methods.getValuePerSlot().call();
-
-      expect(Number(rotateProposerBlocks)).to.be.equal(amount1);
-    });
-
     it('Should set `proposerSetCount` in PoS with the multisig', async () => {
       const transactions = await nfMultiSig.setProposerSetCount(
         amount1 / 2,
@@ -478,13 +457,6 @@ describe(`Testing Administrator`, () => {
       const rotateProposerBlocks = await shieldContract.methods.getRotateProposerBlocks().call();
 
       expect(Number(rotateProposerBlocks)).to.be.equal(amount2);
-    });
-
-    it('Should set `valuePerSlot` in PoS without multisig', async () => {
-      await shieldContract.methods.setValuePerSlot(amount1).send({ from: nf3User.ethereumAddress });
-      const rotateProposerBlocks = await shieldContract.methods.getValuePerSlot().call();
-
-      expect(Number(rotateProposerBlocks)).to.be.equal(amount1);
     });
 
     it('Should set `proposerSetCount` in PoS without multisig', async () => {

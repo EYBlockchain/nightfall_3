@@ -4,9 +4,9 @@ import { setStorageAt } from '@nomicfoundation/hardhat-network-helpers';
 
 const { ethers } = hardhat;
 
-const whitelistSlot = 163;
-const txInfoSlot = 166;
-const advancedWithdrawalSlot = 167;
+const whitelistSlot = 162;
+const txInfoSlot = 165;
+const advancedWithdrawalSlot = 166;
 
 export async function setTransactionInfo(shieldAddress, transactionHash, isEscrowed, isWithdrawn) {
   const index = ethers.utils.solidityKeccak256(
