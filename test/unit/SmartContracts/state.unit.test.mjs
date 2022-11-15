@@ -41,7 +41,7 @@ describe('State contract State functions', function () {
       1,
       '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
       '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-      '10',
+      '1',
     );
 
     blockHash = calculateBlockHash(transactionsCreated.block);
@@ -1022,9 +1022,7 @@ describe('State contract State functions', function () {
       [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
       { value: 10 },
     );
-    expect(await state.isBlockReal(transactionsCreated.block)).to.equal(
-      (await state.getBlockData(0)).blockHash,
-    );
+
     await expect(state.isBlockReal(wrongBlockNumber)).to.be.revertedWith(
       'State: Block does not exist',
     );

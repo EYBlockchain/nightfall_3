@@ -5,10 +5,10 @@ import { setStorageAt, time } from '@nomicfoundation/hardhat-network-helpers';
 
 const { ethers } = hardhat;
 
-const txInfoSlot = 164;
-const blockHashesSlot = 165;
-const stakeAccountsSlot = 168;
-const blockInfoSlot = 169;
+const txInfoSlot = 163;
+const blockHashesSlot = 164;
+const stakeAccountsSlot = 167;
+const blockInfoSlot = 168;
 
 export async function setTransactionInfo(
   stateAddress,
