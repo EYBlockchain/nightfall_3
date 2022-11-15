@@ -5,9 +5,9 @@ pragma solidity ^0.8.3;
 // This contract can parse  a suitably encoded SSL certificate
 import './DerParser.sol';
 import './Whitelist.sol';
-import './KYCInterface.sol';
+import './X509Interface.sol';
 
-contract X509 is DERParser, Whitelist, KYCInterface {
+contract X509 is DERParser, Whitelist, X509Interface {
     uint256 constant SECONDS_PER_DAY = 24 * 60 * 60;
     int256 constant OFFSET19700101 = 2440588;
 
@@ -42,7 +42,6 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         RSAPublicKey calldata trustedPublicKey,
         bytes32 authorityKeyIdentifier
     ) external onlyOwner {
-        //TODO some validation here
         trustedPublicKeys[authorityKeyIdentifier] = trustedPublicKey;
     }
 
@@ -148,7 +147,6 @@ contract X509 is DERParser, Whitelist, KYCInterface {
     }
 
     // this function finds and checks the Not Before and Not After tlvs
-    // TODO this and the subsequent function loop over the tlvs twice - this is inefficient - refactor code
     function checkDates(DecodedTlv[] memory tlvs) private view returns (uint256) {
         // The Not Before and Not After dates are the third SEQUENCE at depth 2
         uint256 i;
@@ -335,9 +333,9 @@ contract X509 is DERParser, Whitelist, KYCInterface {
         addUserToWhitelist(msg.sender); // all checks have passed, so they are free to trade for now.
     }
 
-    // performs an ongoing KYC check (is the user still in the whitelist? Has the public key been revoked? Is the cert in date?)
+    // performs an ongoing X509 check (is the user still in the whitelist? Has the public key been revoked? Is the cert in date?)
     // We could also remove the user in this function, but that would burn more gas.
-    function kycCheck(address user) external view returns (bool) {
+    function x509Check(address user) external view returns (bool) {
         if (
             !whitelisting ||
             (!revokedKeys[keysByUser[user]] &&

@@ -35,7 +35,7 @@ const intermediateCaCert = fs.readFileSync('test/unit/utils/Nightfall_Intermedia
 const endUserCert = fs.readFileSync('test/unit/utils/Nightfall_end_user.cer');
 const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user.der');
 
-describe('kyc tests', () => {
+describe('x509 tests', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
@@ -58,13 +58,13 @@ describe('kyc tests', () => {
     logger.debug(`User[0] has ethereum address ${nf3Users[0].ethereumAddress}`);
   });
 
-  describe('Deposits from a non-kyc-checked then kyc-checked account', () => {
-    it('deposits from a non-kyc-checked account should revert', async function () {
+  describe('Deposits from a non-x509-validated then x509-validated account', () => {
+    it('deposits from a non-x509-validated account should revert', async function () {
       logger.debug('Send failing deposit');
       let error;
       try {
         await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-        expect.fail('A deposit that does not pass the KYC check should fail but it did not');
+        expect.fail('A deposit that does not pass the X509 check should fail but it did not');
       } catch (err) {
         error = err;
       }
@@ -72,7 +72,7 @@ describe('kyc tests', () => {
         message.includes('Transaction has been reverted by the EVM'),
       );
     });
-    it('deposits to a kyc-checked account should work', async function () {
+    it('deposits to a x509-validated account should work', async function () {
       await nf3Users[0].validateCertificate(intermediateCaCert);
       await nf3Users[0].validateCertificate(
         endUserCert,
@@ -88,7 +88,7 @@ describe('kyc tests', () => {
     });
   });
 
-  describe('Withdrawals from a kyc-checked account should work', () => {
+  describe('Withdrawals from a x509-validated account should work', () => {
     let withdrawal;
     let nodeInfo;
     before(async function () {
@@ -112,7 +112,7 @@ describe('kyc tests', () => {
       await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
     });
 
-    it('Should do the kyc check and succeed', async function () {
+    it('Should do the x509 validation and succeed', async function () {
       if (!nodeInfo.includes('TestRPC')) this.skip();
       const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
       expectTransaction(res);

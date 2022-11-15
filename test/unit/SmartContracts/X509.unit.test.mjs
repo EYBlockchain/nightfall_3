@@ -31,7 +31,6 @@ describe('DerParser contract functions', function () {
     await X509Instance.initialize();
     await X509Instance.setTrustedPublicKey(nightfallRootPublicKey, authorityKeyIdentifier);
     await X509Instance.enableWhitelisting(true);
-    await X509Instance.createWhitelistManager(100, addressToSign);
     derBuffer = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     certChain[1] = {
@@ -99,8 +98,8 @@ describe('DerParser contract functions', function () {
     } catch (err) {
       expect(err.message.includes('VM Exception')).to.equal(true);
     }
-    // a kyc check should also fail
-    let result = await X509Instance.kycCheck(addressToSign);
+    // an x509 check should also fail
+    let result = await X509Instance.x509Check(addressToSign);
     expect(result).to.equal(false);
     // presenting the Intermediate CA cert should work because the smart contact trusts the root public key
     await X509Instance.validateCertificate(
@@ -116,8 +115,8 @@ describe('DerParser contract functions', function () {
       signature,
       true,
     );
-    // we should now be able to pass a KYC check for this address
-    result = await X509Instance.kycCheck(addressToSign);
+    // we should now be able to pass an x509 check for this address
+    result = await X509Instance.x509Check(addressToSign);
     expect(result).to.equal(true);
   });
 });

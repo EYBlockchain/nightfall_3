@@ -16,7 +16,7 @@ import './Utils.sol';
 import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
-import './KYCInterface.sol';
+import './X509Interface.sol';
 
 contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -24,10 +24,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
 
     address public challengesAddress;
-    KYCInterface kyc;
+    X509Interface x509;
 
-    function initializeState(address kycAddress) public initializer {
-        kyc = KYCInterface(kycAddress);
+    function initializeState(address x509Address) public initializer {
+        x509 = X509Interface(x509Address);
         initialize();
     }
 
@@ -45,7 +45,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
-        require(kyc.kycCheck(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
         if (t.transactionType == TransactionTypes.DEPOSIT) {
             txInfo[Utils.hashTransaction(t)].isEscrowed = true;
             require(uint256(t.fee) == msg.value);
@@ -217,7 +217,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
 
             state.addPendingWithdrawal(recipientAddress, uint256(advancedWithdrawal.advanceFee), 0);
         }
-        require(kyc.kycCheck(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
         payOut(t, recipientAddress);
     }
 

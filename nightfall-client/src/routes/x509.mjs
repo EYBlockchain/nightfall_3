@@ -1,9 +1,9 @@
 /**
- Routes to perform kyc work
+ Routes to validate x509 certificates
  */
 
 import express from 'express';
-import validateCertificate from '../services/kyc.mjs';
+import validateCertificate from '../services/x509.mjs';
 
 const router = express.Router();
 
@@ -14,6 +14,7 @@ const router = express.Router();
  */
 router.post('/validate', async (req, res, next) => {
   const { certificate, ethereumAddressSignature } = req.body;
+  if (!certificate) next(new Error('Certificate was null or undefined'));
   if (!certificate.type === 'Buffer') next(new Error('Certificate is not a buffer'));
   try {
     const txDataToSign = await validateCertificate(

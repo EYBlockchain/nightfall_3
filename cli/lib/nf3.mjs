@@ -134,7 +134,7 @@ class Nf3 {
         throw new Error('Unknown contract address server');
     }
     // once we know where to ask, we can get the contract addresses
-    this.kycContractAddress = await this.contractGetter('X509');
+    this.x509ContractAddress = await this.contractGetter('X509');
     this.shieldContractAddress = await this.contractGetter('Shield');
     this.proposersContractAddress = await this.contractGetter('Proposers');
     this.challengesContractAddress = await this.contractGetter('Challenges');
@@ -1438,12 +1438,12 @@ class Nf3 {
       );
     }
     // now validate the cert
-    const res = await axios.post(`${this.clientBaseUrl}/kyc/validate`, {
+    const res = await axios.post(`${this.clientBaseUrl}/x509/validate`, {
       certificate,
       ethereumAddressSignature,
     });
     const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign, this.kycContractAddress);
+    return this.submitTransaction(txDataToSign, this.x509ContractAddress);
   }
 }
 

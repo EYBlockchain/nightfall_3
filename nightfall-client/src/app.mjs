@@ -14,7 +14,7 @@ import {
   incomingViewingKey,
   setInstantWithdrawl,
   generateZkpKeys,
-  kyc,
+  x509,
 } from './routes/index.mjs';
 
 const app = express();
@@ -33,7 +33,7 @@ setupHttpDefaults(
     app.use('/incoming-viewing-key', incomingViewingKey);
     app.use('/set-instant-withdrawal', setInstantWithdrawl);
     app.use('/generate-zkp-keys', generateZkpKeys);
-    app.use('/kyc', kyc);
+    app.use('/x509', x509);
   },
   true,
   false,

@@ -80,10 +80,6 @@ module.exports = async function (deployer) {
     token => token.name === 'MATIC',
   ).address;
   await shield.setMaticAddress(maticAddress.toLowerCase());
-  // set initial whitelist managers
-  for (const whitelistManager of WHITELIST_MANAGERS) {
-    await x509.createWhitelistManager(whitelistManager.groupId, whitelistManager.address);
-  }
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING==='enable') await x509.enableWhitelisting(true);
   // set a trusted RSA root public key for KYC certificate checks
