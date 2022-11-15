@@ -15,7 +15,6 @@ contract Config is Ownable, Structures {
     uint96 minimumStake;
     uint96 blockStake;
     uint256 rotateProposerBlocks;
-    uint256 valuePerSlot; // amount of value of a slot
     uint256 proposerSetCount; // number of slots to pop after shuffling slots that will build the proposer set
     uint256 sprintsInSpan; // number of sprints of a span
     uint256 maxProposers; // maximum number of proposers for the PoS
@@ -30,7 +29,6 @@ contract Config is Ownable, Structures {
         minimumStake = 1000000 wei;
         blockStake = 1 wei;
         rotateProposerBlocks = 20;
-        valuePerSlot = minimumStake / 10;
         proposerSetCount = 5;
         sprintsInSpan = 5;
         maxProposers = 100;
@@ -110,20 +108,6 @@ contract Config is Ownable, Structures {
     function removeRestriction(address tokenAddr) external onlyOwner {
         delete erc20limit[tokenAddr][0];
         delete erc20limit[tokenAddr][1];
-    }
-
-    /**
-     * @dev Set value per slot in PoS
-     */
-    function setValuePerSlot(uint256 _valuePerSlot) external onlyOwner {
-        valuePerSlot = _valuePerSlot;
-    }
-
-    /**
-     * @dev Get value per slot in PoS
-     */
-    function getValuePerSlot() public view returns (uint256) {
-        return valuePerSlot;
     }
 
     /**

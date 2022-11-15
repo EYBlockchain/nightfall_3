@@ -99,6 +99,7 @@ export async function submitTransaction(_transaction, fromBlockProposer, txEnabl
     }
 
     await checkTransaction(transaction, true);
+
     logger.info('Transaction checks passed');
 
     // save it

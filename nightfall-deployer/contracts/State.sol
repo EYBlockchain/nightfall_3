@@ -591,7 +591,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
      * @dev Initialize a new span
      */
     function initializeSpan() internal {
-        fillSlots(); // 1) initialize slots based on the stake and valuePerSlot
+        fillSlots(); // 1) initialize slots based on the stake
         shuffleSlots(); // 2) shuffle the slots
         spanProposerSet(); // 3) pop the proposer set from shuffled slots
     }
@@ -608,29 +608,39 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         TimeLockedStake memory stake;
         uint256 weight;
 
+        uint256 slotValue; // we calculate the slotValue depending on the proposer stakes
+        uint256 maximumSlots = 10; // maximum slots we want for the biggest proposer stake
+        while (p.nextAddress != currentProposer.thisAddress) {
+            stake = getStakeAccount(p.thisAddress);
+            if (slotValue < stake.amount / maximumSlots) {
+                slotValue = stake.amount / maximumSlots;
+            }
+            p = proposers[p.nextAddress];
+        }
+        stake = getStakeAccount(p.thisAddress);
+        if (slotValue < stake.amount / maximumSlots) {
+            slotValue = stake.amount / maximumSlots;
+        }
+
+        p = currentProposer;
+
         // 1) remove all slots
         delete slots;
         // 2) assign slots based on the stake of the proposers
-        if (numProposers == 1) {
+        while (p.nextAddress != currentProposer.thisAddress) {
             stake = getStakeAccount(p.thisAddress);
-            weight = stake.amount / valuePerSlot;
+            weight = stake.amount / slotValue;
+            if (weight == 0) weight = 1;
             for (uint256 i = 0; i < weight; i++) {
                 slots.push(p.thisAddress);
             }
-        } else {
-            while (p.nextAddress != currentProposer.thisAddress) {
-                stake = getStakeAccount(p.thisAddress);
-                weight = stake.amount / valuePerSlot;
-                for (uint256 i = 0; i < weight; i++) {
-                    slots.push(p.thisAddress);
-                }
-                p = proposers[p.nextAddress];
-            }
-            stake = getStakeAccount(p.thisAddress);
-            weight = stake.amount / valuePerSlot;
-            for (uint256 i = 0; i < weight; i++) {
-                slots.push(p.thisAddress);
-            }
+            p = proposers[p.nextAddress];
+        }
+        stake = getStakeAccount(p.thisAddress);
+        weight = stake.amount / slotValue;
+        if (weight == 0) weight = 1;
+        for (uint256 i = 0; i < weight; i++) {
+            slots.push(p.thisAddress);
         }
     }
 

@@ -77,7 +77,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -135,7 +134,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -193,7 +191,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -251,7 +248,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -309,7 +305,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -368,7 +363,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -425,7 +419,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -483,7 +476,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -595,7 +587,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -658,7 +649,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers with ganache
@@ -720,7 +710,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers with ganache

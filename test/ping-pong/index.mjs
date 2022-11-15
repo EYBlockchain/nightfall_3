@@ -185,29 +185,6 @@ const setMinimumStake = async amount => {
 };
 
 /**
-Set the value per slot parameter for the proposers
-*/
-const setValuePerSlot = async amount => {
-  const transactions = await nfMultiSig.setValuePerSlot(
-    amount,
-    signingKeys.user1,
-    addresses.user1,
-    await multisigContract.methods.nonce().call(),
-    [],
-  );
-  const approved = await nfMultiSig.setValuePerSlot(
-    amount,
-    signingKeys.user2,
-    addresses.user1,
-    await multisigContract.methods.nonce().call(),
-    transactions,
-  );
-  await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-  const valuePerSlot = await shieldContract.methods.getValuePerSlot().call();
-  console.log('VALUE PER SLOT SET: ', valuePerSlot);
-};
-
-/**
 Set parameters config for the test
 */
 export async function setParametersConfig() {
@@ -236,7 +213,6 @@ export async function setParametersConfig() {
 
   await setBlockStake(amountBlockStake);
   await setMinimumStake(amountMinimumStake);
-  await setValuePerSlot(amountMinimumStake / 10);
 }
 
 /**
