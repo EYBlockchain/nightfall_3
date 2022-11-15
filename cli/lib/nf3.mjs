@@ -1,3 +1,5 @@
+/* eslint class-methods-use-this: "off" */
+
 import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
@@ -994,6 +996,17 @@ class Nf3 {
     });
   }
 
+  createEmitter() {
+    const emitter = new EventEmitter();
+
+    /*
+      Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
+     */
+    emitter.on('error', error => logger.error({ msg: 'Error caught by emitter', error }));
+
+    return emitter;
+  }
+
   /**
     Get block stake
     @method
@@ -1021,12 +1034,16 @@ class Nf3 {
     @async
     */
   async startProposer() {
-    const proposeEmitter = new EventEmitter();
+    const proposeEmitter = this.createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
+
     this.websockets.push(connection); // save so we can close it properly later
-    // we can't setup up a ping until the connection is made because the ping function
-    // only exists in the underlying 'ws' object (_ws) and that is undefined until the
-    // websocket is opened, it seems. Hence, we put all this code inside the onopen.
+
+    /*
+      we can't setup up a ping until the connection is made because the ping function
+      only exists in the underlying 'ws' object (_ws) and that is undefined until the
+      websocket is opened, it seems. Hence, we put all this code inside the onopen.
+     */
     connection.onopen = () => {
       // setup a ping every 15s
       this.intervalIDs.push(
@@ -1036,6 +1053,7 @@ class Nf3 {
       );
       // and a listener for the pong
       logger.debug('Proposer websocket connection opened');
+
       connection.send('blocks');
     };
 
@@ -1071,15 +1089,16 @@ class Nf3 {
             proposeEmitter.emit('error', err, block, transactions);
           }
         });
+      } else if (type === 'rollback') {
+        proposeEmitter.emit('rollback', data);
       }
-
-      if (type === 'rollback') proposeEmitter.emit('rollback', data);
 
       return null;
     };
 
     connection.onerror = () => logger.error('Proposer websocket connection error');
     connection.onclosed = () => logger.warn('Proposer websocket connection closed');
+
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return proposeEmitter;
   }
