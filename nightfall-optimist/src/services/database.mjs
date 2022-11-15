@@ -343,6 +343,7 @@ export async function saveTransaction(_transaction) {
     return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
   }
 
+  // checkAlreadyInBlock called before may set mempool to false, so we should update
   if (!transaction.mempool) {
     db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
   }

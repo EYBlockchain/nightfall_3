@@ -125,6 +125,7 @@ async function blockProposedEventHandler(data) {
     // will get saved and eventually all these blocks will be removed as part of the rollback
     // of the first bad block
     if (queues[2].length === 0) await checkBlock(block, transactions);
+    logger.info('Block Checker - Block was valid');
   } catch (err) {
     if (err instanceof BlockError) {
       logger.warn(`Block Checker - Block invalid, with code ${err.code}! ${err.message}`);

@@ -108,7 +108,7 @@ export async function userTest(IS_TEST_RUNNER) {
       console.warn('Error deposit', err);
     }
     console.log('Sleep 20 seconds to empty mempool');
-    await new Promise(resolve => setTimeout(resolve, 20000)); // this may need to be longer on a real blockchain
+    await new Promise(resolve => setTimeout(resolve, 20000));
   }
 
   // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use

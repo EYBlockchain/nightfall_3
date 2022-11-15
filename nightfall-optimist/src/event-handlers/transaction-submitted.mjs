@@ -23,9 +23,7 @@ let isWorkerEnable = true;
 export function setWorkerEnable(flag) {
   isWorkerEnable = flag;
 }
-export function getWorkerEnable() {
-  return isWorkerEnable;
-}
+
 /**
  * It's possible this is a replay or a re-mine of a transaction that's already
  * in a block. Check for this.  This is not part of the general transaction

@@ -1095,9 +1095,9 @@ class Nf3 {
             proposeEmitter.emit('error', err, block, transactions);
           }
         });
+      } else if (type === 'rollback') {
+        proposeEmitter.emit('rollback', data);
       }
-
-      if (type === 'rollback') proposeEmitter.emit('rollback', data);
 
       return null;
     };
@@ -1168,8 +1168,7 @@ class Nf3 {
           }
         });
         logger.debug(`queued ${type} ${txDataToSign}`);
-      }
-      if (type === 'rollback') {
+      } else if (type === 'rollback') {
         challengeEmitter.emit('rollback', 'rollback complete');
       }
       return null;
