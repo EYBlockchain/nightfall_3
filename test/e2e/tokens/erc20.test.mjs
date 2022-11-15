@@ -101,7 +101,7 @@ describe('ERC20 tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
-  beforeEach(async (globalEnv) => {
+  beforeEach(async globalEnv => {
     console.log('----globalEnv----', globalEnv);
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
     await emptyL2();
@@ -492,7 +492,7 @@ describe('ERC20 tests', () => {
     });
   });
 
-  it('test should encounter zero rollbacks', function() {
+  it('test should encounter zero rollbacks', function () {
     expect(rollbackCount).to.be.equal(0);
   });
 
