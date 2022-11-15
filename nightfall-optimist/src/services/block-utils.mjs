@@ -8,7 +8,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 // of the block object isn't.  They can thus be called directly when instantiating the Block class
 // would be problematic because of its reliance on the Optimist database.
 
-const { SIGNATURES } = config;
+const { SIGNATURES, TIMBER_HEIGHT } = config;
 const { ZERO } = constants;
 const { generalise } = gen;
 
@@ -71,9 +71,12 @@ export function buildBlockSolidityStruct(block) {
 }
 
 export function calculateFrontierHash(frontier) {
-  const frontierPadded = frontier.concat(Array(33 - frontier.length).fill(ZERO));
+  const frontierPadded = frontier.concat(Array(TIMBER_HEIGHT + 1 - frontier.length).fill(ZERO));
   const web3 = new Web3();
-  const encodedTransaction = web3.eth.abi.encodeParameter('bytes32[33]', frontierPadded);
+  const encodedTransaction = web3.eth.abi.encodeParameter(
+    `bytes32[${TIMBER_HEIGHT + 1}]`,
+    frontierPadded,
+  );
   return web3.utils.soliditySha3({
     t: 'bytes',
     v: encodedTransaction,

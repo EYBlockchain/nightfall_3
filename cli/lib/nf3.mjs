@@ -1212,6 +1212,7 @@ class Nf3 {
       // if we're about to challenge, check it's actually our challenge, so as not to waste gas
       if (type === 'challenge' && sender !== this.ethereumAddress) return null;
       if (type === 'commit' || type === 'challenge') {
+        const txSelector = txDataToSign.slice(0, 10);
         challengerQueue.push(async () => {
           try {
             const receipt = await this.submitTransaction(
@@ -1219,9 +1220,9 @@ class Nf3 {
               this.challengesContractAddress,
               0,
             );
-            challengeEmitter.emit('receipt', receipt, type);
+            challengeEmitter.emit('receipt', receipt, type, txSelector);
           } catch (err) {
-            challengeEmitter.emit('error', err, type);
+            challengeEmitter.emit('error', err, type, txSelector);
           }
         });
         logger.debug(`queued ${type} ${txDataToSign}`);

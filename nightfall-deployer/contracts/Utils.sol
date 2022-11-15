@@ -6,7 +6,6 @@ import './Structures.sol';
 
 library Utils {
     bytes32 public constant ZERO = bytes32(0);
-    uint256 constant TRANSACTIONS_BATCH_SIZE = 6; // TODO Change this from 2 to an appropriate value to control stack too deep error
 
     function hashTransaction(Structures.Transaction calldata t) internal pure returns (bytes32) {
         return keccak256(abi.encode(t));

@@ -15,10 +15,10 @@ if (type === 'submit-transaction') {
       ercAddress,
       this.ethereumAddress,
       this.shieldContractAddress,
-      (transactions[0].tokenType === '0' && 'ERC20') ||
-        (transactions[0].tokenType === '1' && 'ERC721') ||
-        (transactions[0].tokenType === '2' && 'ERC1155'),
-      transactions[0].value,
+      (Number(transactions[0].tokenType) === 0 && 'ERC20') ||
+        (Number(transactions[0].tokenType) === 1 && 'ERC721') ||
+        (Number(transactions[0].tokenType) === 2 && 'ERC1155'),
+      Number(transactions[0].value),
       this.web3,
       !!this.ethereumSigningKey,
     );
