@@ -30,8 +30,49 @@ const amountMinimumStake = 100;
 let nfMultiSig;
 let multisigContract;
 let shieldContract;
+let stateContract;
 
 const TEST_LENGTH = 4;
+
+export const getCurrentProposer = async () => {
+  const currentProposer = await stateContract.methods.getCurrentProposer().call();
+  return currentProposer;
+};
+
+const getCurrentSprint = async () => {
+  const currentSprint = await stateContract.methods.currentSprint().call();
+  return currentSprint;
+};
+
+export const getStakeAccount = async proposer => {
+  const stakeAccount = await stateContract.methods.getStakeAccount(proposer).call();
+  return stakeAccount;
+};
+
+const makeBlockAndWaitForEmptyMempool = async optimistUrls => {
+  const currentProposer = await getCurrentProposer();
+  console.log('CURRENT PROPOSER', currentProposer);
+  const url = optimistUrls.find(
+    // eslint-disable-next-line no-loop-func
+    o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
+  ).optimistUrl;
+
+  if (url) {
+    let res = await axios.get(`${url}/proposer/mempool`);
+    while (res.data.result.length > 0) {
+      console.log(` *** ${res.data.result.length} transactions in the mempool`);
+      if (res.data.result.length > 0) {
+        console.log('     Make block...');
+        await axios.get(`${url}/block/make-now`);
+        console.log('     Waiting for block to be created');
+        await new Promise(resolve => setTimeout(resolve, 20000));
+        res = await axios.get(`${url}/proposer/mempool`);
+      }
+    }
+  } else {
+    console.log('This current proposer does not have optimist url defined in the compose yml file');
+  }
+};
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -52,17 +93,12 @@ export async function userTest(IS_TEST_RUNNER, optimistUrls) {
 
   const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress('ERC20Mock'));
 
-  const stateContract = await nf3.getContractInstance('State');
+  stateContract = await nf3.getContractInstance('State');
   const stateAddress = stateContract.options.address;
   web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
   const startBalance = await retrieveL2Balance(nf3, ercAddress);
   console.log('start balance', startBalance);
-
-  const getCurrentProposer = async () => {
-    const currentProposer = await stateContract.methods.getCurrentProposer().call();
-    return currentProposer;
-  };
 
   let currentProposer = await getCurrentProposer();
 
@@ -72,7 +108,7 @@ export async function userTest(IS_TEST_RUNNER, optimistUrls) {
     currentProposer = await getCurrentProposer();
   }
 
-  const offchainTx = !!IS_TEST_RUNNER;
+  let offchainTx = !!IS_TEST_RUNNER;
   // Create a block of deposits
   try {
     await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
@@ -81,24 +117,7 @@ export async function userTest(IS_TEST_RUNNER, optimistUrls) {
     logger.warn(`Error in deposit ${err}`);
   }
 
-  currentProposer = await getCurrentProposer();
-  console.log('CURRENT PROPOSER', currentProposer);
-  let url = optimistUrls.find(
-    // eslint-disable-next-line no-loop-func
-    o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-  ).optimistUrl;
-
-  let res = await axios.get(`${url}/proposer/mempool`);
-  while (res.data.result.length > 0) {
-    console.log(` *** ${res.data.result.length} transactions in the mempool`);
-    if (res.data.result.length > 0) {
-      console.log('     Make block...');
-      await axios.get(`${url}/block/make-now`);
-      console.log('     Waiting for block to be created');
-      await new Promise(resolve => setTimeout(resolve, 20000));
-      res = await axios.get(`${url}/proposer/mempool`);
-    }
-  }
+  await makeBlockAndWaitForEmptyMempool(optimistUrls);
 
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
@@ -134,26 +153,15 @@ export async function userTest(IS_TEST_RUNNER, optimistUrls) {
         );
       }
     }
+    offchainTx = !offchainTx;
 
-    await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
-
-    currentProposer = await getCurrentProposer();
-    url = optimistUrls.find(
-      // eslint-disable-next-line no-loop-func
-      o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-    ).optimistUrl;
-
-    res = await axios.get(`${url}/proposer/mempool`);
-    while (res.data.result.length > 0) {
-      console.log(` *** ${res.data.result.length} transactions in the mempool`);
-      if (res.data.result.length > 0) {
-        console.log('     Make block...');
-        await axios.get(`${url}/block/make-now`);
-        console.log('     Waiting for block to be created');
-        await new Promise(resolve => setTimeout(resolve, 20000));
-        res = await axios.get(`${url}/proposer/mempool`);
-      }
+    try {
+      await nf3.deposit(ercAddress, tokenType, value, tokenId);
+    } catch (err) {
+      console.warn('Error deposit', err);
     }
+
+    await makeBlockAndWaitForEmptyMempool(optimistUrls);
 
     await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     console.log(`Completed ${i + 1} pings`);
@@ -241,11 +249,8 @@ const setMinimumStake = async amount => {
 /**
 Set parameters config for the test
 */
-export async function setParametersConfig() {
-  const nf3User = new Nf3(signingKeys.liquidityProvider, environment);
-  await nf3User.init(mnemonics.liquidityProvider);
-
-  const stateContract = await nf3User.getContractInstance('State');
+export async function setParametersConfig(nf3User) {
+  stateContract = await nf3User.getContractInstance('State');
   const proposersContract = await nf3User.getContractInstance('Proposers');
   const challengesContract = await nf3User.getContractInstance('Challenges');
   shieldContract = await nf3User.getContractInstance('Shield');
@@ -276,23 +281,7 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
   console.log('OPTIMISTURLS', optimistUrls);
 
   try {
-    const stateContract = await nf3Proposer.getContractInstance('State');
     const stateAddress = stateContract.options.address;
-
-    const getCurrentProposer = async () => {
-      const currentProposer = await stateContract.methods.getCurrentProposer().call();
-      return currentProposer;
-    };
-
-    const getCurrentSprint = async () => {
-      const currentSprint = await stateContract.methods.currentSprint().call();
-      return currentSprint;
-    };
-
-    const getStakeAccount = async proposer => {
-      const stakeAccount = await stateContract.methods.getStakeAccount(proposer).call();
-      return stakeAccount;
-    };
 
     const proposersBlocks = [];
     // eslint-disable-next-line no-param-reassign
@@ -335,11 +324,6 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
       }
     });
 
-    while (currentProposer.thisAddress === '0x0000000000000000000000000000000000000000') {
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      currentProposer = await getCurrentProposer();
-    }
-
     let previousSprint = await getCurrentSprint();
 
     // eslint-disable-next-line no-constant-condition
@@ -369,28 +353,8 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
           currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
         }
 
-        const url = optimistUrls.find(
-          // eslint-disable-next-line no-loop-func
-          o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-        )?.optimistUrl;
+        await makeBlockAndWaitForEmptyMempool(optimistUrls);
 
-        if (url) {
-          let res = await axios.get(`${url}/proposer/mempool`);
-          while (res.data.result.length > 0) {
-            console.log(` *** ${res.data.result.length} transactions in the mempool`);
-            if (res.data.result.length > 0) {
-              console.log('     Make block...');
-              await axios.get(`${url}/block/make-now`);
-              console.log('     Waiting for block to be created');
-              await new Promise(resolve => setTimeout(resolve, 20000));
-              res = await axios.get(`${url}/proposer/mempool`);
-            }
-          }
-        } else {
-          console.log(
-            'This current proposer does not have optimist url defined in the compose yml file',
-          );
-        }
         console.log('     Change current proposer...');
         await nf3Proposer.changeCurrentProposer();
       } catch (err) {
