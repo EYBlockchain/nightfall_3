@@ -14,7 +14,7 @@ const X509 = artifacts.require('X509.sol');
 
 const config = require('config');
 
-const { RESTRICTIONS, MULTISIG, WHITELIST_MANAGERS, RSA_TRUST_ROOTS } = config;
+const { RESTRICTIONS, MULTISIG, RSA_TRUST_ROOTS } = config;
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
@@ -82,7 +82,7 @@ module.exports = async function (deployer) {
   await shield.setMaticAddress(maticAddress.toLowerCase());
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING==='enable') await x509.enableWhitelisting(true);
-  // set a trusted RSA root public key for KYC certificate checks
+  // set a trusted RSA root public key for X509 certificate checks
   console.log('setting trusted public key');
   for (publicKey of RSA_TRUST_ROOTS) {
     const { modulus, exponent, authorityKeyIdentifier } = publicKey;
