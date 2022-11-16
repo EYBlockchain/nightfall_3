@@ -934,11 +934,7 @@ class Nf3 {
     @returns {array} A promise that resolves to the Ethereum transaction receipt.
     */
   async getProposerPendingPayments() {
-    const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
-      params: {
-        proposerAddress: this.ethereumAddress,
-      },
-    });
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`);
     return res.data.pendingPayments;
   }
 
@@ -949,11 +945,7 @@ class Nf3 {
     @returns {array} A promise that resolves to the Ethereum transaction receipt.
     */
   async getProposerStake() {
-    const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`, {
-      params: {
-        proposerAddress: this.ethereumAddress,
-      },
-    });
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`);
     return res.data;
   }
 

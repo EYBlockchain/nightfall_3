@@ -205,7 +205,7 @@ router.post('/de-register', auth, async (req, res, next) => {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
 
-    // Remove proposer
+    // Remove the proposer by updating the blockchain state
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
     const tx = {
       from: ethAddress,
@@ -261,13 +261,11 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
  * Function to get pending blocks payments for a proposer.
  */
 router.get('/pending-payments', auth, async (req, res, next) => {
-  const { proposerAddress } = req.query;
-  logger.debug(`requested pending payments for proposer ${proposer}`);
-
+  const ethAddress = req.app.get('ethAddress');
   const pendingPayments = [];
-  // get blocks by proposer
+
   try {
-    const blocks = await findBlocksByProposer(proposerAddress);
+    const blocks = await findBlocksByProposer(ethAddress);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
     for (let i = 0; i < blocks.length; i++) {
@@ -300,15 +298,12 @@ router.get('/pending-payments', auth, async (req, res, next) => {
 /**
  * Function to get stake for a proposer.
  */
-router.get('/stake', async (req, res, next) => {
-  const { proposerAddress } = req.query;
-  logger.debug(`requested stake for proposer ${proposerAddress}`);
+router.get('/stake', auth, async (req, res, next) => {
+  const ethAddress = req.app.get('ethAddress');
 
   try {
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const stakeAccount = await stateContractInstance.methods
-      .getStakeAccount(proposerAddress)
-      .call();
+    const stakeAccount = await stateContractInstance.methods.getStakeAccount(ethAddress).call();
 
     res.json({
       amount: Number(stakeAccount[0]),
