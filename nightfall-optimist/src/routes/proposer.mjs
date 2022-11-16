@@ -174,24 +174,15 @@ router.post('/update', auth, async (req, res, next) => {
  * @openapi
  *  /proposer/current-proposer:
  *    get:
- *      security:
- *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Current Proposer.
  *      description: Returns the current proposer.
- *      parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
  *      responses:
  *        200:
  *          $ref: '#/components/responses/SuccessCurrentProposer'
- *        401:
- *          $ref: '#/components/responses/Unauthorized'
+ *        400:
+ *          $ref: '#/components/responses/BadRequest'
  *        500:
  *          $ref: '#/components/responses/InternalServerError'
  */
@@ -212,24 +203,15 @@ router.get('/current-proposer', async (req, res, next) => {
  * @openapi
  *  /proposer/proposers:
  *    get:
- *      security:
- *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Proposers List.
  *      description: Returns the current proposer.
- *      parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
  *      responses:
  *        200:
  *          $ref: '#/components/responses/SuccessProposerList'
- *        401:
- *          $ref: '#/components/responses/Unauthorized'
+ *        400:
+ *          $ref: '#/components/responses/BadRequest'
  *        500:
  *          $ref: '#/components/responses/InternalServerError'
  */
@@ -401,10 +383,12 @@ router.get('/pending-payments', auth, async (req, res, next) => {
  *          $ref: '#/components/responses/SuccessCurrentStake'
  *        401:
  *          $ref: '#/components/responses/Unauthorized'
+ *        400:
+ *          $ref: '#/components/responses/BadRequest'
  *        500:
  *          $ref: '#/components/responses/InternalServerError'
  */
-router.get('/stake', async (req, res, next) => {
+router.get('/stake', auth, async (req, res, next) => {
   const { proposerAddress } = req.query;
 
   logger.debug(`requested stake for proposer ${proposerAddress}`);
@@ -550,9 +534,9 @@ router.get('/change', auth, async (req, res, next) => {
  *     description: Get the transactions of the mempool that the proposer is connected to.
  *     responses:
  *       200:
- *         $ref: '#/components/responses/SuccessChangeProposer'
- *       401:
- *          $ref: '#/components/responses/Unauthorized'
+ *         $ref: '#/components/responses/Success'
+ *       400:
+ *          $ref: '#/components/responses/BadRequest'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
@@ -584,7 +568,7 @@ router.get('/mempool', async (req, res, next) => {
  *          required: true
  *     responses:
  *       200:
- *         $ref: '#/components/responses/SuccessChangeProposer'
+ *         $ref: '#/components/responses/Success'
  *       401:
  *          $ref: '#/components/responses/Unauthorized'
  *       500:
@@ -666,9 +650,9 @@ router.post('/encode', auth, async (req, res, next) => {
  *     description: Offchain transaction executed by a client.
  *     responses:
  *       200:
- *         $ref: '#/components/responses/SuccessChangeProposer'
- *       401:
- *          $ref: '#/components/responses/Unauthorized'
+ *         $ref: '#/components/responses/Success'
+ *       400:
+ *          $ref: '#/components/responses/BadRequest'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */

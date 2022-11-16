@@ -8,6 +8,30 @@ import { getContractAddress } from '@polygon-nightfall/common-files/utils/contra
 
 const router = express.Router();
 
+/**
+ * @openapi
+ *  /contract-address/{contract}:
+ *    get:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Contract Address
+ *      summary: Get the contract address.
+ *      description: Route that will return the contract address based on the contract name.
+ *      parameters:
+ *        - in: path
+ *          name: contract
+ *          schema:
+ *            type: string
+ *          required: true
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessGetContractAddress'
+ *        404:
+ *          $ref: '#/components/responses/NotFound'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
+ */
 router.get('/:contract', async (req, res, next) => {
   const { contract } = req.params;
   try {

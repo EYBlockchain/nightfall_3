@@ -47,6 +47,43 @@ const options = {
             },
           },
         },
+        ChallengerEnable: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  enable: {
+                    type: 'boolean',
+                    description: 'Option to enable a challenger.',
+                    example: 'true',
+                  },
+                },
+              },
+            },
+          },
+        },
+        AdvanceWithdrawal: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/TransactionHash',
+              },
+            },
+          },
+        },
+        CheckBlock: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/BlockToBeChecked',
+              },
+            },
+          },
+        },
       },
 
       schemas: {
@@ -105,9 +142,11 @@ const options = {
           properties: {
             block: {
               type: 'object',
+              example: {},
             },
             transactions: {
               type: 'array',
+              example: [],
             },
           },
         },
@@ -241,6 +280,44 @@ const options = {
             txDataToSign: '0x0d6022010000000000000',
           },
         },
+        TransactionHash: {
+          type: 'object',
+          properties: {
+            transactionHash: {
+              type: 'string',
+              description: 'The transaction hash',
+            },
+          },
+          example: {
+            transactionHash: '0xb4c1cd9410b6cc87a0e2fe110ece6bf527fa4f170a4bc8cd032f768fc5219838',
+          },
+        },
+        ABIMock: {
+          type: 'object',
+          properties: {
+            abi: {
+              type: 'array',
+              items: {
+                type: 'object',
+              },
+            },
+          },
+          example: {
+            abi: {},
+          },
+        },
+        ContractAddress: {
+          type: 'object',
+          properties: {
+            address: {
+              type: 'string',
+              description: 'The contract address.',
+            },
+          },
+          example: {
+            address: '0x864D734aA772516CDbD012366E72ba697273EB53',
+          },
+        },
         Stake: {
           type: 'object',
           properties: {
@@ -258,6 +335,36 @@ const options = {
               type: 'string',
               description: 'The time interval until the stake can be claimed.',
               example: 10,
+            },
+          },
+        },
+        DebugCounter: {
+          type: 'object',
+          properties: {
+            counters: {
+              type: 'object',
+              properties: {
+                nBlockInvalid: {
+                  type: 'number',
+                  description: 'nBlockInvalid',
+                  example: 1,
+                },
+                proposerWsClosed: {
+                  type: 'number',
+                  description: 'proposerWsClosed',
+                  example: 1,
+                },
+                proposerWsFailed: {
+                  type: 'number',
+                  description: 'proposerWsFailed',
+                  example: 1,
+                },
+                proposerBlockNotSent: {
+                  type: 'number',
+                  description: 'proposerBlockNotSent',
+                  example: 1,
+                },
+              },
             },
           },
         },
@@ -413,11 +520,31 @@ const options = {
             },
           },
         },
+        BadRequest: {
+          description: 'Bad request',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/RequestBody',
+              },
+            },
+          },
+        },
         SuccessBlockChecked: {
           description: 'Block without inconsistency.',
         },
         SuccessBlockCreated: {
           description: 'Making short block.',
+        },
+        SuccessAdvanceWithdrawal: {
+          description: 'Sucessful advance withdrawal.',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/TxDataToSign',
+              },
+            },
+          },
         },
         Success: {
           description: 'OK. Successful request.',
@@ -425,6 +552,36 @@ const options = {
             'application/json': {
               schema: {
                 $ref: '#/components/schemas/RequestBody',
+              },
+            },
+          },
+        },
+        SuccessDebugContract: {
+          description: 'The numbers for debug counters returned.',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/DebugCounter',
+              },
+            },
+          },
+        },
+        SuccessGetContractAbi: {
+          description: 'Contract ABI returned.',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/ABIMock',
+              },
+            },
+          },
+        },
+        SuccessGetContractAddress: {
+          description: 'Contract address returned.',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/ContractAddress',
               },
             },
           },

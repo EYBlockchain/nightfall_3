@@ -15,8 +15,8 @@ const router = express.Router();
  *        - ApiKeyAuth: []
  *      tags:
  *      - Block
- *      summary: Current proposer.
- *      description: Returns the current proposer.
+ *      summary: Check Block.
+ *      description: Check a specific block.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -25,10 +25,7 @@ const router = express.Router();
  *            format: uuid
  *          required: true
  *      requestBody:
- *        content:
- *          application/json:
- *            schema:
- *              $ref: '#/components/schemas/BlockToBeChecked'
+ *        $ref: '#/components/requestBodies/CheckBlock'
  *      responses:
  *        200:
  *          $ref: '#/components/responses/SuccessBlockChecked'
