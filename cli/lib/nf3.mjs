@@ -1060,43 +1060,45 @@ class Nf3 {
     };
 
     connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign, block, transactions, data } = msg;
+      if (connection._ws && connection._ws.readyState === WebSocket.OPEN) {
+        const msg = JSON.parse(message.data);
+        const { type, txDataToSign, block, transactions, data } = msg;
 
-      logger.debug(`Proposer received websocket message of type ${type}`);
+        logger.debug(`Proposer received websocket message of type ${type}`);
 
-      if (type === 'block') {
-        // First sign transaction, and send it within asynchronous queue. This will
-        // ensure that blockProposed events are emitted in order and with the correct nonce.
-        const tx = await this._signTransaction(
-          txDataToSign,
-          this.stateContractAddress,
-          await this.getBlockStake(), // the block stake could have changed, so we get it from the blockchain
-        );
-        proposerQueue.push(async () => {
-          try {
-            const receipt = await this._sendTransaction(tx);
-            proposeEmitter.emit('receipt', receipt, block, transactions);
-          } catch (err) {
-            logger.error({
-              msg: 'Error while trying to submit a block',
-              err,
-            });
-
-            // block proposed is reverted. Send transactions back to mempool
+        if (type === 'block') {
+          // First sign transaction, and send it within asynchronous queue. This will
+          // ensure that blockProposed events are emitted in order and with the correct nonce.
+          const tx = await this._signTransaction(
+            txDataToSign,
+            this.stateContractAddress,
+            await this.getBlockStake(), // the block stake could have changed, so we get it from the blockchain
+          );
+          proposerQueue.push(async () => {
             try {
-              await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
-            } catch (errorResetLocalBlock) {
+              const receipt = await this._sendTransaction(tx);
+              proposeEmitter.emit('receipt', receipt, block, transactions);
+            } catch (err) {
               logger.error({
-                msg: 'Error while trying to reset local block',
-                errorResetLocalBlock,
+                msg: 'Error while trying to submit a block',
+                err,
               });
+
+              // block proposed is reverted. Send transactions back to mempool
+              try {
+                await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+              } catch (errorResetLocalBlock) {
+                logger.error({
+                  msg: 'Error while trying to reset local block',
+                  errorResetLocalBlock,
+                });
+              }
+              proposeEmitter.emit('error', err, block, transactions);
             }
-            proposeEmitter.emit('error', err, block, transactions);
-          }
-        });
-      } else if (type === 'rollback') {
-        proposeEmitter.emit('rollback', data);
+          });
+        } else if (type === 'rollback') {
+          proposeEmitter.emit('rollback', data);
+        }
       }
 
       return null;
@@ -1149,27 +1151,29 @@ class Nf3 {
       connection.send('challenge');
     };
     connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign, sender } = msg;
-      logger.debug(`Challenger received websocket message of type ${type}`);
-      // if we're about to challenge, check it's actually our challenge, so as not to waste gas
-      if (type === 'challenge' && sender !== this.ethereumAddress) return null;
-      if (type === 'commit' || type === 'challenge') {
-        challengerQueue.push(async () => {
-          try {
-            const receipt = await this.submitTransaction(
-              txDataToSign,
-              this.challengesContractAddress,
-              0,
-            );
-            challengeEmitter.emit('receipt', receipt, type);
-          } catch (err) {
-            challengeEmitter.emit('error', err, type);
-          }
-        });
-        logger.debug(`queued ${type} ${txDataToSign}`);
-      } else if (type === 'rollback') {
-        challengeEmitter.emit('rollback', 'rollback complete');
+      if (connection._ws && connection._ws.readyState === WebSocket.OPEN) {
+        const msg = JSON.parse(message.data);
+        const { type, txDataToSign, sender } = msg;
+        logger.debug(`Challenger received websocket message of type ${type}`);
+        // if we're about to challenge, check it's actually our challenge, so as not to waste gas
+        if (type === 'challenge' && sender !== this.ethereumAddress) return null;
+        if (type === 'commit' || type === 'challenge') {
+          challengerQueue.push(async () => {
+            try {
+              const receipt = await this.submitTransaction(
+                txDataToSign,
+                this.challengesContractAddress,
+                0,
+              );
+              challengeEmitter.emit('receipt', receipt, type);
+            } catch (err) {
+              challengeEmitter.emit('error', err, type);
+            }
+          });
+          logger.debug(`queued ${type} ${txDataToSign}`);
+        } else if (type === 'rollback') {
+          challengeEmitter.emit('rollback', 'rollback complete');
+        }
       }
       return null;
     };

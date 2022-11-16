@@ -3,7 +3,6 @@
  */
 import config from 'config';
 import axios from 'axios';
-
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   saveTransaction,
@@ -63,11 +62,11 @@ async function checkAlreadyInBlock(_transaction) {
  *
  * @param {Object} _transaction Transaction data
  * @param {boolean} fromBlockProposer Flag indicating whether this transaction comes from
- * block proposer (for those transactions that werent picked by current proposer).
+ * @param {string} pid Worker process ID
  */
-export async function submitTransaction(_transaction, fromBlockProposer) {
+export async function submitTransaction(_transaction, fromBlockProposer, pid = 0) {
   logger.info({
-    msg: 'Transaction Handler - New transaction received.',
+    msg: `Transaction Handler[${pid}] - New transaction received.`,
     _transaction,
     fromBlockProposer,
   });

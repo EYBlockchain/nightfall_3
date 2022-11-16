@@ -42,7 +42,7 @@ module.exports = {
   ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
   TX_WORKER_PARAMS: {
     txWorkerCount: process.env.TX_WORKER_COUNT || 100,
-    txWorkerUrl: process.env.TX_WORKER_URL || 'http://locqlhost:3000',
+    txWorkerUrl: process.env.TX_WORKER_URL || 'http://localhost:3000',
   },
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task

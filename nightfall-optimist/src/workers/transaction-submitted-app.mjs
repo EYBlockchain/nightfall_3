@@ -40,7 +40,7 @@ async function initWorkers() {
     app.post('/tx-submitted', async (req, res) => {
       const { tx, proposerFlag } = req.body;
       try {
-        submitTransaction(tx, proposerFlag);
+        submitTransaction(tx, proposerFlag, process.pid);
         res.sendStatus(200);
       } catch (err) {
         res.sendStatus(500);
