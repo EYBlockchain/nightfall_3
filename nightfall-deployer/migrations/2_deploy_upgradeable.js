@@ -11,15 +11,11 @@ const Challenges = artifacts.require('Challenges.sol');
 const State = artifacts.require('State.sol');
 const SimpleMultiSig = artifacts.require('SimpleMultiSig.sol');
 const X509 = artifacts.require('X509.sol');
-
-const config = require('config');
-
-const KYC = artifacts.require('KYC.sol');
 const SanctionsListMock = artifacts.require('SanctionsListMock.sol');
 
 const config = require('config');
 
-const { RESTRICTIONS, MULTISIG, SANCTIONS_CONTRACT, TEST_OPTIONS:{ addresses: { sanctionedUser} } } = config;
+const { RESTRICTIONS, MULTISIG, RSA_TRUST_ROOTS, SANCTIONS_CONTRACT, TEST_OPTIONS:{ addresses: { sanctionedUser} } } = config;
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];

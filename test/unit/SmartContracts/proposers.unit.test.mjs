@@ -59,7 +59,6 @@ describe('Proposers contract Proposers functions', function () {
 
     const X509 = await ethers.getContractFactory('X509');
     const x509 = await upgrades.deployProxy(X509, []);
-    await x509.deployed();
 
     const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
     const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
@@ -68,7 +67,7 @@ describe('Proposers contract Proposers functions', function () {
     const sanctionsListAddress = sanctionsListMockInstance.address;
 
     const Shield = await ethers.getContractFactory('Shield');
-    const shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, X509.adress], {
+    const shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, x509.address], {
       initializer: 'initializeState',
     });
     await shield.deployed();

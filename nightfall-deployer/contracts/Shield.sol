@@ -48,10 +48,13 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
-        require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(
+            x509.x509Check(msg.sender),
+            'Shield: You are not authorised to transact using Nightfall'
+        );
         require(
             !sanctionsList.isSanctioned(msg.sender),
-            'You are on the Chainalysis sanctions list'
+            'Shield: You are on the Chainalysis sanctions list'
         );
         if (t.transactionType == TransactionTypes.DEPOSIT) {
             txInfo[Utils.hashTransaction(t)].isEscrowed = true;
@@ -224,10 +227,13 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
 
             state.addPendingWithdrawal(recipientAddress, uint256(advancedWithdrawal.advanceFee), 0);
         }
-        require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(
+            x509.x509Check(msg.sender),
+            'Shield: You are not authorised to transact using Nightfall'
+        );
         require(
             !sanctionsList.isSanctioned(msg.sender),
-            'You are on the Chainalysis sanctions list'
+            'Shield: You are on the Chainalysis sanctions list'
         );
         payOut(t, recipientAddress);
     }

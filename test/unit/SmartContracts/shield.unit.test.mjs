@@ -200,7 +200,7 @@ describe('Testing Shield Contract', function () {
       await Erc20MockInstance.approve(shieldAddress, '10');
       expect(
         ShieldInstance.connect(sanctionedSigner).submitTransaction(depositTransaction),
-      ).to.be.revertedWith('You are on the Chainalysis sanctions list');
+      ).to.be.revertedWith('Shield: You are on the Chainalysis sanctions list');
       await ShieldInstance.connect(owner[0]);
     });
 
@@ -1100,7 +1100,7 @@ describe('Testing Shield Contract', function () {
 
       await expect(
         ShieldInstance.finaliseWithdrawal(block, withdrawTransaction, index, siblingPath),
-      ).to.be.revertedWith('You are not authorised to transact using Nightfall');
+      ).to.be.revertedWith('Shield: You are not authorised to transact using Nightfall');
     });
 
     it('fails to finalise withdrawal if tokenType is ERC20 and tokenId not zero', async function () {
