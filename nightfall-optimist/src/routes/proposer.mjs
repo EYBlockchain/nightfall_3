@@ -26,6 +26,7 @@ import {
 } from '../services/database.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import getProposers from '../services/proposer.mjs';
+import auth from '../utils/auth.mjs';
 
 const router = express.Router();
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
@@ -185,7 +186,7 @@ export function setProposer(p) {
  *        500:
  *          description: Some error occurred.
  */
-router.post('/register', async (req, res, next) => {
+router.post('/register', auth, async (req, res, next) => {
   try {
     const { address, url = '', fee = 0 } = req.body;
     if (url === '') {
@@ -259,7 +260,7 @@ router.post('/register', async (req, res, next) => {
  *        500:
  *          description: Some error occurred.
  */
-router.post('/update', async (req, res, next) => {
+router.post('/update', auth, async (req, res, next) => {
   try {
     const { address, url = '', fee = 0 } = req.body;
     if (url === '') {
@@ -360,7 +361,7 @@ router.get('/proposers', async (req, res, next) => {
  *        500:
  *          description: Some error occurred.
  */
-router.post('/de-register', async (req, res, next) => {
+router.post('/de-register', auth, async (req, res, next) => {
   try {
     const { address = '' } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
@@ -392,7 +393,7 @@ router.post('/de-register', async (req, res, next) => {
  *        500:
  *          description: Some error occurred.
  */
-router.post('/withdrawStake', async (req, res, next) => {
+router.post('/withdrawStake', auth, async (req, res, next) => {
   try {
     const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposerContractInstance.methods.withdrawStake().encodeABI();
@@ -422,8 +423,9 @@ router.post('/withdrawStake', async (req, res, next) => {
  *        500:
  *          description: Some error occurred.
  */
-router.get('/pending-payments', async (req, res, next) => {
+router.get('/pending-payments', auth, async (req, res, next) => {
   const { proposerAddress } = req.query;
+  logger.debug(`requested pending payments for proposer ${proposer}`);
 
   const pendingPayments = [];
   // get blocks by proposer
@@ -490,7 +492,6 @@ router.get('/pending-payments', async (req, res, next) => {
  *          description: Some error occurred.
  */
 router.get('/stake', async (req, res, next) => {
-  logger.debug(`stake endpoint received GET`);
   const { proposerAddress } = req.query;
 
   logger.debug(`requested stake for proposer ${proposerAddress}`);
@@ -532,7 +533,7 @@ router.get('/stake', async (req, res, next) => {
  *        500:
  *          description: Some error occurred.
  */
-router.get('/withdraw', async (req, res, next) => {
+router.get('/withdraw', auth, async (req, res, next) => {
   try {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
@@ -572,7 +573,7 @@ router.get('/withdraw', async (req, res, next) => {
  *       500:
  *         description: An error occurred
  */
-router.post('/payment', async (req, res, next) => {
+router.post('/payment', auth, async (req, res, next) => {
   const { blockHash } = req.body;
   try {
     const block = await getBlockByBlockHash(blockHash);
@@ -601,7 +602,7 @@ router.post('/payment', async (req, res, next) => {
  *       500:
  *         description: An error occurred
  */
-router.get('/change', async (req, res, next) => {
+router.get('/change', auth, async (req, res, next) => {
   try {
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
@@ -634,6 +635,7 @@ router.get('/mempool', async (req, res, next) => {
     next(err);
   }
 });
+
 /**
  * @openapi
  * /proposer/encode:
@@ -648,7 +650,7 @@ router.get('/mempool', async (req, res, next) => {
  *       500:
  *         description: An error occurred
  */
-router.post('/encode', async (req, res, next) => {
+router.post('/encode', auth, async (req, res, next) => {
   try {
     const { transactions, block } = req.body;
 
@@ -713,6 +715,7 @@ router.post('/encode', async (req, res, next) => {
     next(err);
   }
 });
+
 /**
  * @openapi
  * /proposer/offchain-transaction:
@@ -769,4 +772,5 @@ router.post('/offchain-transaction', async (req, res) => {
     res.sendStatus(400);
   }
 });
+
 export default router;
