@@ -24,6 +24,7 @@ export const topicEventMapping = {
   TransactionSubmitted: '0xd9364d1faedd45a064f9090dd61ade3de8d1c1fd83caaa8ebdc4b9808f4eb989',
   NewCurrentProposer: '0xeaa94fa30970548bf8b78ce068ba600b923a4a62ce3c523d09bf308102ff1bab',
 };
+
 export class Web3Client {
   constructor(url) {
     this.url = url || ENVIRONMENT.web3WsUrl;

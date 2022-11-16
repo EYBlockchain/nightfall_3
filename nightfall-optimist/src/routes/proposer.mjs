@@ -8,8 +8,10 @@ import config from 'config';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
+  getContractAddress,
   getContractInstance,
   waitForContract,
+  web3,
 } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
@@ -44,22 +46,48 @@ export function setProposer(p) {
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
 router.post('/register', auth, async (req, res, next) => {
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
+
+  const { url = '', stake = 0, fee = 0 } = req.body;
+
   try {
-    const { address, url = '', fee = 0 } = req.body;
+    // Recreate Proposer, State contracts
+    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+    const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+
+    // Validate url, stake
     if (url === '') {
       throw new Error('Rest API URL not provided');
     }
-    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
-    // the first thing to do is to check if the proposer is already registered on the blockchain
-    const proposers = (await getProposers()).map(p => p.thisAddress);
-    // if not, let's register it
+
+    const minimumStake = await stateContractInstance.methods.getMinimumStake().call();
+    if (stake < minimumStake) {
+      throw new Error(`Given stake is below ${minimumStake} Wei`);
+    }
+
+    // Check if the proposer is already registered on the blockchain
+    const proposerAddresses = (await getProposers()).map(p => p.thisAddress);
+    const isRegistered = proposerAddresses.includes(ethAddress);
+
     let txDataToSign = '';
-    if (!proposers.includes(address)) {
+    let receipt;
+    if (!isRegistered) {
+      logger.debug('Register new proposer...');
       txDataToSign = await proposersContractInstance.methods.registerProposer(url, fee).encodeABI();
+      const tx = {
+        from: ethAddress,
+        to: proposersContractAddress,
+        data: txDataToSign,
+        value: stake,
+        gas: 8000000,
+      };
+      const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+      receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+      logger.debug(`Transaction receipt ${receipt}`);
     } else {
-      logger.warn(
-        'Proposer was already registered on the blockchain - registration attempt ignored',
-      );
+      logger.warn('Proposer was already registered, registration attempt ignored!');
     }
 
     /*
@@ -67,9 +95,9 @@ router.post('/register', auth, async (req, res, next) => {
       or we're just about to register them. We may or may not be registed locally
       with optimist though. Let's check and fix that if needed.
      */
-    if (!(await isRegisteredProposerAddressMine(address))) {
+    if (!(await isRegisteredProposerAddressMine(ethAddress))) {
       logger.debug('Registering proposer locally');
-      await setRegisteredProposerAddress(address, url); // save the registration address
+      await setRegisteredProposerAddress(ethAddress, url); // save the registration address
 
       /*
         We've just registered with optimist but if we were already registered on the blockchain,
@@ -80,15 +108,14 @@ router.post('/register', auth, async (req, res, next) => {
         logger.warn(
           'Proposer was already registered on the blockchain but not with this Optimist instance - registering locally',
         );
-        const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
         const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
-        if (address === currentProposer.thisAddress) {
+        if (ethAddress === currentProposer.thisAddress) {
           proposer.isMe = true;
           await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
         }
       }
     }
-    res.json({ txDataToSign });
+    res.json({ receipt });
   } catch (err) {
     next(err);
   }
@@ -96,20 +123,40 @@ router.post('/register', auth, async (req, res, next) => {
 
 /**
  * Function to update proposer's URL
+ * TODO endpoint could just update params according to the given info (should PATCH instead of update all)
  */
 router.post('/update', auth, async (req, res, next) => {
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
+
+  const { url = '', stake = 0, fee = 0 } = req.body;
+
   try {
-    const { address, url = '', fee = 0 } = req.body;
+    // Recreate Proposer contracts
+    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+
+    // Validate url
     if (url === '') {
       throw new Error('Rest API URL not provided');
     }
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+
     const txDataToSign = await proposersContractInstance.methods
       .updateProposer(url, fee)
       .encodeABI();
+    const tx = {
+      from: ethAddress,
+      to: proposersContractAddress,
+      data: txDataToSign,
+      value: stake,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    res.json({ receipt });
 
-    res.json({ txDataToSign });
-    setRegisteredProposerAddress(address, url); // save the registration address and URL
+    // Update db
+    await setRegisteredProposerAddress(ethAddress, url); // save the registration address and URL
   } catch (err) {
     next(err);
   }
@@ -149,14 +196,30 @@ router.get('/proposers', async (req, res, next) => {
  * provides the tx data. The user has to call the blockchain client.
  */
 router.post('/de-register', auth, async (req, res, next) => {
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
+
   try {
-    const { address = '' } = req.body;
+    // Recreate Proposer contract
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+
+    // Remove the proposer by updating the blockchain state
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
+    const tx = {
+      from: ethAddress,
+      to: proposersContractAddress,
+      data: txDataToSign,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    logger.debug(`Transaction receipt ${receipt}`);
 
-    await deleteRegisteredProposerAddress(address);
+    // Update db
+    await deleteRegisteredProposerAddress(ethAddress);
 
-    res.json({ txDataToSign });
+    res.json({ receipt });
   } catch (err) {
     next(err);
   }
@@ -284,11 +347,27 @@ router.post('/payment', auth, async (req, res, next) => {
  * computed by the app that calls this endpoint.
  */
 router.get('/change', auth, async (req, res, next) => {
-  try {
-    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
 
-    res.json({ txDataToSign });
+  try {
+    // Recreate State contract
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const stateContractAddress = await getContractAddress(STATE_CONTRACT_NAME);
+
+    // Attempt to rotate proposer currently proposing blocks
+    const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
+    const tx = {
+      from: ethAddress,
+      to: stateContractAddress,
+      data: txDataToSign,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    logger.debug(`Transaction receipt ${receipt}`);
+
+    res.json({ receipt });
   } catch (err) {
     next(err);
   }

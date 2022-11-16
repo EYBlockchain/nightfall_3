@@ -1,14 +1,12 @@
-/* This test relies on nightfall_3/cli
- */
-
+/* eslint-disable @babel/no-unused-expressions */
 /* eslint-disable no-await-in-loop */
+
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { NightfallMultiSig } from './nightfall-multisig.mjs';
-import { expectTransaction } from '../utils.mjs';
 
 const { WEB3_OPTIONS } = config;
 const { expect } = chai;
@@ -21,7 +19,6 @@ const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
 const amount1 = 10;
 const amount2 = 100;
 const value1 = 1;
-const value2 = 100;
 
 const getContractInstance = async (contractName, nf3) => {
   const abi = await nf3.getContractAbi(contractName);
@@ -31,29 +28,22 @@ const getContractInstance = async (contractName, nf3) => {
 };
 
 describe(`Testing Administrator`, () => {
-  let nf3User;
   let stateContract;
   let proposersContract;
   let shieldContract;
   let challengesContract;
   let multisigContract;
   let nfMultiSig;
-  let minimumStakeDef;
+  let minimumStake;
 
-  const proposers = [
-    new Nf3(signingKeys.proposer1, environment),
-    new Nf3(signingKeys.proposer2, environment),
-  ];
+  const nf3User = new Nf3(signingKeys.user1, environment);
+  const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
   before(async () => {
-    nf3User = new Nf3(signingKeys.user1, environment);
-
     await nf3User.init(mnemonics.user1);
+    await nf3Proposer.init(mnemonics.proposer);
 
-    await proposers[0].init(mnemonics.proposer);
-    await proposers[1].init(mnemonics.proposer);
-
-    minimumStakeDef = await proposers[0].getMinimumStake();
+    minimumStake = await nf3Proposer.getMinimumStake();
     stateContract = await getContractInstance('State', nf3User);
     proposersContract = await getContractInstance('Proposers', nf3User);
     shieldContract = await getContractInstance('Shield', nf3User);
@@ -77,7 +67,7 @@ describe(`Testing Administrator`, () => {
   });
 
   describe(`Basic tests`, () => {
-    it('Owner of the State, Proposers, Shield and Challenges contract should be the multisig', async function () {
+    it('Owner of State, Proposers, Shield and Challenges contracts should be the multisig', async () => {
       const ownerState = await stateContract.methods.owner().call();
       const ownerShield = await shieldContract.methods.owner().call();
       const ownerProposers = await proposersContract.methods.owner().call();
@@ -90,7 +80,7 @@ describe(`Testing Administrator`, () => {
       expect(ownerChallenges.toUpperCase()).to.be.equal(multisigAddress.toUpperCase());
     });
 
-    it('Set minimum stake to register a proposer with the multisig', async () => {
+    it('Should set `minimumStake` to register a proposer with the multisig', async () => {
       const transactions = await nfMultiSig.setMinimumStake(
         amount2,
         signingKeys.user1,
@@ -106,12 +96,12 @@ describe(`Testing Administrator`, () => {
         transactions,
       );
       await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const minimumStake = await shieldContract.methods.getMinimumStake().call();
+      const newMinimumStake = await shieldContract.methods.getMinimumStake().call();
 
-      expect(Number(minimumStake)).to.be.equal(amount2);
+      expect(Number(newMinimumStake)).to.be.equal(amount2);
     });
 
-    it('Set block stake for a proposer with the multisig', async () => {
+    it('Should set `blockStake` with the multisig', async () => {
       const transactions = await nfMultiSig.setBlockStake(
         amount2,
         signingKeys.user1,
@@ -132,7 +122,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(blockStake)).to.be.equal(amount2);
     });
 
-    it('Set rotate proposer blocks with the multisig', async () => {
+    it('Should set `rotateProposerBlocks` with the multisig', async () => {
       const transactions = await nfMultiSig.setRotateProposerBlocks(
         amount2,
         signingKeys.user1,
@@ -153,7 +143,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(rotateProposerBlocks)).to.be.equal(amount2);
     });
 
-    it('Set proposer set count in PoS with the multisig', async () => {
+    it('Should set `proposerSetCount` in PoS with the multisig', async () => {
       const transactions = await nfMultiSig.setProposerSetCount(
         amount1 / 2,
         signingKeys.user1,
@@ -174,7 +164,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(proposerSetCount)).to.be.equal(amount1 / 2);
     });
 
-    it('Set sprints in span in PoS with the multisig', async () => {
+    it('Should set `sprintsInSpan` in PoS with the multisig', async () => {
       const transactions = await nfMultiSig.setSprintsInSpan(
         amount1 / 2,
         signingKeys.user1,
@@ -195,7 +185,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(sprintsInSpan)).to.be.equal(amount1 / 2);
     });
 
-    it(`Set maximum number of proposers ${value1} in PoS with the multisig`, async () => {
+    it(`Should set maxProposers to ${value1} in PoS with the multisig`, async () => {
       const transactions = await nfMultiSig.setMaxProposers(
         value1,
         signingKeys.user1,
@@ -216,18 +206,35 @@ describe(`Testing Administrator`, () => {
       expect(Number(maxProposers)).to.be.equal(value1);
     });
 
-    it('Allowing register first proposer', async () => {
+    it('Should allow to register first proposer', async () => {
+      // Before registering
+      const { proposers: proposersBeforeRegister } = await nf3Proposer.getProposers();
+      const fProposersBeforeRegister = proposersBeforeRegister.filter(
+        p => p.thisAddress === nf3Proposer.ethereumAddress,
+      );
+
+      // Register proposer
+      // CHECK Why other tests do not have this env check
       if (process.env.ENVIRONMENT !== 'aws') {
-        const res = await proposers[0].registerProposer('http://optimist', minimumStakeDef);
-        expectTransaction(res);
+        await nf3Proposer.registerProposer('http://optimist', minimumStake);
       }
+
+      // After registering
+      const { proposers: proposersAfterRegister } = await nf3Proposer.getProposers();
+      const fProposersAfterRegister = proposersAfterRegister.filter(
+        p => p.thisAddress === nf3Proposer.ethereumAddress,
+      );
+
+      // Assert
+      expect(fProposersBeforeRegister).to.be.an('array').that.is.empty;
+      expect(fProposersAfterRegister).to.have.lengthOf(1);
     });
 
-    it('Not allowing register second proposer', async () => {
+    it.skip('Should not allow to register other proposers', async () => {
+      // SKIP We need to spin a second optimist if we want to keep this test
       let error = null;
       try {
-        const res = await proposers[1].registerProposer('http://optimist', minimumStakeDef);
-        expectTransaction(res);
+        await nf3Proposer.registerProposer('http://optimist', minimumStake);
       } catch (err) {
         error = err;
       }
@@ -236,33 +243,8 @@ describe(`Testing Administrator`, () => {
       );
     });
 
-    it(`Set maximum number of proposers ${value2} in PoS with the multisig`, async () => {
-      const transactions = await nfMultiSig.setMaxProposers(
-        value2,
-        signingKeys.user1,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        [],
-      );
-      const approved = await nfMultiSig.setMaxProposers(
-        value2,
-        signingKeys.user2,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        transactions,
-      );
-      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const maxProposers = await shieldContract.methods.getMaxProposers().call();
-
-      expect(Number(maxProposers)).to.be.equal(value2);
-    });
-
-    it('Allowing register second proposer', async () => {
-      const res = await proposers[1].registerProposer('http://optimist', minimumStakeDef);
-      expectTransaction(res);
-    });
-
-    it('Set boot proposer with the multisig', async () => {
+    it('Should set boot proposer with the multisig', async () => {
+      // CHECK What is boot proposer - does this make sense in the context of a single proposer?
       const transactions = await nfMultiSig.setBootProposer(
         addresses.proposer1,
         signingKeys.user1,
@@ -283,35 +265,7 @@ describe(`Testing Administrator`, () => {
       expect(bootProposer.toUpperCase()).to.be.equal(addresses.proposer1.toUpperCase());
     });
 
-    it(`Set maximum number of proposers ${value1} in PoS with the multisig and change to boot proposer`, async () => {
-      const transactions = await nfMultiSig.setMaxProposers(
-        value1,
-        signingKeys.user1,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        [],
-      );
-      const approved = await nfMultiSig.setMaxProposers(
-        value1,
-        signingKeys.user2,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        transactions,
-      );
-      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const maxProposers = await stateContract.methods.getMaxProposers().call();
-
-      expect(Number(maxProposers)).to.be.equal(value1);
-
-      const numberProposers1 = await stateContract.methods.getNumProposers().call();
-      const res = await proposers[1].changeCurrentProposer();
-      expectTransaction(res);
-      const numberProposers2 = await stateContract.methods.getNumProposers().call();
-      expect(Number(numberProposers1)).to.be.equal(2);
-      expect(Number(numberProposers2)).to.be.equal(1);
-    });
-
-    it('Set boot challenger with the multisig', async () => {
+    it('Should set boot challenger with the multisig', async () => {
       const transactions = await nfMultiSig.setBootChallenger(
         addresses.challenger,
         signingKeys.user1,
@@ -333,7 +287,7 @@ describe(`Testing Administrator`, () => {
       expect(bootChallenger.toUpperCase()).to.be.equal(addresses.challenger.toUpperCase());
     });
 
-    it('Set restriction with the multisig', async () => {
+    it('Should set tx restrictions with the multisig', async () => {
       const transactions = await nfMultiSig.setTokenRestrictions(
         nf3User.ethereumAddress, // simulate a token address
         amount1,
@@ -365,7 +319,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(amount2);
     });
 
-    it('Remove restriction with the multisig', async () => {
+    it('Should remove tx restrictions with the multisig', async () => {
       const transactions = await nfMultiSig.removeTokenRestrictions(
         nf3User.ethereumAddress, // simulate a token address
         signingKeys.user1,
@@ -393,7 +347,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(0);
     });
 
-    it('Set MATIC address with the multisig', async () => {
+    it('Should set MATIC address with the multisig', async () => {
       const transactions = await nfMultiSig.setMaticAddress(
         addresses.user1,
         signingKeys.user1,
@@ -415,7 +369,7 @@ describe(`Testing Administrator`, () => {
       expect(maticAddress.toUpperCase()).to.be.equal(addresses.user1.toUpperCase());
     });
 
-    it('Pause contracts with the multisig', async () => {
+    it('Should pause State contract with the multisig', async () => {
       const paused1 = await stateContract.methods.paused().call();
       const transactions = await nfMultiSig.pauseContracts(
         signingKeys.user1,
@@ -438,7 +392,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(true);
     });
 
-    it('Unpause contracts with the multisig', async () => {
+    it('Should unpause State contract with the multisig', async () => {
       const paused1 = await stateContract.methods.paused().call();
       const transactions = await nfMultiSig.unpauseContracts(
         signingKeys.user1,
@@ -461,7 +415,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(false);
     });
 
-    it('Be able to transfer ownership of contracts from multisig to a specific one', async () => {
+    it('Should transfer ownership of contracts from multisig to a specific address', async () => {
       const transactions = await nfMultiSig.transferOwnership(
         signingKeys.user1,
         signingKeys.user1,
@@ -482,21 +436,21 @@ describe(`Testing Administrator`, () => {
       expect(owner.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
     });
 
-    it('Set minimum stake to register a proposer without multisig', async () => {
+    it('Should set `minimumStake` to register a proposer without multisig', async () => {
       await shieldContract.methods.setMinimumStake(amount2).send({ from: nf3User.ethereumAddress });
-      const minimumStake = await shieldContract.methods.getMinimumStake().call();
+      const newMinimumStake = await shieldContract.methods.getMinimumStake().call();
 
-      expect(Number(minimumStake)).to.be.equal(amount2);
+      expect(Number(newMinimumStake)).to.be.equal(amount2);
     });
 
-    it('Set block stake for a proposer without multisig', async () => {
+    it('Should set `blockStake` without multisig', async () => {
       await shieldContract.methods.setBlockStake(amount2).send({ from: nf3User.ethereumAddress });
       const blockStake = await shieldContract.methods.getBlockStake().call();
 
       expect(Number(blockStake)).to.be.equal(amount2);
     });
 
-    it('Set rotate proposer blocks without multisig', async () => {
+    it('Should set `rotateProposerBlocks` without multisig', async () => {
       await shieldContract.methods
         .setRotateProposerBlocks(amount2)
         .send({ from: nf3User.ethereumAddress });
@@ -505,7 +459,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(rotateProposerBlocks)).to.be.equal(amount2);
     });
 
-    it('Set proposer set count in PoS without multisig', async () => {
+    it('Should set `proposerSetCount` in PoS without multisig', async () => {
       await shieldContract.methods
         .setProposerSetCount(amount1 / 2)
         .send({ from: nf3User.ethereumAddress });
@@ -514,7 +468,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(proposerSetCount)).to.be.equal(amount1 / 2);
     });
 
-    it('Set sprints in span in PoS without multisig', async () => {
+    it('Should set `sprintsInSpan` in PoS without multisig', async () => {
       await shieldContract.methods
         .setSprintsInSpan(amount1 / 2)
         .send({ from: nf3User.ethereumAddress });
@@ -523,14 +477,14 @@ describe(`Testing Administrator`, () => {
       expect(Number(sprintsInSpan)).to.be.equal(amount1 / 2);
     });
 
-    it('Set maximum number of proposers in PoS without multisig', async () => {
+    it(`Should set maxProposers to ${amount2} in PoS without multisig`, async () => {
       await shieldContract.methods.setMaxProposers(amount2).send({ from: nf3User.ethereumAddress });
       const maxProposers = await shieldContract.methods.getMaxProposers().call();
 
       expect(Number(maxProposers)).to.be.equal(amount2);
     });
 
-    it('Set boot proposer without multisig', async () => {
+    it('Should set boot proposer without multisig', async () => {
       await shieldContract.methods
         .setBootProposer(addresses.proposer1)
         .send({ from: nf3User.ethereumAddress });
@@ -539,7 +493,7 @@ describe(`Testing Administrator`, () => {
       expect(bootProposer.toUpperCase()).to.be.equal(addresses.proposer1.toUpperCase());
     });
 
-    it('Set boot challenger without multisig', async () => {
+    it('Should set boot challenger without multisig', async () => {
       await shieldContract.methods
         .setBootChallenger(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
@@ -548,7 +502,7 @@ describe(`Testing Administrator`, () => {
       expect(bootChallenger.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
     });
 
-    it('Set restriction without multisig', async () => {
+    it('Should set tx restrictions without multisig', async () => {
       await shieldContract.methods
         .setRestriction(nf3User.ethereumAddress, amount1, amount2)
         .send({ from: nf3User.ethereumAddress });
@@ -563,7 +517,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(amount2);
     });
 
-    it('Remove restriction without multisig', async () => {
+    it('Should remove tx restrictions without multisig', async () => {
       await shieldContract.methods
         .removeRestriction(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
@@ -578,7 +532,7 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(0);
     });
 
-    it('Set MATIC address without multisig', async () => {
+    it('Should set MATIC address without multisig', async () => {
       await shieldContract.methods
         .setMaticAddress(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
@@ -587,7 +541,7 @@ describe(`Testing Administrator`, () => {
       expect(maticAddress.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
     });
 
-    it('Pause State contract without multisig', async () => {
+    it('Should pause State contract without multisig', async () => {
       const paused1 = await stateContract.methods.paused().call();
       await stateContract.methods.pause().send({ from: nf3User.ethereumAddress });
       const paused2 = await stateContract.methods.paused().call();
@@ -596,7 +550,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(true);
     });
 
-    it('Unpause State contract without multisig', async () => {
+    it('Should unpause State contract without multisig', async () => {
       const paused1 = await stateContract.methods.paused().call();
       await stateContract.methods.unpause().send({ from: nf3User.ethereumAddress });
       const paused2 = await stateContract.methods.paused().call();
@@ -605,7 +559,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(false);
     });
 
-    it('Pause Shield contract without multisig', async () => {
+    it('Should pause Shield contract without multisig', async () => {
       const paused1 = await shieldContract.methods.paused().call();
       await shieldContract.methods.pause().send({ from: nf3User.ethereumAddress });
       const paused2 = await shieldContract.methods.paused().call();
@@ -614,7 +568,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(true);
     });
 
-    it('Unpause Shield contract without multisig', async () => {
+    it('Should unpause Shield contract without multisig', async () => {
       const paused1 = await shieldContract.methods.paused().call();
       await shieldContract.methods.unpause().send({ from: nf3User.ethereumAddress });
       const paused2 = await shieldContract.methods.paused().call();
@@ -623,7 +577,7 @@ describe(`Testing Administrator`, () => {
       expect(paused2).to.be.equal(false);
     });
 
-    it('Restore multisig', async () => {
+    it('Should restore multisig', async () => {
       const multisigAddress = multisigContract.options.address;
       await Promise.all([
         shieldContract.methods
@@ -654,9 +608,8 @@ describe(`Testing Administrator`, () => {
   after(async () => {
     nf3User.close();
     if (process.env.ENVIRONMENT !== 'aws') {
-      await proposers[0].deregisterProposer();
+      await nf3Proposer.deregisterProposer();
     }
-    proposers[0].close();
-    proposers[1].close();
+    nf3Proposer.close();
   });
 });
