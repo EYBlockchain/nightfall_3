@@ -236,16 +236,7 @@ describe('Testing with an adversary', () => {
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
     });
 
-    it('Test duplicate nullifier withdraw', async () => {
-      console.log('Testing duplicate nullifier withdraw...');
-      await nf3AdversarialProposer.makeBlockNow('DuplicateNullifierWithdraw');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback  duplicate nullifier withdraw completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
-    });
-
-    it('Test incorrect proof deposit', async () => {
+    it('Test Incorrect Proof Deposit', async () => {
       console.log('Testing incorrect proof deposit...');
       await nf3AdversarialProposer.makeBlockNow('IncorrectProofDeposit');
       console.log('Waiting for rollback...');
@@ -254,13 +245,49 @@ describe('Testing with an adversary', () => {
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
     });
 
-    it('Test incorrect proof transfer', async () => {
+    it('Test Incorrect Proof Transfer', async () => {
       console.log('Testing incorrect proof transfer...');
       await nf3AdversarialProposer.makeBlockNow('IncorrectProofTransfer');
       console.log('Waiting for rollback...');
       await waitForRollback();
       console.log('Rollback  incorrect proof transfer completed');
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+    });
+
+    it('Test Incorrect Public Input Commitment Deposit', async () => {
+      console.log('Testing incorrect public input commitment deposit...');
+      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputDepositCommitment');
+      console.log('Waiting for rollback...');
+      await waitForRollback();
+      console.log('Rollback incorrect public input commitment deposit completed');
+      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+    });
+
+    it('Test Incorrect Public Input Transfer Commitment', async () => {
+      console.log('Testing incorrect public input transfer commitment...');
+      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputTransferCommitment');
+      console.log('Waiting for rollback...');
+      await waitForRollback();
+      console.log('Rollback incorrect public input transfer commitment completed');
+      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+    });
+
+    it('Test Incorrect Public Input Transfer Nullifier', async () => {
+      console.log('Testing incorrect public input transfer nullifier...');
+      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputTransferCommitment');
+      console.log('Waiting for rollback...');
+      await waitForRollback();
+      console.log('Rollback incorrect public input transfer nullifier completed');
+      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+    });
+
+    it('Test duplicate nullifier withdraw', async () => {
+      console.log('Testing duplicate nullifier withdraw...');
+      await nf3AdversarialProposer.makeBlockNow('DuplicateNullifierWithdraw');
+      console.log('Waiting for rollback...');
+      await waitForRollback();
+      console.log('Rollback  duplicate nullifier withdraw completed');
+      expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
     });
 
     it('Test incorrect proof withdraw', async () => {
@@ -272,35 +299,8 @@ describe('Testing with an adversary', () => {
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
     });
 
-    it('Test incorrect public input commitment deposit', async () => {
-      console.log('Testing incorrect public input commitment deposit...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputDepositCommitment');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect public input commitment deposit completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
-
-    it('Test incorrect public input transfer commitment', async () => {
-      console.log('Testing incorrect public input transfer commitment...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputTransferCommitment');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect public input transfer commitment completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
-
-    it('Test incorrect public input transfer nullifier', async () => {
-      console.log('Testing incorrect public input transfer nullifier...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputTransferCommitment');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect public input transfer nullifier completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
-
     it('Test incorrect public input withdraw nullifier', async () => {
-      console.log('Testing incorrect public input withdraw nullifier...');
+      console.log('Testing incorrect proof withdraw...');
       await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputWithdrawNullifier');
       console.log('Waiting for rollback...');
       await waitForRollback();
@@ -309,7 +309,7 @@ describe('Testing with an adversary', () => {
     });
 
     it('Test incorrect historic root', async () => {
-      console.log('Testing incorrect root...');
+      console.log('Testing incorrect historic root...');
       await nf3AdversarialProposer.makeBlockNow('IncorrectHistoricRoot');
       console.log('Waiting for rollback...');
       await waitForRollback();
