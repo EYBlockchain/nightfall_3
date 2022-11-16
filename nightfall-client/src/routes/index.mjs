@@ -9,7 +9,7 @@ import commitment from './commitment.mjs';
 import incomingViewingKey from './incoming-viewing-key.mjs';
 import setInstantWithdrawl from './instant-withdrawal.mjs';
 import generateZkpKeys from './generate-zkp-keys.mjs';
-import kyc from './kyc.mjs';
+import x509 from './x509.mjs';
 
 export {
   transfer,
@@ -23,5 +23,5 @@ export {
   incomingViewingKey,
   setInstantWithdrawl,
   generateZkpKeys,
-  kyc,
+  x509,
 };
