@@ -76,22 +76,6 @@ export function setProposer(p) {
  *            description: The current proposer address.
  *        example:
  *           txDataToSign: "0x0d6022010000000000000"
- *      Stake:
- *        type: object
- *        properties:
- *          amount:
- *            type: string
- *            description:The staked amount of funds of the proposer.
- *          challengeLocked:
- *            type: string
- *            description: The block stake in case of an invalid block.
- *          time:
- *            type: string
- *            description: The time interval until the stake can be claimed.
- *        example:
- *           amount: '10'
- *           challengeLocked: '10'
- *           time: '10'
  *      ProposersList:
  *        type: array
  *        items:
@@ -156,6 +140,22 @@ export function setProposer(p) {
  *            inProposerSet: false,
  *            indexProposerSet: "0"
  *          }]
+ *      Stake:
+ *        type: object
+ *        properties:
+ *          amount:
+ *            type: string
+ *            description: The staked amount of funds of the proposer.
+ *            example: 10
+ *          challengeLocked:
+ *            type: string
+ *            description: The block stake in case of an invalid block.
+ *            example: 10
+ *          time:
+ *            type: string
+ *            description: The time interval until the stake can be claimed.
+ *            example: 10
+ *
  */
 
 /**
@@ -183,7 +183,7 @@ export function setProposer(p) {
  *              schema:
  *                $ref: '#/components/schemas/TxDataToSign'
  *        500:
- *          description: Some error ocurred.
+ *          description: Some error occurred.
  */
 router.post('/register', async (req, res, next) => {
   try {
@@ -257,7 +257,7 @@ router.post('/register', async (req, res, next) => {
  *              schema:
  *                $ref: '#/components/schemas/TxDataToSign'
  *        500:
- *          description: Some error ocurred.
+ *          description: Some error occurred.
  */
 router.post('/update', async (req, res, next) => {
   try {
@@ -297,7 +297,7 @@ router.post('/update', async (req, res, next) => {
  *                    type: string
  *                    example: "0x0A2798E08B66A1a4188F4B239651C015aC587Bf8"
  *        500:
- *          description: Some error ocurred.
+ *          description: Some error occurred.
  */
 router.get('/current-proposer', async (req, res, next) => {
   try {
@@ -330,7 +330,7 @@ router.get('/current-proposer', async (req, res, next) => {
  *                items:
  *                  $ref: '#/components/schemas/ProposersList'
  *        500:
- *          description: Some error ocurred.
+ *          description: Some error occurred.
  */
 router.get('/proposers', async (req, res, next) => {
   try {
@@ -358,7 +358,7 @@ router.get('/proposers', async (req, res, next) => {
  *              schema:
  *                $ref: '#/components/schemas/TxDataToSign'
  *        500:
- *          description: Some error ocurred.
+ *          description: Some error occurred.
  */
 router.post('/de-register', async (req, res, next) => {
   try {
@@ -390,7 +390,7 @@ router.post('/de-register', async (req, res, next) => {
  *              schema:
  *                $ref: '#/components/schemas/TxDataToSign'
  *        500:
- *          description: Some error ocurred.
+ *          description: Some error occurred.
  */
 router.post('/withdrawStake', async (req, res, next) => {
   try {
@@ -420,7 +420,7 @@ router.post('/withdrawStake', async (req, res, next) => {
  *                items:
  *                  $ref: '#/components/schemas/PendingPayments'
  *        500:
- *          description: Some error ocurred.
+ *          description: Some error occurred.
  */
 router.get('/pending-payments', async (req, res, next) => {
   const { proposerAddress } = req.query;
@@ -472,11 +472,22 @@ router.get('/pending-payments', async (req, res, next) => {
  *          content:
  *            application/json:
  *              schema:
- *                type: array
- *                items:
- *                  $ref: '#/components/schemas/Stake'
+ *                type: object
+ *                properties:
+ *                  amount:
+ *                    type: string
+ *                    description: The staked amount of funds of the proposer.
+ *                    example: 10
+ *                  challengeLocked:
+ *                    type: string
+ *                    description: The block stake in case of an invalid block.
+ *                    example: 10
+ *                  time:
+ *                    type: string
+ *                    description: The time interval until the stake can be claimed.
+ *                    example: 10
  *        500:
- *          description: Some error ocurred.
+ *          description: Some error occurred.
  */
 router.get('/stake', async (req, res, next) => {
   logger.debug(`stake endpoint received GET`);
@@ -519,7 +530,7 @@ router.get('/stake', async (req, res, next) => {
  *                items:
  *                  $ref: '#/components/schemas/TxDataToSign'
  *        500:
- *          description: Some error ocurred.
+ *          description: Some error occurred.
  */
 router.get('/withdraw', async (req, res, next) => {
   try {
@@ -559,7 +570,7 @@ router.get('/withdraw', async (req, res, next) => {
  *       200:
  *         description: OK
  *       500:
- *         description: An error occured
+ *         description: An error occurred
  */
 router.post('/payment', async (req, res, next) => {
   const { blockHash } = req.body;
@@ -588,7 +599,7 @@ router.post('/payment', async (req, res, next) => {
  *       200:
  *         description: OK
  *       500:
- *         description: An error occured
+ *         description: An error occurred
  */
 router.get('/change', async (req, res, next) => {
   try {
@@ -613,7 +624,7 @@ router.get('/change', async (req, res, next) => {
  *       200:
  *         description: OK
  *       500:
- *         description: An error occured
+ *         description: An error occurred
  */
 router.get('/mempool', async (req, res, next) => {
   try {
@@ -635,7 +646,7 @@ router.get('/mempool', async (req, res, next) => {
  *       200:
  *         description: OK
  *       500:
- *         description: An error occured
+ *         description: An error occurred
  */
 router.post('/encode', async (req, res, next) => {
   try {
@@ -714,7 +725,7 @@ router.post('/encode', async (req, res, next) => {
  *       200:
  *         description: OK
  *       500:
- *         description: An error occured
+ *         description: An error occurred
  */
 router.post('/offchain-transaction', async (req, res) => {
   const { transaction } = req.body;
