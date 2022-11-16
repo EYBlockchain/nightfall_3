@@ -55,7 +55,7 @@ const makeBlockAndWaitForEmptyMempool = async optimistUrls => {
   const url = optimistUrls.find(
     // eslint-disable-next-line no-loop-func
     o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-  ).optimistUrl;
+  )?.optimistUrl;
 
   if (url) {
     let res = await axios.get(`${url}/proposer/mempool`);
