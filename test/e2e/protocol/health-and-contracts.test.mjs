@@ -14,19 +14,19 @@ chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const { mnemonics, signingKeys } = config.TEST_OPTIONS;
 
-const nf3User1 = new Nf3(signingKeys.user1, environment);
-
-let user;
-before(async () => {
-  await nf3User1.init(mnemonics.user1);
-  user = await UserFactory.create({
-    blockchainWsUrl: environment.web3WsUrl,
-    clientApiUrl: environment.clientApiUrl,
-    ethereumPrivateKey: signingKeys.user1,
-  });
-});
-
 describe('Health and Contract Checks', () => {
+  const nf3User1 = new Nf3(signingKeys.user1, environment);
+
+  let user;
+  before(async () => {
+    await nf3User1.init(mnemonics.user1);
+    user = await UserFactory.create({
+      blockchainWsUrl: environment.web3WsUrl,
+      clientApiUrl: environment.clientApiUrl,
+      ethereumPrivateKey: signingKeys.user1,
+    });
+  });
+
   it('new sdk should respond with "true" the health check', async function () {
     const status = await user.isClientAlive();
     expect(status).to.be.equal(true);
@@ -70,9 +70,9 @@ describe('Health and Contract Checks', () => {
     expect(res.data.status).to.be.a('string');
     expect(res.data.status).to.be.equal('success');
   });
-});
 
-after(async () => {
-  await nf3User1.close();
-  user.close();
+  after(async () => {
+    await nf3User1.close();
+    user.close();
+  });
 });

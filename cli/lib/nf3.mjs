@@ -4,11 +4,11 @@ import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
+import crypto from 'crypto';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { Mutex } from 'async-mutex';
-import crypto from 'crypto';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
@@ -162,6 +162,7 @@ class Nf3 {
         throw new Error('Unknown contract address server');
     }
     // once we know where to ask, we can get the contract addresses
+    this.x509ContractAddress = await this.contractGetter('X509');
     this.shieldContractAddress = await this.contractGetter('Shield');
     this.proposersContractAddress = await this.contractGetter('Proposers');
     this.challengesContractAddress = await this.contractGetter('Challenges');
@@ -823,25 +824,27 @@ class Nf3 {
     */
   async registerProposer(url, stake, fee) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/register`, {
-      address: this.ethereumAddress,
+      stake,
       url,
       fee,
     });
-    if (res.data.txDataToSign === '') return false; // already registered
-    return new Promise((resolve, reject) => {
-      proposerQueue.push(async () => {
-        try {
-          const receipt = await this.submitTransaction(
-            res.data.txDataToSign,
-            this.proposersContractAddress,
-            stake,
-          );
-          resolve(receipt);
-        } catch (err) {
-          reject(err);
-        }
-      });
-    });
+    logger.debug(`Proposer /register response ${res}`);
+    return res;
+    // if (res.data.txDataToSign === '') return false; // already registered
+    // return new Promise((resolve, reject) => {
+    //   proposerQueue.push(async () => {
+    //     try {
+    //       const receipt = await this.submitTransaction(
+    //         res.data.txDataToSign,
+    //         this.proposersContractAddress,
+    //         stake,
+    //       );
+    //       resolve(receipt);
+    //     } catch (err) {
+    //       reject(err);
+    //     }
+    //   });
+    // });
   }
 
   /**
@@ -853,23 +856,22 @@ class Nf3 {
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
   async deregisterProposer() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`, {
-      address: this.ethereumAddress,
-    });
-    return new Promise((resolve, reject) => {
-      proposerQueue.push(async () => {
-        try {
-          const receipt = await this.submitTransaction(
-            res.data.txDataToSign,
-            this.proposersContractAddress,
-            0,
-          );
-          resolve(receipt);
-        } catch (err) {
-          reject(err);
-        }
-      });
-    });
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`);
+    logger.debug(`Proposer /de-register response ${res}`);
+    // return new Promise((resolve, reject) => {
+    //   proposerQueue.push(async () => {
+    //     try {
+    //       const receipt = await this.submitTransaction(
+    //         res.data.txDataToSign,
+    //         this.proposersContractAddress,
+    //         0,
+    //       );
+    //       resolve(receipt);
+    //     } catch (err) {
+    //       reject(err);
+    //     }
+    //   });
+    // });
   }
 
   /**
@@ -881,23 +883,22 @@ class Nf3 {
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
   async changeCurrentProposer() {
-    const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`, {
-      address: this.ethereumAddress,
-    });
-    return new Promise((resolve, reject) => {
-      proposerQueue.push(async () => {
-        try {
-          const receipt = await this.submitTransaction(
-            res.data.txDataToSign,
-            this.stateContractAddress,
-            0,
-          );
-          resolve(receipt);
-        } catch (err) {
-          reject(err);
-        }
-      });
-    });
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`);
+    logger.debug(`Proposer /change response ${res}`);
+    // return new Promise((resolve, reject) => {
+    //   proposerQueue.push(async () => {
+    //     try {
+    //       const receipt = await this.submitTransaction(
+    //         res.data.txDataToSign,
+    //         this.stateContractAddress,
+    //         0,
+    //       );
+    //       resolve(receipt);
+    //     } catch (err) {
+    //       reject(err);
+    //     }
+    //   });
+    // });
   }
 
   /**
@@ -1004,25 +1005,25 @@ class Nf3 {
     */
   async updateProposer(url, stake, fee) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/update`, {
-      address: this.ethereumAddress,
+      stake,
       url,
       fee,
     });
-    logger.debug(`Proposer with address ${this.ethereumAddress} updated to URL ${url}`);
-    return new Promise((resolve, reject) => {
-      proposerQueue.push(async () => {
-        try {
-          const receipt = await this.submitTransaction(
-            res.data.txDataToSign,
-            this.proposersContractAddress,
-            stake,
-          );
-          resolve(receipt);
-        } catch (err) {
-          reject(err);
-        }
-      });
-    });
+    logger.debug(`Proposer /update response ${res}`);
+    // return new Promise((resolve, reject) => {
+    //   proposerQueue.push(async () => {
+    //     try {
+    //       const receipt = await this.submitTransaction(
+    //         res.data.txDataToSign,
+    //         this.proposersContractAddress,
+    //         stake,
+    //       );
+    //       resolve(receipt);
+    //     } catch (err) {
+    //       reject(err);
+    //     }
+    //   });
+    // });
   }
 
   createEmitter() {
@@ -1064,69 +1065,69 @@ class Nf3 {
     */
   async startProposer() {
     const proposeEmitter = this.createEmitter();
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
+    // const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
 
-    this.websockets.push(connection); // save so we can close it properly later
+    // this.websockets.push(connection); // save so we can close it properly later
 
-    /*
-      we can't setup up a ping until the connection is made because the ping function
-      only exists in the underlying 'ws' object (_ws) and that is undefined until the
-      websocket is opened, it seems. Hence, we put all this code inside the onopen.
-     */
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      logger.debug('Proposer websocket connection opened');
+    // /*
+    //   we can't setup up a ping until the connection is made because the ping function
+    //   only exists in the underlying 'ws' object (_ws) and that is undefined until the
+    //   websocket is opened, it seems. Hence, we put all this code inside the onopen.
+    //  */
+    // connection.onopen = () => {
+    //   // setup a ping every 15s
+    //   this.intervalIDs.push(
+    //     setInterval(() => {
+    //       connection._ws.ping();
+    //     }, WEBSOCKET_PING_TIME),
+    //   );
+    //   // and a listener for the pong
+    //   logger.debug('Proposer websocket connection opened');
 
-      connection.send('blocks');
-    };
+    //   connection.send('blocks');
+    // };
 
-    connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign, block, transactions, data } = msg;
+    // connection.onmessage = async message => {
+    //   const msg = JSON.parse(message.data);
+    //   const { type, txDataToSign, block, transactions, data } = msg;
 
-      logger.debug(`Proposer received websocket message of type ${type}`);
+    //   logger.debug(`Proposer received websocket message of type ${type}`);
 
-      if (type === 'block') {
-        // First sign transaction, and send it within asynchronous queue. This will
-        // ensure that blockProposed events are emitted in order and with the correct nonce.
-        const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0); // we don't send more stake
-        proposerQueue.push(async () => {
-          try {
-            const receipt = await this._sendTransaction(tx);
-            proposeEmitter.emit('receipt', receipt, block, transactions);
-          } catch (err) {
-            logger.error({
-              msg: 'Error while trying to submit a block',
-              err,
-            });
+    //   if (type === 'block') {
+    //     // First sign transaction, and send it within asynchronous queue. This will
+    //     // ensure that blockProposed events are emitted in order and with the correct nonce.
+    //     const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0); // we don't send more stake
+    //     proposerQueue.push(async () => {
+    //       try {
+    //         const receipt = await this._sendTransaction(tx);
+    //         proposeEmitter.emit('receipt', receipt, block, transactions);
+    //       } catch (err) {
+    //         logger.error({
+    //           msg: 'Error while trying to submit a block',
+    //           err,
+    //         });
 
-            // block proposed is reverted. Send transactions back to mempool
-            try {
-              await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
-            } catch (errorResetLocalBlock) {
-              logger.error({
-                msg: 'Error while trying to reset local block',
-                errorResetLocalBlock,
-              });
-            }
-            proposeEmitter.emit('error', err, block, transactions);
-          }
-        });
-      } else if (type === 'rollback') {
-        proposeEmitter.emit('rollback', data);
-      }
+    //         // block proposed is reverted. Send transactions back to mempool
+    //         try {
+    //           await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
+    //         } catch (errorResetLocalBlock) {
+    //           logger.error({
+    //             msg: 'Error while trying to reset local block',
+    //             errorResetLocalBlock,
+    //           });
+    //         }
+    //         proposeEmitter.emit('error', err, block, transactions);
+    //       }
+    //     });
+    //   } else if (type === 'rollback') {
+    //     proposeEmitter.emit('rollback', data);
+    //   }
 
-      return null;
-    };
+    //   return null;
+    // };
 
-    connection.onerror = () => logger.error('Proposer websocket connection error');
-    connection.onclosed = () => logger.warn('Proposer websocket connection closed');
+    // connection.onerror = () => logger.error('Proposer websocket connection error');
+    // connection.onclosed = () => logger.warn('Proposer websocket connection closed');
 
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return proposeEmitter;
@@ -1444,37 +1445,33 @@ class Nf3 {
   }
 
   /**
-   Adds a user to a whitelist (only works of the calling address is that of a Whitelist Manager)
-  */
-  async addUserToWhitelist(groupId, address) {
-    const res = await axios.post(`${this.clientBaseUrl}/whitelist/add`, {
-      address,
+   Validates an X509 (RSA) certificate
+   */
+  async validateCertificate(certificate, ethereumAddress, derPrivateKey) {
+    // sign the ethereum address
+    let ethereumAddressSignature = null;
+    if (derPrivateKey) {
+      const privateKey = crypto.createPrivateKey({
+        key: derPrivateKey,
+        format: 'der',
+        type: 'pkcs1',
+      });
+      ethereumAddressSignature = crypto.sign(
+        'sha256',
+        Buffer.from(ethereumAddress.toLowerCase().slice(2), 'hex'),
+        {
+          key: privateKey,
+          padding: crypto.constants.RSA_PKCS1_PADDING,
+        },
+      );
+    }
+    // now validate the cert
+    const res = await axios.post(`${this.clientBaseUrl}/x509/validate`, {
+      certificate,
+      ethereumAddressSignature,
     });
     const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign);
-  }
-
-  /**
-   Removes a user from a whitelist (only works of the calling address is that of a Whitelist Manager)
-  */
-  async removeUserFromWhitelist(address) {
-    const res = await axios.post(`${this.clientBaseUrl}/whitelist/remove`, {
-      address,
-    });
-    const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign);
-  }
-
-  /**
-   checks if a user is whitelisted
-  */
-  async isWhitelisted(address) {
-    const res = await axios.get(`${this.clientBaseUrl}/whitelist/check`, {
-      params: {
-        address,
-      },
-    });
-    return res.data.isWhitelisted;
+    return this.submitTransaction(txDataToSign, this.x509ContractAddress);
   }
 }
 

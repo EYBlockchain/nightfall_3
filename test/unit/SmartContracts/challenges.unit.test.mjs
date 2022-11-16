@@ -71,8 +71,14 @@ describe('Challenges contract Challenges functions', function () {
     });
     await challenges.deployed();
 
+    const X509 = await ethers.getContractFactory('X509');
+    const x509 = await upgrades.deployProxy(X509, []);
+    await x509.deployed();
+
     const Shield = await ethers.getContractFactory('Shield');
-    shield = await upgrades.deployProxy(Shield, []);
+    shield = await upgrades.deployProxy(Shield, [x509.address], {
+      initializer: 'initializeState',
+    });
     await shield.deployed();
 
     const Utils = await ethers.getContractFactory('Utils');

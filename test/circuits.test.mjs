@@ -275,4 +275,9 @@ describe('General Circuit Test', () => {
     const finalBalance = await getBalance();
     expect(finalBalance - initialBalance).to.be.equal(0);
   });
+
+  after(async () => {
+    await nf3Proposer.deregisterProposer();
+    await nf3Proposer.close();
+  });
 });

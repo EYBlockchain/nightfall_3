@@ -38,6 +38,7 @@ let erc20Address;
 let stateAddress;
 const eventLogs = [];
 let availableTokenIds;
+let rollbackCount = 0;
 
 const emptyL2 = async () => {
   let count = await nf3Users[0].unprocessedTransactionCount();
@@ -59,11 +60,20 @@ describe('ERC1155 tests', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
-    });
+    newGasBlockEmitter
+      .on('gascost', async gasUsed => {
+        logger.debug(
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
+            gasUsed / txPerBlock
+          }`,
+        );
+      })
+      .on('rollback', () => {
+        rollbackCount += 1;
+        logger.debug(
+          `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
+        );
+      });
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
@@ -278,6 +288,12 @@ describe('ERC1155 tests', () => {
         logger.info('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
+    });
+  });
+
+  describe('Rollback checks', () => {
+    it('test should encounter zero rollbacks', function () {
+      expect(rollbackCount).to.be.equal(0);
     });
   });
 

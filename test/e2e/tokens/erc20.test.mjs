@@ -47,6 +47,8 @@ const eventLogs = [];
 const logs = {
   instantWithdraw: 0,
 };
+let rollbackCount = 0;
+
 const waitForTxExecution = async (count, txType) => {
   while (count === logs[txType]) {
     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -76,11 +78,20 @@ describe('ERC20 tests', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
-    });
+    newGasBlockEmitter
+      .on('gascost', async gasUsed => {
+        logger.debug(
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
+            gasUsed / txPerBlock
+          }`,
+        );
+      })
+      .on('rollback', () => {
+        rollbackCount += 1;
+        logger.debug(
+          `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
+        );
+      });
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
@@ -90,7 +101,8 @@ describe('ERC20 tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
-  beforeEach(async () => {
+  beforeEach(async function () {
+    if (this.currentTest.title === 'test should encounter zero rollbacks') return;
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
     await emptyL2();
   });
@@ -477,6 +489,12 @@ describe('ERC20 tests', () => {
         console.log('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
+    });
+  });
+
+  describe('Rollback checks', () => {
+    it('test should encounter zero rollbacks', function () {
+      expect(rollbackCount).to.be.equal(0);
     });
   });
 
