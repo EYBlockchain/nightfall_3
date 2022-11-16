@@ -52,20 +52,20 @@ router.post('/register', auth, async (req, res, next) => {
   const { url = '', stake = 0, fee = 0 } = req.body;
 
   try {
-    // Recreate Proposer, State contracts
-    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
-    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
-    const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-
     // Validate url, stake
     if (url === '') {
       throw new Error('Rest API URL not provided');
     }
 
+    const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
     const minimumStake = await stateContractInstance.methods.getMinimumStake().call();
     if (stake < minimumStake) {
       throw new Error(`Given stake is below ${minimumStake} Wei`);
     }
+
+    // Recreate Proposer contracts
+    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
 
     // Check if the proposer is already registered on the blockchain
     const proposerAddresses = (await getProposers()).map(p => p.thisAddress);
@@ -132,15 +132,16 @@ router.post('/update', auth, async (req, res, next) => {
   const { url = '', stake = 0, fee = 0 } = req.body;
 
   try {
-    // Recreate Proposer contracts
-    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
-    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
-
     // Validate url
     if (url === '') {
       throw new Error('Rest API URL not provided');
     }
 
+    // Recreate Proposer contract
+    const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+
+    // Update proposer data
     const txDataToSign = await proposersContractInstance.methods
       .updateProposer(url, fee)
       .encodeABI();
@@ -204,7 +205,7 @@ router.post('/de-register', auth, async (req, res, next) => {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
 
-    // Remove the proposer by updating the blockchain state
+    // Remove proposer
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
     const tx = {
       from: ethAddress,
@@ -230,10 +231,27 @@ router.post('/de-register', auth, async (req, res, next) => {
  */
 
 router.post('/withdrawStake', auth, async (req, res, next) => {
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
+
   try {
+    // Recreate Proposer contract
     const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+
+    // Withdraw proposer stake (after de-registering + cooling off period)
     const txDataToSign = await proposerContractInstance.methods.withdrawStake().encodeABI();
-    res.json({ txDataToSign });
+    const tx = {
+      from: ethAddress,
+      to: proposersContractAddress,
+      data: txDataToSign,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    logger.debug(`Transaction receipt ${receipt}`);
+
+    res.json({ receipt });
   } catch (error) {
     next(error);
   }
@@ -309,11 +327,26 @@ router.get('/stake', async (req, res, next) => {
  * provides the tx data, the user will need to call the blockchain client.
  */
 router.get('/withdraw', auth, async (req, res, next) => {
-  try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
 
-    res.json({ txDataToSign });
+  try {
+    // Recreate Proposer contract
+    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
+    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+
+    const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
+    const tx = {
+      from: ethAddress,
+      to: proposersContractAddress,
+      data: txDataToSign,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    logger.debug(`Transaction receipt ${receipt}`);
+
+    res.json({ receipt });
   } catch (err) {
     next(err);
   }
@@ -326,14 +359,34 @@ router.get('/withdraw', auth, async (req, res, next) => {
  */
 router.post('/payment', auth, async (req, res, next) => {
   const { blockHash } = req.body;
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
+
   try {
+    // Validate blockHash
+    if (!blockHash) {
+      throw new Error('Rest API URL not provided');
+    }
     const block = await getBlockByBlockHash(blockHash);
+
+    // Recreate Shield contract
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
+    const shieldContractAddress = await getContractAddress(SHIELD_CONTRACT_NAME);
+
     const txDataToSign = await shieldContractInstance.methods
       .requestBlockPayment(block)
       .encodeABI();
+    const tx = {
+      from: ethAddress,
+      to: shieldContractAddress,
+      data: txDataToSign,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    logger.debug(`Transaction receipt ${receipt}`);
 
-    res.json({ txDataToSign });
+    res.json({ receipt });
   } catch (err) {
     next(err);
   }
@@ -386,10 +439,15 @@ router.get('/mempool', async (req, res, next) => {
 });
 
 router.post('/encode', auth, async (req, res, next) => {
-  try {
-    const { transactions, block } = req.body;
+  const { transactions, block } = req.body;
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
 
+  try {
+    // Recreate State contract
     const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+    const stateContractAddress = await getContractAddress(STATE_CONTRACT_NAME);
+
     const latestTree = await getLatestTree();
     let currentLeafCount = latestTree.leafCount;
     /*
@@ -444,8 +502,17 @@ router.post('/encode', auth, async (req, res, next) => {
         newTransactions.map(t => Transaction.buildSolidityStruct(t)),
       )
       .encodeABI();
+    const tx = {
+      from: ethAddress,
+      to: stateContractAddress,
+      data: txDataToSign,
+      gas: 8000000,
+    };
+    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+    logger.debug(`Transaction receipt ${receipt}`);
 
-    res.json({ txDataToSign, block: newBlock, transactions: newTransactions });
+    res.json({ receipt, block: newBlock, transactions: newTransactions });
   } catch (err) {
     next(err);
   }

@@ -29,7 +29,6 @@ import {
 // then there will only be one queue here. The constructor does not need to initialise clientBaseUrl
 // for proposer/liquidityProvider/challenger and optimistBaseUrl, optimistWsUrl for a user etc
 const userQueue = new Queue({ autostart: true, concurrency: 1 });
-const proposerQueue = new Queue({ autostart: true });
 const challengerQueue = new Queue({ autostart: true, concurrency: 1 });
 const liquidityProviderQueue = new Queue({ autostart: true, concurrency: 1 });
 
@@ -909,23 +908,23 @@ class Nf3 {
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
   async withdrawStake() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawStake`, {
-      address: this.ethereumAddress,
-    });
-    return new Promise((resolve, reject) => {
-      proposerQueue.push(async () => {
-        try {
-          const receipt = await this.submitTransaction(
-            res.data.txDataToSign,
-            this.proposersContractAddress,
-            0,
-          );
-          resolve(receipt);
-        } catch (err) {
-          reject(err);
-        }
-      });
-    });
+    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawStake`);
+    logger.debug(`Proposer /withdrawStake response ${res}`);
+    return res;
+    // return new Promise((resolve, reject) => {
+    //   proposerQueue.push(async () => {
+    //     try {
+    //       const receipt = await this.submitTransaction(
+    //         res.data.txDataToSign,
+    //         this.proposersContractAddress,
+    //         0,
+    //       );
+    //       resolve(receipt);
+    //     } catch (err) {
+    //       reject(err);
+    //     }
+    //   });
+    // });
   }
 
   /**
@@ -966,10 +965,10 @@ class Nf3 {
     */
   async requestBlockPayment(blockHash) {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/payment`, {
-      address: this.ethereumAddress,
       blockHash,
     });
-    return this.submitTransaction(res.data.txDataToSign, this.shieldContractAddress, 0);
+    logger.debug(`Proposer /payment response ${res}`);
+    return res;
   }
 
   /**
