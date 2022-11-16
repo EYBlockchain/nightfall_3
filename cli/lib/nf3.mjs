@@ -1007,6 +1007,11 @@ class Nf3 {
     return emitter;
   }
 
+  // wrapper function to check for websocket readyness
+  isWsConnReady(connection) {
+    return connection && connection._ws && connection._ws.readyState === WebSocket.OPEN;
+  }
+
   /**
     Get block stake
     @method
@@ -1048,7 +1053,7 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          if (connection._ws && connection._ws.readyState === WebSocket.OPEN) {
+          if (this.isWsConnReady(connection)) {
             connection._ws.ping();
           }
         }, WEBSOCKET_PING_TIME),
@@ -1060,7 +1065,7 @@ class Nf3 {
     };
 
     connection.onmessage = async message => {
-      if (connection._ws && connection._ws.readyState === WebSocket.OPEN) {
+      if (this.isWsConnReady(connection)) {
         const msg = JSON.parse(message.data);
         const { type, txDataToSign, block, transactions, data } = msg;
 
@@ -1141,7 +1146,7 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          if (connection._ws && connection._ws.readyState === WebSocket.OPEN) {
+          if (this.isWsConnReady(connection)) {
             connection._ws.ping();
           }
         }, WEBSOCKET_PING_TIME),
@@ -1151,7 +1156,7 @@ class Nf3 {
       connection.send('challenge');
     };
     connection.onmessage = async message => {
-      if (connection._ws && connection._ws.readyState === WebSocket.OPEN) {
+      if (this.isWsConnReady(connection)) {
         const msg = JSON.parse(message.data);
         const { type, txDataToSign, sender } = msg;
         logger.debug(`Challenger received websocket message of type ${type}`);
