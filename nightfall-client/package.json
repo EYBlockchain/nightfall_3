@@ -5,7 +5,7 @@
   "main": "src/index.mjs",
   "scripts": {
     "start": "node src/index.mjs",
-    "start:debug": "node --inspect=0.0.0.0:9229 src/index.mjs",
+    "start:debug": "nodemon --inspect=0.0.0.0:9229 src/index.mjs",
     "dev": "nodemon src/index.mjs"
   },
   "repository": {

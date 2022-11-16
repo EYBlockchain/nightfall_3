@@ -3,6 +3,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import axios from 'axios';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { Web3Client, expectTransaction, pendingCommitmentCount } from '../../utils.mjs';
 
@@ -127,6 +128,42 @@ describe('Basic Proposer tests', () => {
         console.log(e);
       }
     }
+  });
+
+  it('should fail to register a proposer without a valid API key', async () => {
+    try {
+      bootProposer.setApiKey('test');
+      await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
+      expect.fail();
+    } catch (err) {
+      expect(err);
+    } finally {
+      bootProposer.setApiKey(environment.PROPOSER_KEY);
+    }
+  });
+
+  it('should fail to register a proposer without an API key', async () => {
+    try {
+      bootProposer.resetApiKey();
+      await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
+      expect.fail();
+    } catch (err) {
+      expect(err);
+    } finally {
+      bootProposer.setApiKey(environment.PROPOSER_KEY);
+    }
+  });
+
+  it('should access any public route with any API key', async () => {
+    bootProposer.resetApiKey();
+    const { status } = await axios.get(`${environment.optimistApiUrl}/proposer/mempool`);
+    expect(status).to.equal(200);
+  });
+
+  it('should access any public route with the correct API key', async () => {
+    bootProposer.setApiKey(environment.PROPOSER_KEY);
+    const { status } = await axios.get(`${environment.optimistApiUrl}/proposer/mempool`);
+    expect(status).to.equal(200);
   });
 
   it('should register the boot proposer', async () => {
