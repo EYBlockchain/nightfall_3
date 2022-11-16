@@ -43,6 +43,8 @@
     "mongodb": "^4.7.0",
     "queue": "^6.0.2",
     "safe-buffer": "^5.2.1",
+    "swagger-jsdoc": "^6.2.5",
+    "swagger-ui-express": "^4.6.0",
     "tar": "^6.1.11",
     "web3": "^1.7.5",
     "ws": "^7.4.3"

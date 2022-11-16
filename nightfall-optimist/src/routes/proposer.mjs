@@ -40,10 +40,38 @@ export function setProposer(p) {
 }
 
 /**
- * Function to return a raw transaction that registers a proposer.  This just
- * provides the tx data, the user will need to append the registration bond
- * amount.  The user must post the address being registered.  This is for the
- * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
+ * @openapi
+ *  /proposer/register:
+ *    post:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Proposer
+ *      summary: Register Proposer.
+ *      description: Route to return a raw transaction that registers a proposer. This just
+ *        provides the tx data, the user will need to append the registration bond
+ *        amount. The user must post the address being registered.  This is for the
+ *        Optimist app to use for it to decide when to start proposing blocks.  It is not
+ *        part of the unsigned blockchain transaction that is returned.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      requestBody:
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/Proposer'
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessProposerRegister'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/register', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
@@ -123,7 +151,38 @@ router.post('/register', auth, async (req, res, next) => {
 
 /**
  * Function to update proposer's URL
- * TODO endpoint could just update params according to the given info (should PATCH instead of update all)
+ * @TODO endpoint could just update params according to the given info (should PATCH instead of update all)
+ */
+
+/**
+ * @openapi
+ *  /proposer/update:
+ *    post:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Proposer
+ *      summary: Update Proposer.
+ *      description: Route to update proposer's URL.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      requestBody:
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/Proposer'
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessProposerUpdate'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/update', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
@@ -163,7 +222,20 @@ router.post('/update', auth, async (req, res, next) => {
 });
 
 /**
- * Returns the current proposer
+ * @openapi
+ *  /proposer/current-proposer:
+ *    get:
+ *      tags:
+ *      - Proposer
+ *      summary: Current Proposer.
+ *      description: Returns the current proposer.
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessCurrentProposer'
+ *        400:
+ *          $ref: '#/components/responses/BadRequest'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/current-proposer', async (req, res, next) => {
   try {
@@ -179,7 +251,20 @@ router.get('/current-proposer', async (req, res, next) => {
 });
 
 /**
- * Returns a list of the registered proposers
+ * @openapi
+ *  /proposer/proposers:
+ *    get:
+ *      tags:
+ *      - Proposer
+ *      summary: Proposers List.
+ *      description: Returns the current proposer.
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessProposerList'
+ *        400:
+ *          $ref: '#/components/responses/BadRequest'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/proposers', async (req, res, next) => {
   try {
@@ -192,8 +277,29 @@ router.get('/proposers', async (req, res, next) => {
 });
 
 /**
- * Function to return a raw transaction that de-registers a proposer.  This just
- * provides the tx data. The user has to call the blockchain client.
+ * @openapi
+ *  /proposer/de-register:
+ *    post:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Proposer
+ *      summary: Deregister Proposer.
+ *      description: Route that deregister a proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessDeregisterProposer'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/de-register', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
@@ -226,9 +332,30 @@ router.post('/de-register', auth, async (req, res, next) => {
 });
 
 /**
- * Function to withdraw stake for a de-registered proposer
+ * @openapi
+ *  /proposer/withdrawStake:
+ *    post:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Proposer
+ *      summary: Withdraw Stake.
+ *      description: Route to withdraw stake for a de-registered proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessWithdrawStake'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
  */
-
 router.post('/withdrawStake', auth, async (req, res, next) => {
   try {
     const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
@@ -240,7 +367,29 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
 });
 
 /**
- * Function to get pending blocks payments for a proposer.
+ * @openapi
+ *  /proposer/pending-payments:
+ *    get:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Proposer
+ *      summary: Pending Payments.
+ *      description: Function to get pending blocks payments for a proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessPendingPayments'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/pending-payments', auth, async (req, res, next) => {
   const { proposerAddress } = req.query;
@@ -280,10 +429,35 @@ router.get('/pending-payments', auth, async (req, res, next) => {
 });
 
 /**
- * Function to get stake for a proposer.
+ * @openapi
+ *  /proposer/stake:
+ *    get:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Proposer
+ *      summary: Get Stake.
+ *      description: Function to get the stake for a proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessCurrentStake'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        400:
+ *          $ref: '#/components/responses/BadRequest'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
  */
-router.get('/stake', async (req, res, next) => {
+router.get('/stake', auth, async (req, res, next) => {
   const { proposerAddress } = req.query;
+
   logger.debug(`requested stake for proposer ${proposerAddress}`);
 
   try {
@@ -304,9 +478,29 @@ router.get('/stake', async (req, res, next) => {
 });
 
 /**
- * Function to withdraw funds owing to an account.  This could be profits made
- * Through a successful challenge or proposing state updates. This just
- * provides the tx data, the user will need to call the blockchain client.
+ * @openapi
+ *  /proposer/withdraw:
+ *    get:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Proposer
+ *      summary: Finalise Withdraw.
+ *      description: Function to withdraw funds owing to an account.  This could be profits made Through a successful challenge or proposing state updates. This just provides the tx data, the user will need to call the blockchain client.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessWithdrawPayment'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/withdraw', auth, async (req, res, next) => {
   try {
@@ -320,9 +514,31 @@ router.get('/withdraw', auth, async (req, res, next) => {
 });
 
 /**
- * Function to get payment for proposing a L2 block.  This should be called only
- * after the block is finalised. It will authorise the payment as a pending
- * withdrawal and then /withdraw needs to be called to recover the money.
+ * @openapi
+ * /proposer/payment:
+ *   post:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *     - Proposer
+ *     summary: Initiate Withdraw Payment.
+ *     description: Function to get payment for proposing L2 block.  This should be called only after the block is finalised. It will authorise the payment as a pending withdrawal and then /withdraw needs to be called to recover the money.
+ *     parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *     requestBody:
+ *       $ref: '#/components/requestBodies/ProposerPayment'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessProposerPayment'
+ *       401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/payment', auth, async (req, res, next) => {
   const { blockHash } = req.body;
@@ -340,11 +556,29 @@ router.post('/payment', auth, async (req, res, next) => {
 });
 
 /**
- * Function to change the current proposer (assuming their time has elapsed).
- * This just provides the tx data, the user will need to call the blockchain
- * client.  It is a convenience function, because the unsigned transaction is
- * for a parameterless function - therefore it's a constant and could be pre-
- * computed by the app that calls this endpoint.
+ * @openapi
+ * /proposer/change:
+ *   get:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *     - Proposer
+ *     summary: Change Current Proposer.
+ *     description: Function to change the current proposer (assuming their time has elapsed). This just provides the tx data, the user will need to call the blockchain client.
+ *     parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessChangeProposer'
+ *       401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/change', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
@@ -374,7 +608,20 @@ router.get('/change', auth, async (req, res, next) => {
 });
 
 /**
- * Function to get mempool of a connected proposer
+ * @openapi
+ * /proposer/mempool:
+ *   get:
+ *     tags:
+ *     - Proposer
+ *     summary: Get Mempool of Transactions.
+ *     description: Get the transactions of the mempool that the proposer is connected to.
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       400:
+ *          $ref: '#/components/responses/BadRequest'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/mempool', async (req, res, next) => {
   try {
@@ -385,6 +632,31 @@ router.get('/mempool', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /proposer/encode:
+ *   post:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *     - Proposer
+ *     summary: Encode.
+ *     description:
+ *     parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
 router.post('/encode', auth, async (req, res, next) => {
   try {
     const { transactions, block } = req.body;
@@ -451,6 +723,22 @@ router.post('/encode', auth, async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /proposer/offchain-transaction:
+ *   post:
+ *     tags:
+ *     - Proposer
+ *     summary: Offchain Transaction.
+ *     description: Offchain transaction executed by a client.
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/Success'
+ *       400:
+ *          $ref: '#/components/responses/BadRequest'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
 router.post('/offchain-transaction', async (req, res) => {
   const { transaction } = req.body;
   /*
