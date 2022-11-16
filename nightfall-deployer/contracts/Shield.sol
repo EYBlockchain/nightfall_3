@@ -16,21 +16,26 @@ import './Utils.sol';
 import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
-import './KYC.sol';
+import './X509Interface.sol';
 
-contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
+contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => TransactionInfo) public txInfo;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
 
     address public challengesAddress;
+    X509Interface x509;
 
-    function initialize() public override(Stateful, Config, Pausable, KYC) initializer {
+    function initializeState(address x509Address) public initializer {
+        x509 = X509Interface(x509Address);
+        initialize();
+    }
+
+    function initialize() public override(Stateful, Config, Pausable) onlyInitializing {
         Stateful.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
-        KYC.initialize();
     }
 
     function getTransactionEscrowed(bytes32 transactionHash) public view returns (bool) {
@@ -40,7 +45,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
-        require(isWhitelisted(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
         if (t.transactionType == TransactionTypes.DEPOSIT) {
             txInfo[Utils.hashTransaction(t)].isEscrowed = true;
             require(uint256(t.fee) == msg.value);
@@ -212,7 +217,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, KYC {
 
             state.addPendingWithdrawal(recipientAddress, uint256(advancedWithdrawal.advanceFee), 0);
         }
-        require(isWhitelisted(msg.sender), 'Shield: You are not authorised to withdraw funds');
+        require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
         payOut(t, recipientAddress);
     }
 

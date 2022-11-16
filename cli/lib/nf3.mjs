@@ -4,6 +4,7 @@ import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
+import crypto from 'crypto';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
@@ -133,6 +134,7 @@ class Nf3 {
         throw new Error('Unknown contract address server');
     }
     // once we know where to ask, we can get the contract addresses
+    this.x509ContractAddress = await this.contractGetter('X509');
     this.shieldContractAddress = await this.contractGetter('Shield');
     this.proposersContractAddress = await this.contractGetter('Proposers');
     this.challengesContractAddress = await this.contractGetter('Challenges');
@@ -1415,37 +1417,33 @@ class Nf3 {
   }
 
   /**
-   Adds a user to a whitelist (only works of the calling address is that of a Whitelist Manager)
-  */
-  async addUserToWhitelist(groupId, address) {
-    const res = await axios.post(`${this.clientBaseUrl}/whitelist/add`, {
-      address,
+   Validates an X509 (RSA) certificate
+   */
+  async validateCertificate(certificate, ethereumAddress, derPrivateKey) {
+    // sign the ethereum address
+    let ethereumAddressSignature = null;
+    if (derPrivateKey) {
+      const privateKey = crypto.createPrivateKey({
+        key: derPrivateKey,
+        format: 'der',
+        type: 'pkcs1',
+      });
+      ethereumAddressSignature = crypto.sign(
+        'sha256',
+        Buffer.from(ethereumAddress.toLowerCase().slice(2), 'hex'),
+        {
+          key: privateKey,
+          padding: crypto.constants.RSA_PKCS1_PADDING,
+        },
+      );
+    }
+    // now validate the cert
+    const res = await axios.post(`${this.clientBaseUrl}/x509/validate`, {
+      certificate,
+      ethereumAddressSignature,
     });
     const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign);
-  }
-
-  /**
-   Removes a user from a whitelist (only works of the calling address is that of a Whitelist Manager)
-  */
-  async removeUserFromWhitelist(address) {
-    const res = await axios.post(`${this.clientBaseUrl}/whitelist/remove`, {
-      address,
-    });
-    const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign);
-  }
-
-  /**
-   checks if a user is whitelisted
-  */
-  async isWhitelisted(address) {
-    const res = await axios.get(`${this.clientBaseUrl}/whitelist/check`, {
-      params: {
-        address,
-      },
-    });
-    return res.data.isWhitelisted;
+    return this.submitTransaction(txDataToSign, this.x509ContractAddress);
   }
 }
 

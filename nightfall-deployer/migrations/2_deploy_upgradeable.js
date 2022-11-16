@@ -10,11 +10,11 @@ const Proposers = artifacts.require('Proposers.sol');
 const Challenges = artifacts.require('Challenges.sol');
 const State = artifacts.require('State.sol');
 const SimpleMultiSig = artifacts.require('SimpleMultiSig.sol');
-const KYC = artifacts.require('KYC.sol');
+const X509 = artifacts.require('X509.sol');
 
 const config = require('config');
 
-const { RESTRICTIONS, MULTISIG, WHITELIST_MANAGERS } = config;
+const { RESTRICTIONS, MULTISIG, RSA_TRUST_ROOTS } = config;
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
@@ -42,9 +42,10 @@ module.exports = async function (deployer) {
   await deployer.link(ChallengesUtil, Challenges);
   await deployer.deploy(SimpleMultiSig, SIGNATURE_THRESHOLD, sortedOwners, network_id);
 
+  await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
-  await deployProxy(Shield, [], { deployer, unsafeAllowLinkedLibraries: true });
+  await deployProxy(Shield, [X509.address], { deployer, unsafeAllowLinkedLibraries: true, initializer: 'initializeState' });
   await deployProxy(State, [Proposers.address, Challenges.address, Shield.address], {
     deployer,
     unsafeAllowLinkedLibraries: true,
@@ -54,6 +55,7 @@ module.exports = async function (deployer) {
   const proposers = await Proposers.deployed();
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
+  const x509 = await X509.deployed();
   await State.deployed();
   const { bootProposer, bootChallenger } = addresses;
   await proposers.setBootProposer(bootProposer);
@@ -78,10 +80,12 @@ module.exports = async function (deployer) {
     token => token.name === 'MATIC',
   ).address;
   await shield.setMaticAddress(maticAddress.toLowerCase());
-  // set initial whitelist managers
-  for (const whitelistManager of WHITELIST_MANAGERS) {
-    await shield.createWhitelistManager(whitelistManager.groupId, whitelistManager.address);
-  }
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
-  if (process.env.WHITELISTING==='enable') await shield.enableWhitelisting(true);
+  if (process.env.WHITELISTING==='enable') await x509.enableWhitelisting(true);
+  // set a trusted RSA root public key for X509 certificate checks
+  console.log('setting trusted public key');
+  for (publicKey of RSA_TRUST_ROOTS) {
+    const { modulus, exponent, authorityKeyIdentifier } = publicKey;
+    await x509.setTrustedPublicKey({ modulus, exponent }, authorityKeyIdentifier );
+  }
 };

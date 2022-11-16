@@ -343,7 +343,7 @@ jobs:
           name: ganache-test-logs
           path: ./ganache-test.log
 
-  kyc-test:
+  x509-test:
     env:
       WHITELISTING: enable
       CONFIRMATIONS: 1
@@ -368,7 +368,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> kyc-test.log &disown
+          ./bin/start-nightfall -g -d &> x509-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -380,14 +380,14 @@ jobs:
 
       - name: Debug logs - after image builds
         if: always()
-        run: cat kyc-test.log
+        run: cat x509-test.log
 
       - name: Run integration test
-        run: npm run test-kyc
+        run: npm run test-x509
 
       - name: Debug logs - after integration test run
         if: always()
-        run: cat kyc-test.log
+        run: cat x509-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -397,8 +397,8 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: kyc-test-logs
-          path: ./ganackyche-test.log
+          name: x509-test-logs
+          path: ./ganacx509he-test.log
 
   administrator-test:
     runs-on: ubuntu-20.04

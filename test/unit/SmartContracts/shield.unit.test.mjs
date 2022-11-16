@@ -7,11 +7,7 @@ import {
   calculateTransactionHash,
   createBlockAndTransactions,
 } from '../utils/utils.mjs';
-import {
-  setAdvancedWithdrawal,
-  setTransactionInfo,
-  setWhitelist,
-} from '../utils/shieldStorage.mjs';
+import { setAdvancedWithdrawal, setTransactionInfo } from '../utils/shieldStorage.mjs';
 import {
   setBlockData,
   setBlockPaymentClaimed,
@@ -22,6 +18,9 @@ import {
 const { ethers, upgrades } = hardhat;
 
 describe('Testing Shield Contract', function () {
+  let x509Address;
+  let X509Instance;
+
   let ShieldInstance;
   let shieldAddress;
 
@@ -72,8 +71,14 @@ describe('Testing Shield Contract', function () {
     const erc1155MockInstance = await Erc1155MockInstance.deployed();
     erc1155MockAddress = erc1155MockInstance.address;
 
+    const X509Deployer = await ethers.getContractFactory('X509');
+    X509Instance = await upgrades.deployProxy(X509Deployer);
+    x509Address = X509Instance.address;
+
     const ShieldDeployer = await ethers.getContractFactory('Shield');
-    ShieldInstance = await upgrades.deployProxy(ShieldDeployer);
+    ShieldInstance = await upgrades.deployProxy(ShieldDeployer, [x509Address], {
+      initializer: 'initializeState',
+    });
     shieldAddress = (await ShieldInstance.deployed()).address;
 
     const PoseidonDeployer = await ethers.getContractFactory('Poseidon');
@@ -289,7 +294,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if user is not whitelisted and whitelisting is active', async function () {
-      await setWhitelist(shieldAddress);
+      await X509Instance.enableWhitelisting(true);
       await expect(ShieldInstance.submitTransaction(withdrawTransaction)).to.be.revertedWith(
         'You are not authorised to transact using Nightfall',
       );
@@ -1064,7 +1069,7 @@ describe('Testing Shield Contract', function () {
     });
 
     it('fails if user is not whitelisted and whitelisting is active', async function () {
-      await setWhitelist(shieldAddress);
+      await X509Instance.enableWhitelisting(true);
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
       await time.increase(86400 * 7 + 1);
@@ -1074,7 +1079,7 @@ describe('Testing Shield Contract', function () {
 
       await expect(
         ShieldInstance.finaliseWithdrawal(block, withdrawTransaction, index, siblingPath),
-      ).to.be.revertedWith('Shield: You are not authorised to withdraw funds');
+      ).to.be.revertedWith('You are not authorised to transact using Nightfall');
     });
 
     it('fails to finalise withdrawal if tokenType is ERC20 and tokenId not zero', async function () {
