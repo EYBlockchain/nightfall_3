@@ -10,11 +10,8 @@ import { submitTransaction } from '../event-handlers/transaction-submitted.mjs';
 
 const { txWorkerCount } = config.TX_WORKER_PARAMS;
 
-//  ip addr show docker0
 async function initWorkers() {
   if (cluster.isPrimary) {
-    // Contact with optimist and download Shield and Challenges jsons. Only necessary is working in
-    // non docker mode. In docker mode, contracts are downloaded already
     const totalCPUs = Math.min(os.cpus().length - 1, Number(txWorkerCount));
 
     console.log(`Number of CPUs is ${totalCPUs}`);
@@ -31,6 +28,8 @@ async function initWorkers() {
     });
   } else {
     const app = express();
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
     console.log(`Worker ${process.pid} started`);
 
     app.get('/healthcheck', async (req, res) => {
@@ -41,8 +40,8 @@ async function initWorkers() {
     app.post('/tx-submitted', async (req, res) => {
       const { tx, proposerFlag } = req.body;
       try {
-        const response = submitTransaction(JSON.parse(tx), proposerFlag === 'true');
-        res.json(response);
+        submitTransaction(tx, proposerFlag);
+        res.sendStatus(200);
       } catch (err) {
         res.sendStatus(500);
       }

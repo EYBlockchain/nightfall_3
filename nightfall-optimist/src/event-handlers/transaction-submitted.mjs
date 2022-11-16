@@ -117,7 +117,6 @@ export async function transactionSubmittedEventHandler(eventParams) {
   logger.info({
     msg: 'Transaction Handler Main Thread - New transaction received.',
     transaction,
-    txWorkerCount,
     isWorkerEnable,
   });
 
@@ -130,10 +129,7 @@ export async function transactionSubmittedEventHandler(eventParams) {
       })
       .catch(function (error) {
         logger.error(`Error submit tx worker ${error}`);
-        // Main thread (no workers)
-        if (error.request) {
-          submitTransaction(transaction, fromBlockProposer);
-        }
+        submitTransaction(transaction, fromBlockProposer);
       });
   } else {
     // Main thread (no workers)
