@@ -124,18 +124,6 @@ export async function getBlockByBlockHash(blockHash) {
 }
 
 /**
-function to get a block by root, if you know the root of the block. This
-is useful for nightfall-client to establish the layer block number containing
-a given (historic) root.
-*/
-export async function getBlockByRoot(root) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { root };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
-}
-
-/**
 get the latest blockNumberL2 in our database
 */
 export async function getLatestBlockInfo() {

@@ -28,6 +28,7 @@ import {
 } from '../services/database.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import getProposers from '../services/proposer.mjs';
+import auth from '../utils/auth.mjs';
 
 const router = express.Router();
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
@@ -44,7 +45,7 @@ export function setProposer(p) {
  * amount.  The user must post the address being registered.  This is for the
  * Optimist app to use for it to decide when to start proposing blocks.  It is * not part of the unsigned blockchain transaction that is returned.
  */
-router.post('/register', async (req, res, next) => {
+router.post('/register', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
 
@@ -124,7 +125,7 @@ router.post('/register', async (req, res, next) => {
  * Function to update proposer's URL
  * TODO endpoint could just update params according to the given info (should PATCH instead of update all)
  */
-router.post('/update', async (req, res, next) => {
+router.post('/update', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
 
@@ -194,7 +195,7 @@ router.get('/proposers', async (req, res, next) => {
  * Function to return a raw transaction that de-registers a proposer.  This just
  * provides the tx data. The user has to call the blockchain client.
  */
-router.post('/de-register', async (req, res, next) => {
+router.post('/de-register', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
 
@@ -228,7 +229,7 @@ router.post('/de-register', async (req, res, next) => {
  * Function to withdraw stake for a de-registered proposer
  */
 
-router.post('/withdrawStake', async (req, res, next) => {
+router.post('/withdrawStake', auth, async (req, res, next) => {
   try {
     const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposerContractInstance.methods.withdrawStake().encodeABI();
@@ -241,8 +242,9 @@ router.post('/withdrawStake', async (req, res, next) => {
 /**
  * Function to get pending blocks payments for a proposer.
  */
-router.get('/pending-payments', async (req, res, next) => {
+router.get('/pending-payments', auth, async (req, res, next) => {
   const { proposerAddress } = req.query;
+  logger.debug(`requested pending payments for proposer ${proposer}`);
 
   const pendingPayments = [];
   // get blocks by proposer
@@ -281,7 +283,6 @@ router.get('/pending-payments', async (req, res, next) => {
  * Function to get stake for a proposer.
  */
 router.get('/stake', async (req, res, next) => {
-  logger.debug(`stake endpoint received GET`);
   const { proposerAddress } = req.query;
   logger.debug(`requested stake for proposer ${proposerAddress}`);
 
@@ -307,7 +308,7 @@ router.get('/stake', async (req, res, next) => {
  * Through a successful challenge or proposing state updates. This just
  * provides the tx data, the user will need to call the blockchain client.
  */
-router.get('/withdraw', async (req, res, next) => {
+router.get('/withdraw', auth, async (req, res, next) => {
   try {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
@@ -323,7 +324,7 @@ router.get('/withdraw', async (req, res, next) => {
  * after the block is finalised. It will authorise the payment as a pending
  * withdrawal and then /withdraw needs to be called to recover the money.
  */
-router.post('/payment', async (req, res, next) => {
+router.post('/payment', auth, async (req, res, next) => {
   const { blockHash } = req.body;
   try {
     const block = await getBlockByBlockHash(blockHash);
@@ -345,7 +346,7 @@ router.post('/payment', async (req, res, next) => {
  * for a parameterless function - therefore it's a constant and could be pre-
  * computed by the app that calls this endpoint.
  */
-router.get('/change', async (req, res, next) => {
+router.get('/change', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
 
@@ -384,7 +385,7 @@ router.get('/mempool', async (req, res, next) => {
   }
 });
 
-router.post('/encode', async (req, res, next) => {
+router.post('/encode', auth, async (req, res, next) => {
   try {
     const { transactions, block } = req.body;
 

@@ -8,6 +8,7 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { Mutex } from 'async-mutex';
+import crypto from 'crypto';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
@@ -106,6 +107,34 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
+    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
+      .createHash('sha256')
+      .update(environment.PROPOSER_KEY)
+      .digest('hex');
+  }
+
+  /**
+   * TODO This one should go it's merry way once the Nightfall Node is up
+   * as the only reason it is here is to allow for testing the optimist routes
+   * with a wrong API key
+   */
+  // eslint-disable-next-line class-methods-use-this
+  async setApiKey(key) {
+    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
+      .createHash('sha256')
+      .update(key)
+      .digest('hex');
+  }
+
+  /**
+   * TODO This one should go it's merry way once the Nightfall Node is up
+   * as the only reason it is here is to allow for testing the optimist routes
+   * with an empty API key
+   */
+
+  // eslint-disable-next-line class-methods-use-this
+  async resetApiKey() {
+    delete axios.defaults.headers.common['X-APP-TOKEN'];
   }
 
   /**

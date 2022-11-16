@@ -6,6 +6,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import { UserFactory } from 'nightfall-sdk';
+import axios from 'axios';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { Web3Client } from '../../utils.mjs';
 
@@ -67,6 +68,42 @@ describe('Basic Proposer tests', () => {
     stateABI = await bootProposer.getContractAbi('State');
     erc20Address = await bootProposer.getContractAddress('ERC20Mock');
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+  });
+
+  it('Should fail to register a proposer without a valid API key', async () => {
+    try {
+      bootProposer.setApiKey('test');
+      await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
+      expect.fail();
+    } catch (err) {
+      expect(err);
+    } finally {
+      bootProposer.setApiKey(environment.PROPOSER_KEY);
+    }
+  });
+
+  it('Should fail to register a proposer without an API key', async () => {
+    try {
+      bootProposer.resetApiKey();
+      await bootProposer.registerProposer(testProposersUrl[2], minimumStake);
+      expect.fail();
+    } catch (err) {
+      expect(err);
+    } finally {
+      bootProposer.setApiKey(environment.PROPOSER_KEY);
+    }
+  });
+
+  it('Should access any public route with any API key', async () => {
+    bootProposer.resetApiKey();
+    const { status } = await axios.get(`${environment.optimistApiUrl}/proposer/mempool`);
+    expect(status).to.equal(200);
+  });
+
+  it('Should access any public route with the correct API key', async () => {
+    bootProposer.setApiKey(environment.PROPOSER_KEY);
+    const { status } = await axios.get(`${environment.optimistApiUrl}/proposer/mempool`);
+    expect(status).to.equal(200);
   });
 
   it('Should register the boot proposer', async () => {
