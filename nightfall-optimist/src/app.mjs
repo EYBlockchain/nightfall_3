@@ -4,7 +4,7 @@ import express from 'express';
 import { setupHttpDefaults } from '@polygon-nightfall/common-files/utils/httputils.mjs';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
-import config from 'config';
+import options from './swagger-options.mjs';
 
 import {
   proposer,
@@ -15,47 +15,6 @@ import {
   getContractAbi,
   debug,
 } from './routes/index.mjs';
-
-const { optimistApiUrl } =
-  config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-
-const options = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Nightfall Optmist API',
-      version: '1.0.0',
-      description: 'An api to be used by the proposers',
-    },
-    servers: [
-      {
-        url: `${optimistApiUrl}`,
-      },
-    ],
-    components: {
-      securitySchemes: {
-        ApiKeyAuth: {
-          type: 'apiKey',
-          name: 'X-API-KEY',
-          in: 'header',
-        },
-      },
-      responses: {
-        UnauthorizedError: {
-          description: 'API key is missing or invalid',
-          headers: {
-            WWW_Authenticate: {
-              schema: {
-                type: 'string',
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-  apis: ['src/routes/**/*.mjs'],
-};
 
 const spec = swaggerJsDoc(options);
 

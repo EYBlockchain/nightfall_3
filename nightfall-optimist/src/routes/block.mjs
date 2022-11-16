@@ -9,103 +9,6 @@ const router = express.Router();
 
 /**
  * @openapi
- *  components:
- *    schemas:
- *      Block:
- *        type: object
- *        properties:
- *          _id:
- *            type: string
- *          blockHash:
- *            type: string
- *          blockNumber:
- *            type: number
- *          blockNumberL2:
- *            type: number
- *          frontierHash:
- *            type: string
- *          leafCount:
- *            type: number
- *          nCommitments:
- *            type: number
- *          previousBlockHash:
- *            type: string
- *          proposer:
- *            type: string
- *          root:
- *            type: string
- *          timeBlockL2:
- *            type: string
- *          transactionHashL1:
- *            type: string
- *          transactionHashes:
- *            type: array
- *            items:
- *              type: string
- *          transactionHashesRoot:
- *            type: string
- *      BlockToBeChecked:
- *        type: object
- *        properties:
- *          block:
- *            type: object
- *          transactions:
- *            type: array
- *      Transaction:
- *        type: object
- *        properties:
- *          value:
- *            type: string
- *          fee:
- *            type: string
- *          transactionType:
- *            type: string
- *          tokenType:
- *            type: string
- *          historicRootBlockNumberL2:
- *            type: array
- *            items:
- *              type: string
- *          historicRootBlockNumberL2Fee:
- *            type: array
- *            items:
- *              type: string
- *          tokenId:
- *            type: string
- *          ercAddress:
- *            type: string
- *          recipientAddress:
- *            type: string
- *          commitments:
- *            type: array
- *            items:
- *              type: string
- *          nullifiers:
- *            type: array
- *            items:
- *              type: string
- *          commitmentFee:
- *            type: array
- *            items:
- *              type: string
- *          nullifiersFee:
- *            type: array
- *            items:
- *              type: string
- *          compressedSecrets:
- *            type: array
- *            items:
- *              type: string
- *          proof:
- *            type: array
- *            items:
- *              type: string
- *          transactionHash:
- *            type: string
- */
-
-/**
- * @openapi
  *  /block/check:
  *    post:
  *      security:
@@ -128,11 +31,11 @@ const router = express.Router();
  *              $ref: '#/components/schemas/BlockToBeChecked'
  *      responses:
  *        200:
- *          description: Block without inconsistency.
+ *          $ref: '#/components/responses/SuccessBlockChecked'
  *        401:
- *          $ref: '#/components/responses/UnauthorizedError'
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some inconsistency was found.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/check', auth, async (req, res, next) => {
   try {
@@ -163,11 +66,11 @@ router.post('/check', auth, async (req, res, next) => {
  *          required: true
  *      responses:
  *        200:
- *          description: Making short block.
+ *          $ref: '#/components/responses/SuccessBlockCreated'
  *        401:
- *          $ref: '#/components/responses/UnauthorizedError'
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some inconsistency was found.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/make-now', auth, async (req, res, next) => {
   try {
@@ -197,19 +100,11 @@ router.get('/make-now', auth, async (req, res, next) => {
  *          required: true
  *      responses:
  *        200:
- *          description: Block reseted.
- *          content:
- *            application/json:
- *              schema:
- *                type: object
- *                properties:
- *                  block:
- *                    resetstatus: boolean
- *                    example: true
+ *          $ref: '#/components/responses/SuccessBlockReseted'
  *        401:
- *          $ref: '#/components/responses/UnauthorizedError'
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error ocurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/reset-localblock', auth, async (req, res, next) => {
   try {

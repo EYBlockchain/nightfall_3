@@ -39,130 +39,10 @@ export function setProposer(p) {
 
 /**
  * @openapi
- *  components:
- *    schemas:
- *      PendingPayments:
- *        type: array
- *        items:
- *          type: object
- *          properties:
- *            blockHash:
- *              type: string
- *            challengePeriod:
- *              type: boolean
- *        example:
- *           blockHash: "0x0d602201000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000018687474703a2f2f70726f706f736572746573743a383030300000000000000000"
- *           challengePeriod: false
- *      Proposer:
- *        type: object
- *        properties:
- *          url:
- *            type: string
- *            description: The proposer's url.
- *          stake:
- *            type: string
- *            description: The proposer's stake.
- *          fee:
- *            type: integer
- *            description: The proposer's fee.
- *        example:
- *           url: http://proposer1:8587
- *           stake: 0
- *           fee: 0
- *      TxDataToSign:
- *        type: object
- *        properties:
- *          txDataToSign:
- *            type: string
- *            description: The current proposer address.
- *        example:
- *           txDataToSign: "0x0d6022010000000000000"
- *      ProposersList:
- *        type: array
- *        items:
- *          type: object
- *          properties:
- *            0:
- *              type: string
- *              description: Current proposer address.
- *            1:
- *              type: string
- *              description: Previous proposer address.
- *            2:
- *              type: string
- *              description: Next proposer address.
- *            3:
- *              type: string
- *              description: Proposer's url.
- *            4:
- *              type: string
- *              description: Proposer's fee.
- *            5:
- *              type: boolean
- *              description: Proposer in.
- *            6:
- *              type: string
- *              description: Proposer index.
- *            thisAddress:
- *              type: integer
- *              description: Current proposer address.
- *            previousAddress:
- *              type: string
- *              description: Previous proposer address.
- *            nextAddress:
- *              type: string
- *              description: Next proposer address.
- *            url:
- *              type: string
- *              description: Proposer's url.
- *            fee:
- *              type: string
- *              description: Proposer's fee.
- *            inProposerSet:
- *              type: boolean
- *              description: Proposer in.
- *            indexProposerSet:
- *              type: string
- *              description: Proposer index.
- *        example:
- *          proposers: [{
- *            0: "0x0000000000000000000000000000000000000000",
- *            1: "0x0000000000000000000000000000000000000000",
- *            2: "0x0000000000000000000000000000000000000000",
- *            3: "",
- *            4: "0",
- *            5: false,
- *            6: "0",
- *            thisAddress: "0x0000000000000000000000000000000000000000",
- *            previousAddress: "0x0000000000000000000000000000000000000000",
- *            nextAddress: "0x0000000000000000000000000000000000000000",
- *            url: "",
- *            fee: "0",
- *            inProposerSet: false,
- *            indexProposerSet: "0"
- *          }]
- *      Stake:
- *        type: object
- *        properties:
- *          amount:
- *            type: string
- *            description: The staked amount of funds of the proposer.
- *            example: 10
- *          challengeLocked:
- *            type: string
- *            description: The block stake in case of an invalid block.
- *            example: 10
- *          time:
- *            type: string
- *            description: The time interval until the stake can be claimed.
- *            example: 10
- *
- */
-
-/**
- * @openapi
  *  /proposer/register:
  *    post:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Register Proposer.
@@ -171,6 +51,13 @@ export function setProposer(p) {
  *        amount. The user must post the address being registered.  This is for the
  *        Optimist app to use for it to decide when to start proposing blocks.  It is not
  *        part of the unsigned blockchain transaction that is returned.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      requestBody:
  *        content:
  *          application/json:
@@ -178,13 +65,11 @@ export function setProposer(p) {
  *              $ref: '#/components/schemas/Proposer'
  *      responses:
  *        200:
- *          description: Proposer updated.
- *          content:
- *            application/json:
- *              schema:
- *                $ref: '#/components/schemas/TxDataToSign'
+ *          $ref: '#/components/responses/SuccessProposerRegister'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error occurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/register', auth, async (req, res, next) => {
   try {
@@ -241,10 +126,19 @@ router.post('/register', auth, async (req, res, next) => {
  * @openapi
  *  /proposer/update:
  *    post:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Update Proposer.
  *      description: Route to update proposer's URL.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      requestBody:
  *        content:
  *          application/json:
@@ -252,13 +146,11 @@ router.post('/register', auth, async (req, res, next) => {
  *              $ref: '#/components/schemas/Proposer'
  *      responses:
  *        200:
- *          description: Proposer updated.
- *          content:
- *            application/json:
- *              schema:
- *                $ref: '#/components/schemas/TxDataToSign'
+ *          $ref: '#/components/responses/SuccessProposerUpdate'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error occurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/update', auth, async (req, res, next) => {
   try {
@@ -282,23 +174,26 @@ router.post('/update', auth, async (req, res, next) => {
  * @openapi
  *  /proposer/current-proposer:
  *    get:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Current Proposer.
  *      description: Returns the current proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      responses:
  *        200:
- *          description: Current proposer returned.
- *          content:
- *            application/json:
- *              schema:
- *                type: object
- *                properties:
- *                  currentProposer:
- *                    type: string
- *                    example: "0x0A2798E08B66A1a4188F4B239651C015aC587Bf8"
+ *          $ref: '#/components/responses/SuccessCurrentProposer'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error occurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/current-proposer', async (req, res, next) => {
   try {
@@ -317,21 +212,26 @@ router.get('/current-proposer', async (req, res, next) => {
  * @openapi
  *  /proposer/proposers:
  *    get:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Proposers List.
  *      description: Returns the current proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      responses:
  *        200:
- *          description: Proposer updated.
- *          content:
- *            application/json:
- *              schema:
- *                type: array
- *                items:
- *                  $ref: '#/components/schemas/ProposersList'
+ *          $ref: '#/components/responses/SuccessProposerList'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error occurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/proposers', async (req, res, next) => {
   try {
@@ -347,19 +247,26 @@ router.get('/proposers', async (req, res, next) => {
  * @openapi
  *  /proposer/de-register:
  *    post:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Deregister Proposer.
  *      description: Route that deregister a proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      responses:
  *        200:
- *          description: Proposer deregistered.
- *          content:
- *            application/json:
- *              schema:
- *                $ref: '#/components/schemas/TxDataToSign'
+ *          $ref: '#/components/responses/SuccessDeregisterProposer'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error occurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/de-register', auth, async (req, res, next) => {
   try {
@@ -379,19 +286,26 @@ router.post('/de-register', auth, async (req, res, next) => {
  * @openapi
  *  /proposer/withdrawStake:
  *    post:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Withdraw Stake.
  *      description: Route to withdraw stake for a de-registered proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      responses:
  *        200:
- *          description: Stake withdraw.
- *          content:
- *            application/json:
- *              schema:
- *                $ref: '#/components/schemas/TxDataToSign'
+ *          $ref: '#/components/responses/SuccessWithdrawStake'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error occurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/withdrawStake', auth, async (req, res, next) => {
   try {
@@ -407,21 +321,26 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
  * @openapi
  *  /proposer/pending-payments:
  *    get:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Pending Payments.
  *      description: Function to get pending blocks payments for a proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      responses:
  *        200:
- *          description: Pending payments recieved.
- *          content:
- *            application/json:
- *              schema:
- *                type: array
- *                items:
- *                  $ref: '#/components/schemas/PendingPayments'
+ *          $ref: '#/components/responses/SuccessPendingPayments'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error occurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/pending-payments', auth, async (req, res, next) => {
   const { proposerAddress } = req.query;
@@ -464,32 +383,26 @@ router.get('/pending-payments', auth, async (req, res, next) => {
  * @openapi
  *  /proposer/stake:
  *    get:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Get Stake.
  *      description: Function to get the stake for a proposer.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      responses:
  *        200:
- *          description: Current stake.
- *          content:
- *            application/json:
- *              schema:
- *                type: object
- *                properties:
- *                  amount:
- *                    type: string
- *                    description: The staked amount of funds of the proposer.
- *                    example: 10
- *                  challengeLocked:
- *                    type: string
- *                    description: The block stake in case of an invalid block.
- *                    example: 10
- *                  time:
- *                    type: string
- *                    description: The time interval until the stake can be claimed.
- *                    example: 10
+ *          $ref: '#/components/responses/SuccessCurrentStake'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error occurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/stake', async (req, res, next) => {
   const { proposerAddress } = req.query;
@@ -517,21 +430,26 @@ router.get('/stake', async (req, res, next) => {
  * @openapi
  *  /proposer/withdraw:
  *    get:
+ *      security:
+ *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
  *      summary: Finalise Withdraw.
  *      description: Function to withdraw funds owing to an account.  This could be profits made Through a successful challenge or proposing state updates. This just provides the tx data, the user will need to call the blockchain client.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *      responses:
  *        200:
- *          description: Withdrawal created.
- *          content:
- *            application/json:
- *              schema:
- *                type: array
- *                items:
- *                  $ref: '#/components/schemas/TxDataToSign'
+ *          $ref: '#/components/responses/SuccessWithdrawPayment'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
  *        500:
- *          description: Some error occurred.
+ *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/withdraw', auth, async (req, res, next) => {
   try {
@@ -548,30 +466,28 @@ router.get('/withdraw', auth, async (req, res, next) => {
  * @openapi
  * /proposer/payment:
  *   post:
+ *     security:
+ *       - ApiKeyAuth: []
  *     tags:
  *     - Proposer
  *     summary: Initiate Withdraw Payment.
  *     description: Function to get payment for proposing L2 block.  This should be called only after the block is finalised. It will authorise the payment as a pending withdrawal and then /withdraw needs to be called to recover the money.
+ *     parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               address:
- *                 type: string
- *                 description: Proposer address
- *                 example: '0x0A2798E08B66A1a4188F4B239651C015aC587Bf8'
- *               blockHash:
- *                 type: string
- *                 description: Hash of the payment
- *                 example: '0x7fe911936f773030ecaa1cf417b8c24e47cbf5e05b003b8f155bb10b0066956d'
+ *       $ref: '#/components/requestBodies/ProposerPayment'
  *     responses:
  *       200:
- *         description: OK
+ *         $ref: '#/components/responses/SuccessProposerPayment'
+ *       401:
+ *          $ref: '#/components/responses/Unauthorized'
  *       500:
- *         description: An error occurred
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/payment', auth, async (req, res, next) => {
   const { blockHash } = req.body;
@@ -592,15 +508,26 @@ router.post('/payment', auth, async (req, res, next) => {
  * @openapi
  * /proposer/change:
  *   get:
+ *     security:
+ *       - ApiKeyAuth: []
  *     tags:
  *     - Proposer
  *     summary: Change Current Proposer.
  *     description: Function to change the current proposer (assuming their time has elapsed). This just provides the tx data, the user will need to call the blockchain client.
+ *     parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *     responses:
  *       200:
- *         description: OK
+ *         $ref: '#/components/responses/SuccessChangeProposer'
+ *       401:
+ *          $ref: '#/components/responses/Unauthorized'
  *       500:
- *         description: An error occurred
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/change', auth, async (req, res, next) => {
   try {
@@ -623,9 +550,11 @@ router.get('/change', auth, async (req, res, next) => {
  *     description: Get the transactions of the mempool that the proposer is connected to.
  *     responses:
  *       200:
- *         description: OK
+ *         $ref: '#/components/responses/SuccessChangeProposer'
+ *       401:
+ *          $ref: '#/components/responses/Unauthorized'
  *       500:
- *         description: An error occurred
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/mempool', async (req, res, next) => {
   try {
@@ -640,15 +569,26 @@ router.get('/mempool', async (req, res, next) => {
  * @openapi
  * /proposer/encode:
  *   post:
+ *     security:
+ *       - ApiKeyAuth: []
  *     tags:
  *     - Proposer
  *     summary: Encode.
  *     description:
+ *     parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
  *     responses:
  *       200:
- *         description: OK
+ *         $ref: '#/components/responses/SuccessChangeProposer'
+ *       401:
+ *          $ref: '#/components/responses/Unauthorized'
  *       500:
- *         description: An error occurred
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/encode', auth, async (req, res, next) => {
   try {
@@ -726,9 +666,11 @@ router.post('/encode', auth, async (req, res, next) => {
  *     description: Offchain transaction executed by a client.
  *     responses:
  *       200:
- *         description: OK
+ *         $ref: '#/components/responses/SuccessChangeProposer'
+ *       401:
+ *          $ref: '#/components/responses/Unauthorized'
  *       500:
- *         description: An error occurred
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/offchain-transaction', async (req, res) => {
   const { transaction } = req.body;
