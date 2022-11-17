@@ -599,8 +599,6 @@ jobs:
 
   adversary-test:
     runs-on: ubuntu-20.04
-    env:
-      TRANSACTIONS_PER_BLOCK: 32
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v1

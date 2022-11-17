@@ -83,7 +83,7 @@ contract Challenges is Stateful, Config {
   is compared to the root stored within the block.
   */
     function challengeNewRootCorrect(
-        bytes32[33] calldata frontierAfterBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
+        bytes32[33] calldata frontierAfterBlock, // frontier after all the block commitments has been added.
         Block calldata blockL2,
         bytes32 salt
     ) external {
@@ -92,7 +92,7 @@ contract Challenges is Stateful, Config {
         // check that the current block hash is correct
         state.isBlockReal(blockL2);
 
-        bytes32 frontierAfterHash = keccak256(abi.encodePacked(frontierAfterBlock));
+        bytes32 frontierAfterHash = Utils.hashFrontier(frontierAfterBlock);
         require(frontierAfterHash == blockL2.frontierHash, 'Invalid prior block frontier');
 
         // see if the challenge is valid
