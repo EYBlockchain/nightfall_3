@@ -118,7 +118,7 @@ class Nf3 {
    * with a wrong API key
    */
   // eslint-disable-next-line class-methods-use-this
-  async setApiKey(key) {
+  setApiKey(key) {
     axios.defaults.headers.common['X-APP-TOKEN'] = crypto
       .createHash('sha256')
       .update(key)
@@ -132,7 +132,7 @@ class Nf3 {
    */
 
   // eslint-disable-next-line class-methods-use-this
-  async resetApiKey() {
+  resetApiKey() {
     delete axios.defaults.headers.common['X-APP-TOKEN'];
   }
 

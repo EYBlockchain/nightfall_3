@@ -326,14 +326,14 @@ router.get('/withdraw', auth, async (req, res, next) => {
   const ethPrivateKey = req.app.get('ethPrivateKey');
 
   try {
-    // Recreate Proposer contract
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+    // Recreate State contract
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const stateContractAddress = await getContractAddress(STATE_CONTRACT_NAME);
 
-    const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
+    const txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
     const tx = {
       from: ethAddress,
-      to: proposersContractAddress,
+      to: stateContractAddress,
       data: txDataToSign,
       gas: 8000000,
     };
@@ -360,7 +360,7 @@ router.post('/payment', auth, async (req, res, next) => {
   try {
     // Validate blockHash
     if (!blockHash) {
-      throw new Error('Rest API URL not provided');
+      throw new Error('Rest API `blockHash` not provided');
     }
     const block = await getBlockByBlockHash(blockHash);
 
