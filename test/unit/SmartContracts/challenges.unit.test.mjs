@@ -19,6 +19,12 @@ describe('Challenges contract Challenges functions', function () {
   let shield;
   let merkleTree;
   let challengesUtil;
+  let sanctionedSigner;
+
+  before(async () => {
+    const owner = await ethers.getSigners();
+    [, , , , sanctionedSigner] = owner;
+  });
 
   beforeEach(async () => {
     [addr1] = await ethers.getSigners();
@@ -73,10 +79,15 @@ describe('Challenges contract Challenges functions', function () {
 
     const X509 = await ethers.getContractFactory('X509');
     const x509 = await upgrades.deployProxy(X509, []);
-    await x509.deployed();
+
+    const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
+    const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
+      sanctionedSigner.address,
+    );
+    const sanctionsListAddress = sanctionsListMockInstance.address;
 
     const Shield = await ethers.getContractFactory('Shield');
-    shield = await upgrades.deployProxy(Shield, [x509.address], {
+    shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, x509.address], {
       initializer: 'initializeState',
     });
     await shield.deployed();
