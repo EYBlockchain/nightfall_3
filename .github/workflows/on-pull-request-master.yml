@@ -703,6 +703,7 @@ jobs:
 
   test-gas:
     env:
+      MAX_BLOCK_SIZE: 25000
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     name: check gas transactions per block
@@ -728,7 +729,7 @@ jobs:
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-gas.log &disown
         env:
-          MAX_BLOCK_SIZE: 50000
+          MAX_BLOCK_SIZE: 25000
           CONFIRMATIONS: 1
 
       - name: Wait for images to be ready
