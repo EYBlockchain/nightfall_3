@@ -1,6 +1,3 @@
-/**
- * Routes for checking that a block is valid.
- */
 import express from 'express';
 import { checkBlock } from '../services/check-block.mjs';
 import Block from '../classes/block.mjs';
@@ -10,6 +7,33 @@ import auth from '../utils/auth.mjs';
 
 const router = express.Router();
 
+/**
+ * @openapi
+ *  /block/check:
+ *    post:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Block
+ *      summary: Check Block.
+ *      description: Check a specific block.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      requestBody:
+ *        $ref: '#/components/requestBodies/CheckBlock'
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessBlockChecked'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
+ */
 router.post('/check', auth, async (req, res, next) => {
   try {
     const { block, transactions } = req.body;
@@ -20,6 +44,31 @@ router.post('/check', auth, async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ *  /block/make-now:
+ *    get:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Block
+ *      summary: Make block.
+ *      description: Responsible to call the function that will generate a new block.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessBlockCreated'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
+ */
 router.get('/make-now', auth, async (req, res, next) => {
   try {
     setMakeNow();
@@ -29,6 +78,31 @@ router.get('/make-now', auth, async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ *  /block/reset-localblock:
+ *    get:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Block
+ *      summary: Reset local block.
+ *      description: Route that reset a local block.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessBlockReseted'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
+ */
 router.get('/reset-localblock', auth, async (req, res, next) => {
   try {
     await Block.rollback();
