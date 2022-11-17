@@ -1215,7 +1215,7 @@ describe('Testing Shield Contract', function () {
 
       await expect(
         ShieldInstance.finaliseWithdrawal(block, withdrawTransaction, index, siblingPath),
-      ).to.be.revertedWith('You are not authorised to transact using Nightfall');
+      ).to.be.revertedWith('Shield: You are not authorised to transact using Nightfall');
     });
 
     it('fails to finalise withdrawal if tokenType is ERC20 and tokenId not zero', async function () {

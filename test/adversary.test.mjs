@@ -29,7 +29,7 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const { txPerBlock } = config.TEST_OPTIONS;
+const txPerBlock = 2;
 const TX_WAIT = 12000;
 const TEST_LENGTH = 3;
 

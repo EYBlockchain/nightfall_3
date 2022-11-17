@@ -21,8 +21,6 @@ import './X509Interface.sol';
 contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
-
-    address public challengesAddress;
     X509Interface x509;
 
     function initializeState(address x509Address) public initializer {
@@ -40,7 +38,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
-        require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(x509.x509Check(msg.sender), 'Shield: You are not authorised to transact using Nightfall');
         require(
             msg.value == 0 || Utils.getFee(t.packedInfo) == 0,
             'Shield: Fee cannot be paid in both tokens'
@@ -220,7 +218,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
 
             state.addPendingWithdrawal(recipientAddress, advancedWithdrawal.advanceFee, 0);
         }
-        require(x509.x509Check(msg.sender), 'You are not authorised to transact using Nightfall');
+        require(x509.x509Check(msg.sender), 'Shield: You are not authorised to transact using Nightfall');
         payOut(t, recipientAddress);
     }
 

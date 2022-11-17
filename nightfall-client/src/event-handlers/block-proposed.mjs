@@ -12,7 +12,7 @@ import {
   countCommitments,
   countNullifiers,
   setSiblingInfo,
-  countTransactionHashesBelongCircuit,
+  countCircuitTransactions,
   isTransactionHashBelongCircuit,
 } from '../services/commitment-storage.mjs';
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
@@ -63,6 +63,8 @@ async function blockProposedEventHandler(data, syncing) {
     const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
     const countOfNonZeroNullifiers = await countNullifiers(nonZeroNullifiers);
 
+    // In order to check if the transaction is a transfer, we check if the compressed secrets
+    // are different than zero. All other transaction types have compressedSecrets = [0,0]
     if (
       (transaction.compressedSecrets[0] !== 0 || transaction.compressedSecrets[1] !== 0) &&
       !countOfNonZeroCommitments
@@ -166,9 +168,7 @@ async function blockProposedEventHandler(data, syncing) {
 
   const withdrawCircuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(32);
 
-  if (
-    (await countTransactionHashesBelongCircuit(block.transactionHashes, withdrawCircuitHash)) > 0
-  ) {
+  if ((await countCircuitTransactions(block.transactionHashes, withdrawCircuitHash)) > 0) {
     const transactionHashesTimber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
     const updatedTransactionHashesTimber = Timber.statelessUpdate(
       transactionHashesTimber,

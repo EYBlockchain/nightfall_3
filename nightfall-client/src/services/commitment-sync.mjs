@@ -66,6 +66,8 @@ export async function clientCommitmentSync(zkpPrivateKey, nullifierKey) {
   for (let i = 0; i < transactions.length; i++) {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transactions[i].commitments.filter(n => n !== ZERO);
+    // In order to check if the transaction is a transfer, we check if the compressed secrets
+    // are different than zero. All other transaction types have compressedSecrets = [0,0]
     if (
       (transactions[i].compressedSecrets[0] !== 0 || transactions[i].compressedSecrets[1] !== 0) &&
       countCommitments([nonZeroCommitments[0]]) === 0

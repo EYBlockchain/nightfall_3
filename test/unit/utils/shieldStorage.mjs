@@ -4,7 +4,7 @@ import { setStorageAt } from '@nomicfoundation/hardhat-network-helpers';
 
 const { ethers } = hardhat;
 
-const advancedWithdrawalSlot = 165;
+const advancedWithdrawalSlot = 162;
 
 // eslint-disable-next-line import/prefer-default-export
 export async function setAdvancedWithdrawal(

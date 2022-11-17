@@ -19,7 +19,6 @@ const {
   ROTATE_PROPOSER_BLOCKS,
   fee,
   transferValue,
-  txPerBlock,
   tokenConfigs: { tokenType, tokenId },
 } = config.TEST_OPTIONS;
 
@@ -208,17 +207,13 @@ describe('Basic Proposer tests', () => {
     const currentZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
 
-    for (let i = 0; i < txPerBlock; i++) {
-      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-    }
+    await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
     await emptyL2(nf3User, web3Client, eventLogs);
 
     const afterZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
-    expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
-      transferValue * txPerBlock,
-    );
+    expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(transferValue);
   });
 
   it('Should create a valid changeCurrentProposer (because blocks has passed)', async function () {

@@ -18,7 +18,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const {
   fee,
   transferValue,
-  txPerBlock,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
@@ -58,20 +57,12 @@ describe('ERC20 tests', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
-    newGasBlockEmitter
-      .on('gascost', async gasUsed => {
-        logger.debug(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
-            gasUsed / txPerBlock
-          }`,
-        );
-      })
-      .on('rollback', () => {
-        rollbackCount += 1;
-        logger.debug(
-          `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
-        );
-      });
+    newGasBlockEmitter.on('rollback', () => {
+      rollbackCount += 1;
+      logger.debug(
+        `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
+      );
+    });
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
@@ -408,7 +399,7 @@ describe('ERC20 tests', () => {
           // limit (floor of 1/4th). So we perform 6 deposits of the max deposit value, accumulate them into
           // one commitment with multiple tranfers. Then perform withdraw with this huge commitment which
           // will be bigger than withdraw limit. Transfers to accumulate are done in such that they can
-          // accumulate this final value with any txPerBlock
+          // accumulate this final value
 
           // Transfer which gives a change of 0 is not possible because these commitments won't be picked
           // and transfer errors with no suitable commitments. Example, this is not possible
@@ -430,7 +421,7 @@ describe('ERC20 tests', () => {
 
           await depositNTransactions(
             nf3Users[0],
-            txPerBlock < 6 ? 6 : txPerBlock, // at least 6 deposits of max deposit value, put together it is bigger than max withdraw value
+            6, // at least 6 deposits of max deposit value, put together it is bigger than max withdraw value
             erc20Address,
             tokenType,
             maxERC20DepositValue,

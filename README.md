@@ -50,11 +50,11 @@ build up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./setup-nightfall`).
 If running for first time, do the setup as above and then run this script:
 
 ```sh
-./start-nightfall -l | -g | -r [-d]
+./bin/start-nightfall -l | -g | -r [-d]
 ```
 
 One can set the environment variable `NF_SERVICES_TO_START` with the list of the services desired to
-start up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./start-nightfall`).
+start up (e.g. `NF_SERVICES_TO_START=client,worker,optimist ./bin/start-nightfall`).
 
 This will bring up the application. You can run it either with a Ganache blockchain simulator or a
 real blockchain client which exposes a websocket connection on localHost:8546. See below for more

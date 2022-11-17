@@ -18,7 +18,6 @@
     "test-erc721-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/erc721.test.mjs",
     "test-erc1155-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/erc1155.test.mjs",
     "test-l2tokenisation": "npx hardhat test --bail --no-compile test/e2e/tokens/l2tokenisation.test.mjs",
-    "test-erc20-cli": "npx hardhat test --no-compile --bail test/client/erc20.test.mjs ",
     "ping-pong": "npx hardhat test --bail --no-compile test/ping-pong/ping-pong.test.mjs",
     "test-administrator": "npx hardhat test --bail --no-compile test/multisig/administrator.test.mjs ",
     "test-optimist-sync": "npx hardhat test --no-compile --bail test/optimist-resync.test.mjs",

@@ -22,7 +22,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const { BN128_GROUP_ORDER } = constants;
 
 const {
-  txPerBlock,
   transferValue,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
@@ -40,6 +39,7 @@ let erc20Address;
 let l2Address;
 let stateAddress;
 const eventLogs = [];
+let rollbackCount = 0;
 
 /*
   This function tries to zero the number of unprocessed transactions in the optimist node
@@ -55,9 +55,10 @@ describe('L2 Tokenisation tests', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
+    newGasBlockEmitter.on('rollback', () => {
+      rollbackCount += 1;
       logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+        `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
       );
     });
 
@@ -78,14 +79,6 @@ describe('L2 Tokenisation tests', () => {
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
 
     await emptyL2(nf3Users[0], web3Client, eventLogs);
-  });
-
-  after(async () => {
-    await nf3Proposer1.deregisterProposer();
-    await nf3Proposer1.close();
-    await nf3Users[0].close();
-    await nf3Users[1].close();
-    await web3Client.closeWeb3();
   });
 
   describe('Tokenise tests', () => {
@@ -222,5 +215,19 @@ describe('L2 Tokenisation tests', () => {
       expect(l2AddressBalanceAfter - l2AddressBalanceBefore).to.be.equal(-valueBurnt);
       expect(erc20AddressBalanceAfter - erc20AddressBalanceBefore).to.be.equal(-1);
     });
+  });
+
+  describe('Rollback checks', () => {
+    it('test should encounter zero rollbacks', function () {
+      expect(rollbackCount).to.be.equal(0);
+    });
+  });
+
+  after(async () => {
+    await nf3Proposer1.deregisterProposer();
+    await nf3Proposer1.close();
+    await nf3Users[0].close();
+    await nf3Users[1].close();
+    await web3Client.closeWeb3();
   });
 });
