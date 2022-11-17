@@ -608,12 +608,10 @@ jobs:
       - name: Build adversary
         run: npm run build-adversary
 
-      - name: Start Containers with geth
+      - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/geth-standalone -s
-          sleep 300
-          ./bin/start-nightfall -l -d -a &> adversary-test.log &disown
+          ./bin/start-nightfall -g -d -a &> adversary-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -627,7 +625,7 @@ jobs:
         if: always()
         run: cat adversary-test.log
 
-      - name: Run integration test
+      - name: Run adversary test
         run: |
           VERBOSE=true npm run test-adversary
 
@@ -635,11 +633,10 @@ jobs:
         if: always()
         run: cat adversary-test.log
 
-      - name: If integration test failed, shutdown the Containers
+      - name: If adversary test failed, shutdown the Containers
         if: failure()
         run: |
           npm run nightfall-down
-          ./bin/geth-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -696,7 +693,6 @@ jobs:
         if: failure()
         run: |
           npm run nightfall-down
-          ./bin/geth-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
