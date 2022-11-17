@@ -22,8 +22,6 @@ import './SanctionsListInterface.sol';
 contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
-
-    address public challengesAddress;
     X509Interface x509;
     SanctionsListInterface sanctionsList;
 
@@ -63,7 +61,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
                 revert(0, 4)
             }
         }
-        
+
         (, bool isEscrowRequired) = state.circuitInfo(Utils.getCircuitHash(t.packedInfo));
         if (isEscrowRequired || msg.value > 0) {
             bytes32 transactionHash = Utils.hashTransaction(t);
@@ -72,8 +70,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
                 payIn(t);
             }
         }
-
-        
     }
 
     // function to enable a proposer to get paid for proposing a block

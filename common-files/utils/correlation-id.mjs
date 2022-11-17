@@ -1,7 +1,6 @@
-import * as uuid from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import cls from 'cls-hooked';
 
-const { v4: uuidv4 } = uuid;
 const store = cls.createNamespace('correlation-id-namespace');
 
 const CORRELATION_ID_KEY = 'correlation-id';

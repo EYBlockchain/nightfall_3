@@ -19,7 +19,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const {
   fee,
-  txPerBlock,
   transferValue,
   tokenConfigs: { tokenTypeERC1155, tokenType, tokenId },
   mnemonics,
@@ -47,20 +46,12 @@ describe('ERC1155 tests', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter
-      .on('gascost', async gasUsed => {
-        logger.debug(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
-            gasUsed / txPerBlock
-          }`,
-        );
-      })
-      .on('rollback', () => {
-        rollbackCount += 1;
-        logger.debug(
-          `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
-        );
-      });
+    newGasBlockEmitter.on('rollback', () => {
+      rollbackCount += 1;
+      logger.debug(
+        `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
+      );
+    });
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);

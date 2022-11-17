@@ -74,8 +74,8 @@ export async function countNullifiers(nullifiers) {
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
 
-// function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
-export async function countTransactionHashesBelongCircuit(transactionHashes, circuitHash) {
+// function to get count of transaction hashes that belongs to the circuitHash specified
+export async function countCircuitTransactions(transactionHashes, circuitHash) {
   const connection = await mongo.connection(MONGO_URL);
   const query = {
     transactionHash: { $in: transactionHashes },

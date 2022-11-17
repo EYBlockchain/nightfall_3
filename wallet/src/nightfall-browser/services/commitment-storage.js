@@ -82,8 +82,8 @@ export async function countTransactionHashes(transactionHashes) {
   return filtered.length;
 }
 
-// function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
-export async function countTransactionHashesBelongCircuit(transactionHashes, circuitHash) {
+// function to get count of transaction hashes that belongs to the circuitHash specified
+export async function countCircuitTransactions(transactionHashes, circuitHash) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {

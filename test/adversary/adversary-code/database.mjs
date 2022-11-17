@@ -380,7 +380,7 @@ export const addTx = txType => {
 Function to return transactions, ordered by the highest fee. 
 */
 // eslint-disable-next-line import/prefer-default-export
-export async function getSortedByFeeMempoolTransactions(errorIndex) {
+export async function getMempoolTxsSortedByFee(errorIndex) {
   if (resetErrorIdx) {
     resetErrorIdx = false;
     indexOffset = errorIndex;

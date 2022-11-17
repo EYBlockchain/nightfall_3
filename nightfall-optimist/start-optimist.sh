@@ -14,7 +14,7 @@ usage()
   echo "Usage:"
   echo "  -d or --delete_db; delete mongo db contents"
   echo "  -e or --environment; start optimist on mainnet or testnet."
-  echo "     If not added, it will start optimist to local setup created wih ./start-nightfall"
+  echo "     If not added, it will start optimist to local setup created wih ./bin/start-nightfall"
 }
 
 # MONGODB volume
@@ -87,7 +87,7 @@ if [ ! -z "${DEPLOYMENT}" ]; then
    -e MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME} \
    mongo
 else
-  # If we use ./start-nightfall script, then assume we are using ganache. Retrieve IP to establish connection
+  # If we use ./bin/start-nightfall script, then assume we are using ganache. Retrieve IP to establish connection
   OPTIMIST_VOLUME_STRING="--mount source=nightfall_3_build,destination=/app/build"
   BLOCKCHAIN_CONTAINER_ID=$(docker ps  --no-trunc | grep ganache | awk '{print $1}')
   BLOCKCHAIN_IP=$(docker network inspect nightfall_3_nightfall_network | jq ".[0].Containers.\"${BLOCKCHAIN_CONTAINER_ID}\"".IPv4Address | tr -d "\"")

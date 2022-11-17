@@ -13,7 +13,7 @@ import {
   countCommitments,
   setSiblingInfo,
   countTransactionHashes,
-  countTransactionHashesBelongCircuit,
+  countCircuitTransactions,
   isTransactionHashBelongCircuit,
 } from '../services/commitment-storage';
 import {
@@ -52,6 +52,8 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
 
     const storeCommitments = [];
     const tempTransactionStore = [];
+    // In order to check if the transaction is a transfer, we check if the compressed secrets
+    // are different than zero. All other transaction types have compressedSecrets = [0,0]
     if (
       (transaction.compressedSecrets[0] !== 0 || transaction.compressedSecrets[1] !== 0) &&
       !countOfNonZeroCommitments
@@ -172,7 +174,7 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
   // 2. Save transactions hash of the transactions in this L2 block that contains withdraw transactions for this client
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
-  if ((await countTransactionHashesBelongCircuit(block.transactionHashes, circuitHash)) > 0) {
+  if ((await countCircuitTransactions(block.transactionHashes, circuitHash)) > 0) {
     const transactionHashesTimber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
 
     const updatedTransactionHashesTimber = Timber.statelessUpdate(

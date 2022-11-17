@@ -8,7 +8,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
 import Transaction from '../common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { depositNTransactions, Web3Client, waitForTimeout } from './utils.mjs';
+import { Web3Client, waitForTimeout } from './utils.mjs';
 import { buildBlockSolidityStruct } from '../nightfall-optimist/src/services/block-utils.mjs';
 
 // so we can use require with mjs file
@@ -21,7 +21,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const {
   fee,
   transferValue,
-  txPerBlock,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
@@ -159,17 +158,9 @@ describe('Optimist synchronisation tests', () => {
 
     it('Resync optimist after making a good block without dropping dB', async function () {
       // We create enough good transactions to fill a block full of deposits.
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       let p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
       await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
@@ -188,17 +179,9 @@ describe('Optimist synchronisation tests', () => {
       // TODO - get optimist to do this automatically.
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a resync correctly occured
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
       await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
@@ -211,17 +194,9 @@ describe('Optimist synchronisation tests', () => {
 
     it('Resync optimist after making a good block dropping Db', async function () {
       // We create enough good transactions to fill a block full of deposits.
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       let p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
       await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
@@ -238,17 +213,9 @@ describe('Optimist synchronisation tests', () => {
       // TODO - get optimist to do this automatically.
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a resync correctly occured
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
       await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
@@ -261,17 +228,9 @@ describe('Optimist synchronisation tests', () => {
 
     it('Resync optimist after making an un-resolved bad block', async function () {
       // We create enough good transactions to fill a block full of deposits.
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       let p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
       await nf3Users[0].makeBlockNow();
 
@@ -325,17 +284,9 @@ describe('Optimist synchronisation tests', () => {
       await nf3Proposer1.registerProposer('http://optimist', minimumStake);
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a rollback correctly occured
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
       await nf3Users[0].makeBlockNow();
 
