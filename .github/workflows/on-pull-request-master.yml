@@ -1,8 +1,8 @@
 name: Check PR
 
 on:
-  push:
-    branches: [liju.jose/make-all-bad-tx-are-challenged-and-rolledback]
+  pull_request:
+    branches: [master]
 
 jobs:
   dependency-review:
