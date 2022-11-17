@@ -559,16 +559,6 @@ export async function getTreeByBlockNumberL2(blockNumberL2) {
   return t;
 }
 
-export async function getTreeByRoot(treeRoot) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const { root, frontier, leafCount } = (await db
-    .collection(TIMBER_COLLECTION)
-    .findOne({ root: treeRoot })) ?? { root: 0, frontier: [], leafCount: 0 };
-  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
-  return t;
-}
-
 export async function getTreeByLeafCount(historicalLeafCount) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
