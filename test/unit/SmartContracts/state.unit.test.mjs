@@ -13,6 +13,12 @@ describe('State contract State functions', function () {
   let addressC;
   let transactionsCreated;
   let shield;
+  let sanctionedSigner;
+
+  before(async () => {
+    const owner = await ethers.getSigners();
+    [, , , , sanctionedSigner] = owner;
+  });
 
   beforeEach(async () => {
     [addr1, addr2, addressC] = await ethers.getSigners();
@@ -70,8 +76,16 @@ describe('State contract State functions', function () {
     const X509Instance = await upgrades.deployProxy(X509Deployer);
     const x509Address = X509Instance.address;
 
+    const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
+    const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
+      sanctionedSigner.address,
+    );
+    const sanctionsListAddress = sanctionsListMockInstance.address;
+
     const Shield = await ethers.getContractFactory('Shield');
-    shield = await upgrades.deployProxy(Shield, [x509Address], { initializer: 'initializeState' });
+    shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, x509Address], {
+      initializer: 'initializeState',
+    });
     await shield.deployed();
 
     const Utils = await ethers.getContractFactory('Utils');
