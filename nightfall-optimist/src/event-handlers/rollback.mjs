@@ -63,7 +63,7 @@ async function rollbackEventHandler(data) {
       try {
         // eslint-disable-next-line no-await-in-loop
         await checkTransaction(blockTransactions[j], false, {
-          blockNumberL2: blocksToBeDeleted[i].blockNumberL2,
+          blockNumbersL2: blocksToBeDeleted.map( b => b.blockNumberL2),
         });
       } catch (error) {
         logger.error({

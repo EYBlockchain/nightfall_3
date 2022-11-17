@@ -25,7 +25,7 @@ const { generalise } = gen;
 const { PROVING_SCHEME, BACKEND, CURVE } = config;
 const { ZERO, CHALLENGES_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
-async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
+async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txBlockNumbersL2) {
   // Note: There is no need to check the duplicate commitment in the same transaction since this is already checked in the circuit
   // check if any commitment in the transaction is already part of an L2 block
 
@@ -36,7 +36,7 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txB
       const transactionL2 = await getL2TransactionByCommitment(
         commitment,
         inL2AndNotInL2,
-        txBlockNumberL2,
+        txBlockNumbersL2,
       );
 
       // If a transaction was found, means that the commitment is duplicated
@@ -69,7 +69,7 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txB
   }
 }
 
-async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
+async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBlockNumbersL2) {
   // Note: There is no need to check the duplicate nullifiers in the same transaction since this is already checked in the circuit
   // check if any nullifier in the transction is already part of an L2 block
   for (const [index, nullifier] of transaction.nullifiers.entries()) {
@@ -78,7 +78,7 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBl
       const transactionL2 = await getL2TransactionByNullifier(
         nullifier,
         inL2AndNotInL2,
-        txBlockNumberL2,
+        txBlockNumbersL2,
       );
 
       // If a transaction was found, means that the nullifier is duplicated
@@ -191,8 +191,8 @@ async function verifyProof(transaction) {
 
 async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
   return Promise.all([
-    checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
-    checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumberL2),
+    checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumbersL2),
+    checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumbersL2),
     checkHistoricRootBlockNumber(transaction),
     verifyProof(transaction),
   ]);

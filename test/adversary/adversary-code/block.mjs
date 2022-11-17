@@ -11,15 +11,23 @@ let error = process.env.BAD_BLOCK_SEQUENCE
       // 'IncorrectLeafCount', //  Needs one prior block
       'DuplicateCommitmentTransfer', // needs atleast one non withdraw transaction in a prior block
       'DuplicateCommitmentDeposit',
+      'ValidBlock',
       'DuplicateNullifierTransfer', // needs atleast one non deposit transaction in a prior block
+      'ValidBlock',
       'IncorrectProofDeposit',
+      'ValidBlock',
       'IncorrectProofTransfer',
+      'ValidBlock',
       'IncorrectPublicInputDepositCommitment',
+      'ValidBlock',
       'IncorrectPublicInputTransferCommitment',
+      'ValidBlock',
       'IncorrectPublicInputTransferNullifier',
       'ValidBlock',
       'DuplicateNullifierWithdraw', // needs atleast one non deposit transaction in a prior block
+      'ValidBlock',
       'IncorrectProofWithdraw',
+      'ValidBlock',
       'IncorrectPublicInputWithdrawNullifier',
       // 'IncorrectHistoricRoot', // TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
       'ValidBlock',

@@ -18,15 +18,23 @@ let error = process.env.BAD_TX_SEQUENCE
       // 'IncorrectLeafCount',
       'DuplicateCommitmentTransfer',
       'DuplicateCommitmentDeposit',
+      'ValidTransaction',
       'DuplicateNullifierTransfer',
+      'ValidTransaction',
       'IncorrectProofDeposit',
+      'ValidTransaction',
       'IncorrectProofTransfer',
+      'ValidTransaction',
       'IncorrectPublicInputDepositCommitment',
+      'ValidTransaction',
       'IncorrectPublicInputTransferCommitment',
+      'ValidTransaction',
       'IncorrectPublicInputTransferNullifier',
       'ValidTransaction',
       'DuplicateNullifierWithdraw',
+      'ValidTransaction',
       'IncorrectProofWithdraw',
+      'ValidTransaction',
       'IncorrectPublicInputWithdrawNullifier',
       // 'IncorrectHistoricRoot', // TODO IncorrectHistoricRootTransfer and IncorrectHistoricRootWithdraw
       'ValidTransaction',
@@ -169,7 +177,7 @@ const duplicateNullifier = async (number, transactionType) => {
 
     // update transactionHash because proposeBlock in State.sol enforces transactionHashesRoot in Block data to be equal to what it calculates from the transactions
     modifiedTransaction.transactionHash = Transaction.calcHash(modifiedTransaction);
-    logger.debug(`Transfer after modification ${JSON.stringify(modifiedTransaction[0], null, 2)}`);
+    logger.debug(`Transfer after modification ${JSON.stringify(modifiedTransaction, null, 2)}`);
 
     modifiedTransactions = transactions.slice(0, number - 1);
     modifiedTransactions.push(modifiedTransaction);

@@ -473,7 +473,7 @@ export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
 export async function getL2TransactionByCommitment(
   commitmentHash,
   inL2AndNotInL2 = false,
-  blockNumberL2OfTx,
+  blockNumbersL2OfTx,
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -481,7 +481,7 @@ export async function getL2TransactionByCommitment(
     ? { commitments: commitmentHash }
     : {
         commitments: commitmentHash,
-        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+        blockNumberL2: { $gte: -1, $nin: blockNumbersL2OfTx },
       };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
@@ -491,7 +491,7 @@ export async function getL2TransactionByCommitment(
 export async function getL2TransactionByNullifier(
   nullifierHash,
   inL2AndNotInL2 = false,
-  blockNumberL2OfTx,
+  blockNumbersL2OfTx,
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -499,7 +499,7 @@ export async function getL2TransactionByNullifier(
     ? { nullifiers: nullifierHash }
     : {
         nullifiers: nullifierHash,
-        blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+        blockNumberL2: { $gte: -1, $nin: blockNumbersL2OfTx },
       };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
