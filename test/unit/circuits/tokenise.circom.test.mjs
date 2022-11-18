@@ -10,14 +10,14 @@ const __dirname = path.dirname(__filename);
 const tester = circomTester.wasm;
 // const { expect } = chai;
 
-describe('Test burn circuit', function () {
+describe('Test tokenise circuit', function () {
   this.timeout(60000);
-  const circuitPath = path.join(__dirname, '../../nightfall-deployer/circuits/burn.circom');
+  const circuitPath = path.join(__dirname, '../../../nightfall-deployer/circuits/tokenise.circom');
   let circuit;
 
   let value;
   let fee;
-  const circuitHash = '4';
+  const circuitHash = '3';
   let tokenType;
   let ercAddress;
   let historicRootBlockNumberL2;
@@ -49,30 +49,24 @@ describe('Test burn circuit', function () {
     fee = '1';
     tokenType = '0';
     tokenId = ['0', '0', '0', '0', '0', '0', '0', '0'];
-    historicRootBlockNumberL2 = ['2', '2', '0'];
+    historicRootBlockNumberL2 = ['0', '0'];
     ercAddress = '0';
     commitments = [
-      '16375765543079323602529377570070023885410445967535428085833109742976453595894',
-      '18707536334705882256869311881167201810355473445932762964237349831507871442386',
+      '1313166623246429593084644272698919593071502363368033233247421550614677235254',
+      '13795926514176711409651363556113530777846871819130511983847321219523948733795',
     ];
     nullifiers = [
-      '7282396293468696541787692821799319645402325477708549771055867669166529046302',
-      '5665660959676054353752818697098428062741333526418201927541295922806967195106',
+      '19361914569140534497371439710163441315436234882045674534770607170344888469425',
       '0',
     ];
     compressedSecrets = ['0', '0'];
-    roots = [
-      '1415033194412474259604457225946249736927324822014018173178295842554598286714',
-      '1415033194412474259604457225946249736927324822014018173178295842554598286714',
-      '0',
-    ];
+    roots = ['1238158923135214511678539010701967550127808660486153268011734093437145284318', '0'];
     feeAddress = '1319533947831612348694315757168650042041713553662';
     recipientAddress = '0';
     rootKey = '2279923558995011751611063584918713773156544989985830828459384641106187332209';
-    nullifiersValues = ['5', '8', '0'];
+    nullifiersValues = ['10', '0'];
     nullifiersSalts = [
-      '1148036745128417359917070962024254213109377584646006074738607786607848625585',
-      '1118528393993997824675296443684053194374662027509797001442461774032464070117',
+      '18229817256822383831082290017727107562979937067420277805181360470721804935345',
       '0',
     ];
     paths = [
@@ -106,41 +100,7 @@ describe('Test burn circuit', function () {
         '0',
         '0',
         '0',
-        '3067214235569605348053524621998343395561574295199234413368570087079442800289',
-        '18522342711066106425961359570360419829060169902806176026128797812172152392682',
-        '13795926514176711409651363556113530777846871819130511983847321219523948733795',
-      ],
-      [
         '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '2184076416084575252155788950520993737142087411043641888726720976784217542467',
         '0',
         '0',
       ],
@@ -180,11 +140,11 @@ describe('Test burn circuit', function () {
       ],
     ];
 
-    orders = ['3', '4', '0'];
-    commitmentsValues = ['1', '7'];
+    orders = ['0', '0'];
+    commitmentsValues = ['1', '9'];
     commitmentsSalts = [
-      '21410471382643710744442571469981294631414048971628290436304391481694453066466',
-      '4698247583643147343025590386834825758712559730779777460381049927871782298629',
+      '16790462312303348840737270388017939400790001316276057587137079544630373466756',
+      '19288797260900545636510770670502347912857351707263327459877164437871562442516',
     ];
     recipientPublicKey = [
       [
@@ -202,10 +162,10 @@ describe('Test burn circuit', function () {
     packedErcAddressPrivate =
       '21711016731996786641919559690090612179745446532414748301311487203631771980383';
     idRemainderPrivate = '11';
-    valuePrivate = '4';
+    valuePrivate = '1';
   });
 
-  it('Should verify a valid burn', async () => {
+  it('Should verify a valid tokenise', async () => {
     const input = {
       value,
       fee,
@@ -290,7 +250,6 @@ describe('Test burn circuit', function () {
       nullifiers: [
         '17999105792329651812725678444463795258152753649215938181082241399954600642554',
         '17999105792329651812725678444463795258152753649215938181082241399954600642554',
-        '0',
       ],
       compressedSecrets,
       roots,
@@ -536,7 +495,7 @@ describe('Test burn circuit', function () {
     }
   });
 
-  it('Should fail if first nullifier is zero', async () => {
+  it('Should fail if first commitment is zero', async () => {
     const input = {
       value,
       fee,
@@ -546,8 +505,8 @@ describe('Test burn circuit', function () {
       ercAddress,
       tokenId,
       recipientAddress,
-      commitments,
-      nullifiers: ['0', '0', '0'],
+      commitments: ['0', '0'],
+      nullifiers,
       compressedSecrets,
       roots,
       feeAddress,
@@ -627,7 +586,7 @@ describe('Test burn circuit', function () {
       nullifiersValues,
       nullifiersSalts,
       paths,
-      orders: ['1', '0', '0'],
+      orders: ['1', '0'],
       commitmentsValues,
       commitmentsSalts,
       recipientPublicKey,

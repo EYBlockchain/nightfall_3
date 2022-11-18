@@ -1,24 +1,34 @@
+/* ignore unused exports */
+
+import gen from 'general-number';
 import Web3 from 'web3';
 import config from 'config';
-import gen from 'general-number';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import constants from '../constants/index.mjs';
+import logger from './logger.mjs';
 
-// These functions are called by static methods in the Block class but are sometimes needed when the rest
-// of the block object isn't.  They can thus be called directly when instantiating the Block class
-// would be problematic because of its reliance on the Optimist database.
-
+const { generalise } = gen;
 const { SIGNATURES, TIMBER_HEIGHT } = config;
 const { ZERO } = constants;
-const { generalise } = gen;
 
-export const packInfo = (blockNumberL2, leafCount, proposer) => {
+// eslint-disable-next-line import/prefer-default-export
+export function unpackBlockInfo(packedInfo) {
+  const packedInfoHex = generalise(packedInfo).hex(32).slice(2);
+
+  const leafCount = generalise(`0x${packedInfoHex.slice(0, 8)}`).hex(4);
+  const blockNumberL2 = generalise(`0x${packedInfoHex.slice(8, 24)}`).hex(8);
+  const proposer = generalise(`0x${packedInfoHex.slice(24, 64)}`).hex(20);
+
+  return { leafCount, blockNumberL2, proposer };
+}
+
+export function packBlockInfo(leafCount, proposer, blockNumberL2) {
   const blockNumberL2Packed = generalise(blockNumberL2).hex(8).slice(2);
   const leafCountPacked = generalise(leafCount).hex(4).slice(2);
   const proposerPacked = generalise(proposer).hex(20).slice(2);
 
-  return '0x'.concat(leafCountPacked, blockNumberL2Packed, proposerPacked);
-};
+  const packedInfo = '0x'.concat(leafCountPacked, blockNumberL2Packed, proposerPacked);
+  return packedInfo;
+}
 
 export function calcBlockHash(block) {
   const web3 = new Web3();
@@ -32,7 +42,7 @@ export function calcBlockHash(block) {
     transactionHashesRoot,
   } = block;
 
-  const packedInfo = packInfo(blockNumberL2, leafCount, proposer);
+  const packedInfo = packBlockInfo(leafCount, proposer, blockNumberL2);
 
   const blockArray = [packedInfo, root, previousBlockHash, frontierHash, transactionHashesRoot];
 
@@ -59,7 +69,7 @@ export function buildBlockSolidityStruct(block) {
     transactionHashesRoot,
   } = block;
 
-  const packedInfo = packInfo(blockNumberL2, leafCount, proposer);
+  const packedInfo = packBlockInfo(leafCount, proposer, blockNumberL2);
 
   return {
     packedInfo,

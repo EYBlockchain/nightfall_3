@@ -29,7 +29,7 @@ describe('Test verify nullifiers', async function () {
   before(async () => {
     const circuitCode = `
             pragma circom 2.1.0;
-            include "../../../../../nightfall-deployer/circuits/common/verifiers/nullifiers/verify_nullifiers.circom";
+            include "../../../../../../nightfall-deployer/circuits/common/verifiers/nullifiers/verify_nullifiers.circom";
             component main = VerifyNullifiers(1);
         `;
 

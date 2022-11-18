@@ -7,6 +7,7 @@ import config from 'config';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
 import { decompressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { unpackBlockInfo } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 
@@ -24,7 +25,7 @@ export async function getProposeBlockCalldata(eventData) {
   const transactionsData = decoded['1'];
   const [packedBlockInfo, root, previousBlockHash, frontierHash, transactionHashesRoot] = blockData;
 
-  const { proposer, leafCount, blockNumberL2 } = Block.unpackInfo(packedBlockInfo);
+  const { proposer, leafCount, blockNumberL2 } = unpackBlockInfo(packedBlockInfo);
 
   const block = {
     proposer,
@@ -49,7 +50,8 @@ export async function getProposeBlockCalldata(eventData) {
       proof,
     ] = t;
 
-    const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedTransactionInfo);
+    const { value, fee, circuitHash, tokenType } =
+      Transaction.unpackTransactionInfo(packedTransactionInfo);
 
     const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
       nullifiers.length,
@@ -106,7 +108,8 @@ export async function getTransactionSubmittedCalldata(eventData) {
     proof,
   ] = transactionData;
 
-  const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedTransactionInfo);
+  const { value, fee, circuitHash, tokenType } =
+    Transaction.unpackTransactionInfo(packedTransactionInfo);
 
   const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
     nullifiers.length,

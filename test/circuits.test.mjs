@@ -61,7 +61,7 @@ describe('General Circuit Test', () => {
     logger.debug(`Sending 1 deposit of 10...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 10, tokenId, 0);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     const beforeBalances = await getBalance();
 
@@ -76,7 +76,7 @@ describe('General Circuit Test', () => {
     );
     expectTransaction(singleTransfer);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     const afterBalances = await getBalance();
 
@@ -94,7 +94,7 @@ describe('General Circuit Test', () => {
     logger.debug(`Sending 1 deposit of 10...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 10, tokenId, 0);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     // Deposit checks here
 
@@ -110,7 +110,7 @@ describe('General Circuit Test', () => {
     );
     expectTransaction(singleTransferNoChange);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     // Single Transfer No Change checks here
 
@@ -126,7 +126,7 @@ describe('General Circuit Test', () => {
     );
     expectTransaction(singleTransferChange);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     logger.debug(`Sending withdrawal with no change...`);
     const withdrawalNoChange = await nf3Users[0].withdraw(
@@ -141,7 +141,7 @@ describe('General Circuit Test', () => {
 
     expectTransaction(withdrawalNoChange);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     // Withdrawal No Change checks here
 
@@ -158,13 +158,13 @@ describe('General Circuit Test', () => {
 
     expectTransaction(withdrawalChange);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     // Withdrawal Change checks here
 
     logger.debug(`Sending deposit of 8...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 8, tokenId, 0);
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     logger.debug(`Sending double transfer with change...`);
     const doubleTransferChange = await nf3Users[0].transfer(
@@ -179,7 +179,7 @@ describe('General Circuit Test', () => {
 
     expectTransaction(doubleTransferChange);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     // Double transfer Change checks here
 
@@ -196,14 +196,14 @@ describe('General Circuit Test', () => {
 
     expectTransaction(doubleTransferNoChange);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     // Double transfer No Change checks here
 
     logger.debug(`Sending deposit of 4...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 4, tokenId, 0);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     logger.debug(`Sending double withdrawal with change...`);
     const doubleWithdrawalChange = await nf3Users[0].withdraw(
@@ -218,13 +218,13 @@ describe('General Circuit Test', () => {
 
     expectTransaction(doubleWithdrawalChange);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
     // Double Withdrawal Change checks here
 
     logger.debug(`Sending deposit of 2...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 2, tokenId, 0);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     logger.debug(`Sending double Withdrawal with no change...`);
     const doubleWithdrawalNoChange = await nf3Users[0].withdraw(
@@ -239,7 +239,7 @@ describe('General Circuit Test', () => {
 
     expectTransaction(doubleWithdrawalNoChange);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     // Double Withdrawal No Change
 

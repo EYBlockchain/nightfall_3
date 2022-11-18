@@ -10,9 +10,9 @@ const __dirname = path.dirname(__filename);
 const tester = circomTester.wasm;
 const { expect } = chai;
 
-describe('Test verify commitments optional', function () {
+describe('Test verify commitments', function () {
   this.timeout(60000);
-  const circuitPath = path.join(__dirname, 'verify_commitments_optional_tester.circom');
+  const circuitPath = path.join(__dirname, 'verify_commitments_tester.circom');
   let circuit;
 
   let packedErcAddress;
@@ -25,8 +25,8 @@ describe('Test verify commitments optional', function () {
   before(async () => {
     const circuitCode = `
             pragma circom 2.1.0;
-            include "../../../../../nightfall-deployer/circuits/common/verifiers/commitments/verify_commitments_optional.circom";
-            component main = VerifyCommitmentsOptional(1);
+            include "../../../../../../nightfall-deployer/circuits/common/verifiers/commitments/verify_commitments.circom";
+            component main = VerifyCommitments(1);
         `;
 
     fs.writeFileSync(circuitPath, circuitCode, 'utf8');
@@ -74,24 +74,6 @@ describe('Test verify commitments optional', function () {
     await circuit.assertOut(w, output);
   });
 
-  it('Should verify a commitment whose value is zero', async () => {
-    const input = {
-      packedErcAddress,
-      idRemainder,
-      commitmentsHashes: [0n],
-      newCommitmentsValues: [0n],
-      newCommitmentsSalts: [0n],
-      recipientPublicKey: [[0n, 0n]],
-    };
-
-    const output = {
-      valid: 1,
-    };
-
-    const w = await circuit.calculateWitness(input, { logOutput: false });
-    await circuit.assertOut(w, output);
-  });
-
   it("Should throw an error if a commitment can't be reconstructed", async () => {
     const input = {
       packedErcAddress,
@@ -99,24 +81,6 @@ describe('Test verify commitments optional', function () {
       commitmentsHashes,
       newCommitmentsValues,
       newCommitmentsSalts: [0n],
-      recipientPublicKey,
-    };
-
-    try {
-      await circuit.calculateWitness(input, { logOutput: false });
-      expect(true).to.be.equal(false);
-    } catch (error) {
-      expect(error.message.includes('Assert Failed')).to.be.equal(true);
-    }
-  });
-
-  it("Should throw an error if a commitment hash is zero but value isn't", async () => {
-    const input = {
-      packedErcAddress,
-      idRemainder,
-      commitmentsHashes: [0n],
-      newCommitmentsValues,
-      newCommitmentsSalts,
       recipientPublicKey,
     };
 

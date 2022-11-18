@@ -4,41 +4,13 @@ address.
 */
 import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import gen from 'general-number';
+import { buildBlockSolidityStruct } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
 
 const { SHIELD_CONTRACT_NAME } = constants;
-const { generalise } = gen;
 
-// TODO move classes to their own folder so this is not needed (it's already a
-// static function in the Block class)
-export function buildSolidityStruct(block) {
-  const {
-    proposer,
-    root,
-    leafCount,
-    blockNumberL2,
-    previousBlockHash,
-    frontierHash,
-    transactionHashesRoot,
-  } = block;
-
-  const blockNumberL2Packed = generalise(blockNumberL2).hex(8).slice(2);
-  const leafCountPacked = generalise(leafCount).hex(4).slice(2);
-  const proposerPacked = generalise(proposer).hex(20).slice(2);
-
-  const packedInfo = '0x'.concat(leafCountPacked, blockNumberL2Packed, proposerPacked);
-
-  return {
-    packedInfo,
-    root,
-    previousBlockHash,
-    frontierHash,
-    transactionHashesRoot,
-  };
-}
-
+// eslint-disable-next-line import/prefer-default-export
 export async function finaliseWithdrawal(transactionHash) {
   const block = await getBlockByTransactionHash(transactionHash);
   const transactions = await Promise.all(
@@ -53,7 +25,7 @@ export async function finaliseWithdrawal(transactionHash) {
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
   const rawTransaction = await shieldContractInstance.methods
     .finaliseWithdrawal(
-      buildSolidityStruct(block),
+      buildBlockSolidityStruct(block),
       Transaction.buildSolidityStruct(transactions[index]),
       index,
       siblingPath,

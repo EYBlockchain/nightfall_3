@@ -202,14 +202,13 @@ describe('Basic Proposer tests', () => {
     await bootProposer.startProposer(); // start proposer to listen making blocks
 
     await nf3User.deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
-    await emptyL2(nf3User, web3Client, eventLogs);
-
+    await emptyL2({ nf3User, web3: web3Client, logs: eventLogs });
     const currentZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
 
     await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
-    await emptyL2(nf3User, web3Client, eventLogs);
+    await emptyL2({ nf3User, web3: web3Client, logs: eventLogs });
 
     const afterZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;

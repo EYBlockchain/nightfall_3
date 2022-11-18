@@ -6,18 +6,21 @@
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import config from 'config';
-import axios from 'axios';
 import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  getCircuitHash,
+  generateProof,
+} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
-const { CIRCOM_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
+const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
@@ -55,19 +58,7 @@ async function withdraw(withdrawParams) {
   });
 
   try {
-    const responseCircuitHash = await axios.get(
-      `${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`,
-      {
-        params: { circuit: 'withdraw' },
-      },
-    );
-
-    logger.trace({
-      msg: 'Received response from get-circuit-hash',
-      response: responseCircuitHash.data,
-    });
-
-    const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
+    const circuitHash = await getCircuitHash('withdraw');
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
@@ -114,13 +105,7 @@ async function withdraw(withdrawParams) {
     });
 
     // call a worker to generate the proof
-    const folderpath = 'withdraw';
-    const res = await axios.post(`${PROTOCOL}${CIRCOM_WORKER_HOST}/generate-proof`, {
-      folderpath,
-      inputs: witness,
-      provingScheme: PROVING_SCHEME,
-      backend: BACKEND,
-    });
+    const res = await generateProof({ folderpath: 'withdraw', witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',

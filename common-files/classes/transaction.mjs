@@ -23,7 +23,7 @@ const arrayEquality = (as, bs) => {
   return false;
 };
 
-export const packInfo = (value, fee, circuitHash, tokenType) => {
+export const packTransactionInfo = (value, fee, circuitHash, tokenType) => {
   const valuePacked = generalise(value).hex(14).slice(2);
   const feePacked = generalise(fee).hex(12).slice(2);
   const circuitHashPacked = generalise(circuitHash).hex(5).slice(2);
@@ -66,7 +66,7 @@ function keccak(preimage) {
   let { proof } = preimage;
   proof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof);
 
-  const packedInfo = packInfo(value, fee, circuitHash, tokenType);
+  const packedInfo = packTransactionInfo(value, fee, circuitHash, tokenType);
 
   const historicRootsPacked = packHistoricRoots(historicRootBlockNumberL2);
 
@@ -161,7 +161,7 @@ class Transaction {
     return transactionHash;
   }
 
-  static unpackInfo(packedInfo) {
+  static unpackTransactionInfo(packedInfo) {
     const packedInfoHex = generalise(packedInfo).hex(32).slice(2);
 
     const circuitHash = generalise(`0x${packedInfoHex.slice(0, 10)}`).hex(5);
@@ -204,7 +204,7 @@ class Transaction {
       proof,
     } = transaction;
 
-    const packedInfo = packInfo(value, fee, circuitHash, tokenType);
+    const packedInfo = packTransactionInfo(value, fee, circuitHash, tokenType);
 
     const historicRootsPacked = packHistoricRoots(historicRootBlockNumberL2);
 

@@ -1214,6 +1214,9 @@ class Nf3 {
       // if we're about to challenge, check it's actually our challenge, so as not to waste gas
       if (type === 'challenge' && sender !== this.ethereumAddress) return null;
       if (type === 'commit' || type === 'challenge') {
+        // Get the function selector from the encoded ABI, which corresponds to the first 4 bytes.
+        // In hex, it will correspond to the first 8 characters + 2 extra characters (0x), hence we
+        // do slice(0,10)
         const txSelector = txDataToSign.slice(0, 10);
         challengerQueue.push(async () => {
           try {

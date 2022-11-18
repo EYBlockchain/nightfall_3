@@ -5,13 +5,12 @@ Function to retreive calldata associated with a blockchain event.
 This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
-import gen from 'general-number';
 import Web3 from '../../common-files/utils/web3';
+import { unpackBlockInfo } from '../../common-files/utils/block-utils.js';
 import Transaction from '../../common-files/classes/transaction';
 import { decompressProof } from '../../common-files/utils/curve-maths/curves';
 
 const { SIGNATURES } = global.config;
-const { generalise } = gen;
 
 async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -24,11 +23,7 @@ async function getProposeBlockCalldata(eventData) {
   const transactionsData = decoded['1'];
   const [packedBlockInfo, root, previousBlockHash, frontierHash, transactionHashesRoot] = blockData;
 
-  const packedInfoHex = generalise(packedBlockInfo).hex(32).slice(2);
-
-  const leafCount = generalise(`0x${packedInfoHex.slice(0, 8)}`).hex(4);
-  const blockNumberL2 = generalise(`0x${packedInfoHex.slice(8, 24)}`).hex(8);
-  const proposer = generalise(`0x${packedInfoHex.slice(24, 64)}`).hex(20);
+  const { leafCount, proposer, blockNumberL2 } = unpackBlockInfo(packedBlockInfo);
 
   const block = {
     proposer,
@@ -52,7 +47,7 @@ async function getProposeBlockCalldata(eventData) {
       proof,
     ] = t;
 
-    const { value, fee, circuitHash, tokenType } = Transaction.unpackInfo(packedInfo);
+    const { value, fee, circuitHash, tokenType } = Transaction.unpackTransactionInfo(packedInfo);
 
     const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
       nullifiers.length,

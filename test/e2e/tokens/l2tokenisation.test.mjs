@@ -4,13 +4,13 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import gen from 'general-number';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { /* expectTransaction, */ emptyL2, Web3Client } from '../../utils.mjs';
-import Commitment from '../../../nightfall-client/src/classes/commitment.mjs';
+import poseidonHash from '../../../common-files/utils/crypto/poseidon/poseidon.mjs';
+import constants from '../../../common-files/constants/index.mjs';
 
 // so we can use require with mjs file
 // const { expect } = chai;
@@ -19,7 +19,7 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { BN128_GROUP_ORDER } = constants;
+const { BN128_GROUP_ORDER, SHIFT } = constants;
 
 const {
   transferValue,
@@ -78,7 +78,7 @@ describe('L2 Tokenisation tests', () => {
 
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
   });
 
   describe('Tokenise tests', () => {
@@ -96,7 +96,7 @@ describe('L2 Tokenisation tests', () => {
 
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
@@ -115,18 +115,23 @@ describe('L2 Tokenisation tests', () => {
       const privateTokenId = 11;
       const salt = await randValueLT(BN128_GROUP_ORDER);
 
-      const commitment = new Commitment({
-        ercAddress: l2Address,
-        tokenId: privateTokenId,
-        value,
-        salt: salt.hex(),
-        zkpPublicKey: nf3Users[0].zkpKeys.zkpPublicKey,
-      });
+      const [top4Bytes, remainder] = generalise(privateTokenId)
+        .limbs(224, 2)
+        .map(l => BigInt(l));
+      const packedErcAddress = generalise(l2Address).bigInt + top4Bytes * SHIFT;
+      const commitmentHash = poseidonHash(
+        generalise([
+          packedErcAddress,
+          remainder,
+          generalise(value).field(BN128_GROUP_ORDER),
+          ...generalise(nf3Users[0].zkpKeys.zkpPublicKey).all.field(BN128_GROUP_ORDER),
+          salt.field(BN128_GROUP_ORDER),
+        ]),
+      ).hex(32);
 
-      const commitmentHash = commitment.hash.hex(32);
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
@@ -137,7 +142,7 @@ describe('L2 Tokenisation tests', () => {
 
       await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [commitmentHash], 1);
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
@@ -153,18 +158,23 @@ describe('L2 Tokenisation tests', () => {
       const privateTokenId = 11;
       const salt = await randValueLT(BN128_GROUP_ORDER);
 
-      const commitment = new Commitment({
-        ercAddress: l2Address,
-        tokenId: privateTokenId,
-        value,
-        salt: salt.hex(),
-        zkpPublicKey: nf3Users[0].zkpKeys.zkpPublicKey,
-      });
+      const [top4Bytes, remainder] = generalise(privateTokenId)
+        .limbs(224, 2)
+        .map(l => BigInt(l));
+      const packedErcAddress = generalise(l2Address).bigInt + top4Bytes * SHIFT;
+      const commitmentHash = poseidonHash(
+        generalise([
+          packedErcAddress,
+          remainder,
+          generalise(value).field(BN128_GROUP_ORDER),
+          ...generalise(nf3Users[0].zkpPublicKey).all.field(BN128_GROUP_ORDER),
+          salt.field(BN128_GROUP_ORDER),
+        ]).hex(32),
+      );
 
-      const commitmentHash = commitment.hash.hex(32);
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
@@ -175,7 +185,7 @@ describe('L2 Tokenisation tests', () => {
 
       await nf3Users[0].burn(l2Address, value, privateTokenId, [commitmentHash], 1);
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
@@ -194,7 +204,7 @@ describe('L2 Tokenisation tests', () => {
 
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
@@ -205,7 +215,7 @@ describe('L2 Tokenisation tests', () => {
 
       await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [], 1);
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;

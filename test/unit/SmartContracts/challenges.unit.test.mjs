@@ -5,9 +5,9 @@ import {
   calculateTransactionHash,
   calculateBlockHash,
   createBlockAndTransactions,
-  unpackBlockInfo,
 } from '../utils/utils.mjs';
 import { setTransactionInfo } from '../utils/stateStorage.mjs';
+import { unpackBlockInfo } from '../../../common-files/utils/block-utils.mjs';
 
 const { ethers, upgrades } = hardhat;
 

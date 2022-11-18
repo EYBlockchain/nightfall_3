@@ -75,7 +75,7 @@ describe('x509 tests', () => {
       logger.debug('doing whitelisted account');
       const res = await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       expectTransaction(res);
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
       logger.debug('Working deposit done');
     });
   });
@@ -97,7 +97,7 @@ describe('x509 tests', () => {
         fee,
       );
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       logger.debug('Getting withdrawal hash');
       withdrawal = await nf3Users[0].getLatestWithdrawHash();

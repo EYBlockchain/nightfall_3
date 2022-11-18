@@ -71,7 +71,7 @@ describe('ERC1155 tests', () => {
 
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
 
-    await emptyL2(nf3Users[0], web3Client, eventLogs);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
   });
 
   describe('Deposit', () => {
@@ -93,7 +93,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const afterBalance =
         (await nf3Users[0].getLayer2Balances())[erc1155Address]?.find(
@@ -128,7 +128,7 @@ describe('ERC1155 tests', () => {
         fee,
       );
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const beforeBalances = await getBalances();
 
@@ -143,7 +143,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const afterBalances = await getBalances();
 
@@ -165,7 +165,7 @@ describe('ERC1155 tests', () => {
         fee,
       );
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const beforeBalanceERC1155 = (await nf3Users[0].getLayer2Balances())[erc1155Address].find(
         e => e.tokenId === generalise(tokenToWithdraw).hex(32),
@@ -183,7 +183,7 @@ describe('ERC1155 tests', () => {
         fee,
       );
 
-      await emptyL2(nf3Users[0], web3Client, eventLogs);
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       expectTransaction(rec);
       logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
@@ -213,7 +213,7 @@ describe('ERC1155 tests', () => {
           fee,
         );
 
-        await emptyL2(nf3Users[0], web3Client, eventLogs);
+        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
         const beforeBalanceERC1155 =
           (await nf3Users[0].getLayer2Balances())[erc1155Address]?.find(
@@ -233,7 +233,7 @@ describe('ERC1155 tests', () => {
           fee,
         );
         expectTransaction(rec);
-        await emptyL2(nf3Users[0], web3Client, eventLogs);
+        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
         const withdrawal = nf3Users[0].getLatestWithdrawHash();
 

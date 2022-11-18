@@ -3,7 +3,7 @@ import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
 
 const { generalise } = gen;
-const { BN128_GROUP_ORDER } = constants;
+const { BN128_GROUP_ORDER, SHIFT } = constants;
 
 const NULL_COMMITMENT = {
   value: 0,
@@ -134,7 +134,6 @@ export const computeCircuitInputs = (
   }
 
   if (ercAddress) {
-    const SHIFT = 1461501637330902918203684832716283019655932542976n;
     const [top4Bytes, remainder] = tokenId.limbs(224, 2).map(l => BigInt(l));
     const packedErcAddress = ercAddress.bigInt + top4Bytes * SHIFT;
     witness.packedErcAddressPrivate = generalise(packedErcAddress).field(BN128_GROUP_ORDER);

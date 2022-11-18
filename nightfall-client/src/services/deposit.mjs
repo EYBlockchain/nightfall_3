@@ -7,18 +7,21 @@
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import config from 'config';
-import axios from 'axios';
 import gen from 'general-number';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import {
+  getCircuitHash,
+  generateProof,
+} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 
-const { CIRCOM_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
+const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
 const { generalise } = gen;
 
@@ -62,16 +65,7 @@ async function deposit(items) {
     hash: commitment.hash.hex(),
   });
 
-  const responseCircuitHash = await axios.get(`${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`, {
-    params: { circuit: 'deposit' },
-  });
-
-  logger.trace({
-    msg: 'Received response from get-circuit-hash',
-    response: responseCircuitHash.data,
-  });
-
-  const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
+  const circuitHash = await getCircuitHash('deposit');
 
   const publicData = new Transaction({
     fee,
@@ -104,13 +98,7 @@ async function deposit(items) {
     witness: JSON.stringify(witness, 0, 2),
   });
   // call a worker to generate the proof
-  const folderpath = 'deposit';
-  const res = await axios.post(`${PROTOCOL}${CIRCOM_WORKER_HOST}/generate-proof`, {
-    folderpath,
-    inputs: witness,
-    provingScheme: PROVING_SCHEME,
-    backend: BACKEND,
-  });
+  const res = await generateProof({ folderpath: 'deposit', witness });
 
   logger.trace({
     msg: 'Received response from generete-proof',

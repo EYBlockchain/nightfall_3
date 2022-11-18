@@ -8,9 +8,9 @@ import {
 import { setTransactionInfo } from '../utils/stateStorage.mjs';
 import {
   packHistoricRoots,
-  packInfo as packTransactionInfo,
+  packTransactionInfo,
 } from '../../../common-files/classes/transaction.mjs';
-import { packInfo as packBlockInfo } from '../../../nightfall-optimist/src/services/block-utils.mjs';
+import { packBlockInfo } from '../../../common-files/utils/block-utils.mjs';
 
 const { ethers, upgrades } = hardhat;
 
@@ -834,7 +834,7 @@ describe('State contract State functions', function () {
     expect((await state.blockInfo(blockHash)).feesEth).to.equal(10);
     expect((await state.blockInfo(blockHash)).feesMatic).to.equal(1);
 
-    const packedInfoBlock = packBlockInfo(1, 1, addr1.address);
+    const packedInfoBlock = packBlockInfo(1, addr1.address, 1);
 
     transactionsCreated.block.packedInfo = packedInfoBlock;
     await expect(
@@ -847,7 +847,7 @@ describe('State contract State functions', function () {
   });
 
   it('should not proposeBlock Proposer address is not the sender', async function () {
-    const packedInfoBlock = packBlockInfo(0, 700, addr2.address);
+    const packedInfoBlock = packBlockInfo(700, addr2.address, 0);
 
     const wrongBlock = [
       packedInfoBlock,
@@ -941,7 +941,7 @@ describe('State contract State functions', function () {
   });
 
   it('should be a real block', async function () {
-    const packedInfoBlock = packBlockInfo(5, 700, addr1.address);
+    const packedInfoBlock = packBlockInfo(700, addr1.address, 5);
 
     const wrongBlockNumber = {
       packedInfo: packedInfoBlock,
