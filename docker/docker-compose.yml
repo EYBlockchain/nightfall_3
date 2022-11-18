@@ -44,15 +44,15 @@ services:
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
-      ZOKRATES_WORKER_HOST: ${ZOKRATES_WORKER_HOST:-worker}
+      CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
       RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://rabbitmq}
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
       OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
-      USE_STUBS: ${USE_STUBS:-false} # make sure this flag is the same as in deployer service
-    command: [ 'npm', 'run', 'dev' ]
+    command: ['npm', 'run', 'dev']
+
     # Temporary container to deploy contracts and circuits and populate volumes
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
@@ -72,8 +72,7 @@ services:
       ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
-      ZOKRATES_WORKER_HOST: ${ZOKRATES_WORKER_HOST:-worker}
-      USE_STUBS: ${USE_STUBS:-false}
+      CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
       WHITELISTING: ${WHITELISTING}
       UPGRADE: ${UPGRADE_CONTRACTS}
       ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
@@ -116,8 +115,8 @@ services:
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
       IS_CHALLENGER: ${IS_CHALLENGER:-true}
-      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
-    command: [ 'npm', 'run', 'dev' ]
+      MAX_BLOCK_SIZE: ${MAX_BLOCK_SIZE:-50000}
+    command: ['npm', 'run', 'dev']
 
   rabbitmq:
     image: rabbitmq

@@ -17,7 +17,7 @@ async function rand(bytes) {
 // Rejection sampling for a value < bigIntValue
 async function randValueLT(bigIntValue) {
   let genVal = Infinity;
-  const MAX_ATTEMPTS = 1000;
+  const MAX_ATTEMPTS = 10000;
   const minimumBytes = Math.ceil(generalise(bigIntValue).binary.length / 8);
   let counter = 0;
   do {

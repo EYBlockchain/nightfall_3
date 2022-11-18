@@ -15,6 +15,9 @@ router.post('/', async (req, res, next) => {
     if (err.message.includes('No suitable commitments')) {
       logger.info('Returning "No suitable commitments" error');
       res.json({ error: 'No suitable commitments' });
+    } else if (err.message.includes('invalid commitment hashes')) {
+      logger.info('Returning "invalid commitment hashes" error');
+      res.json({ error: err.message });
     } else {
       next(err);
     }
