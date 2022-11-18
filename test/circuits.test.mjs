@@ -4,9 +4,9 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import crypto from 'crypto';
+import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import axios from 'axios';
 import { expectTransaction, Web3Client } from './utils.mjs';
 
 // so we can use require with mjs file
@@ -17,7 +17,6 @@ chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
-  txPerBlock,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
@@ -30,8 +29,8 @@ const web3Client = new Web3Client();
 let erc20Address;
 let stateAddress;
 let eventLogs = [];
-let fee = 0;
-let stake = '1000000';
+const fee = 0;
+const stake = '1000000';
 const optimistApiUrl = environment.optimistApiUrl;
 /*
   This function tries to zero the number of unprocessed transactions in the optimist node
@@ -45,14 +44,14 @@ describe('General Circuit Test', () => {
 
     const ethPrivateKey = environment.PROPOSER_KEY;
 
-    const res = await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
+    await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
 
     axios.defaults.headers.common['X-APP-TOKEN'] = crypto
       .createHash('sha256')
       .update(ethPrivateKey)
       .digest('hex');
 
-    const reg = await axios.post(`${optimistApiUrl}/proposer/register`, {
+    await axios.post(`${optimistApiUrl}/proposer/register`, {
       url: optimistApiUrl,
       stake,
       fee,
@@ -285,6 +284,6 @@ describe('General Circuit Test', () => {
   });
 
   after(async () => {
-    const dereg = await axios.post(`${optimistApiUrl}/proposer/de-register`, {});
+    await axios.post(`${optimistApiUrl}/proposer/de-register`, {});
   });
 });
