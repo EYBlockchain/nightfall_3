@@ -3,9 +3,8 @@
  */
 
 import express from 'express';
-import config from 'config';
-import axios from 'axios';
 import gen from 'general-number';
+import { getCircuitHash } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import {
   getCommitmentBySalt,
   getWalletBalance,
@@ -22,8 +21,6 @@ import {
 const router = express.Router();
 
 const { generalise } = gen;
-
-const { PROTOCOL, CIRCOM_WORKER_HOST } = config;
 
 router.get('/salt', async (req, res, next) => {
   try {
@@ -125,14 +122,9 @@ router.get('/', async (req, res, next) => {
 
 router.get('/withdraws', async (req, res, next) => {
   try {
-    const responseCircuitHash = await axios.get(
-      `${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`,
-      {
-        params: { circuit: 'withdraw' },
-      },
-    );
+    const circuitHash = await getCircuitHash('withdraw');
 
-    const withdrawCircuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(32);
+    const withdrawCircuitHash = generalise(circuitHash).hex(32);
 
     const commitments = await getCommitmentsByCircuitHash(withdrawCircuitHash);
     res.json({ commitments });

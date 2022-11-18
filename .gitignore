@@ -11,6 +11,7 @@ wallet/cli
 __pycache__
 test/adversary/nightfall-adversary
 test/adversary/adversary-cli
+test/adversary/adversary-client
 wallet/tests/e2e/videos
 wallet/tests/e2e/screenshots
 typechain-types/

@@ -6,10 +6,10 @@ import config from 'config';
 import compose from 'docker-compose';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
+import { buildBlockSolidityStruct } from '../common-files/utils/block-utils.mjs';
 import Transaction from '../common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { Web3Client, waitForTimeout } from './utils.mjs';
-import { buildBlockSolidityStruct } from '../nightfall-optimist/src/services/block-utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;

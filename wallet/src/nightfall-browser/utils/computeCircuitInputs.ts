@@ -4,7 +4,7 @@ import utils from '../../common-files/utils/crypto/merkle-tree/utils';
 const { generalise } = gen;
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-const { BN128_GROUP_ORDER } = global.nightfallConstants;
+const { BN128_GROUP_ORDER, SHIFT } = global.nightfallConstants;
 const NULL_COMMITMENT = {
   value: 0,
   salt: 0,
@@ -168,7 +168,6 @@ const computeCircuitInputs = (
   }
 
   if (ercAddress) {
-    const SHIFT = 1461501637330902918203684832716283019655932542976n;
     const [top4Bytes, remainder] = tokenId.limbs(224, 2).map((l: any) => BigInt(l));
     const packedErcAddress = ercAddress.bigInt + top4Bytes * SHIFT;
     witness.packedErcAddressPrivate = generalise(packedErcAddress).field(BN128_GROUP_ORDER);

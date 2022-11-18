@@ -10,14 +10,14 @@ const __dirname = path.dirname(__filename);
 const tester = circomTester.wasm;
 // const { expect } = chai;
 
-describe('Test transfer circuit', function () {
+describe('Test burn circuit', function () {
   this.timeout(60000);
-  const circuitPath = path.join(__dirname, '../../nightfall-deployer/circuits/transfer.circom');
+  const circuitPath = path.join(__dirname, '../../../nightfall-deployer/circuits/burn.circom');
   let circuit;
 
   let value;
   let fee;
-  const circuitHash = '1';
+  const circuitHash = '4';
   let tokenType;
   let ercAddress;
   let historicRootBlockNumberL2;
@@ -38,7 +38,7 @@ describe('Test transfer circuit', function () {
   let recipientPublicKey;
   let packedErcAddressPrivate;
   let idRemainderPrivate;
-  let ephemeralKey;
+  let valuePrivate;
 
   before(async () => {
     circuit = await tester(circuitPath, { reduceConstraints: false });
@@ -48,48 +48,31 @@ describe('Test transfer circuit', function () {
     value = '0';
     fee = '1';
     tokenType = '0';
-    tokenId = [
-      '312823736',
-      '3256528173',
-      '1469971658',
-      '2066892461',
-      '3857016417',
-      '3719684205',
-      '3518546394',
-      '1383280089',
-    ];
-    historicRootBlockNumberL2 = ['2', '0', '0', '0'];
-    ercAddress = '132879599395472219364501254852296720465866736717521941213348774738587710070';
+    tokenId = ['0', '0', '0', '0', '0', '0', '0', '0'];
+    historicRootBlockNumberL2 = ['2', '2', '0'];
+    ercAddress = '0';
     commitments = [
-      '17757779475771887336357842275909057132037232354039100658148751003055531261983',
-      '12554361619243879049908583107882479056516016877280674758017429953383772997808',
-      '0',
+      '16375765543079323602529377570070023885410445967535428085833109742976453595894',
+      '18707536334705882256869311881167201810355473445932762964237349831507871442386',
     ];
     nullifiers = [
-      '117197709477382921538019157130002666423833032783762819352913222960882908146',
-      '14300342375687883043781581600514382717671282147270299098452723711992633103162',
-      '0',
+      '7282396293468696541787692821799319645402325477708549771055867669166529046302',
+      '5665660959676054353752818697098428062741333526418201927541295922806967195106',
       '0',
     ];
-    compressedSecrets = [
-      '21168098505838680327273190678857184515054246835679269731579160077666503959877',
-      '10169841309943788425388858633837196980948099681313251904021825048923098020873',
-    ];
+    compressedSecrets = ['0', '0'];
     roots = [
-      '20964734282951928498431654994464533343258690792797020655572338130275330702810',
-      '3255859854610022712078710786625410158921384524803529764848754866431549438369',
-      '0',
+      '1415033194412474259604457225946249736927324822014018173178295842554598286714',
+      '1415033194412474259604457225946249736927324822014018173178295842554598286714',
       '0',
     ];
     feeAddress = '1319533947831612348694315757168650042041713553662';
-    recipientAddress =
-      '7756502216251446190890576589102414109278544248834858022081187213535079180632';
+    recipientAddress = '0';
     rootKey = '2279923558995011751611063584918713773156544989985830828459384641106187332209';
-    nullifiersValues = ['0', '10', '0', '0'];
+    nullifiersValues = ['5', '8', '0'];
     nullifiersSalts = [
-      '15340017689176527589104004637940033165402219799349309558245567952247042957987',
-      '17050793308128068127075637850076756759332532730466377884930007248365074989258',
-      '0',
+      '1148036745128417359917070962024254213109377584646006074738607786607848625585',
+      '1118528393993997824675296443684053194374662027509797001442461774032464070117',
       '0',
     ];
     paths = [
@@ -123,9 +106,9 @@ describe('Test transfer circuit', function () {
         '0',
         '0',
         '0',
-        '0',
-        '20485083585002706637081569015766164906760950525323997630771107581802573080375',
-        '0',
+        '3067214235569605348053524621998343395561574295199234413368570087079442800289',
+        '18522342711066106425961359570360419829060169902806176026128797812172152392682',
+        '13795926514176711409651363556113530777846871819130511983847321219523948733795',
       ],
       [
         '0',
@@ -157,41 +140,7 @@ describe('Test transfer circuit', function () {
         '0',
         '0',
         '0',
-        '0',
-        '0',
-        '0',
-      ],
-      [
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
-        '0',
+        '2184076416084575252155788950520993737142087411043641888726720976784217542467',
         '0',
         '0',
       ],
@@ -231,31 +180,32 @@ describe('Test transfer circuit', function () {
       ],
     ];
 
-    orders = ['2', '0', '0', '0'];
-    commitmentsValues = ['0', '9', '0'];
+    orders = ['3', '4', '0'];
+    commitmentsValues = ['1', '7'];
     commitmentsSalts = [
-      '21076183789647231661714109116890378504343710611690685717543855437204853365978',
-      '1522068224836897283121160171456811218383856683932886147822804168466578616752',
-      '0',
+      '21410471382643710744442571469981294631414048971628290436304391481694453066466',
+      '4698247583643147343025590386834825758712559730779777460381049927871782298629',
     ];
     recipientPublicKey = [
       [
-        '21455585142010026507269989850142987603845789706340301710583334029113247699665',
-        '5026357651889742986360178720315154348945488195628612719416852550950370706302',
+        [
+          '8490685904787475746369366901729727151930997402058548597274067437080179631982',
+          '16019898780588040648157153023567746553375452631966740349901590026272037097498',
+        ],
+        [
+          '8490685904787475746369366901729727151930997402058548597274067437080179631982',
+          '16019898780588040648157153023567746553375452631966740349901590026272037097498',
+        ],
       ],
-      [
-        '8490685904787475746369366901729727151930997402058548597274067437080179631982',
-        '16019898780588040648157153023567746553375452631966740349901590026272037097498',
-      ],
-      ['0', '0'],
     ];
 
-    packedErcAddressPrivate = '1569275434574047503899461711674324182407852210045805191109';
-    idRemainderPrivate = '3';
-    ephemeralKey = '963948797541814037237923107657092227793394179262775402387658355273258414634';
+    packedErcAddressPrivate =
+      '21711016731996786641919559690090612179745446532414748301311487203631771980383';
+    idRemainderPrivate = '11';
+    valuePrivate = '4';
   });
 
-  it('Should verify a valid transfer', async () => {
+  it('Should verify a valid burn', async () => {
     const input = {
       value,
       fee,
@@ -280,7 +230,7 @@ describe('Test transfer circuit', function () {
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
     };
 
     const w = await circuit.calculateWitness(input);
@@ -300,7 +250,6 @@ describe('Test transfer circuit', function () {
       commitments: [
         '18494771599034867623561540682859693959325329137772357382989983287248677307908',
         '18494771599034867623561540682859693959325329137772357382989983287248677307908',
-        '0',
       ],
       nullifiers,
       compressedSecrets,
@@ -316,7 +265,7 @@ describe('Test transfer circuit', function () {
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
     };
 
     try {
@@ -342,7 +291,6 @@ describe('Test transfer circuit', function () {
         '17999105792329651812725678444463795258152753649215938181082241399954600642554',
         '17999105792329651812725678444463795258152753649215938181082241399954600642554',
         '0',
-        '0',
       ],
       compressedSecrets,
       roots,
@@ -357,7 +305,7 @@ describe('Test transfer circuit', function () {
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
     };
 
     try {
@@ -368,7 +316,7 @@ describe('Test transfer circuit', function () {
     }
   });
 
-  it('Should fail if compressed secrets is zero', async () => {
+  it('Should fail if compressed secrets is not zero', async () => {
     const input = {
       value,
       fee,
@@ -380,7 +328,10 @@ describe('Test transfer circuit', function () {
       recipientAddress,
       commitments,
       nullifiers,
-      compressedSecrets: ['0', '0'],
+      compressedSecrets: [
+        '0',
+        '17999105792329651812725678444463795258152753649215938181082241399954600642554',
+      ],
       roots,
       feeAddress,
       rootKey,
@@ -393,7 +344,7 @@ describe('Test transfer circuit', function () {
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
     };
 
     try {
@@ -404,14 +355,14 @@ describe('Test transfer circuit', function () {
     }
   });
 
-  it('Should fail if ercAddress is zero', async () => {
+  it('Should fail if ercAddress is not zero', async () => {
     const input = {
       value,
       fee,
       circuitHash,
       tokenType,
       historicRootBlockNumberL2,
-      ercAddress: 0,
+      ercAddress: '17999105792329651812725678444463795258152753649215938181082241399954600642554',
       tokenId,
       recipientAddress,
       commitments,
@@ -429,7 +380,43 @@ describe('Test transfer circuit', function () {
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
+    };
+
+    try {
+      await circuit.calculateWitness(input, { logOutput: false });
+      expect(true).to.be.equal(false);
+    } catch (error) {
+      expect(error.message.includes('Assert Failed')).to.be.equal(true);
+    }
+  });
+
+  it('Should fail if ercAddress private is not valid for l2 tokenisation', async () => {
+    const input = {
+      value,
+      fee,
+      circuitHash,
+      tokenType,
+      historicRootBlockNumberL2,
+      ercAddress: '1319533947831612348694315757168650042041713553662',
+      tokenId,
+      recipientAddress,
+      commitments,
+      nullifiers,
+      compressedSecrets,
+      roots,
+      feeAddress,
+      rootKey,
+      nullifiersValues,
+      nullifiersSalts,
+      paths,
+      orders,
+      commitmentsValues,
+      commitmentsSalts,
+      recipientPublicKey,
+      packedErcAddressPrivate,
+      idRemainderPrivate,
+      valuePrivate,
     };
 
     try {
@@ -465,7 +452,7 @@ describe('Test transfer circuit', function () {
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
     };
 
     try {
@@ -476,7 +463,7 @@ describe('Test transfer circuit', function () {
     }
   });
 
-  it('Should fail if recipient address is zero', async () => {
+  it('Should fail if recipient address is not zero', async () => {
     const input = {
       value,
       fee,
@@ -485,7 +472,8 @@ describe('Test transfer circuit', function () {
       historicRootBlockNumberL2,
       ercAddress,
       tokenId,
-      recipientAddress: 0,
+      recipientAddress:
+        '17999105792329651812725678444463795258152753649215938181082241399954600642554',
       commitments,
       nullifiers,
       compressedSecrets,
@@ -501,7 +489,43 @@ describe('Test transfer circuit', function () {
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
+    };
+
+    try {
+      await circuit.calculateWitness(input, { logOutput: false });
+      expect(true).to.be.equal(false);
+    } catch (error) {
+      expect(error.message.includes('Assert Failed')).to.be.equal(true);
+    }
+  });
+
+  it('Should fail if tokenId is not zero', async () => {
+    const input = {
+      value,
+      fee,
+      circuitHash,
+      tokenType,
+      historicRootBlockNumberL2,
+      ercAddress,
+      tokenId: ['0', '0', '0', '0', '0', '0', '1', '1'],
+      recipientAddress,
+      commitments,
+      nullifiers,
+      compressedSecrets,
+      roots,
+      feeAddress,
+      rootKey,
+      nullifiersValues,
+      nullifiersSalts,
+      paths,
+      orders,
+      commitmentsValues,
+      commitmentsSalts,
+      recipientPublicKey,
+      packedErcAddressPrivate,
+      idRemainderPrivate,
+      valuePrivate,
     };
 
     try {
@@ -523,7 +547,7 @@ describe('Test transfer circuit', function () {
       tokenId,
       recipientAddress,
       commitments,
-      nullifiers: ['0', '0', '0', '0'],
+      nullifiers: ['0', '0', '0'],
       compressedSecrets,
       roots,
       feeAddress,
@@ -537,43 +561,7 @@ describe('Test transfer circuit', function () {
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
-    };
-
-    try {
-      await circuit.calculateWitness(input, { logOutput: false });
-      expect(true).to.be.equal(false);
-    } catch (error) {
-      expect(error.message.includes('Assert Failed')).to.be.equal(true);
-    }
-  });
-
-  it('Should fail if first commitment is zero', async () => {
-    const input = {
-      value,
-      fee,
-      circuitHash,
-      tokenType,
-      historicRootBlockNumberL2,
-      ercAddress,
-      tokenId,
-      recipientAddress,
-      commitments: ['0', '0', '0'],
-      nullifiers,
-      compressedSecrets,
-      roots,
-      feeAddress,
-      rootKey,
-      nullifiersValues,
-      nullifiersSalts,
-      paths,
-      orders,
-      commitmentsValues,
-      commitmentsSalts,
-      recipientPublicKey,
-      packedErcAddressPrivate,
-      idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
     };
 
     try {
@@ -609,7 +597,7 @@ describe('Test transfer circuit', function () {
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate: '24',
     };
 
     try {
@@ -639,13 +627,13 @@ describe('Test transfer circuit', function () {
       nullifiersValues,
       nullifiersSalts,
       paths,
-      orders: ['1', '0', '0', '0'],
+      orders: ['1', '0', '0'],
       commitmentsValues,
       commitmentsSalts,
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
     };
 
     try {
@@ -677,11 +665,11 @@ describe('Test transfer circuit', function () {
       paths,
       orders,
       commitmentsValues,
-      commitmentsSalts: ['1', '0', '0'],
+      commitmentsSalts: ['1', '0'],
       recipientPublicKey,
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
+      valuePrivate,
     };
 
     try {
@@ -715,52 +703,12 @@ describe('Test transfer circuit', function () {
       commitmentsValues,
       commitmentsSalts,
       recipientPublicKey: [
-        [
-          '21455585142010026507269989850142987603845789706340301710583334029113247699665',
-          '5026357651889742986360178720315154348945488195628612719416852550950370706302',
-        ],
         ['0', '0'],
         ['0', '0'],
       ],
       packedErcAddressPrivate,
       idRemainderPrivate,
-      ephemeralKey,
-    };
-
-    try {
-      await circuit.calculateWitness(input, { logOutput: false });
-      expect(true).to.be.equal(false);
-    } catch (error) {
-      expect(error.message.includes('Assert Failed')).to.be.equal(true);
-    }
-  });
-
-  it('Should fail if verify encryption fails', async () => {
-    const input = {
-      value,
-      fee,
-      circuitHash,
-      tokenType,
-      historicRootBlockNumberL2,
-      ercAddress,
-      tokenId,
-      recipientAddress,
-      commitments,
-      nullifiers,
-      compressedSecrets,
-      roots,
-      feeAddress,
-      rootKey,
-      nullifiersValues,
-      nullifiersSalts,
-      paths,
-      orders,
-      commitmentsValues,
-      commitmentsSalts,
-      recipientPublicKey,
-      packedErcAddressPrivate,
-      idRemainderPrivate,
-      ephemeralKey: 0,
+      valuePrivate,
     };
 
     try {

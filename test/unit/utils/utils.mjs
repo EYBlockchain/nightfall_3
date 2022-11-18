@@ -1,21 +1,10 @@
 /* eslint-disable no-empty-function */
 import hardhat from 'hardhat';
-import gen from 'general-number';
-import { packInfo as packTransactionInfo } from '../../../common-files/classes/transaction.mjs';
-import { packInfo as packBlockInfo } from '../../../nightfall-optimist/src/services/block-utils.mjs';
+import { packTransactionInfo } from '../../../common-files/classes/transaction.mjs';
+import { packBlockInfo } from '../../../common-files/utils/block-utils.mjs';
 
 const { ethers } = hardhat;
-const { generalise } = gen;
 
-export function unpackBlockInfo(packedBlockInfo) {
-  const packedInfoHex = generalise(packedBlockInfo).hex(32).slice(2);
-
-  const leafCount = generalise(`0x${packedInfoHex.slice(0, 8)}`).hex(4);
-  const blockNumberL2 = generalise(`0x${packedInfoHex.slice(8, 24)}`).hex(8);
-  const proposer = generalise(`0x${packedInfoHex.slice(24, 64)}`).hex(20);
-
-  return { leafCount, blockNumberL2, proposer };
-}
 export function calculateBlockHash(b) {
   const encodedBlock = ethers.utils.defaultAbiCoder.encode(
     ['uint256', 'bytes32', 'bytes32', 'bytes32', 'bytes32'],
@@ -127,7 +116,7 @@ export function createBlockAndTransactions(
     [calculateTransactionHash(withdrawTransaction), calculateTransactionHash(depositTransaction)],
   );
 
-  const packedInfoBlock = packBlockInfo(blockNumberL2, leafCount, ownerAddress);
+  const packedInfoBlock = packBlockInfo(leafCount, ownerAddress, blockNumberL2);
 
   const block = {
     packedInfo: packedInfoBlock,

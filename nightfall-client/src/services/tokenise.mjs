@@ -1,8 +1,11 @@
-import axios from 'axios';
 import config from 'config';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  getCircuitHash,
+  generateProof,
+} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import gen from 'general-number';
 import { ZkpKeys } from './keys.mjs';
@@ -12,14 +15,13 @@ import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
-const { CIRCOM_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
+const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
 const { generalise } = gen;
 
 async function tokenise(items) {
   logger.info('Creating a tokenise transaction');
   const {
-    ercAddress,
     salt = (await randValueLT(BN128_GROUP_ORDER)).hex(),
     value = 0,
     compressedZkpPublicKey,
@@ -27,20 +29,11 @@ async function tokenise(items) {
     tokenId = 0,
     fee,
   } = generalise(items);
-
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
 
-  const responseCircuitHash = await axios.get(`${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`, {
-    params: { circuit: 'tokenise' },
-  });
-
-  logger.trace({
-    msg: 'Received response from get-circuit-hash',
-    response: responseCircuitHash.data,
-  });
-
-  const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
+  const circuitHash = await getCircuitHash('tokenise');
 
   logger.debug({
     msg: 'Hash of new commitment',
@@ -58,7 +51,7 @@ async function tokenise(items) {
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: 0n,
     fee,
-    ercAddress: generalise(0),
+    ercAddress,
     maticAddress,
     rootKey,
     maxNullifiers: VK_IDS.tokenise.numberNullifiers,
@@ -111,13 +104,7 @@ async function tokenise(items) {
       witness: JSON.stringify(witness, 0, 2),
     });
 
-    const folderpath = 'tokenise';
-    const res = await axios.post(`${PROTOCOL}${CIRCOM_WORKER_HOST}/generate-proof`, {
-      folderpath,
-      inputs: witness,
-      provingScheme: PROVING_SCHEME,
-      backend: BACKEND,
-    });
+    const res = await generateProof({ folderpath: 'tokenise', witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',

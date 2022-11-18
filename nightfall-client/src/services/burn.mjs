@@ -1,8 +1,11 @@
-import axios from 'axios';
 import config from 'config';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  getCircuitHash,
+  generateProof,
+} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import gen from 'general-number';
 import Transaction from '@polygon-nightfall/common-files/classes/transaction.mjs';
 import { clearPending } from './commitment-storage.mjs';
@@ -10,7 +13,7 @@ import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
-const { CIRCOM_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, VK_IDS } = config;
+const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
@@ -18,18 +21,9 @@ async function burn(burnParams) {
   logger.info('Creating a burn transaction');
   // let's extract the input items
   const { providedCommitments, ...items } = burnParams;
-  const { rootKey, value, fee, ercAddress, tokenId } = generalise(items);
-
-  const responseCircuitHash = await axios.get(`${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`, {
-    params: { circuit: 'burn' },
-  });
-
-  logger.trace({
-    msg: 'Received response from get-circuit-hash',
-    response: responseCircuitHash.data,
-  });
-
-  const circuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(5);
+  const { rootKey, value, fee, tokenId } = generalise(items);
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
+  const circuitHash = await getCircuitHash('burn');
 
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
@@ -103,13 +97,7 @@ async function burn(burnParams) {
       witness: JSON.stringify(witness, 0, 2),
     });
 
-    const folderpath = 'burn';
-    const res = await axios.post(`${PROTOCOL}${CIRCOM_WORKER_HOST}/generate-proof`, {
-      folderpath,
-      inputs: witness,
-      provingScheme: PROVING_SCHEME,
-      backend: BACKEND,
-    });
+    const res = await generateProof({ folderpath: 'burn', witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',

@@ -12,7 +12,7 @@ const tester = circomTester.wasm;
 
 describe('Test deposit circuit', function () {
   this.timeout(60000);
-  const circuitPath = path.join(__dirname, '../../nightfall-deployer/circuits/deposit.circom');
+  const circuitPath = path.join(__dirname, '../../../nightfall-deployer/circuits/deposit.circom');
   let circuit;
 
   let value;

@@ -64,9 +64,6 @@ details on how to do the latter as there are some additional considerations.
   - Use `-g` to use a Ganache client inside the container
   - Use `-l` to use some localhost client running on your machine. We recommend using Ganache first
     to check everything works, because it's considerably faster.
-  - Use `-r` to use ropsten node hosted by the dev team. Note: with option -r set environment
-    variable $ROPSTEN_NODE, $FROM_ADDRESS and $ETH_PRIVATE_KEY to testnet node URL, EOA address and
-    EOA address's private key, respectively
 - Use the `-d` or `--dev` flag to bind mount the development folders inside the containers, making
   it useful for development purposes. Omit it to deploy the services using the existing `ghcr`
   images.

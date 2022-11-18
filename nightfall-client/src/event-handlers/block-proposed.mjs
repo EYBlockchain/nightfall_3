@@ -4,7 +4,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
 import getTimeByBlock from '@polygon-nightfall/common-files/utils/block-info.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import axios from 'axios';
+import { getCircuitHash } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import gen from 'general-number';
 import {
   markNullifiedOnChain,
@@ -26,7 +26,7 @@ import {
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE, PROTOCOL, CIRCOM_WORKER_HOST } = config;
+const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
 const { ZERO } = constants;
 
 const { generalise } = gen;
@@ -162,11 +162,9 @@ async function blockProposedEventHandler(data, syncing) {
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
 
-  const responseCircuitHash = await axios.get(`${PROTOCOL}${CIRCOM_WORKER_HOST}/get-circuit-hash`, {
-    params: { circuit: 'withdraw' },
-  });
+  const circuitHash = await getCircuitHash('withdraw');
 
-  const withdrawCircuitHash = generalise(responseCircuitHash.data.slice(0, 12)).hex(32);
+  const withdrawCircuitHash = generalise(circuitHash).hex(32);
 
   if ((await countCircuitTransactions(block.transactionHashes, withdrawCircuitHash)) > 0) {
     const transactionHashesTimber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
