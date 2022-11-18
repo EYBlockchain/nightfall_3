@@ -10,11 +10,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import {
-  removeTransactionsFromMemPool,
-  getMostProfitableTransactions,
-  numberOfUnprocessedTransactions,
-} from './database.mjs';
+import { getMempoolTxsSortedByFee, removeTransactionsFromMemPool } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import {
@@ -23,7 +19,7 @@ import {
   increaseProposerBlockNotSent,
 } from './debug-counters.mjs';
 
-const { TRANSACTIONS_PER_BLOCK } = config;
+const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS } = config;
 const { STATE_CONTRACT_NAME } = constants;
 
 let ws;
@@ -58,14 +54,10 @@ export async function signalRollbackCompleted(data) {
   ws.send(JSON.stringify({ type: 'rollback', data }));
 }
 
-async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
+async function makeBlock(proposer, transactions) {
   logger.debug('Block Assembler - about to make a new block');
-  // we retrieve un-processed transactions from our local database, relying on
-  // the transaction service to keep the database current
-  const transactions = await getMostProfitableTransactions(number);
   // then we make new block objects until we run out of unprocessed transactions
-  const block = await Block.build({ proposer, transactions });
-  return { block, transactions };
+  return Block.build({ proposer, transactions });
 }
 
 /**
@@ -81,15 +73,56 @@ export async function conditionalMakeBlock(proposer) {
     transaction. If not, we must wait until either we have enough (hooray)
     or we're no-longer the proposer (boo).
    */
-  if (proposer.isMe) {
-    const unprocessed = await numberOfUnprocessedTransactions();
-    let numberOfProposableL2Blocks = Math.floor(unprocessed / TRANSACTIONS_PER_BLOCK);
-    // if we want to make a block right now but there aren't enough transactions, this logic
-    // tells us to go anyway
-    if (makeNow && unprocessed > 0 && numberOfProposableL2Blocks === 0)
-      numberOfProposableL2Blocks = 1;
 
-    if (numberOfProposableL2Blocks >= 1) {
+  logger.info(`I am the current proposer: ${proposer.isMe}`);
+  if (proposer.isMe) {
+    // Get all the mempool transactions sorted by fee
+    const mempoolTransactions = await getMempoolTxsSortedByFee();
+
+    // Map each mempool transaction to their byte size
+    const mempoolTransactionSizes = mempoolTransactions.map(tx => {
+      const txSlots =
+        MINIMUM_TRANSACTION_SLOTS +
+        tx.nullifiers.length +
+        Math.ceil(tx.historicRootBlockNumberL2.length / 4) +
+        tx.commitments.length;
+
+      return txSlots * 32;
+    });
+
+    // Calculate the total number of bytes that are in the mempool
+    const totalBytes = mempoolTransactionSizes.reduce((acc, curr) => acc + curr, 0);
+
+    logger.info({
+      msg: 'In the mempool there are the following number of transactions',
+      numberTransactions: mempoolTransactions.length,
+      totalBytes,
+      makeNow,
+    });
+
+    const transactionBatches = [];
+    if (totalBytes > 0) {
+      let bytesSum = 0;
+      for (let i = 0; i < mempoolTransactionSizes.length; ++i) {
+        if (bytesSum + mempoolTransactionSizes[i] > MAX_BLOCK_SIZE) {
+          bytesSum = mempoolTransactionSizes[i];
+          transactionBatches.push(i);
+        } else {
+          bytesSum += mempoolTransactionSizes[i];
+        }
+      }
+
+      if (transactionBatches.length === 0 && makeNow) {
+        transactionBatches.push(mempoolTransactionSizes.length);
+      }
+    }
+
+    logger.info({
+      msg: 'The proposer can create the following number of blocks',
+      transactionBatches: transactionBatches.length,
+    });
+
+    if (transactionBatches.length >= 1) {
       // TODO set an upper limit to numberOfProposableL2Blocks because a proposer
       /*
         might not be able to submit a large number of blocks before the next proposer becomes
@@ -98,22 +131,30 @@ export async function conditionalMakeBlock(proposer) {
       */
       logger.debug({
         msg: 'Block Assembler will create blocks at once',
-        numberOfProposableL2Blocks,
+        numberBlocks: transactionBatches.length,
       });
 
-      for (let i = 0; i < numberOfProposableL2Blocks; i++) {
-        // work out if this is a normal size block or a short one
-        const numberOfTransactionsInBlock =
-          unprocessed >= TRANSACTIONS_PER_BLOCK ? TRANSACTIONS_PER_BLOCK : unprocessed;
+      for (let i = 0; i < transactionBatches.length; i++) {
+        // we retrieve un-processed transactions from our local database, relying on
+        // the transaction service to keep the database current
+
+        const start = i === 0 ? 0 : transactionBatches[i - 1];
+        const end = transactionBatches[i];
+
+        const transactions = mempoolTransactions.slice(start, end);
+
         makeNow = false; // reset the makeNow so we only make one block with a short number of transactions
-        const { block, transactions } = await makeBlock(
-          proposer.address,
-          numberOfTransactionsInBlock,
-        );
+
+        const block = await makeBlock(proposer.address, transactions);
+
+        const blockSize = mempoolTransactionSizes
+          .slice(start, end)
+          .reduce((acc, curr) => acc + curr, 0);
 
         logger.info({
           msg: 'Block Assembler - New Block created',
           block,
+          blockSize,
         });
 
         // propose this block to the Shield contract here

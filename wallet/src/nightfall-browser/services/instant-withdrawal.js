@@ -4,8 +4,8 @@
  * This module enables setting instant withdrawals fees
  */
 import { getContractInstance } from '../../common-files/utils/contract';
+import { buildBlockSolidityStruct } from '../../common-files/utils/block-utils.js';
 import { Transaction } from '../classes/index';
-import { buildSolidityStruct } from './finalise-withdrawal';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database';
 
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
@@ -28,7 +28,7 @@ const setInstantWithdrawl = async (transactionHash, shieldContractAddress) => {
   try {
     const rawTransaction = await shieldContractInstance.methods
       .setAdvanceWithdrawalFee(
-        buildSolidityStruct(block),
+        buildBlockSolidityStruct(block),
         Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,

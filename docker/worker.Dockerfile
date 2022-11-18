@@ -1,5 +1,5 @@
-# build zokrates from source for local verify
-FROM ghcr.io/eyblockchain/local-zokrates:0.8.2 as builder
+# build circom from source for local verify
+FROM ghcr.io/eyblockchain/local-circom as builder
 
 FROM ubuntu:20.04
 
@@ -10,8 +10,7 @@ RUN apt-get install -y nodejs gcc g++ make
 
 EXPOSE 80
 
-ENV ZOKRATES_HOME /app
-ENV ZOKRATES_STDLIB /app/stdlib
+ENV CIRCOM_HOME /app
 
 WORKDIR /
 COPY common-files common-files
@@ -22,13 +21,11 @@ RUN npm link
 WORKDIR /app
 COPY config/default.js config/default.js
 COPY /nightfall-deployer/circuits circuits
-COPY --from=builder /app/ZoKrates/zokrates_stdlib/stdlib /app/stdlib
-COPY --from=builder /app/ZoKrates/target/release/zokrates /app/zokrates
-COPY ./zokrates-worker/package.json ./zokrates-worker/package-lock.json ./
-COPY ./zokrates-worker/src ./src
-COPY ./zokrates-worker/circuits ./circuits
-COPY ./zokrates-worker/start-script ./start-script
-COPY ./zokrates-worker/start-dev ./start-dev
+COPY --from=builder /app/circom/target/release/circom /app/circom
+COPY ./worker/package.json ./worker/package-lock.json ./
+COPY ./worker/src ./src
+COPY ./worker/start-script ./start-script
+COPY ./worker/start-dev ./start-dev
 
 RUN npm ci
 

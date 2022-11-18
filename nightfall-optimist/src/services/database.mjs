@@ -289,21 +289,6 @@ export async function getAllRegisteredProposersCount() {
 }
 
 /**
-Function to return 'number' transactions, ordered by the highest fee. If there
-are fewer than 'number' transactions, all are returned.
-*/
-export async function getMostProfitableTransactions(number) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  return db
-    .collection(TRANSACTIONS_COLLECTION)
-    .find({ mempool: true }, { _id: 0 })
-    .sort({ fee: -1 })
-    .limit(number)
-    .toArray();
-}
-
-/**
 Function to save a (unprocessed) Transaction
 */
 export async function saveTransaction(_transaction) {
@@ -403,10 +388,14 @@ export async function removeNullifiersFromMemPool(nullifiers) {
 /**
 How many transactions are waiting to be processed into a block?
 */
-export async function numberOfUnprocessedTransactions() {
+export async function getMempoolTxsSortedByFee() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  return db.collection(TRANSACTIONS_COLLECTION).countDocuments({ mempool: true });
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .find({ mempool: true }, { _id: 0 })
+    .sort({ fee: -1 })
+    .toArray();
 }
 
 /**
@@ -566,16 +555,6 @@ export async function getTreeByBlockNumberL2(blockNumberL2) {
   const db = connection.db(OPTIMIST_DB);
   const { root, frontier, leafCount } =
     (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
-  const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
-  return t;
-}
-
-export async function getTreeByRoot(treeRoot) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const { root, frontier, leafCount } = (await db
-    .collection(TIMBER_COLLECTION)
-    .findOne({ root: treeRoot })) ?? { root: 0, frontier: [], leafCount: 0 };
   const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
   return t;
 }

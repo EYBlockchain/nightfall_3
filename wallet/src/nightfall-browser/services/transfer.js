@@ -9,10 +9,9 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  */
 
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
-
+import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
-import computeCircuitInputs from '../utils/compute-witness';
+import computeCircuitInputs from '../utils/computeCircuitInputs';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
@@ -21,26 +20,27 @@ import { edwardsCompress } from '../../common-files/utils/curve-maths/curves';
 import { ZkpKeys } from './keys';
 import {
   checkIndexDBForCircuit,
-  getStoreCircuit,
   getLatestTree,
   getMaxBlock,
   emptyStoreBlocks,
   emptyStoreTimber,
+  getStoreCircuit,
 } from './database';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { USE_STUBS } = global.config;
+const { VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
 
-const circuitName = USE_STUBS ? 'transfer_stub' : 'transfer';
+const circuitName = 'transfer';
 
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { ...items } = transferParams;
+  const { providedCommitments, ...items } = transferParams;
   const { tokenId, recipientData, rootKey, fee = generalise(0) } = generalise(items);
+
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
@@ -80,6 +80,8 @@ async function transfer(transferParams, shieldContractAddress) {
       maticAddress,
       tokenId,
       rootKey,
+      maxNullifiers: VK_IDS.transfer.numberNullifiers,
+      providedCommitments,
     });
 
     try {
@@ -100,17 +102,24 @@ async function transfer(transferParams, shieldContractAddress) {
       // Compress the public key as it will be put on-chain
       const compressedEPub = edwardsCompress(ePublic);
 
+      const circuitHashData = await getStoreCircuit(`transfer-hash`);
+
+      const circuitHash = circuitHashData.data;
+
       // now we have everything we need to create a Witness and compute a proof
       const transaction = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-        transactionType: 1,
+        circuitHash,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-        tokenId: compressedSecrets[1], // this is the encrypted tokenID
-        recipientAddress: compressedEPub,
+        tokenId: compressedEPub,
+        recipientAddress: compressedSecrets[1], // this is the encrypted tokenID
         commitments: commitmentsInfo.newCommitments,
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
+        numberNullifiers: VK_IDS.transfer.numberNullifiers,
+        numberCommitments: VK_IDS.transfer.numberCommitments,
+        isOnlyL2: true,
       });
 
       const privateData = {
@@ -129,53 +138,39 @@ async function transfer(transferParams, shieldContractAddress) {
         ephemeralKey: ePrivate,
       };
 
-      const witnessInput = computeCircuitInputs(
+      const witness = computeCircuitInputs(
         transaction,
         privateData,
-        [...commitmentsInfo.roots],
+        commitmentsInfo.roots,
         maticAddress,
+        VK_IDS.transfer.numberNullifiers,
+        VK_IDS.transfer.numberCommitments,
       );
 
-      // call a zokrates worker to generate the proof
-      // This is (so far) the only place where we need to get specific about the
-      // circuit
       if (!(await checkIndexDBForCircuit(circuitName)))
         throw Error('Some circuit data are missing from IndexedDB');
-      const [abiData, programData, pkData] = await Promise.all([
-        getStoreCircuit(`${circuitName}-abi`),
-        getStoreCircuit(`${circuitName}-program`),
-        getStoreCircuit(`${circuitName}-pk`),
+      const [wasmData, zkeyData] = await Promise.all([
+        getStoreCircuit(`${circuitName}-wasm`),
+        getStoreCircuit(`${circuitName}-zkey`),
       ]);
-      const abi = abiData.data;
-      const program = programData.data;
-      const pk = pkData.data;
 
-      const zokratesProvider = await initialize();
-      const artifacts = {
-        program: new Uint8Array(program),
-        abi: { inputs: abi.inputs, outputs: [abi.output] },
-      };
-      const keypair = { pk: new Uint8Array(pk) };
-      console.log('Computing witness');
-      const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
       // generate proof
-      console.log('Generating Proof');
-      let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
-      console.log('Proof Generated');
-      proof = [...proof.a, ...proof.b, ...proof.c];
-      proof = proof.flat(Infinity);
-      // and work out the ABI encoded data that the caller should sign and send to the shield contract
+      const { proof } = await snarkjs.groth16.fullProve(witness, wasmData.data, zkeyData.data); // zkey, witness
+
       const optimisticTransferTransaction = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-        transactionType: 1,
+        circuitHash,
         ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-        tokenId: compressedSecrets[1], // this is the encrypted tokenID
-        recipientAddress: compressedEPub,
+        tokenId: compressedEPub, // this is the encrypted tokenID
+        recipientAddress: compressedSecrets[1],
         commitments: commitmentsInfo.newCommitments,
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
         proof,
+        numberNullifiers: VK_IDS.transfer.numberNullifiers,
+        numberCommitments: VK_IDS.transfer.numberCommitments,
+        isOnlyL2: true,
       });
 
       const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
@@ -201,6 +196,7 @@ async function transfer(transferParams, shieldContractAddress) {
       throw new Error(err);
     }
   } catch (err) {
+    console.log('ERR', err);
     throw new Error(err); // let the caller handle the error
   }
 }

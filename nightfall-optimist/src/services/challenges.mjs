@@ -8,7 +8,7 @@ import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random
 import {
   saveCommit,
   getBlockByBlockNumberL2,
-  getTreeByRoot,
+  getTreeByBlockNumberL2,
   getTransactionHashSiblingInfo,
 } from './database.mjs';
 import Block from '../classes/block.mjs';
@@ -135,7 +135,7 @@ export async function createChallenge(block, transactions, err) {
     case 1: {
       logger.debug(`Challenging incorrect root`);
 
-      const tree = await getTreeByRoot(block.root);
+      const tree = await getTreeByBlockNumberL2(block.blockNumberL2);
       // We need to pad our frontier as we don't store them with the trailing zeroes.
       const frontierAfterBlock = tree.frontier.concat(
         Array(TIMBER_HEIGHT - tree.frontier.length + 1).fill(ZERO),
@@ -248,7 +248,7 @@ export async function createChallenge(block, transactions, err) {
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
       const uncompressedProof = transactions[transactionIndex].proof;
-      const [historicBlock1, historicBlock2, historicBlock3, historicBlock4] = await Promise.all(
+      const historicRoots = await Promise.all(
         transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
           if (transactions[transactionIndex].nullifiers[i] === 0) {
             return {};
@@ -281,18 +281,31 @@ export async function createChallenge(block, transactions, err) {
             transactionIndex,
             transactionSiblingPath,
           },
-          [historicBlock1, historicBlock2, historicBlock3, historicBlock4],
+          historicRoots,
           uncompressedProof,
           salt,
         )
         .encodeABI();
       break;
     }
+    // historic root block number not correct
     case 5: {
       const { transactionHashIndex: transactionIndex } = err.metadata;
-      const transactionSiblingPath = await getTransactionHashSiblingInfo(
-        transactions[transactionIndex].transactionHash,
-      );
+      let transactionSiblingPath = (
+        await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+      ).transactionHashSiblingPath;
+
+      // case when block.build never was called
+      // may be this optimist never ran as proposer
+      // or more likely since this tx is bad tx from a bad proposer.
+      // prposer hosted in this optimist never build any block with this bad tx in it
+      if (transactionSiblingPath === undefined) {
+        await Block.calcTransactionHashesRoot(transactions);
+        transactionSiblingPath = (
+          await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+        ).transactionHashSiblingPath;
+      }
+
       txDataToSign = await challengeContractInstance.methods
         .challengeHistoricRootBlockNumber({
           blockL2: Block.buildSolidityStruct(block),
@@ -313,7 +326,7 @@ export async function createChallenge(block, transactions, err) {
           `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
         );
 
-      const priorTree = await getTreeByRoot(priorBlock.root);
+      const priorTree = await getTreeByBlockNumberL2(priorBlock.blockNumberL2);
       // We need to pad our frontier as we don't store them with the trailing zeroes.
       const frontierBeforeBlock = priorTree.frontier.concat(
         Array(TIMBER_HEIGHT - priorTree.frontier.length + 1).fill(ZERO),

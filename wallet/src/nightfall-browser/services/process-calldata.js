@@ -6,6 +6,7 @@ This is used, rather than re-emmiting the calldata in the event because it's
 much cheaper, although the offchain part is more complex.
 */
 import Web3 from '../../common-files/utils/web3';
+import { unpackBlockInfo } from '../../common-files/utils/block-utils.js';
 import Transaction from '../../common-files/classes/transaction';
 import { decompressProof } from '../../common-files/utils/curve-maths/curves';
 
@@ -20,23 +21,23 @@ async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [leafCount, proposer, root, blockNumberL2, previousBlockHash, transactionHashesRoot] =
-    blockData;
+  const [packedBlockInfo, root, previousBlockHash, frontierHash, transactionHashesRoot] = blockData;
+
+  const { leafCount, proposer, blockNumberL2 } = unpackBlockInfo(packedBlockInfo);
+
   const block = {
     proposer,
     root,
     leafCount: Number(leafCount),
     blockNumberL2: Number(blockNumberL2),
     previousBlockHash,
+    frontierHash,
     transactionHashesRoot,
   };
   const transactions = transactionsData.map(t => {
     const [
-      value,
-      fee,
-      transactionType,
-      tokenType,
-      historicRootBlockNumberL2,
+      packedInfo,
+      historicRootBlockNumberL2Packed,
       tokenId,
       ercAddress,
       recipientAddress,
@@ -45,10 +46,18 @@ async function getProposeBlockCalldata(eventData) {
       compressedSecrets,
       proof,
     ] = t;
+
+    const { value, fee, circuitHash, tokenType } = Transaction.unpackTransactionInfo(packedInfo);
+
+    const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
+      nullifiers.length,
+      historicRootBlockNumberL2Packed,
+    );
+
     const transaction = {
       value,
       fee,
-      transactionType,
+      circuitHash,
       tokenType,
       historicRootBlockNumberL2,
       tokenId,
