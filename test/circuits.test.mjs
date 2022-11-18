@@ -44,7 +44,6 @@ describe('General Circuit Test', () => {
     // we must set the URL from the point of view of the client container
 
     const ethPrivateKey = environment.PROPOSER_KEY;
-    const { address } = web3.eth.accounts.privateKeyToAccount(ethPrivateKey);
 
     const res = await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
 
