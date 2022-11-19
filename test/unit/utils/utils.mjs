@@ -1,4 +1,5 @@
 /* eslint-disable no-empty-function */
+import { generalise } from 'general-number';
 import hardhat from 'hardhat';
 import { packTransactionInfo } from '../../../common-files/classes/transaction.mjs';
 import { packBlockInfo } from '../../../common-files/utils/block-utils.mjs';
@@ -55,15 +56,28 @@ export function createBlockAndTransactions(
   fee = 1,
 ) {
   const packedInfoWithdraw = packTransactionInfo(10, fee, 2, 0);
+  const historicRootBlockNumberL2s = [
+    '0x0000000000000000000000000000000000000000000000000000000000000009',
+    '0x0000000000000000000000000000000000000000000000000000000000000002',
+    '0x0000000000000000000000000000000000000000000000000000000000000000',
+    '0x0000000000000000000000000000000000000000000000000000000000000000',
+  ];
+  let historicRootOneLiner = historicRootBlockNumberL2s.reduce(
+    (acc, curr) => acc.concat(generalise(curr).hex(8).slice(2)),
+    '',
+  );
 
+  while (historicRootOneLiner.length % 64 !== 0) {
+    historicRootOneLiner += '0';
+  }
+
+  const historicRootsPacked = [];
+  for (let i = 0; i < historicRootOneLiner.length; i += 64) {
+    historicRootsPacked.push(`0x${historicRootOneLiner.substring(i, i + 64)}`);
+  }
   const withdrawTransaction = {
     packedInfo: packedInfoWithdraw,
-    historicRootBlockNumberL2: [
-      '0x0000000000000000000000000000000000000000000000000000000000000009',
-      '0x0000000000000000000000000000000000000000000000000000000000000002',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ],
+    historicRootBlockNumberL2: historicRootsPacked,
     tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
     ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
     recipientAddress: ethers.utils.hexZeroPad(ownerAddress, 32),
@@ -74,8 +88,8 @@ export function createBlockAndTransactions(
     nullifiers: [
       '0x078ba912b4169b22fb2d9b6fba6249ccd4ae9c2610c72312d0c6d18d85fd22cf',
       '0x078ba912b4169b22fb2d9b6fba6239ccd4ae9c2610c72312d0c6d18d85fd22cf',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
+      // '0x0000000000000000000000000000000000000000000000000000000000000000',
+      // '0x0000000000000000000000000000000000000000000000000000000000000000',
     ],
     compressedSecrets: [
       '0x0000000000000000000000000000000000000000000000000000000000000000',
