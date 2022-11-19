@@ -8,9 +8,8 @@ import './Structures.sol';
 contract Config is Ownable, Structures {
     uint256 constant CHALLENGE_PERIOD = 1 weeks;
     bytes32 constant ZERO = bytes32(0);
-    uint256 constant TRANSACTIONS_PER_BLOCK = 32;
-    uint256 constant BLOCK_STRUCTURE_SLOTS = 7;
-    uint256 constant TRANSACTION_STRUCTURE_SLOTS = 24;
+    uint256 constant MAX_BLOCK_SIZE = 50000;
+    uint256 constant BLOCK_STRUCTURE_SLOTS = 5;
 
     uint96 minimumStake;
     uint96 blockStake;
@@ -78,16 +77,14 @@ contract Config is Ownable, Structures {
         return maticAddress;
     }
 
-    /**
-     * @dev Get restricting tokens.
-     * transactionType 0 for deposit and 1 for withdraw
-     */
-    function getRestriction(address tokenAddr, uint256 transactionType)
-        public
-        view
-        returns (uint256)
-    {
-        return erc20limit[tokenAddr][transactionType];
+    // restricting tokens for deposit
+    function getRestrictionDeposit(address tokenAddr) public view returns (uint256) {
+        return erc20limit[tokenAddr][0];
+    }
+
+    // restricting tokens for deposit
+    function getRestrictionWithdraw(address tokenAddr) public view returns (uint256) {
+        return erc20limit[tokenAddr][1];
     }
 
     /**

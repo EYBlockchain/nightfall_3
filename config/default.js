@@ -21,7 +21,7 @@ module.exports = {
   KEYS_COLLECTION: 'keys',
   CONTRACT_ARTIFACTS: '/app/build/contracts',
   EXCLUDE_DIRS: 'common',
-  MAX_QUEUE: 5,
+  MAX_QUEUE: 10,
   TIMBER_HEIGHT: 32,
   TXHASH_TREE_HEIGHT: 5,
   CONFIRMATION_POLL_TIME: 1000,
@@ -36,10 +36,12 @@ module.exports = {
   LOG_HTTP_PAYLOAD_ENABLED: process.env.LOG_HTTP_PAYLOAD_ENABLED || 'true',
   LOG_HTTP_FULL_DATA: process.env.LOG_HTTP_FULL_DATA || 'false',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
-  PROTOCOL: 'http://', // connect to zokrates microservice like this
+  PROTOCOL: 'http://',
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
-  ZOKRATES_WORKER_HOST: process.env.ZOKRATES_WORKER_HOST || 'worker',
+  CIRCOM_WORKER_HOST: process.env.CIRCOM_WORKER_HOST || 'worker',
+  SANCTIONS_CONTRACT:
+    process.env.TEST_SANCTIONS_CONTRACT || '0x40C57923924B5c5c5455c48D93317139ADDaC8fb',
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
     APPROVERS: process.env.MULTISIG_APPROVERS
@@ -87,14 +89,45 @@ module.exports = {
       onTimeout: false,
     },
   },
-  PROVING_SCHEME: process.env.PROVING_SCHEME || 'g16',
+  PROVING_SCHEME: process.env.PROVING_SCHEME || 'groth16',
   BACKEND: process.env.BACKEND || 'bellman',
   CURVE: process.env.CURVE || 'bn128',
 
-  TRANSACTIONS_PER_BLOCK: Number(process.env.TRANSACTIONS_PER_BLOCK) || 2,
-  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 150,
-  USE_STUBS: process.env.USE_STUBS === 'true',
-  VK_IDS: { deposit: 0, transfer: 1, withdraw: 2 }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
+  MINIMUM_TRANSACTION_SLOTS: 16,
+  MAX_BLOCK_SIZE: Number(process.env.MAX_BLOCK_SIZE) || 50000,
+  RETRIES: Number(process.env.AUTOSTART_RETRIES) || 100,
+  VK_IDS: {
+    deposit: {
+      numberNullifiers: 0,
+      numberCommitments: 1,
+      isEscrowRequired: true,
+      isWithdrawing: false,
+    },
+    transfer: {
+      numberNullifiers: 4,
+      numberCommitments: 3,
+      isEscrowRequired: false,
+      isWithdrawing: false,
+    },
+    withdraw: {
+      numberNullifiers: 4,
+      numberCommitments: 2,
+      isEscrowRequired: false,
+      isWithdrawing: true,
+    },
+    tokenise: {
+      numberNullifiers: 2,
+      numberCommitments: 2,
+      isEscrowRequired: false,
+      isWithdrawing: false,
+    },
+    burn: {
+      numberNullifiers: 3,
+      numberCommitments: 2,
+      isEscrowRequired: false,
+      isWithdrawing: false,
+    },
+  }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   MPC: {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
@@ -201,7 +234,6 @@ module.exports = {
     gasCosts: 80000000000000000,
     fee: 1,
     ROTATE_PROPOSER_BLOCKS: 20,
-    txPerBlock: process.env.TRANSACTIONS_PER_BLOCK || 2,
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||
@@ -227,6 +259,9 @@ module.exports = {
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_KEY ||
         '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+      sanctionedUser:
+        process.env.SANCTIONED_USER ||
+        '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
     },
     addresses: {
       walletTest: process.env.WALLET_TEST_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
@@ -239,6 +274,7 @@ module.exports = {
         process.env.BOOT_CHALLENGER_ADDRESS || '0xFFF578cDdc48792522F4a7Fdc3973Ec0d41A831f',
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+      sanctionedUser: process.env.SANCTIONED_USER || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
     },
     zkpPublicKeys: {
       user1:
@@ -263,6 +299,9 @@ module.exports = {
         'crush power outer gadget enter maze advance rather divert monster indoor axis',
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_MNEMONIC ||
+        'smart base soup sister army address member poem point quick save penalty',
+      sanctionedUser:
+        process.env.SANCTIONED_USER_MNEMONIC ||
         'smart base soup sister army address member poem point quick save penalty',
     },
     restrictions: {
@@ -461,14 +500,14 @@ module.exports = {
   // is running in local machine
   isLocalRun: process.env.LOCAL_PROPOSER === 'true',
   SIGNATURES: {
-    BLOCK: '(uint48,address,bytes32,uint256,bytes32,bytes32, bytes32)',
+    BLOCK: '(uint256,bytes32,bytes32,bytes32, bytes32)',
     TRANSACTION:
-      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+      '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
     PROPOSE_BLOCK: [
-      '(uint48,address,bytes32,uint256,bytes32,bytes32,bytes32)',
-      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])[]',
+      '(uint256,bytes32,bytes32,bytes32,bytes32)',
+      '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])[]',
     ],
     SUBMIT_TRANSACTION:
-      '(uint112,uint112,uint8,uint8,uint64[4],bytes32,bytes32,bytes32,bytes32[3],bytes32[4],bytes32[2],uint256[4])',
+      '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
   },
 };

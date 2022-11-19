@@ -5,7 +5,9 @@ import Nullifier from '../classes/nullifier';
 import {
   clearPending,
   findUsableCommitmentsMutex,
+  getCommitmentsByHash,
   getSiblingInfo,
+  markPending,
 } from '../services/commitment-storage';
 import { ZkpKeys } from '../services/keys';
 
@@ -33,6 +35,9 @@ type TxInfo = {
   maticAddress: GeneralNumber;
   tokenId: GeneralNumber;
   rootKey: any;
+  maxNullifiers: number;
+  maxNonFeeNullifiers: number | undefined;
+  providedCommitments: string[];
 };
 
 const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
@@ -44,7 +49,11 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
     maticAddress,
     tokenId = generalise(0),
     rootKey,
+    providedCommitments = [],
   } = txInfo;
+
+  let { maxNullifiers, maxNonFeeNullifiers = undefined } = txInfo;
+
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
   const valuesArray = recipientZkpPublicKeysArray.map(() => totalValueToSend);
@@ -54,31 +63,82 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
   const tokenIdArray = recipientZkpPublicKeysArray.map(() => tokenId);
   const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee : 0n;
 
-  const value = totalValueToSend + addedFee;
+  let value = totalValueToSend + addedFee;
   const feeValue = fee - addedFee;
 
-  const commitments = await findUsableCommitmentsMutex(
-    compressedZkpPublicKey,
-    ercAddress,
-    tokenId,
-    maticAddress,
-    value,
-    feeValue,
-  );
+  if (maxNonFeeNullifiers === undefined) {
+    maxNonFeeNullifiers = feeValue > 0n ? maxNullifiers - 1 : maxNullifiers;
+  }
 
-  if (!commitments) throw new Error('Not available commitments has been found');
-
-  const { oldCommitments, oldCommitmentsFee } = commitments;
-
-  const spentCommitments = [...oldCommitments, ...oldCommitmentsFee];
-
+  const spentCommitments = [];
   try {
+    let validatedProvidedCommitments = [];
+    if (providedCommitments.length > 0) {
+      const commitmentHashes = providedCommitments.map(c => c.toString());
+      const rawCommitments = await getCommitmentsByHash(
+        commitmentHashes,
+        compressedZkpPublicKey,
+        ercAddress,
+        tokenId,
+      );
+
+      if (rawCommitments.length < commitmentHashes.length) {
+        const invalidHashes = commitmentHashes.filter(ch => {
+          for (const rc of rawCommitments) {
+            if (rc._id === ch) return false;
+          }
+          return true;
+        });
+        throw new Error(`invalid commitment hashes: ${invalidHashes}`);
+      }
+
+      const providedValue = rawCommitments
+        .map((c: any) => generalise(c.preimage.value).bigInt)
+        .reduce((sum: bigint, c: bigint) => sum + c);
+
+      if (providedValue < totalValueToSend)
+        throw new Error('provided commitments do not cover the value');
+
+      // transform the hashes retrieved from the DB to well formed commitments
+      validatedProvidedCommitments = rawCommitments.map((ct: any) => new Commitment(ct.preimage));
+
+      if (maticAddress.hex(32) === ercAddress.hex(32)) {
+        // the user provided enough commitments to cover the value but not the fee
+        // this can only happen when the token to send is the fee token
+        // we need to set the value here instead of the feeValue
+        value = providedValue >= value ? 0n : value - providedValue;
+      } else {
+        maxNonFeeNullifiers = 0;
+      }
+
+      maxNullifiers -= validatedProvidedCommitments.length;
+      await Promise.all(validatedProvidedCommitments.map((c: Commitment) => markPending(c)));
+      spentCommitments.push(...validatedProvidedCommitments);
+    }
+
+    const commitments = await findUsableCommitmentsMutex(
+      compressedZkpPublicKey,
+      ercAddress,
+      tokenId,
+      maticAddress,
+      value,
+      feeValue,
+      maxNullifiers,
+      maxNonFeeNullifiers,
+    );
+
+    const { oldCommitments, oldCommitmentsFee } = commitments;
+    spentCommitments.push(...oldCommitments);
+    spentCommitments.push(...oldCommitmentsFee);
+
+    oldCommitments.push(...validatedProvidedCommitments);
+
     // Compute the nullifiers
     const nullifiers = spentCommitments.map(commitment => new Nullifier(commitment, nullifierKey));
 
     // then the new output commitment(s)
     const totalInputCommitmentValue = oldCommitments.reduce(
-      (acc, commitment) => acc + commitment.preimage.value.bigInt,
+      (acc: bigint, commitment: Commitment) => acc + commitment.preimage.value.bigInt,
       0n,
     );
 
@@ -95,7 +155,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
 
     // then the new output commitment(s) fee
     const totalInputCommitmentFeeValue = oldCommitmentsFee.reduce(
-      (acc, commitment) => acc + commitment.preimage.value.bigInt,
+      (acc: bigint, commitment: Commitment) => acc + commitment.preimage.value.bigInt,
       0n,
     );
 
@@ -147,8 +207,9 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
       salts,
     };
   } catch (err) {
-    await Promise.all(oldCommitments.map(o => clearPending(o)));
-    throw new Error('Failed getting commitment info');
+    console.log('ERR', err);
+    await Promise.all(spentCommitments.map((o: any) => clearPending(o)));
+    throw err;
   }
 };
 

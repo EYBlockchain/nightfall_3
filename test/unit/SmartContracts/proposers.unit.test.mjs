@@ -8,6 +8,12 @@ describe('Proposers contract Proposers functions', function () {
   let addr1;
   let addr2;
   let state;
+  let sanctionedSigner;
+
+  before(async () => {
+    const owner = await ethers.getSigners();
+    [, , , , sanctionedSigner] = owner;
+  });
 
   beforeEach(async () => {
     [addr1, addr2] = await ethers.getSigners();
@@ -53,10 +59,15 @@ describe('Proposers contract Proposers functions', function () {
 
     const X509 = await ethers.getContractFactory('X509');
     const x509 = await upgrades.deployProxy(X509, []);
-    await x509.deployed();
+
+    const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
+    const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
+      sanctionedSigner.address,
+    );
+    const sanctionsListAddress = sanctionsListMockInstance.address;
 
     const Shield = await ethers.getContractFactory('Shield');
-    const shield = await upgrades.deployProxy(Shield, [x509.address], {
+    const shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, x509.address], {
       initializer: 'initializeState',
     });
     await shield.deployed();
@@ -357,10 +368,10 @@ describe('Proposers contract Proposers functions', function () {
 
       expect((await state.stakeAccounts(addr1.address)).amount).to.equal(0);
 
-      expect(await state.pendingWithdrawals(addr1.address, 0)).to.equal(
+      expect((await state.pendingWithdrawalsFees(addr1.address)).feesEth).to.equal(
         TimeLockedStakeBefore.amount.add(TimeLockedStakeBefore.challengeLocked),
       );
-      expect(await state.pendingWithdrawals(addr1.address, 1)).to.equal(0);
+      expect((await state.pendingWithdrawalsFees(addr1.address)).feesMatic).to.equal(0);
     } else {
       console.log('Test skipped');
     }

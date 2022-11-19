@@ -6,7 +6,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { expectTransaction, Web3Client } from '../../utils.mjs';
+import { emptyL2, expectTransaction, Web3Client } from '../../utils.mjs';
 import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -17,7 +17,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const {
   fee,
-  txPerBlock,
   transferValue,
   tokenConfigs: { tokenTypeERC721, tokenType, tokenId },
   mnemonics,
@@ -44,18 +43,6 @@ let rollbackCount = 0;
   L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
   of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
 */
-const emptyL2 = async () => {
-  let count = await nf3Users[0].unprocessedTransactionCount();
-
-  while (count !== 0) {
-    await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    count = await nf3Users[0].unprocessedTransactionCount();
-  }
-
-  await nf3Users[0].makeBlockNow();
-  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-};
 
 describe('ERC721 tests', () => {
   before(async () => {
@@ -64,20 +51,12 @@ describe('ERC721 tests', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter
-      .on('gascost', async gasUsed => {
-        logger.debug(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${
-            gasUsed / txPerBlock
-          }`,
-        );
-      })
-      .on('rollback', () => {
-        rollbackCount += 1;
-        logger.debug(
-          `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
-        );
-      });
+    newGasBlockEmitter.on('rollback', () => {
+      rollbackCount += 1;
+      logger.debug(
+        `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
+      );
+    });
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
@@ -95,7 +74,7 @@ describe('ERC721 tests', () => {
 
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
 
-    await emptyL2();
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
   });
 
   describe('Deposit', () => {
@@ -117,7 +96,7 @@ describe('ERC721 tests', () => {
       const res = await nf3Users[0].deposit(erc721Address, tokenTypeERC721, 0, tokenToDeposit, fee);
       expectTransaction(res);
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const balanceAfter = (await nf3Users[0].getLayer2Balances())[erc721Address]?.length || 0;
       const unspentCommitmentsAfter = await nf3Users[0].getLayer2Commitments([erc721Address], true);
@@ -143,7 +122,7 @@ describe('ERC721 tests', () => {
         fee,
       );
       expectTransaction(deposit);
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       async function getBalances() {
         return Promise.all([
@@ -165,7 +144,7 @@ describe('ERC721 tests', () => {
       );
       expectTransaction(res);
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const balancesAfter = await getBalances();
       expect(
@@ -176,6 +155,8 @@ describe('ERC721 tests', () => {
         (balancesAfter[1][erc721Address]?.length || 0) -
           (balancesBefore[1][erc721Address]?.length || 0),
       ).to.be.equal(1);
+      console.log('Balances after', balancesAfter);
+      console.log('Balances before', balancesBefore);
       expect(
         (balancesAfter[0][erc20Address]?.[0].balance || 0) -
           (balancesBefore[0][erc20Address]?.[0].balance || 0),
@@ -195,7 +176,7 @@ describe('ERC721 tests', () => {
         fee,
       );
       expectTransaction(res);
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const balancesBefore = await nf3Users[0].getLayer2Balances();
 
@@ -211,7 +192,7 @@ describe('ERC721 tests', () => {
       expectTransaction(rec);
       logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const balancesAfter = await nf3Users[0].getLayer2Balances();
       expect(
@@ -236,7 +217,7 @@ describe('ERC721 tests', () => {
           fee,
         );
         expectTransaction(deposit);
-        await emptyL2();
+        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
         const balancesBefore = await nf3Users[0].getLayer2Balances();
 
@@ -250,7 +231,7 @@ describe('ERC721 tests', () => {
           fee,
         );
         expectTransaction(rec);
-        await emptyL2();
+        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
         const withdrawal = nf3Users[0].getLatestWithdrawHash();
 

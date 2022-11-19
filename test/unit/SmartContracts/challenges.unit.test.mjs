@@ -6,7 +6,8 @@ import {
   calculateBlockHash,
   createBlockAndTransactions,
 } from '../utils/utils.mjs';
-import { setTransactionInfo } from '../utils/shieldStorage.mjs';
+import { setTransactionInfo } from '../utils/stateStorage.mjs';
+import { unpackBlockInfo } from '../../../common-files/utils/block-utils.mjs';
 
 const { ethers, upgrades } = hardhat;
 
@@ -19,6 +20,12 @@ describe('Challenges contract Challenges functions', function () {
   let shield;
   let merkleTree;
   let challengesUtil;
+  let sanctionedSigner;
+
+  before(async () => {
+    const owner = await ethers.getSigners();
+    [, , , , sanctionedSigner] = owner;
+  });
 
   beforeEach(async () => {
     [addr1] = await ethers.getSigners();
@@ -73,10 +80,15 @@ describe('Challenges contract Challenges functions', function () {
 
     const X509 = await ethers.getContractFactory('X509');
     const x509 = await upgrades.deployProxy(X509, []);
-    await x509.deployed();
+
+    const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
+    const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
+      sanctionedSigner.address,
+    );
+    const sanctionsListAddress = sanctionsListMockInstance.address;
 
     const Shield = await ethers.getContractFactory('Shield');
-    shield = await upgrades.deployProxy(Shield, [x509.address], {
+    shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, x509.address], {
       initializer: 'initializeState',
     });
     await shield.deployed();
@@ -124,16 +136,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -187,16 +199,15 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -255,16 +266,15 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -305,7 +315,6 @@ describe('Challenges contract Challenges functions', function () {
 
   it('should not challengeLeafCountCorrect: Cannot challenge block', async function () {
     const network = await ethers.provider.getNetwork();
-    console.log('Network chain id=', network.chainId);
     if (network.chainId === 31337 || network.chainId === 1337) {
       const newUrl = 'url';
       const newFee = 100;
@@ -328,13 +337,13 @@ describe('Challenges contract Challenges functions', function () {
         shield.address,
         calculateTransactionHash(transactionsCreated.withdrawTransaction),
         true,
-        false,
+        0,
       );
       await setTransactionInfo(
         shield.address,
         calculateTransactionHash(transactionsCreated.depositTransaction),
         true,
-        false,
+        0,
       );
       await state.proposeBlock(
         transactionsCreated.block,
@@ -398,16 +407,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -466,16 +475,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -523,16 +532,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -605,16 +614,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -657,7 +666,8 @@ describe('Challenges contract Challenges functions', function () {
     const eventRollback = receipt.events.find(event => event.event === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
-    expect(blockNumberL2).to.equal(newTx.block.blockNumberL2);
+    const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
+    expect(blockNumberL2).to.equal(Number(unpackedBlockInfo.blockNumberL2));
   });
 
   it('should not challengeHistoricRootBlockNumber: Historic roots are not greater than L2BlockNumber on chain', async function () {
@@ -679,16 +689,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -769,16 +779,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -848,7 +858,8 @@ describe('Challenges contract Challenges functions', function () {
     const eventRollback = receipt.events.find(event => event.event === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
-    expect(blockNumberL2).to.equal(newTx.block.blockNumberL2);
+    const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
+    expect(blockNumberL2).to.equal(Number(unpackedBlockInfo.blockNumberL2));
   });
 
   it('should challengeCommitment: tx1', async function () {
@@ -870,16 +881,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -949,7 +960,8 @@ describe('Challenges contract Challenges functions', function () {
     const eventRollback = receipt.events.find(event => event.event === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
-    expect(blockNumberL2).to.equal(newTx.block.blockNumberL2);
+    const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
+    expect(blockNumberL2).to.equal(Number(unpackedBlockInfo.blockNumberL2));
   });
 
   it('should not challengeCommitment: ', async function () {
@@ -971,16 +983,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1061,16 +1073,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1139,16 +1151,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1218,7 +1230,8 @@ describe('Challenges contract Challenges functions', function () {
     const eventRollback = receipt.events.find(event => event.event === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
-    expect(blockNumberL2).to.equal(newTx.block.blockNumberL2);
+    const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
+    expect(blockNumberL2).to.equal(Number(unpackedBlockInfo.blockNumberL2));
   });
 
   it('should not challengeNullifier: Cannot be the same transactionIndex', async function () {
@@ -1240,16 +1253,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1318,16 +1331,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1376,7 +1389,8 @@ describe('Challenges contract Challenges functions', function () {
     const eventRollback = receipt.events.find(event => event.event === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
-    expect(blockNumberL2).to.equal(newTx.block.blockNumberL2);
+    const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
+    expect(blockNumberL2).to.equal(Number(unpackedBlockInfo.blockNumberL2));
   });
 
   it('should not challengeNewFrontierCorrect: Invalid prior block frontier', async function () {
@@ -1398,16 +1412,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1475,16 +1489,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1555,16 +1569,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1607,7 +1621,8 @@ describe('Challenges contract Challenges functions', function () {
     const eventRollback = receipt.events.find(event => event.event === 'Rollback');
     const [blockNumberL2] = eventRollback.args;
 
-    expect(blockNumberL2).to.equal(newTx.block.blockNumberL2);
+    const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
+    expect(blockNumberL2).to.equal(Number(unpackedBlockInfo.blockNumberL2));
   });
 
   it('should not challengeNewRootCorrect: Invalid prior block frontier', async function () {
@@ -1629,16 +1644,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1700,16 +1715,16 @@ describe('Challenges contract Challenges functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
-    );
-    await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
     );
     await state.proposeBlock(
       transactionsCreated.block,

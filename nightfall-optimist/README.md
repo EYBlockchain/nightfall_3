@@ -14,10 +14,10 @@ To launch a stand alone optimist:
 
 `OPTIONS` include:
 
-- -d|--delete : Delete mondodb contents
+- -d|--delete : Delete mongodb contents
 - -e|--environment : Set Nightfall environment. Possible values are `mainnet` and `testnet`. If
   `environment` is not configured, it is assumed that optimist is to be attached to the Nightfall
-  environment that results from launching `./start-nightfall`
+  environment that results from launching `./bin/start-nightfall`
 
 4. To stop optimist:
 
@@ -44,8 +44,8 @@ File `optimist.env` contains the configuration variables needed. When launching
 
 Scripts provided can spin an optimist and connect it to an existing testnet or mainntet nightfall
 deployment. In this case, one needs to have access to Web3 node. Alternatively, the optimist can
-connect to the sandbox environment provided by `./start-nightfall` script. In this case, it is not
-necessary to provide `BLOCKCHAIN_URL` parameters. The same ganache node will be automatically
+connect to the sandbox environment provided by `./bin/start-nightfall` script. In this case, it is
+not necessary to provide `BLOCKCHAIN_URL` parameters. The same ganache node will be automatically
 configured.
 
 ## Applications

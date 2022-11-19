@@ -1,7 +1,11 @@
 import React from 'react';
 import { Row, Spinner, Image } from 'react-bootstrap';
 import importTokens from '@TokenList/index';
-import { getAllTransactions, findBlocksFromBlockNumberL2 } from '@Nightfall/services/database.js';
+import {
+  getAllTransactions,
+  findBlocksFromBlockNumberL2,
+  getStoreCircuit,
+} from '@Nightfall/services/database.js';
 import { getAllCommitments } from '@Nightfall/services/commitment-storage';
 import { isValidWithdrawal } from '@Nightfall/services/valid-withdrawal';
 import WithdrawTransaction from './withdraw.tsx';
@@ -49,12 +53,19 @@ const Transactions = () => {
   }, {});
 
   const [currencyValues, setCurrencyValues] = React.useState({ now: 0, ...initialPrices });
+  const [circuitHashes, setCircuitHashes] = React.useState([]);
 
   React.useEffect(async () => {
     if (!getPricing()) await setPricing(supportedTokens.map(t => t.id));
     else if (Date.now() - getPricing().time > 86400)
       await setPricing(supportedTokens.map(t => t.id));
     setCurrencyValues(getPricing());
+
+    const depositCircuitHash = BigInt((await getStoreCircuit(`deposit-hash`)).data).toString();
+    const transferCircuitHash = BigInt((await getStoreCircuit(`transfer-hash`)).data).toString();
+    const withdrawCircuitHash = BigInt((await getStoreCircuit(`withdraw-hash`)).data).toString();
+
+    setCircuitHashes([depositCircuitHash, transferCircuitHash, withdrawCircuitHash]);
   }, []);
 
   useInterval(async () => {
@@ -78,7 +89,7 @@ const Transactions = () => {
     const blocks = await findBlocksFromBlockNumberL2(-1);
     // TODO: MODIFY
     const promisedTxs = transactions.map(async tx => {
-      const safeTransactionType = BigInt(tx.transactionType).toString();
+      const safeTransactionType = BigInt(tx.circuitHash).toString();
       let value = BigInt(tx.value);
       // The value of transfers need to be derived from the components making up the transfer
       // Add sum nullifiers in transactions
@@ -109,7 +120,16 @@ const Transactions = () => {
       });
 
       let withdrawReady = false;
-      if (safeTransactionType === '2' && tx.isOnChain > 0 && tx.withdrawState !== 'finalised') {
+
+      const circuitHashData = await getStoreCircuit(`transfer-hash`);
+      const withdrawHash = circuitHashData.data;
+
+      if (
+        safeTransactionType === withdrawHash &&
+        tx.isOnChain > 0 &&
+        tx.withdrawState !== 'finalised' &&
+        Math.floor(Date.now() / 1000) - tx.createdTime > 3600 * 24 * 7
+      ) {
         withdrawReady = await isValidWithdrawal(tx._id, shieldContractAddress);
       }
       if (tx.withdrawState === 'instant') {
@@ -144,7 +164,6 @@ const Transactions = () => {
     const mappedTxs = (await Promise.all(promisedTxs)).sort(
       (a, b) => b.createdTime - a.createdTime,
     );
-    console.log('Transactions', transactions);
     setTxs(mappedTxs);
   }, delay);
 
@@ -213,11 +232,11 @@ const Transactions = () => {
             .filter(f => {
               switch (isActive) {
                 case 'deposit':
-                  return f.txType === '0';
+                  return f.txType === circuitHashes[txTypeOptions.indexOf('Deposit')];
                 case 'transfer':
-                  return f.txType === '1';
+                  return f.txType === circuitHashes[txTypeOptions.indexOf('Transfer')];
                 case 'withdraw':
-                  return f.txType === '2';
+                  return f.txType === circuitHashes[txTypeOptions.indexOf('Withdraw')];
                 case 'pending':
                   return f.isOnChain === -1;
                 default:
@@ -254,9 +273,7 @@ const Transactions = () => {
                       {/* Details */}
                       <div style={{ display: 'flex', fontWeight: '600', fontSize: '14px' }}>
                         {/* tx-type-time */}
-                        <div style={{ textTransform: 'capitalize' }}>
-                          {txTypeOptions[tx.txType]}
-                        </div>
+                        <div style={{ textTransform: 'capitalize' }}></div>
                         {/* tx-type-time-type */}
                         <div style={{ color: '#b0b4bb', paddingLeft: '5px' }}>
                           {/* tx-type-time-time */}
@@ -275,7 +292,8 @@ const Transactions = () => {
                         {/* tx-status-hash */}
                         {/* <div> 1/3 • Action Required • From Mumbai to Goerli</div> */}
                         <div style={{ textTransform: 'capitalize' }}>
-                          {tx.isOnChain >= 0 ? 'Success' : 'Pending'} • {txTypeDest[tx.txType]}{' '}
+                          {tx.isOnChain >= 0 ? 'Success' : 'Pending'} •{' '}
+                          {txTypeDest[circuitHashes.indexOf(tx.txType)]}{' '}
                           {!tx.withdrawState ? '' : `• ${tx.withdrawState}`}
                         </div>
                       </div>
@@ -365,7 +383,9 @@ const Transactions = () => {
                     </a>
                   </div>
                 </Row>
-                {tx.txType === '2' && tx.isOnChain > 0 && !tx.withdrawState ? (
+                {tx.txType === circuitHashes[txTypeOptions.indexOf('Withdraw')] &&
+                tx.isOnChain > 0 &&
+                !tx.withdrawState ? (
                   <WithdrawTransaction
                     withdrawready={tx.withdrawReady}
                     transactionhash={tx.transactionHash}

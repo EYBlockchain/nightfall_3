@@ -13,17 +13,18 @@ pragma solidity ^0.8.0;
 import './Utils.sol';
 import './Config.sol';
 import './Pausable.sol';
+import './Key_Registry.sol';
 
-contract State is ReentrancyGuardUpgradeable, Pausable, Config {
+contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // global state variables
+    mapping(bytes32 => TransactionInfo) public txInfo;
     BlockData[] public blockHashes; // array containing mainly blockHashes
-    mapping(address => uint256[2]) public pendingWithdrawals;
+    mapping(address => FeeTokens) public pendingWithdrawalsFees;
     mapping(address => LinkedAddress) public proposers;
     mapping(address => TimeLockedStake) public stakeAccounts;
-    mapping(bytes32 => uint256[2]) public feeBook;
-    mapping(bytes32 => bool) public claimedBlockStakes;
+    mapping(bytes32 => BlockInfo) public blockInfo;
     LinkedAddress public currentProposer; // who can propose a new shield state
     uint256 public proposerStartBlock; // L1 block where currentProposer became current
     // local state variables
@@ -36,8 +37,9 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     ProposerSet[] public proposersSet; // proposer set for next span
     uint256 public currentSprint; // the current sprint of the span
 
-    function initialize() public override(Pausable, Config) {
+    function initialize() public override(Pausable, Key_Registry, Config) {
         Pausable.initialize();
+        Key_Registry.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     }
@@ -53,28 +55,18 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         initialize();
     }
 
-    modifier onlyRegistered() {
-        require(
-            msg.sender == proposersAddress ||
-                msg.sender == challengesAddress ||
-                msg.sender == shieldAddress,
-            'State: Not authorised to call this function'
-        );
-        _;
-    }
-
     modifier onlyShield() {
-        require(msg.sender == shieldAddress, 'Only shield contract is authorized');
+        require(msg.sender == shieldAddress, 'State: Only shield contract is authorized');
         _;
     }
 
     modifier onlyProposer() {
-        require(msg.sender == proposersAddress, 'Only proposer contract is authorized');
+        require(msg.sender == proposersAddress, 'State: Only proposer contract is authorized');
         _;
     }
 
     modifier onlyChallenger() {
-        require(msg.sender == challengesAddress, 'Only challenger contract is authorized');
+        require(msg.sender == challengesAddress, 'State: Only challenger contract is authorized');
         _;
     }
 
@@ -103,41 +95,29 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         onlyCurrentProposer
         whenNotPaused
     {
-        require(b.blockNumberL2 == blockHashes.length, 'State: Block out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
-        if (blockHashes.length != 0)
+        require(Utils.getBlockNumberL2(b.packedInfo) == blockHashes.length, 'State: Block out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
+        if (blockHashes.length != 0) {
             require(
                 b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash,
                 'State: Block flawed or out of order'
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
-
-        TimeLockedStake memory stake = getStakeAccount(msg.sender);
-        require(b.proposer == msg.sender, 'State: Proposer address is not the sender');
-        // set the maximum tx/block to prevent unchallengably large blocks
-        require(t.length <= TRANSACTIONS_PER_BLOCK, 'State: The block has too many transactions');
-        stake.amount += msg.value; // the staked sent by the proposer
-        require(stake.amount >= blockStake, "State: Proposer doesn't have enough funds staked");
-        stake.amount -= blockStake; // the block stake in case of an invalid block
-        stake.challengeLocked += blockStake; // the block stake in case of an invalid block
-        stakeAccounts[msg.sender] = TimeLockedStake(stake.amount, stake.challengeLocked, 0);
-
-        bytes32 input = keccak256(abi.encodePacked(b.proposer, b.blockNumberL2));
-        feeBook[input][0] = 0; // fee payments Eth
-        feeBook[input][1] = 0; // fee payments Matic
-
-        for (uint256 i = 0; i < t.length; i++) {
-            if (t[i].transactionType == TransactionTypes.DEPOSIT) {
-                feeBook[input][0] += uint256(t[i].fee);
-            } else {
-                feeBook[input][1] += uint256(t[i].fee);
-            }
         }
+        require(Utils.getProposer(b.packedInfo) == msg.sender, 'State: The sender is not the proposer');
+        require(
+            stakeAccounts[msg.sender].amount + msg.value >= blockStake,
+            'State: Proposer does not have enough funds staked'
+        );
+        stakeAccounts[msg.sender].amount = stakeAccounts[msg.sender].amount + uint112(msg.value) - blockStake;
+        stakeAccounts[msg.sender].challengeLocked += blockStake;
+        stakeAccounts[msg.sender].time = 0;
+
+        uint120 feesMatic = 0;
+        uint120 feesEth = 0;
 
         bytes32 blockHash;
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
-        uint256 transactionSlots = TRANSACTION_STRUCTURE_SLOTS; //Number of slots that the transaction structure has
+        uint256 maxBlockSize = MAX_BLOCK_SIZE;
 
-        //Get the signature for the function that checks if the transaction has been escrowed or not
-        bytes4 checkTxEscrowedSignature = bytes4(keccak256('getTransactionEscrowed(bytes32)')); //Function signature
 
         assembly {
             //Function that calculates the height of the Merkle Tree
@@ -151,13 +131,15 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                     _height := add(_height, 1)
                 }
             }
+		
+            if lt(maxBlockSize, sub(calldatasize(), add(t.offset, calldataload(t.offset)))) {
+                mstore(0, 0x41c918e600000000000000000000000000000000000000000000000000000000) //Custom error InvalidBlockSize
+                revert(0, 4)
+            }
 
             let x := mload(0x40) //Gets the first free memory pointer
-            let blockPos := add(x, mul(0x20, 2)) //Save two slots of 32 bytes for calling external libraries
-            calldatacopy(blockPos, 0x04, mul(0x20, blockSlots)) //Copy the block structure into blockPos
-            let transactionHashesPos := add(blockPos, mul(0x20, blockSlots)) // calculate memory location of the transaction hashes
+            let transactionHashesPos := add(x, mul(0x20, 3)) // calculate memory location of the transaction hashes
             let transactionPos := add(
-                // calculate memory location of transactions
                 transactionHashesPos,
                 mul(0x20, exp(2, getTreeHeight(t.length)))
             )
@@ -167,44 +149,79 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             } lt(i, t.length) {
                 i := add(i, 1)
             } {
+                let transactionSlots := div(
+                    sub(
+                        add(t.offset, calldataload(add(t.offset, mul(0x20, add(i, 1))))),
+                        add(t.offset, calldataload(add(t.offset, mul(0x20, i))))
+                    ),
+                    32
+                )
+
+                if eq(add(i, 1), t.length) {
+                    transactionSlots := div(
+                        sub(
+                            calldatasize(),
+                            add(t.offset, calldataload(add(t.offset, mul(0x20, i))))
+                        ),
+                        32
+                    )
+                }
+
                 // Copy the transaction into transactionPos
                 calldatacopy(
-                    transactionPos,
-                    add(t.offset, mul(mul(0x20, transactionSlots), i)),
+                    add(transactionPos, 0x20),
+                    add(t.offset, calldataload(add(t.offset, mul(0x20, i)))),
                     mul(0x20, transactionSlots)
                 )
 
                 // Calculate the hash of the transaction and store it in transactionHashesPos
+                mstore(transactionPos, 0x20)
+
                 mstore(
                     add(transactionHashesPos, mul(0x20, i)),
-                    keccak256(transactionPos, mul(0x20, transactionSlots))
+                    keccak256(transactionPos, mul(0x20, add(transactionSlots, 1)))
                 )
 
-                // Get the transaction type
-                let transactionType := calldataload(
-                    add(t.offset, add(mul(mul(0x20, transactionSlots), i), mul(0x20, 2)))
-                )
+                // We need to check if circuit requires to escrow funds
+                mstore(x, shr(216,calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))))))
+                mstore(add(x, 0x20), circuitInfo.slot)
+                
+                let isEscrowRequired := shr(8, sload(keccak256(x, mul(0x20, 2))))
+                let fee := shr(160,shl(40,calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))))))
 
-                // If the transactionType is zero (aka deposit), we need to check if the funds were escrowed
-                if iszero(transactionType) {
-                    mstore(x, checkTxEscrowedSignature) //Store the signature of the function in x
-                    mstore(add(x, 0x04), mload(add(transactionHashesPos, mul(0x20, i)))) //Store the transactionHash after the signature
-                    pop(
-                        call(
-                            // Call getTransactionEscrowed function to see if funds has been deposited
-                            gas(),
-                            sload(shieldAddress.slot),
-                            0, //No value
-                            x, //Inputs are stored at location x
-                            0x24, //Inputs are 36 bytes long
-                            x, //Store output over input (saves space)
-                            0x20 //Outputs are 32 bytes long
-                        )
-                    )
+                switch isEscrowRequired
+                case true {
+                    mstore(x, mload(add(transactionHashesPos, mul(0x20, i))))
+                    mstore(add(x, 0x20), txInfo.slot)
+                    let transactionInfo := sload(keccak256(x, mul(0x20, 2)))
+                    
                     //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
-                    if iszero(mload(x)) {
-                        revert(0, 0)
+                    if iszero(shr(248,transactionInfo)) {
+                        mstore(
+                            0,
+                            0xd96541f500000000000000000000000000000000000000000000000000000000 //Custom error DepositNotEscrowed
+                        )
+                        mstore(0x04, mload(add(transactionHashesPos, mul(0x20, i))))
+                        revert(0, 36)
                     }
+            
+                    // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
+                    if iszero(fee) {
+                        feesEth := add(feesEth, shr(8,shl(8,transactionInfo)))
+                    }
+                }
+                case false {
+                    // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
+                    if iszero(fee) {
+                        mstore(x, mload(add(transactionHashesPos, mul(0x20, i))))
+                        mstore(add(x, 0x20), txInfo.slot)
+                        feesEth := add(feesEth, shr(8,shl(8,sload(keccak256(x, mul(0x20, 2))))))
+                    }
+                }
+
+                // If the transaction fee is not zero, update the MATIC fee payments
+                if eq(iszero(fee),0) {
+                    feesMatic := add(feesMatic, fee)
                 }
             }
 
@@ -219,31 +236,29 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
                 } lt(j, exp(2, sub(i, 1))) {
                     j := add(j, 1)
                 } {
-                    let left := mload(add(transactionHashesPos, mul(mul(0x20, j), 2)))
-                    let right := mload(add(transactionHashesPos, add(mul(mul(0x20, j), 2), 0x20)))
-                    if eq(and(iszero(left), iszero(right)), 1) {
+                    let leftPos := add(transactionHashesPos, mul(mul(0x20, j), 2))
+                    if eq(and(iszero(mload(leftPos)), iszero(mload(add(leftPos, 0x20)))), 1) {
                         mstore(add(transactionHashesPos, mul(0x20, j)), 0)
                     }
-                    if eq(and(iszero(left), iszero(right)), 0) {
-                        mstore(
-                            add(transactionHashesPos, mul(0x20, j)),
-                            keccak256(add(transactionHashesPos, mul(mul(0x20, j), 2)), 0x40)
-                        )
+                    if eq(and(iszero(mload(leftPos)), iszero(mload(add(leftPos, 0x20)))), 0) {
+                        mstore(add(transactionHashesPos, mul(0x20, j)), keccak256(leftPos, 0x40))
                     }
                 }
             }
             // check if the transaction hashes root calculated equal to the one passed as part of block data
             if eq(
                 eq(
-                    mload(add(blockPos, mul(sub(blockSlots, 1), 0x20))),
+                    calldataload(add(0x04, mul(sub(blockSlots, 1), 0x20))),
                     mload(transactionHashesPos)
                 ),
                 0
             ) {
-                revert(0, 0)
+                mstore(0, 0x3c80abfc00000000000000000000000000000000000000000000000000000000) //Custom error InvalidTransactionHash
+                revert(0, 4)
             }
             // calculate block hash
-            blockHash := keccak256(blockPos, mul(blockSlots, 0x20))
+            calldatacopy(x, 0x04, mul(0x20, blockSlots)) //Copy the block structure into x
+            blockHash := keccak256(x, mul(blockSlots, 0x20))
         }
         // We need to set the blockHash on chain here, because there is no way to
         // convince a challenge function of the (in)correctness by an offchain
@@ -253,13 +268,17 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         // contain all of the relevant data (2) it doesn't take much gas.
         // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
 
+        // Store block fees
+        blockInfo[blockHash].feesMatic = feesMatic;
+        blockInfo[blockHash].feesEth = feesEth;
+        
         // blockHash is hash of all block data and hash of all the transactions data.
         blockHashes.push(
             BlockData({
                 blockHash: blockHash,
                 time: block.timestamp,
                 blockStake: blockStake,
-                proposer: b.proposer
+                proposer: Utils.getProposer(b.packedInfo)
             })
         );
         // Timber will listen for the BlockProposed event as well as
@@ -268,12 +287,9 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         emit BlockProposed();
     }
 
-    // function to signal a rollback. Note that we include the block hash because
-    // it's uinque, although technically not needed (Optimist consumes the
-    // block number and Timber the leaf count). It's helpful when testing to make
-    // sure we have the correct event.
-    function emitRollback(uint256 blockNumberL2ToRollbackTo) public onlyRegistered {
-        emit Rollback(blockNumberL2ToRollbackTo);
+    function setTransactionInfo(bytes32 transactionHash, bool isEscrowed, uint248 ethFee) public onlyShield {
+        txInfo[transactionHash].isEscrowed = isEscrowed;
+        txInfo[transactionHash].ethFee = ethFee;
     }
 
     function setProposer(address addr, LinkedAddress calldata proposer) public onlyProposer {
@@ -292,17 +308,9 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         return currentProposer;
     }
 
-    function getFeeBookInfo(address proposer, uint256 blockNumberL2)
-        public
-        view
-        returns (uint256, uint256)
-    {
-        bytes32 input = keccak256(abi.encodePacked(proposer, blockNumberL2));
-        return (feeBook[input][0], feeBook[input][1]);
-    }
-
-    function resetFeeBookInfo(address proposer, uint256 blockNumberL2) public onlyShield {
-        delete feeBook[keccak256(abi.encodePacked(proposer, blockNumberL2))];
+    function resetFeeBookBlocksInfo(bytes32 blockHash) public onlyShield {
+        blockInfo[blockHash].feesEth = 0;
+        blockInfo[blockHash].feesMatic = 0;
     }
 
     function popBlockData() public onlyChallenger returns (BlockData memory) {
@@ -312,7 +320,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         return popped;
     }
 
-    function getBlockData(uint256 blockNumberL2) public view returns (BlockData memory) {
+    function getBlockData(uint64 blockNumberL2) public view returns (BlockData memory) {
         require(blockNumberL2 < blockHashes.length, 'State: Invalid block number L2');
         return blockHashes[blockNumberL2];
     }
@@ -323,24 +331,27 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
 
     function addPendingWithdrawal(
         address addr,
-        uint256 amountEth,
-        uint256 amountMatic
-    ) public onlyRegistered {
-        pendingWithdrawals[addr][0] += amountEth;
-        pendingWithdrawals[addr][1] += amountMatic;
+        uint256 feesEth,
+        uint256 feesMatic
+    ) public {
+        require(msg.sender == proposersAddress ||
+                msg.sender == shieldAddress,
+            'State: Not authorised to call this function');
+
+        pendingWithdrawalsFees[addr] = FeeTokens(uint120(feesEth), uint120(feesMatic)); 
     }
 
     function withdraw() external nonReentrant whenNotPaused {
-        uint256 amountEth = pendingWithdrawals[msg.sender][0];
-        uint256 amountMatic = pendingWithdrawals[msg.sender][1];
+        uint256 amountEth = pendingWithdrawalsFees[msg.sender].feesEth;
+        uint256 amountMatic = pendingWithdrawalsFees[msg.sender].feesMatic;
 
-        pendingWithdrawals[msg.sender] = [0, 0];
         if (amountEth > 0) {
+            pendingWithdrawalsFees[msg.sender].feesEth = 0;
             (bool success, ) = payable(msg.sender).call{value: amountEth}('');
             require(success, 'Transfer failed.');
         }
         if (amountMatic > 0) {
-            pendingWithdrawals[msg.sender][1] = 0;
+            pendingWithdrawalsFees[msg.sender].feesMatic = 0;
             IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
                 address(this),
                 msg.sender,
@@ -353,11 +364,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         proposerStartBlock = sb;
     }
 
-    function getProposerStartBlock() public view returns (uint256) {
-        return proposerStartBlock;
-    }
-
-    function setNumProposers(uint256 np) public onlyRegistered {
+    function setNumProposers(uint256 np) public onlyProposer {
         numProposers = np;
     }
 
@@ -365,7 +372,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         return numProposers;
     }
 
-    function removeProposer(address proposer) public onlyRegistered {
+    function removeProposer(address proposer) public {
+         require(msg.sender == proposersAddress ||
+                msg.sender == challengesAddress,
+            'State: Not authorised to call this function');
         _removeProposer(proposer);
         if (proposer == currentProposer.thisAddress || currentProposer.thisAddress == address(0)) {
             currentProposer = proposers[currentProposer.nextAddress]; // we need to refresh the current proposer before the change
@@ -400,40 +410,28 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
-    // block). It also checks that the transactions sent as a calldata are all contained
-    //in the block by performing its hash and comparing it to the value stored in the block
-    function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts)
-        public
-        view
-        returns (bytes32)
-    {
-        bytes32 blockHash = Utils.hashBlock(b);
+    // block).
+    function isBlockReal(Block calldata b) public view {
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(b.packedInfo);
         require(
-            b.blockNumberL2 < blockHashes.length &&
-                blockHashes[b.blockNumberL2].blockHash == blockHash,
-            'State: This block does not exist'
+            blockNumberL2 < blockHashes.length &&
+                blockHashes[blockNumberL2].blockHash == Utils.hashBlock(b),
+            'State: Block does not exist'
         );
-        bytes32 tranasactionHashesRoot = Utils.hashTransactionHashes(ts);
-        require(
-            b.transactionHashesRoot == tranasactionHashesRoot,
-            'State: Some of these transactions are not in this block'
-        );
-        return blockHash;
     }
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block).
-    function isBlockReal(Block calldata b) public view returns (bytes32) {
-        bytes32 blockHash = Utils.hashBlock(b);
+    function areBlockAndTransactionsReal(Block calldata b, Transaction[] calldata ts) public view {
+        isBlockReal(b);
         require(
-            b.blockNumberL2 < blockHashes.length &&
-                blockHashes[b.blockNumberL2].blockHash == blockHash,
-            'This block does not exist'
+            b.transactionHashesRoot == Utils.hashTransactionHashes(ts),
+            'State: Transaction hashes root does not match'
         );
-
-        return blockHash;
     }
+
+   
 
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
@@ -444,19 +442,13 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         uint256 index,
         bytes32[] calldata siblingPath
     ) public view returns (bytes32) {
-        bytes32 blockHash = Utils.hashBlock(b);
-        require(
-            b.blockNumberL2 < blockHashes.length &&
-                blockHashes[b.blockNumberL2].blockHash == blockHash,
-            'State: This block does not exist'
-        );
+        isBlockReal(b);
         require(
             b.transactionHashesRoot == siblingPath[0],
-            'State: This transaction hashes root is incorrect'
+            'State: Transaction hashes root is incorrect'
         );
         bytes32 transactionHash = Utils.hashTransaction(t);
-        bool valid = Utils.checkPath(siblingPath, index, transactionHash);
-        require(valid, 'State: Transaction does not exist in block');
+        require(Utils.checkPath(siblingPath, index, transactionHash), 'State: Transaction does not exist in block');
         return transactionHash;
     }
 
@@ -467,8 +459,11 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
         address addr,
         uint256 amount,
         uint256 challengeLocked
-    ) public onlyRegistered {
-        stakeAccounts[addr] = TimeLockedStake(amount, challengeLocked, 0);
+    ) public {
+         require(msg.sender == proposersAddress ||
+                msg.sender == shieldAddress,
+            'State: Not authorised to call this function');
+        stakeAccounts[addr] = TimeLockedStake(uint112(amount), uint112(challengeLocked), 0);
     }
 
     /**
@@ -485,7 +480,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
     ) public onlyChallenger {
         removeProposer(proposer);
 
-        uint256 rewardedStake = 0;
+        uint120 rewardedStake = 0;
         for (uint256 i = 0; i < badBlocks.length; ++i) {
             TimeLockedStake memory stake = stakeAccounts[badBlocks[i].proposer];
             // Give reward to challenger from the stake locked for challenges
@@ -497,25 +492,18 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             rewardedStake += badBlocks[i].blockStake;
         }
 
-        pendingWithdrawals[challengerAddr][0] += rewardedStake;
+        pendingWithdrawalsFees[challengerAddr].feesEth += rewardedStake;
     }
 
     function updateStakeAccountTime(address addr, uint256 time) public onlyProposer {
-        _updateStakeAccountTime(addr, time);
+        stakeAccounts[addr].time = uint32(time);
     }
 
-    function _updateStakeAccountTime(address addr, uint256 time) internal {
-        TimeLockedStake memory stake = stakeAccounts[addr];
-        stake.time = time;
-        stakeAccounts[addr] = stake;
-    }
-
-    function isBlockStakeWithdrawn(bytes32 blockHash) public view returns (bool) {
-        return claimedBlockStakes[blockHash];
-    }
-
-    function setBlockStakeWithdrawn(bytes32 blockHash) public onlyRegistered {
-        claimedBlockStakes[blockHash] = true;
+    function setBlockStakeWithdrawn(bytes32 blockHash) public {
+         require(msg.sender == challengesAddress ||
+                msg.sender == shieldAddress,
+            'State: Not authorised to call this function');
+        blockInfo[blockHash].stakeClaimed = true;
     }
 
     /**
@@ -539,7 +527,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Config {
             while (numProposers > 1) {
                 _removeProposer(selectedProposer);
                 // The selectedProposer has to wait a CHALLENGE_PERIOD from current block.timestamp
-                _updateStakeAccountTime(selectedProposer, block.timestamp);
+                stakeAccounts[selectedProposer].time = uint32(block.timestamp);
                 selectedProposer = currentProposer.nextAddress;
             }
         }

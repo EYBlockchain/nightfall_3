@@ -67,6 +67,8 @@ services:
       - type: bind
         source: ../nightfall-deployer/entrypoint.sh
         target: /app/entrypoint.sh
+    environment:
+      TEST_SANCTIONS_CONTRACT: 'mock'
 
   optimist:
     build:
@@ -98,7 +100,7 @@ services:
         source: ../nightfall-deployer/circuits
         target: /app/circuits/
       - type: bind
-        source: ../zokrates-worker/src
+        source: ../worker/src
         target: /app/src/
       - type: bind
         source: ../config/default.js

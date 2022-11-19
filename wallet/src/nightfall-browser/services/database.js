@@ -89,9 +89,8 @@ export async function emptyStoreTimber() {
  */
 export async function checkIndexDBForCircuit(circuit) {
   const record = await Promise.all([
-    getStoreCircuit(`${circuit}-abi`),
-    getStoreCircuit(`${circuit}-program`),
-    getStoreCircuit(`${circuit}-pk`),
+    getStoreCircuit(`${circuit}-wasm`),
+    getStoreCircuit(`${circuit}-zkey`),
   ]);
   return record.every(r => typeof r !== 'undefined');
 }
@@ -103,17 +102,11 @@ export async function checkIndexDBForCircuit(circuit) {
 export async function checkIndexDBForCircuitHash(circuitInfo) {
   const circuitName = circuitInfo.name;
   const record = await Promise.all([
-    getStoreCircuitHash(`${circuitName}-abi`),
-    getStoreCircuitHash(`${circuitName}-program`),
-    getStoreCircuitHash(`${circuitName}-pk`),
+    getStoreCircuitHash(`${circuitName}-wasm`),
+    getStoreCircuitHash(`${circuitName}-zkey`),
   ]);
   if (record.every(r => typeof r !== 'undefined')) {
-    return record.every(
-      r =>
-        r.dataHash === circuitInfo.abih ||
-        r.dataHash === circuitInfo.programh ||
-        r.dataHash === circuitInfo.pkh,
-    );
+    return record.every(r => r.dataHash === circuitInfo.wasmh || r.dataHash === circuitInfo.zkeyh);
   }
   return false;
 }

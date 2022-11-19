@@ -1,3 +1,3 @@
 module.exports = {
-    skipFiles: ['MerkleTree_Stateless.sol', 'Poseidon.sol']
+  skipFiles: ['MerkleTree_Stateless.sol', 'Poseidon.sol'],
 };

@@ -6,29 +6,30 @@
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import config from 'config';
-import axios from 'axios';
 import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  getCircuitHash,
+  generateProof,
+} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
-import { clearPending, markNullified, storeCommitment } from './commitment-storage.mjs';
-import { ZkpKeys } from './keys.mjs';
-import getProposersUrl from './peers.mjs';
+import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
+import { submitTransaction } from '../utils/submitTransaction.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
+const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME } = constants;
 const { generalise } = gen;
 
 const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
-const NEXT_N_PROPOSERS = 3;
 
 async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { offchain = false, ...items } = withdrawParams;
+  const { offchain = false, providedCommitments, ...items } = withdrawParams;
   const { tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
@@ -52,14 +53,18 @@ async function withdraw(withdrawParams) {
     maticAddress,
     tokenId,
     rootKey,
+    maxNullifiers: VK_IDS.withdraw.numberNullifiers,
+    providedCommitments,
   });
 
   try {
+    const circuitHash = await getCircuitHash('withdraw');
+
     // now we have everything we need to create a Witness and compute a proof
-    const transaction = new Transaction({
+    const publicData = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
+      circuitHash,
       tokenType: items.tokenType,
       tokenId,
       value,
@@ -67,6 +72,9 @@ async function withdraw(withdrawParams) {
       recipientAddress,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
+      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
+      numberCommitments: VK_IDS.withdraw.numberCommitments,
+      isOnlyL2: false,
     });
 
     const privateData = {
@@ -80,31 +88,24 @@ async function withdraw(withdrawParams) {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      ercAddress,
-      tokenId,
     };
 
     const witness = computeCircuitInputs(
-      transaction,
+      publicData,
       privateData,
       commitmentsInfo.roots,
       maticAddress,
+      VK_IDS.withdraw.numberNullifiers,
+      VK_IDS.withdraw.numberCommitments,
     );
 
     logger.debug({
-      msg: 'Witness input is',
-      witness: witness.join(' '),
+      msg: 'witness input is',
+      witness: JSON.stringify(witness, 0, 2),
     });
 
-    // call a zokrates worker to generate the proof
-    let folderpath = 'withdraw';
-    if (USE_STUBS) folderpath = `${folderpath}_stub`;
-    const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
-      folderpath,
-      inputs: witness,
-      provingScheme: PROVING_SCHEME,
-      backend: BACKEND,
-    });
+    // call a worker to generate the proof
+    const res = await generateProof({ folderpath: 'withdraw', witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
@@ -117,7 +118,7 @@ async function withdraw(withdrawParams) {
     const optimisticWithdrawTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
+      circuitHash,
       tokenType: items.tokenType,
       tokenId,
       value,
@@ -126,51 +127,24 @@ async function withdraw(withdrawParams) {
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
+      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
+      numberCommitments: VK_IDS.withdraw.numberCommitments,
+      isOnlyL2: false,
     });
 
-    const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+    logger.debug({
+      msg: 'Client made transaction',
+      transaction: JSON.stringify(optimisticWithdrawTransaction, null, 2),
+      offchain,
+    });
 
-    // Store new commitments that are ours.
-    const storeNewCommitments = commitmentsInfo.newCommitments
-      .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
-      .map(c => storeCommitment(c, nullifierKey));
-
-    const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
-      markNullified(c, optimisticWithdrawTransaction),
+    return submitTransaction(
+      optimisticWithdrawTransaction,
+      commitmentsInfo,
+      rootKey,
+      shieldContractInstance,
+      offchain,
     );
-
-    await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
-
-    const returnObj = { transaction: optimisticWithdrawTransaction };
-
-    if (offchain) {
-      // dig up connection peers
-      const peerList = await getProposersUrl(NEXT_N_PROPOSERS);
-
-      logger.debug({
-        msg: 'Peer List',
-        peerList,
-      });
-
-      await Promise.all(
-        Object.keys(peerList).map(async address => {
-          logger.debug(
-            `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
-          );
-
-          return axios.post(
-            `${peerList[address]}/proposer/offchain-transaction`,
-            { transaction: optimisticWithdrawTransaction },
-            { timeout: 3600000 },
-          );
-        }),
-      );
-    } else {
-      returnObj.rawTransaction = await shieldContractInstance.methods
-        .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
-        .encodeABI();
-    }
-    return returnObj;
   } catch (error) {
     logger.error(error);
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));

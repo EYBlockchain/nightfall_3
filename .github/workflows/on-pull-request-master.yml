@@ -58,6 +58,32 @@ jobs:
           cd ../
           npm run unit-test
 
+  unit-test-circuits:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+      - name: Install Circom
+        run: |
+          curl https://sh.rustup.rs -sSf -o rust.sh
+          bash -f rust.sh -y
+          git clone https://github.com/iden3/circom.git
+          cd circom
+          cargo build --release
+          cargo install --path circom
+
+      - name: Unit Circuit Tests
+        run: |
+          npm ci
+          cd common-files
+          npm ci
+          cd ../nightfall-deployer
+          npm ci
+          cd ../
+          npm run unit-test-circuits
+
   circuits-test:
     env:
       CONFIRMATIONS: 1
@@ -343,6 +369,63 @@ jobs:
           name: ganache-test-logs
           path: ./ganache-test.log
 
+  ganache-tokenisation-l2-test:
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          npm link @polygon-nightfall/common-files
+          cd cli
+          npm link @polygon-nightfall/common-files
+          npm ci
+          cd ..
+
+      - name: Start Containers
+        run: |
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat ganache-test.log
+
+      - name: Run integration test
+        run: |
+          npm run test-l2tokenisation
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat ganache-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: ganache-test-logs
+          path: ./ganache-test.log
   x509-test:
     env:
       WHITELISTING: enable
@@ -515,57 +598,52 @@ jobs:
           path: ./optimist-sync-test.log
 
   adversary-test:
-     runs-on: ubuntu-20.04
-     env:
-       TRANSACTIONS_PER_BLOCK: 32
-     steps:
-       - uses: actions/checkout@v3
-       - uses: actions/setup-node@v1
-         with:
-           node-version: '16.17.0'
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
 
-       - name: Build adversary
-         run: npm run build-adversary
+      - name: Build adversary
+        run: npm run build-adversary
 
-       - name: Start Containers with geth
-         run: |
-           ./bin/setup-nightfall
-           ./bin/geth-standalone -s
-           sleep 300
-           ./bin/start-nightfall -l -d -a &> adversary-test.log &disown
+      - name: Start Containers
+        run: |
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d -a &> adversary-test.log &disown
 
-       - name: Wait for images to be ready
-         uses: Wandalen/wretry.action@v1.0.11
-         with:
-           command: |
-             docker wait nightfall_3_deployer_1
-           attempt_limit: 100
-           attempt_delay: 20000
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
 
-       - name: debug logs - after container startup
-         if: always()
-         run: cat adversary-test.log
+      - name: debug logs - after container startup
+        if: always()
+        run: cat adversary-test.log
 
-       - name: Run integration test
-         run: |
-           VERBOSE=true npm run test-adversary
+      - name: Run adversary test
+        run: |
+          VERBOSE=true npm run test-adversary
 
-       - name: debug logs - after integration test run
-         if: always()
-         run: cat adversary-test.log
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat adversary-test.log
 
-       - name: If integration test failed, shutdown the Containers
-         if: failure()
-         run: |
-           npm run nightfall-down
-           ./bin/geth-standalone -d
+      - name: If adversary test failed, shutdown the Containers
+        if: failure()
+        run: |
+          npm run nightfall-down
 
-       - name: If integration test failed, upload logs files as artifacts
-         if: failure()
-         uses: actions/upload-artifact@v3
-         with:
-           name: adversary-test-logs
-           path: ./adversary-test.log
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: adversary-test-logs
+          path: ./adversary-test.log
 
   ping-pong-test:
     env:
@@ -615,7 +693,6 @@ jobs:
         if: failure()
         run: |
           npm run nightfall-down
-          ./bin/geth-standalone -d
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -626,9 +703,10 @@ jobs:
 
   test-gas:
     env:
+      MAX_BLOCK_SIZE: 25000
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    name: check gas for 32 transactions per block
+    name: check gas transactions per block
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -651,7 +729,7 @@ jobs:
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-gas.log &disown
         env:
-          TRANSACTIONS_PER_BLOCK: 32
+          MAX_BLOCK_SIZE: 25000
           CONFIRMATIONS: 1
 
       - name: Wait for images to be ready
@@ -689,7 +767,6 @@ jobs:
     name: check apps for liveliness
     runs-on: ubuntu-20.04
     env:
-      TRANSACTIONS_PER_BLOCK: 32
       NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
     steps:
       - uses: actions/checkout@v3
@@ -800,7 +877,9 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml -p nightfall_3 down -v
+        run:
+          docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml
+          -p nightfall_3 down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
