@@ -17,7 +17,7 @@ const router = express.Router();
  *      tags:
  *      - Challanger
  *      summary: Enable a challenger.
- *      description: .
+ *      description: TBC
  *      parameters:
  *        - in: header
  *          name: api_key

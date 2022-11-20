@@ -17,7 +17,7 @@ const router = express.Router();
  *      tags:
  *      - Contract Address
  *      summary: Get the contract address.
- *      description: Route that will return the contract address based on the contract name.
+ *      description: Return the contract address based on the contract name.
  *      parameters:
  *        - in: path
  *          name: contract

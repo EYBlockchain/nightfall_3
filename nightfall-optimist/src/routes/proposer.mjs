@@ -42,12 +42,9 @@ export function setProposer(p) {
  *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
- *      summary: Register Proposer.
- *      description: Route to return a raw transaction that registers a proposer. This just
- *        provides the tx data, the user will need to append the registration bond
- *        amount. The user must post the address being registered.  This is for the
- *        Optimist app to use for it to decide when to start proposing blocks.  It is not
- *        part of the unsigned blockchain transaction that is returned.
+ *      summary: Register proposer.
+ *      description: Registers a proposer to the Proposers contract.
+ *        The user must post the url, stake and fee.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -83,12 +80,11 @@ router.post('/register', auth, async (req, res, next) => {
     const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
     const minimumStake = await stateContractInstance.methods.getMinimumStake().call();
     if (stake < minimumStake) {
-      throw new Error(`Given stake is below ${minimumStake} Wei`);
+      throw new Error(`Given stake is below minimum required, ie ${minimumStake} Wei`);
     }
 
     // Recreate Proposer contracts
     const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
-    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
 
     // Check if the proposer is already registered on the blockchain
     const proposerAddresses = (await getProposers()).map(p => p.thisAddress);
@@ -101,7 +97,7 @@ router.post('/register', auth, async (req, res, next) => {
       txDataToSign = await proposersContractInstance.methods.registerProposer(url, fee).encodeABI();
       const tx = {
         from: ethAddress,
-        to: proposersContractAddress,
+        to: proposersContractInstance.options.address,
         data: txDataToSign,
         value: stake,
         gas: 8000000,
@@ -115,7 +111,7 @@ router.post('/register', auth, async (req, res, next) => {
 
     /*
       when we get to here, either the proposer was already registered (txDataToSign === '')
-      or we're just about to register them. We may or may not be registed locally
+      or we're just about to register them. We may or may not be registered locally
       with optimist though. Let's check and fix that if needed.
      */
     if (!(await isRegisteredProposerAddressMine(ethAddress))) {
@@ -145,8 +141,7 @@ router.post('/register', auth, async (req, res, next) => {
 });
 
 /**
- * Function to update proposer's URL
- * @TODO endpoint could just update params according to the given info (should PATCH instead of update all)
+ * @TODO update endpoint could just update params according to the given info (should PATCH instead of update all)
  */
 
 /**
@@ -157,8 +152,8 @@ router.post('/register', auth, async (req, res, next) => {
  *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
- *      summary: Update Proposer.
- *      description: Route to update proposer's URL.
+ *      summary: Update proposer.
+ *      description: Update proposer's url, stake or fee.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -193,7 +188,6 @@ router.post('/update', auth, async (req, res, next) => {
 
     // Recreate Proposer contract
     const proposersContractInstance = await waitForContract(PROPOSERS_CONTRACT_NAME);
-    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
 
     // Update proposer data
     const txDataToSign = await proposersContractInstance.methods
@@ -201,7 +195,7 @@ router.post('/update', auth, async (req, res, next) => {
       .encodeABI();
     const tx = {
       from: ethAddress,
-      to: proposersContractAddress,
+      to: proposersContractInstance.options.address,
       data: txDataToSign,
       value: stake,
       gas: 8000000,
@@ -223,8 +217,8 @@ router.post('/update', auth, async (req, res, next) => {
  *    get:
  *      tags:
  *      - Proposer
- *      summary: Current Proposer.
- *      description: Returns the current proposer.
+ *      summary: Current proposer.
+ *      description: Returns the proposer currently proposing L2 blocks.
  *      responses:
  *        200:
  *          $ref: '#/components/responses/SuccessCurrentProposer'
@@ -252,8 +246,8 @@ router.get('/current-proposer', async (req, res, next) => {
  *    get:
  *      tags:
  *      - Proposer
- *      summary: Proposers List.
- *      description: Returns the current proposer.
+ *      summary: Proposers list.
+ *      description: Returns all registered proposers.
  *      responses:
  *        200:
  *          $ref: '#/components/responses/SuccessProposerList'
@@ -280,8 +274,9 @@ router.get('/proposers', async (req, res, next) => {
  *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
- *      summary: Deregister Proposer.
- *      description: Route that deregister a proposer.
+ *      summary: Deregister proposer.
+ *      description: De-register a proposer - removes proposer from Proposer contract.
+ *      Proposers can de-register even when they are the current proposer.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -335,8 +330,9 @@ router.post('/de-register', auth, async (req, res, next) => {
  *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
- *      summary: Withdraw Stake.
- *      description: Route to withdraw stake for a de-registered proposer.
+ *      summary: Withdraw stake.
+ *      description: Withdraw stake for a de-registered proposer.
+ *      Can only be called after the cooling off period.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -358,14 +354,13 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
 
   try {
     // Recreate Proposer contract
-    const proposerContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
+    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
 
-    // Withdraw proposer stake (after de-registering + cooling off period)
-    const txDataToSign = await proposerContractInstance.methods.withdrawStake().encodeABI();
+    // Withdraw proposer stake
+    const txDataToSign = await proposersContractInstance.methods.withdrawStake().encodeABI();
     const tx = {
       from: ethAddress,
-      to: proposersContractAddress,
+      to: proposersContractInstance.options.address,
       data: txDataToSign,
       gas: 8000000,
     };
@@ -387,8 +382,8 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
  *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
- *      summary: Pending Payments.
- *      description: Function to get pending blocks payments for a proposer.
+ *      summary: Pending payments.
+ *      description: Get pending payments for new blocks proposed or successful challenges.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -447,8 +442,8 @@ router.get('/pending-payments', auth, async (req, res, next) => {
  *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
- *      summary: Get Stake.
- *      description: Function to get the stake for a proposer.
+ *      summary: Get stake.
+ *      description: Request stake data - available stake, and locked stake plus locked time reference.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -492,8 +487,8 @@ router.get('/stake', auth, async (req, res, next) => {
  *        - ApiKeyAuth: []
  *      tags:
  *      - Proposer
- *      summary: Finalise Withdraw.
- *      description: Function to withdraw funds owing to an account.  This could be profits made Through a successful challenge or proposing state updates. This just provides the tx data, the user will need to call the blockchain client.
+ *      summary: Finalise withdrawal.
+ *      description: Withdraw profits to account after calling /payment.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -516,12 +511,11 @@ router.get('/withdraw', auth, async (req, res, next) => {
   try {
     // Recreate State contract
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const stateContractAddress = await getContractAddress(STATE_CONTRACT_NAME);
 
     const txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
     const tx = {
       from: ethAddress,
-      to: stateContractAddress,
+      to: stateContractInstance.options.address,
       data: txDataToSign,
       gas: 8000000,
     };
@@ -543,8 +537,10 @@ router.get('/withdraw', auth, async (req, res, next) => {
  *       - ApiKeyAuth: []
  *     tags:
  *     - Proposer
- *     summary: Initiate Withdraw Payment.
- *     description: Function to get payment for proposing L2 block.  This should be called only after the block is finalised. It will authorise the payment as a pending withdrawal and then /withdraw needs to be called to recover the money.
+ *     summary: Initiate withdrawal.
+ *     description: Request payment for new blocks proposed or successful challenges.
+ *     Then /withdraw needs to be called to recover the money.
+ *     Can only be called after the cooling off period.
  *     parameters:
  *        - in: header
  *          name: api_key
@@ -576,14 +572,13 @@ router.post('/payment', auth, async (req, res, next) => {
 
     // Recreate Shield contract
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
-    const shieldContractAddress = await getContractAddress(SHIELD_CONTRACT_NAME);
 
     const txDataToSign = await shieldContractInstance.methods
       .requestBlockPayment(block)
       .encodeABI();
     const tx = {
       from: ethAddress,
-      to: shieldContractAddress,
+      to: shieldContractInstance.options.address,
       data: txDataToSign,
       gas: 8000000,
     };
@@ -605,8 +600,8 @@ router.post('/payment', auth, async (req, res, next) => {
  *       - ApiKeyAuth: []
  *     tags:
  *     - Proposer
- *     summary: Change Current Proposer.
- *     description: Function to change the current proposer (assuming their time has elapsed). This just provides the tx data, the user will need to call the blockchain client.
+ *     summary: Change current proposer.
+ *     description: Change the current proposer once their time has elapsed.
  *     parameters:
  *        - in: header
  *          name: api_key
@@ -629,13 +624,12 @@ router.get('/change', auth, async (req, res, next) => {
   try {
     // Recreate State contract
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
-    const stateContractAddress = await getContractAddress(STATE_CONTRACT_NAME);
 
     // Attempt to rotate proposer currently proposing blocks
     const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
     const tx = {
       from: ethAddress,
-      to: stateContractAddress,
+      to: stateContractInstance.options.address,
       data: txDataToSign,
       gas: 8000000,
     };
@@ -655,8 +649,8 @@ router.get('/change', auth, async (req, res, next) => {
  *   get:
  *     tags:
  *     - Proposer
- *     summary: Get Mempool of Transactions.
- *     description: Get the transactions of the mempool that the proposer is connected to.
+ *     summary: Get transactions still in mempool.
+ *     description: Get transactions from this proposer's mempool.
  *     responses:
  *       200:
  *         $ref: '#/components/responses/Success'
@@ -683,7 +677,7 @@ router.get('/mempool', async (req, res, next) => {
  *     tags:
  *     - Proposer
  *     summary: Encode.
- *     description:
+ *     description: TBC
  *     parameters:
  *        - in: header
  *          name: api_key
@@ -785,8 +779,10 @@ router.post('/encode', auth, async (req, res, next) => {
  *   post:
  *     tags:
  *     - Proposer
- *     summary: Offchain Transaction.
- *     description: Offchain transaction executed by a client.
+ *     summary: Add an off-chain transaction to mempool.
+ *     description: Request to add an off-chain transaction from a client to this proposer mempool, for a fee.
+ *     This is only available for L2 transfers amd withdrawals.
+ *     Client must cover the proposer minimum fee.
  *     responses:
  *       200:
  *         $ref: '#/components/responses/Success'
@@ -812,7 +808,7 @@ router.post('/offchain-transaction', async (req, res) => {
     } else {
       /*
           When comparing this with getTransactionSubmittedCalldata,
-          note we dont need to decompressProof as proofs are only compressed if they go on-chain.
+          note we don't need to decompressProof as proofs are only compressed if they go on-chain.
           let's not directly call transactionSubmittedEventHandler, instead, we'll queue it
          */
       await enqueueEvent(transactionSubmittedEventHandler, 1, {

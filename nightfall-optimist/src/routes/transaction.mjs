@@ -14,7 +14,7 @@ const router = express.Router();
  *      tags:
  *      - Transaction
  *      summary: Advance Withdrawal.
- *      description: Route that perform an advance withdrawal.
+ *      description: Request an advanced withdrawal from a liquidity provider.
  *      parameters:
  *        - in: header
  *          name: api_key
