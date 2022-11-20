@@ -2,8 +2,6 @@ version: '3.5'
 # Use this script for running up 2 independent proposers with optimist and mongodb services.
 services:
   proposer_optimist_1:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
     build:
       dockerfile: docker/optimist.standalone.Dockerfile
       context: ..
@@ -22,20 +20,17 @@ services:
         target: /app/build/
     environment:
       WEBSOCKET_PORT: 8080
-      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://optimist_mongodb_1:27017}
       HASH_TYPE: poseidon
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
-      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       OPTIMIST_PORT: 9091
       OPTIMIST_WS_PORT: 9090
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
     build:
       dockerfile: docker/optimist.standalone.Dockerfile
       context: ..
@@ -54,13 +49,12 @@ services:
         target: /app/build/
     environment:
       WEBSOCKET_PORT: 8080
-      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://optimist_mongodb_2:27017}
       HASH_TYPE: poseidon
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
-      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       OPTIMIST_PORT: 9093
       OPTIMIST_WS_PORT: 9092
     command: ['npm', 'run', 'dev']
@@ -94,8 +88,6 @@ services:
         target: /data/db
 
   proposer_1:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
@@ -106,7 +98,7 @@ services:
       # to use with postman and etc
       - 8092:8092
     environment:
-      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: 8546
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: proposer_optimist_1
@@ -125,8 +117,6 @@ services:
         target: /app/src
 
   proposer_2:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
@@ -137,7 +127,7 @@ services:
       # to use with postman and etc
       - 8093:8093
     environment:
-      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: 8546
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: proposer_optimist_2

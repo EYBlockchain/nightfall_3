@@ -21,11 +21,11 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
      */
     function registerProposer(string calldata url, uint256 fee) external payable nonReentrant {
         require(
-            state.getNumProposers() < maxProposers,
+            state.numProposers() < maxProposers,
             'Proposers: Max number of registered proposers'
         );
         TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
-        stake.amount += msg.value;
+        stake.amount += uint112(msg.value);
         require(minimumStake <= stake.amount, 'Proposers: Need minimumStake');
         require(
             state.getProposer(msg.sender).thisAddress == address(0),
@@ -78,7 +78,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
                 }
                 state.setProposer(proposersCurrent.thisAddress, proposersCurrent);
                 state.setProposer(msg.sender, proposer);
-                state.setNumProposers(state.getNumProposers() + 1);
+                state.setNumProposers(state.numProposers() + 1);
             }
         }
         state.setCurrentProposer(currentProposer.thisAddress);
@@ -94,7 +94,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
         );
         state.removeProposer(msg.sender);
         // The msg.sender has to wait a CHALLENGE_PERIOD from current block.timestamp
-        state.updateStakeAccountTime(msg.sender, block.timestamp);
+        state.updateStakeAccountTime(msg.sender, uint32(block.timestamp));
     }
 
     function withdrawStake() external {
@@ -110,7 +110,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
         // Zero out the entry in the stake escrow
         state.setStakeAccount(msg.sender, 0, 0);
         // We have waited a CHALLENGE_PERIOD so we can also withdraw the pending challengeLocked still pending
-        state.addPendingWithdrawal(msg.sender, stake.amount + stake.challengeLocked, 0);
+        state.addPendingWithdrawal(msg.sender, uint120(stake.amount + stake.challengeLocked), 0);
     }
 
     // Proposers can change REST API URL or increment stake
@@ -122,7 +122,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
         state.updateProposer(msg.sender, url, fee);
         if (msg.value > 0) {
             TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
-            stake.amount += msg.value;
+            stake.amount += uint112(msg.value);
 
             // send the stake to the state contract
             (bool success, ) = payable(address(state)).call{value: msg.value}('');

@@ -4,26 +4,12 @@
 Module to endable withdrawal of funds from the Shield contract to the user's
 address.
 */
+import { buildBlockSolidityStruct } from '../../common-files/utils/block-utils.js';
 import { getContractInstance } from '../../common-files/utils/contract';
 import { Transaction } from '../classes/index';
 import { getBlockByTransactionHash, getTransactionByTransactionHash } from './database';
 
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
-
-// TODO move classes to their own folder so this is not needed (it's already a
-// static function in the Block class)
-function buildSolidityStruct(block) {
-  const { proposer, root, leafCount, blockNumberL2, previousBlockHash, transactionHashesRoot } =
-    block;
-  return {
-    proposer,
-    root,
-    leafCount: Number(leafCount),
-    blockNumberL2: Number(blockNumberL2),
-    previousBlockHash,
-    transactionHashesRoot,
-  };
-}
 
 // eslint-disable-next-line import/prefer-default-export
 export async function isValidWithdrawal(transactionHash, shieldContractAddress) {
@@ -44,7 +30,7 @@ export async function isValidWithdrawal(transactionHash, shieldContractAddress) 
   try {
     const valid = await shieldContractInstance.methods
       .isValidWithdrawal(
-        buildSolidityStruct(block),
+        buildBlockSolidityStruct(block),
         Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,

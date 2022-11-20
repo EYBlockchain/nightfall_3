@@ -7,7 +7,7 @@ import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { ZkpKeys } from '../services/keys.mjs';
 
 const { generalise } = gen;
-const { BN128_GROUP_ORDER } = constants;
+const { BN128_GROUP_ORDER, SHIFT } = constants;
 
 class Commitment {
   preimage;
@@ -37,10 +37,10 @@ class Commitment {
     // we encode the top four bytes of the tokenId into the empty bytes at the top of the erc address.
     // this is consistent to what we do in the ZKP circuits
     const [top4Bytes, remainder] = this.preimage.tokenId.limbs(224, 2).map(l => BigInt(l));
-    const SHIFT = 1461501637330902918203684832716283019655932542976n;
+    const packedErcAddress = this.preimage.ercAddress.bigInt + top4Bytes * SHIFT;
     this.hash = poseidon(
       generalise([
-        this.preimage.ercAddress.bigInt + top4Bytes * SHIFT,
+        packedErcAddress,
         remainder,
         this.preimage.value.field(BN128_GROUP_ORDER),
         ...this.preimage.zkpPublicKey.all.field(BN128_GROUP_ORDER),

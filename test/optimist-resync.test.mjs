@@ -4,12 +4,12 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import compose from 'docker-compose';
-import Transaction from '@polygon-nightfall/common-files/classes/transaction.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
+import { buildBlockSolidityStruct } from '../common-files/utils/block-utils.mjs';
+import Transaction from '../common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { depositNTransactions, Web3Client, waitForTimeout } from './utils.mjs';
-import { buildBlockSolidityStruct } from '../nightfall-optimist/src/services/block-utils.mjs';
+import { Web3Client, waitForTimeout } from './utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -21,7 +21,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const {
   fee,
   transferValue,
-  txPerBlock,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
@@ -159,23 +158,17 @@ describe('Optimist synchronisation tests', () => {
 
     it('Resync optimist after making a good block without dropping dB', async function () {
       // We create enough good transactions to fill a block full of deposits.
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       let p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block } = await p;
       const firstBlock = { ...block };
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
       await waitForTimeout(5000);
       await restartOptimist(false);
@@ -186,44 +179,32 @@ describe('Optimist synchronisation tests', () => {
       // TODO - get optimist to do this automatically.
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a resync correctly occured
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
     it('Resync optimist after making a good block dropping Db', async function () {
       // We create enough good transactions to fill a block full of deposits.
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       let p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block } = await p;
       const firstBlock = { ...block };
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
       await restartOptimist();
 
@@ -232,44 +213,33 @@ describe('Optimist synchronisation tests', () => {
       // TODO - get optimist to do this automatically.
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a resync correctly occured
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
     it('Resync optimist after making an un-resolved bad block', async function () {
       // We create enough good transactions to fill a block full of deposits.
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       let p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+
+      await nf3Users[0].makeBlockNow();
+
+      ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block, transactions } = await p;
       const firstBlock = { ...block };
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       // turn off challenging.  We're going to make a bad block and we don't want it challenged
       await nf3Challenger.challengeEnable(false);
       // update the block so we can submit it again
@@ -314,22 +284,17 @@ describe('Optimist synchronisation tests', () => {
       await nf3Proposer1.registerProposer('http://optimist', minimumStake);
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a rollback correctly occured
-      logger.debug(`      Sending ${txPerBlock} deposits...`);
+      logger.debug(`      Sending a deposit...`);
       p = proposePromise();
-      await depositNTransactions(
-        nf3Users[0],
-        txPerBlock,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        fee,
-      );
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+
+      await nf3Users[0].makeBlockNow();
+
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
-      // we still need to clean the 'BlockProposed' event from the  test logs though.
-      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+
+      ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
   });

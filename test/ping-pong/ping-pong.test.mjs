@@ -71,7 +71,7 @@ describe('Ping-pong tests', () => {
       proposersFinalStakes: [],
     }; // initialize stats for the test
 
-    userTest(false);
+    userTest(false, optimistUrls);
 
     const nf3Proposer = new Nf3(signingKeys.proposer3, environment);
     await nf3Proposer.init(mnemonics.proposer3);
@@ -95,7 +95,7 @@ describe('Ping-pong tests', () => {
     console.log('BLOCKSTAKE: ', blockStake);
     proposerTest(optimistUrls, proposersStats, nf3Proposer);
 
-    result = await userTest(true);
+    result = await userTest(true, optimistUrls);
     expect(result).to.be.equal(0);
 
     for (const prop of optimistUrls) {

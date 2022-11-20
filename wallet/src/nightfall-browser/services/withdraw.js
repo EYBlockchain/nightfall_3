@@ -8,21 +8,21 @@ It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import gen from 'general-number';
-import { initialize } from 'zokrates-js';
+import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
-import computeCircuitInputs from '../utils/compute-witness';
+import computeCircuitInputs from '../utils/computeCircuitInputs';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
 import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
-import { checkIndexDBForCircuit, getStoreCircuit, getLatestTree, getMaxBlock } from './database';
+import { checkIndexDBForCircuit, getLatestTree, getMaxBlock, getStoreCircuit } from './database';
 import { ZkpKeys } from './keys';
 import { clearPending, markNullified, storeCommitment } from './commitment-storage';
 
-const { USE_STUBS } = global.config;
+const { VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME } = global.nightfallConstants;
 const { generalise } = gen;
-const circuitName = USE_STUBS ? 'withdraw_stub' : 'withdraw';
+const circuitName = 'withdraw';
 
 const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
 
@@ -35,26 +35,15 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     recipientAddress,
     rootKey,
     fee = generalise(0),
+    providedCommitments,
   } = generalise(withdrawParams);
 
   const ercAddress = generalise(withdrawParams.ercAddress.toLowerCase());
-
-  if (!(await checkIndexDBForCircuit(circuitName)))
-    throw Error('Some circuit data are missing from IndexedDB');
-  const [abiData, programData, pkData] = await Promise.all([
-    getStoreCircuit(`${circuitName}-abi`),
-    getStoreCircuit(`${circuitName}-program`),
-    getStoreCircuit(`${circuitName}-pk`),
-  ]);
 
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
   await confirmBlock(lastBlockNumber, lastTree);
-
-  const abi = abiData.data;
-  const program = programData.data;
-  const pk = pkData.data;
 
   const shieldContractInstance = await getContractInstance(
     SHIELD_CONTRACT_NAME,
@@ -74,14 +63,20 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     maticAddress,
     tokenId,
     rootKey,
+    maxNullifiers: VK_IDS.withdraw.numberNullifiers,
+    providedCommitments,
   });
+
+  const circuitHashData = await getStoreCircuit(`withdraw-hash`);
+
+  const circuitHash = circuitHashData.data;
 
   try {
     // now we have everything  we need to create a Witness and compute a proof
     const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
+      circuitHash,
       tokenType: withdrawParams.tokenType,
       tokenId,
       value,
@@ -89,6 +84,9 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       recipientAddress,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
+      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
+      numberCommitments: VK_IDS.withdraw.numberCommitments,
+      isOnlyL2: false,
     });
 
     const privateData = {
@@ -102,36 +100,32 @@ async function withdraw(withdrawParams, shieldContractAddress) {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      ercAddress,
-      tokenId,
     };
 
-    const witnessInput = computeCircuitInputs(
+    const witness = computeCircuitInputs(
       transaction,
       privateData,
       commitmentsInfo.roots,
       maticAddress,
+      VK_IDS.withdraw.numberNullifiers,
+      VK_IDS.withdraw.numberCommitments,
     );
 
-    // call a zokrates worker to generate the proof
-    const zokratesProvider = await initialize();
-    const artifacts = {
-      program: new Uint8Array(program),
-      abi: { inputs: abi.inputs, outputs: [abi.output] },
-    };
-    const keypair = { pk: new Uint8Array(pk) };
-    // computation
-    const { witness } = zokratesProvider.computeWitness(artifacts, witnessInput);
-    // generate proof
-    let { proof } = zokratesProvider.generateProof(artifacts.program, witness, keypair.pk);
-    proof = [...proof.a, ...proof.b, ...proof.c];
-    proof = proof.flat(Infinity);
-    // and work out the ABI encoded data that the caller should sign and send to the shield contract
+    if (!(await checkIndexDBForCircuit(circuitName)))
+      throw Error('Some circuit data are missing from IndexedDB');
+    const [wasmData, zkeyData] = await Promise.all([
+      getStoreCircuit(`${circuitName}-wasm`),
+      getStoreCircuit(`${circuitName}-zkey`),
+    ]);
 
+    // generate proof
+    const { proof } = await snarkjs.groth16.fullProve(witness, wasmData.data, zkeyData.data); // zkey, witness
+
+    // and work out the ABI encoded data that the caller should sign and send to the shield contract
     const optimisticWithdrawTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      transactionType: 2,
+      circuitHash,
       tokenType: withdrawParams.tokenType,
       tokenId,
       value,
@@ -140,6 +134,9 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
+      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
+      numberCommitments: VK_IDS.withdraw.numberCommitments,
+      isOnlyL2: false,
     });
     try {
       const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
@@ -168,6 +165,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       throw new Error(err);
     }
   } catch (err) {
+    console.log('ERR', err);
     throw new Error(err); // let the caller handle the error
   }
 }

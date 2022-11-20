@@ -1,6 +1,3 @@
-# install zokrates for local verify
-FROM zokrates/zokrates:0.7.7 as builder
-
 FROM node:16.17
 
 # install node
@@ -13,9 +10,6 @@ RUN apt-get install -y nodejs gcc g++ make
 RUN apt-get install -y netcat
 # installs libs required for zokrates
 RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
-
-ENV ZOKRATES_HOME /app
-ENV ZOKRATES_STDLIB /app/stdlib
 
 ARG OPTIMIST_PORT=80
 ARG OPTIMIST_WS_PORT=8080
@@ -39,8 +33,6 @@ RUN mkdir /app/mongodb
 COPY nightfall-optimist/src src
 COPY nightfall-optimist/docker-entrypoint.standalone.sh ./docker-entrypoint.sh
 COPY nightfall-optimist/package*.json  ./
-COPY --from=builder /home/zokrates/.zokrates/bin/zokrates /app/zokrates
-COPY --from=builder /home/zokrates/.zokrates/stdlib /app/stdlib/
 
 RUN npm ci
 

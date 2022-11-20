@@ -258,7 +258,7 @@ class Nf3 {
 
   /**
   Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
-  until it has TRANSACTIONS_PER_BLOCK of them
+  until the block is full
   @method
   @async
   */
@@ -477,6 +477,60 @@ class Nf3 {
   }
 
   /**
+    Mint an L2 token
+    @method
+    @async
+    @param {number} fee - The amount (Wei) to pay a proposer for the transaction
+    @param {string} ercAddress - The "fake" ercAddress
+    @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  Since the token was minted on thin
+    air, it can be any value
+    @param {string} salt - The salt used to mint the new token. It is optional
+    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    */
+  async tokenise(ercAddress, value = 0, tokenId = 0, salt = undefined, fee = this.defaultFeeMatic) {
+    const res = await axios.post(`${this.clientBaseUrl}/tokenise`, {
+      ercAddress,
+      tokenId,
+      salt,
+      value,
+      rootKey: this.zkpKeys.rootKey,
+      compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
+      fee,
+    });
+
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
+    return res.status;
+  }
+
+  /**
+    Burn an L2 token
+    @method
+    @async
+    @param {number} fee - The amount (Wei) to pay a proposer for the transaction
+    @param {string} ercAddress - The "fake" ercAddress
+    @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  Since the token was minted on thin
+    air, it can be any value
+    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    */
+  async burn(ercAddress, value, tokenId, providedCommitments, fee = this.defaultFeeMatic) {
+    const res = await axios.post(`${this.clientBaseUrl}/burn`, {
+      ercAddress,
+      tokenId,
+      value,
+      providedCommitments,
+      rootKey: this.zkpKeys.rootKey,
+      fee,
+    });
+
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
+    return res.status;
+  }
+
+  /**
     Deposits a Layer 1 token into Layer 2, so that it can be transacted
     privately.
     @method
@@ -494,7 +548,14 @@ class Nf3 {
     @param {object} keys - The ZKP private key set.
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
-  async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFeeEth) {
+  async deposit(
+    ercAddress,
+    tokenType,
+    value,
+    tokenId,
+    fee = this.defaultFeeEth,
+    feePaidL2 = false,
+  ) {
     let txDataToSign;
     try {
       txDataToSign = await approve(
@@ -515,6 +576,10 @@ class Nf3 {
         return this.submitTransaction(txDataToSign, ercAddress, 0);
       });
     }
+
+    const feeL1 = feePaidL2 ? 0 : fee;
+    const feeL2 = feePaidL2 ? fee : 0;
+
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
@@ -522,7 +587,7 @@ class Nf3 {
       value,
       compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
       nullifierKey: this.zkpKeys.nullifierKey,
-      fee,
+      fee: feeL2,
     });
     return new Promise((resolve, reject) => {
       userQueue.push(async () => {
@@ -530,7 +595,7 @@ class Nf3 {
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.shieldContractAddress,
-            fee,
+            feeL1,
           );
           resolve(receipt);
         } catch (err) {
@@ -1177,6 +1242,10 @@ class Nf3 {
       // if we're about to challenge, check it's actually our challenge, so as not to waste gas
       if (type === 'challenge' && sender !== this.ethereumAddress) return null;
       if (type === 'commit' || type === 'challenge') {
+        // Get the function selector from the encoded ABI, which corresponds to the first 4 bytes.
+        // In hex, it will correspond to the first 8 characters + 2 extra characters (0x), hence we
+        // do slice(0,10)
+        const txSelector = txDataToSign.slice(0, 10);
         challengerQueue.push(async () => {
           try {
             const receipt = await this.submitTransaction(
@@ -1184,9 +1253,9 @@ class Nf3 {
               this.challengesContractAddress,
               0,
             );
-            challengeEmitter.emit('receipt', receipt, type);
+            challengeEmitter.emit('receipt', receipt, type, txSelector);
           } catch (err) {
-            challengeEmitter.emit('error', err, type);
+            challengeEmitter.emit('error', err, type, txSelector);
           }
         });
         logger.debug(`queued ${type} ${txDataToSign}`);
