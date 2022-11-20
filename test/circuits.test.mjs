@@ -28,15 +28,10 @@ const web3Client = new Web3Client();
 
 let erc20Address;
 let stateAddress;
-<<<<<<< HEAD
 let eventLogs = [];
 const fee = 0;
 const stake = '1000000';
 const optimistApiUrl = environment.optimistApiUrl;
-=======
-const eventLogs = [];
-
->>>>>>> 9a41168967ec0d641b61badd214d0257b8bedf84
 /*
   This function tries to zero the number of unprocessed transactions in the optimist node
   that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
@@ -46,7 +41,6 @@ const eventLogs = [];
 describe('General Circuit Test', () => {
   before(async () => {
     // we must set the URL from the point of view of the client container
-<<<<<<< HEAD
 
     const ethPrivateKey = environment.PROPOSER_KEY;
 
@@ -62,11 +56,6 @@ describe('General Circuit Test', () => {
       stake,
       fee,
     });
-=======
-    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
-
-    await nf3Proposer.startProposer();
->>>>>>> 9a41168967ec0d641b61badd214d0257b8bedf84
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
