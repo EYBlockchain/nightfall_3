@@ -1,6 +1,7 @@
 import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 const { generalise } = gen;
 const { BN128_GROUP_ORDER, SHIFT } = constants;
@@ -14,7 +15,6 @@ const computePublicInputs = (tx, rootsOldCommitments, maticAddress, numberNullif
   const roots = utils.padArray(generalise(rootsOldCommitments), 0, numberNullifiers);
 
   const transaction = generalise(tx);
-
   return {
     value: transaction.value.field(BN128_GROUP_ORDER),
     fee: transaction.fee.field(BN128_GROUP_ORDER),
@@ -87,6 +87,16 @@ const computePrivateInputsCommitments = (
   };
 };
 
+const packErcAddress = (_ercAddress, _tokenId) => {
+  logger.debug('packing erc address');
+  const ercAddress = generalise(_ercAddress);
+  const tokenId = generalise(_tokenId);
+  logger.debug({ ercAddress, tokenId });
+  const [top4Bytes, remainder] = tokenId.limbs(224, 2).map(l => BigInt(l));
+  const packedErcAddress = ercAddress.bigInt + top4Bytes * SHIFT;
+  return [packedErcAddress, remainder];
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export const computeCircuitInputs = (
   txObject,
@@ -108,6 +118,8 @@ export const computeCircuitInputs = (
     ercAddress,
     tokenId,
     value,
+    tokenInputs,
+    tokenOutputs,
   } = generalise(privateData);
   if (numberNullifiers > 0) {
     witness = {
@@ -146,6 +158,40 @@ export const computeCircuitInputs = (
 
   if (value) {
     witness.valuePrivate = value.field(BN128_GROUP_ORDER);
+  }
+
+  if (tokenInputs && tokenOutputs) {
+    // we need to remove the last nullifier that is created for the output commitment
+    witness.roots.pop();
+    witness.nullifiersValues.pop();
+    witness.nullifiersSalts.pop();
+    witness.paths.pop();
+    witness.orders.pop();
+
+    witness.inputPackedAddressesPrivate = [];
+    witness.inputIdRemaindersPrivate = [];
+    witness.inputValuesPrivate = [];
+    witness.outputPackedAddressesPrivate = [];
+    witness.outputIdRemaindersPrivate = [];
+    witness.outputValuesPrivate = [];
+
+    tokenInputs.forEach(t => {
+      let [packedErcAddress, remainder] = packErcAddress(t.ercAddress, t.tokenId);
+      packedErcAddress = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
+      remainder = generalise(remainder).field(BN128_GROUP_ORDER);
+      witness.inputPackedAddressesPrivate.push(packedErcAddress);
+      witness.inputIdRemaindersPrivate.push(remainder);
+      witness.inputValuesPrivate.push(generalise(t.value).field(BN128_GROUP_ORDER));
+    });
+
+    tokenOutputs.forEach(t => {
+      let [packedErcAddress, remainder] = packErcAddress(t.ercAddress, t.tokenId);
+      packedErcAddress = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
+      remainder = generalise(remainder).field(BN128_GROUP_ORDER);
+      witness.outputPackedAddressesPrivate.push(packedErcAddress);
+      witness.outputIdRemaindersPrivate.push(remainder);
+      witness.outputValuesPrivate.push(generalise(t.value).field(BN128_GROUP_ORDER));
+    });
   }
   return witness;
 };

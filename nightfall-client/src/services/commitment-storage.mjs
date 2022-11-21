@@ -644,6 +644,7 @@ async function verifyEnoughCommitments(
       .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
 
     const c = commitments.length; // Store the number of commitments
+    logger.debug({ msg: 'filered commitments', commitments });
 
     // At most, we can use (maxNullifiers - number of fee commitments needed) commitments to pay for the
     // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
@@ -652,6 +653,8 @@ async function verifyEnoughCommitments(
 
     const minimumFeeCommits = fee.bigInt > 0n ? 1 : 0;
     const maxPossibleCommitments = Math.min(c, maxNullifiers - minimumFeeCommits);
+
+    logger.trace({ maxPossibleCommitments });
 
     let j = 1;
     let sumHighestCommitments = 0n;
@@ -869,16 +872,27 @@ function selectCommitments(commitments, value, minC, maxC) {
 async function findUsableCommitments(
   compressedZkpPublicKey,
   ercAddress,
-  tokenId,
+  _tokenId,
   ercAddressFee,
   _value,
   _fee,
   maxNullifiers,
   maxNonFeeNullifiers,
 ) {
-  const value = generalise(_value); // sometimes this is sent as a BigInt.
-  const fee = generalise(_fee); // sometimes this is sent as a BigInt.
+  // sometimes these are sent as a BigInt.
+  const value = generalise(_value);
+  const fee = generalise(_fee);
+  const tokenId = generalise(_tokenId);
 
+  logger.debug({
+    msg: 'verifying commitments',
+    compressedZkpPublicKey,
+    ercAddress,
+    tokenId,
+    value,
+    ercAddressFee,
+    fee,
+  });
   const commitmentsVerification = await verifyEnoughCommitments(
     compressedZkpPublicKey,
     ercAddress,
