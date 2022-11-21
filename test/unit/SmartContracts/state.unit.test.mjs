@@ -1202,7 +1202,7 @@ describe('State contract State functions', function () {
     expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(true);
   });
 
-  it('Should build spanProposersList andn change current proposer', async function () {
+  it('Should build spanProposersList and change current proposer', async function () {
     const newUrl = 'url';
     const newFee = 100;
     const amount = await state.getMinimumStake();
@@ -1235,37 +1235,16 @@ describe('State contract State functions', function () {
       0,
     ]);
 
-
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
     await state.setNumProposers(2);
 
     let prevSprint;
-    let prevList = await state.getSpanProposersList();
     for (let i = 0; i < (await state.getSprintsInSpan()).add(3); i++) {
       prevSprint = await state.currentSprint();
       await state.setProposerStartBlock(0);
       await state.changeCurrentProposer();
       expect((prevSprint.add(1)).mod(await state.getSprintsInSpan())).to.equal((await state.currentSprint()).mod((await state.getSprintsInSpan())));
     }
-    await state.setProposer(addr3.address, [
-      addr3.address,
-      addr1.address,
-      addr1.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setStakeAccount(addr3.address, amount.mul(10000000), challengeLocked);
-    await state.setNumProposers(3);
-    for (let i = 0; i < (await state.getSprintsInSpan()).add(3); i++) {
-      prevSprint = await state.currentSprint();
-      await state.setProposerStartBlock(0);
-      await state.changeCurrentProposer();
-      expect((prevSprint.add(1)).mod(await state.getSprintsInSpan())).to.equal((await state.currentSprint()).mod((await state.getSprintsInSpan())));
-    }
-    let propList = await state.getSpanProposersList();
-    expect(propList.length === prevList.length && propList.every(el => prevList.includes(el))).to.equal(false);
   });
 });
