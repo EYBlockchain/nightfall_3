@@ -23,7 +23,7 @@ const amount2 = 100;
 const value1 = 1;
 const fee = '0';
 const stake = '1000000';
-const optimistApiUrl = environment.optimistApiUrl;
+const { optimistApiUrl } = environment;
 
 const getContractInstance = async (contractName, nf3) => {
   const abi = await nf3.getContractAbi(contractName);
@@ -55,7 +55,6 @@ describe(`Testing Administrator`, () => {
     shieldContract = await getContractInstance('Shield', nf3User);
     challengesContract = await getContractInstance('Challenges', nf3User);
     multisigContract = await getContractInstance('SimpleMultiSig', nf3User);
-    const minimumStake = await stateContract.methods.getMinimumStake().call();
 
     if (!(await nf3User.healthcheck('client'))) throw new Error('Healthcheck failed');
     nfMultiSig = new NightfallMultiSig(

@@ -32,7 +32,7 @@ const eventLogs = [];
 const fee = '0';
 const stake = '1000000';
 
-const optimistApiUrl = environment.optimistApiUrl;
+const { optimistApiUrl } = environment;
 
 /*
   This function tries to zero the number of unprocessed transactions in the optimist node
