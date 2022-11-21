@@ -28,10 +28,12 @@ const web3Client = new Web3Client();
 
 let erc20Address;
 let stateAddress;
-let eventLogs = [];
-const fee = 0;
+const eventLogs = [];
+const fee = '0';
 const stake = '1000000';
+
 const optimistApiUrl = environment.optimistApiUrl;
+
 /*
   This function tries to zero the number of unprocessed transactions in the optimist node
   that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
@@ -44,7 +46,7 @@ describe('General Circuit Test', () => {
 
     const ethPrivateKey = environment.PROPOSER_KEY;
 
-    await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
+    // await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
 
     axios.defaults.headers.common['X-APP-TOKEN'] = crypto
       .createHash('sha256')
@@ -262,6 +264,6 @@ describe('General Circuit Test', () => {
   });
 
   after(async () => {
-    await axios.post(`${optimistApiUrl}/proposer/de-register`, {});
+    await axios.post(`${optimistApiUrl}/proposer/de-register`);
   });
 });

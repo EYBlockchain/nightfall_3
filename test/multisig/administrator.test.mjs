@@ -5,6 +5,8 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
+import crypto from 'crypto';
+import axios from 'axios';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { NightfallMultiSig } from './nightfall-multisig.mjs';
 
@@ -19,6 +21,9 @@ const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
 const amount1 = 10;
 const amount2 = 100;
 const value1 = 1;
+const fee = '0';
+const stake = '1000000';
+const optimistApiUrl = environment.optimistApiUrl;
 
 const getContractInstance = async (contractName, nf3) => {
   const abi = await nf3.getContractAbi(contractName);
@@ -34,21 +39,23 @@ describe(`Testing Administrator`, () => {
   let challengesContract;
   let multisigContract;
   let nfMultiSig;
-  let minimumStake;
-
   const nf3User = new Nf3(signingKeys.user1, environment);
-  const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
   before(async () => {
     await nf3User.init(mnemonics.user1);
-    await nf3Proposer.init(mnemonics.proposer);
+    const ethPrivateKey = environment.PROPOSER_KEY;
 
-    minimumStake = await nf3Proposer.getMinimumStake();
+    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
+      .createHash('sha256')
+      .update(ethPrivateKey)
+      .digest('hex');
+
     stateContract = await getContractInstance('State', nf3User);
     proposersContract = await getContractInstance('Proposers', nf3User);
     shieldContract = await getContractInstance('Shield', nf3User);
     challengesContract = await getContractInstance('Challenges', nf3User);
     multisigContract = await getContractInstance('SimpleMultiSig', nf3User);
+    const minimumStake = await stateContract.methods.getMinimumStake().call();
 
     if (!(await nf3User.healthcheck('client'))) throw new Error('Healthcheck failed');
     nfMultiSig = new NightfallMultiSig(
@@ -208,21 +215,29 @@ describe(`Testing Administrator`, () => {
 
     it('Should allow to register first proposer', async () => {
       // Before registering
-      const { proposers: proposersBeforeRegister } = await nf3Proposer.getProposers();
-      const fProposersBeforeRegister = proposersBeforeRegister.filter(
-        p => p.thisAddress === nf3Proposer.ethereumAddress,
+      const proposersBeforeRegister = await axios.get(`${optimistApiUrl}/proposer/proposers`);
+      const currentProposerBefore = await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
+
+      const fProposersBeforeRegister = proposersBeforeRegister.data.proposers.filter(
+        p => p.thisAddress !== currentProposerBefore.data.currentProposer,
       );
 
       // Register proposer
       // CHECK Why other tests do not have this env check
       if (process.env.ENVIRONMENT !== 'aws') {
-        await nf3Proposer.registerProposer('http://optimist', minimumStake);
+        const proposer = await axios.post(`${optimistApiUrl}/proposer/register`, {
+          url: optimistApiUrl,
+          stake,
+          fee,
+        });
       }
 
       // After registering
-      const { proposers: proposersAfterRegister } = await nf3Proposer.getProposers();
-      const fProposersAfterRegister = proposersAfterRegister.filter(
-        p => p.thisAddress === nf3Proposer.ethereumAddress,
+      const proposersAfterRegister = await axios.get(`${optimistApiUrl}/proposer/proposers`);
+      const currentProposerAfter = await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
+
+      const fProposersAfterRegister = proposersAfterRegister.data.proposers.filter(
+        p => p.thisAddress === currentProposerAfter.data.currentProposer,
       );
 
       // Assert
@@ -234,7 +249,11 @@ describe(`Testing Administrator`, () => {
       // SKIP We need to spin a second optimist if we want to keep this test
       let error = null;
       try {
-        await nf3Proposer.registerProposer('http://optimist', minimumStake);
+        await axios.post(`${optimistApiUrl}/proposer/register`, {
+          url: optimistApiUrl,
+          stake,
+          fee,
+        });
       } catch (err) {
         error = err;
       }
@@ -608,8 +627,7 @@ describe(`Testing Administrator`, () => {
   after(async () => {
     nf3User.close();
     if (process.env.ENVIRONMENT !== 'aws') {
-      await nf3Proposer.deregisterProposer();
+      await axios.post(`${optimistApiUrl}/proposer/de-register`);
     }
-    nf3Proposer.close();
   });
 });
