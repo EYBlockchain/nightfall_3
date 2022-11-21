@@ -14,7 +14,9 @@ import {
   incomingViewingKey,
   setInstantWithdrawl,
   generateZkpKeys,
-  kyc,
+  x509,
+  tokenise,
+  burn,
 } from './routes/index.mjs';
 
 const app = express();
@@ -27,13 +29,15 @@ setupHttpDefaults(
     app.use('/contract-abi', getContractAbi);
     app.use('/transfer', transfer);
     app.use('/withdraw', withdraw);
+    app.use('/tokenise', tokenise);
+    app.use('/burn', burn);
     app.use('/finalise-withdrawal', finaliseWithdrawal);
     app.use('/valid-withdrawal', isValidWithdrawal);
     app.use('/commitment', commitment);
     app.use('/incoming-viewing-key', incomingViewingKey);
     app.use('/set-instant-withdrawal', setInstantWithdrawl);
     app.use('/generate-zkp-keys', generateZkpKeys);
-    app.use('/whitelist', kyc);
+    app.use('/x509', x509);
   },
   true,
   false,

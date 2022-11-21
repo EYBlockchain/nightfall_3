@@ -8,18 +8,16 @@ grounds.
 
 pragma solidity ^0.8.0;
 
-import './Key_Registry.sol';
 import './Utils.sol';
 import './ChallengesUtil.sol';
 import './Config.sol';
 import './Stateful.sol';
 
-contract Challenges is Stateful, Key_Registry, Config {
+contract Challenges is Stateful, Config {
     mapping(bytes32 => address) public committers;
 
-    function initialize() public override(Stateful, Key_Registry, Config) initializer {
+    function initialize() public override(Stateful, Config) initializer {
         Stateful.initialize();
-        Key_Registry.initialize();
         Config.initialize();
     }
 
@@ -39,12 +37,13 @@ contract Challenges is Stateful, Key_Registry, Config {
         state.areBlockAndTransactionsReal(blockL2, transactions);
 
         require(
-            priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2,
+            Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 ==
+                Utils.getBlockNumberL2(blockL2.packedInfo),
             'Blocks needs to be subsequent'
         );
         ChallengesUtil.libChallengeLeafCountCorrect(
-            priorBlockL2.leafCount,
-            blockL2.leafCount,
+            Utils.getLeafCount(priorBlockL2.packedInfo),
+            Utils.getLeafCount(blockL2.packedInfo),
             transactions
         );
         challengeAccepted(blockL2);
@@ -63,7 +62,8 @@ contract Challenges is Stateful, Key_Registry, Config {
         state.areBlockAndTransactionsReal(blockL2, transactions);
 
         require(
-            priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2,
+            Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 ==
+                Utils.getBlockNumberL2(blockL2.packedInfo),
             'Blocks needs to be subsequent'
         );
 
@@ -71,12 +71,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         require(frontierBeforeHash == priorBlockL2.frontierHash, 'Invalid prior block frontier');
 
         // see if the challenge is valid
-        ChallengesUtil.libChallengeNewFrontierCorrect(
-            priorBlockL2,
-            frontierBeforeBlock,
-            blockL2,
-            transactions
-        );
+        ChallengesUtil.libChallengeNewFrontierCorrect(frontierBeforeBlock, blockL2, transactions);
         challengeAccepted(blockL2);
     }
 
@@ -88,7 +83,7 @@ contract Challenges is Stateful, Key_Registry, Config {
   is compared to the root stored within the block.
   */
     function challengeNewRootCorrect(
-        bytes32[33] calldata frontierAfterBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
+        bytes32[33] calldata frontierAfterBlock, // frontier after all the block commitments has been added.
         Block calldata blockL2,
         bytes32 salt
     ) external {
@@ -97,7 +92,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         // check that the current block hash is correct
         state.isBlockReal(blockL2);
 
-        bytes32 frontierAfterHash = keccak256(abi.encodePacked(frontierAfterBlock));
+        bytes32 frontierAfterHash = Utils.hashFrontier(frontierAfterBlock);
         require(frontierAfterHash == blockL2.frontierHash, 'Invalid prior block frontier');
 
         // see if the challenge is valid
@@ -133,7 +128,10 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction2.transactionSiblingPath
         );
 
-        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+        uint64 blockL2NumberTx1 = Utils.getBlockNumberL2(transaction1.blockL2.packedInfo);
+        uint64 blockL2NumberTx2 = Utils.getBlockNumberL2(transaction2.blockL2.packedInfo);
+
+        if (blockL2NumberTx1 == blockL2NumberTx2) {
             require(
                 transaction1.transactionIndex != transaction2.transactionIndex,
                 'Cannot be the same transactionIndex'
@@ -148,7 +146,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         );
 
         // Delete the latest block of the two
-        if (transaction1.blockL2.blockNumberL2 > transaction2.blockL2.blockNumberL2) {
+        if (blockL2NumberTx1 > blockL2NumberTx2) {
             challengeAccepted(transaction1.blockL2);
         } else {
             challengeAccepted(transaction2.blockL2);
@@ -183,7 +181,10 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction2.transactionSiblingPath
         );
 
-        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+        uint64 blockL2NumberTx1 = Utils.getBlockNumberL2(transaction1.blockL2.packedInfo);
+        uint64 blockL2NumberTx2 = Utils.getBlockNumberL2(transaction2.blockL2.packedInfo);
+
+        if (blockL2NumberTx1 == blockL2NumberTx2) {
             require(
                 transaction1.transactionIndex != transaction2.transactionIndex,
                 'Cannot be the same transactionIndex'
@@ -198,7 +199,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         );
 
         // Delete the latest block of the two
-        if (transaction1.blockL2.blockNumberL2 > transaction2.blockL2.blockNumberL2) {
+        if (blockL2NumberTx1 > blockL2NumberTx2) {
             challengeAccepted(transaction1.blockL2);
         } else {
             challengeAccepted(transaction2.blockL2);
@@ -207,7 +208,7 @@ contract Challenges is Stateful, Key_Registry, Config {
 
     function challengeProofVerification(
         TransactionInfoBlock calldata transaction,
-        Block[4] calldata blockL2ContainingHistoricRoot,
+        Block[] calldata blockL2ContainingHistoricRoot,
         uint256[8] memory uncompressedProof,
         bytes32 salt
     ) external {
@@ -219,18 +220,28 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction.transactionSiblingPath
         );
 
+        require(
+            blockL2ContainingHistoricRoot.length == transaction.transaction.nullifiers.length,
+            'Invalid number of blocks L2 containing historic root'
+        );
+
         PublicInputs memory extraPublicInputs = PublicInputs(
-            [uint256(0), 0, 0, 0],
+            new uint256[](transaction.transaction.nullifiers.length),
             super.getMaticAddress()
         );
 
-        for (uint256 i = 0; i < 4; ++i) {
+        for (uint256 i = 0; i < transaction.transaction.nullifiers.length; ++i) {
             if (uint256(transaction.transaction.nullifiers[i]) != 0) {
                 state.isBlockReal(blockL2ContainingHistoricRoot[i]);
 
+                uint64 historicblockNumberL2 = Utils.getHistoricRoot(
+                    transaction.transaction.historicRootBlockNumberL2,
+                    i
+                );
+
                 require(
-                    transaction.transaction.historicRootBlockNumberL2[i] ==
-                        blockL2ContainingHistoricRoot[i].blockNumberL2,
+                    historicblockNumberL2 ==
+                        Utils.getBlockNumberL2(blockL2ContainingHistoricRoot[i].packedInfo),
                     'Incorrect historic root block'
                 );
 
@@ -243,7 +254,7 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction.transaction,
             extraPublicInputs,
             uncompressedProof,
-            vks[transaction.transaction.transactionType]
+            state.getVerificationKey(Utils.getCircuitHash(transaction.transaction.packedInfo))
         );
         challengeAccepted(transaction.blockL2);
     }
@@ -256,11 +267,16 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction.transactionIndex,
             transaction.transactionSiblingPath
         );
-        for (uint256 i = 0; i < 4; ++i) {
-            if (
-                transaction.transaction.historicRootBlockNumberL2[i] >= state.getNumberOfL2Blocks()
-            ) {
+
+        for (uint256 i = 0; i < transaction.transaction.nullifiers.length; ++i) {
+            uint64 historicblockNumberL2 = Utils.getHistoricRoot(
+                transaction.transaction.historicRootBlockNumberL2,
+                i
+            );
+
+            if (uint256(historicblockNumberL2) >= state.getNumberOfL2Blocks()) {
                 challengeAccepted(transaction.blockL2);
+                return;
             }
         }
 
@@ -270,8 +286,9 @@ contract Challenges is Stateful, Key_Registry, Config {
     // This gets called when a challenge succeeds
     function challengeAccepted(Block calldata badBlock) private {
         // Check to ensure that the block being challenged is less than a week old
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(badBlock.packedInfo);
         require(
-            state.getBlockData(badBlock.blockNumberL2).time >= (block.timestamp - 7 days),
+            state.getBlockData(blockNumberL2).time >= (block.timestamp - 7 days),
             'Cannot challenge block'
         );
         // emit the leafCount where the bad block was added. Timber will pick this
@@ -279,24 +296,27 @@ contract Challenges is Stateful, Key_Registry, Config {
         // State.sol because Timber gets confused if its events come from two
         // different contracts (it uses the contract name as part of the db
         // connection - we need to change that).
-        state.emitRollback(badBlock.blockNumberL2);
+        emit Rollback(blockNumberL2);
         // we need to remove the block that has been successfully
         // challenged from the linked list of blocks and all of the subsequent
         // blocks
-        BlockData[] memory badBlocks = removeBlockHashes(badBlock.blockNumberL2);
+        BlockData[] memory badBlocks = removeBlockHashes(blockNumberL2);
         // remove the proposer and give the proposer's block stake to the challenger
-        state.rewardChallenger(msg.sender, badBlock.proposer, badBlocks);
+        state.rewardChallenger(msg.sender, Utils.getProposer(badBlock.packedInfo), badBlocks);
     }
 
-    function removeBlockHashes(uint256 blockNumberL2) internal returns (BlockData[] memory) {
+    function removeBlockHashes(uint64 blockNumberL2) internal returns (BlockData[] memory) {
         uint256 lastBlock = state.getNumberOfL2Blocks() - 1;
         BlockData[] memory badBlocks = new BlockData[](lastBlock - blockNumberL2 + 1);
-        for (uint256 i = 0; i <= lastBlock - blockNumberL2; i++) {
+        for (uint256 i = 0; i <= uint256(lastBlock - blockNumberL2); i++) {
             BlockData memory blockData = state.popBlockData();
             state.setBlockStakeWithdrawn(blockData.blockHash);
             badBlocks[i] = blockData;
         }
-        require(state.getNumberOfL2Blocks() == blockNumberL2, 'Number remaining not as expected.');
+        require(
+            state.getNumberOfL2Blocks() == uint256(blockNumberL2),
+            'Number remaining not as expected.'
+        );
         return badBlocks;
     }
 

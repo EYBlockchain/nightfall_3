@@ -27,12 +27,12 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
     try {
       const cipherTexts = [
         transaction.ercAddress,
-        transaction.tokenId,
+        transaction.recipientAddress, // It contains the tokenID encrypted (which is a field)
         ...transaction.compressedSecrets,
       ];
       const [packedErc, unpackedTokenID, ...rest] = decrypt(
         generalise(key),
-        generalise(edwardsDecompress(transaction.recipientAddress)),
+        generalise(edwardsDecompress(transaction.tokenId)), // Compressed public key is stored in token ID
         generalise(cipherTexts),
       );
       const [erc, tokenId] = packSecrets(generalise(packedErc), generalise(unpackedTokenID), 2, 0);
@@ -66,7 +66,12 @@ export async function clientCommitmentSync(zkpPrivateKey, nullifierKey) {
   for (let i = 0; i < transactions.length; i++) {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transactions[i].commitments.filter(n => n !== ZERO);
-    if (transactions[i].transactionType === '1' && countCommitments([nonZeroCommitments[0]]) === 0)
+    // In order to check if the transaction is a transfer, we check if the compressed secrets
+    // are different than zero. All other transaction types have compressedSecrets = [0,0]
+    if (
+      (transactions[i].compressedSecrets[0] !== 0 || transactions[i].compressedSecrets[1] !== 0) &&
+      countCommitments([nonZeroCommitments[0]]) === 0
+    )
       decryptCommitment(transactions[i], zkpPrivateKey, nullifierKey);
   }
 }

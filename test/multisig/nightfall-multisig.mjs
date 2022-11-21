@@ -327,29 +327,6 @@ export class NightfallMultiSig {
   }
 
   /**
-  This function sets the value per slot for PoS
-  */
-  async setValuePerSlot(newValuePerSlot, signingKey, executorAddress, _nonce, transactions) {
-    let nonce = _nonce;
-    if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
-
-    return Promise.all(
-      this.contractInstancesConfigurables().map(async (configurable, i) => {
-        const contractInstance = configurable;
-        const data = contractInstance.methods.setValuePerSlot(newValuePerSlot).encodeABI();
-        return this.multiSig.addMultiSigSignature(
-          data,
-          signingKey,
-          contractInstance.options.address,
-          executorAddress,
-          nonce + i,
-          transactions.flat(),
-        );
-      }),
-    );
-  }
-
-  /**
   This function sets the proposer set count for PoS
   */
   async setProposerSetCount(

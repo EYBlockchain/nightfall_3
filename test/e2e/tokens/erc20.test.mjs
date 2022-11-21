@@ -5,12 +5,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import {
-  depositNTransactions,
-  expectTransaction,
-  pendingCommitmentCount,
-  Web3Client,
-} from '../../utils.mjs';
+import { depositNTransactions, emptyL2, expectTransaction, Web3Client } from '../../utils.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -23,7 +18,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const {
   fee,
   transferValue,
-  txPerBlock,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
@@ -38,7 +32,11 @@ const {
 
 const { TEST_ERC20_ADDRESS } = process.env;
 
-const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
+const nf3Users = [
+  new Nf3(signingKeys.user1, environment),
+  new Nf3(signingKeys.user2, environment),
+  new Nf3(signingKeys.sanctionedUser, environment),
+];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
@@ -49,25 +47,12 @@ const eventLogs = [];
 const logs = {
   instantWithdraw: 0,
 };
+let rollbackCount = 0;
+
 const waitForTxExecution = async (count, txType) => {
   while (count === logs[txType]) {
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
-};
-
-const emptyL2 = async () => {
-  await new Promise(resolve => setTimeout(resolve, 6000));
-  let count = await pendingCommitmentCount(nf3Users[0]);
-  while (count !== 0) {
-    await nf3Users[0].makeBlockNow();
-    try {
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      count = await pendingCommitmentCount(nf3Users[0]);
-    } catch (err) {
-      break;
-    }
-  }
-  await new Promise(resolve => setTimeout(resolve, 6000));
 };
 
 describe('ERC20 tests', () => {
@@ -79,15 +64,17 @@ describe('ERC20 tests', () => {
 
       // Proposer listening for incoming events
       const newGasBlockEmitter = await nf3Proposer.startProposer();
-      newGasBlockEmitter.on('gascost', async gasUsed => {
+      newGasBlockEmitter.on('rollback', () => {
+        rollbackCount += 1;
         logger.debug(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+          `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
         );
       });
     }
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
+    await nf3Users[2].init(mnemonics.sanctionedUser);
 
     erc20Address = TEST_ERC20_ADDRESS || (await nf3Users[0].getContractAddress('ERC20Mock'));
 
@@ -95,23 +82,49 @@ describe('ERC20 tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
-  beforeEach(async () => {
-    logger.info('Performing deposit...');
+  beforeEach(async function () {
+    if (this.currentTest.title === 'test should encounter zero rollbacks') return;
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
-    await emptyL2();
-    logger.info('Deposit finished!');
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
   });
 
   describe('Deposits', () => {
-    it('should increment the balance after deposit some ERC20 crypto', async function () {
+    it('should increment the balance after deposit some ERC20 crypto and pay fee in L1', async function () {
       const currentZkpPublicKeyBalance =
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+
       const afterZkpPublicKeyBalance =
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(transferValue);
+    });
+    it('should fail to deposit if the user is sanctioned', async function () {
+      try {
+        // user 2 is sanctioned
+        await nf3Users[2].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+        expect.fail('Transaction has not been reverted by the EVM');
+      } catch (err) {
+        console.log(err);
+        expect(err.message).to.satisfy(message =>
+          message.includes('Transaction has been reverted by the EVM'),
+        );
+      }
+    });
+
+    it('should increment the balance after deposit some ERC20 crypto and pay fee in L2', async function () {
+      const currentZkpPublicKeyBalance =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee, true);
+
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+
+      const afterZkpPublicKeyBalance =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+      expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
+        transferValue - fee,
+      );
     });
   });
 
@@ -139,7 +152,7 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(res);
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const afterBalances = await getBalances();
 
@@ -160,7 +173,8 @@ describe('ERC20 tests', () => {
         fee,
       );
       expectTransaction(res);
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
 
       const after = (await nf3Users[0].getLayer2Balances())[erc20Address][0].balance;
@@ -182,7 +196,7 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(rec);
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
@@ -203,7 +217,7 @@ describe('ERC20 tests', () => {
         );
         expectTransaction(rec);
 
-        await emptyL2();
+        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
@@ -235,7 +249,7 @@ describe('ERC20 tests', () => {
         );
         expectTransaction(rec);
 
-        await emptyL2();
+        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
@@ -275,7 +289,7 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(rec);
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
@@ -330,14 +344,14 @@ describe('ERC20 tests', () => {
         fee,
       );
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const latestWithdrawTransactionHash = nf3Users[0].getLatestWithdrawHash();
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
       const count = logs.instantWithdraw;
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
       const res = await nf3Users[0].requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
@@ -412,7 +426,7 @@ describe('ERC20 tests', () => {
           // limit (floor of 1/4th). So we perform 6 deposits of the max deposit value, accumulate them into
           // one commitment with multiple tranfers. Then perform withdraw with this huge commitment which
           // will be bigger than withdraw limit. Transfers to accumulate are done in such that they can
-          // accumulate this final value with any txPerBlock
+          // accumulate this final value
 
           // Transfer which gives a change of 0 is not possible because these commitments won't be picked
           // and transfer errors with no suitable commitments. Example, this is not possible
@@ -434,7 +448,7 @@ describe('ERC20 tests', () => {
 
           await depositNTransactions(
             nf3Users[0],
-            txPerBlock < 6 ? 6 : txPerBlock, // at least 6 deposits of max deposit value, put together it is bigger than max withdraw value
+            6, // at least 6 deposits of max deposit value, put together it is bigger than max withdraw value
             erc20Address,
             tokenType,
             maxERC20DepositValue,
@@ -442,7 +456,7 @@ describe('ERC20 tests', () => {
             fee,
           );
 
-          await emptyL2();
+          await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
           await nf3Users[0].transfer(
             false,
@@ -454,7 +468,7 @@ describe('ERC20 tests', () => {
             0,
           );
 
-          await emptyL2();
+          await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
           const rec = await nf3Users[0].withdraw(
             false,
@@ -466,7 +480,8 @@ describe('ERC20 tests', () => {
             0,
           );
 
-          await emptyL2();
+          await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+
           await new Promise(resolve => setTimeout(resolve, 30000));
 
           expectTransaction(rec);
@@ -486,6 +501,12 @@ describe('ERC20 tests', () => {
         console.log('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
+    });
+  });
+
+  describe('Rollback checks', () => {
+    it('test should encounter zero rollbacks', function () {
+      expect(rollbackCount).to.be.equal(0);
     });
   });
 

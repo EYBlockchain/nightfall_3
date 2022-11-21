@@ -8,14 +8,12 @@ import './Structures.sol';
 contract Config is Ownable, Structures {
     uint256 constant CHALLENGE_PERIOD = 1 weeks;
     bytes32 constant ZERO = bytes32(0);
-    uint256 constant TRANSACTIONS_PER_BLOCK = 32;
-    uint256 constant BLOCK_STRUCTURE_SLOTS = 7;
-    uint256 constant TRANSACTION_STRUCTURE_SLOTS = 24;
+    uint256 constant MAX_BLOCK_SIZE = 50000;
+    uint256 constant BLOCK_STRUCTURE_SLOTS = 5;
 
     uint96 minimumStake;
     uint96 blockStake;
     uint256 rotateProposerBlocks;
-    uint256 valuePerSlot; // amount of value of a slot
     uint256 proposerSetCount; // number of slots to pop after shuffling slots that will build the proposer set
     uint256 sprintsInSpan; // number of sprints of a span
     uint256 maxProposers; // maximum number of proposers for the PoS
@@ -30,7 +28,6 @@ contract Config is Ownable, Structures {
         minimumStake = 1000000 wei;
         blockStake = 1 wei;
         rotateProposerBlocks = 20;
-        valuePerSlot = 10;
         proposerSetCount = 5;
         sprintsInSpan = 5;
         maxProposers = 100;
@@ -80,16 +77,14 @@ contract Config is Ownable, Structures {
         return maticAddress;
     }
 
-    /**
-     * @dev Get restricting tokens.
-     * transactionType 0 for deposit and 1 for withdraw
-     */
-    function getRestriction(address tokenAddr, uint256 transactionType)
-        public
-        view
-        returns (uint256)
-    {
-        return erc20limit[tokenAddr][transactionType];
+    // restricting tokens for deposit
+    function getRestrictionDeposit(address tokenAddr) public view returns (uint256) {
+        return erc20limit[tokenAddr][0];
+    }
+
+    // restricting tokens for deposit
+    function getRestrictionWithdraw(address tokenAddr) public view returns (uint256) {
+        return erc20limit[tokenAddr][1];
     }
 
     /**
@@ -110,20 +105,6 @@ contract Config is Ownable, Structures {
     function removeRestriction(address tokenAddr) external onlyOwner {
         delete erc20limit[tokenAddr][0];
         delete erc20limit[tokenAddr][1];
-    }
-
-    /**
-     * @dev Set value per slot in PoS
-     */
-    function setValuePerSlot(uint256 _valuePerSlot) external onlyOwner {
-        valuePerSlot = _valuePerSlot;
-    }
-
-    /**
-     * @dev Get value per slot in PoS
-     */
-    function getValuePerSlot() public view returns (uint256) {
-        return valuePerSlot;
     }
 
     /**

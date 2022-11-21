@@ -179,11 +179,12 @@ router.post('/withdrawStake', async (req, res, next) => {
  * Function to get pending blocks payments for a proposer.
  */
 router.get('/pending-payments', async (req, res, next) => {
-  const { proposerPayments = proposer } = req.query;
+  const { proposerAddress } = req.query;
+
   const pendingPayments = [];
   // get blocks by proposer
   try {
-    const blocks = await findBlocksByProposer(proposerPayments);
+    const blocks = await findBlocksByProposer(proposerAddress);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
     for (let i = 0; i < blocks.length; i++) {
@@ -209,6 +210,31 @@ router.get('/pending-payments', async (req, res, next) => {
     }
     res.json({ pendingPayments });
   } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * Function to get stake for a proposer.
+ */
+router.get('/stake', async (req, res, next) => {
+  logger.debug(`stake endpoint received GET`);
+  const { proposerAddress } = req.query;
+  logger.debug(`requested stake for proposer ${proposerAddress}`);
+
+  try {
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const stakeAccount = await stateContractInstance.methods
+      .getStakeAccount(proposerAddress)
+      .call();
+
+    res.json({
+      amount: Number(stakeAccount[0]),
+      challengeLocked: Number(stakeAccount[1]),
+      time: Number(stakeAccount[2]),
+    });
+  } catch (err) {
+    logger.error(err);
     next(err);
   }
 });
@@ -352,28 +378,26 @@ router.post('/offchain-transaction', async (req, res) => {
     The response from on-chain events converts them to saner string values (e.g. uint64 etc).
     Since we do the transfer off-chain, we do the conversation manually here.
    */
-  const { transactionType, fee } = transaction;
+  const { circuitHash, fee } = transaction;
+
   try {
-    switch (Number(transactionType)) {
-      case 1:
-      case 2: {
-        /*
+    const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
+    const circuitInfo = await stateInstance.methods.getCircuitInfo(circuitHash).call();
+    if (circuitInfo.isEscrowRequired) {
+      res.sendStatus(400);
+    } else {
+      /*
           When comparing this with getTransactionSubmittedCalldata,
           note we dont need to decompressProof as proofs are only compressed if they go on-chain.
           let's not directly call transactionSubmittedEventHandler, instead, we'll queue it
          */
-        await enqueueEvent(transactionSubmittedEventHandler, 1, {
-          offchain: true,
-          ...transaction,
-          fee: Number(fee),
-        });
+      await enqueueEvent(transactionSubmittedEventHandler, 1, {
+        offchain: true,
+        ...transaction,
+        fee: Number(fee),
+      });
 
-        res.sendStatus(200);
-        break;
-      }
-      default:
-        res.sendStatus(400);
-        break;
+      res.sendStatus(200);
     }
   } catch (err) {
     if (err instanceof TransactionError) {

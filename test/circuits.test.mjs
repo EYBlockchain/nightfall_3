@@ -5,7 +5,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { expectTransaction, Web3Client } from './utils.mjs';
+import { emptyL2, expectTransaction, Web3Client } from './utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -15,7 +15,6 @@ chai.use(chaiAsPromised);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
-  txPerBlock,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
@@ -30,7 +29,7 @@ const web3Client = new Web3Client();
 
 let erc20Address;
 let stateAddress;
-let eventLogs = [];
+const eventLogs = [];
 
 /*
   This function tries to zero the number of unprocessed transactions in the optimist node
@@ -44,14 +43,7 @@ describe('General Circuit Test', () => {
       await nf3Proposer.init(mnemonics.proposer);
       // we must set the URL from the point of view of the client container
       await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
-
-      // Proposer listening for incoming events
-      const newGasBlockEmitter = await nf3Proposer.startProposer();
-      newGasBlockEmitter.on('gascost', async gasUsed => {
-        logger.debug(
-          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-        );
-      });
+      await nf3Proposer.startProposer();
     }
 
     await nf3Users[0].init(mnemonics.user1);
@@ -61,8 +53,6 @@ describe('General Circuit Test', () => {
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
-
-    await nf3Users[0].makeBlockNow();
   });
 
   it.skip('Test that matic transfers pays the fee from the same transfer commitment', async () => {
@@ -75,8 +65,7 @@ describe('General Circuit Test', () => {
     logger.debug(`Sending 1 deposit of 10...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 10, tokenId, 0);
 
-    await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     const beforeBalances = await getBalance();
 
@@ -91,8 +80,7 @@ describe('General Circuit Test', () => {
     );
     expectTransaction(singleTransfer);
 
-    await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     const afterBalances = await getBalance();
 
@@ -110,10 +98,7 @@ describe('General Circuit Test', () => {
     logger.debug(`Sending 1 deposit of 10...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 10, tokenId, 0);
 
-    await nf3Users[0].makeBlockNow();
-
-    // Wait until we see the right number of blocks appear
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     // Deposit checks here
 
@@ -129,9 +114,7 @@ describe('General Circuit Test', () => {
     );
     expectTransaction(singleTransferNoChange);
 
-    await nf3Users[0].makeBlockNow();
-
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     // Single Transfer No Change checks here
 
@@ -147,9 +130,7 @@ describe('General Circuit Test', () => {
     );
     expectTransaction(singleTransferChange);
 
-    await nf3Users[0].makeBlockNow();
-
-    ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     logger.debug(`Sending withdrawal with no change...`);
     const withdrawalNoChange = await nf3Users[0].withdraw(
@@ -164,9 +145,8 @@ describe('General Circuit Test', () => {
 
     expectTransaction(withdrawalNoChange);
 
-    await nf3Users[0].makeBlockNow();
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     // Withdrawal No Change checks here
 
     logger.debug(`Sending withdrawal with change...`);
@@ -182,15 +162,13 @@ describe('General Circuit Test', () => {
 
     expectTransaction(withdrawalChange);
 
-    await nf3Users[0].makeBlockNow();
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     // Withdrawal Change checks here
 
     logger.debug(`Sending deposit of 8...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 8, tokenId, 0);
-    await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     logger.debug(`Sending double transfer with change...`);
     const doubleTransferChange = await nf3Users[0].transfer(
@@ -205,9 +183,8 @@ describe('General Circuit Test', () => {
 
     expectTransaction(doubleTransferChange);
 
-    await nf3Users[0].makeBlockNow();
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     // Double transfer Change checks here
 
     logger.debug(`Sending double transfer with no change...`);
@@ -223,16 +200,14 @@ describe('General Circuit Test', () => {
 
     expectTransaction(doubleTransferNoChange);
 
-    await nf3Users[0].makeBlockNow();
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     // Double transfer No Change checks here
 
     logger.debug(`Sending deposit of 4...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 4, tokenId, 0);
 
-    await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     logger.debug(`Sending double withdrawal with change...`);
     const doubleWithdrawalChange = await nf3Users[0].withdraw(
@@ -247,17 +222,13 @@ describe('General Circuit Test', () => {
 
     expectTransaction(doubleWithdrawalChange);
 
-    await nf3Users[0].makeBlockNow();
-
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
     // Double Withdrawal Change checks here
 
     logger.debug(`Sending deposit of 2...`);
     await nf3Users[0].deposit(erc20Address, tokenType, 2, tokenId, 0);
 
-    await nf3Users[0].makeBlockNow();
-
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
     logger.debug(`Sending double Withdrawal with no change...`);
     const doubleWithdrawalNoChange = await nf3Users[0].withdraw(
@@ -272,9 +243,8 @@ describe('General Circuit Test', () => {
 
     expectTransaction(doubleWithdrawalNoChange);
 
-    await nf3Users[0].makeBlockNow();
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     // Double Withdrawal No Change
 
     const finalBalance = await getBalance();
