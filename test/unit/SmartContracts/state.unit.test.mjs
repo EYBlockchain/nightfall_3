@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import { expect } from 'chai';
 import hardhat from 'hardhat';
 import {
@@ -369,12 +370,12 @@ describe('State contract State functions', function () {
     expect((await state.proposers(addr1.address)).thisAddress).to.equal(
       ethers.constants.AddressZero,
     );
-    expect((await state.proposers(addr1.address)).nextAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.proposers(addr1.address)).nextAddress).to.equal(
+      ethers.constants.AddressZero,
+    );
     expect((await state.proposers(addr1.address)).url).to.equal('');
     expect((await state.proposers(addr1.address)).fee).to.equal(0);
-
     expect((await state.proposers(addr2.address)).nextAddress).to.equal(addr2.address);
-
   });
 
   it('should remove proposer without proposer rotation', async function () {
@@ -1244,7 +1245,9 @@ describe('State contract State functions', function () {
       prevSprint = await state.currentSprint();
       await state.setProposerStartBlock(0);
       await state.changeCurrentProposer();
-      expect((prevSprint.add(1)).mod(await state.getSprintsInSpan())).to.equal((await state.currentSprint()).mod((await state.getSprintsInSpan())));
+      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      );
     }
   });
 });
