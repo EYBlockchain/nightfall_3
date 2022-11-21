@@ -330,8 +330,8 @@ describe('State contract State functions', function () {
     );
     await state.setProposer(addr1.address, [
       addr1.address,
-      addr1.address,
-      addr1.address,
+      addr2.address,
+      addr2.address,
       newUrl,
       newFee,
       false,
@@ -339,13 +339,13 @@ describe('State contract State functions', function () {
     ]);
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
-    expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr1.address);
+    expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
     expect((await state.proposers(addr1.address)).url).to.equal(newUrl);
     expect((await state.proposers(addr1.address)).fee).to.equal(newFee);
     await state.setProposer(addr2.address, [
       addr2.address,
-      addr2.address,
-      addr2.address,
+      addr1.address,
+      addr1.address,
       newUrl,
       newFee,
       false,
@@ -369,9 +369,12 @@ describe('State contract State functions', function () {
     expect((await state.proposers(addr1.address)).thisAddress).to.equal(
       ethers.constants.AddressZero,
     );
-    expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
+    expect((await state.proposers(addr1.address)).nextAddress).to.equal(ethers.constants.AddressZero);
     expect((await state.proposers(addr1.address)).url).to.equal('');
     expect((await state.proposers(addr1.address)).fee).to.equal(0);
+
+    expect((await state.proposers(addr2.address)).nextAddress).to.equal(addr2.address);
+
   });
 
   it('should remove proposer without proposer rotation', async function () {
@@ -386,7 +389,7 @@ describe('State contract State functions', function () {
     );
     await state.setProposer(addr1.address, [
       addr1.address,
-      addr1.address,
+      addr2.address,
       addr2.address,
       newUrl,
       newFee,
@@ -400,8 +403,8 @@ describe('State contract State functions', function () {
     expect((await state.proposers(addr1.address)).fee).to.equal(newFee);
     await state.setProposer(addr2.address, [
       addr2.address,
-      addr2.address,
-      addr2.address,
+      addr1.address,
+      addr1.address,
       newUrl,
       newFee,
       false,
@@ -1197,5 +1200,72 @@ describe('State contract State functions', function () {
     expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(false);
     await state.setBlockStakeWithdrawn(blockHash);
     expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(true);
+  });
+
+  it('Should build spanProposersList andn change current proposer', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = await state.getMinimumStake();
+    const challengeLocked = 5;
+
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
+      ethers.constants.AddressZero,
+    );
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr2.address,
+      addr2.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(1);
+    await state.setCurrentProposer(addr1.address);
+
+    await state.setProposer(addr2.address, [
+      addr2.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+
+
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setNumProposers(2);
+
+    let prevSprint;
+    let prevList = await state.getSpanProposersList();
+    for (let i = 0; i < (await state.getSprintsInSpan()).add(3); i++) {
+      prevSprint = await state.currentSprint();
+      await state.setProposerStartBlock(0);
+      await state.changeCurrentProposer();
+      expect((prevSprint.add(1)).mod(await state.getSprintsInSpan())).to.equal((await state.currentSprint()).mod((await state.getSprintsInSpan())));
+    }
+    await state.setProposer(addr3.address, [
+      addr3.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setStakeAccount(addr3.address, amount.mul(10000000), challengeLocked);
+    await state.setNumProposers(3);
+    for (let i = 0; i < (await state.getSprintsInSpan()).add(3); i++) {
+      prevSprint = await state.currentSprint();
+      await state.setProposerStartBlock(0);
+      await state.changeCurrentProposer();
+      expect((prevSprint.add(1)).mod(await state.getSprintsInSpan())).to.equal((await state.currentSprint()).mod((await state.getSprintsInSpan())));
+    }
+    let propList = await state.getSpanProposersList();
+    expect(propList.length === prevList.length && propList.every(el => prevList.includes(el))).to.equal(false);
   });
 });
