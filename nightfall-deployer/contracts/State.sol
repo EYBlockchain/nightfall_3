@@ -36,6 +36,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     address[] public slots; // slots based on proposers stake
     ProposerSet[] public proposersSet; // proposer set for next span
     uint256 public currentSprint; // the current sprint of the span
+    address[] public proposersList;
 
     function initialize() public override(Pausable, Key_Registry, Config) {
         Pausable.initialize();
@@ -366,6 +367,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
 
     function setNumProposers(uint256 np) public onlyProposer {
         numProposers = np;
+        if (numProposers == 2) {
+            initializeSpan();
+            calculateNextProposers(address(0));
+        }
     }
 
     function getNumProposers() public view returns (uint256) {
@@ -538,15 +543,32 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
             currentSprint = 0; // We don't have sprints because always same proposer
             addressBestPeer = currentProposer.thisAddress;
         } else {
-            ProposerSet memory peer;
-            uint256 totalEffectiveWeight = 0;
+            addressBestPeer = proposersList[currentSprint];
+            currentSprint += 1;
 
-            if (currentSprint == sprintsInSpan || proposerStartBlock == 0) {
-                currentProposer = proposers[currentProposer.nextAddress]; // it could be removed
+            if (currentSprint == sprintsInSpan) {
                 currentSprint = 0;
             }
-            if (currentSprint == 0) initializeSpan();
 
+            if (currentSprint == 0) {
+                initializeSpan();
+                calculateNextProposers(addressBestPeer);
+            }
+        }
+
+        currentProposer = proposers[addressBestPeer];
+        proposerStartBlock = block.number;
+        emit NewCurrentProposer(currentProposer.thisAddress);
+    }
+
+    function getProposersList() public view returns (address[] memory) {
+        return proposersList;
+    }
+
+    function calculateNextProposers(address addressBestPeer) internal {
+        ProposerSet memory peer;
+        uint256 totalEffectiveWeight = 0;
+        for (uint256 j = 0; j < proposerSetCount; j++) {
             for (uint256 i = 0; i < proposersSet.length; i++) {
                 peer = proposersSet[i];
                 totalEffectiveWeight += peer.effectiveWeight;
@@ -567,12 +589,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                     totalEffectiveWeight
                 );
 
-            currentSprint += 1;
+            proposersList.push(addressBestPeer);
         }
-
-        currentProposer = proposers[addressBestPeer];
-        proposerStartBlock = block.number;
-        emit NewCurrentProposer(currentProposer.thisAddress);
     }
 
     /**
