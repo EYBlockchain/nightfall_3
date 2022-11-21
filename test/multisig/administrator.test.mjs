@@ -225,7 +225,7 @@ describe(`Testing Administrator`, () => {
       // Register proposer
       // CHECK Why other tests do not have this env check
       if (process.env.ENVIRONMENT !== 'aws') {
-        const proposer = await axios.post(`${optimistApiUrl}/proposer/register`, {
+        await axios.post(`${optimistApiUrl}/proposer/register`, {
           url: optimistApiUrl,
           stake,
           fee,
