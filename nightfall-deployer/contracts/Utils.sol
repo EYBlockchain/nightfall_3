@@ -169,7 +169,7 @@ library Utils {
         inputs[count++] = uint32(uint256(ts.tokenId) >> 64);
         inputs[count++] = uint32(uint256(ts.tokenId) >> 32);
         inputs[count++] = uint32(uint256(ts.tokenId));
-        inputs[count++] = uint32(uint256(ts.recipientAddress));
+        inputs[count++] = uint256(ts.recipientAddress);
         for (uint256 i = 0; i < ts.commitments.length; ++i) {
             inputs[count++] = uint256(ts.commitments[i]);
         }
