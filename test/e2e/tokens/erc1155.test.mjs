@@ -26,6 +26,8 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
+const { TEST_ERC20_ADDRESS, TEST_ERC1155_ADDRESS } = process.env;
+
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
 
@@ -54,21 +56,24 @@ const emptyL2 = async () => {
 
 describe('ERC1155 tests', () => {
   before(async () => {
-    await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer('http://optimist', await nf3Proposer1.getMinimumStake());
+    if(process.env.ENVIRONMENT !== 'aws') {
+      await nf3Proposer1.init(mnemonics.proposer);
+      await nf3Proposer1.registerProposer('http://optimist', await nf3Proposer1.getMinimumStake());
 
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
-      logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
-      );
-    });
+      // Proposer listening for incoming events
+      const newGasBlockEmitter = await nf3Proposer1.startProposer();
+      newGasBlockEmitter.on('gascost', async gasUsed => {
+        logger.debug(
+          `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+        );
+      });
+    }
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-    erc1155Address = await nf3Users[0].getContractAddress('ERC1155Mock');
+
+    erc20Address = TEST_ERC20_ADDRESS || (await nf3Users[0].getContractAddress('ERC20Mock'));
+    erc1155Address = TEST_ERC1155_ADDRESS || (await nf3Users[0].getContractAddress('ERC1155Mock'));
 
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
@@ -282,8 +287,11 @@ describe('ERC1155 tests', () => {
   });
 
   after(async () => {
-    await nf3Proposer1.deregisterProposer();
-    await nf3Proposer1.close();
+    if(process.env.ENVIRONMENT !== 'aws') {
+      await nf3Proposer1.deregisterProposer();
+      await nf3Proposer1.close();
+    }
+
     await nf3Users[0].close();
     await nf3Users[1].close();
     await web3Client.closeWeb3();
