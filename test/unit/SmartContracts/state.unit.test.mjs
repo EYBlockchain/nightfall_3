@@ -357,7 +357,6 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setNumProposers(2);
 
-
     expect((await state.getCurrentProposer()).thisAddress).to.equal(addr1.address);
 
     await state.removeProposer(addr1.address);
