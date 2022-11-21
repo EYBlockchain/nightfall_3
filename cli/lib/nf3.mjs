@@ -1095,6 +1095,16 @@ class Nf3 {
   }
 
   /**
+    Get rotate proposer blocks
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum call.
+    */
+  async getRotateProposerBlocks() {
+    return this.stateContract.methods.getRotateProposerBlocks().call();
+  }
+
+  /**
     Starts a Proposer that listens for blocks and submits block proposal
     transactions to the blockchain.
     @method
