@@ -683,14 +683,6 @@ jobs:
         run: |
           ./bin/start-test-env &> test-env.log &disown
 
-      - name: Wait for test env images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            docker wait proposer_1
-          attempt_limit: 100
-          attempt_delay: 20000
-
       - name: Debug logs - after image builds
         if: always()
         run: cat ping-pong-test.log
