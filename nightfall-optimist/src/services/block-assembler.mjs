@@ -25,7 +25,7 @@ import {
 } from './debug-counters.mjs';
 
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS } = config;
-const { STATE_CONTRACT_NAME } = constants;
+const { STATE_CONTRACT_NAME, ZERO } = constants;
 
 let ws;
 let makeNow = false;
@@ -210,9 +210,11 @@ export async function conditionalMakeBlock(proposer) {
         // blocks with them
         await removeTransactionsFromMemPool(block.transactionHashes);
         await removeCommitmentsFromMemPool(
-          transactions.map(transaction => transaction.commitments),
+          transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
         );
-        await removeNullifiersFromMemPool(transactions.map(transaction => transaction.nullifiers));
+        await removeNullifiersFromMemPool(
+          transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
+        );
       }
     }
   }
