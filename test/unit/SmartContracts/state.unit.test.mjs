@@ -1158,49 +1158,10 @@ describe('State contract State functions', function () {
     expect(stakeAccount.amount).to.equal(amount);
     expect(stakeAccount.time).to.equal(0);
     expect(stakeAccount.challengeLocked).to.equal(challengeLocked - amount);
-    expect(await state.pendingWithdrawals(addressC.address, 0)).to.equal(badBlock.blockStake);
-    expect(await state.pendingWithdrawals(addressC.address, 1)).to.equal(0);
-  });
-
-  it('should setBlockStakeWithdrawn', async function () {
-    const newUrl = 'url';
-    const newFee = 100;
-    const amount = 100;
-    const challengeLocked = 5;
-
-    await state.setProposer(addr1.address, [
-      addr1.address,
-      addr1.address,
-      addr1.address,
-      newUrl,
-      newFee,
-      false,
-      0,
-    ]);
-    await state.setCurrentProposer(addr1.address);
-    await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
-      false,
+    expect((await state.pendingWithdrawalsFees(addressC.address)).feesEth).to.equal(
+      badBlock.blockStake,
     );
-    await setTransactionInfo(
-      shield.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      false,
-    );
-    await state.proposeBlock(
-      transactionsCreated.block,
-      [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
-      { value: 10 },
-    );
-
-    const { blockHash } = await state.blockHashes(0);
-    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(false);
-    await state.setBlockStakeWithdrawn(blockHash);
-    expect(await state.isBlockStakeWithdrawn(blockHash)).to.equal(true);
+    expect((await state.pendingWithdrawalsFees(addressC.address)).feesMatic).to.equal(0);
   });
 
   it('Should build spanProposersList and change current proposer', async function () {
