@@ -47,6 +47,7 @@ async function rollbackEventHandler(data) {
   logger.info(`Rollback - rollback layer 2 blocks ${JSON.stringify(blocksToBeDeleted, null, 2)}`);
 
   const invalidTransactions = [];
+
   // For valid transactions that have made it to this point, we run them through our transaction checker for validity
   for (let i = 0; i < blocksToBeDeleted.length; i++) {
     // Get the trannsaction hashes included in these blocks

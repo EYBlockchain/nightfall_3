@@ -63,7 +63,7 @@ CONTRACT_FILES_URL=url of the repository for the contract files
 This will run a docker-compose with the needed components:
 
 - client. Nightfall client service with endpoints to interact with.
-- worker. Zokrates worker service used by the client to generate the proofs.
+- worker. Circom worker service used by the client to generate the proofs.
 - rabittmq. Queue service used by the client to manage some queues.
 
 ### Localhost deployment

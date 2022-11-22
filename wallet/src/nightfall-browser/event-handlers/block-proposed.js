@@ -13,8 +13,8 @@ import {
   countCommitments,
   setSiblingInfo,
   countTransactionHashes,
-  countWithdrawTransactionHashes,
-  isTransactionHashWithdraw,
+  countCircuitTransactions,
+  isTransactionHashBelongCircuit,
 } from '../services/commitment-storage';
 import {
   getTreeByBlockNumberL2,
@@ -23,6 +23,7 @@ import {
   saveBlock,
   setTransactionHashSiblingInfo,
   updateTransactionTime,
+  getStoreCircuit,
 } from '../services/database';
 import { edwardsDecompress } from '../../common-files/utils/curve-maths/curves';
 
@@ -51,19 +52,24 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
 
     const storeCommitments = [];
     const tempTransactionStore = [];
-    if (Number(transaction.transactionType) === 1 && countOfNonZeroCommitments === 0) {
+    // In order to check if the transaction is a transfer, we check if the compressed secrets
+    // are different than zero. All other transaction types have compressedSecrets = [0,0]
+    if (
+      (transaction.compressedSecrets[0] !== 0 || transaction.compressedSecrets[1] !== 0) &&
+      !countOfNonZeroCommitments
+    ) {
       zkpPrivateKeys.forEach((key, i) => {
         // decompress the secrets first and then we will decryp t the secrets from this
         const { zkpPublicKey } = ZkpKeys.calculateZkpPublicKey(generalise(key));
         try {
           const cipherTexts = [
             transaction.ercAddress,
-            transaction.tokenId,
+            transaction.recipientAddress,
             ...transaction.compressedSecrets,
           ];
           const [packedErc, unpackedTokenID, ...rest] = decrypt(
             generalise(key),
-            generalise(edwardsDecompress(transaction.recipientAddress)),
+            generalise(edwardsDecompress(transaction.tokenId)),
             generalise(cipherTexts),
           );
           const [erc, tokenId] = packSecrets(
@@ -159,13 +165,16 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
     ++height;
   }
 
+  const circuitHashData = await getStoreCircuit(`withdraw-hash`);
+  const circuitHash = circuitHashData.data;
+
   // If this L2 block contains withdraw transactions known to this client,
   // the following needs to be saved for later to be used during finalise/instant withdraw
   // 1. Save sibling path for the withdraw transaction hash that is present in transaction hashes timber tree
   // 2. Save transactions hash of the transactions in this L2 block that contains withdraw transactions for this client
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
-  if ((await countWithdrawTransactionHashes(block.transactionHashes)) > 0) {
+  if ((await countCircuitTransactions(block.transactionHashes, circuitHash)) > 0) {
     const transactionHashesTimber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
 
     const updatedTransactionHashesTimber = Timber.statelessUpdate(
@@ -178,7 +187,7 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
     await Promise.all(
       // eslint-disable-next-line consistent-return
       block.transactionHashes.map(async (transactionHash, i) => {
-        if (await isTransactionHashWithdraw(transactionHash)) {
+        if (await isTransactionHashBelongCircuit(transactionHash, circuitHash)) {
           const siblingPathTransactionHash =
             updatedTransactionHashesTimber.getSiblingPath(transactionHash);
           return setTransactionHashSiblingInfo(

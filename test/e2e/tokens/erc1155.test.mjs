@@ -7,7 +7,7 @@ import config from 'config';
 import { generalise } from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { expectTransaction, Web3Client } from '../../utils.mjs';
+import { emptyL2, expectTransaction, Web3Client } from '../../utils.mjs';
 import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -19,7 +19,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const {
   fee,
-  txPerBlock,
   transferValue,
   tokenConfigs: { tokenTypeERC1155, tokenType, tokenId },
   mnemonics,
@@ -38,19 +37,7 @@ let erc20Address;
 let stateAddress;
 const eventLogs = [];
 let availableTokenIds;
-
-const emptyL2 = async () => {
-  let count = await nf3Users[0].unprocessedTransactionCount();
-
-  while (count !== 0) {
-    await nf3Users[0].makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    count = await nf3Users[0].unprocessedTransactionCount();
-  }
-
-  await nf3Users[0].makeBlockNow();
-  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-};
+let rollbackCount = 0;
 
 describe('ERC1155 tests', () => {
   before(async () => {
@@ -59,9 +46,10 @@ describe('ERC1155 tests', () => {
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('gascost', async gasUsed => {
+    newGasBlockEmitter.on('rollback', () => {
+      rollbackCount += 1;
       logger.debug(
-        `Block proposal gas cost was ${gasUsed}, cost per transaction was ${gasUsed / txPerBlock}`,
+        `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
       );
     });
 
@@ -83,7 +71,7 @@ describe('ERC1155 tests', () => {
 
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
 
-    await emptyL2();
+    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
   });
 
   describe('Deposit', () => {
@@ -105,7 +93,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const afterBalance =
         (await nf3Users[0].getLayer2Balances())[erc1155Address]?.find(
@@ -140,7 +128,7 @@ describe('ERC1155 tests', () => {
         fee,
       );
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const beforeBalances = await getBalances();
 
@@ -155,7 +143,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const afterBalances = await getBalances();
 
@@ -177,7 +165,7 @@ describe('ERC1155 tests', () => {
         fee,
       );
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const beforeBalanceERC1155 = (await nf3Users[0].getLayer2Balances())[erc1155Address].find(
         e => e.tokenId === generalise(tokenToWithdraw).hex(32),
@@ -195,7 +183,7 @@ describe('ERC1155 tests', () => {
         fee,
       );
 
-      await emptyL2();
+      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       expectTransaction(rec);
       logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
@@ -225,7 +213,7 @@ describe('ERC1155 tests', () => {
           fee,
         );
 
-        await emptyL2();
+        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
         const beforeBalanceERC1155 =
           (await nf3Users[0].getLayer2Balances())[erc1155Address]?.find(
@@ -245,7 +233,7 @@ describe('ERC1155 tests', () => {
           fee,
         );
         expectTransaction(rec);
-        await emptyL2();
+        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
         const withdrawal = nf3Users[0].getLatestWithdrawHash();
 
@@ -278,6 +266,12 @@ describe('ERC1155 tests', () => {
         logger.info('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
+    });
+  });
+
+  describe('Rollback checks', () => {
+    it('test should encounter zero rollbacks', function () {
+      expect(rollbackCount).to.be.equal(0);
     });
   });
 

@@ -30,7 +30,7 @@ describe('End to End tests', () => {
   // check for balance and keep doing one transaction(for example deposit) to satisfy
   // tx count per block will be impractical.
   // reason is, it through blance change we doing assertion of logic
-  const txPerBlock = Number(Cypress.env('TRANSACTIONS_PER_BLOCK') || 2);
+  const txPerBlock = 2;
   let txCount = 0;
 
   beforeEach(() => {

@@ -1,20 +1,14 @@
 /* eslint-disable no-empty-function */
 import hardhat from 'hardhat';
+import { packTransactionInfo } from '../../../common-files/classes/transaction.mjs';
+import { packBlockInfo } from '../../../common-files/utils/block-utils.mjs';
 
 const { ethers } = hardhat;
 
 export function calculateBlockHash(b) {
   const encodedBlock = ethers.utils.defaultAbiCoder.encode(
-    ['uint48', 'address', 'bytes32', 'uint256', 'bytes32', 'bytes32', 'bytes32'],
-    [
-      b.leafCount,
-      b.proposer,
-      b.root,
-      b.blockNumberL2,
-      b.previousBlockHash,
-      b.frontierHash,
-      b.transactionHashesRoot,
-    ],
+    ['uint256', 'bytes32', 'bytes32', 'bytes32', 'bytes32'],
+    [b.packedInfo, b.root, b.previousBlockHash, b.frontierHash, b.transactionHashesRoot],
   );
 
   return ethers.utils.keccak256(encodedBlock);
@@ -23,24 +17,18 @@ export function calculateBlockHash(b) {
 export function calculateTransactionHash(tx) {
   const encodedTx = ethers.utils.defaultAbiCoder.encode(
     [
-      'uint112',
-      'uint112',
-      'uint8',
-      'uint8',
-      'uint64[4]',
+      'uint256',
+      'uint256[]',
       'bytes32',
       'bytes32',
       'bytes32',
-      'bytes32[3]',
-      'bytes32[4]',
+      'bytes32[]',
+      'bytes32[]',
       'bytes32[2]',
       'uint256[4]',
     ],
     [
-      tx.value,
-      tx.fee,
-      tx.transactionType,
-      tx.tokenType,
+      tx.packedInfo,
       tx.historicRootBlockNumberL2,
       tx.tokenId,
       tx.ercAddress,
@@ -52,15 +40,24 @@ export function calculateTransactionHash(tx) {
     ],
   );
 
-  return ethers.utils.keccak256(encodedTx);
+  const encodedTxPadded = ethers.utils.hexZeroPad(32, 32).concat(encodedTx.slice(2));
+  return ethers.utils.keccak256(encodedTxPadded);
 }
 
-export function createBlockAndTransactions(erc20MockAddress, ownerAddress, feeAmount = 0) {
+export function createBlockAndTransactions(
+  erc20MockAddress,
+  ownerAddress,
+  blockNumberL2 = 0,
+  previousBlockHash = '0x0000000000000000000000000000000000000000000000000000000000000000',
+  leafCount = 1,
+  frontierHash = '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
+  root = '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
+  fee = 1,
+) {
+  const packedInfoWithdraw = packTransactionInfo(10, fee, 2, 0);
+
   const withdrawTransaction = {
-    value: '10',
-    fee: feeAmount,
-    transactionType: '2',
-    tokenType: '0',
+    packedInfo: packedInfoWithdraw,
     historicRootBlockNumberL2: [
       '0x0000000000000000000000000000000000000000000000000000000000000009',
       '0x0000000000000000000000000000000000000000000000000000000000000002',
@@ -72,7 +69,6 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress, feeAm
     recipientAddress: ethers.utils.hexZeroPad(ownerAddress, 32),
     commitments: [
       '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
       '0x0000000000000000000000000000000000000000000000000000000000000000',
     ],
     nullifiers: [
@@ -93,31 +89,16 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress, feeAm
     ],
   };
 
+  const packedInfoDeposit = packTransactionInfo(10, 0, 0, 0);
+
   const depositTransaction = {
-    value: '10',
-    fee: feeAmount,
-    transactionType: '0',
-    tokenType: '0',
-    historicRootBlockNumberL2: [
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ],
+    packedInfo: packedInfoDeposit,
+    historicRootBlockNumberL2: [],
     tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
     ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
     recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    commitments: [
-      '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ],
-    nullifiers: [
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-      '0x0000000000000000000000000000000000000000000000000000000000000000',
-    ],
+    commitments: ['0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf'],
+    nullifiers: [],
     compressedSecrets: [
       '0x0000000000000000000000000000000000000000000000000000000000000000',
       '0x0000000000000000000000000000000000000000000000000000000000000000',
@@ -135,13 +116,13 @@ export function createBlockAndTransactions(erc20MockAddress, ownerAddress, feeAm
     [calculateTransactionHash(withdrawTransaction), calculateTransactionHash(depositTransaction)],
   );
 
+  const packedInfoBlock = packBlockInfo(leafCount, ownerAddress, blockNumberL2);
+
   const block = {
-    leafCount: 1,
-    proposer: ownerAddress,
-    root: '0x2dffeee2af2f5be8b946c00d2a0f96dc59ac65d1decce3bae9c2c70d5efca4a0',
-    blockNumberL2: 0,
-    previousBlockHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    frontierHash: '0x6fdcfc8a2d541d6b99b6d6349b67783edf599fedfd1931b96f4385bcb3f2f188',
+    packedInfo: packedInfoBlock,
+    root,
+    previousBlockHash,
+    frontierHash,
     transactionHashesRoot,
   };
 

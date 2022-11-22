@@ -5,13 +5,15 @@ module for manupulating elliptic curve points for an alt-bn128 curve. This
 is the curve that Ethereum currently has pairing precompiles for. All the
 return values are BigInts (or arrays of BigInts).
 */
+import gen from 'general-number';
 import utils from '../crypto/merkle-tree/utils.mjs';
 import { mulMod, addMod, squareRootModPrime } from '../crypto/number-theory.mjs';
 import Fq2 from '../../classes/fq2.mjs';
-import Proof from '../../classes/proof.mjs';
 import { modDivide } from '../crypto/modular-division.mjs';
 import constants from '../../constants/index.mjs';
+import Proof from '../../classes/proof.mjs';
 
+const { generalise } = gen;
 const { BN128_PRIME_FIELD, BN128_GROUP_ORDER, BABYJUBJUB } = constants;
 
 const one = BigInt(1);
@@ -36,7 +38,7 @@ export function compressG1(point) {
   // string is 256 bits to fit with an Ethereum word)
   const compressedBinary = parity.concat(x.toString(2).padStart(255, '0'));
   const compressedBigInt = BigInt(`0b${compressedBinary}`);
-  return `0x${compressedBigInt.toString(16)}`;
+  return compressedBigInt;
 }
 
 /**
@@ -57,9 +59,19 @@ export function compressProof(_proof) {
   let proof;
   if (Array.isArray(_proof)) {
     if (_proof.length !== 8) throw new Error('Flat proof array should have length 8');
-    proof = new Proof(_proof);
-  } else proof = _proof;
-  const compressed = [compressG1(proof.a), compressG2(proof.b), compressG1(proof.c)];
+    proof = _proof;
+  } else {
+    proof = Proof.flatProof(_proof);
+  }
+  const compressed = [
+    compressG1([proof[0], proof[1]]),
+    compressG2([
+      [proof[2], proof[3]],
+      [proof[4], proof[5]],
+    ]),
+    compressG1([proof[6], proof[7]]),
+  ];
+
   return compressed.flat();
 }
 
@@ -76,7 +88,7 @@ export function decompressG1(xin) {
   const y2 = addMod([x3, 3n], BN128_PRIME_FIELD);
   let y = squareRootModPrime(y2, BN128_PRIME_FIELD);
   if (parity !== y.toString(2).slice(-1)) y = BN128_PRIME_FIELD - y;
-  return [`0x${x.toString(16).padStart(64, '0')}`, `0x${y.toString(16).padStart(64, '0')}`];
+  return generalise([x, y]).all.hex(32);
 }
 
 /**
@@ -166,9 +178,12 @@ TODO - probably simpler to use integer arithmetic rather than binary manipulatio
 export function edwardsCompress(p) {
   const px = p[0];
   const py = p[1];
-  const xBits = px.toString(2).padStart(256, '0');
   const yBits = py.toString(2).padStart(256, '0');
-  const sign = xBits[255] === '1' ? '1' : '0';
+  const sign =
+    generalise(px).bigInt >
+    10944121435919637611123202872628637544274182200208017171849102093287904247808n
+      ? '1'
+      : '0';
   const yBitsC = sign.concat(yBits.slice(1)); // add in the sign bit
   const y = utils.ensure0x(BigInt('0b'.concat(yBitsC)).toString(16).padStart(64, '0')); // put yBits into hex
   return y;
@@ -182,14 +197,20 @@ export function edwardsDecompress(y) {
   // 168700.x^2 + y^2 = 1 + 168696.x^2.y^2
   const y2 = mulMod([yfield, yfield], Fp);
   const x2 = modDivide(
-    addMod([y2, BigInt(-1)], Fp),
-    addMod([mulMod([JUBJUBD, y2], Fp), -JUBJUBA], Fp),
+    addMod([-y2, 1n], Fp),
+    addMod([mulMod([-JUBJUBD, y2], Fp), JUBJUBA], Fp),
     Fp,
   );
   if (x2 === 0n && sign === '0') return BABYJUBJUB.INFINITY;
   let xfield = squareRootModPrime(x2, Fp);
-  const px = BigInt(xfield).toString(2).padStart(256, '0');
-  if (px[255] !== sign) xfield = Fp - xfield;
+  const signField =
+    generalise(xfield).bigInt >
+    10944121435919637611123202872628637544274182200208017171849102093287904247808n
+      ? '1'
+      : '0';
+  if (signField !== sign) {
+    xfield = Fp - xfield;
+  }
   const p = [xfield, yfield];
   if (!isOnCurve(p)) throw new Error('The computed point was not on the Babyjubjub curve');
   return p;

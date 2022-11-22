@@ -20,7 +20,6 @@ WORKDIR /app
 COPY nightfall-client/src src
 COPY nightfall-client/docker-entrypoint.sh nightfall-client/package.json nightfall-client/package-lock.json ./
 
-RUN npm link @polygon-nightfall/common-files
 RUN npm ci
 
 COPY common-files/classes node_modules/@polygon-nightfall/common-files/classes

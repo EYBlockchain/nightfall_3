@@ -4,8 +4,8 @@
 
 import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { buildBlockSolidityStruct } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
 import { Transaction } from '../classes/index.mjs';
-import { buildSolidityStruct } from './finalise-withdrawal.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
 
 const { SHIELD_CONTRACT_NAME } = constants;
@@ -25,7 +25,7 @@ const setInstantWithdrawl = async ({ transactionHash }) => {
   try {
     const rawTransaction = await shieldContractInstance.methods
       .setAdvanceWithdrawalFee(
-        buildSolidityStruct(block),
+        buildBlockSolidityStruct(block),
         Transaction.buildSolidityStruct(transactions[index]),
         index,
         siblingPath,

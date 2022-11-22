@@ -13,3 +13,4 @@ hardhat.*
 typechain-types/
 config/geth/data
 backup/
+coverage/

@@ -3,20 +3,24 @@
  */
 
 import express from 'express';
+import gen from 'general-number';
+import { getCircuitHash } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import {
   getCommitmentBySalt,
   getWalletBalance,
   getWalletBalanceUnfiltered,
   getWalletCommitments,
-  getWithdrawCommitments,
   getWalletPendingDepositBalance,
   getWalletPendingSpentBalance,
   getCommitments,
   getCommitmentsByCompressedZkpPublicKeyList,
   insertCommitmentsAndResync,
+  getCommitmentsByCircuitHash,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
+
+const { generalise } = gen;
 
 router.get('/salt', async (req, res, next) => {
   try {
@@ -118,7 +122,11 @@ router.get('/', async (req, res, next) => {
 
 router.get('/withdraws', async (req, res, next) => {
   try {
-    const commitments = await getWithdrawCommitments();
+    const circuitHash = await getCircuitHash('withdraw');
+
+    const withdrawCircuitHash = generalise(circuitHash).hex(32);
+
+    const commitments = await getCommitmentsByCircuitHash(withdrawCircuitHash);
     res.json({ commitments });
   } catch (err) {
     next(err);

@@ -3,7 +3,7 @@ title Deposit
 Transactor->Client: transactionData = deposit(args)
 Client->Client: prepareCommitment()
 note right of Client: Generates a random number for creating the commitment. It returns when the Commitment hash is greather than BN128_GROUP_ORDER 
-Client->ZokratesWorker: proof = generateProof(args)
+Client->CircomWorker: proof = generateProof(args)
 Client->Client: shieldContractInstance = getContractInstance(SHIELD_CONTRACT_NAME)
 Client->Client: optimisticDepositTransaction = newTransaction(args)
 Client->Transaction: transformedTransaction = buildSolidityStruct(optimisticDepositTransaction)
