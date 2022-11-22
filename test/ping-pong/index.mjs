@@ -18,7 +18,15 @@ import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys, addresses, zkpPublicKeys } = config.TEST_OPTIONS;
+const {
+  mnemonics,
+  signingKeys,
+  addresses,
+  zkpPublicKeys,
+  clientApiUrls,
+  optimistApiUrls,
+  optimistWsUrls,
+} = config.TEST_OPTIONS;
 
 const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
 
@@ -60,7 +68,11 @@ const makeBlockAndWaitForEmptyMempool = async optimistUrls => {
   if (url) {
     let res = await axios.get(`${url}/proposer/mempool`);
     while (res.data.result.length > 0) {
-      console.log(` *** ${res.data.result.length} transactions in the mempool`);
+      console.log(
+        ` *** ${
+          res.data.result.length
+        } transactions in the mempool (${currentProposer.thisAddress.toUpperCase()} - ${url})`,
+      );
       if (res.data.result.length > 0) {
         console.log('     Make block...');
         await axios.get(`${url}/block/make-now`);
@@ -85,6 +97,15 @@ export async function userTest(IS_TEST_RUNNER, optimistUrls) {
   const tokenType = 'ERC20';
   const value = 1;
   const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
+  environment.clientApiUrl =
+    (IS_TEST_RUNNER ? clientApiUrls.client1 : clientApiUrls.client2) || environment.clientApiUrl;
+  environment.optimistApiUrl =
+    (IS_TEST_RUNNER ? optimistApiUrls.optimist1 : optimistApiUrls.optimist2) ||
+    environment.optimistApiUrl;
+  environment.optimistWsUrl =
+    (IS_TEST_RUNNER ? optimistWsUrls.optimist1 : optimistWsUrls.optimist2) ||
+    environment.optimistWsUrl;
+
   const nf3 = new Nf3(IS_TEST_RUNNER ? signingKeys.user1 : signingKeys.user2, environment);
 
   await nf3.init(IS_TEST_RUNNER ? mnemonics.user1 : mnemonics.user2);

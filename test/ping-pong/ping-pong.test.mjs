@@ -1,9 +1,4 @@
 import config from 'config';
-import compose from 'docker-compose';
-import yaml from 'js-yaml';
-import fs from 'fs';
-import { Docker } from 'docker-cli-js';
-import Web3 from 'web3';
 import { expect } from 'chai';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import {
@@ -14,51 +9,41 @@ import {
   getCurrentProposer,
 } from './index.mjs';
 
-const { mnemonics, signingKeys } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls } =
+  config.TEST_OPTIONS;
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 let result;
+// let initialCurrentProposer = false;
+
+environment.clientApiUrl = clientApiUrls.client1 || environment.clientApiUrl;
+environment.optimistApiUrl = optimistApiUrls.optimist1 || environment.optimistApiUrl;
+environment.optimistWsUrl = optimistWsUrls.optimist1 || environment.optimistWsUrl;
+
+console.log(environment);
 const nf3User = new Nf3(signingKeys.liquidityProvider, environment);
 
-// default options for dockerCommand
-const dockerCommandOptions = {
-  machineName: undefined, // uses local docker
-  currentWorkingDirectory: undefined, // uses current working directory
-  echo: true, // echo command output to stdout/stderr
-  env: undefined,
-  stdin: undefined,
-};
-
-const docker = new Docker(dockerCommandOptions);
-
-// default optioins for docker-compose
-const dockerComposeOptions = {
-  config: ['docker/docker-compose.proposers.yml'],
-  // log: process.env.LOG_LEVEL || 'silent',
-  composeOptions: [['-p', 'nightfall_3']],
-};
-
 const getOptimistUrls = async () => {
-  const data = await docker.command('ps');
-  const optimistList = data.containerList.filter(c => c.names.includes('proposer_optimist_'));
-  const optimistUrls = []; // list with all the proposers from the yml file and their optimistUrl
-
-  let configYml;
-  try {
-    configYml = yaml.load(fs.readFileSync('docker/docker-compose.proposers.yml', 'utf8'));
-  } catch (e) {
-    console.log(e);
-  }
-  const web3 = new Web3();
-  for (const opt of optimistList) {
-    const proposerAddress = web3.eth.accounts.privateKeyToAccount(
-      configYml.services[`proposer_${opt.names.split('_')[2]}`].environment.PROPOSER_KEY,
-    ).address;
+  // const optimistUrls = [];
+  // TODO: Replace when the nightfall node is available with the prop.url
+  /* const resultProposers = await nf3User.getProposers();
+  for (const prop of resultProposers.proposers) {
     optimistUrls.push({
-      proposer: proposerAddress,
-      optimistUrl: `http://localhost:${opt.ports.split('->')[0].split(':')[1]}`,
+      proposer: prop.thisAddress,
+      optimistUrl: prop.url,
     });
-  }
+  } */
+
+  const optimistUrls = [
+    {
+      proposer: '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8',
+      optimistUrl: optimistApiUrls.optimist2,
+    },
+    {
+      proposer: '0xa12D5C4921518980c57Ce3fFe275593e4BAB9211',
+      optimistUrl: optimistApiUrls.optimist1,
+    },
+  ];
   return optimistUrls;
 };
 
@@ -96,21 +81,11 @@ describe('Ping-pong tests', () => {
   before(async () => {
     await nf3User.init(mnemonics.liquidityProvider);
     await setParametersConfig(nf3User); // initialize parameters and contracts
-    console.log('Removing volumes...');
-    const data = await docker.command('volume ls -q');
-    const volumes = data.raw.split('\n').filter(c => c.includes('nightfall_3_optimist_mongodb'));
-    for (const v of volumes) {
-      console.log(`Removing volume ${v}...`);
-      // eslint-disable-next-line no-await-in-loop
-      await docker.command(`volume rm ${v}`);
-    }
-
-    console.log('Starting containers...');
-    await compose.upAll(dockerComposeOptions);
   });
 
   it('Runs ping-pong tests', async () => {
-    const optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers
+    const optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers from docker files
+    console.log(optimistUrls);
     const proposersStats = await getInitialProposerStats(optimistUrls);
     await waitForCurrentProposer();
 
@@ -162,20 +137,22 @@ describe('Ping-pong tests', () => {
     nf3User.close();
   });
 
-  after(async () => {
-    console.log('Stopping containers...');
-    try {
-      await compose.down(dockerComposeOptions);
-    } catch (e) {
-      // while removing network: network nightfall_3_nightfall_network has active endpoints
+  /* after(async () => {
+     if (!initialCurrentProposer) {
+      console.log('Stopping containers...');
+      try {
+        await compose.down(dockerComposeOptions);
+      } catch (e) {
+        // while removing network: network nightfall_3_nightfall_network has active endpoints
+      }
+      console.log('Removing volumes...');
+      const data = await docker.command('volume ls -q');
+      const volumes = data.raw.split('\n').filter(c => c.includes('nightfall_3_optimist_mongodb'));
+      for (const v of volumes) {
+        console.log(`Removing volume ${v}...`);
+        // eslint-disable-next-line no-await-in-loop
+        await docker.command(`volume rm ${v}`);
+      }
     }
-    console.log('Removing volumes...');
-    const data = await docker.command('volume ls -q');
-    const volumes = data.raw.split('\n').filter(c => c.includes('nightfall_3_optimist_mongodb'));
-    for (const v of volumes) {
-      console.log(`Removing volume ${v}...`);
-      // eslint-disable-next-line no-await-in-loop
-      await docker.command(`volume rm ${v}`);
-    }
-  });
+  }); */
 });

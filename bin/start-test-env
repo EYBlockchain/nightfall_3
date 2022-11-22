@@ -1,0 +1,14 @@
+#! /bin/bash
+# shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
+trap "docker-compose -f docker/docker-compose.tests.yml -p 'nightfall_3' down -t 1; exit 1" SIGHUP SIGINT SIGTERM
+
+docker-compose -f docker/docker-compose.tests.yml -p 'nightfall_3' down
+
+# if-else block checks - volume exist and then removes it.
+echo -n 'Removing '
+docker volume rm nightfall_3_optimist_mongodb_1
+
+echo -n 'Removing '
+docker volume rm nightfall_3_optimist_mongodb_2
+
+docker-compose -f docker/docker-compose.tests.yml -p 'nightfall_3' up
