@@ -1,4 +1,5 @@
 #! /bin/bash
+FILE=
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
 trap "docker-compose -f docker/docker-compose.tests.yml -p 'nightfall_3' down -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
@@ -11,4 +12,8 @@ docker volume rm nightfall_3_optimist_mongodb_1
 echo -n 'Removing '
 docker volume rm nightfall_3_optimist_mongodb_2
 
-docker-compose -f docker/docker-compose.tests.yml -p 'nightfall_3' up
+# env file with the variables to pass to the docker-compose
+if [ -f test.env ]; then
+  FILE='--env-file ./test.env'
+fi
+docker-compose $FILE -f docker/docker-compose.tests.yml -p 'nightfall_3' up
