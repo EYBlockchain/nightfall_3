@@ -1,0 +1,6 @@
+#! /bin/bash
+if [ -f test.env ]; then
+  grep -v '^#' test.env
+  # Export env vars
+  export $(grep -v '^#' test.env | xargs)
+fi
