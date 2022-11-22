@@ -1,3 +1,5 @@
+/* ignore unused exports */
+
 /**
  * Functions for storing blockchain data that the optimist application needs to
  * remember wholesale because otherwise it would have to be constructed in real-
