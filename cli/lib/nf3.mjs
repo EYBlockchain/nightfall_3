@@ -107,10 +107,7 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
-    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
-      .createHash('sha256')
-      .update(environment.PROPOSER_KEY)
-      .digest('hex');
+    axios.defaults.headers.common['X-APP-TOKEN'] = environment.PROPOSER_KEY;
   }
 
   /**
@@ -120,10 +117,7 @@ class Nf3 {
    */
   // eslint-disable-next-line class-methods-use-this
   async setApiKey(key) {
-    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
-      .createHash('sha256')
-      .update(key)
-      .digest('hex');
+    axios.defaults.headers.common['X-APP-TOKEN'] = key;
   }
 
   /**
