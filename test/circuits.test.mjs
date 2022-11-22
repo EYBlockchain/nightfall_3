@@ -262,5 +262,6 @@ describe('General Circuit Test', () => {
 
   after(async () => {
     await axios.post(`${optimistApiUrl}/proposer/de-register`);
+    await web3Client.closeWeb3();
   });
 });
