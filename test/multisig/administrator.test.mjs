@@ -7,6 +7,7 @@ import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import crypto from 'crypto';
 import axios from 'axios';
+import { Web3Client } from '../utils.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { NightfallMultiSig } from './nightfall-multisig.mjs';
 
@@ -14,7 +15,6 @@ const { WEB3_OPTIONS } = config;
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
-
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
@@ -24,6 +24,7 @@ const value1 = 1;
 const fee = '0';
 const stake = '1000000';
 const { optimistApiUrl } = environment;
+const web3Client = new Web3Client();
 
 const getContractInstance = async (contractName, nf3) => {
   const abi = await nf3.getContractAbi(contractName);
@@ -215,10 +216,12 @@ describe(`Testing Administrator`, () => {
     it('Should allow to register first proposer', async () => {
       // Before registering
       const proposersBeforeRegister = await axios.get(`${optimistApiUrl}/proposer/proposers`);
-      const currentProposerBefore = await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
+      const proposerPrivateKey = environment.PROPOSER_KEY;
+
+      const address = web3Client.getEthAddressFromPrivateKey(proposerPrivateKey);
 
       const fProposersBeforeRegister = proposersBeforeRegister.data.proposers.filter(
-        p => p.thisAddress !== currentProposerBefore.data.currentProposer,
+        p => p.thisAddress === address,
       );
 
       // Register proposer
@@ -233,10 +236,9 @@ describe(`Testing Administrator`, () => {
 
       // After registering
       const proposersAfterRegister = await axios.get(`${optimistApiUrl}/proposer/proposers`);
-      const currentProposerAfter = await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
 
       const fProposersAfterRegister = proposersAfterRegister.data.proposers.filter(
-        p => p.thisAddress === currentProposerAfter.data.currentProposer,
+        p => p.thisAddress === address,
       );
 
       // Assert

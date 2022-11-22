@@ -42,17 +42,14 @@ const { optimistApiUrl } = environment;
 */
 describe('General Circuit Test', () => {
   before(async () => {
-    // we must set the URL from the point of view of the client container
-
     const ethPrivateKey = environment.PROPOSER_KEY;
-
-    // await axios.get(`${optimistApiUrl}/proposer/current-proposer`);
 
     axios.defaults.headers.common['X-APP-TOKEN'] = crypto
       .createHash('sha256')
       .update(ethPrivateKey)
       .digest('hex');
 
+    // we must set the URL from the point of view of the client container
     await axios.post(`${optimistApiUrl}/proposer/register`, {
       url: optimistApiUrl,
       stake,
