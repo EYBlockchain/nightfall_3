@@ -275,7 +275,7 @@ router.get('/proposers', async (req, res, next) => {
  *      tags:
  *      - Proposer
  *      summary: Deregister proposer.
- *      description: De-register a proposer - removes proposer from Proposer contract.
+ *      description: De-register a proposer - removes proposer from Proposers contract.
  *      Proposers can de-register even when they are the current proposer.
  *      parameters:
  *        - in: header
@@ -383,7 +383,7 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
  *      tags:
  *      - Proposer
  *      summary: Pending payments.
- *      description: Get pending payments for new blocks proposed or successful challenges.
+ *      description: TBC Get pending payments for new blocks proposed or successful block challenges.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -538,8 +538,9 @@ router.get('/withdraw', auth, async (req, res, next) => {
  *     tags:
  *     - Proposer
  *     summary: Initiate withdrawal.
- *     description: Request payment for new blocks proposed or successful challenges.
- *     Then /withdraw needs to be called to recover the money.
+ *     description: Request payment for new blocks successfully proposed or challenged.
+ *     Also unlocks any locked stake after the cooling off period.
+ *     Then /withdraw can be called to recover the money.
  *     Can only be called after the cooling off period.
  *     parameters:
  *        - in: header

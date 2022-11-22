@@ -102,7 +102,7 @@
     "minimist": "^1.2.6",
     "mocha": "^10.1.0",
     "mongodb": "^4.7.0",
-    "nightfall-sdk": "^1.0.0",
+    "nightfall-sdk": "^1.0.2",
     "path": "^0.12.7",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.10",
