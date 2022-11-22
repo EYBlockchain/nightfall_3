@@ -1768,4 +1768,279 @@ describe('Challenges contract Challenges functions', function () {
       challenges.challengeNewRootCorrect(frontierBeforeBlock, newTx.block, salt),
     ).to.be.revertedWith('The root is actually fine');
   });
+
+  it('should challengeProofVerification', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(1);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
+    );
+    await state.proposeBlock(
+      transactionsCreated.block,
+      [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
+      {
+        value: 10,
+      },
+    );
+    const newTx = createBlockAndTransactions(
+      '0x000000000000000000000000499d11e0b6eac7c0593d8fb292dcbbf815fb29ae',
+      addr1.address,
+      1,
+      calculateBlockHash(transactionsCreated.block),
+    );
+    await state.proposeBlock(newTx.block, [newTx.withdrawTransaction, newTx.depositTransaction], {
+      value: 10,
+    });
+
+    const siblingPath = [
+      newTx.block.transactionHashesRoot,
+      calculateTransactionHash(newTx.depositTransaction),
+    ];
+
+    const TransactionInfoBlock = {
+      blockL2: newTx.block,
+      transaction: newTx.withdrawTransaction,
+      transactionIndex: 0,
+      transactionSiblingPath: siblingPath,
+    };
+
+    let uncompressedProof = newTx.withdrawTransaction.proof;
+    uncompressedProof = uncompressedProof.concat(
+      new Array(8 - uncompressedProof.length).fill(ethers.constants.HashZero),
+    );
+    const salt = (await rand(32)).hex(32);
+
+    // eslint-disable-next-line prefer-destructuring
+    const data = (
+      await challenges.populateTransaction.challengeProofVerification(
+        TransactionInfoBlock,
+        [
+          transactionsCreated.block,
+          transactionsCreated.block,
+          transactionsCreated.block,
+          transactionsCreated.block,
+        ],
+        uncompressedProof,
+        salt,
+      )
+    ).data;
+    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    await challenges.commitToChallenge(hashedData);
+    await state.registerVerificationKey(2, new Array(33).fill(1), false, false);
+    const tx = await challenges.challengeProofVerification(
+      TransactionInfoBlock,
+      [
+        transactionsCreated.block,
+        transactionsCreated.block,
+        transactionsCreated.block,
+        transactionsCreated.block,
+      ],
+      uncompressedProof,
+      salt,
+    );
+
+    const receipt = await tx.wait();
+
+    const eventRollback = receipt.events.find(event => event.event === 'Rollback');
+    const [blockNumberL2] = eventRollback.args;
+
+    const unpackedBlockInfo = unpackBlockInfo(newTx.block.packedInfo);
+    expect(blockNumberL2).to.equal(Number(unpackedBlockInfo.blockNumberL2));
+  });
+
+  it('should not challengeProofVerification: Incorrect historic root block', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(1);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
+    );
+    await state.proposeBlock(
+      transactionsCreated.block,
+      [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
+      {
+        value: 10,
+      },
+    );
+    const newTx = createBlockAndTransactions(
+      '0x000000000000000000000000499d11e0b6eac7c0593d8fb292dcbbf815fb29ae',
+      addr1.address,
+      1,
+      calculateBlockHash(transactionsCreated.block),
+    );
+    await state.proposeBlock(newTx.block, [newTx.withdrawTransaction, newTx.depositTransaction], {
+      value: 10,
+    });
+
+    const siblingPath = [
+      newTx.block.transactionHashesRoot,
+      calculateTransactionHash(newTx.depositTransaction),
+    ];
+
+    const TransactionInfoBlock = {
+      blockL2: newTx.block,
+      transaction: newTx.withdrawTransaction,
+      transactionIndex: 0,
+      transactionSiblingPath: siblingPath,
+    };
+
+    let uncompressedProof = newTx.withdrawTransaction.proof;
+    uncompressedProof = uncompressedProof.concat(
+      new Array(8 - uncompressedProof.length).fill(ethers.constants.HashZero),
+    );
+    const salt = (await rand(32)).hex(32);
+
+    // eslint-disable-next-line prefer-destructuring
+    const data = (
+      await challenges.populateTransaction.challengeProofVerification(
+        TransactionInfoBlock,
+        [newTx.block, newTx.block, newTx.block, newTx.block],
+        uncompressedProof,
+        salt,
+      )
+    ).data;
+    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    await challenges.commitToChallenge(hashedData);
+    await expect(
+      challenges.challengeProofVerification(
+        TransactionInfoBlock,
+        [newTx.block, newTx.block, newTx.block, newTx.block],
+        uncompressedProof,
+        salt,
+      ),
+    ).to.be.revertedWith('Incorrect historic root block');
+  });
+
+  it('should not challengeProofVerification: Incorrect historic root block', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = 100;
+    const challengeLocked = 5;
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(1);
+    await state.setCurrentProposer(addr1.address);
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
+    );
+    await setTransactionInfo(
+      state.address,
+      calculateTransactionHash(transactionsCreated.depositTransaction),
+      true,
+      0,
+    );
+    await state.proposeBlock(
+      transactionsCreated.block,
+      [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
+      {
+        value: 10,
+      },
+    );
+    const newTx = createBlockAndTransactions(
+      '0x000000000000000000000000499d11e0b6eac7c0593d8fb292dcbbf815fb29ae',
+      addr1.address,
+      1,
+      calculateBlockHash(transactionsCreated.block),
+    );
+    await state.proposeBlock(newTx.block, [newTx.withdrawTransaction, newTx.depositTransaction], {
+      value: 10,
+    });
+
+    const siblingPath = [
+      newTx.block.transactionHashesRoot,
+      calculateTransactionHash(newTx.depositTransaction),
+    ];
+
+    const TransactionInfoBlock = {
+      blockL2: newTx.block,
+      transaction: newTx.withdrawTransaction,
+      transactionIndex: 0,
+      transactionSiblingPath: siblingPath,
+    };
+
+    let uncompressedProof = newTx.withdrawTransaction.proof;
+    uncompressedProof = uncompressedProof.concat(
+      new Array(8 - uncompressedProof.length).fill(ethers.constants.HashZero),
+    );
+    const salt = (await rand(32)).hex(32);
+
+    // eslint-disable-next-line prefer-destructuring
+    const data = (
+      await challenges.populateTransaction.challengeProofVerification(
+        TransactionInfoBlock,
+        [newTx.block, newTx.block, newTx.block],
+        uncompressedProof,
+        salt,
+      )
+    ).data;
+    const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
+    await challenges.commitToChallenge(hashedData);
+    await expect(
+      challenges.challengeProofVerification(
+        TransactionInfoBlock,
+        [newTx.block, newTx.block, newTx.block],
+        uncompressedProof,
+        salt,
+      ),
+    ).to.be.revertedWith('Invalid number of blocks L2 containing historic root');
+  });
 });
