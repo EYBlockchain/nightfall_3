@@ -10,7 +10,7 @@ import {
   addTransactionsToMemPool,
   deleteBlock,
   findBlocksFromBlockNumberL2,
-  getTransactionsByTransactionHashes,
+  getTransactionsByTransactionHashesByL2Block,
   deleteTransactionsByTransactionHashes,
   deleteTreeByBlockNumberL2,
   getAllRegisteredProposersCount,
@@ -54,7 +54,10 @@ async function rollbackEventHandler(data) {
     const transactionHashesInBlock = blocksToBeDeleted[i].transactionHashes.flat(Infinity);
     // Use the transaction hashes to grab the actual transactions filtering out deposits - In Order.
     // eslint-disable-next-line no-await-in-loop
-    const blockTransactions = await getTransactionsByTransactionHashes(transactionHashesInBlock); // TODO move this to getTransactionsByTransactionHashes by l2 block number because transaction hash is not unique and might not pull the right l2 block number
+    const blockTransactions = await getTransactionsByTransactionHashesByL2Block(
+      transactionHashesInBlock,
+      blocksToBeDeleted[i],
+    );
     logger.info({
       msg: 'Rollback - blockTransactions to check:',
       blockTransactions,
