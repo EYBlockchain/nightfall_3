@@ -3,7 +3,6 @@
 import express from 'express';
 import config from 'config';
 import { web3 } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { setupHttpDefaults } from '@polygon-nightfall/common-files/utils/httputils.mjs';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
@@ -21,7 +20,6 @@ import {
 
 const spec = swaggerJsDoc(options);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-logger.debug(`********* Optimist environment vars ${JSON.stringify(environment)}`); // TODO review logs
 
 const app = express();
 

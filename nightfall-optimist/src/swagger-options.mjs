@@ -7,9 +7,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Nightfall Optmist API',
+      title: 'Nightfall Optimist API',
       version: '1.0.0',
-      description: 'An api to be used by the proposers',
+      description: 'An API to be used by the proposers',
     },
     servers: [
       {
@@ -56,7 +56,7 @@ const options = {
                 properties: {
                   enable: {
                     type: 'boolean',
-                    description: 'Option to enable a challenger.',
+                    description: 'Option to enable a challenger',
                     example: 'true',
                   },
                 },
@@ -251,15 +251,15 @@ const options = {
           properties: {
             url: {
               type: 'string',
-              description: "The proposer's url.",
+              description: "Proposer's url",
             },
             stake: {
               type: 'string',
-              description: "The proposer's stake.",
+              description: "Proposer's stake",
             },
             fee: {
               type: 'integer',
-              description: "The proposer's fee.",
+              description: "Proposer's fee",
             },
           },
           example: {
@@ -273,7 +273,7 @@ const options = {
           properties: {
             txDataToSign: {
               type: 'string',
-              description: 'The current proposer address.',
+              description: 'The current proposer address',
             },
           },
           example: {
@@ -311,7 +311,7 @@ const options = {
           properties: {
             address: {
               type: 'string',
-              description: 'The contract address.',
+              description: 'The contract address',
             },
           },
           example: {
@@ -323,17 +323,17 @@ const options = {
           properties: {
             amount: {
               type: 'string',
-              description: 'The staked amount of funds of the proposer.',
+              description: 'The staked amount of funds of the proposer',
               example: 10,
             },
             challengeLocked: {
               type: 'string',
-              description: 'The block stake in case of an invalid block.',
+              description: 'The block stake in case of an invalid block',
               example: 10,
             },
             time: {
               type: 'string',
-              description: 'The time interval until the stake can be claimed.',
+              description: 'The time interval until the stake can be claimed',
               example: 10,
             },
           },
@@ -375,59 +375,59 @@ const options = {
             properties: {
               0: {
                 type: 'string',
-                description: 'Current proposer address.',
+                description: 'Current proposer address',
               },
               1: {
                 type: 'string',
-                description: 'Previous proposer address.',
+                description: 'Previous proposer address',
               },
               2: {
                 type: 'string',
-                description: 'Next proposer address.',
+                description: 'Next proposer address',
               },
               3: {
                 type: 'string',
-                description: "Proposer's url.",
+                description: "Proposer's url",
               },
               4: {
                 type: 'string',
-                description: "Proposer's fee.",
+                description: "Proposer's fee",
               },
               5: {
                 type: 'boolean',
-                description: 'Proposer in.',
+                description: 'Proposer in TBC',
               },
               6: {
                 type: 'string',
-                description: 'Proposer index.',
+                description: 'Proposer index',
               },
               thisAddress: {
                 type: 'integer',
-                description: 'Current proposer address.',
+                description: 'Current proposer address',
               },
               previousAddress: {
                 type: 'string',
-                description: 'Previous proposer address.',
+                description: 'Previous proposer address TBC',
               },
               nextAddress: {
                 type: 'string',
-                description: 'Next proposer address.',
+                description: 'Next proposer address',
               },
               url: {
                 type: 'string',
-                description: "Proposer's url.",
+                description: "Proposer's url",
               },
               fee: {
                 type: 'string',
-                description: "Proposer's fee.",
+                description: "Proposer's fee",
               },
               inProposerSet: {
                 type: 'boolean',
-                description: 'Proposer in.',
+                description: 'Proposer in TBC',
               },
               indexProposerSet: {
                 type: 'string',
-                description: 'Proposer index.',
+                description: 'Proposer index',
               },
             },
           },
@@ -464,7 +464,7 @@ const options = {
           },
           required: ['code', 'message'],
         },
-        BlockReseted: {
+        BlockReset: {
           type: 'object',
           properties: {
             block: {
@@ -531,13 +531,13 @@ const options = {
           },
         },
         SuccessBlockChecked: {
-          description: 'Block without inconsistency.',
+          description: 'Block without inconsistency',
         },
         SuccessBlockCreated: {
-          description: 'Making short block.',
+          description: 'Making short block',
         },
         SuccessAdvanceWithdrawal: {
-          description: 'Sucessful advance withdrawal.',
+          description: 'Successful advance withdrawal',
           content: {
             'application/json': {
               schema: {
@@ -557,7 +557,7 @@ const options = {
           },
         },
         SuccessDebugContract: {
-          description: 'The numbers for debug counters returned.',
+          description: 'Debug counters returned',
           content: {
             'application/json': {
               schema: {
@@ -567,7 +567,7 @@ const options = {
           },
         },
         SuccessGetContractAbi: {
-          description: 'Contract ABI returned.',
+          description: 'Contract ABI returned',
           content: {
             'application/json': {
               schema: {
@@ -577,7 +577,7 @@ const options = {
           },
         },
         SuccessGetContractAddress: {
-          description: 'Contract address returned.',
+          description: 'Contract address returned',
           content: {
             'application/json': {
               schema: {
@@ -587,7 +587,7 @@ const options = {
           },
         },
         SuccessProposerRegister: {
-          description: 'Proposer registered.',
+          description: 'Proposer registered',
           content: {
             'application/json': {
               schema: {
@@ -597,7 +597,7 @@ const options = {
           },
         },
         SuccessProposerUpdate: {
-          description: 'Proposer updated.',
+          description: 'Proposer updated',
           content: {
             'application/json': {
               schema: {
@@ -607,18 +607,18 @@ const options = {
           },
         },
 
-        SuccessBlockReseted: {
-          description: 'Block reseted.',
+        SuccessBlockReset: {
+          description: 'Block reset',
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/BlockReseted',
+                $ref: '#/components/schemas/BlockReset',
               },
             },
           },
         },
         SuccessCurrentProposer: {
-          description: 'Current proposer returned.',
+          description: 'Current proposer returned',
           content: {
             'application/json': {
               schema: {
@@ -634,7 +634,7 @@ const options = {
           },
         },
         SuccessProposerList: {
-          description: 'Proposer updated.',
+          description: 'Proposer updated',
           content: {
             'application/json': {
               schema: {
@@ -647,7 +647,7 @@ const options = {
           },
         },
         SuccessDeregisterProposer: {
-          description: 'Proposer deregistered.',
+          description: 'Proposer deregistered',
           content: {
             'application/json': {
               schema: {
@@ -657,7 +657,7 @@ const options = {
           },
         },
         SuccessWithdrawStake: {
-          description: 'Stake withdraw.',
+          description: 'Stake withdraw',
           content: {
             'application/json': {
               schema: {
@@ -667,7 +667,7 @@ const options = {
           },
         },
         SuccessPendingPayments: {
-          description: 'Pending payments recieved.',
+          description: 'Pending payments received',
           content: {
             'application/json': {
               schema: {
@@ -680,7 +680,7 @@ const options = {
           },
         },
         SuccessCurrentStake: {
-          description: 'Current stake.',
+          description: 'Current stake',
           content: {
             'application/json': {
               schema: {
@@ -688,18 +688,18 @@ const options = {
                 properties: {
                   amount: {
                     type: 'string',
-                    description: 'The staked amount of funds of the proposer.',
-                    example: 10,
+                    description: 'The staked amount of funds of the proposer',
+                    example: '10',
                   },
                   challengeLocked: {
                     type: 'string',
-                    description: 'The block stake in case of an invalid block.',
-                    example: 10,
+                    description: 'The block stake in case of an invalid block',
+                    example: '10',
                   },
                   time: {
                     type: 'string',
-                    description: 'The time interval until the stake can be claimed.',
-                    example: 10,
+                    description: 'The time interval until the stake can be claimed',
+                    example: '10',
                   },
                 },
               },
@@ -707,7 +707,7 @@ const options = {
           },
         },
         SuccessProposerPayment: {
-          description: 'Proposer payment created.',
+          description: 'Proposer payment created',
           content: {
             'application/json': {
               schema: {
@@ -717,7 +717,7 @@ const options = {
           },
         },
         SuccessWithdrawPayment: {
-          description: 'Withdrawal created.',
+          description: 'Withdrawal created',
           content: {
             'application/json': {
               schema: {
@@ -730,7 +730,7 @@ const options = {
           },
         },
         SuccessChangeProposer: {
-          description: 'Proposer changed.',
+          description: 'Proposer changed',
           content: {
             'application/json': {
               schema: {

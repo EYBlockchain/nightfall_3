@@ -630,5 +630,6 @@ describe(`Testing Administrator`, () => {
     if (process.env.ENVIRONMENT !== 'aws') {
       await axios.post(`${optimistApiUrl}/proposer/de-register`);
     }
+    await web3Client.closeWeb3();
   });
 });

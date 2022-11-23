@@ -505,7 +505,7 @@ export async function getL2TransactionByNullifier(
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
-// This function is useful in resetting transacations that have been marked out of the mempool because
+// This function is useful in resetting transactions that have been marked out of the mempool because
 // we have included them in blocks, but those blocks did not end up being mined on-chain.
 export async function resetUnsuccessfulBlockProposedTransactions() {
   const connection = await mongo.connection(MONGO_URL);

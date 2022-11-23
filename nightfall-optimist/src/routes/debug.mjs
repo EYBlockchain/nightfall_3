@@ -13,7 +13,7 @@ const router = express.Router();
  *      tags:
  *      - Debug
  *      summary: Debug counters.
- *      description: Route that will return the debug counters.
+ *      description: Return the debug counters.
  *      parameters:
  *        - in: header
  *          name: api_key
