@@ -687,6 +687,10 @@ jobs:
         run: |
           ./bin/start-test-env &> test-env.log &disown
 
+      - name: Debug test dev logs - after image builds
+        if: always()
+        run: cat test-env.log
+
       - name: 'Check proposer liveliness'
         uses: Wandalen/wretry.action@v1.0.11
         with:
