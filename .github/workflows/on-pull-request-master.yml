@@ -648,7 +648,7 @@ jobs:
   ping-pong-test:
     env:
       CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain, client,deployer,optimist,worker
+      NF_SERVICES_TO_START: blockchain,deployer,worker
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
