@@ -268,13 +268,33 @@ contract Challenges is Stateful, Config {
             transaction.transactionSiblingPath
         );
 
-        for (uint256 i = 0; i < transaction.transaction.nullifiers.length; ++i) {
-            uint64 historicblockNumberL2 = Utils.getHistoricRoot(
+        // Unpack the historic block numbers, they are packed in 256bits and so 4 x 64 historicRootBlockNumbers are unpacked.
+        uint64[] memory historicRootBlockNumbers = new uint64[](
+            transaction.transaction.historicRootBlockNumberL2.length * 4
+        );
+
+        for (uint256 i = 0; i < historicRootBlockNumbers.length; ++i) {
+            historicRootBlockNumbers[i] = Utils.getHistoricRoot(
                 transaction.transaction.historicRootBlockNumberL2,
                 i
             );
+        }
 
-            if (uint256(historicblockNumberL2) >= state.getNumberOfL2Blocks()) {
+        for (uint256 i = 0; i < transaction.transaction.nullifiers.length; ++i) {
+            if (uint256(historicRootBlockNumbers[i]) >= state.getNumberOfL2Blocks()) {
+                challengeAccepted(transaction.blockL2);
+                return;
+            }
+        }
+
+        // Historic Block Numbers are packed in 256bits and so always results in multiples of 4
+        // if nullifiers are not multiple of 4 we need to ensure these "extra" historic block numbers are zero.
+        for (
+            uint256 i = historicRootBlockNumbers.length - 1;
+            i >= transaction.transaction.nullifiers.length;
+            --i
+        ) {
+            if (historicRootBlockNumbers[i] != uint64(0)) {
                 challengeAccepted(transaction.blockL2);
                 return;
             }
