@@ -22,6 +22,7 @@ export const submitTransaction = async (
     .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
     .map(c => storeCommitment(c, nullifierKey));
 
+  logger.debug({ msg: 'nullifying commitments', commitments: commitmentsInfo.oldCommitments });
   const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
     markNullified(c, transaction),
   );

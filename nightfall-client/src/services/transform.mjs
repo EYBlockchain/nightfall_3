@@ -1,11 +1,14 @@
 /* eslint-disable no-await-in-loop */
 
-import axios from 'axios';
 import config from 'config';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  getCircuitHash,
+  generateProof,
+} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import gen from 'general-number';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { clearPending } from './commitment-storage.mjs';
@@ -14,8 +17,8 @@ import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 import { ZkpKeys } from './keys.mjs';
 
-const { CIRCOM_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL } = config;
-const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, VK_IDS } = constants;
+const { VK_IDS } = config;
+const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
 const { generalise } = gen;
 
 async function transform(transformParams) {
@@ -23,32 +26,30 @@ async function transform(transformParams) {
 
   const { tokenInputs, tokenOutputs, ...items } = transformParams;
   const { rootKey, fee } = generalise(items);
-
   const { zkpPublicKey } = new ZkpKeys(rootKey);
-  console.log(zkpPublicKey);
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-
   const maticAddress = generalise(
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
+
+  const circuitHash = await getCircuitHash('transform');
 
   // get commitment info for every token Input
   const commitmentInfoArray = [];
   for (const tokenInput of tokenInputs) {
     const ci = await getCommitmentInfo({
       totalValueToSend: generalise(tokenInput.value).bigInt,
-      fee: generalise(0),
-      ercAddress: generalise(tokenInput.ercAddress),
+      ercAddress: generalise(tokenInput.ercAddress.toLowerCase()),
       tokenId: generalise(tokenInput.tokenId),
       maticAddress,
       rootKey,
-      maxNumberNullifiers: 1,
+      maxNullifiers: 1,
     });
     commitmentInfoArray.push(ci);
   }
 
-  // TODO: what do we do if we don't have 2 inputs?
+  // TODO: append empty commitemnt + nullifier if there is only one input
 
   logger.debug('getting fee commitments');
   commitmentInfoArray.push(
@@ -56,11 +57,9 @@ async function transform(transformParams) {
       totalValueToSend: 0n,
       fee,
       ercAddress: maticAddress,
-      tokenId: generalise(0),
       maticAddress,
       rootKey,
-      maxNumberNullifiers: 1,
-      feeOnly: true,
+      maxNullifiers: 1,
     }),
   );
 
@@ -83,18 +82,13 @@ async function transform(transformParams) {
     }
   });
 
-  logger.debug({
-    msg: 'comparing public keys',
-    zkpPublicKey,
-    commitmentInfoKey: commitmentInfo.newCommitments[0].preimage.zkpPublicKey,
-  });
   // add a new commitment for each output token
   for (const tokenOutput of tokenOutputs) {
     const commitment = new Commitment({
-      ercAddress: tokenOutput.ercAddress,
-      tokenId: tokenOutput.tokenId,
-      value: tokenOutput.value,
-      zkpPublicKey: commitmentInfo.newCommitments[0].preimage.zkpPublicKey,
+      ercAddress: generalise(tokenOutput.ercAddress.toLowerCase()),
+      tokenId: generalise(tokenOutput.tokenId),
+      value: generalise(tokenOutput.value),
+      zkpPublicKey,
       salt: (await randValueLT(BN128_GROUP_ORDER)).hex(),
     });
     logger.debug({ msg: 'output commitment', commitment });
@@ -108,7 +102,7 @@ async function transform(transformParams) {
     const publicData = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentInfo.blockNumberL2s,
-      circuitHash: 0,
+      circuitHash,
       commitments: commitmentInfo.newCommitments,
       nullifiers: commitmentInfo.nullifiers,
       numberNullifiers: VK_IDS.transform.numberNullifiers,
@@ -151,15 +145,7 @@ async function transform(transformParams) {
     });
 
     // call a worker to generate the proof
-    const folderpath = 'transform';
-    const res = await axios
-      .post(`${PROTOCOL}${CIRCOM_WORKER_HOST}/generate-proof`, {
-        folderpath,
-        inputs: witness,
-        provingScheme: PROVING_SCHEME,
-        backend: BACKEND,
-      })
-      .catch(e => logger.debug({ msg: 'proof generation failed', e }));
+    const res = await generateProof({ folderpath: 'tokenise', witness });
 
     logger.debug({
       msg: 'Received response from generate-proof',

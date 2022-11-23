@@ -121,11 +121,6 @@ template Transform(N,C, I, O) {
     for (var i = 0; i < I; i++) {
       inputValuesSum += inputValuesPrivate[i];
     }
-    
-    var outputValuesSum = 0;
-    for (var i = 0; i < O; i++) {
-      outputValuesSum += outputValuesPrivate[i];
-    }
 
     // Check that the value holds
     nullifiersSum === commitmentsSum + fee + inputValuesSum;
