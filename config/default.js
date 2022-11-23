@@ -187,6 +187,7 @@ module.exports = {
         process.env.CHALLENGER_KEY ||
         process.env.BOOT_CHALLENGER_KEY ||
         '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+      AUTH_TOKEN: process.env.AUTH_TOKEN || '0ce4fee0-c765-43d6-973c-d404bfdde2e9',
     },
     aws: {
       name: 'AWS',
