@@ -17,4 +17,3 @@ if [ -f test.env ]; then
   FILE='--env-file ./test.env'
 fi
 docker-compose $FILE -f docker/docker-compose.tests.yml -p 'nightfall_3' up
-docker-compose -p 'nightfall_3' -f docker/docker-compose.tests.yml logs -f 
