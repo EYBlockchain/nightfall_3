@@ -121,9 +121,12 @@ export async function conditionalMakeBlock(proposer) {
           bytesSum += mempoolTransactionSizes[i];
         }
       }
-      
+
       const currentTime = new Date().now;
-      if (transactionBatches.length === 0 && (makeNow || currentTime - lastBlockTimestamp >= PROPOSER_MAX_BLOCK_PERIOD_MILIS)) {
+      if (
+        transactionBatches.length === 0 &&
+        (makeNow || currentTime - lastBlockTimestamp >= PROPOSER_MAX_BLOCK_PERIOD_MILIS)
+      ) {
         transactionBatches.push(mempoolTransactionSizes.length);
         lastBlockTimestamp = currentTime;
       }
