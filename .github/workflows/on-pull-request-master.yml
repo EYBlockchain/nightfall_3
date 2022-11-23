@@ -679,13 +679,21 @@ jobs:
           attempt_limit: 100
           attempt_delay: 20000
 
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat ping-pong-test.log
+
       - name: Start test env Containers
         run: |
           ./bin/start-test-env &> test-env.log &disown
 
-      - name: Debug logs - after image builds
-        if: always()
-        run: cat ping-pong-test.log
+      - name: 'Check proposer liveliness'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8093/healthcheck
+          attempt_limit: 10
+          attempt_delay: 30000
 
       - name: Run ping-pong test
         run: |
