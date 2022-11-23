@@ -20,14 +20,23 @@ contract X509 is DERParser, Whitelist, X509Interface {
     mapping(bytes32 => RSAPublicKey) trustedPublicKeys;
     mapping(bytes32 => bool) revokedKeys;
     mapping(address => bytes32) keysByUser;
+    bytes32[] extendedKeyUsageOIDs;
 
     bytes1 usageBitMaskEndUser;
     bytes1 usageBitMaskIntermediate;
 
     function initialize() public override(Whitelist) initializer {
         Whitelist.initialize();
-        usageBitMaskEndUser = 0xC0;
+        usageBitMaskEndUser = 0x80;
         usageBitMaskIntermediate = 0x06;
+        // these values will need to be changed to reflect the OIDs used by the CAs whose trust roots are ultimately included
+        // this can be done by calling removeExtendedKeyUsage then adding the corrected ones.
+        // these ones may be used for test however
+        extendedKeyUsageOIDs = [
+            bytes32(0x2b06010505070303000000000000000000000000000000000000000000000000),
+            bytes32(0x2b06010505070304000000000000000000000000000000000000000000000000),
+            bytes32(0x2b06010505070308000000000000000000000000000000000000000000000000)
+        ];
     }
 
     function setUsageBitMaskEndUser(bytes1 _usageBitMask) external onlyOwner {
@@ -36,6 +45,14 @@ contract X509 is DERParser, Whitelist, X509Interface {
 
     function setUsageBitMasIntermediate(bytes1 _usageBitMask) external onlyOwner {
         usageBitMaskIntermediate = _usageBitMask;
+    }
+
+    function addExtendedKeyUsage(bytes32 oid) external onlyOwner {
+        extendedKeyUsageOIDs.push(oid);
+    }
+
+    function removeExtendedKeyUsage() external onlyOwner {
+        delete extendedKeyUsageOIDs;
     }
 
     function setTrustedPublicKey(
@@ -241,7 +258,7 @@ contract X509 is DERParser, Whitelist, X509Interface {
             if (
                 bytes32(tlvs[i].value) ==
                 bytes32((0x551d0f0000000000000000000000000000000000000000000000000000000000))
-            ) break; // OID for the AKID
+            ) break; // OID for keyUsage
         }
         require(i < tlvs.length, 'X509: OID for Key Usage not found');
         bytes memory usageBytes = tlvs[i + 1].value;
@@ -256,6 +273,34 @@ contract X509 is DERParser, Whitelist, X509Interface {
             (usageFlags & _usageBitMask) == _usageBitMask,
             'X509: Key usage is not as required'
         );
+    }
+
+    function checkExtendedKeyUsage(DecodedTlv[] memory tlvs) private view {
+        // // The extended key usage sequence begins after the Extended Key Usage OID at depth 5
+        uint256 i;
+        for (i = 0; i < tlvs.length; i++) {
+            if (tlvs[i].depth != 5) continue;
+            if (
+                bytes32(tlvs[i].value) ==
+                bytes32((0x551d250000000000000000000000000000000000000000000000000000000000))
+            ) break; // OID for extendedKeyUsage
+        }
+        require(i < tlvs.length, 'X509: OID for Extended Key Usage not found');
+        bytes memory extendedUsageBytes = tlvs[i + 1].value;
+        uint256 tlvLength = this.computeNumberOfTlvs(extendedUsageBytes, 0); // we cannot guess how long the list might be
+        DecodedTlv[] memory extendedUsageTlvs = new DecodedTlv[](tlvLength);
+        extendedUsageTlvs = this.parseDER(extendedUsageBytes, 0, tlvLength);
+        // Now we need to loop through the extendedKeyUsageOIDs, and check we have every one of them in the cert
+        for (uint256 j = 0; j < extendedKeyUsageOIDs.length; j++) {
+            bool oidFound = false;
+            for (uint256 k = 0; k < tlvLength; k++) {
+                if (bytes32(extendedUsageTlvs[k].value) == extendedKeyUsageOIDs[j]) {
+                    oidFound = true;
+                    break;
+                }
+            }
+            require(oidFound, 'A required Extended Key Usage OID was not found');
+        }
     }
 
     // function to check the signature over a message
@@ -322,6 +367,8 @@ contract X509 is DERParser, Whitelist, X509Interface {
         // as we are trying to add an address, this certificate should be an end user certificate, created for digital signature
         // and non-repudiation (or possibly other things - we can change this).
         checkKeyUsage(tlvs, usageBitMaskEndUser);
+        // we only check extended key usage for end-user certs; it's not really relevant for CA certs
+        checkExtendedKeyUsage(tlvs);
         trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
         checkSignature(
             addressSignature,
