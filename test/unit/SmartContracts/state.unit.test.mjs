@@ -338,6 +338,7 @@ describe('State contract State functions', function () {
       false,
       0,
     ]);
+    await state.setNumProposers(1);
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
@@ -397,6 +398,7 @@ describe('State contract State functions', function () {
       false,
       0,
     ]);
+    await state.setNumProposers(1);
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
@@ -456,6 +458,7 @@ describe('State contract State functions', function () {
       false,
       0,
     ]);
+    await state.setNumProposers(1);
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
@@ -507,6 +510,7 @@ describe('State contract State functions', function () {
       false,
       0,
     ]);
+    await state.setNumProposers(1);
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr2.address);
@@ -597,6 +601,7 @@ describe('State contract State functions', function () {
       0,
     ]);
 
+    await state.setNumProposers(1);
     expect((await state.getProposer(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).thisAddress).to.equal(addr1.address);
     expect((await state.proposers(addr1.address)).nextAddress).to.equal(addr1.address);
@@ -1101,8 +1106,8 @@ describe('State contract State functions', function () {
   it('should rewardChallenger', async function () {
     const newUrl = 'url';
     const newFee = 100;
-    const amount = 100;
-    const challengeLocked = 300;
+    const amount = await state.getMinimumStake();
+    const challengeLocked = amount.mul(2);
 
     await state.setProposer(addr1.address, [
       addr1.address,
@@ -1113,6 +1118,7 @@ describe('State contract State functions', function () {
       false,
       0,
     ]);
+    await state.setNumProposers(1);
     await state.setProposer(addr2.address, [
       addr2.address,
       addr2.address,
@@ -1202,7 +1208,275 @@ describe('State contract State functions', function () {
     await state.setNumProposers(2);
 
     let prevSprint;
-    for (let i = 0; i < (await state.getSprintsInSpan()).add(3); i++) {
+    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
+      prevSprint = await state.currentSprint();
+      await state.setProposerStartBlock(0);
+      await state.changeCurrentProposer();
+      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      );
+    }
+  });
+
+  it('Should build spanProposersList and change current proposer with 10 proposers', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = await state.getMinimumStake();
+    const challengeLocked = 5;
+
+    const signers = [];
+    for (let i = 0; i < 10; i++) {
+      signers.push(ethers.Wallet.createRandom())
+    }
+
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
+      ethers.constants.AddressZero,
+    );
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr2.address,
+      addr2.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(1);
+    await state.setCurrentProposer(addr1.address);
+
+    await state.setProposer(addr2.address, [
+      addr2.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setNumProposers(2);
+
+    for (let i = 0; i < signers.length; i++) {
+      await state.setProposer(signers[i].address, [
+        signers[i].address,
+        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        newUrl,
+        newFee,
+        false,
+        0,
+      ]);
+      await state.setStakeAccount(signers[i].address, amount, challengeLocked);
+      await state.setNumProposers(i + 1 + 2);
+    }
+
+    let prevSprint;
+    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
+      prevSprint = await state.currentSprint();
+      await state.setProposerStartBlock(0);
+      await state.changeCurrentProposer();
+      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      );
+    }
+  });
+
+  it('Should build spanProposersList and change current proposer with 20 proposers', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = await state.getMinimumStake();
+    const challengeLocked = 5;
+
+    const signers = [];
+    for (let i = 0; i < 20; i++) {
+      signers.push(ethers.Wallet.createRandom())
+    }
+
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
+      ethers.constants.AddressZero,
+    );
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr2.address,
+      addr2.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(1);
+    await state.setCurrentProposer(addr1.address);
+
+    await state.setProposer(addr2.address, [
+      addr2.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setNumProposers(2);
+
+    for (let i = 0; i < signers.length; i++) {
+      await state.setProposer(signers[i].address, [
+        signers[i].address,
+        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        newUrl,
+        newFee,
+        false,
+        0,
+      ]);
+      await state.setStakeAccount(signers[i].address, amount, challengeLocked);
+      await state.setNumProposers(i + 1 + 2);
+    }
+
+    let prevSprint;
+    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
+      prevSprint = await state.currentSprint();
+      await state.setProposerStartBlock(0);
+      await state.changeCurrentProposer();
+      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      );
+    }
+  });
+
+  it('Should build spanProposersList and change current proposer with 30 proposers', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = await state.getMinimumStake();
+    const challengeLocked = 5;
+
+    const signers = [];
+    for (let i = 0; i < 30; i++) {
+      signers.push(ethers.Wallet.createRandom())
+    }
+
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
+      ethers.constants.AddressZero,
+    );
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr2.address,
+      addr2.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(1);
+    await state.setCurrentProposer(addr1.address);
+
+    await state.setProposer(addr2.address, [
+      addr2.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setNumProposers(2);
+
+    for (let i = 0; i < signers.length; i++) {
+      await state.setProposer(signers[i].address, [
+        signers[i].address,
+        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        newUrl,
+        newFee,
+        false,
+        0,
+      ]);
+      await state.setStakeAccount(signers[i].address, amount, challengeLocked);
+      await state.setNumProposers(i + 1 + 2);
+    }
+
+    let prevSprint;
+    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
+      prevSprint = await state.currentSprint();
+      await state.setProposerStartBlock(0);
+      await state.changeCurrentProposer();
+      expect(prevSprint.add(1).mod(await state.getSprintsInSpan())).to.equal(
+        (await state.currentSprint()).mod(await state.getSprintsInSpan()),
+      );
+    }
+  });
+
+  it('Should build spanProposersList and change current proposer with 50 proposers', async function () {
+    const newUrl = 'url';
+    const newFee = 100;
+    const amount = await state.getMinimumStake();
+    const challengeLocked = 5;
+
+    const signers = [];
+    for (let i = 0; i < 50; i++) {
+      signers.push(ethers.Wallet.createRandom())
+    }
+
+    expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
+    expect((await state.getProposer(addr1.address)).thisAddress).to.equal(
+      ethers.constants.AddressZero,
+    );
+
+    await state.setProposer(addr1.address, [
+      addr1.address,
+      addr2.address,
+      addr2.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+    await state.setNumProposers(1);
+    await state.setCurrentProposer(addr1.address);
+
+    await state.setProposer(addr2.address, [
+      addr2.address,
+      addr1.address,
+      addr1.address,
+      newUrl,
+      newFee,
+      false,
+      0,
+    ]);
+
+    await state.setStakeAccount(addr1.address, amount, challengeLocked);
+    await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
+    await state.setNumProposers(2);
+
+    for (let i = 0; i < signers.length; i++) {
+      await state.setProposer(signers[i].address, [
+        signers[i].address,
+        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        newUrl,
+        newFee,
+        false,
+        0,
+      ]);
+      await state.setStakeAccount(signers[i].address, amount, challengeLocked);
+      await state.setNumProposers(i + 1 + 2);
+    }
+
+    let prevSprint;
+    for (let i = 0; i < (await state.getSprintsInSpan()).add(100); i++) {
       prevSprint = await state.currentSprint();
       await state.setProposerStartBlock(0);
       await state.changeCurrentProposer();
