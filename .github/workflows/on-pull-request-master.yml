@@ -715,7 +715,9 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: ping-pong-test-logs
-          path: ./ping-pong-test.log
+          path: |
+            ./test-env.log
+            ./ping-pong-test.log
 
   test-gas:
     env:
