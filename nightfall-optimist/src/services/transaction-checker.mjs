@@ -64,6 +64,20 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txB
                 }
               : undefined,
           );
+        } else {
+          // this mean original transaction is not yet proposed
+          // compare provided proposer fee in both transactions(duplicate and original) and
+          // allow duplicate to save if it has higher proposer payment.
+          if (
+            generalise(transactionL2.fee).bigInt <= generalise(transaction.fee).bigInt &&
+            inL2AndNotInL2
+          ) {
+            throw new TransactionError(
+              `The transaction has a duplicate commitment ${commitment} and transaction does not have enough proposer payment to be consider as replacement`,
+              0,
+              undefined,
+            );
+          }
         }
       }
     }
@@ -104,6 +118,20 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBl
                 }
               : undefined,
           );
+        } else {
+          // this mean original transaction is not yet proposed
+          // compare provided proposer fee in both transactions(duplicate and original) and
+          // allow duplicate to save if it has higher proposer payment.
+          if (
+            generalise(transactionL2.fee).bigInt <= generalise(transaction.fee).bigInt &&
+            inL2AndNotInL2
+          ) {
+            throw new TransactionError(
+              `The transaction has a duplicate nullifier ${nullifier} and transaction does not have enough proposer payment to be consider as replacement`,
+              0,
+              undefined,
+            );
+          }
         }
       }
     }
