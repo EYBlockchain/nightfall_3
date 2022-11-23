@@ -464,10 +464,18 @@ describe('Testing Shield Contract', function () {
       );
     });
 
-    it('fails to submit deposit transaction if tokenType is ERC20 and deposit restriction has not been set', async function () {
-      await expect(ShieldInstance.submitTransaction(depositTransaction)).to.be.revertedWith(
-        'Shield: Cannot have restrictions of zero value',
-      );
+    it('allows a deposit transaction (of any size) if tokenType is ERC20 and deposit restriction has not been set', async function () {
+      await Erc20MockInstance.approve(shieldAddress, '10');
+
+      const tx = await ShieldInstance.submitTransaction(depositTransaction, {
+        value: 15,
+      });
+
+      expect((await StateInstance.txInfo(depositTransactionHash)).isEscrowed).to.equal(true);
+      expect(await Erc20MockInstance.balanceOf(await owner[0].address)).to.equal(99999990);
+      expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(10);
+      expect((await StateInstance.txInfo(depositTransactionHash)).ethFee).to.equal(15);
+      await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 
     it('fails to submit deposit transaction if tokenType is ERC20 and trying to deposit more than allowed', async function () {

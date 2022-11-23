@@ -21,7 +21,7 @@ const router = express.Router();
  *      tags:
  *      - Contract ABI
  *      summary: Get the contract ABI.
- *      description: Route that will return the contract ABI based on the contract name.
+ *      description: Return the contract ABI based on the contract name.
  *      parameters:
  *        - in: path
  *          name: contract
@@ -59,7 +59,7 @@ router.get('/:contract', async (req, res, next) => {
  *      tags:
  *      - Contract ABI
  *      summary: Clear cached contracts.
- *      description: Route that will clear the cached contracts.
+ *      description: Clear cached contracts.
  *      parameters:
  *        - in: header
  *          name: api_key

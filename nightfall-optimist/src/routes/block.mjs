@@ -53,7 +53,7 @@ router.post('/check', auth, async (req, res, next) => {
  *      tags:
  *      - Block
  *      summary: Make block.
- *      description: Responsible to call the function that will generate a new block.
+ *      description: Set flag makeNow to true, to trigger the creation of a new block.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -87,7 +87,7 @@ router.get('/make-now', auth, async (req, res, next) => {
  *      tags:
  *      - Block
  *      summary: Reset local block.
- *      description: Route that reset a local block.
+ *      description: Reset transactions from unsuccessful block proposed.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -97,7 +97,7 @@ router.get('/make-now', auth, async (req, res, next) => {
  *          required: true
  *      responses:
  *        200:
- *          $ref: '#/components/responses/SuccessBlockReseted'
+ *          $ref: '#/components/responses/SuccessBlockReset'
  *        401:
  *          $ref: '#/components/responses/Unauthorized'
  *        500:
