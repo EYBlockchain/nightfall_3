@@ -366,8 +366,9 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     }
 
     function setNumProposers(uint256 np) public onlyProposer {
+        uint256 prevNumProposers = numProposers;
         numProposers = np;
-        if (numProposers == 2) {
+        if (numProposers == 2 && prevNumProposers == 1) {
             initializeSpan();
             calculateNextProposers(address(0));
         }
