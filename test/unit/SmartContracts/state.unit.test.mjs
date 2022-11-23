@@ -1226,7 +1226,7 @@ describe('State contract State functions', function () {
 
     const signers = [];
     for (let i = 0; i < 10; i++) {
-      signers.push(ethers.Wallet.createRandom())
+      signers.push(ethers.Wallet.createRandom());
     }
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
@@ -1263,8 +1263,8 @@ describe('State contract State functions', function () {
     for (let i = 0; i < signers.length; i++) {
       await state.setProposer(signers[i].address, [
         signers[i].address,
-        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
-        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i === signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i === signers.length - 1 ? signers[0].address : signers[i + 1].address,
         newUrl,
         newFee,
         false,
@@ -1293,7 +1293,7 @@ describe('State contract State functions', function () {
 
     const signers = [];
     for (let i = 0; i < 20; i++) {
-      signers.push(ethers.Wallet.createRandom())
+      signers.push(ethers.Wallet.createRandom());
     }
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
@@ -1330,8 +1330,8 @@ describe('State contract State functions', function () {
     for (let i = 0; i < signers.length; i++) {
       await state.setProposer(signers[i].address, [
         signers[i].address,
-        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
-        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i === signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i === signers.length - 1 ? signers[0].address : signers[i + 1].address,
         newUrl,
         newFee,
         false,
@@ -1360,7 +1360,7 @@ describe('State contract State functions', function () {
 
     const signers = [];
     for (let i = 0; i < 30; i++) {
-      signers.push(ethers.Wallet.createRandom())
+      signers.push(ethers.Wallet.createRandom());
     }
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
@@ -1397,8 +1397,8 @@ describe('State contract State functions', function () {
     for (let i = 0; i < signers.length; i++) {
       await state.setProposer(signers[i].address, [
         signers[i].address,
-        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
-        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i === signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i === signers.length - 1 ? signers[0].address : signers[i + 1].address,
         newUrl,
         newFee,
         false,
@@ -1427,7 +1427,7 @@ describe('State contract State functions', function () {
 
     const signers = [];
     for (let i = 0; i < 50; i++) {
-      signers.push(ethers.Wallet.createRandom())
+      signers.push(ethers.Wallet.createRandom());
     }
 
     expect((await state.getCurrentProposer()).thisAddress).to.equal(ethers.constants.AddressZero);
@@ -1464,8 +1464,8 @@ describe('State contract State functions', function () {
     for (let i = 0; i < signers.length; i++) {
       await state.setProposer(signers[i].address, [
         signers[i].address,
-        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
-        i == signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i === signers.length - 1 ? signers[0].address : signers[i + 1].address,
+        i === signers.length - 1 ? signers[0].address : signers[i + 1].address,
         newUrl,
         newFee,
         false,
