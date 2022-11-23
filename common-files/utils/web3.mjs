@@ -54,13 +54,25 @@ export default {
     if (!config.WEB3_OPTIONS.from) throw Error('config WEB3_OPTIONS.from is not set');
     if (!config.ETH_PRIVATE_KEY) throw Error('config ETH_PRIVATE_KEY not set');
 
+    const fromAddress = await this.web3.eth.accounts.privateKeyToAccount(config.ETH_PRIVATE_KEY);
+
     const tx = {
+      from: fromAddress.address,
       to: contractAddress,
       data: rawTransaction,
       value,
-      gas: config.WEB3_OPTIONS.gas,
       gasPrice: config.WEB3_OPTIONS.gasPrice,
     };
+    let gas;
+    try {
+      gas = await this.web3.eth.estimateGas(tx);
+      logger.debug({ msg: 'Gas estimated at', gas });
+    } catch (error) {
+      gas = config.WEB3_OPTIONS.gas;
+      logger.warn({ msg: 'Gas estimation failed, use default', gas });
+    }
+
+    tx.gas = Math.ceil(gas * 2); // 50% seems a more than reasonable buffer
 
     const signed = await this.web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
     return this.web3.eth.sendSignedTransaction(signed.rawTransaction);

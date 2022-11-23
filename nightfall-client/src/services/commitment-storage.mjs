@@ -244,11 +244,11 @@ export async function getWalletBalanceUnfiltered() {
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
   const options = {
-    projection: {
-      compressedZkpPublicKey: 1,
-      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
-      _id: 0,
-    },
+    compressedZkpPublicKey: 1,
+    'preimage.ercAddress': 1,
+    'preimage.tokenId': 1,
+    'preimage.value': 1,
+    _id: 0,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
@@ -289,11 +289,11 @@ export async function getWalletBalance(compressedZkpPublicKey, ercList) {
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
   const options = {
-    projection: {
-      compressedZkpPublicKey: 1,
-      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
-      _id: 0,
-    },
+    compressedZkpPublicKey: 1,
+    'preimage.ercAddress': 1,
+    'preimage.tokenId': 1,
+    'preimage.value': 1,
+    _id: 0,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
@@ -346,11 +346,11 @@ export async function getWalletPendingDepositBalance(compressedZkpPublicKey, erc
   const db = connection.db(COMMITMENTS_DB);
   const query = { isDeposited: true, isNullified: false, isOnChain: { $eq: -1 } };
   const options = {
-    projection: {
-      compressedZkpPublicKey: 1,
-      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
-      _id: 0,
-    },
+    compressedZkpPublicKey: 1,
+    'preimage.ercAddress': 1,
+    'preimage.tokenId': 1,
+    'preimage.value': 1,
+    _id: 0,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
@@ -407,11 +407,11 @@ export async function getWalletPendingSpentBalance(compressedZkpPublicKey, ercLi
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: true, isNullifiedOnChain: { $eq: -1 } };
   const options = {
-    projection: {
-      compressedZkpPublicKey: 1,
-      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
-      _id: 0,
-    },
+    compressedZkpPublicKey: 1,
+    'preimage.ercAddress': 1,
+    'preimage.tokenId': 1,
+    'preimage.value': 1,
+    _id: 0,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
@@ -470,11 +470,11 @@ export async function getWalletCommitments(compressedZkpPublicKeyList, ercList) 
   const db = connection.db(COMMITMENTS_DB);
   const query = { isNullified: false, isOnChain: { $gte: 0 } };
   const options = {
-    projection: {
-      compressedZkpPublicKey: 1,
-      preimage: { ercAddress: 1, tokenId: 1, value: 1 },
-      _id: 0,
-    },
+    compressedZkpPublicKey: 1,
+    'preimage.ercAddress': 1,
+    'preimage.tokenId': 1,
+    'preimage.value': 1,
+    _id: 0,
   };
   const wallet = await db.collection(COMMITMENTS_COLLECTION).find(query, options).toArray();
   // the below is a little complex.  First we extract the ercAddress, tokenId and value

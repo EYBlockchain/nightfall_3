@@ -24,11 +24,12 @@ import {
   increaseProposerBlockNotSent,
 } from './debug-counters.mjs';
 
-const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS } = config;
+const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
 const { STATE_CONTRACT_NAME, ZERO } = constants;
 
 let ws;
 let makeNow = false;
+let lastBlockTimestamp = new Date().now;
 
 export function setBlockAssembledWebSocketConnection(_ws) {
   ws = _ws;
@@ -79,7 +80,9 @@ export async function conditionalMakeBlock(proposer) {
     or we're no-longer the proposer (boo).
    */
 
-  logger.info(`I am the current proposer: ${proposer.isMe}`);
+  if (proposer.isMe) {
+    logger.info(`I am the current proposer: ${proposer.isMe}`);
+  }
   if (proposer.isMe) {
     // Get all the mempool transactions sorted by fee
     const mempoolTransactions = await getMempoolTxsSortedByFee();
@@ -98,12 +101,14 @@ export async function conditionalMakeBlock(proposer) {
     // Calculate the total number of bytes that are in the mempool
     const totalBytes = mempoolTransactionSizes.reduce((acc, curr) => acc + curr, 0);
 
-    logger.info({
-      msg: 'In the mempool there are the following number of transactions',
-      numberTransactions: mempoolTransactions.length,
-      totalBytes,
-      makeNow,
-    });
+    if (totalBytes) {
+      logger.info({
+        msg: 'In the mempool there are the following number of transactions',
+        numberTransactions: mempoolTransactions.length,
+        totalBytes,
+        makeNow,
+      });
+    }
 
     const transactionBatches = [];
     if (totalBytes > 0) {
@@ -116,9 +121,11 @@ export async function conditionalMakeBlock(proposer) {
           bytesSum += mempoolTransactionSizes[i];
         }
       }
-
-      if (transactionBatches.length === 0 && makeNow) {
+      
+      const currentTime = new Date().now;
+      if (transactionBatches.length === 0 && (makeNow || currentTime - lastBlockTimestamp >= PROPOSER_MAX_BLOCK_PERIOD_MILIS)) {
         transactionBatches.push(mempoolTransactionSizes.length);
+        lastBlockTimestamp = currentTime;
       }
     }
 
