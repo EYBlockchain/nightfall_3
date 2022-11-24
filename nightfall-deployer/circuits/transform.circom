@@ -10,6 +10,8 @@ include "./common/verifiers/nullifiers/verify_nullifiers_optional.circom";
 include "./common/verifiers/verify_encryption.circom";
 
 include "../node_modules/circomlib/circuits/bitify.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/mux1.circom";
 
 /**
  * Checks that a tranform transaction is valid
@@ -122,26 +124,29 @@ template Transform(N,C) {
     (nullifierKeys, zkpPublicKeys) = CalculateKeys()(rootKey);
 
     // Check that the fee nullfiers are valid
-    var checkFeeNullifier = VerifyNullifiers(2)(
-      feeAddress, 
-      0, 
-      nullifierKeys, 
-      zkpPublicKeys, 
-      [nullifiers[0], nullifiers[1]], 
-      [roots[0], roots[1]], 
-      [nullifiersValues[0], nullifiersValues[1]], 
-      [nullifiersSalts[0], nullifiersSalts[1]], 
-      [paths[0],paths[1] ], 
-      [orders[0], orders[1]]
-    );
-    checkFeeNullifier === 1;
+    // var checkFeeNullifier = VerifyNullifiers(2)(
+    //   feeAddress, 
+    //   0, 
+    //   nullifierKeys, 
+    //   zkpPublicKeys, 
+    //   [nullifiers[0], nullifiers[1]], 
+    //   [roots[0], roots[1]], 
+    //   [nullifiersValues[0], nullifiersValues[1]], 
+    //   [nullifiersSalts[0], nullifiersSalts[1]], 
+    //   [paths[0],paths[1] ], 
+    //   [orders[0], orders[1]]
+    // );
+    // checkFeeNullifier === 1;
 
     // Check the L2 nullifiers
     for (var i = 2; i < N; i++) {
       // Check that the top most two bits of all packed ercAddresses are equal to 1
       var ercAddressBits[254] = Num2Bits(254)(inputPackedAddressesPrivate[i-2]);
-      ercAddressBits[253] === 1;
-      ercAddressBits[252] === 1;
+      var isZero = IsZero()(inputPackedAddressesPrivate[i-2]);
+      var valid1 = Mux1()([ercAddressBits[253], 1], isZero);
+      var valid2 = Mux1()([ercAddressBits[252], 1], isZero);
+      valid1 === 1;
+      valid2 === 1;
 
       // Check that the values do not overflow
       var valuePrivateBits[254] = Num2Bits(254)(nullifiersValues[i]);
@@ -165,22 +170,23 @@ template Transform(N,C) {
     }
 
     // Check that the fee Commitment is valid
-      var checkFeeCommitment = VerifyCommitmentsOptional(1)(
+    var checkFeeCommitment = VerifyCommitmentsOptional(1)(
         feeAddress, 
         0, 
         [commitments[0]], 
         [commitmentsValues[0]], 
         [commitmentsSalts[0]], 
         [recipientPublicKey[0]]
-      );
-      checkFeeCommitment === 1;
+        );
+    checkFeeCommitment === 1;
 
     // verify the L2 commitments 
     for (var i = 1; i < C; i++) {
       // Check that the top most two bits of all packed ercAddresses are equal to 1
       var ercAddressBits[254] = Num2Bits(254)(outputPackedAddressesPrivate[i-1]);
-      ercAddressBits[253] === 1;
-      ercAddressBits[252] === 1;
+      var isZero = IsZero()(outputPackedAddressesPrivate[i-1]);
+      var valid1 = Mux1()([ercAddressBits[253], 1], isZero);
+      var valid2 = Mux1()([ercAddressBits[252], 1], isZero);
 
       // Check that the values do not overflow
       var valuePrivateBits[254] = Num2Bits(254)(commitmentsValues[i]);
@@ -188,7 +194,7 @@ template Transform(N,C) {
       valuePrivateBits[252] === 0;
       
       // Check the output commitments
-      var checkOutputCommitment = VerifyCommitments(1)(
+      var checkOutputCommitment = VerifyCommitmentsOptional(1)(
         outputPackedAddressesPrivate[i-1], 
         outputIdRemaindersPrivate[i-1], 
         [commitments[i]], 

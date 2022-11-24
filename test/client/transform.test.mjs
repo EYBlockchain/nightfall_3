@@ -104,12 +104,12 @@ describe('Manufacture Service Tests', () => {
           value: 1,
           salt: await randValueLT(BN128_GROUP_ORDER),
         },
-        {
-          id: 2,
-          address: L2TokenAddress,
-          value: 1,
-          salt: await randValueLT(BN128_GROUP_ORDER),
-        },
+        // {
+        //   id: 2,
+        //   address: L2TokenAddress,
+        //   value: 1,
+        //   salt: await randValueLT(BN128_GROUP_ORDER),
+        // },
       ];
 
       const outputTokens = [

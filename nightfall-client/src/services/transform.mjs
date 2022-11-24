@@ -50,7 +50,18 @@ async function transform(transformParams) {
     rootKey,
     maxNullifiers: 2,
   });
-  while (feeCi.nullifiers.length < 2) feeCi.nullifiers.push('0');
+
+  while (feeCi.nullifiers.length < 2) {
+    feeCi.nullifiers.push({
+      hash: 0,
+      preimage: { nullifierKey: 0, commitment: 0 },
+    });
+    feeCi.oldCommitments.push({
+      hash: 0,
+      preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
+    });
+  }
+
   if (feeCi.newCommitments.length !== 1)
     feeCi.newCommitments = [
       {
@@ -111,6 +122,7 @@ async function transform(transformParams) {
 
   try {
     logger.debug('creating transaction...');
+    logger.debug(commitmentInfo);
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
@@ -140,8 +152,8 @@ async function transform(transformParams) {
       }),
 
       recipientPublicKeys: commitmentInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      inputTokens: Array.from(inputTokens),
-      outputTokens: Array.from(outputTokens),
+      inputTokens,
+      outputTokens,
     };
     logger.debug(privateData.newCommitmentPreimage);
 
