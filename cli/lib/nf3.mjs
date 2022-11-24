@@ -5,6 +5,7 @@ import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
 import crypto from 'crypto';
+import config from 'config';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
@@ -31,6 +32,8 @@ import {
 const userQueue = new Queue({ autostart: true, concurrency: 1 });
 const challengerQueue = new Queue({ autostart: true, concurrency: 1 });
 const liquidityProviderQueue = new Queue({ autostart: true, concurrency: 1 });
+const environmentConfig =
+  config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 /**
 @class
@@ -106,7 +109,8 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
-    axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
+    axios.defaults.headers.common['X-APP-TOKEN'] =
+      environmentConfig.AUTH_TOKEN || '0ce4fee0-c765-43d6-973c-d404bfdde2e9';
   }
 
   /**

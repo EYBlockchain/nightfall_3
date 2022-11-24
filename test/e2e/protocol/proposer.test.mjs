@@ -84,7 +84,7 @@ describe('Basic Proposer tests', () => {
   });
 
   it('Should access any public route with the correct API key', async () => {
-    bootProposer.setApiKey(environment.PROPOSER_KEY);
+    bootProposer.setApiKey(environment.AUTH_TOKEN);
     const { status } = await axios.get(`${environment.optimistApiUrl}/proposer/mempool`);
     expect(status).to.equal(200);
   });
@@ -97,7 +97,7 @@ describe('Basic Proposer tests', () => {
     } catch (err) {
       expect(err);
     } finally {
-      bootProposer.setApiKey(environment.PROPOSER_KEY);
+      bootProposer.setApiKey(environment.AUTH_TOKEN);
     }
   });
 
@@ -109,7 +109,7 @@ describe('Basic Proposer tests', () => {
     } catch (err) {
       expect(err);
     } finally {
-      bootProposer.setApiKey(environment.PROPOSER_KEY);
+      bootProposer.setApiKey(environment.AUTH_TOKEN);
     }
   });
 

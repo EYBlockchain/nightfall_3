@@ -201,6 +201,7 @@ module.exports = {
       adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
       CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+      AUTH_TOKEN: process.env.AUTH_TOKEN,
     },
     polygonEdge: {
       name: 'Polygon Edge',
@@ -220,6 +221,7 @@ module.exports = {
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: `ws://localhost:10002/ws`,
+      AUTH_TOKEN: process.env.AUTH_TOKEN,
     },
   },
   TEST_OPTIONS: {
