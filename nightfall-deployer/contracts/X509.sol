@@ -20,7 +20,7 @@ contract X509 is DERParser, Whitelist, X509Interface {
     mapping(bytes32 => RSAPublicKey) trustedPublicKeys;
     mapping(bytes32 => bool) revokedKeys;
     mapping(address => bytes32) keysByUser;
-    bytes32[] extendedKeyUsageOIDs;
+    bytes32[][] extendedKeyUsageOIDs; // this is an array of arrays because each CA has their own set of OIDs that they use
 
     bytes1 usageBitMaskEndUser;
     bytes1 usageBitMaskIntermediate;
@@ -29,14 +29,6 @@ contract X509 is DERParser, Whitelist, X509Interface {
         Whitelist.initialize();
         usageBitMaskEndUser = 0x80;
         usageBitMaskIntermediate = 0x06;
-        // these values will need to be changed to reflect the OIDs used by the CAs whose trust roots are ultimately included
-        // this can be done by calling removeExtendedKeyUsage then adding the corrected ones.
-        // these ones may be used for test however
-        extendedKeyUsageOIDs = [
-            bytes32(0x2b06010505070303000000000000000000000000000000000000000000000000),
-            bytes32(0x2b06010505070304000000000000000000000000000000000000000000000000),
-            bytes32(0x2b06010505070308000000000000000000000000000000000000000000000000)
-        ];
     }
 
     function setUsageBitMaskEndUser(bytes1 _usageBitMask) external onlyOwner {
@@ -47,10 +39,13 @@ contract X509 is DERParser, Whitelist, X509Interface {
         usageBitMaskIntermediate = _usageBitMask;
     }
 
-    function addExtendedKeyUsage(bytes32 oid) external onlyOwner {
-        extendedKeyUsageOIDs.push(oid);
+    function addExtendedKeyUsage(bytes32[] calldata oids) external onlyOwner {
+        extendedKeyUsageOIDs.push(oids);
     }
 
+    // NB this function removes everything.  You need to re-add all oids if you call this but removing
+    // everything has the advantage of not creating a sparse array, whihc would happend if we deleted
+    // individual elements. Of course it is unlikely that this function will ever be needed.
     function removeExtendedKeyUsage() external onlyOwner {
         delete extendedKeyUsageOIDs;
     }
@@ -275,7 +270,7 @@ contract X509 is DERParser, Whitelist, X509Interface {
         );
     }
 
-    function checkExtendedKeyUsage(DecodedTlv[] memory tlvs) private view {
+    function checkExtendedKeyUsage(DecodedTlv[] memory tlvs, uint256 oidGroup) private view {
         // // The extended key usage sequence begins after the Extended Key Usage OID at depth 5
         uint256 i;
         for (i = 0; i < tlvs.length; i++) {
@@ -291,10 +286,10 @@ contract X509 is DERParser, Whitelist, X509Interface {
         DecodedTlv[] memory extendedUsageTlvs = new DecodedTlv[](tlvLength);
         extendedUsageTlvs = this.parseDER(extendedUsageBytes, 0, tlvLength);
         // Now we need to loop through the extendedKeyUsageOIDs, and check we have every one of them in the cert
-        for (uint256 j = 0; j < extendedKeyUsageOIDs.length; j++) {
+        for (uint256 j = 0; j < extendedKeyUsageOIDs[oidGroup].length; j++) {
             bool oidFound = false;
             for (uint256 k = 0; k < tlvLength; k++) {
-                if (bytes32(extendedUsageTlvs[k].value) == extendedKeyUsageOIDs[j]) {
+                if (bytes32(extendedUsageTlvs[k].value) == extendedKeyUsageOIDs[oidGroup][j]) {
                     oidFound = true;
                     break;
                 }
@@ -330,7 +325,8 @@ contract X509 is DERParser, Whitelist, X509Interface {
         bytes calldata certificate,
         uint256 tlvLength,
         bytes calldata addressSignature,
-        bool addAddress
+        bool addAddress,
+        uint256 oidGroup
     ) external {
         DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         // decode the DER encoded binary certificate data into an array of Tag-Length-Value structs
@@ -368,7 +364,7 @@ contract X509 is DERParser, Whitelist, X509Interface {
         // and non-repudiation (or possibly other things - we can change this).
         checkKeyUsage(tlvs, usageBitMaskEndUser);
         // we only check extended key usage for end-user certs; it's not really relevant for CA certs
-        checkExtendedKeyUsage(tlvs);
+        checkExtendedKeyUsage(tlvs, oidGroup);
         trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
         checkSignature(
             addressSignature,

@@ -54,14 +54,6 @@ module.exports = {
           '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
         ],
   },
-  RSA_TRUST_ROOTS: [
-    {
-      modulus:
-        '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
-      exponent: 65537,
-      authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`,
-    },
-  ],
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
@@ -497,6 +489,28 @@ module.exports = {
           address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
           amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
         },
+      ],
+    },
+  },
+  X509: {
+    blockchain: {
+      RSA_TRUST_ROOTS: [
+        {
+          modulus:
+            '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
+          exponent: 65537,
+          authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(
+            64,
+            '0',
+          )}`,
+        },
+      ],
+      extendedKeyUsageOIDs: [
+        [
+          '0x2b06010505070303000000000000000000000000000000000000000000000000',
+          '0x2b06010505070304000000000000000000000000000000000000000000000000',
+          '0x2b06010505070308000000000000000000000000000000000000000000000000',
+        ],
       ],
     },
   },

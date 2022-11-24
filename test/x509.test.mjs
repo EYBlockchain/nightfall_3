@@ -71,6 +71,7 @@ describe('x509 tests', () => {
         endUserCert,
         nf3Users[0].ethereumAddress,
         derPrivateKey,
+        0,
       );
       logger.debug('doing whitelisted account');
       const res = await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);

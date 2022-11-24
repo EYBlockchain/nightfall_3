@@ -2,20 +2,22 @@ import { expect } from 'chai';
 import hardhat from 'hardhat';
 import fs from 'fs';
 import crypto from 'crypto';
+import config from 'config';
 import { makeTlv, signEthereumAddress } from '../utils/x509.mjs';
 
 const { ethers } = hardhat;
+const {
+  X509: {
+    blockchain: { extendedKeyUsageOIDs, RSA_TRUST_ROOTS:[{ modulus, exponent}] },
+  },
+} = config;
 
 describe('DerParser contract functions', function () {
   const authorityKeyIdentifier = `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(
     64,
     '0',
   )}`;
-  const nightfallRootPublicKey = {
-    modulus:
-      '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
-    exponent: 65537,
-  };
+  const nightfallRootPublicKey = { modulus, exponent };
   let X509Instance;
   let signature;
   let addressToSign;
@@ -31,6 +33,7 @@ describe('DerParser contract functions', function () {
     await X509Instance.initialize();
     await X509Instance.setTrustedPublicKey(nightfallRootPublicKey, authorityKeyIdentifier);
     await X509Instance.enableWhitelisting(true);
+    await X509Instance.addExtendedKeyUsage(extendedKeyUsageOIDs[0]);
     derBuffer = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     certChain[1] = {
@@ -71,7 +74,6 @@ describe('DerParser contract functions', function () {
     expect(tlvs[1].depth).to.equal(1);
     expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
     expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
-    console.log(tlvs);
   });
   it('Should verify the signature over the users ethereum address', async function () {
     const publicKey = crypto.createPublicKey({ key: derPrivateKey, format: 'der', type: 'pkcs1' });
@@ -94,6 +96,7 @@ describe('DerParser contract functions', function () {
         certChain[0].tlvLength,
         signature,
         true,
+        0,
       );
       expect.fail('The certificate check passed, but it should have failed');
     } catch (err) {
@@ -108,6 +111,7 @@ describe('DerParser contract functions', function () {
       certChain[1].tlvLength,
       0,
       false,
+      0,
     );
     // now presenting the end user cert should work because the smart contract now trusts the Intermediate CA public key
     await X509Instance.validateCertificate(
@@ -115,6 +119,7 @@ describe('DerParser contract functions', function () {
       certChain[0].tlvLength,
       signature,
       true,
+      0,
     );
     // we should now be able to pass an x509 check for this address
     result = await X509Instance.x509Check(addressToSign);
