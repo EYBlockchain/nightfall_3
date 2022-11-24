@@ -60,6 +60,9 @@ async function transform(transformParams) {
       hash: 0,
       preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
     });
+    feeCi.roots.push(0);
+    feeCi.localSiblingPaths.push(Array(32).fill(0));
+    feeCi.leafIndices.push(0);
   }
 
   if (feeCi.newCommitments.length !== 1)

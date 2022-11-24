@@ -29,6 +29,7 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
   }
   try {
     logger.debug('Compute witness...');
+    logger.warn({ inputs });
     await snarkjs.wtns.calculate(
       inputs,
       `${outputPath}/${folderpath}/${circuitName}_js/${circuitName}.wasm`,
