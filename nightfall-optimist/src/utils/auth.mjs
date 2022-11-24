@@ -1,4 +1,5 @@
 import config from 'config';
+
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 export default function auth(req, res, next) {

@@ -5,7 +5,6 @@ import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
 import crypto from 'crypto';
-import config from 'config';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
