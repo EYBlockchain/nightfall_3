@@ -2,11 +2,7 @@
  * Module to handle new Transactions being posted
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import {
-  saveTransaction,
-  getBlockByTransactionHash,
-  getTransactionByTransactionHash,
-} from '../services/database.mjs';
+import { saveTransaction } from '../services/database.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
