@@ -177,7 +177,7 @@ export async function simpleUserTest(
 /**
 Does the preliminary setup and starts listening on the websocket
 */
-export async function userTest(TEST_LENGTH, value, IS_TEST_RUNNER) {
+/* export async function userTest(TEST_LENGTH, value, IS_TEST_RUNNER) {
   logger.info('Starting local test...');
   const eventLogs = [];
   const web3Client = new Web3Client();
@@ -294,7 +294,7 @@ export async function userTest(TEST_LENGTH, value, IS_TEST_RUNNER) {
     loop++;
   } while (loop < loopMax);
   return 1;
-}
+} */
 
 /**
 Set the block stake parameter for the proposers
