@@ -18,9 +18,7 @@ export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS:
   let { wasm, zkey, hash } = circuit; // keys path in bucket
   const { wasmh = null, zkeyh = null, hashh = null } = circuit; // keys hash in bucket
   if (isLocalRun) {
-    wasm = await fetch(
-      `${utilApiServerUrl}/${circuit.name}/${circuit.name}_js/${circuit.name}.wasm`,
-    )
+    wasm = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}.wasm`)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);

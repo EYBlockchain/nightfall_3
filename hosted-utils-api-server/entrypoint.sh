@@ -19,7 +19,7 @@ for PROVING_FILE_FOLDERS in * ; do
     echo -e "\t\t\"zkeyh\": \"${HF_ZKEY}\"," >> s3_hash.txt
     echo -e "\t\t\"zkey\": \"circuits/${PROVING_FILE_FOLDERS}/${PROVING_FILE_FOLDERS}.zkey\"," >> s3_hash.txt
     echo -e "\t\t\"wasmh\": \"${HF_WASM}\"," >> s3_hash.txt
-    echo -e "\t\t\"wasm\": \"circuits/${PROVING_FILE_FOLDERS}/${PROVING_FILE_FOLDERS}_js/${PROVING_FILE_FOLDERS}.wasm\"" >> s3_hash.txt
+    echo -e "\t\t\"wasm\": \"circuits/${PROVING_FILE_FOLDERS}/${PROVING_FILE_FOLDERS}.wasm\"" >> s3_hash.txt
     echo -e "\t}," >> s3_hash.txt
   fi
 done

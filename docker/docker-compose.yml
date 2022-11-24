@@ -81,6 +81,7 @@ services:
     build:
       dockerfile: docker/hosted-utils-api-server.Dockerfile
       context: ..
+    image: ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server:latest
     depends_on:
       - worker
     ports:
