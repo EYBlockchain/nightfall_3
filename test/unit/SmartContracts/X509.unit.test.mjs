@@ -10,6 +10,7 @@ const {
   X509: {
     blockchain: {
       extendedKeyUsageOIDs,
+      certificatePoliciesOIDs,
       RSA_TRUST_ROOTS: [{ modulus, exponent }],
     },
   },
@@ -24,7 +25,7 @@ describe('DerParser contract functions', function () {
   let X509Instance;
   let signature;
   let addressToSign;
-  const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user_extended.der');
+  const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user_policies.der');
   const certChain = []; // contains the certificate to verify chain, lowest index is lowest cert in chain (i.e. [0] = end user)
   before(async () => {
     const accounts = await ethers.getSigners();
@@ -37,6 +38,7 @@ describe('DerParser contract functions', function () {
     await X509Instance.setTrustedPublicKey(nightfallRootPublicKey, authorityKeyIdentifier);
     await X509Instance.enableWhitelisting(true);
     await X509Instance.addExtendedKeyUsage(extendedKeyUsageOIDs[0]);
+    await X509Instance.addCertificatePolicies(certificatePoliciesOIDs[0]);
     derBuffer = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     certChain[1] = {
@@ -44,7 +46,7 @@ describe('DerParser contract functions', function () {
       tlvLength,
       authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`,
     };
-    derBuffer = fs.readFileSync('test/unit/utils/Nightfall_end_user_extended.cer');
+    derBuffer = fs.readFileSync('test/unit/utils/Nightfall_end_user_policies.cer');
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     certChain[0] = { derBuffer, tlvLength };
     // sign the ethereum address

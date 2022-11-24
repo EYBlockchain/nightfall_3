@@ -27,7 +27,7 @@ const {
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
-const { extendedKeyUsageOIDs, RSA_TRUST_ROOTS } = x509Params[process.env.ETH_NETWORK];
+const { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS } = x509Params[process.env.ETH_NETWORK];
 
 // function to sort addresses into ascending order (required for SimpleMultiSig)
 function sortAscending(hexArray) {
@@ -112,5 +112,8 @@ module.exports = async function (deployer) {
   }
   for (extendedKeyUsageOIDGroup of extendedKeyUsageOIDs) {
     await x509.addExtendedKeyUsage(extendedKeyUsageOIDGroup);
+  }
+  for (certificatePoliciesOIDGroup of certificatePoliciesOIDs) {
+    await x509.addCertificatePolicies(certificatePoliciesOIDGroup);
   }
 };
