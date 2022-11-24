@@ -593,6 +593,19 @@ export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
   return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
 
+async function getAvailableCommitments(db, compressedZkpPublicKey, ercAddress, tokenId) {
+  return db
+    .collection(COMMITMENTS_COLLECTION)
+    .find({
+      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
+      'preimage.ercAddress': ercAddress.hex(32),
+      'preimage.tokenId': tokenId.hex(32),
+      isNullified: false,
+      isPendingNullification: false,
+    })
+    .toArray();
+}
+
 async function verifyEnoughCommitments(
   compressedZkpPublicKey,
   ercAddress,
@@ -613,16 +626,12 @@ async function verifyEnoughCommitments(
 
   if (maxNonFeeNullifiers !== 0) {
     // Get the commitments from the database
-    const commitmentArray = await db
-      .collection(COMMITMENTS_COLLECTION)
-      .find({
-        compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-        'preimage.ercAddress': ercAddress.hex(32),
-        'preimage.tokenId': tokenId.hex(32),
-        isNullified: false,
-        isPendingNullification: false,
-      })
-      .toArray();
+    const commitmentArray = await getAvailableCommitments(
+      db,
+      compressedZkpPublicKey,
+      ercAddress,
+      tokenId,
+    );
 
     // If not commitments are found, the transfer/withdrawal cannot be paid, so throw an error
     if (commitmentArray.length === 0)
@@ -669,16 +678,12 @@ async function verifyEnoughCommitments(
   // would need to pay for the fee
   if (fee.bigInt > 0n) {
     // Get the fee commitments from the database
-    const commitmentArrayFee = await db
-      .collection(COMMITMENTS_COLLECTION)
-      .find({
-        compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-        'preimage.ercAddress': ercAddressFee.hex(32),
-        'preimage.tokenId': generalise(0).hex(32),
-        isNullified: false,
-        isPendingNullification: false,
-      })
-      .toArray();
+    const commitmentArrayFee = await getAvailableCommitments(
+      db,
+      compressedZkpPublicKey,
+      ercAddressFee,
+      0,
+    );
 
     // If not commitments are found, the fee cannot be paid, so throw an error
     if (commitmentArrayFee.length === 0) throw new Error('no commitments found');

@@ -110,7 +110,7 @@ async function deposit(items) {
   // first, get the contract instance
 
   // next we need to compute the optimistic Transaction object
-  const optimisticDepositTransaction = new Transaction({
+  const transaction = new Transaction({
     fee,
     circuitHash,
     tokenType: items.tokenType,
@@ -124,19 +124,20 @@ async function deposit(items) {
     isOnlyL2: false,
   });
 
-  logger.trace({
-    optimisticDepositTransaction,
+  logger.debug({
+    msg: 'Client made transaction',
+    transaction: JSON.stringify(transaction, null, 2),
   });
 
   // and then we can create an unsigned blockchain transaction
   try {
-    const rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
-      .encodeABI();
     // store the commitment on successful computation of the transaction
     commitment.isDeposited = true;
     storeCommitment(commitment, nullifierKey);
-    return { rawTransaction, transaction: optimisticDepositTransaction };
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
+      .encodeABI();
+    return { rawTransaction, transaction };
   } catch (err) {
     logger.error(err);
     throw err; // let the caller handle the error
