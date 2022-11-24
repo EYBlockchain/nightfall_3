@@ -37,13 +37,11 @@ include "../node_modules/circomlib/circuits/bitify.circom";
  *
  * @input packedInputAddressesPrivate - {Array[Field]} 
  * @input packedInputIdRemaindersPrivate - {Array[Uint256]} 
- * @input packedInputValuesPrivate - {Array[Field]} 
  * @input packedOutputAddressesPrivate - {Array[Field]} 
  * @input packedOutputIdRemaindersPrivate - {Array[Uint256]} 
- * @input packedOutputValuesPrivate - {Array[Field]} 
  */
 
-template Transform(N,C, I, O) {
+template Transform(N,C) {
     signal input value;
     signal input fee;
     signal input circuitHash;
@@ -66,12 +64,11 @@ template Transform(N,C, I, O) {
     signal input commitmentsSalts[C];
     signal input recipientPublicKey[C][2];
     
-    signal input inputPackedAddressesPrivate[I];
-    signal input inputIdRemaindersPrivate[I];
-    signal input inputValuesPrivate[I];
-    signal input outputPackedAddressesPrivate[O];
-    signal input outputIdRemaindersPrivate[O];
-    signal input outputValuesPrivate[O];
+    signal input inputPackedAddressesPrivate[N-2];
+    signal input inputIdRemaindersPrivate[N-2];
+
+    signal input outputPackedAddressesPrivate[C-1];
+    signal input outputIdRemaindersPrivate[C-1];
     
     // Check that the transaction does not have nullifiers nor commitments duplicated
     var checkDuplicates = VerifyDuplicates(N,C)(nullifiers, commitments);
@@ -98,88 +95,110 @@ template Transform(N,C, I, O) {
     // Check that the first nullifier is different than zero
     assert(nullifiers[0] != 0);
 
-    // Convert the nullifiers values to numbers and calculate its sum
-    var nullifiersSum = 0;
+    // check that none of the values overflow
     for (var i = 0; i < N; i++) {
-        nullifiersSum += nullifiersValues[i];
-        var nullifierValueBits[254] = Num2Bits(254)(nullifiersValues[i]);
-        nullifierValueBits[253] === 0;
-        nullifierValueBits[252] === 0;
+      var nullifierValueBits[254] = Num2Bits(254)(nullifiersValues[i]);
+      nullifierValueBits[253] === 0;
+      nullifierValueBits[252] === 0;
+    }
+    for (var i = 0; i < C; i++) {
+      var commitmentValueBits[254] = Num2Bits(254)(commitmentsValues[0]);
+      commitmentValueBits[253] === 0;
+      commitmentValueBits[252] === 0;
+    }
+
+    // Convert the fee nullifiers values to numbers and calculate its sum
+    var feeNullifiersSum = 0;
+    for (var i = 0; i < 2; i++) {
+      feeNullifiersSum += nullifiersValues[i];
     }
     
-    // Convert the commitment values to numbers and calculate its sum
-    // ignore the last commitment since it is for the output token
-    var commitmentsSum = 0;
-    for (var i = 0; i < C - 1; i++) {
-        commitmentsSum += commitmentsValues[i];
-        var commitmentValueBits[254] = Num2Bits(254)(commitmentsValues[i]);
-        commitmentValueBits[253] === 0;
-        commitmentValueBits[252] === 0;
-    }
-
-    var inputValuesSum = 0;
-    for (var i = 0; i < I; i++) {
-      inputValuesSum += inputValuesPrivate[i];
-    }
-
     // Check that the value holds
-    nullifiersSum === commitmentsSum + fee + inputValuesSum;
+    // the first commitment is reserved for fee change
+    feeNullifiersSum === commitmentsValues[0] + fee;
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
     var nullifierKeys, zkpPublicKeys[2];
     (nullifierKeys, zkpPublicKeys) = CalculateKeys()(rootKey);
 
-    // commitment order
-    // inputs -> fee -> outputs
-    
-    // verify the input tokens
-    for (var i = 0; i < I; i++) {
+    // Check that the fee nullfiers are valid
+    var checkFeeNullifier = VerifyNullifiers(2)(
+      feeAddress, 
+      0, 
+      nullifierKeys, 
+      zkpPublicKeys, 
+      [nullifiers[0], nullifiers[1]], 
+      [roots[0], roots[1]], 
+      [nullifiersValues[0], nullifiersValues[1]], 
+      [nullifiersSalts[0], nullifiersSalts[1]], 
+      [paths[0],paths[1] ], 
+      [orders[0], orders[1]]
+    );
+    checkFeeNullifier === 1;
+
+    // Check the L2 nullifiers
+    for (var i = 2; i < N; i++) {
       // Check that the top most two bits of all packed ercAddresses are equal to 1
-      var ercAddressBits[254] = Num2Bits(254)(inputPackedAddressesPrivate[i]);
+      var ercAddressBits[254] = Num2Bits(254)(inputPackedAddressesPrivate[i-2]);
       ercAddressBits[253] === 1;
       ercAddressBits[252] === 1;
 
       // Check that the values do not overflow
-      var valuePrivateBits[254] = Num2Bits(254)(inputValuesPrivate[i]);
+      var valuePrivateBits[254] = Num2Bits(254)(nullifiersValues[i]);
       valuePrivateBits[253] === 0;
       valuePrivateBits[252] === 0;
 
       // Check that the input nullifiers are valid
-      var checkInputNullifier = VerifyNullifiers(1)(inputPackedAddressesPrivate[i], inputIdRemaindersPrivate[i], nullifierKeys, zkpPublicKeys, [nullifiers[i]], [roots[i]], [nullifiersValues[i]], [nullifiersSalts[i]], [paths[i]], [orders[i]]);
+      var checkInputNullifier = VerifyNullifiersOptional(1)(
+        inputPackedAddressesPrivate[i-2], 
+        inputIdRemaindersPrivate[i-2], 
+        nullifierKeys, 
+        zkpPublicKeys, 
+        [nullifiers[i]], 
+        [roots[i]], 
+        [nullifiersValues[i]], 
+        [nullifiersSalts[i]], 
+        [paths[i]], 
+        [orders[i]]
+      );
       checkInputNullifier === 1;
-
-      // Check that input commitments are valid
-      var checkInputCommitment = VerifyCommitmentsOptional(1)(inputPackedAddressesPrivate[i], inputIdRemaindersPrivate[i], [commitments[i]], [commitmentsValues[i]], [commitmentsSalts[i]], [recipientPublicKey[i]]);
-      checkInputCommitment === 1;
     }
 
-    // Check that the fee nullfier is valid
-    var checkFeeNullifier = VerifyNullifiers(1)(feeAddress, 0, nullifierKeys, zkpPublicKeys, [nullifiers[I]], [roots[I]], [nullifiersValues[I]], [nullifiersSalts[I]], [paths[I]], [orders[I]]);
-    checkFeeNullifier === 1;
-    
     // Check that the fee Commitment is valid
-      var checkFeeCommitment = VerifyCommitmentsOptional(1)(feeAddress, 0, [commitments[I]], [commitmentsValues[I]], [commitmentsSalts[I]], [recipientPublicKey[I]]);
+      var checkFeeCommitment = VerifyCommitmentsOptional(1)(
+        feeAddress, 
+        0, 
+        [commitments[0]], 
+        [commitmentsValues[0]], 
+        [commitmentsSalts[0]], 
+        [recipientPublicKey[0]]
+      );
       checkFeeCommitment === 1;
 
-    // verify the output tokens
-    for (var i = 0; i < O; i++) {
+    // verify the L2 commitments 
+    for (var i = 1; i < C; i++) {
       // Check that the top most two bits of all packed ercAddresses are equal to 1
-      var ercAddressBits[254] = Num2Bits(254)(outputPackedAddressesPrivate[i]);
+      var ercAddressBits[254] = Num2Bits(254)(outputPackedAddressesPrivate[i-1]);
       ercAddressBits[253] === 1;
       ercAddressBits[252] === 1;
 
       // Check that the values do not overflow
-      var valuePrivateBits[254] = Num2Bits(254)(outputValuesPrivate[i]);
+      var valuePrivateBits[254] = Num2Bits(254)(commitmentsValues[i]);
       valuePrivateBits[253] === 0;
       valuePrivateBits[252] === 0;
       
-      // There are no nullifiers for the output tokens
-      
       // Check the output commitments
-      var checkOutputCommitment = VerifyCommitments(1)(outputPackedAddressesPrivate[i], outputIdRemaindersPrivate[i], [commitments[I+1+i]], [commitmentsValues[I+1+i]], [commitmentsSalts[I+1+i]], [recipientPublicKey[I+1+i]]);
+      var checkOutputCommitment = VerifyCommitments(1)(
+        outputPackedAddressesPrivate[i-1], 
+        outputIdRemaindersPrivate[i-1], 
+        [commitments[i]], 
+        [commitmentsValues[i]], 
+        [commitmentsSalts[i]], 
+        [recipientPublicKey[i]]
+      );
       checkOutputCommitment === 1;
     }
 }
 
-component main {public [value, fee, circuitHash, tokenType, historicRootBlockNumberL2, tokenId, ercAddress, recipientAddress, commitments, nullifiers, compressedSecrets,roots, feeAddress]} = Transform(3, 4, 2, 1);
+component main {public [value, fee, circuitHash, tokenType, historicRootBlockNumberL2, tokenId, ercAddress, recipientAddress, commitments, nullifiers, compressedSecrets,roots, feeAddress]} = Transform(6, 5);
 

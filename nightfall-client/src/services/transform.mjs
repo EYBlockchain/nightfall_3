@@ -24,7 +24,7 @@ const { generalise } = gen;
 async function transform(transformParams) {
   logger.info('Creating a transform transaction');
 
-  const { tokenInputs, tokenOutputs, ...items } = transformParams;
+  const { inputTokens, outputTokens, ...items } = transformParams;
   const { rootKey, fee } = generalise(items);
   const { zkpPublicKey } = new ZkpKeys(rootKey);
 
@@ -37,31 +37,45 @@ async function transform(transformParams) {
 
   // get commitment info for every token Input
   const commitmentInfoArray = [];
-  for (const tokenInput of tokenInputs) {
+
+  // the first two nullifiers are reserverd for paying the fee
+  // the first commitment is reserved for paying the fee change
+  // we modify the commitmentInfo result to preserve this order
+  logger.debug('getting fee commitments');
+  const feeCi = await getCommitmentInfo({
+    totalValueToSend: 0n,
+    fee,
+    ercAddress: maticAddress,
+    maticAddress,
+    rootKey,
+    maxNullifiers: 2,
+  });
+  while (feeCi.nullifiers.length < 2) feeCi.nullifiers.push('0');
+  if (feeCi.newCommitments.length !== 1)
+    feeCi.newCommitments = [
+      {
+        hash: 0,
+        preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
+      },
+    ];
+  commitmentInfoArray.push(feeCi);
+
+  for (const token of inputTokens) {
+    // we don't need to rely on the user value here and could also hard code it to 1
     const ci = await getCommitmentInfo({
-      totalValueToSend: generalise(tokenInput.value).bigInt,
-      ercAddress: generalise(tokenInput.ercAddress.toLowerCase()),
-      tokenId: generalise(tokenInput.tokenId),
+      totalValueToSend: generalise(token.value).bigInt,
+      ercAddress: generalise(token.address.toLowerCase()),
+      tokenId: generalise(token.id),
       maticAddress,
       rootKey,
-      maxNullifiers: 1,
+      providedCommitments: [token.commitmentHash],
     });
+
+    if (ci.oldCommitments.length !== 1) throw Error('retrieved incorrect number of commitments');
+    // we don't want any new commitments because we don't care about the change
+    ci.newCommitments = [];
     commitmentInfoArray.push(ci);
   }
-
-  // TODO: append empty commitemnt + nullifier if there is only one input
-
-  logger.debug('getting fee commitments');
-  commitmentInfoArray.push(
-    await getCommitmentInfo({
-      totalValueToSend: 0n,
-      fee,
-      ercAddress: maticAddress,
-      maticAddress,
-      rootKey,
-      maxNullifiers: 1,
-    }),
-  );
 
   const commitmentInfo = {
     oldCommitments: [],
@@ -83,13 +97,13 @@ async function transform(transformParams) {
   });
 
   // add a new commitment for each output token
-  for (const tokenOutput of tokenOutputs) {
+  for (const token of outputTokens) {
     const commitment = new Commitment({
-      ercAddress: generalise(tokenOutput.ercAddress.toLowerCase()),
-      tokenId: generalise(tokenOutput.tokenId),
-      value: generalise(tokenOutput.value),
+      ercAddress: generalise(token.address.toLowerCase()),
+      tokenId: generalise(token.id),
+      value: generalise(token.value),
       zkpPublicKey,
-      salt: (await randValueLT(BN128_GROUP_ORDER)).hex(),
+      salt: token.salt ? generalise(token.salt) : (await randValueLT(BN128_GROUP_ORDER)).hex(),
     });
     logger.debug({ msg: 'output commitment', commitment });
     commitmentInfo.newCommitments.push(commitment);
@@ -105,8 +119,10 @@ async function transform(transformParams) {
       circuitHash,
       commitments: commitmentInfo.newCommitments,
       nullifiers: commitmentInfo.nullifiers,
-      numberNullifiers: VK_IDS.transform.numberNullifiers,
-      numberCommitments: VK_IDS.transform.numberCommitments,
+      numberNullifiers: 6,
+      numberCommitments: 5,
+      // numberNullifiers: VK_IDS.transform.numberNullifiers,
+      // numberCommitments: VK_IDS.transform.numberCommitments,
       isOnlyL2: true,
     });
 
@@ -124,8 +140,8 @@ async function transform(transformParams) {
       }),
 
       recipientPublicKeys: commitmentInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
-      tokenInputs,
-      tokenOutputs,
+      inputTokens: Array.from(inputTokens),
+      outputTokens: Array.from(outputTokens),
     };
     logger.debug(privateData.newCommitmentPreimage);
 
@@ -135,8 +151,10 @@ async function transform(transformParams) {
       privateData,
       commitmentInfo.roots,
       maticAddress,
-      VK_IDS.transfer.numberNullifiers,
-      VK_IDS.transfer.numberCommitments,
+      6,
+      5,
+      // VK_IDS.transfer.numberNullifiers,
+      // VK_IDS.transfer.numberCommitments,
     );
 
     logger.debug({
@@ -162,8 +180,11 @@ async function transform(transformParams) {
       commitments: commitmentInfo.newCommitments,
       nullifiers: commitmentInfo.nullifiers,
       proof,
-      numberNullifiers: VK_IDS.transform.numberNullifiers,
-      numberCommitments: VK_IDS.transform.numberCommitments,
+
+      numberNullifiers: 6,
+      numberCommitments: 5,
+      // numberNullifiers: VK_IDS.transform.numberNullifiers,
+      // numberCommitments: VK_IDS.transform.numberCommitments,
       isOnlyL2: true,
     });
 

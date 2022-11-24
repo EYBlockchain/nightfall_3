@@ -118,8 +118,8 @@ export const computeCircuitInputs = (
     ercAddress,
     tokenId,
     value,
-    tokenInputs,
-    tokenOutputs,
+    inputTokens,
+    outputTokens,
   } = generalise(privateData);
   if (numberNullifiers > 0) {
     witness = {
@@ -160,38 +160,46 @@ export const computeCircuitInputs = (
     witness.valuePrivate = value.field(BN128_GROUP_ORDER);
   }
 
-  if (tokenInputs && tokenOutputs) {
-    // we need to remove the last nullifier that is created for the output commitment
-    witness.roots.pop();
-    witness.nullifiersValues.pop();
-    witness.nullifiersSalts.pop();
-    witness.paths.pop();
-    witness.orders.pop();
-
+  if (inputTokens && outputTokens) {
     witness.inputPackedAddressesPrivate = [];
     witness.inputIdRemaindersPrivate = [];
-    witness.inputValuesPrivate = [];
     witness.outputPackedAddressesPrivate = [];
     witness.outputIdRemaindersPrivate = [];
-    witness.outputValuesPrivate = [];
 
-    tokenInputs.forEach(t => {
-      let [packedErcAddress, remainder] = packErcAddress(t.ercAddress, t.tokenId);
-      packedErcAddress = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
-      remainder = generalise(remainder).field(BN128_GROUP_ORDER);
-      witness.inputPackedAddressesPrivate.push(packedErcAddress);
-      witness.inputIdRemaindersPrivate.push(remainder);
-      witness.inputValuesPrivate.push(generalise(t.value).field(BN128_GROUP_ORDER));
-    });
+    logger.debug({ inputTokens, outputTokens });
+    for (let i = 0; i < numberNullifiers - 2; i++) {
+      if (inputTokens.length > 0) {
+        const current = inputTokens.pop();
+        logger.debug({ current });
+        const inputErcAddress = current.address;
+        const inputTokenId = current.id;
+        let [packedErcAddress, remainder] = packErcAddress(inputErcAddress, inputTokenId);
+        packedErcAddress = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
+        remainder = generalise(remainder).field(BN128_GROUP_ORDER);
+        witness.inputPackedAddressesPrivate.push(packedErcAddress);
+        witness.inputIdRemaindersPrivate.push(remainder);
+      } else {
+        witness.inputPackedAddressesPrivate.push('0');
+        witness.inputIdRemaindersPrivate.push('0');
+      }
+    }
 
-    tokenOutputs.forEach(t => {
-      let [packedErcAddress, remainder] = packErcAddress(t.ercAddress, t.tokenId);
-      packedErcAddress = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
-      remainder = generalise(remainder).field(BN128_GROUP_ORDER);
-      witness.outputPackedAddressesPrivate.push(packedErcAddress);
-      witness.outputIdRemaindersPrivate.push(remainder);
-      witness.outputValuesPrivate.push(generalise(t.value).field(BN128_GROUP_ORDER));
-    });
+    for (let i = 0; i < numberCommitments - 1; i++) {
+      if (outputTokens.length > 0) {
+        const current = outputTokens.pop();
+        logger.debug({ current });
+        const outputErcAddress = current.address;
+        const outputTokenId = current.id;
+        let [packedErcAddress, remainder] = packErcAddress(outputErcAddress, outputTokenId);
+        packedErcAddress = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
+        remainder = generalise(remainder).field(BN128_GROUP_ORDER);
+        witness.outputPackedAddressesPrivate.push(packedErcAddress);
+        witness.outputIdRemaindersPrivate.push(remainder);
+      } else {
+        witness.outputPackedAddressesPrivate.push('0');
+        witness.outputIdRemaindersPrivate.push('0');
+      }
+    }
   }
   return witness;
 };
