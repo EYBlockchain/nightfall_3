@@ -19,6 +19,7 @@ services:
       - client_rabbitmq_1
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-local}
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
@@ -51,6 +52,7 @@ services:
       - client_rabbitmq_2
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-local}
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
