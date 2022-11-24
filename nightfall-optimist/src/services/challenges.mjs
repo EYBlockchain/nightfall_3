@@ -5,6 +5,7 @@ import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
 import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import {
   saveCommit,
   getBlockByBlockNumberL2,
@@ -248,6 +249,24 @@ export async function createChallenge(block, transactions, err) {
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
       const uncompressedProof = transactions[transactionIndex].proof;
+
+      logger.warn({
+        msg: 'Uncompressed proof before',
+        uncompressedProof,
+        compressed: compressProof(uncompressedProof),
+      });
+
+      for (const i of [1, 4, 5, 7]) {
+        const parity = BigInt(uncompressedProof[i]).toString(2).slice(-1); // extract last binary digit
+        if (parity === '0') uncompressedProof[i] = ZERO;
+      }
+
+      logger.warn({
+        msg: 'Uncompressed proof after',
+        uncompressedProof,
+        compressed: compressProof(uncompressedProof),
+      });
+
       const historicRoots = await Promise.all(
         transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
           if (transactions[transactionIndex].nullifiers[i] === 0) {

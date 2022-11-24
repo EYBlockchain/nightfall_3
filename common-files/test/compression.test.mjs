@@ -66,4 +66,25 @@ describe('Compression tests', () => {
     const flatProof = generalise(Proof.flatProof(testProof)).all.hex(32);
     assert.deepStrictEqual(flatProof, decompressedProof);
   });
+
+  it('BIG ISSUE!!', async () => {
+    const flatProof = Object.values(testProof).flat(Infinity);
+    console.log('flatProof', flatProof);
+    const compressedProof = compressProof(flatProof);
+    console.log('compressedProof', generalise(compressedProof).all.hex(32));
+    console.log('-----------------------------------');
+    // console.log(flatProof.map(p => BigInt(p).toString(2).padStart(256, '0')));
+    // console.log(compressedProof.map(p => BigInt(p).toString(2).padStart(256, '0')));
+    const flatProof2 = Object.values(testProof).flat(Infinity);
+    for (const i of [1, 4, 5, 7]) {
+      const parity = BigInt(flatProof2[i]).toString(2).slice(-1); // extract last binary digit
+      if (parity === '0')
+        flatProof2[i] = '0x0000000000000000000000000000000000000000000000000000000000000000';
+    }
+    console.log('flatProof2', flatProof2);
+    const compressedProof2 = compressProof(flatProof2);
+    console.log('compressedProof2', generalise(compressedProof2).all.hex(32));
+  });
 });
+
+// 0, 2, 3, 6;

@@ -3,7 +3,7 @@ Module to check that submitted Blocks and Transactions are valid
 */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { BlockError, Transaction } from '../classes/index.mjs';
+import { BlockError, Transaction, TransactionError } from '../classes/index.mjs';
 import {
   getBlockByBlockNumberL2,
   getTransactionHashSiblingInfo,
@@ -253,6 +253,7 @@ export async function checkBlock(block, transactions) {
     for (let i = 0; i < transactions.length; i++) {
       transaction = transactions[i];
       await checkTransaction(transaction, false, { blockNumberL2: block.blockNumberL2 }); // eslint-disable-line no-await-in-loop
+      throw new TransactionError('The proof did not verify', 2);
     }
   } catch (err) {
     if (err.code === 0 || err.code === 1) {

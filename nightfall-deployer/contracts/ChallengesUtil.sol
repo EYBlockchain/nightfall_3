@@ -37,7 +37,10 @@ library ChallengesUtil {
         bytes32[33] calldata frontierAfterBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Structures.Block calldata blockL2
     ) public {
-        bytes32 root = MerkleTree_Stateless.calculateRoot(frontierAfterBlock, Utils.getLeafCount(blockL2.packedInfo));
+        bytes32 root = MerkleTree_Stateless.calculateRoot(
+            frontierAfterBlock,
+            Utils.getLeafCount(blockL2.packedInfo)
+        );
 
         require(root != blockL2.root, 'The root is actually fine');
     }
