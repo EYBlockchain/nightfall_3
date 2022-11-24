@@ -8,7 +8,10 @@ import { makeTlv, signEthereumAddress } from '../utils/x509.mjs';
 const { ethers } = hardhat;
 const {
   X509: {
-    blockchain: { extendedKeyUsageOIDs, RSA_TRUST_ROOTS:[{ modulus, exponent}] },
+    blockchain: {
+      extendedKeyUsageOIDs,
+      RSA_TRUST_ROOTS: [{ modulus, exponent }],
+    },
   },
 } = config;
 
