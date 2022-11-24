@@ -7,28 +7,12 @@ Module that runs up as a user
 import config from 'config';
 import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import Nf3 from '../../cli/lib/nf3.mjs';
-import {
-  waitForSufficientBalance,
-  retrieveL2Balance,
-  topicEventMapping,
-  Web3Client,
-} from '../utils.mjs';
+import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
 import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const { signingKeys, addresses } = config.TEST_OPTIONS;
 
-const {
-  mnemonics,
-  signingKeys,
-  addresses,
-  zkpPublicKeys,
-  clientApiUrls,
-  optimistApiUrls,
-  optimistWsUrls,
-} = config.TEST_OPTIONS;
-
-const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
+const { TX_WAIT = 1000 } = process.env;
 
 const { WEB3_OPTIONS } = config;
 
