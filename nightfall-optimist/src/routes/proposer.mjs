@@ -23,6 +23,10 @@ import {
 } from '../services/database.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import getProposers from '../services/proposer.mjs';
+import {
+  createSignedTransaction,
+  sendSignedTransaction,
+} from '../services/transaction-sign-send.mjs';
 import auth from '../utils/auth.mjs';
 
 const router = express.Router();
@@ -293,30 +297,26 @@ router.get('/proposers', async (req, res, next) => {
  *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/de-register', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
-  const ethPrivateKey = req.app.get('ethPrivateKey');
-
   try {
     // Recreate Proposer contract
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
 
-    // Remove the proposer by updating the blockchain state
+    // Create unsigned tx for removing proposer from Proposers contract
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: proposersContractAddress,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
 
-    // Update db
-    await deleteRegisteredProposerAddress(ethAddress);
+    // Sign tx
+    const to = proposersContractInstance.options.address;
+    const signedTx = await createSignedTransaction(to, txDataToSign);
 
-    res.json({ receipt });
+    // Submit tx and update db if tx is successful
+    sendSignedTransaction(signedTx).then(receipt => {
+      logger.debug({ msg: 'Proposer removed from contract', receipt });
+      deleteRegisteredProposerAddress(receipt.from)
+        .then(() => logger.debug({ msg: 'Proposer removed from db' }))
+        .catch(error => logger.warn(error));
+    });
+
+    res.json({ signedTx });
   } catch (err) {
     next(err);
   }
