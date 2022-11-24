@@ -1498,7 +1498,7 @@ class Nf3 {
   /**
    Validates an X509 (RSA) certificate
    */
-  async validateCertificate(certificate, oidGroup = 0, ethereumAddress, derPrivateKey) {
+  async validateCertificate(certificate, ethereumAddress, derPrivateKey, oidGroup = 0) {
     // sign the ethereum address
     let ethereumAddressSignature = null;
     if (derPrivateKey) {
