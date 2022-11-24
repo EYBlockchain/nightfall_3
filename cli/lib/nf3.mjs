@@ -1,6 +1,7 @@
 /* eslint class-methods-use-this: "off" */
 
 import axios from 'axios';
+import config from 'config';
 import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
