@@ -34,7 +34,8 @@ export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS:
   } else {
     wasm = await fetchAWSfiles(s3Bucket, wasm);
     zk = await fetchAWSfiles(s3Bucket, zk);
-    hash = await fetchAWSfiles(s3Bucket, hash);
+    // hash is already computed when writing s3_file at deployment time.
+    // no need to compute it here
   }
   return { wasm, wasmh, zk, zkh, hash, hashh };
 }
