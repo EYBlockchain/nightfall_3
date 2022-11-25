@@ -71,10 +71,10 @@ Test infrastructure will be deployed to AWS in the following environments:
 - staging 
 
 Actors deployed:
-- 10 proposers -> `https://proposer<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
-- 10 challengers -> `https://challenger<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
-- 10 optimists https server-> `https://optimist-api<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
-- 10 optimists wss server-> `wss://optimist-ws<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
+- 6 proposers -> `https://proposer<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
+- 6 challengers -> `https://challenger<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
+- 6 optimists https server-> `https://optimist-api<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
+- 6 optimists wss server-> `wss://optimist-ws<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
 - 10 clients-> `https://client<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
 - 1 geth client: https-> `https://web3-rpc<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
 - 1 geth client: wss-> `wss://web3-ws<index>.<environment>.polygon-nightfall.technology`, where `index` is null, 2, 3,...10, and `environment` is `preprod`, `internal` or `staging` (production doesnt require anything)
