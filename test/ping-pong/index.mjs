@@ -76,6 +76,7 @@ const makeBlockAndWaitForEmptyMempool = async optimistUrls => {
 export async function simpleUserTest(
   TEST_LENGTH,
   value,
+  fee,
   ercAddress,
   nf3,
   listUserAddresses,
@@ -94,9 +95,10 @@ export async function simpleUserTest(
       from: nf3.zkpKeys.compressedZkpPublicKey,
       to: nf3.zkpKeys.compressedZkpPublicKey,
       value,
+      fee,
     });
     try {
-      await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
+      await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
       await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     } catch (err) {
       logger.warn(`Error in deposit ${err}`);
@@ -108,12 +110,13 @@ export async function simpleUserTest(
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
     const userAdressTo = listUserAddresses[Math.floor(Math.random() * listUserAddresses.length)];
-    const valueToTransfer = Math.floor(Math.random() * 10) + 1; // Returns a random integer from 1 to 10
+    const valueToTransfer = Math.floor(Math.random() * (value - fee)) + 1; // Returns a random integer from 1 to value - fee
 
     listTransfersSent.push({
       from: nf3.zkpKeys.compressedZkpPublicKey,
       to: userAdressTo,
       value: valueToTransfer,
+      fee,
     });
 
     try {
@@ -124,7 +127,7 @@ export async function simpleUserTest(
         valueToTransfer,
         tokenId,
         userAdressTo,
-        0,
+        fee,
       );
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
@@ -136,7 +139,7 @@ export async function simpleUserTest(
           } seconds and try one last time`,
         );
         await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-        await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, userAdressTo, 0);
+        await nf3.transfer(offchainTx, ercAddress, tokenType, value, tokenId, userAdressTo, fee);
       }
     }
     offchainTx = !offchainTx;
@@ -145,10 +148,11 @@ export async function simpleUserTest(
       from: nf3.zkpKeys.compressedZkpPublicKey,
       to: nf3.zkpKeys.compressedZkpPublicKey,
       value: valueToTransfer,
+      fee,
     });
 
     try {
-      await nf3.deposit(ercAddress, tokenType, valueToTransfer, tokenId);
+      await nf3.deposit(ercAddress, tokenType, valueToTransfer, tokenId, fee);
     } catch (err) {
       console.warn('Error deposit', err);
     }

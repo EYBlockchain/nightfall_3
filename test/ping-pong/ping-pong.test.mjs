@@ -10,7 +10,7 @@ import {
   simpleUserTest,
 } from './index.mjs';
 
-const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls } =
+const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls, fee } =
   config.TEST_OPTIONS;
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const { TEST_ERC20_ADDRESS } = process.env;
@@ -159,7 +159,7 @@ const waitForBalanceUpdate = async usersStats => {
           t.to !== nf3Users[i].zkpKeys.compressedZkpPublicKey &&
           t.from === nf3Users[i].zkpKeys.compressedZkpPublicKey
         ) {
-          totalTransferred -= t.value;
+          totalTransferred -= t.value + t.fee;
         }
       });
     }
@@ -283,6 +283,7 @@ describe('Ping-pong tests', () => {
       simpleUserTest(
         TEST_LENGTH,
         value,
+        fee,
         ercAddress,
         nf3Users[i],
         listAddressesToSend,
