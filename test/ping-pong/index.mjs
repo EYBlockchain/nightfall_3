@@ -10,7 +10,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
 import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
 
-const { signingKeys, addresses } = config.TEST_OPTIONS;
+const { signingKeys, addresses, fee } = config.TEST_OPTIONS;
 
 const { TX_WAIT = 1000 } = process.env;
 
@@ -124,7 +124,7 @@ export async function simpleUserTest(
         valueToTransfer,
         tokenId,
         userAdressTo,
-        0,
+        fee,
       );
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
@@ -159,6 +159,7 @@ export async function simpleUserTest(
 }
 
 /**
+<<<<<<< HEAD
 Does the preliminary setup and starts listening on the websocket
 */
 /* export async function userTest(TEST_LENGTH, value, IS_TEST_RUNNER) {
@@ -281,6 +282,130 @@ Does the preliminary setup and starts listening on the websocket
 } */
 
 /**
+||||||| parent of f6286264 (fix: add fees)
+Does the preliminary setup and starts listening on the websocket
+*/
+/* export async function userTest(TEST_LENGTH, value, IS_TEST_RUNNER) {
+  logger.info('Starting local test...');
+  const eventLogs = [];
+  const web3Client = new Web3Client();
+
+  environment.clientApiUrl =
+    (IS_TEST_RUNNER ? clientApiUrls.client1 : clientApiUrls.client2) || environment.clientApiUrl;
+  environment.optimistApiUrl =
+    (IS_TEST_RUNNER ? optimistApiUrls.optimist1 : optimistApiUrls.optimist2) ||
+    environment.optimistApiUrl;
+  environment.optimistWsUrl =
+    (IS_TEST_RUNNER ? optimistWsUrls.optimist1 : optimistWsUrls.optimist2) ||
+    environment.optimistWsUrl;
+
+  console.log('ENVIRONMENT USER:', environment);
+  const nf3 = new Nf3(IS_TEST_RUNNER ? signingKeys.user1 : signingKeys.user2, environment);
+
+  await nf3.init(IS_TEST_RUNNER ? mnemonics.user1 : mnemonics.user2);
+  if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
+  else throw new Error('Healthcheck failed');
+
+  const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress('ERC20Mock'));
+
+  stateContract = await nf3.getContractInstance('State');
+  const stateAddress = stateContract.options.address;
+  web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+
+  const startBalance = await retrieveL2Balance(nf3, ercAddress);
+  console.log('start balance', startBalance);
+
+  let offchainTx = !!IS_TEST_RUNNER;
+  // Create a block of deposits
+  for (let i = 0; i < TEST_LENGTH; i++) {
+    try {
+      await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
+      await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
+    } catch (err) {
+      logger.warn(`Error in deposit ${err}`);
+    }
+  }
+  await waitForSufficientBalance(nf3, startBalance + TEST_LENGTH * value, ercAddress);
+
+  // Create a block of transfer and deposit transactions
+  for (let i = 0; i < TEST_LENGTH; i++) {
+    // await waitForSufficientBalance(nf3, startBalance + value, ercAddress);
+    try {
+      await nf3.transfer(
+        offchainTx,
+        ercAddress,
+        tokenType,
+        value,
+        tokenId,
+        IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
+        0,
+      );
+    } catch (err) {
+      if (err.message.includes('No suitable commitments')) {
+        // if we get here, it's possible that a block we are waiting for has not been proposed yet
+        // let's wait 10x normal and then try again
+        logger.warn(
+          `No suitable commitments were found for transfer. I will wait ${
+            0.01 * TX_WAIT
+          } seconds and try one last time`,
+        );
+        await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
+        await nf3.transfer(
+          offchainTx,
+          ercAddress,
+          tokenType,
+          value,
+          tokenId,
+          IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
+          0,
+        );
+      }
+    }
+    offchainTx = !offchainTx;
+
+    try {
+      await nf3.deposit(ercAddress, tokenType, value, tokenId);
+    } catch (err) {
+      console.warn('Error deposit', err);
+    }
+
+    // await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
+    console.log(`Completed ${i + 1} pings`);
+  }
+
+  // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use
+  // This needs to be much longer than we may have waited for a transfer
+  let loop = 0;
+  let loopMax = 10000;
+  if (IS_TEST_RUNNER) loopMax = 100; // the TEST_RUNNER must finish first so that its exit status is returned to the tester
+  do {
+    const endBalance = await retrieveL2Balance(nf3, ercAddress);
+    if (endBalance - startBalance === value * TEST_LENGTH + value * TEST_LENGTH && IS_TEST_RUNNER) {
+      logger.info('Test passed');
+      logger.info(
+        `Balance of User value + value received) :
+        ${endBalance - startBalance}`,
+      );
+      logger.info(`Amount sent to other User: ${value * TEST_LENGTH + value * TEST_LENGTH}`);
+      nf3.close();
+      return 0;
+    }
+
+    logger.info(
+      `The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting:
+        Current Transacted Balance is: ${endBalance - startBalance} - Expecting: ${
+        value * TEST_LENGTH + value * TEST_LENGTH
+      } (IS_TEST_RUNNER: ${IS_TEST_RUNNER})`,
+    );
+    await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
+    loop++;
+  } while (loop < loopMax);
+  return 1;
+} */
+
+/**
+=======
+>>>>>>> f6286264 (fix: add fees)
 Set the block stake parameter for the proposers
 */
 const setBlockStake = async amount => {
