@@ -563,23 +563,40 @@ router.get('/stake', auth, async (req, res, next) => {
 router.get('/withdraw', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
+  const nonce = req.app.get('nonce');
 
   try {
     // Recreate State contract
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
 
+    // Withdraw profits
     const txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: stateContractInstance.options.address,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
 
-    res.json({ receipt });
+    // Sign tx
+    const stateContractAddress = stateContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      nonce,
+      ethPrivateKey,
+      ethAddress,
+      stateContractAddress,
+      txDataToSign,
+    );
+
+    // Submit tx
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer profits withdrawn', receipt });
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
@@ -616,9 +633,11 @@ router.get('/withdraw', auth, async (req, res, next) => {
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/payment', auth, async (req, res, next) => {
-  const { blockHash } = req.body;
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
+  const nonce = req.app.get('nonce');
+
+  const { blockHash } = req.body;
 
   try {
     // Validate blockHash
@@ -630,20 +649,36 @@ router.post('/payment', auth, async (req, res, next) => {
     // Recreate Shield contract
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
+    // Request payment, unlock stake
     const txDataToSign = await shieldContractInstance.methods
       .requestBlockPayment(block)
       .encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: shieldContractInstance.options.address,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
 
-    res.json({ receipt });
+    // Sign tx
+    const shieldContractAddress = shieldContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      nonce,
+      ethPrivateKey,
+      ethAddress,
+      shieldContractAddress,
+      txDataToSign,
+    );
+
+    // Submit tx
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer payment completed', receipt });
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
