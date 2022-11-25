@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "@nomiclabs/buidler": "^1.4.8",
     "@openzeppelin/truffle-upgrades": "^1.13.0",
     "@truffle/hdwallet-provider": "^2.0.10",
     "hardhat": "^2.11.2",
