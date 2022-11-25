@@ -7,7 +7,6 @@ import { setupHttpDefaults } from '@polygon-nightfall/common-files/utils/httputi
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsDoc from 'swagger-jsdoc';
 import options from './swagger-options.mjs';
-
 import {
   proposer,
   block,
@@ -17,18 +16,21 @@ import {
   getContractAbi,
   debug,
 } from './routes/index.mjs';
+import { getAddressNonce } from './services/transaction-sign-send.mjs';
 
-const spec = swaggerJsDoc(options);
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const app = express();
 
 const ethPrivateKey = environment.PROPOSER_KEY;
 const { address } = web3.eth.accounts.privateKeyToAccount(ethPrivateKey);
+const nonce = await getAddressNonce(address);
 
 app.set('ethPrivateKey', ethPrivateKey);
 app.set('ethAddress', address);
+app.set('nonce', nonce);
 
+const spec = swaggerJsDoc(options);
 setupHttpDefaults(
   app,
   app => {

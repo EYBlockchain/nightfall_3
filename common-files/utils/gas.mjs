@@ -1,5 +1,7 @@
-import logger from './logger.mjs';
+/* ignore unused exports */
+
 import axios from 'axios';
+import logger from './logger.mjs';
 
 /**
  * Estimate the amount of gas that will be needed to submit a transaction (tx)
@@ -16,12 +18,12 @@ import axios from 'axios';
  * @param {number} gasMultiplier Buffer to apply to estimated gas - Has default
  * @returns {Promise<number>}
  */
-export async function estimateGas(unsignedTx, web3, gasDefault = 4000000, gasMultiplier = 2) {
+export async function estimateGas(to, unsignedTx, web3, gasDefault = 4000000, gasMultiplier = 2) {
   logger.debug({ msg: 'Estimate gas for unsigned Tx...', unsignedTx });
 
   let gas;
   try {
-    gas = await web3.eth.estimateGas(tx);
+    gas = await web3.eth.estimateGas({ to, data: unsignedTx });
     logger.debug({ msg: 'Gas estimated at', gas });
   } catch (error) {
     gas = gasDefault;
@@ -51,7 +53,7 @@ export async function estimateGasPrice(
 
   let proposedGasPrice;
   try {
-    const result = (await axios.get(gasEstimateEndpoint)).data.result;
+    const { result } = (await axios.get(gasEstimateEndpoint)).data;
     proposedGasPrice = Number(result?.ProposeGasPrice) * 10 ** 9;
     logger.debug({ msg: 'Gas price', proposedGasPrice });
   } catch (error) {

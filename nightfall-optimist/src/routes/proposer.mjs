@@ -28,6 +28,7 @@ import {
   sendSignedTransaction,
 } from '../services/transaction-sign-send.mjs';
 import auth from '../utils/auth.mjs';
+import txsQueue from '../utils/transactions-queue.mjs';
 
 const router = express.Router();
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
@@ -297,6 +298,10 @@ router.get('/proposers', async (req, res, next) => {
  *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/de-register', auth, async (req, res, next) => {
+  const ethAddress = req.app.get('ethAddress');
+  const ethPrivateKey = req.app.get('ethPrivateKey');
+  const nonce = req.app.get('nonce');
+
   try {
     // Recreate Proposer contract
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
@@ -305,18 +310,35 @@ router.post('/de-register', auth, async (req, res, next) => {
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
 
     // Sign tx
-    const to = proposersContractInstance.options.address;
-    const signedTx = await createSignedTransaction(to, txDataToSign);
+    const proposersContractAddress = proposersContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      nonce,
+      ethPrivateKey,
+      ethAddress,
+      proposersContractAddress,
+      txDataToSign,
+    );
 
     // Submit tx and update db if tx is successful
-    sendSignedTransaction(signedTx).then(receipt => {
-      logger.debug({ msg: 'Proposer removed from contract', receipt });
-      deleteRegisteredProposerAddress(receipt.from)
-        .then(() => logger.debug({ msg: 'Proposer removed from db' }))
-        .catch(error => logger.warn(error));
+    // CHECK - does this go inside a Promise? see `nf3` eg `deregisterProposer`
+    // CHECK - is await for db correct?
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer removed from contract', receipt });
+
+        await deleteRegisteredProposerAddress(ethAddress);
+        logger.debug({ msg: 'Proposer removed from db' });
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
     });
 
-    res.json({ signedTx });
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
