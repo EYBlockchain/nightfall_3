@@ -9,7 +9,7 @@ import { UserFactory } from 'nightfall-sdk';
 import axios from 'axios';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { Web3Client } from '../../utils.mjs';
+import { isTransactionMined, Web3Client } from '../../utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -47,12 +47,6 @@ const getCurrentSprint = async () => {
   const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   return stateContractInstance.methods.currentSprint().call();
 };
-
-async function isTransactionMined(txHash) {
-  const receipt = await web3.eth.getTransactionReceipt(txHash);
-  if (receipt !== null) return;
-  await isTransactionMined(txHash);
-}
 
 describe('Basic Proposer tests', () => {
   let minimumStake;
@@ -169,7 +163,7 @@ describe('Basic Proposer tests', () => {
     const { transactionHash } = await bootProposer.updateProposer(currentUrl, stake, newFee);
 
     // Wait for transaction to be mined
-    await isTransactionMined(transactionHash);
+    await isTransactionMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -198,7 +192,7 @@ describe('Basic Proposer tests', () => {
     const { transactionHash } = await bootProposer.updateProposer(newUrl, stake, currentFee);
 
     // Wait for transaction to be mined
-    await isTransactionMined(transactionHash);
+    await isTransactionMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -230,7 +224,7 @@ describe('Basic Proposer tests', () => {
     );
 
     // Wait for transaction to be mined
-    await isTransactionMined(transactionHash);
+    await isTransactionMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);

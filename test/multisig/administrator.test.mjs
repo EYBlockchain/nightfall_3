@@ -7,7 +7,7 @@ import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import crypto from 'crypto';
 import axios from 'axios';
-import { Web3Client } from '../utils.mjs';
+import { isTransactionMined, Web3Client } from '../utils.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { NightfallMultiSig } from './nightfall-multisig.mjs';
 
@@ -25,6 +25,7 @@ const fee = '0';
 const stake = '1000000';
 const { optimistApiUrl } = environment;
 const web3Client = new Web3Client();
+const web3 = web3Client.getWeb3();
 
 const getContractInstance = async (contractName, nf3) => {
   const abi = await nf3.getContractAbi(contractName);
@@ -227,11 +228,13 @@ describe(`Testing Administrator`, () => {
       // Register proposer
       // CHECK Why other tests do not have this env check
       if (process.env.ENVIRONMENT !== 'aws') {
-        await axios.post(`${optimistApiUrl}/proposer/register`, {
+        const { data } = await axios.post(`${optimistApiUrl}/proposer/register`, {
           url: optimistApiUrl,
           stake,
           fee,
         });
+        // Wait for transaction to be mined
+        await isTransactionMined(data.transactionHash, web3);
       }
 
       // After registering
