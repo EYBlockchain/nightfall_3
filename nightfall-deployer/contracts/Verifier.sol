@@ -81,7 +81,11 @@ library Verifier {
         uint256[] memory _publicInputs,
         uint256[] memory _vk
     ) internal view returns (uint256) {
-        if ((_vk.length - 33) % 3 != 0 || (_vk.length - 33) / 3 != _publicInputs.length + 1) {
+        if (
+            _vk.length < 33 ||
+            (_vk.length - 33) != ((_publicInputs.length + 1) * 3) ||
+            (_vk.length - 33) % 3 != 0
+        ) {
             return 3;
         }
         VerifyingKey memory vk = verifyingKey(_vk, _publicInputs.length);

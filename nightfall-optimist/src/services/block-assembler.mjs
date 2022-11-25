@@ -174,14 +174,14 @@ export async function conditionalMakeBlock(proposer) {
 
         // check that the websocket exists (it should) and its readyState is OPEN
         // before sending Proposed block. If not wait until the proposer reconnects
-        let tryCount = 0;
+        let count = 0;
         while (!ws || ws.readyState !== WebSocket.OPEN) {
           await waitForTimeout(3000); // eslint-disable-line no-await-in-loop
 
           logger.warn(`Websocket to proposer is closed. Waiting for proposer to reconnect`);
 
           increaseProposerWsClosed();
-          if (tryCount++ > 100) {
+          if (count++ > 100) {
             increaseProposerWsFailed();
 
             logger.error(`Websocket to proposer has failed. Returning...`);

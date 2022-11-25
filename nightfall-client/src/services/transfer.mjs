@@ -138,7 +138,7 @@ async function transfer(transferParams) {
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
 
-    const optimisticTransferTransaction = new Transaction({
+    const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
@@ -156,17 +156,16 @@ async function transfer(transferParams) {
 
     logger.debug({
       msg: 'Client made transaction',
-      transaction: optimisticTransferTransaction,
+      transaction,
       offchain,
     });
 
-    return submitTransaction(
-      optimisticTransferTransaction,
-      commitmentsInfo,
-      rootKey,
-      shieldContractInstance,
-      offchain,
-    );
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
+      .encodeABI();
+    await submitTransaction(transaction, commitmentsInfo, rootKey, offchain);
+
+    return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
     throw new Error(error);

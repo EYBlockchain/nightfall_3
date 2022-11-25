@@ -112,11 +112,25 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
   if (index2 !== 0) {
     const transaction1Index = blockCommitments[index1].transactionIndex;
     const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
-    const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
+    let siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
+      .transactionHashSiblingPath;
+
+    if (siblingPath1 === undefined) {
+      await Block.calcTransactionHashesRoot(transactions);
+      siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
+        .transactionHashSiblingPath;
+    }
 
     const transaction2Index = blockCommitments[index2].transactionIndex;
     const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
-    const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
+    let siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
+      .transactionHashSiblingPath;
+
+    if (siblingPath2 === undefined) {
+      await Block.calcTransactionHashesRoot(transactions);
+      siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
+        .transactionHashSiblingPath;
+    }
 
     throw new BlockError(
       `The block check failed due to duplicate commitments in different transactions of the same block`,
@@ -126,15 +140,15 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
         transaction1: transactions[transaction1Index],
         transaction1Index,
         siblingPath1,
-        duplicateCommitment1Index: transactions[transaction1Index].commitments.find(
-          c => c === blockCommitments[index1].commitment,
+        duplicateCommitment1Index: transactions[transaction1Index].commitments.indexOf(
+          blockCommitments[index1].commitment,
         ),
         block2: block,
         transaction2: transactions[transaction2Index],
         transaction2Index,
         siblingPath2,
-        duplicateCommitment2Index: transactions[transaction2Index].commitments.find(
-          c => c === blockCommitments[index1].commitment,
+        duplicateCommitment2Index: transactions[transaction2Index].commitments.indexOf(
+          blockCommitments[index1].commitment,
         ),
       },
     );
@@ -173,11 +187,25 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
   if (index2 !== 0) {
     const transaction1Index = blockNullifiers[index1].transactionIndex;
     const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
-    const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
+    let siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
+      .transactionHashSiblingPath;
+
+    if (siblingPath1 === undefined) {
+      await Block.calcTransactionHashesRoot(transactions);
+      siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
+        .transactionHashSiblingPath;
+    }
 
     const transaction2Index = blockNullifiers[index2].transactionIndex;
     const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
-    const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
+    let siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
+      .transactionHashSiblingPath;
+
+    if (siblingPath2 === undefined) {
+      await Block.calcTransactionHashesRoot(transactions);
+      siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
+        .transactionHashSiblingPath;
+    }
 
     throw new BlockError(
       `The block check failed due to duplicate nullifiers in different transactions of the same block`,
@@ -187,15 +215,15 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
         transaction1: transactions[transaction1Index],
         transaction1Index,
         siblingPath1,
-        duplicateNullifier1Index: transactions[transaction1Index].nullifiers.find(
-          n => n === blockNullifiers[index1].nullifier,
+        duplicateNullifier1Index: transactions[transaction1Index].nullifiers.indexOf(
+          blockNullifiers[index1].nullifier,
         ),
         block2: block,
         transaction2: transactions[transaction2Index],
         transaction2Index,
         siblingPath2,
-        duplicateNullifier2Index: transactions[transaction2Index].nullifiers.find(
-          n => n === blockNullifiers[index1].nullifier,
+        duplicateNullifier2Index: transactions[transaction2Index].nullifiers.indexOf(
+          blockNullifiers[index1].nullifier,
         ),
       },
     );

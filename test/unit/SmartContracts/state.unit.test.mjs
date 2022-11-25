@@ -128,6 +128,11 @@ describe('State contract State functions', function () {
     await hardhat.network.provider.send('hardhat_reset');
   });
 
+  it('test', async function () {
+    const vkArray = await state.getVerificationKey(354);
+    console.log('VK ARRAY', vkArray);
+  });
+
   it('should set proposer', async function () {
     const newUrl = 'url';
     const newFee = 100;
@@ -707,7 +712,7 @@ describe('State contract State functions', function () {
         [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
         { value: 10 },
       ),
-    ).to.be.revertedWithCustomError(shield, 'DepositNotEscrowed');
+    ).to.be.revertedWithCustomError(state, 'DepositNotEscrowed');
   });
 
   it('should not proposeBlock: transaction hashes root', async function () {
@@ -754,7 +759,7 @@ describe('State contract State functions', function () {
         [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
         { value: 10 },
       ),
-    ).to.be.revertedWithCustomError(shield, 'InvalidTransactionHash');
+    ).to.be.revertedWithCustomError(state, 'InvalidTransactionHash');
   });
 
   it('should not proposeBlock: The block has an invalid size', async function () {

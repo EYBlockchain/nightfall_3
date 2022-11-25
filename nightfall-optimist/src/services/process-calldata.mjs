@@ -5,6 +5,7 @@ much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { decompressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { unpackBlockInfo } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
@@ -58,6 +59,14 @@ export async function getProposeBlockCalldata(eventData) {
       historicRootBlockNumberL2Packed,
     );
 
+    let proofDecompressed;
+    try {
+      proofDecompressed = decompressProof(proof);
+    } catch (error) {
+      logger.warn({ msg: 'The transaction has an invalid proof', proof });
+      proofDecompressed = Array(8).fill(ZERO);
+    }
+
     const transaction = {
       value,
       fee,
@@ -70,7 +79,7 @@ export async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       compressedSecrets,
-      proof: decompressProof(proof),
+      proof: proofDecompressed,
     };
     transaction.transactionHash = Transaction.calcHash(transaction);
     // note, this transaction is incomplete in that the 'fee' field is empty.
@@ -116,6 +125,14 @@ export async function getTransactionSubmittedCalldata(eventData) {
     historicRootBlockNumberL2Packed,
   );
 
+  let proofDecompressed;
+  try {
+    proofDecompressed = decompressProof(proof);
+  } catch (error) {
+    logger.warn({ msg: 'The transaction has an invalid proof', proof });
+    proofDecompressed = Array(8).fill(ZERO);
+  }
+
   const transaction = {
     value,
     fee,
@@ -128,7 +145,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
     commitments,
     nullifiers,
     compressedSecrets,
-    proof: decompressProof(proof),
+    proof: proofDecompressed,
   };
   transaction.transactionHash = Transaction.calcHash(transaction);
   return transaction;
