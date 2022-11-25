@@ -25,4 +25,4 @@ docker/volumes
 coverage
 coverage.json
 
-test.env
+multiproposer-test.env

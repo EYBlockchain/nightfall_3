@@ -202,16 +202,18 @@ The ping-pong test uses 2 users and 2 proposers by default to test during a peri
 - checks for the users layer 2 balances.
 - checks for the rotation, stake and statistics for the proposers.
 
-To configure the proposers there is a docker-compose file in `docker/docker-compose.proposers.yml`
-that define the containers `proposer_x`, `proposer_optimist_x` and `optimist_mongodb_x` for each
-proposer and the corresponding parameters for each container. You can add more proposers if needed
-configuring the parameters properly. The test detects the proposers parameters from the `yml` file
-and will run the test with the configured proposers.
+To configure the proposers and clients there is a `multiproposer-test.env` you can copy from
+`example.multiproposer-test.env` for the environment variables for docker-compose file in
+`docker/docker-compose.multiproposer-test.yml` that define the containers `proposer_x`,
+`proposer_optimist_x` and `optimist_mongodb_x` for each proposer and the corresponding parameters
+for each container. You can add more proposers if needed configuring the parameters properly. The
+same way you can configure different clients with `client_x` sharing the same database
+`optimist_mongodb_x` because they have access to different mongo collections.
 
 To test you can run in a terminal
 
 ```sh
-start-nightfall -g -d
+./bin/start-multiproposer-test-env -g
 ```
 
 And in another terminal once the Nightfall deployer has exited:

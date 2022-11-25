@@ -19,9 +19,9 @@ fi
 
 while [ -n "$1" ]; do
   case $1 in
-      -g  | --ganache )             FILE="-f docker/docker-compose.tests.yml -f docker/docker-compose.ganache.yml";
+      -g  | --ganache )             FILE="-f docker/docker-compose.multiproposer-test.yml -f docker/docker-compose.ganache.yml";
                                     ;;
-      -l  | --localhost )           FILE="-f docker/docker-compose.tests.yml -f docker/docker-compose.host.docker.internal.yml"
+      -l  | --localhost )           FILE="-f docker/docker-compose.multiproposer-test.yml -f docker/docker-compose.host.docker.internal.yml"
                                     ;;
       * )                           usage
                               exit 1
@@ -75,7 +75,7 @@ if [ ! -z "$DEV" ]; then
 fi
 
 if [ -f test.env ]; then
-  ENV='--env-file ./test.env'
+  ENV='--env-file ./multiproposer-test.env'
 fi
 
 docker-compose $ENV $FILE  -p 'nightfall_3' up -d --remove-orphans
