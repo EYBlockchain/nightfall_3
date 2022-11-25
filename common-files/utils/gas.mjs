@@ -12,18 +12,18 @@ import logger from './logger.mjs';
  *
  * @async
  * @function estimateGas
- * @param {string} tx A tx object
+ * @param {object} tx A tx object
  * @param {Web3} web3
  * @param {number} gasDefault Has default
  * @param {number} gasMultiplier Buffer to apply to estimated gas - Has default
  * @returns {Promise<number>}
  */
-export async function estimateGas(unsignedTx, web3, gasDefault = 4000000, gasMultiplier = 2) {
-  logger.debug({ msg: 'Estimate gas for unsigned Tx...', unsignedTx });
+export async function estimateGas(tx, web3, gasDefault = 4000000, gasMultiplier = 2) {
+  logger.debug({ msg: 'Estimate gas for transaction...', tx });
 
   let gas;
   try {
-    gas = await web3.eth.estimateGas(unsignedTx);
+    gas = await web3.eth.estimateGas(tx);
     logger.debug({ msg: 'Gas estimated at', gas });
   } catch (error) {
     gas = gasDefault;

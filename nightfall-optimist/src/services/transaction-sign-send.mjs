@@ -29,8 +29,11 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
 
   let signedTx;
   await nonceMutex.runExclusive(async () => {
-    // Estimate gas
-    const gas = await estimateGas(data, web3, GAS, GAS_MULTIPLIER);
+    // Update nonce if necessary
+    const _nonce = await getAddressNonce(from);
+    if (nonce < _nonce) {
+      nonce = _nonce;
+    }
     // Estimate gasPrice
     const gasPrice = await estimateGasPrice(
       GAS_ESTIMATE_ENDPOINT,
@@ -38,24 +41,23 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
       GAS_PRICE,
       GAS_PRICE_MULTIPLIER,
     );
-    // Update nonce if necessary
-    const _nonce = await getAddressNonce(from);
-    if (nonce < _nonce) {
-      nonce = _nonce;
-    }
-
+    // Eth tx
     const tx = {
       from,
       to,
       data,
       value,
-      gas,
       gasPrice,
       nonce,
     };
+    // Estimate gas
+    const gas = await estimateGas(tx, web3, GAS, GAS_MULTIPLIER);
+    tx.gas = gas;
+
     logger.debug({ msg: 'Sign transaction...', tx });
     signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
   });
+
   return signedTx;
 }
 
