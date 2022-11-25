@@ -10,7 +10,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
 import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
 
-const { signingKeys, addresses, fee } = config.TEST_OPTIONS;
+const { signingKeys, addresses } = config.TEST_OPTIONS;
 
 const { TX_WAIT = 1000 } = process.env;
 
