@@ -324,7 +324,7 @@ router.post('/de-register', auth, async (req, res, next) => {
     // Recreate Proposer contract
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
 
-    // Create unsigned tx for removing proposer from Proposers contract
+    // Remove proposer
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
 
     // Sign tx
@@ -804,13 +804,13 @@ router.get('/mempool', async (req, res, next) => {
 router.post('/encode', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
+  const nonce = req.app.get('nonce');
 
   const { transactions, block } = req.body;
 
   try {
     // Recreate State contract
     const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-    const stateContractAddress = await getContractAddress(STATE_CONTRACT_NAME);
 
     const latestTree = await getLatestTree();
     let currentLeafCount = latestTree.leafCount;
@@ -866,15 +866,17 @@ router.post('/encode', auth, async (req, res, next) => {
         newTransactions.map(t => Transaction.buildSolidityStruct(t)),
       )
       .encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: stateContractAddress,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
+
+    // Sign and submit tx
+    const stateContractAddress = stateContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      nonce,
+      ethPrivateKey,
+      ethAddress,
+      stateContractAddress,
+      txDataToSign,
+    );
+    const receipt = await sendSignedTransaction(signedTx);
 
     res.json({ receipt, block: newBlock, transactions: newTransactions });
   } catch (err) {
