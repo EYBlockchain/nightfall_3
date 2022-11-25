@@ -669,7 +669,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ping-pong-test.log &disown
+          ./bin/start-test-env -g &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -682,22 +682,6 @@ jobs:
       - name: Debug logs - after image builds
         if: always()
         run: cat ping-pong-test.log
-
-      - name: Start test env Containers
-        run: |
-          ./bin/start-test-env &> test-env.log &disown
-
-      - name: Debug test dev logs - after image builds
-        if: always()
-        run: cat test-env.log
-
-      - name: 'Check proposer liveliness'
-        uses: Wandalen/wretry.action@v1.0.11
-        with:
-          command: |
-            curl -i http://localhost:8093/healthcheck
-          attempt_limit: 10
-          attempt_delay: 30000
 
       - name: Run ping-pong test
         run: |
@@ -715,9 +699,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: ping-pong-test-logs
-          path: |
-            ./test-env.log
-            ./ping-pong-test.log
+          path: ./ping-pong-test.log
 
   test-gas:
     env:

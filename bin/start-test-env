@@ -1,20 +1,82 @@
 #! /bin/bash
 FILE=
-# shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose -f docker/docker-compose.tests.yml -p 'nightfall_3' down -t 1; exit 1" SIGHUP SIGINT SIGTERM
+ENV=
+VOLUME_LIST=$(docker volume ls -q)
 
-docker-compose -f docker/docker-compose.tests.yml -p 'nightfall_3' down
+usage()
+{
+  echo "Usage:"
+  echo "  -g or --ganache; for a ganache simulator"
+  echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
+  echo "  -d or --dev; to bind mount the filesystem and use it for development"
+}
+
+# select a Geth or Ganache client
+if [ -z "$1" ]; then
+  usage
+  exit 1
+fi
+
+while [ -n "$1" ]; do
+  case $1 in
+      -g  | --ganache )             FILE="-f docker/docker-compose.tests.yml -f docker/docker-compose.ganache.yml";
+                                    ;;
+      -l  | --localhost )           FILE="-f docker/docker-compose.tests.yml -f docker/docker-compose.host.docker.internal.yml"
+                                    ;;
+      * )                           usage
+                              exit 1
+    esac
+  shift
+done
+
+# FILE should always be set.  Asking for -s on its own makes no sense
+if [ -z "$FILE" ]; then
+  usage
+  exit 1
+fi
+# shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
+trap "docker-compose $FILE -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+
+docker-compose -f docker/docker-compose.tests.yml $FILE -p 'nightfall_3' down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
-echo -n 'Removing '
-docker volume rm nightfall_3_optimist_mongodb_1
-
-echo -n 'Removing '
-docker volume rm nightfall_3_optimist_mongodb_2
-
-# env file with the variables to pass to the docker-compose
-if [ -f test.env ]; then
-  FILE='--env-file ./test.env'
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_optimist_mongodb_1) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_optimist_mongodb_1
 fi
-docker-compose $FILE -f docker/docker-compose.tests.yml -p 'nightfall_3' up
-docker-compose -p 'nightfall_3' -f docker/docker-compose.tests.yml logs -f 
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_optimist_mongodb_2) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_optimist_mongodb_2
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_build
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth1-chain) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_geth1-chain
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth-miner-chain1) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_geth-miner-chain1
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag1) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_dag1
+fi
+
+if [ ! -z "$DEV" ]; then
+  cd common-files && npm ci && cd ..
+fi
+
+if [ -f test.env ]; then
+  ENV='--env-file ./test.env'
+fi
+
+docker-compose $ENV $FILE  -p 'nightfall_3' up -d --remove-orphans
+docker-compose -p 'nightfall_3' $FILE logs -f

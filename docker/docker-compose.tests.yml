@@ -1,6 +1,104 @@
 version: '3.5'
 # Use this script for running up 2 independent proposers with optimist and mongodb services.
 services:
+  # Temporary container to deploy contracts and circuits and populate volumes
+  deployer:
+    image: ghcr.io/eyblockchain/nightfall3-deployer:latest
+    build:
+      dockerfile: docker/deployer.Dockerfile
+      context: ..
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+      - type: bind
+        source: ../nightfall-deployer/contracts
+        target: /app/contracts/
+      - type: bind
+        source: ../nightfall-deployer/circuits
+        target: /app/circuits/
+      - type: bind
+        source: ../nightfall-deployer/src
+        target: /app/src/
+      - type: bind
+        source: ../common-files
+        target: /common-files
+      - type: bind
+        source: ../config/default.js
+        target: /app/config/default.js
+      - type: bind
+        source: ../nightfall-deployer/migrations
+        target: /app/migrations
+      - type: bind
+        source: ../nightfall-deployer/truffle-config.js
+        target: /app/truffle-config.js
+      - type: bind
+        source: ../nightfall-deployer/entrypoint.sh
+        target: /app/entrypoint.sh
+    networks:
+      - nightfall_network
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # startup routines will wait for a blockchain client to be reachable on this network
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
+      WHITELISTING: ${WHITELISTING}
+      UPGRADE: ${UPGRADE_CONTRACTS}
+      ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
+      TEST_SANCTIONS_CONTRACT: 'mock'
+
+  hosted-utils-api-server:
+    build:
+      dockerfile: docker/hosted-utils-api-server.Dockerfile
+      context: ..
+    depends_on:
+      - worker
+    ports:
+      - 8087:80
+    volumes:
+      - type: volume
+        source: proving_files
+        target: /app/public/
+
+  worker:
+    image: ghcr.io/eyblockchain/nightfall3-worker:latest
+    build:
+      dockerfile: docker/worker.Dockerfile
+      context: ..
+    volumes:
+      - type: volume
+        source: proving_files
+        target: /app/output/
+      - type: bind
+        source: ../common-files/test
+        target: /common-files/test
+      - type: bind
+        source: ../nightfall-deployer/circuits
+        target: /app/circuits/
+      - type: bind
+        source: ../worker/src
+        target: /app/src/
+      - type: bind
+        source: ../config/default.js
+        target: /app/config/default.js
+    depends_on:
+      - deployer
+      - rabbitmq
+    networks:
+      - nightfall_network
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      MPC: ${MPC}
+
   client_1:
     build:
       dockerfile: docker/client.Dockerfile
@@ -15,6 +113,8 @@ services:
     ports:
       - 8083:80
     depends_on:
+      - deployer
+      - worker
       - optimist_mongodb_1
       - client_rabbitmq_1
     environment:
@@ -48,6 +148,8 @@ services:
     ports:
       - 8084:80
     depends_on:
+      - deployer
+      - worker
       - optimist_mongodb_2
       - client_rabbitmq_2
     environment:
@@ -207,6 +309,14 @@ services:
         source: ../apps/proposer/src
         target: /app/src
 
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '15674:15674'
+      - '5672:5672'
+    networks:
+      - nightfall_network
+
   client_rabbitmq_1:
     image: rabbitmq
     container_name: client_rabbitmq_1
@@ -228,6 +338,7 @@ services:
 volumes:
   optimist_mongodb_1:
   optimist_mongodb_2:
+  proving_files:
   build:
 networks:
   nightfall_network:
