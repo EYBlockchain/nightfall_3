@@ -3,7 +3,6 @@ import config from 'config';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
-  getContractAddress,
   getContractInstance,
   waitForContract,
   web3,
