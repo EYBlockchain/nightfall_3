@@ -134,10 +134,8 @@ async function transform(transformParams) {
       circuitHash,
       commitments: commitmentInfo.newCommitments,
       nullifiers: commitmentInfo.nullifiers,
-      numberNullifiers: 6,
-      numberCommitments: 5,
-      // numberNullifiers: VK_IDS.transform.numberNullifiers,
-      // numberCommitments: VK_IDS.transform.numberCommitments,
+      numberNullifiers: VK_IDS.transform.numberNullifiers,
+      numberCommitments: VK_IDS.transform.numberCommitments,
       isOnlyL2: true,
     });
 
@@ -166,10 +164,8 @@ async function transform(transformParams) {
       privateData,
       commitmentInfo.roots,
       maticAddress,
-      6,
-      5,
-      // VK_IDS.transfer.numberNullifiers,
-      // VK_IDS.transfer.numberCommitments,
+      VK_IDS.transform.numberNullifiers,
+      VK_IDS.transform.numberCommitments,
     );
 
     logger.debug({
@@ -178,7 +174,7 @@ async function transform(transformParams) {
     });
 
     // call a worker to generate the proof
-    const res = await generateProof({ folderpath: 'tokenise', witness });
+    const res = await generateProof({ folderpath: 'transform', witness });
 
     logger.debug({
       msg: 'Received response from generate-proof',
@@ -195,11 +191,8 @@ async function transform(transformParams) {
       commitments: commitmentInfo.newCommitments,
       nullifiers: commitmentInfo.nullifiers,
       proof,
-
-      numberNullifiers: 6,
-      numberCommitments: 5,
-      // numberNullifiers: VK_IDS.transform.numberNullifiers,
-      // numberCommitments: VK_IDS.transform.numberCommitments,
+      numberNullifiers: VK_IDS.transform.numberNullifiers,
+      numberCommitments: VK_IDS.transform.numberCommitments,
       isOnlyL2: true,
     });
 
@@ -207,6 +200,10 @@ async function transform(transformParams) {
       msg: 'Client made transaction',
       transaction: JSON.stringify(optimisticTransformTransaction, null, 2),
     });
+
+    // if we added a zero commitment for the fee we need to remove it here
+    // otherwise submit transaction will try to nullify it
+    commitmentInfo.oldCommitments = commitmentInfo.oldCommitments.filter(c => c.hash !== 0);
 
     return submitTransaction(
       optimisticTransformTransaction,

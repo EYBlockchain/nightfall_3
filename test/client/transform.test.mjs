@@ -14,7 +14,7 @@ import gen from 'general-number';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { pendingCommitmentCount, Web3Client } from '../utils.mjs';
 
-// const { expect } = chai;
+const { expect } = chai;
 const { generalise } = gen;
 const { BN128_GROUP_ORDER } = constants;
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
@@ -63,12 +63,12 @@ async function emptyL2(user) {
   }
 }
 
-// async function getL2tokenBalance(nf3User, tokenAddress, tokenId = 0) {
-//   const balances = await nf3User.getLayer2Balances();
-//   const hexTokenAddress = generalise(tokenAddress).hex();
-//   const hexTokenId = generalise(tokenId).hex(32);
-//   return balances[hexTokenAddress]?.find(e => e.tokenId === hexTokenId)?.balance || 0;
-// }
+async function getL2tokenBalance(nf3User, tokenAddress, tokenId = 0) {
+  const balances = await nf3User.getLayer2Balances();
+  const hexTokenAddress = generalise(tokenAddress).hex();
+  const hexTokenId = generalise(tokenId).hex(32);
+  return balances[hexTokenAddress]?.find(e => e.tokenId === hexTokenId)?.balance || 0;
+}
 
 describe('Manufacture Service Tests', () => {
   before(async () => {
@@ -128,6 +128,7 @@ describe('Manufacture Service Tests', () => {
       ];
 
       logger.debug({ balances: await nf3Sender.getLayer2Balances() });
+      logger.debug({ commitments: await nf3Sender.getLayer2Commitments( [L2TokenAddress], false) });
 
       logger.debug('depositing...');
       await nf3Sender.deposit(feeTokenAddress, 'ERC20', 10, 0, 0);
@@ -150,6 +151,9 @@ describe('Manufacture Service Tests', () => {
         token.commitmentValue = commitment.value;
       }
 
+      const beforeInput = await getL2tokenBalance(nf3Sender, L2TokenAddress, inputTokens[0].id);
+      const outputBalanceBefore = await getL2tokenBalance(nf3Sender, L2TokenAddress, outputTokens[0].id);
+
       await axios.post(`${environment.clientApiUrl}/transform`, {
         rootKey: nf3Sender.zkpKeys.rootKey,
         inputTokens: inputTokens.map(({ id, address, value, commitmentHash }) => ({
@@ -160,12 +164,13 @@ describe('Manufacture Service Tests', () => {
         })),
         outputTokens,
         fee,
-        compressedZkpPublicKey: nf3Receiver.zkpKeys.compressedZkpPublicKey,
       });
 
       await emptyL2(nf3Sender);
 
       logger.debug({ balances: await nf3Sender.getLayer2Balances() });
+      logger.debug({ commitments: await nf3Sender.getLayer2Commitments( [L2TokenAddress], false) });
+
     });
   });
 });

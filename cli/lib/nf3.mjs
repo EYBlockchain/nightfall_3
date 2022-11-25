@@ -515,6 +515,42 @@ class Nf3 {
   }
 
   /**
+    Transform a set of input L2 tokens into a set of output L2 tokens 
+    @method
+    @async
+
+    @param {Object[]} inputTokens
+    @param {number} inputTokens[].id - the token id
+    @param {string} inputTokens[].address - the L2 address
+    @param {number} inputTokens[].value - this needs to be less than the total total value of the commitment but is ignored otherwise
+    @param {number} inputTokens[].salt
+    @param {string} inputTokens[].commitmentHash - the hash of the input commitment
+
+    @param {Object[]} outputTokens
+    @param {number} outputTokens[].id - the token id
+    @param {string} outputTokens[].address - the L2 address
+    @param {number} outputTokens[].value - this needs to be less than the total total value of the commitment but is ignored otherwise
+    @param {number} outputTokens[].salt
+
+    @param {number} fee - The amount (Wei) to pay a proposer for the transaction
+
+    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    */
+  async transform(inputTokens, outputTokens, fee = this.defaultFeeMatic) {
+    const res = await axios.post(`${this.clientBaseUrl}/transform`, {
+      rootKey: this.zkpKeys.rootKey,
+      inputTokens,
+      outputTokens,
+      fee,
+    });
+
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
+    return res.status;
+  }
+
+  /**
     Deposits a Layer 1 token into Layer 2, so that it can be transacted
     privately.
     @method
