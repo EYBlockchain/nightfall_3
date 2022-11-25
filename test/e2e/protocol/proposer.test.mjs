@@ -48,6 +48,12 @@ const getCurrentSprint = async () => {
   return stateContractInstance.methods.currentSprint().call();
 };
 
+async function isTransactionMined(txHash) {
+  const receipt = await web3.eth.getTransactionReceipt(txHash);
+  if (receipt !== null) return;
+  await isTransactionMined(txHash);
+}
+
 describe('Basic Proposer tests', () => {
   let minimumStake;
   let erc20Address;
@@ -160,7 +166,10 @@ describe('Basic Proposer tests', () => {
     const currentUrl = proposersBeforeUpdate[0].url; // Need to pass current value
     const stake = 0; // Contract adds given value to existing amount
     const newFee = fee;
-    await bootProposer.updateProposer(currentUrl, stake, newFee);
+    const { transactionHash } = await bootProposer.updateProposer(currentUrl, stake, newFee);
+
+    // Wait for transaction to be mined
+    await isTransactionMined(transactionHash);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -186,7 +195,10 @@ describe('Basic Proposer tests', () => {
     const newUrl = testProposersUrl[1];
     const stake = 0; // Contract adds given value to existing amount
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    await bootProposer.updateProposer(newUrl, stake, currentFee);
+    const { transactionHash } = await bootProposer.updateProposer(newUrl, stake, currentFee);
+
+    // Wait for transaction to be mined
+    await isTransactionMined(transactionHash);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -211,7 +223,14 @@ describe('Basic Proposer tests', () => {
     // Update proposer url
     const currentUrl = proposersBeforeUpdate[0].url;
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    await bootProposer.updateProposer(currentUrl, minimumStake, currentFee);
+    const { transactionHash } = await bootProposer.updateProposer(
+      currentUrl,
+      minimumStake,
+      currentFee,
+    );
+
+    // Wait for transaction to be mined
+    await isTransactionMined(transactionHash);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);

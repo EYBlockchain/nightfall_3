@@ -1066,6 +1066,7 @@ class Nf3 {
       fee,
     });
     logger.debug(`Proposer /update response ${res}`);
+    return res?.data;
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
     //     try {
