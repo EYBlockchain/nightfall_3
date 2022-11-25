@@ -47,7 +47,11 @@ const checkCircuitsOutput = async () => {
             ? `${circuits.find(c => filename.includes(c))}/`
             : '';
 
+          if (!fs.existsSync(`${outputPath}/${circuit}`)) {
+            fs.mkdirSync(`${outputPath}/${circuit}`);
+          }
           if (extension === 'wasm') circuit = `${circuit}${circuit.slice(0, -1)}_js/`;
+
           if (!fs.existsSync(`${outputPath}/${circuit}`)) {
             fs.mkdirSync(`${outputPath}/${circuit}`);
           }
