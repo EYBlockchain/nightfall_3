@@ -192,7 +192,6 @@ template Transform(N,C) {
       var valuePrivateBits[254] = Num2Bits(254)(commitmentsValues[i]);
       valuePrivateBits[253] === 0;
       valuePrivateBits[252] === 0;
-      log(commitments[i]);
       
       // Check the output commitments
       var checkOutputCommitment = VerifyCommitmentsOptional(1)(

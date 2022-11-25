@@ -169,8 +169,7 @@ export const computeCircuitInputs = (
     logger.debug({ inputTokens, outputTokens });
     for (let i = 0; i < numberNullifiers - 2; i++) {
       if (inputTokens.length > 0) {
-        const current = inputTokens.pop();
-        logger.debug({ current });
+        const current = inputTokens.shift();
         const inputErcAddress = current.address;
         const inputTokenId = current.id;
         let [packedErcAddress, remainder] = packErcAddress(inputErcAddress, inputTokenId);
@@ -186,8 +185,7 @@ export const computeCircuitInputs = (
 
     for (let i = 0; i < numberCommitments - 1; i++) {
       if (outputTokens.length > 0) {
-        const current = outputTokens.pop();
-        logger.debug({ current });
+        const current = outputTokens.shift();
         const outputErcAddress = current.address;
         const outputTokenId = current.id;
         let [packedErcAddress, remainder] = packErcAddress(outputErcAddress, outputTokenId);
