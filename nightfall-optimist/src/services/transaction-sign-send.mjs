@@ -30,7 +30,7 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
   let signedTx;
   await nonceMutex.runExclusive(async () => {
     // Estimate gas
-    const gas = await estimateGas(to, data, web3, GAS, GAS_MULTIPLIER);
+    const gas = await estimateGas(data, web3, GAS, GAS_MULTIPLIER);
     // Estimate gasPrice
     const gasPrice = await estimateGasPrice(
       GAS_ESTIMATE_ENDPOINT,
