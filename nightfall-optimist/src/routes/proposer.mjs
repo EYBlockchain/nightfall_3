@@ -182,6 +182,7 @@ router.post('/register', auth, async (req, res, next) => {
 router.post('/update', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
+  const nonce = req.app.get('nonce');
 
   const { url = '', stake = 0, fee = 0 } = req.body;
 
@@ -198,19 +199,36 @@ router.post('/update', auth, async (req, res, next) => {
     const txDataToSign = await proposersContractInstance.methods
       .updateProposer(url, fee)
       .encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: proposersContractInstance.options.address,
-      data: txDataToSign,
-      value: stake,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    res.json({ receipt });
 
-    // Update db
-    await setRegisteredProposerAddress(ethAddress, url); // save the registration address and URL
+    // Sign tx
+    const proposersContractAddress = proposersContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      nonce,
+      ethPrivateKey,
+      ethAddress,
+      proposersContractAddress,
+      txDataToSign,
+      stake,
+    );
+
+    // Submit tx and update db if tx is successful
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer updated', receipt });
+
+        await setRegisteredProposerAddress(ethAddress, url);
+        logger.debug({ msg: 'Proposer data updated in db' });
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
