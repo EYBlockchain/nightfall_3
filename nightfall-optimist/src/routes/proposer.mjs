@@ -391,6 +391,7 @@ router.post('/de-register', auth, async (req, res, next) => {
 router.post('/withdrawStake', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
+  const nonce = req.app.get('nonce');
 
   try {
     // Recreate Proposer contract
@@ -398,17 +399,32 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
 
     // Withdraw proposer stake
     const txDataToSign = await proposersContractInstance.methods.withdrawStake().encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: proposersContractInstance.options.address,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
 
-    res.json({ receipt });
+    // Sign tx
+    const proposersContractAddress = proposersContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      nonce,
+      ethPrivateKey,
+      ethAddress,
+      proposersContractAddress,
+      txDataToSign,
+    );
+
+    // Submit tx
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer stake withdrawn', receipt });
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (error) {
     next(error);
   }
