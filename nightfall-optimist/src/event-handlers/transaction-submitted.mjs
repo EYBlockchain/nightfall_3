@@ -11,7 +11,7 @@ import { getTransactionSubmittedCalldata } from '../services/process-calldata.mj
  * This handler runs whenever a new transaction is submitted to the blockchain
  */
 async function transactionSubmittedEventHandler(eventParams) {
-  const { offchain = false, fromBlockProposer, blockNumberL2 = -1, ...data } = eventParams;
+  const { offchain = false, fromBlockProposer = false, blockNumberL2 = -1, ...data } = eventParams;
   let transaction;
   if (offchain) {
     transaction = data;
