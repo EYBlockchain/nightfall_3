@@ -124,19 +124,19 @@ template Transform(N,C) {
     (nullifierKeys, zkpPublicKeys) = CalculateKeys()(rootKey);
 
     // Check that the fee nullfiers are valid
-    // var checkFeeNullifier = VerifyNullifiers(2)(
-    //   feeAddress, 
-    //   0, 
-    //   nullifierKeys, 
-    //   zkpPublicKeys, 
-    //   [nullifiers[0], nullifiers[1]], 
-    //   [roots[0], roots[1]], 
-    //   [nullifiersValues[0], nullifiersValues[1]], 
-    //   [nullifiersSalts[0], nullifiersSalts[1]], 
-    //   [paths[0],paths[1] ], 
-    //   [orders[0], orders[1]]
-    // );
-    // checkFeeNullifier === 1;
+    var checkFeeNullifier = VerifyNullifiersOptional(2)(
+      feeAddress, 
+      0, 
+      nullifierKeys, 
+      zkpPublicKeys, 
+      [nullifiers[0], nullifiers[1]], 
+      [roots[0], roots[1]], 
+      [nullifiersValues[0], nullifiersValues[1]], 
+      [nullifiersSalts[0], nullifiersSalts[1]], 
+      [paths[0],paths[1] ], 
+      [orders[0], orders[1]]
+    );
+    checkFeeNullifier === 1;
 
     // Check the L2 nullifiers
     for (var i = 2; i < N; i++) {
@@ -192,6 +192,7 @@ template Transform(N,C) {
       var valuePrivateBits[254] = Num2Bits(254)(commitmentsValues[i]);
       valuePrivateBits[253] === 0;
       valuePrivateBits[252] === 0;
+      log(commitments[i]);
       
       // Check the output commitments
       var checkOutputCommitment = VerifyCommitmentsOptional(1)(
