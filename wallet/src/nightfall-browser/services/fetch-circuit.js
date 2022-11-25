@@ -15,14 +15,14 @@ export async function fetchAWSfiles(Bucket, Key) {
 }
 
 export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS: { s3Bucket } }) {
-  let { wasm, zkey, hash } = circuit; // keys path in bucket
-  const { wasmh = null, zkeyh = null, hashh = null } = circuit; // keys hash in bucket
+  let { wasm, zk, hash } = circuit; // keys path in bucket
+  const { wasmh = null, zkh = null, hashh = null } = circuit; // keys hash in bucket
   if (isLocalRun) {
     wasm = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}.wasm`)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
-    zkey = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}.zkey`)
+    zk = await fetch(`${utilApiServerUrl}/${circuit.name}/${circuit.name}.zkey`)
       .then(response => response.body.getReader())
       .then(parseData)
       .then(mergeUint8Array);
@@ -33,8 +33,8 @@ export async function fetchCircuit(circuit, { utilApiServerUrl, isLocalRun, AWS:
       );
   } else {
     wasm = await fetchAWSfiles(s3Bucket, wasm);
-    zkey = await fetchAWSfiles(s3Bucket, zkey);
+    zk = await fetchAWSfiles(s3Bucket, zk);
     hash = await fetchAWSfiles(s3Bucket, hash);
   }
-  return { wasm, wasmh, zkey, zkeyh, hash, hashh };
+  return { wasm, wasmh, zk, zkh, hash, hashh };
 }
