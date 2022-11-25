@@ -6,10 +6,13 @@ much cheaper, although the offchain part is more complex.
 import config from 'config';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
 import Transaction from '@polygon-nightfall/common-files/classes/transaction.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { decompressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import { unpackBlockInfo } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
 const { SIGNATURES } = config;
+const { ZERO } = constants;
 
 async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -53,6 +56,14 @@ async function getProposeBlockCalldata(eventData) {
       historicRootBlockNumberL2Packed,
     );
 
+    let proofDecompressed;
+    try {
+      proofDecompressed = decompressProof(proof);
+    } catch (error) {
+      logger.warn({ msg: 'The transaction has an invalid proof', proof });
+      proofDecompressed = Array(8).fill(ZERO);
+    }
+
     const transaction = {
       value,
       fee,
@@ -65,7 +76,7 @@ async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       compressedSecrets,
-      proof: decompressProof(proof),
+      proof: proofDecompressed,
     };
     // note, this transaction is incomplete in that the 'fee' field is empty.
     // that shouldn't matter as it's not needed.

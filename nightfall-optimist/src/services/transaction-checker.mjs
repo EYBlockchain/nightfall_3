@@ -126,6 +126,8 @@ async function verifyProof(transaction) {
   const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
   const vkArray = await stateInstance.methods.getVerificationKey(transaction.circuitHash).call();
 
+  if (vkArray.length < 33) throw new TransactionError('The proof did not verify', 2);
+
   const historicRoots = await Promise.all(
     Array.from({ length: transaction.nullifiers.length }, () => 0).map((value, index) => {
       if (transaction.nullifiers[index] === ZERO) return { root: ZERO };
