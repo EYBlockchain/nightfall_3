@@ -12,7 +12,7 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
   let proof;
   let publicInputs;
 
-  let dummyInputs = {
+  const dummyInputs = {
     value: '0',
     fee: '1',
     circuitHash: '440846153647',

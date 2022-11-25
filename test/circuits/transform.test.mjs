@@ -1,6 +1,7 @@
 import path from 'path';
 import circomTester from 'circom_tester';
 import { fileURLToPath } from 'url';
+import * as snarkjs from 'snarkjs';
 // import { generalise } from 'general-number';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -315,5 +316,14 @@ describe('Test tokenise circuit', function () {
   it('should verify a valid transform', async () => {
     const w = await circuit.calculateWitness(witnessInput);
     await circuit.assertOut(w, {});
+    // await snarkjs.wtns.calculate(
+    //   witnessInput,
+    //   `./test/circuits/transform.wasm`,
+    //   `./test/circuits/transform_witness`,
+    // );
+    // const { proof, publicSignals } = await snarkjs.groth16.prove(
+    //   `./test/circuits/transform.zkey`,
+    //   `./test/circuits/transform_witness`,
+    // );
   });
 });
