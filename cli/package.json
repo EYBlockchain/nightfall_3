@@ -17,6 +17,7 @@
     "clear": "^0.1.0",
     "cli-table": "^0.3.6",
     "commander": "^8.2.0",
+    "config": "^3.3.8",
     "cors": "^2.8.5",
     "express": "^4.17.3",
     "figlet": "^1.5.2",
