@@ -124,7 +124,7 @@ export async function simpleUserTest(
         valueToTransfer,
         tokenId,
         userAdressTo,
-        fee,
+        0,
       );
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
