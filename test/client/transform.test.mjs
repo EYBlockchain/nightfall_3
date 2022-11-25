@@ -129,19 +129,17 @@ describe('Manufacture Service Tests', () => {
 
       logger.debug({ balances: await nf3Sender.getLayer2Balances() });
 
-      // for (let i = 0; i <= inputTokens.length; i++) {
-      //   logger.debug('depositing...');
-      //   await nf3Sender.deposit(feeTokenAddress, 'ERC20', 10, 0, 0);
-      // }
-      // await emptyL2(nf3Sender);
+      logger.debug('depositing...');
+      await nf3Sender.deposit(feeTokenAddress, 'ERC20', 10, 0, 0);
+      await emptyL2(nf3Sender);
 
-      // logger.debug({ balances: await nf3Sender.getLayer2Balances() });
+      for (const token of inputTokens) {
+        logger.debug('tokenising...');
+        await nf3Sender.tokenise(token.address, token.value, token.id, token.salt.hex(), 1);
+        await emptyL2(nf3Sender);
+      }
 
-      // for (const token of inputTokens) {
-      //   logger.debug('tokenising...');
-      //   await nf3Sender.tokenise(token.address, token.value, token.id, token.salt.hex(), 1);
-      // }
-      // await emptyL2(nf3Sender);
+      logger.debug({ balances: await nf3Sender.getLayer2Balances() });
 
       for (const token of inputTokens) {
         const commitment = (

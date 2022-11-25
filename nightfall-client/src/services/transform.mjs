@@ -61,7 +61,7 @@ async function transform(transformParams) {
       preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
     });
     feeCi.roots.push(0);
-    feeCi.localSiblingPaths.push(Array(32).fill(0));
+    feeCi.localSiblingPaths.push(Array(33).fill(0));
     feeCi.leafIndices.push(0);
   }
 
