@@ -5,7 +5,6 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
   getContractInstance,
   waitForContract,
-  web3,
 } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
@@ -72,6 +71,7 @@ export function setProposer(p) {
 router.post('/register', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
+  const nonce = req.app.get('nonce');
 
   const { url = '', stake = 0, fee = 0 } = req.body;
 
@@ -95,20 +95,35 @@ router.post('/register', auth, async (req, res, next) => {
     const isRegistered = proposerAddresses.includes(ethAddress);
 
     let txDataToSign = '';
-    let receipt;
+    let signedTx;
     if (!isRegistered) {
       logger.debug('Register new proposer...');
       txDataToSign = await proposersContractInstance.methods.registerProposer(url, fee).encodeABI();
-      const tx = {
-        from: ethAddress,
-        to: proposersContractInstance.options.address,
-        data: txDataToSign,
-        value: stake,
-        gas: 8000000,
-      };
-      const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-      receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-      logger.debug(`Transaction receipt ${receipt}`);
+
+      // Sign tx
+      const proposersContractAddress = proposersContractInstance.options.address;
+      signedTx = await createSignedTransaction(
+        nonce,
+        ethPrivateKey,
+        ethAddress,
+        proposersContractAddress,
+        txDataToSign,
+        stake,
+      );
+
+      // Submit tx and update db if tx is successful
+      // CHECK - I think the code beyond L132 can be removed (?) then db op could be moved here
+      txsQueue.push(async () => {
+        try {
+          const receipt = await sendSignedTransaction(signedTx);
+          logger.debug({ msg: 'Proposer registered', receipt });
+        } catch (err) {
+          logger.error({
+            msg: 'Something went wrong',
+            err,
+          });
+        }
+      });
     } else {
       logger.warn('Proposer was already registered, registration attempt ignored!');
     }
@@ -138,7 +153,13 @@ router.post('/register', auth, async (req, res, next) => {
         }
       }
     }
-    res.json({ receipt });
+
+    if (signedTx) {
+      const { transactionHash } = signedTx;
+      res.json({ transactionHash });
+    } else {
+      res.json({ signedTx });
+    }
   } catch (err) {
     next(err);
   }
