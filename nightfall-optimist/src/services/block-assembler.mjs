@@ -9,7 +9,7 @@ import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { waitForContract, web3 } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   removeTransactionsFromMemPool,
   removeCommitmentsFromMemPool,
@@ -23,10 +23,8 @@ import { Transaction } from '../classes/index.mjs';
 //   increaseProposerWsClosed,
 //   increaseProposerBlockNotSent,
 // } from './debug-counters.mjs';
-
-const { ENVIRONMENTS } = config;
-const environment = ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const ethPrivateKey = environment.PROPOSER_KEY;
+import { createSignedTransaction, sendSignedTransaction } from './transaction-sign-send.mjs';
+import txsQueue from '../utils/transactions-queue.mjs';
 
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS } = config;
 const { STATE_CONTRACT_NAME, ZERO } = constants;
@@ -75,8 +73,11 @@ async function makeBlock(proposer, transactions) {
  * stop making blocks. It is called from the 'main()' routine to start it, and
  * should not be called from anywhere else because we only want one instance ever
  */
-export async function conditionalMakeBlock(proposer) {
+export async function conditionalMakeBlock(args) {
+  const { proposer, ethAddress, ethPrivateKey, nonce } = args;
+
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+  const stateContractAddress = stateContractInstance.options.address;
 
   /*
     if we are the current proposer, and there are enough transactions waiting
@@ -175,18 +176,44 @@ export async function conditionalMakeBlock(proposer) {
             transactions.map(t => Transaction.buildSolidityStruct(t)),
           )
           .encodeABI();
-        const { address } = web3.eth.accounts.privateKeyToAccount(ethPrivateKey);
+
+        // Sign tx
         const blockStake = await stateContractInstance.methods.getBlockStake().call();
-        const tx = {
-          from: address,
-          to: stateContractInstance.options.address,
-          data: txDataToSign,
-          value: blockStake,
-          gas: 8000000,
-        };
-        const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-        const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-        logger.debug(`Transaction receipt ${receipt}`);
+        const signedTx = await createSignedTransaction(
+          nonce,
+          ethPrivateKey,
+          ethAddress,
+          stateContractAddress,
+          txDataToSign,
+          blockStake,
+        );
+
+        // Submit tx and update db if tx is successful
+        // CHECK - db ops
+        txsQueue.push(async () => {
+          try {
+            const receipt = await sendSignedTransaction(signedTx);
+            logger.debug({ msg: 'Block proposed', receipt });
+
+            await removeTransactionsFromMemPool(block.transactionHashes);
+            logger.debug({ msg: 'Txs marked as removed from mempool in db' });
+
+            await removeCommitmentsFromMemPool(
+              transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
+            );
+            logger.debug({ msg: 'Commitments marked as removed from mempool in db' });
+
+            await removeNullifiersFromMemPool(
+              transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
+            );
+            logger.debug({ msg: 'Nullifiers marked as removed from mempool in db' });
+          } catch (err) {
+            logger.error({
+              msg: 'Something went wrong',
+              err,
+            });
+          }
+        });
 
         // check that the websocket exists (it should) and its readyState is OPEN
         // before sending Proposed block. If not wait until the proposer reconnects
@@ -221,13 +248,14 @@ export async function conditionalMakeBlock(proposer) {
         // }
         // remove the transactions from the mempool so we don't keep making new
         // blocks with them
-        await removeTransactionsFromMemPool(block.transactionHashes);
-        await removeCommitmentsFromMemPool(
-          transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
-        );
-        await removeNullifiersFromMemPool(
-          transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
-        );
+
+        // await removeTransactionsFromMemPool(block.transactionHashes);
+        // await removeCommitmentsFromMemPool(
+        //   transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
+        // );
+        // await removeNullifiersFromMemPool(
+        //   transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
+        // );
       }
     }
   }
