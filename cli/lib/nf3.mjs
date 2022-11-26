@@ -552,9 +552,6 @@ class Nf3 {
     const feeL1 = feePaidL2 ? 0 : fee;
     const feeL2 = feePaidL2 ? fee : 0;
 
-    console.log(
-      `client: ${this.clientBaseUrl}/deposit compressedZkpPublicKey: ${this.zkpKeys.compressedZkpPublicKey} ercAddress: ${ercAddress}`,
-    );
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
