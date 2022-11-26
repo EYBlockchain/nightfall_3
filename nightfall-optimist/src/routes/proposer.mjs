@@ -319,7 +319,7 @@ router.get('/proposers', async (req, res, next) => {
  *      - Proposer
  *      summary: Deregister proposer.
  *      description: De-register a proposer - removes proposer from Proposers contract.
- *      Proposers can de-register even when they are the current proposer.
+ *        Proposers can de-register even when they are the current proposer.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -392,7 +392,7 @@ router.post('/de-register', auth, async (req, res, next) => {
  *      - Proposer
  *      summary: Withdraw stake.
  *      description: Withdraw stake for a de-registered proposer.
- *      Can only be called after the cooling off period.
+ *        Can only be called after the cooling off period.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -632,9 +632,9 @@ router.get('/withdraw', auth, async (req, res, next) => {
  *     - Proposer
  *     summary: Initiate withdrawal.
  *     description: Request payment for new blocks successfully proposed or challenged.
- *     Also unlocks any locked stake after the cooling off period.
- *     Then /withdraw can be called to recover the money.
- *     Can only be called after the cooling off period.
+ *       Also unlocks any locked stake after the cooling off period.
+ *       Then /withdraw can be called to recover the money.
+ *       Can only be called after the cooling off period.
  *     parameters:
  *        - in: header
  *          name: api_key
@@ -912,8 +912,8 @@ router.post('/encode', auth, async (req, res, next) => {
  *     - Proposer
  *     summary: Add an off-chain transaction to mempool.
  *     description: Request to add an off-chain transaction from a client to this proposer mempool, for a fee.
- *     This is only available for L2 transfers amd withdrawals.
- *     Client must cover the proposer minimum fee.
+ *       This is only available for L2 transfers amd withdrawals.
+ *       Client must cover the proposer minimum fee.
  *     responses:
  *       200:
  *         $ref: '#/components/responses/Success'
