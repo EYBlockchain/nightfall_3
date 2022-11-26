@@ -74,7 +74,7 @@ if [ ! -z "$DEV" ]; then
   cd common-files && npm ci && cd ..
 fi
 
-if [ -f test.env ]; then
+if [ -f multiproposer-test.env ]; then
   ENV='--env-file ./multiproposer-test.env'
 fi
 

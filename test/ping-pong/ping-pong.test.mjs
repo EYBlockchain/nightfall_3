@@ -100,6 +100,8 @@ const waitForCurrentProposer = async () => {
 const initializeUsersParameters = async () => {
   const signingKeysUsers = [signingKeys.user1, signingKeys.user2];
   const mnemonicsUsers = [mnemonics.user1, mnemonics.user2];
+  console.log('SIGNING KEYS: ', signingKeysUsers);
+  console.log('MNEMONICS USERS: ', mnemonicsUsers);
 
   const environmentUser1 = { ...environment };
   environmentUser1.clientApiUrl = clientApiUrls.client1 || environmentUser1.clientApiUrl;
@@ -119,6 +121,12 @@ const initializeUsersParameters = async () => {
     nf3Users[i] = new Nf3(signingKeysUsers[i], environment);
     // eslint-disable-next-line no-await-in-loop
     await nf3Users[i].init(mnemonicsUsers[i]);
+    console.log(
+      'USER ETH ADDRESS: ',
+      nf3Users[i].ethereumAddress,
+      // eslint-disable-next-line no-await-in-loop
+      await nf3Users[i].getL1Balance(nf3Users[i].ethereumAddress),
+    );
   }
 
   // add addresses of the users
@@ -259,14 +267,17 @@ describe('Ping-pong tests', () => {
   });
 
   it('Runs ping-pong tests', async () => {
-    const optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers from docker files
-    console.log(optimistUrls);
-    const proposersStats = await getInitialProposerStats(optimistUrls);
+    let proposersStats;
+    let optimistUrls;
+    if (process.env.OPTIMIST1_API_URL) {
+      optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers from docker files
+      console.log(optimistUrls);
+      proposersStats = await getInitialProposerStats(optimistUrls);
+      blockStake = await nf3User.getBlockStake();
+      console.log('BLOCKSTAKE: ', blockStake);
+    }
     // wait for the current proposer to be ready
     await waitForCurrentProposer();
-
-    blockStake = await nf3User.getBlockStake();
-    console.log('BLOCKSTAKE: ', blockStake);
 
     // set user parameters
     await initializeUsersParameters();
@@ -291,8 +302,10 @@ describe('Ping-pong tests', () => {
       );
     }
 
-    // user that will rotate proposers and get block statistics
-    proposerTest(optimistUrls, proposersStats, nf3User);
+    if (process.env.OPTIMIST1_API_URL) {
+      // user that will rotate proposers and get block statistics
+      proposerTest(optimistUrls, proposersStats, nf3User);
+    }
 
     // wait for all the user transfers to be completed
     await waitForTransfersCompleted();
@@ -300,8 +313,10 @@ describe('Ping-pong tests', () => {
     // wait for balances update
     await waitForBalanceUpdate(usersStats);
 
-    // check final stats are ok
-    await finalStatsCheck(optimistUrls, proposersStats);
+    if (process.env.OPTIMIST1_API_URL) {
+      // check final stats are ok
+      await finalStatsCheck(optimistUrls, proposersStats);
+    }
   });
 
   after(async () => {

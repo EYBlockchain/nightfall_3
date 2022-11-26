@@ -414,6 +414,7 @@ Set the block stake parameter for the proposers
 */
 const setBlockStake = async amount => {
   let blockStake = await shieldContract.methods.getBlockStake().call();
+  console.log('BLOCK STAKE GET: ', blockStake);
   if (Number(blockStake) !== amount) {
     const transactions = await nfMultiSig.setBlockStake(
       amount,
@@ -437,6 +438,7 @@ const setBlockStake = async amount => {
 
 const setMinimumStake = async amount => {
   let minimumStake = await shieldContract.methods.getMinimumStake().call();
+  console.log('MINIMUM STAKE GET: ', minimumStake);
   if (Number(minimumStake) !== amount) {
     const transactions = await nfMultiSig.setMinimumStake(
       amount,
@@ -462,28 +464,35 @@ const setMinimumStake = async amount => {
 Set parameters config for the test
 */
 export async function setParametersConfig(nf3User) {
+  console.log('Getting State contract instance...');
   stateContract = await nf3User.getContractInstance('State');
+  console.log('Getting Proposers contract instance...');
   const proposersContract = await nf3User.getContractInstance('Proposers');
+  console.log('Getting Challenges contract instance...');
   const challengesContract = await nf3User.getContractInstance('Challenges');
+  console.log('Getting Shield contract instance...');
   shieldContract = await nf3User.getContractInstance('Shield');
-  multisigContract = await nf3User.getContractInstance('SimpleMultiSig');
+  if (process.env.OPTIMIST1_API_URL) {
+    console.log('Getting Multisig contract instance...');
+    multisigContract = await nf3User.getContractInstance('SimpleMultiSig');
 
-  nfMultiSig = new NightfallMultiSig(
-    nf3User.web3,
-    {
-      state: stateContract,
-      proposers: proposersContract,
-      shield: shieldContract,
-      challenges: challengesContract,
-      multisig: multisigContract,
-    },
-    2,
-    await nf3User.web3.eth.getChainId(),
-    WEB3_OPTIONS.gas,
-  );
+    nfMultiSig = new NightfallMultiSig(
+      nf3User.web3,
+      {
+        state: stateContract,
+        proposers: proposersContract,
+        shield: shieldContract,
+        challenges: challengesContract,
+        multisig: multisigContract,
+      },
+      2,
+      await nf3User.web3.eth.getChainId(),
+      WEB3_OPTIONS.gas,
+    );
 
-  await setBlockStake(amountBlockStake);
-  await setMinimumStake(amountMinimumStake);
+    await setBlockStake(amountBlockStake);
+    await setMinimumStake(amountMinimumStake);
+  }
 }
 
 /**
