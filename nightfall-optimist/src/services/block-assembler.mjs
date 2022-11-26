@@ -169,7 +169,7 @@ export async function conditionalMakeBlock(args) {
           blockSize,
         });
 
-        // propose this block to the Shield contract here
+        // Propose this block to the State contract
         const txDataToSign = await stateContractInstance.methods
           .proposeBlock(
             Block.buildSolidityStruct(block),
