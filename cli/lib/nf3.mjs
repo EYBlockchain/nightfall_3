@@ -1,6 +1,7 @@
 /* eslint class-methods-use-this: "off" */
 
 import axios from 'axios';
+import config from 'config';
 import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
@@ -31,6 +32,8 @@ import {
 const userQueue = new Queue({ autostart: true, concurrency: 1 });
 const challengerQueue = new Queue({ autostart: true, concurrency: 1 });
 const liquidityProviderQueue = new Queue({ autostart: true, concurrency: 1 });
+const environmentConfig =
+  config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 /**
 @class
@@ -106,10 +109,8 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
-    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
-      .createHash('sha256')
-      .update(environment.PROPOSER_KEY)
-      .digest('hex');
+    axios.defaults.headers.common['X-APP-TOKEN'] =
+      environmentConfig.AUTH_TOKEN || '0ce4fee0-c765-43d6-973c-d404bfdde2e9';
   }
 
   /**
@@ -118,11 +119,8 @@ class Nf3 {
    * with a wrong API key
    */
   // eslint-disable-next-line class-methods-use-this
-  setApiKey(key) {
-    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
-      .createHash('sha256')
-      .update(key)
-      .digest('hex');
+  async setApiKey(key) {
+    axios.defaults.headers.common['X-APP-TOKEN'] = key;
   }
 
   /**

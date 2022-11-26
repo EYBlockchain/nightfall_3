@@ -5,7 +5,6 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
-import crypto from 'crypto';
 import axios from 'axios';
 import { isTransactionMined, Web3Client } from '../utils.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
@@ -45,12 +44,8 @@ describe(`Testing Administrator`, () => {
 
   before(async () => {
     await nf3User.init(mnemonics.user1);
-    const ethPrivateKey = environment.PROPOSER_KEY;
 
-    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
-      .createHash('sha256')
-      .update(ethPrivateKey)
-      .digest('hex');
+    axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
 
     stateContract = await getContractInstance('State', nf3User);
     proposersContract = await getContractInstance('Proposers', nf3User);

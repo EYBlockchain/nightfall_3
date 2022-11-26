@@ -3,7 +3,6 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import crypto from 'crypto';
 import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
@@ -43,12 +42,7 @@ const { optimistApiUrl } = environment;
 */
 describe('General Circuit Test', () => {
   before(async () => {
-    const ethPrivateKey = environment.PROPOSER_KEY;
-
-    axios.defaults.headers.common['X-APP-TOKEN'] = crypto
-      .createHash('sha256')
-      .update(ethPrivateKey)
-      .digest('hex');
+    axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
 
     // We must set the URL from the point of view of the client container
     const { data } = await axios.post(`${optimistApiUrl}/proposer/register`, {
