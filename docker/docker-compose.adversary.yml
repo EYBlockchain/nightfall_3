@@ -1,7 +1,7 @@
 version: '3.5'
 # Use this script for making an adversary service
 services:
-  adversary:
+  lazy-optimist:
     build:
       dockerfile: docker/optimist.Dockerfile
       context: ..
@@ -51,9 +51,9 @@ services:
     networks:
       - nightfall_network
     ports:
-      - 8083:80
+      - 8093:80
       # websocket port for adversary is on localhost:8082
-      - 8084:8080
+      - 8094:8080
     volumes:
       - type: volume
         source: build
