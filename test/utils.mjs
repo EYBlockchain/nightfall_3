@@ -526,5 +526,5 @@ export const emptyL2 = async ({ nf3User, web3, logs }) => {
 export async function isTransactionMined(txHash, web3) {
   const receipt = await web3.eth.getTransactionReceipt(txHash);
   if (receipt !== null) return;
-  await isTransactionMined(txHash);
+  await isTransactionMined(txHash, web3);
 }
