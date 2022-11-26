@@ -10,6 +10,14 @@ const { GAS, GAS_MULTIPLIER, GAS_ESTIMATE_ENDPOINT, GAS_PRICE, GAS_PRICE_MULTIPL
 
 const nonceMutex = new Mutex();
 
+const isListening = async () => {
+  try {
+    await web3.eth.net.isListening();
+  } catch (error) {
+    throw new Error('Web3 ws is disconnected, try again later');
+  }
+};
+
 export async function getAddressNonce(ethAddress) {
   let nonce;
   try {
@@ -23,8 +31,11 @@ export async function getAddressNonce(ethAddress) {
   return nonce;
 }
 
-// TODO check web3 ws is opened
+// TODO document
 export async function createSignedTransaction(nonce, ethPrivateKey, from, to, data, value = 0) {
+  // Check if web3 ws is available
+  await isListening();
+
   logger.debug({ msg: 'Create transaction object...' });
 
   let signedTx;
