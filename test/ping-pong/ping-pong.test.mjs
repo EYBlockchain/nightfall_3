@@ -95,6 +95,7 @@ const waitForCurrentProposer = async () => {
     // eslint-disable-next-line no-await-in-loop
     currentProposer = await getCurrentProposer();
   }
+  console.log('CURRENT PROPOSER: ', currentProposer);
 };
 
 const initializeUsersParameters = async () => {
@@ -118,7 +119,6 @@ const initializeUsersParameters = async () => {
   console.log('ENVIRONMENT FOR USER1: ', environmentUser1);
   console.log('ENVIRONMENT FOR USER2: ', environmentUser2);
   for (let i = 0; i < signingKeysUsers.length; i++) {
-    nf3Users[i] = new Nf3(signingKeysUsers[i], environment);
     // eslint-disable-next-line no-await-in-loop
     await nf3Users[i].init(mnemonicsUsers[i]);
     console.log(
