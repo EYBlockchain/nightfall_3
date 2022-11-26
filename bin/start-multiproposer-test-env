@@ -37,7 +37,7 @@ fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
 trap "docker-compose $FILE -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker/docker-compose.tests.yml $FILE -p 'nightfall_3' down --remove-orphans
+docker-compose -f docker/docker-compose.multiproposer-test.yml $FILE -p 'nightfall_3' down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_optimist_mongodb_1) ]]; then
