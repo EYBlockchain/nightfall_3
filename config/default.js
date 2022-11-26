@@ -171,8 +171,8 @@ module.exports = {
         : 'http://localhost:8092',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
-      adversarialClientApiUrl: 'http://localhost:8083',
-      adversarialClientWsUrl: 'ws://localhost:8084',
+      adversarialClientApiUrl: 'http://localhost:8093',
+      adversarialClientWsUrl: 'ws://localhost:8094',
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT

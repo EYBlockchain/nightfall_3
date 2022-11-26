@@ -221,6 +221,15 @@ export class Web3Client {
       if (timeout === 0) throw new Error('Timeout in waitForEvent');
     }
 
+    if (expectedEvents[0] === 'blockProposed') {
+      while (
+        eventLogs[0]?.eventName !== expectedEvents[0] &&
+        eventLogs[0]?.eventName === 'NewCurrentProposer'
+      ) {
+        eventLogs.shift();
+      }
+    }
+
     while (eventLogs[0]?.eventName !== expectedEvents[0]) {
       await waitForTimeout(3000);
     }

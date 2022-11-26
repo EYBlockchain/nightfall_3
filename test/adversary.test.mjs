@@ -28,7 +28,7 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const web3Client = new Web3Client();
 
 let stateAddress;
-const eventLogs = [];
+let eventLogs = [];
 
 const challengeSelectors = {
   challengeRoot: '0x25009307',
@@ -186,6 +186,7 @@ describe('Testing with an adversary', () => {
       });
 
     stateAddress = await nf3User.stateContractAddress;
+    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
     await makeBlockNow();
@@ -220,7 +221,6 @@ describe('Testing with an adversary', () => {
 
   beforeEach(async () => {
     currentRollbacks = rollbackCount;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
   describe('Testing bad transactions', () => {
@@ -473,7 +473,7 @@ describe('Testing with an adversary', () => {
 
     after(async () => {
       await makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      ({ eventLogs } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
     });
   });
 
