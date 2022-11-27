@@ -128,11 +128,6 @@ describe('State contract State functions', function () {
     await hardhat.network.provider.send('hardhat_reset');
   });
 
-  it('test', async function () {
-    const vkArray = await state.getVerificationKey(354);
-    console.log('VK ARRAY', vkArray);
-  });
-
   it('should set proposer', async function () {
     const newUrl = 'url';
     const newFee = 100;
