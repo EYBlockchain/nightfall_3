@@ -269,7 +269,7 @@ describe('Ping-pong tests', () => {
   it('Runs ping-pong tests', async () => {
     let proposersStats;
     let optimistUrls;
-    if (process.env.OPTIMIST1_API_URL) {
+    if (environment.web3WsUrl.includes('localhost')) {
       optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers from docker files
       console.log(optimistUrls);
       proposersStats = await getInitialProposerStats(optimistUrls);
@@ -302,7 +302,7 @@ describe('Ping-pong tests', () => {
       );
     }
 
-    if (process.env.OPTIMIST1_API_URL) {
+    if (environment.web3WsUrl.includes('localhost')) {
       // user that will rotate proposers and get block statistics
       proposerTest(optimistUrls, proposersStats, nf3User);
     }
@@ -313,7 +313,7 @@ describe('Ping-pong tests', () => {
     // wait for balances update
     await waitForBalanceUpdate(usersStats);
 
-    if (process.env.OPTIMIST1_API_URL) {
+    if (environment.web3WsUrl.includes('localhost')) {
       // check final stats are ok
       await finalStatsCheck(optimistUrls, proposersStats);
     }
