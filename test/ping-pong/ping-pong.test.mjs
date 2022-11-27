@@ -121,6 +121,8 @@ const initializeUsersParameters = async () => {
   for (let i = 0; i < signingKeysUsers.length; i++) {
     // eslint-disable-next-line no-await-in-loop
     await nf3Users[i].init(mnemonicsUsers[i]);
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise(resolving => setTimeout(resolving, 5000));
     console.log(
       'USER ETH ADDRESS: ',
       nf3Users[i].ethereumAddress,
