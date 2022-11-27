@@ -119,16 +119,13 @@ const initializeUsersParameters = async () => {
   console.log('ENVIRONMENT FOR USER1: ', environmentUser1);
   console.log('ENVIRONMENT FOR USER2: ', environmentUser2);
   for (let i = 0; i < signingKeysUsers.length; i++) {
+    console.log(`Initializing user with menmonic ${mnemonicsUsers[i]}`);
     // eslint-disable-next-line no-await-in-loop
     await nf3Users[i].init(mnemonicsUsers[i]);
+    console.log(`USER ETH ADDRESS: ${nf3Users[i].ethereumAddress}`);
     // eslint-disable-next-line no-await-in-loop
-    await new Promise(resolving => setTimeout(resolving, 5000));
-    console.log(
-      'USER ETH ADDRESS: ',
-      nf3Users[i].ethereumAddress,
-      // eslint-disable-next-line no-await-in-loop
-      await nf3Users[i].getL1Balance(nf3Users[i].ethereumAddress),
-    );
+    const balance = await nf3Users[i].getL1Balance(nf3Users[i].ethereumAddress);
+    console.log(`BALANCE user ${nf3Users[i].ethereumAddress}: ${balance}`);
   }
 
   // add addresses of the users
