@@ -11,7 +11,6 @@ import Transaction from '../../common-files/classes/transaction';
 import { decompressProof } from '../../common-files/utils/curve-maths/curves';
 
 const { SIGNATURES } = global.config;
-const { ZERO } = global.nightfallConstants;
 
 async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
@@ -55,13 +54,6 @@ async function getProposeBlockCalldata(eventData) {
       historicRootBlockNumberL2Packed,
     );
 
-    let proofDecompressed;
-    try {
-      proofDecompressed = decompressProof(proof);
-    } catch (error) {
-      proofDecompressed = Array(8).fill(ZERO);
-    }
-
     const transaction = {
       value,
       fee,
@@ -74,7 +66,7 @@ async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       compressedSecrets,
-      proof: proofDecompressed,
+      proof: decompressProof(proof),
     };
     // note, this transaction is incomplete in that the 'fee' field is empty.
     // that shouldn't matter as it's not needed.
