@@ -683,6 +683,22 @@ jobs:
         if: always()
         run: cat ping-pong-test.log
 
+      - name: 'Check client1 liveliness'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8083/healthcheck
+          attempt_limit: 10
+          attempt_delay: 30000
+
+      - name: 'Check client2 liveliness'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8084/healthcheck
+          attempt_limit: 10
+          attempt_delay: 30000
+
       - name: Run ping-pong test
         run: |
           npm ci
