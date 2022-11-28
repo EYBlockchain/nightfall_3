@@ -29,7 +29,7 @@ const { STATE_CONTRACT_NAME, ZERO } = constants;
 
 let ws;
 let makeNow = false;
-let lastBlockTimestamp = new Date().now;
+let lastBlockTimestamp = new Date().getTime();
 
 export function setBlockAssembledWebSocketConnection(_ws) {
   ws = _ws;
@@ -98,6 +98,7 @@ export async function conditionalMakeBlock(proposer) {
 
     // Calculate the total number of bytes that are in the mempool
     const totalBytes = mempoolTransactionSizes.reduce((acc, curr) => acc + curr, 0);
+    const currentTime = new Date().getTime();
 
     if (totalBytes) {
       logger.info({
@@ -120,14 +121,11 @@ export async function conditionalMakeBlock(proposer) {
         }
       }
 
-      const currentTime = new Date().now;
       if (
         transactionBatches.length === 0 &&
-        mempoolTransactionSizes.length &&
         (makeNow || currentTime - lastBlockTimestamp >= PROPOSER_MAX_BLOCK_PERIOD_MILIS)
       ) {
         transactionBatches.push(mempoolTransactionSizes.length);
-        lastBlockTimestamp = currentTime;
       }
     }
 
@@ -137,6 +135,7 @@ export async function conditionalMakeBlock(proposer) {
     });
 
     if (transactionBatches.length >= 1) {
+      lastBlockTimestamp = currentTime;
       // TODO set an upper limit to numberOfProposableL2Blocks because a proposer
       /*
         might not be able to submit a large number of blocks before the next proposer becomes
