@@ -14,8 +14,6 @@ import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/util
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import crypto from 'crypto';
 
-const web3 = Web3.connection();
-
 const fsPromises = fs.promises;
 
 /**
