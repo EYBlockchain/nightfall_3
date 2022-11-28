@@ -17,7 +17,7 @@ wallet/tests/e2e/screenshots
 typechain-types/
 artifacts/
 cache/
-config/geth/data
+config/geth/data/
 backup
 docker/volumes
 
