@@ -146,7 +146,7 @@ services:
     networks:
       - nightfall_network
     ports:
-      - 8084:80
+      - 8086:80
     depends_on:
       - deployer
       - worker

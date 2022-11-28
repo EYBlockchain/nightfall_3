@@ -691,11 +691,11 @@ jobs:
           attempt_limit: 10
           attempt_delay: 30000
 
-      - name: 'Check client2 liveliness'
+cache      - name: 'Check client2 liveliness'
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
-            curl -i http://localhost:8084/healthcheck
+            curl -i http://localhost:8086/healthcheck
           attempt_limit: 10
           attempt_delay: 30000
 

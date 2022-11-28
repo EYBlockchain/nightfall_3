@@ -239,7 +239,7 @@ module.exports = {
     ROTATE_PROPOSER_BLOCKS: 20,
     clientApiUrls: {
       client1: process.env.CLIENT1_API_URL || 'http://localhost:8083',
-      client2: process.env.CLIENT2_API_URL || 'http://localhost:8084',
+      client2: process.env.CLIENT2_API_URL || 'http://localhost:8086',
     },
     optimistApiUrls: {
       optimist1: process.env.OPTIMIST1_API_URL || 'http://localhost:9091',
