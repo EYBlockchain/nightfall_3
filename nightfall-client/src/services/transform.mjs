@@ -51,14 +51,14 @@ async function transform(transformParams) {
   });
 
   while (feeCi.nullifiers.length < 2) {
-    feeCi.nullifiers.push({
+    feeCi.nullifiers.push(generalise({
       hash: 0,
       preimage: { nullifierKey: 0, commitment: 0 },
-    });
-    feeCi.oldCommitments.push({
+    }));
+    feeCi.oldCommitments.push(generalise({
       hash: 0,
       preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
-    });
+    }));
     feeCi.roots.push(0);
     feeCi.localSiblingPaths.push(Array(33).fill(0));
     feeCi.leafIndices.push(0);
