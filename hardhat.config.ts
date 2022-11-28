@@ -8,7 +8,6 @@ import 'solidity-coverage';
 import 'hardhat-gas-reporter';
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "hardhat",
   solidity: {
     version: '0.8.17',
     settings: {
@@ -16,12 +15,6 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
-    },
-  },
-  networks: {
-    hardhat: {
-      chainId: 1337,
-      allowUnlimitedContractSize: true
     },
   },
   gasReporter: { enabled: true },

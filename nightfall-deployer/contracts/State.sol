@@ -562,10 +562,6 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         emit NewCurrentProposer(currentProposer.thisAddress);
     }
 
-    function getSpanProposersList() public view returns (address[] memory) {
-        return spanProposersList;
-    }
-
     function calculateNextProposers(address addressBestPeer) internal {
         ProposerSet memory peer;
         uint256 totalEffectiveWeight = 0;
