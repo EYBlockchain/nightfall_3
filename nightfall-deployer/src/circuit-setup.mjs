@@ -169,26 +169,7 @@ async function setupCircuits() {
       // on networks like Edge, there's no account management so we need to encodeABI()
       // since methods like send() don't work
       if (config.ETH_PRIVATE_KEY) {
-        let gas;
-        const fromAddress = await web3.eth.accounts.privateKeyToAccount(config.ETH_PRIVATE_KEY);
-        const tx = {
-          from: fromAddress.address,
-          to: keyRegistry.options.address,
-          data: call.encodeABI(),
-          gasPrice: config.WEB3_OPTIONS.gasPrice,
-        };
-        try {
-          gas = await web3.eth.estimateGas(tx);
-          logger.debug({ msg: 'Gas estimated at', gas });
-        } catch (error) {
-          gas = config.WEB3_OPTIONS.gas;
-          logger.warn({ msg: 'Gas estimation failed, use default', gas });
-        }
-
-        tx.gas = Math.ceil(gas * 2); // 50% seems a more than reasonable buffer
-
-        const signedTx = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
-        await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        await Web3.submitRawTransaction(call.endcodeABI(), keyRegistry.options.address);
       } else {
         call.send();
       }
@@ -209,26 +190,7 @@ async function setupCircuits() {
       // on networks like Edge, there's no account management so we need to encodeABI()
       // since methods like send() don't work
       if (config.ETH_PRIVATE_KEY) {
-        let gas;
-        const fromAddress = await web3.eth.accounts.privateKeyToAccount(config.ETH_PRIVATE_KEY);
-        const tx = {
-          from: fromAddress.address,
-          to: keyRegistry.options.address,
-          data: call.encodeABI(),
-          gasPrice: config.WEB3_OPTIONS.gasPrice,
-        };
-        try {
-          gas = await web3.eth.estimateGas(tx);
-          logger.debug({ msg: 'Gas estimated at', gas });
-        } catch (error) {
-          gas = config.WEB3_OPTIONS.gas;
-          logger.warn({ msg: 'Gas estimation failed, use default', gas });
-        }
-
-        tx.gas = Math.ceil(gas * 2); // 50% seems a more than reasonable buffer
-
-        const signedTx = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
-        await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        await Web3.submitRawTransaction(call.endcodeABI(), keyRegistry.options.address);
       } else {
         call.send();
       }
