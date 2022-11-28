@@ -1134,16 +1134,15 @@ describe('State contract State functions', function () {
     await state.setCurrentProposer(addr1.address);
     await state.setNumProposers(2);
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.withdrawTransaction),
-      true,
       false,
     );
     await setTransactionInfo(
-      shield.address,
+      state.address,
       calculateTransactionHash(transactionsCreated.depositTransaction),
       true,
-      false,
+      34,
     );
     await state.proposeBlock(
       transactionsCreated.block,
