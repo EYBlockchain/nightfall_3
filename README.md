@@ -210,17 +210,31 @@ for each container. You can add more proposers if needed configuring the paramet
 same way you can configure different clients with `client_x` sharing the same database
 `optimist_mongodb_x` because they have access to different mongo collections.
 
-To test you can run in a terminal
+To test in local you can run in a terminal
 
 ```sh
 ./bin/start-multiproposer-test-env -g
 ```
 
-And in another terminal once the Nightfall deployer has exited:
+that will start all the containers for the test, and in another terminal once the Nightfall deployer
+has exited and proposers are ready:
 
 ```sh
 npm run ping-pong
 ```
+
+The test will run by default with accounts for user1 and user2 from the config. To run the test with
+specific accounts for user1 and user2 you have to create a `multiproposer-test.env` file in the root
+folder from a copy of `example.multiproposer-test.env`. Then you should fill the information of:
+
+- CLIENT1_API_URL, CLIENT2_API_URL with the clients that user1 and user2 will connect as client API
+  to generate the transactions.
+- USER1_KEY, USER2_KEY with the private keys of the users
+- USER1_MNEMONIC and USER2_MNEMONIC with the mnemonics of the users
+- USER1_COMPRESSED_ZKP_PUBLIC_KEY and USER2_COMPRESSED_ZKP_PUBLIC_KEY with the compressed zkp public
+  keys of the users.
+- BLOCKCHAIN_WS_HOST with the blockchain you want to test When you execute the command
+  `npm run ping-pong` the specific environment variables will be load for this test.
 
 ## Using a Geth private blockchain
 
