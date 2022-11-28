@@ -1,7 +1,6 @@
 import path from 'path';
 import circomTester from 'circom_tester';
 import { fileURLToPath } from 'url';
-import * as snarkjs from 'snarkjs';
 // import { generalise } from 'general-number';
 
 const __filename = fileURLToPath(import.meta.url);

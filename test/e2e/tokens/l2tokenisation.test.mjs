@@ -23,8 +23,8 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const { BN128_GROUP_ORDER, SHIFT } = constants;
 
 const {
-  transferValue,
-  tokenConfigs: { tokenType, tokenId },
+  // transferValue,
+  // tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;

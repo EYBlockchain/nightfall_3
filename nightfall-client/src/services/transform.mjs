@@ -51,14 +51,18 @@ async function transform(transformParams) {
   });
 
   while (feeCi.nullifiers.length < 2) {
-    feeCi.nullifiers.push(generalise({
-      hash: 0,
-      preimage: { nullifierKey: 0, commitment: 0 },
-    }));
-    feeCi.oldCommitments.push(generalise({
-      hash: 0,
-      preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
-    }));
+    feeCi.nullifiers.push(
+      generalise({
+        hash: 0,
+        preimage: { nullifierKey: 0, commitment: 0 },
+      }),
+    );
+    feeCi.oldCommitments.push(
+      generalise({
+        hash: 0,
+        preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
+      }),
+    );
     feeCi.roots.push(0);
     feeCi.localSiblingPaths.push(Array(33).fill(0));
     feeCi.leafIndices.push(0);
@@ -182,10 +186,6 @@ async function transform(transformParams) {
 
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
-
-    // if we added a zero commitment for the fee we need to remove it here
-    // otherwise submit transaction will try to nullify it
-    // commitmentInfo.oldCommitments = commitmentInfo.oldCommitments.filter(c => c.hash !== 0);
 
     const optimisticTransformTransaction = new Transaction({
       fee,
