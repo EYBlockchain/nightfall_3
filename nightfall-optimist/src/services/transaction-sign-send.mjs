@@ -20,16 +20,12 @@ const isWeb3Listening = async () => {
 };
 
 export async function getAddressNonce(ethAddress) {
-  let nonce;
   try {
-    nonce = await web3.eth.getTransactionCount(ethAddress);
-  } catch (err) {
-    logger.error({
-      msg: 'Error obtaining address nonce',
-      err,
-    });
+    const nonce = await web3.eth.getTransactionCount(ethAddress);
+    return nonce;
+  } catch (error) {
+    throw new Error(error.message);
   }
-  return nonce;
 }
 
 // TODO document
@@ -39,6 +35,7 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
   if (result) {
     logger.debug('Create transaction object...');
 
+    let tx;
     let signedTx;
     await nonceMutex.runExclusive(async () => {
       // Update nonce if necessary
@@ -54,7 +51,7 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
         GAS_PRICE_MULTIPLIER,
       );
       // Eth tx
-      const tx = {
+      tx = {
         from,
         to,
         data,
@@ -70,7 +67,7 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
       signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
     });
 
-    return signedTx;
+    return { tx, signedTx };
   }
 
   throw new Error('Web3 ws not listening, try again later');
