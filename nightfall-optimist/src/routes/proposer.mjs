@@ -238,7 +238,7 @@ router.post('/update', auth, async (req, res, next) => {
         logger.debug({ msg: 'Proposer updated', receipt });
 
         await setRegisteredProposerAddress(ethAddress, url);
-        logger.debug({ msg: 'Proposer data updated in db' });
+        logger.debug('Proposer data updated in db');
       } catch (err) {
         logger.error({
           msg: 'Something went wrong',
@@ -366,7 +366,7 @@ router.post('/de-register', auth, async (req, res, next) => {
         logger.debug({ msg: 'Proposer removed from contract', receipt });
 
         await deleteRegisteredProposerAddress(ethAddress);
-        logger.debug({ msg: 'Proposer removed from db' });
+        logger.debug('Proposer removed from db');
       } catch (err) {
         logger.error({
           msg: 'Something went wrong',

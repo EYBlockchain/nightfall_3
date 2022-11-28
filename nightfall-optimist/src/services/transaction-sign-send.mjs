@@ -36,7 +36,7 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
   // Check if web3 ws is available
   await isListening();
 
-  logger.debug({ msg: 'Create transaction object...' });
+  logger.debug('Create transaction object...');
 
   let signedTx;
   await nonceMutex.runExclusive(async () => {

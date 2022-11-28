@@ -196,17 +196,17 @@ export async function conditionalMakeBlock(args) {
             logger.debug({ msg: 'Block proposed', receipt });
 
             await removeTransactionsFromMemPool(block.transactionHashes);
-            logger.debug({ msg: 'Txs marked as removed from mempool in db' });
+            logger.debug('Txs marked as removed from mempool in db');
 
             await removeCommitmentsFromMemPool(
               transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
             );
-            logger.debug({ msg: 'Commitments marked as removed from mempool in db' });
+            logger.debug('Commitments marked as removed from mempool in db');
 
             await removeNullifiersFromMemPool(
               transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
             );
-            logger.debug({ msg: 'Nullifiers marked as removed from mempool in db' });
+            logger.debug('Nullifiers marked as removed from mempool in db');
           } catch (err) {
             logger.error({
               msg: 'Something went wrong',
