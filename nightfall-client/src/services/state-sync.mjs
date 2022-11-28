@@ -4,29 +4,18 @@ Resync code so that restarted client instances are able to read past events and 
 their local commitments databsae.
 */
 
-import axios from 'axios';
-import fs from 'fs';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
-import downloadFile from '@polygon-nightfall/common-files/utils/httputils.mjs';
+import { checkContractsABI } from '@polygon-nightfall/common-files/utils/sync-files.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { unpauseQueue } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 
-const { STATE_CONTRACT_NAME, CHALLENGES_CONTRACT_NAME } = constants;
-const {
-  MONGO_URL,
-  COMMITMENTS_DB,
-  COMMITMENTS_COLLECTION,
-  CONTRACT_ARTIFACTS,
-  STATE_GENESIS_BLOCK,
-  DEPLOYMENT_FILES_URL: { DEFAULT_CONTRACT_FILES_URL },
-} = config;
-
-const { ETH_NETWORK, CONTRACT_FILES_URL } = process.env;
+const { STATE_CONTRACT_NAME } = constants;
+const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_GENESIS_BLOCK } = config;
 
 export const syncState = async (
   fromBlock = 'earliest',
@@ -74,52 +63,6 @@ const genGetCommitments = async (query = {}, proj = {}) => {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).find(query, proj).toArray();
-};
-
-const checkContractsABI = async () => {
-  let env;
-  switch (ETH_NETWORK) {
-    case 'goerli':
-      env = 'testnet';
-      break;
-    case 'mainnet':
-      env = 'production';
-      break;
-    default:
-      env = '';
-  }
-
-  if (env) {
-    const baseUrl = CONTRACT_FILES_URL
-      ? `${CONTRACT_FILES_URL}`
-      : `${DEFAULT_CONTRACT_FILES_URL}/${env}`;
-    const url = `${baseUrl}/build/hash.txt`;
-
-    const res = await axios.get(url); // get all json abi contracts
-    const files = res.data.split('\n');
-
-    if (!fs.existsSync(`${CONTRACT_ARTIFACTS}`)) {
-      fs.mkdirSync(`${CONTRACT_ARTIFACTS}`);
-    }
-
-    logger.info(`Downloading contracts from ${url}...`);
-
-    await Promise.all(
-      files.map(async f => {
-        if (f) {
-          try {
-            await downloadFile(
-              `${baseUrl}/build/contracts/${f.split('  ')[1]}`,
-              `${CONTRACT_ARTIFACTS}/${f.split('  ')[1]}`,
-            );
-          } catch (e) {
-            console.error(`ERROR downloading ${f.split('  ')[1]}`);
-          }
-        }
-      }),
-    );
-    logger.info(`Contracts downloaded`);
-  }
 };
 
 // eslint-disable-next-line import/prefer-default-export

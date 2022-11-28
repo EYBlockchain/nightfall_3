@@ -130,9 +130,10 @@ module.exports = {
     MPC_PARAMS_URL:
       'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
   },
+  // 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/testnet/proving_files',
   DEPLOYMENT_FILES_URL: {
-    DEFAULT_CIRCUIT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
-    DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
+    CIRCUIT_FILES_URL: process.env.CIRCUIT_FILES_URL,
+    CONTRACT_FILES_URL: process.env.CONTRACT_FILES_URL,
   },
   PROPOSER_MAX_BLOCK_PERIOD_MILIS: Number(process.env.PROPOSER_MAX_BLOCK_PERIOD_MILIS) || 0,
   ENVIRONMENTS: {
