@@ -79,8 +79,11 @@ async function rollbackEventHandler(data) {
       }
     }
     try {
-      checkDuplicateCommitmentsWithinBlock(blocksToBeDeleted[i], blockTransactions);
-      checkDuplicateNullifiersWithinBlock(blocksToBeDeleted[i], blockTransactions);
+      // eslint-disable-next-line no-await-in-loop
+      await checkDuplicateCommitmentsWithinBlock(blocksToBeDeleted[i], blockTransactions);
+
+      // eslint-disable-next-line no-await-in-loop
+      await checkDuplicateNullifiersWithinBlock(blocksToBeDeleted[i], blockTransactions);
     } catch (error) {
       const { transaction2: transaction } = error.metadata; // TODO pick transaction to delete based on which transaction pays more to proposer
       logger.debug(`Rollback - Invalid transaction: ${transaction.transactionHash}`);
