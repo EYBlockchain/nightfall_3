@@ -63,6 +63,11 @@ if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb2) ]]; then
   docker volume rm nightfall_3_mongodb2
 fi
 
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb-adversary-db) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_mongodb-adversary-db
+fi
+
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
   echo -n 'Removing '
   docker volume rm nightfall_3_build
