@@ -523,8 +523,14 @@ export const emptyL2 = async ({ nf3User, web3, logs }) => {
   await new Promise(resolve => setTimeout(resolve, 6000));
 };
 
-export async function waitTransactionToBeMined(txHash, web3) {
-  const receipt = await web3.eth.getTransactionReceipt(txHash);
-  if (receipt !== null) return;
-  await waitTransactionToBeMined(txHash, web3);
+export async function waitTransactionToBeMined(txHash, web3, counter = 50) {
+  let receipt = await web3.eth.getTransactionReceipt(txHash);
+  let i = 1;
+
+  while (receipt === null && i < counter) {
+    await waitForTimeout(2000);
+    receipt = await web3.eth.getTransactionReceipt(txHash);
+    logger.debug({ msg: `Round ${i}: get transaction receipt returned`, receipt });
+    i++;
+  }
 }
