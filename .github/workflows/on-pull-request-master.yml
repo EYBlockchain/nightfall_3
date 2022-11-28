@@ -1,8 +1,8 @@
 name: Check PR
 
 on:
-  pull_request:
-    branches: [master, tokenisation-l2]
+  push:
+    branches: [liju.jose/test-master-28-11-2022]
 
 jobs:
   dependency-review:
