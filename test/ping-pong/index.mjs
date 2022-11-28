@@ -98,9 +98,7 @@ export async function simpleUserTest(
       fee,
     });
     try {
-      console.log(`DEPOSIT ${nf3.zkpKeys.compressedZkpPublicKey} ...`);
       await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
-      console.log(`DEPOSIT ${nf3.zkpKeys.compressedZkpPublicKey} ok`);
       await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     } catch (err) {
       logger.warn(`Error in deposit ${nf3.zkpKeys.compressedZkpPublicKey} ${err}`);
