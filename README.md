@@ -231,8 +231,6 @@ folder from a copy of `example.multiproposer-test.env`. Then you should fill the
   to generate the transactions.
 - USER1_KEY, USER2_KEY with the private keys of the users.
 - USER1_MNEMONIC and USER2_MNEMONIC with the mnemonics of the users.
-- USER1_COMPRESSED_ZKP_PUBLIC_KEY and USER2_COMPRESSED_ZKP_PUBLIC_KEY with the compressed zkp public
-  keys of the users.
 - BLOCKCHAIN_WS_HOST with the blockchain you want to test When you execute the command
   `npm run ping-pong` the specific environment variables will be load for this test.
 
