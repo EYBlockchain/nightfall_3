@@ -10,11 +10,12 @@ const { GAS, GAS_MULTIPLIER, GAS_ESTIMATE_ENDPOINT, GAS_PRICE, GAS_PRICE_MULTIPL
 
 const nonceMutex = new Mutex();
 
-const isListening = async () => {
+const isWeb3Listening = async () => {
   try {
-    await web3.eth.net.isListening();
+    const isListening = await web3.eth.net.isListening();
+    return isListening;
   } catch (error) {
-    throw new Error('Web3 ws is disconnected, try again later');
+    throw new Error(error.message);
   }
 };
 
@@ -34,42 +35,45 @@ export async function getAddressNonce(ethAddress) {
 // TODO document
 export async function createSignedTransaction(nonce, ethPrivateKey, from, to, data, value = 0) {
   // Check if web3 ws is available
-  await isListening();
+  const result = await isWeb3Listening();
+  if (result) {
+    logger.debug('Create transaction object...');
 
-  logger.debug('Create transaction object...');
+    let signedTx;
+    await nonceMutex.runExclusive(async () => {
+      // Update nonce if necessary
+      const _nonce = await getAddressNonce(from);
+      if (nonce < _nonce) {
+        nonce = _nonce;
+      }
+      // Estimate gasPrice
+      const gasPrice = await estimateGasPrice(
+        GAS_ESTIMATE_ENDPOINT,
+        web3,
+        GAS_PRICE,
+        GAS_PRICE_MULTIPLIER,
+      );
+      // Eth tx
+      const tx = {
+        from,
+        to,
+        data,
+        value,
+        gasPrice,
+        nonce,
+      };
+      // Estimate gas
+      const gas = await estimateGas(tx, web3, GAS, GAS_MULTIPLIER);
+      tx.gas = gas;
 
-  let signedTx;
-  await nonceMutex.runExclusive(async () => {
-    // Update nonce if necessary
-    const _nonce = await getAddressNonce(from);
-    if (nonce < _nonce) {
-      nonce = _nonce;
-    }
-    // Estimate gasPrice
-    const gasPrice = await estimateGasPrice(
-      GAS_ESTIMATE_ENDPOINT,
-      web3,
-      GAS_PRICE,
-      GAS_PRICE_MULTIPLIER,
-    );
-    // Eth tx
-    const tx = {
-      from,
-      to,
-      data,
-      value,
-      gasPrice,
-      nonce,
-    };
-    // Estimate gas
-    const gas = await estimateGas(tx, web3, GAS, GAS_MULTIPLIER);
-    tx.gas = gas;
+      logger.debug({ msg: 'Sign transaction...', tx });
+      signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+    });
 
-    logger.debug({ msg: 'Sign transaction...', tx });
-    signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-  });
+    return signedTx;
+  }
 
-  return signedTx;
+  throw new Error('Web3 ws not listening, try again later');
 }
 
 export async function sendSignedTransaction(tx) {
