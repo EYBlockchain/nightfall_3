@@ -236,6 +236,11 @@ folder from a copy of `example.multiproposer-test.env`. Then you should fill the
 - BLOCKCHAIN_WS_HOST with the blockchain you want to test When you execute the command
   `npm run ping-pong` the specific environment variables will be load for this test.
 
+If you want to run specific keys for the proposer_1 and proposer_2 you also can define
+PROPOSER1_KEY, PROPOSER2_KEY environment variables in the `multiproposer-test.env` file and also
+OPTIMIST1_API_URL, OPTIMIST2_API_URL, OPTIMIST1_WS_URL, OPTIMIST2_WS_URL for the optimists of the
+proposers in order to call the make block in the test automatically for the current proposer.
+
 ## Using a Geth private blockchain
 
 The script `./bin/geth-standalone` will run up a private blockchain consisting of a bootnode, two

@@ -21,7 +21,7 @@ while [ -n "$1" ]; do
   case $1 in
       -g  | --ganache )             FILE="-f docker/docker-compose.multiproposer-test.yml -f docker/docker-compose.ganache.yml";
                                     ;;
-      -l  | --localhost )           FILE="-f docker/docker-compose.multiproposer-test.yml -f docker/docker-compose.host.docker.internal.yml"
+      -l  | --localhost )           FILE="-f docker/docker-compose.multiproposer-test.yml -f docker/docker-compose.multiproposer-test.host.docker.internal.yml"
                                     ;;
       * )                           usage
                               exit 1
