@@ -11,6 +11,7 @@ import config from 'config';
 import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import * as snarkjs from 'snarkjs';
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import {
@@ -171,6 +172,7 @@ async function verifyProof(transaction) {
 }
 
 async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
+  logger.info({ msg: 'Verifying the following transaction', transaction });
   return Promise.all([
     checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
     checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumberL2),

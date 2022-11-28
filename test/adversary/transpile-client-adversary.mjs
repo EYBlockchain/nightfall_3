@@ -150,13 +150,13 @@ const transpileCommitmentStorage = (_pathToSrc, _pathToInject) => {
   );
 
   const regexModifyGetCommitmentsCallFee =
-    /const commitmentArrayFee = await getAvailableCommitments\((\s)*db,(\s)*compressedZkpPublicKey,(\s)*ercAddress,(\s)*tokenId,(\s)*\);/g;
+    /const commitmentArrayFee = await getAvailableCommitments\((\s)*db,(\s)*compressedZkpPublicKey,(\s)*ercAddressFee,(\s)*generalise\(0\),(\s)*\);/g;
   const reModifyGetCommitmentsCallFee = duplicateNullifier(
     'commitmentArrayFee',
     'getAvailableCommitments',
     'db',
     'ercAddressFee',
-    '0',
+    'generalise(0)',
   );
   srcFile = srcFile.replace(regexModifyGetCommitmentsCallFee, reModifyGetCommitmentsCallFee);
 
