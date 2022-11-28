@@ -64,6 +64,7 @@ async function transform(transformParams) {
       }),
     );
     feeCi.roots.push(0);
+    feeCi.blockNumberL2s.push(0);
     feeCi.localSiblingPaths.push(Array(33).fill(0));
     feeCi.leafIndices.push(0);
   }
@@ -204,13 +205,15 @@ async function transform(transformParams) {
       transaction: JSON.stringify(optimisticTransformTransaction, null, 2),
     });
 
-    return submitTransaction(
+    const st = await submitTransaction(
       optimisticTransformTransaction,
       commitmentInfo,
       rootKey,
       shieldContractInstance,
       true, // offchain
     );
+    logger.debug(st);
+    return st;
   } catch (error) {
     await Promise.all(commitmentInfo.oldCommitments.map(o => clearPending(o)));
     throw new Error(error);
