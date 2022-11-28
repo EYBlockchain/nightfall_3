@@ -25,8 +25,7 @@ async function transform(transformParams) {
   logger.info('Creating a transform transaction');
 
   const { inputTokens, outputTokens, ...items } = transformParams;
-  const { rootKey, fee } = generalise(items);
-  const { zkpPublicKey } = new ZkpKeys(rootKey);
+  const { rootKey, compressedZkpPublicKey, fee } = generalise(items);
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
   const maticAddress = generalise(
@@ -116,8 +115,8 @@ async function transform(transformParams) {
       ercAddress: generalise(token.address.toLowerCase()),
       tokenId: generalise(token.id),
       value: generalise(token.value),
-      zkpPublicKey,
-      salt: token.salt ? generalise(token.salt) : (await randValueLT(BN128_GROUP_ORDER)).hex(),
+      zkpPublicKey: ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey),
+      salt: token.salt ? token.salt : (await randValueLT(BN128_GROUP_ORDER)).hex(),
     });
     logger.debug({ msg: 'output commitment', commitment });
     commitmentInfo.newCommitments.push(commitment);
@@ -184,10 +183,14 @@ async function transform(transformParams) {
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
 
+    // if we added a zero commitment for the fee we need to remove it here
+    // otherwise submit transaction will try to nullify it
+    // commitmentInfo.oldCommitments = commitmentInfo.oldCommitments.filter(c => c.hash !== 0);
+
     const optimisticTransformTransaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentInfo.blockNumberL2s,
-      transactionType: VK_IDS.transform.txType,
+      circuitHash,
       commitments: commitmentInfo.newCommitments,
       nullifiers: commitmentInfo.nullifiers,
       proof,
@@ -200,10 +203,6 @@ async function transform(transformParams) {
       msg: 'Client made transaction',
       transaction: JSON.stringify(optimisticTransformTransaction, null, 2),
     });
-
-    // if we added a zero commitment for the fee we need to remove it here
-    // otherwise submit transaction will try to nullify it
-    commitmentInfo.oldCommitments = commitmentInfo.oldCommitments.filter(c => c.hash !== 0);
 
     return submitTransaction(
       optimisticTransformTransaction,
