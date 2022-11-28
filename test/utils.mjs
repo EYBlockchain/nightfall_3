@@ -533,4 +533,6 @@ export async function waitTransactionToBeMined(txHash, web3, counter = 50) {
     logger.debug({ msg: `Round ${i}: get transaction receipt returned`, receipt });
     i++;
   }
+
+  if (i >= counter && receipt === null) throw new Error(`Unable to get tx receipt`);
 }

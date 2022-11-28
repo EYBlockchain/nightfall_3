@@ -195,18 +195,16 @@ export async function conditionalMakeBlock(args) {
             const receipt = await sendSignedTransaction(signedTx);
             logger.debug({ msg: 'Block proposed', receipt });
 
-            await removeTransactionsFromMemPool(block.transactionHashes);
-            logger.debug('Txs marked as removed from mempool in db');
-
-            await removeCommitmentsFromMemPool(
-              transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
-            );
-            logger.debug('Commitments marked as removed from mempool in db');
-
-            await removeNullifiersFromMemPool(
-              transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
-            );
-            logger.debug('Nullifiers marked as removed from mempool in db');
+            await Promise.all([
+              removeTransactionsFromMemPool(block.transactionHashes),
+              removeCommitmentsFromMemPool(
+                transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
+              ),
+              removeNullifiersFromMemPool(
+                transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
+              ),
+            ]);
+            logger.debug('Db updates successful');
           } catch (err) {
             logger.error({
               msg: 'Something went wrong',
