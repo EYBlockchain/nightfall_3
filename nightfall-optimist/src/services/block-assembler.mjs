@@ -123,6 +123,7 @@ export async function conditionalMakeBlock(proposer) {
       const currentTime = new Date().now;
       if (
         transactionBatches.length === 0 &&
+        mempoolTransactionSizes.length &&
         (makeNow || currentTime - lastBlockTimestamp >= PROPOSER_MAX_BLOCK_PERIOD_MILIS)
       ) {
         transactionBatches.push(mempoolTransactionSizes.length);
