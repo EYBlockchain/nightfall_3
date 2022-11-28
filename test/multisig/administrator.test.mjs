@@ -6,7 +6,7 @@ import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import axios from 'axios';
-import { isTransactionMined, Web3Client } from '../utils.mjs';
+import { waitTransactionToBeMined, Web3Client } from '../utils.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { NightfallMultiSig } from './nightfall-multisig.mjs';
 
@@ -229,7 +229,7 @@ describe(`Testing Administrator`, () => {
           fee,
         });
         // Wait for transaction to be mined
-        await isTransactionMined(data.transactionHash, web3);
+        await waitTransactionToBeMined(data.transactionHash, web3);
       }
 
       // After registering

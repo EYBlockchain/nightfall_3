@@ -9,7 +9,7 @@ import { UserFactory } from 'nightfall-sdk';
 import axios from 'axios';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { isTransactionMined, Web3Client } from '../../utils.mjs';
+import { waitTransactionToBeMined, Web3Client } from '../../utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -163,7 +163,7 @@ describe('Basic Proposer tests', () => {
     const { transactionHash } = await bootProposer.updateProposer(currentUrl, stake, newFee);
 
     // Wait for transaction to be mined
-    await isTransactionMined(transactionHash, web3);
+    await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -192,7 +192,7 @@ describe('Basic Proposer tests', () => {
     const { transactionHash } = await bootProposer.updateProposer(newUrl, stake, currentFee);
 
     // Wait for transaction to be mined
-    await isTransactionMined(transactionHash, web3);
+    await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -224,7 +224,7 @@ describe('Basic Proposer tests', () => {
     );
 
     // Wait for transaction to be mined
-    await isTransactionMined(transactionHash, web3);
+    await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
