@@ -44,8 +44,13 @@ export const getCommitmentInfo = async txInfo => {
 
   logger.debug(`Fee will be added as part of the transaction commitments: ${addedFee > 0n}`);
 
-  let value = totalValueToSend + addedFee;
-  const feeValue = fee.bigInt - addedFee;
+  let value = totalValueToSend;
+  let feeValue = fee.bigInt;
+
+  if (maxNonFeeNullifiers === undefined || maxNonFeeNullifiers !== 0) {
+    value += addedFee;
+    feeValue -= addedFee;
+  }
 
   if (maxNonFeeNullifiers === undefined) {
     maxNonFeeNullifiers = feeValue > 0n ? maxNullifiers - 1 : maxNullifiers;
@@ -92,6 +97,8 @@ export const getCommitmentInfo = async txInfo => {
         // this can only happen when the token to send is the fee token
         // we need to set the value here instead of the feeValue
         value = providedValue >= value ? 0n : value - providedValue;
+        maxNonFeeNullifiers =
+          providedValue >= value ? 0 : maxNonFeeNullifiers - validatedProvidedCommitments.length;
       } else {
         maxNonFeeNullifiers = 0;
       }
