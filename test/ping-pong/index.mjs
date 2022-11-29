@@ -578,7 +578,7 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
       try {
         // eslint-disable-next-line no-await-in-loop
         const currentSprint = await getCurrentSprint();
-        if (previousSprint !== currentSprint) {
+        if (previousSprint !== currentSprint && nf3Proposer.web3WsUrl.includes('localhost')) {
           // eslint-disable-next-line no-param-reassign
           proposersStats.sprints++;
           previousSprint = currentSprint;
