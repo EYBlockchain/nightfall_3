@@ -47,6 +47,19 @@ export default {
     this.web3.currentProvider.connection.close();
   },
 
+  async estimateGas(tx) {
+    let gas;
+    try {
+      gas = await this.web3.eth.estimateGas(tx);
+      logger.debug({ msg: 'Gas estimated at', gas });
+    } catch (error) {
+      gas = config.WEB3_OPTIONS.gas;
+      logger.warn({ msg: 'Gas estimation failed, use default', gas });
+    }
+    gas = Math.ceil(gas * 2); // 50% seems a more than reasonable buffer
+    return gas;
+  },
+
   // function only needed for infura deployment
   async submitRawTransaction(rawTransaction, contractAddress, value = 0) {
     if (!rawTransaction) throw Error('No tx data to sign');
@@ -63,16 +76,7 @@ export default {
       value,
       gasPrice: config.WEB3_OPTIONS.gasPrice,
     };
-    let gas;
-    try {
-      gas = await this.web3.eth.estimateGas(tx);
-      logger.debug({ msg: 'Gas estimated at', gas });
-    } catch (error) {
-      gas = config.WEB3_OPTIONS.gas;
-      logger.warn({ msg: 'Gas estimation failed, use default', gas });
-    }
-
-    tx.gas = Math.ceil(gas * 2); // 50% seems a more than reasonable buffer
+    tx.gas = await this.estimateGas(tx);
 
     const signed = await this.web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
     return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
