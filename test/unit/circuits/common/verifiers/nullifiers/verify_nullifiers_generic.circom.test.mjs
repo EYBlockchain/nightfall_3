@@ -31,7 +31,7 @@ describe('Test verify nullifiers generic', async function () {
 
   before(async () => {
     const circuitCode = `
-            pragma circom 2.1.0;
+            pragma circom 2.1.2;
             include "../../../../../../nightfall-deployer/circuits/common/verifiers/nullifiers/verify_nullifiers_generic.circom";
             component main = VerifyNullifiersGeneric(1);
         `;

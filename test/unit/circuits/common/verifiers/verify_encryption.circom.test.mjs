@@ -28,7 +28,7 @@ describe('Test verify encryption', function () {
 
   before(async () => {
     const circuitCode = `
-            pragma circom 2.1.0;
+            pragma circom 2.1.2;
             include "../../../../../nightfall-deployer/circuits/common/verifiers/verify_encryption.circom";
             component main = VerifyEncryption();
         `;

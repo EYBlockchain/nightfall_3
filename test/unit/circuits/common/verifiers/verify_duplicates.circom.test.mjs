@@ -17,7 +17,7 @@ describe('Test verify duplicates', function () {
 
   before(async () => {
     const circuitCode = `
-            pragma circom 2.1.0;
+            pragma circom 2.1.2;
             include "../../../../../nightfall-deployer/circuits/common/verifiers/verify_duplicates.circom";
             component main = VerifyDuplicates(4,4);
         `;
