@@ -25,16 +25,13 @@ services:
       OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
-      RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://rabbitmq}
-      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
-      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
       BLOCKCHAIN_URL: wss://${BLOCKCHAIN_WS_HOST}
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
       ETH_NETWORK: ${ETH_NETWORK}
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
-
+      LAUNCH_LOCAL: 1
     command: ['npm', 'run', 'dev']
 
   rabbitmq:

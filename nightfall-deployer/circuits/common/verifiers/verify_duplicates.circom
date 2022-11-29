@@ -1,4 +1,4 @@
-pragma circom 2.1.0;
+pragma circom 2.1.2;
 
 /**
  * Check that there are no duplicate commitments nor nullifiers in the same transaction

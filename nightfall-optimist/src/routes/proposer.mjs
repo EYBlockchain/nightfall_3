@@ -131,6 +131,7 @@ router.post('/register', auth, async (req, res, next) => {
       or we're just about to register them. We may or may not be registered locally
       with optimist though. Let's check and fix that if needed.
      */
+    const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
     if (!(await isRegisteredProposerAddressMine(ethAddress))) {
       logger.debug('Registering proposer locally');
       await setRegisteredProposerAddress(ethAddress, url); // save the registration address
@@ -144,12 +145,18 @@ router.post('/register', auth, async (req, res, next) => {
         logger.warn(
           'Proposer was already registered on the blockchain but not with this Optimist instance - registering locally',
         );
-        const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
         if (ethAddress === currentProposer.thisAddress) {
           proposer.isMe = true;
           await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
         }
       }
+    } else if (ethAddress === currentProposer.thisAddress && !proposer.isMe) {
+      logger.warn(
+        'Proposer was already registered on the blockchain and with this Optimist instance, but proposer flag wasnt set - setting isMe flag',
+      );
+      proposer.isMe = true;
+      proposer.address = ethAddress;
+      await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
     }
 
     const { transactionHash } = signedTx;

@@ -21,6 +21,14 @@ import {
 
 const app = express();
 
+// Add check for syncing state. If it is in syncing state, just respond 400
+app.use((req, res, next) => {
+  if (req.app.get('isSyncing')) {
+    res.sendStatus(400);
+    return res.status;
+  }
+  return next();
+});
 setupHttpDefaults(
   app,
   app => {

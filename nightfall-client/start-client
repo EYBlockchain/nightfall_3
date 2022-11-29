@@ -54,5 +54,6 @@ trap "docker-compose $FILE -p 'nightfall_3' down --remove-orphans -t 1; exit 1" 
 docker-compose $FILE -p 'nightfall_3' down --remove-orphans
 
 echo "docker-compose $FILE -p 'nightfall_3' up -d --remove-orphans"
+docker-compose $FILE pull
 docker-compose $FILE -p 'nightfall_3' up -d --remove-orphans
 docker-compose -p 'nightfall_3' $FILE logs -f
