@@ -220,6 +220,27 @@ module.exports = {
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: `ws://localhost:10002/ws`,
     },
+    mumbai: {
+      name: 'mumbai',
+      chainId: 80001,
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
+      web3WsUrl: `wss://polygon-mumbai.g.alchemy.com/v2/rQInXX0BGBazbLhH4BRco6YRm9648Mhr`,
+      adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
+      adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+    },
   },
   TEST_OPTIONS: {
     tokenConfigs: {

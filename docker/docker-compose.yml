@@ -70,12 +70,15 @@ services:
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL:-}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
       WHITELISTING: ${WHITELISTING}
       UPGRADE: ${UPGRADE_CONTRACTS}
       ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
+      ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY:-}
+      ETH_ADDRESS: ${ETH_ADDRESS:-}
 
   hosted-utils-api-server:
     build:
