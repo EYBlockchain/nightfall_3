@@ -534,5 +534,5 @@ export async function waitTransactionToBeMined(txHash, web3, counter = 50) {
     i++;
   }
 
-  if (i >= counter && receipt === null) throw new Error(`Unable to get tx receipt`);
+  if (receipt === null) throw new Error(`Unable to get tx receipt`);
 }
