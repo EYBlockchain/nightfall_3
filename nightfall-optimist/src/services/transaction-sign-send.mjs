@@ -35,7 +35,6 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
   if (result) {
     logger.debug('Create transaction object...');
 
-    let tx;
     let signedTx;
     await nonceMutex.runExclusive(async () => {
       // Update nonce if necessary
@@ -51,7 +50,7 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
         GAS_PRICE_MULTIPLIER,
       );
       // Eth tx
-      tx = {
+      const tx = {
         from,
         to,
         data,
@@ -67,7 +66,7 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
       signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
     });
 
-    return { tx, signedTx };
+    return signedTx;
   }
 
   throw new Error('Web3 ws not listening, try again later');

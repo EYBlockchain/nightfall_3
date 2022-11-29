@@ -102,7 +102,7 @@ router.post('/register', auth, async (req, res, next) => {
 
       // Sign tx
       const proposersContractAddress = proposersContractInstance.options.address;
-      const result = await createSignedTransaction(
+      signedTx = await createSignedTransaction(
         nonce,
         ethPrivateKey,
         ethAddress,
@@ -110,9 +110,6 @@ router.post('/register', auth, async (req, res, next) => {
         txDataToSign,
         stake,
       );
-      signedTx = result.signedTx;
-      const { tx } = result;
-      if (tx.nonce !== nonce) req.app.set('nonce', tx.nonce);
 
       // Submit tx and update db if tx is successful
       // CHECK - I think the code beyond L132 can be removed (?) then db op could be moved here
@@ -157,12 +154,8 @@ router.post('/register', auth, async (req, res, next) => {
       }
     }
 
-    if (signedTx) {
-      const { transactionHash } = signedTx;
-      res.json({ transactionHash });
-    } else {
-      res.json({ signedTx });
-    }
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
@@ -225,7 +218,7 @@ router.post('/update', auth, async (req, res, next) => {
 
     // Sign tx
     const proposersContractAddress = proposersContractInstance.options.address;
-    const { tx, signedTx } = await createSignedTransaction(
+    const signedTx = await createSignedTransaction(
       nonce,
       ethPrivateKey,
       ethAddress,
@@ -233,7 +226,6 @@ router.post('/update', auth, async (req, res, next) => {
       txDataToSign,
       stake,
     );
-    if (tx.nonce !== nonce) req.app.set('nonce', tx.nonce);
 
     // Submit tx and update db if tx is successful
     txsQueue.push(async () => {
@@ -353,14 +345,13 @@ router.post('/de-register', auth, async (req, res, next) => {
 
     // Sign tx
     const proposersContractAddress = proposersContractInstance.options.address;
-    const { tx, signedTx } = await createSignedTransaction(
+    const signedTx = await createSignedTransaction(
       nonce,
       ethPrivateKey,
       ethAddress,
       proposersContractAddress,
       txDataToSign,
     );
-    if (tx.nonce !== nonce) req.app.set('nonce', tx.nonce);
 
     // Submit tx and update db if tx is successful
     // CHECK - does this go inside a Promise? see `nf3` eg `deregisterProposer`
@@ -427,14 +418,13 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
 
     // Sign tx
     const proposersContractAddress = proposersContractInstance.options.address;
-    const { tx, signedTx } = await createSignedTransaction(
+    const signedTx = await createSignedTransaction(
       nonce,
       ethPrivateKey,
       ethAddress,
       proposersContractAddress,
       txDataToSign,
     );
-    if (tx.nonce !== nonce) req.app.set('nonce', tx.nonce);
 
     // Submit tx
     txsQueue.push(async () => {
@@ -600,14 +590,13 @@ router.get('/withdraw', auth, async (req, res, next) => {
 
     // Sign tx
     const stateContractAddress = stateContractInstance.options.address;
-    const { tx, signedTx } = await createSignedTransaction(
+    const signedTx = await createSignedTransaction(
       nonce,
       ethPrivateKey,
       ethAddress,
       stateContractAddress,
       txDataToSign,
     );
-    if (tx.nonce !== nonce) req.app.set('nonce', tx.nonce);
 
     // Submit tx
     txsQueue.push(async () => {
@@ -683,14 +672,13 @@ router.post('/payment', auth, async (req, res, next) => {
 
     // Sign tx
     const shieldContractAddress = shieldContractInstance.options.address;
-    const { tx, signedTx } = await createSignedTransaction(
+    const signedTx = await createSignedTransaction(
       nonce,
       ethPrivateKey,
       ethAddress,
       shieldContractAddress,
       txDataToSign,
     );
-    if (tx.nonce !== nonce) req.app.set('nonce', tx.nonce);
 
     // Submit tx
     txsQueue.push(async () => {
@@ -751,14 +739,13 @@ router.get('/change', auth, async (req, res, next) => {
 
     // Sign tx
     const stateContractAddress = stateContractInstance.options.address;
-    const { tx, signedTx } = await createSignedTransaction(
+    const signedTx = await createSignedTransaction(
       nonce,
       ethPrivateKey,
       ethAddress,
       stateContractAddress,
       txDataToSign,
     );
-    if (tx.nonce !== nonce) req.app.set('nonce', tx.nonce);
 
     // Submit tx
     txsQueue.push(async () => {
@@ -898,14 +885,13 @@ router.post('/encode', auth, async (req, res, next) => {
 
     // Sign and submit tx
     const stateContractAddress = stateContractInstance.options.address;
-    const { tx, signedTx } = await createSignedTransaction(
+    const signedTx = await createSignedTransaction(
       nonce,
       ethPrivateKey,
       ethAddress,
       stateContractAddress,
       txDataToSign,
     );
-    if (tx.nonce !== nonce) req.app.set('nonce', tx.nonce);
     const receipt = await sendSignedTransaction(signedTx);
 
     res.json({ receipt, block: newBlock, transactions: newTransactions });
