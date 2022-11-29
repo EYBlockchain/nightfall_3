@@ -63,6 +63,11 @@ export class Web3Client {
     return address;
   }
 
+  getTransactionReceipt(txHash) {
+    var receipt = this.web3.eth.getTransactionReceipt(txHash);
+    return receipt;
+  }
+
   subscribeTo(event, queue, options) {
     if (event === 'newBlockHeaders') {
       this.web3.eth.subscribe('newBlockHeaders').on('data', () => {
