@@ -261,7 +261,7 @@ describe('Ping-pong tests', () => {
     nf3User = new Nf3(signingKeys.liquidityProvider, environment);
 
     await nf3User.init(mnemonics.liquidityProvider);
-    await setParametersConfig(nf3User); // initialize parameters and contracts
+    await setParametersConfig(nf3User); // initialize parameters and contracts for test
     ercAddress = TEST_ERC20_ADDRESS || (await nf3User.getContractAddress('ERC20Mock'));
   });
 

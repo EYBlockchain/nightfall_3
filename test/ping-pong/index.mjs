@@ -496,7 +496,8 @@ export async function setParametersConfig(nf3User) {
   const challengesContract = await nf3User.getContractInstance('Challenges');
   console.log('Getting Shield contract instance...');
   shieldContract = await nf3User.getContractInstance('Shield');
-  if (process.env.OPTIMIST1_API_URL) {
+
+  if (nf3User.web3WsUrl.includes('localhost')) {
     console.log('Getting Multisig contract instance...');
     multisigContract = await nf3User.getContractInstance('SimpleMultiSig');
 
