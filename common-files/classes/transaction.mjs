@@ -126,9 +126,8 @@ class Transaction {
     if (_compressedSecrets === undefined || _compressedSecrets.length === 0)
       compressedSecrets = [0, 0];
     else compressedSecrets = _compressedSecrets;
-
     if (!isOnlyL2 && TOKEN_TYPES[tokenType] === undefined)
-      throw new Error(`Unrecognized token type! isOnlyL2: ${isOnlyL2}`);
+      throw new Error('Unrecognized token type');
     // convert everything to hex(32) for interfacing with web3
 
     const preimage = generalise({

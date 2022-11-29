@@ -111,13 +111,13 @@ template Transform(N,C) {
 
     // Convert the fee nullifiers values to numbers and calculate its sum
     var feeNullifiersSum = 0;
-    for (var i = 0; i < 2; i++) {
+    for (var i = N-2; i < N; i++) {
       feeNullifiersSum += nullifiersValues[i];
     }
-    
+
     // Check that the value holds
-    // the first commitment is reserved for fee change
-    feeNullifiersSum === commitmentsValues[0] + fee;
+    // the last commitment is reserved for fee change
+    feeNullifiersSum === commitmentsValues[C-1] + fee;
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
     var nullifierKeys, zkpPublicKeys[2];
@@ -129,34 +129,29 @@ template Transform(N,C) {
       0, 
       nullifierKeys, 
       zkpPublicKeys, 
-      [nullifiers[0], nullifiers[1]], 
-      [roots[0], roots[1]], 
-      [nullifiersValues[0], nullifiersValues[1]], 
-      [nullifiersSalts[0], nullifiersSalts[1]], 
-      [paths[0],paths[1] ], 
-      [orders[0], orders[1]]
+      [nullifiers[N-2], nullifiers[N-1]], 
+      [roots[N-2], roots[N-1]], 
+      [nullifiersValues[N-2], nullifiersValues[N-1]], 
+      [nullifiersSalts[N-2], nullifiersSalts[N-1]], 
+      [paths[N-2],paths[N-1] ], 
+      [orders[N-2], orders[N-1]]
     );
     checkFeeNullifier === 1;
 
     // Check the L2 nullifiers
-    for (var i = 2; i < N; i++) {
+    for (var i = 0; i < N - 2; i++) {
       // Check that the top most two bits of all packed ercAddresses are equal to 1
-      var ercAddressBits[254] = Num2Bits(254)(inputPackedAddressesPrivate[i-2]);
-      var isZero = IsZero()(inputPackedAddressesPrivate[i-2]);
+      var ercAddressBits[254] = Num2Bits(254)(inputPackedAddressesPrivate[i]);
+      var isZero = IsZero()(inputPackedAddressesPrivate[i]);
       var valid1 = Mux1()([ercAddressBits[253], 1], isZero);
       var valid2 = Mux1()([ercAddressBits[252], 1], isZero);
       valid1 === 1;
       valid2 === 1;
 
-      // Check that the values do not overflow
-      var valuePrivateBits[254] = Num2Bits(254)(nullifiersValues[i]);
-      valuePrivateBits[253] === 0;
-      valuePrivateBits[252] === 0;
-
       // Check that the input nullifiers are valid
       var checkInputNullifier = VerifyNullifiersOptional(1)(
-        inputPackedAddressesPrivate[i-2], 
-        inputIdRemaindersPrivate[i-2], 
+        inputPackedAddressesPrivate[i], 
+        inputIdRemaindersPrivate[i], 
         nullifierKeys, 
         zkpPublicKeys, 
         [nullifiers[i]], 
@@ -171,32 +166,27 @@ template Transform(N,C) {
 
     // Check that the fee Commitment is valid
     var checkFeeCommitment = VerifyCommitmentsOptional(1)(
-        feeAddress, 
-        0, 
-        [commitments[0]], 
-        [commitmentsValues[0]], 
-        [commitmentsSalts[0]], 
-        [recipientPublicKey[0]]
-        );
+      feeAddress, 
+      0, 
+      [commitments[C-1]], 
+      [commitmentsValues[C-1]], 
+      [commitmentsSalts[C-1]], 
+      [recipientPublicKey[C-1]]
+    );
     checkFeeCommitment === 1;
 
     // verify the L2 commitments 
-    for (var i = 1; i < C; i++) {
+    for (var i = 0; i < C-1; i++) {
       // Check that the top most two bits of all packed ercAddresses are equal to 1
-      var ercAddressBits[254] = Num2Bits(254)(outputPackedAddressesPrivate[i-1]);
-      var isZero = IsZero()(outputPackedAddressesPrivate[i-1]);
+      var ercAddressBits[254] = Num2Bits(254)(outputPackedAddressesPrivate[i]);
+      var isZero = IsZero()(outputPackedAddressesPrivate[i]);
       var valid1 = Mux1()([ercAddressBits[253], 1], isZero);
       var valid2 = Mux1()([ercAddressBits[252], 1], isZero);
 
-      // Check that the values do not overflow
-      var valuePrivateBits[254] = Num2Bits(254)(commitmentsValues[i]);
-      valuePrivateBits[253] === 0;
-      valuePrivateBits[252] === 0;
-      
       // Check the output commitments
       var checkOutputCommitment = VerifyCommitmentsOptional(1)(
-        outputPackedAddressesPrivate[i-1], 
-        outputIdRemaindersPrivate[i-1], 
+        outputPackedAddressesPrivate[i], 
+        outputIdRemaindersPrivate[i],
         [commitments[i]], 
         [commitmentsValues[i]], 
         [commitmentsSalts[i]], 

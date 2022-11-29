@@ -1,7 +1,6 @@
 import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 const { generalise } = gen;
 const { BN128_GROUP_ORDER, SHIFT } = constants;
@@ -87,14 +86,10 @@ const computePrivateInputsCommitments = (
   };
 };
 
-const packErcAddress = (_ercAddress, _tokenId) => {
-  logger.debug('packing erc address');
-  const ercAddress = generalise(_ercAddress);
-  const tokenId = generalise(_tokenId);
-  logger.debug({ ercAddress, tokenId });
+const packErcAddress = (ercAddress, tokenId) => {
   const [top4Bytes, remainder] = tokenId.limbs(224, 2).map(l => BigInt(l));
   const packedErcAddress = ercAddress.bigInt + top4Bytes * SHIFT;
-  return [packedErcAddress, remainder];
+  return [packedErcAddress, remainder].map(e => generalise(e).field(BN128_GROUP_ORDER));
 };
 
 // eslint-disable-next-line import/prefer-default-export
@@ -146,10 +141,9 @@ export const computeCircuitInputs = (
   }
 
   if (ercAddress) {
-    const [top4Bytes, remainder] = tokenId.limbs(224, 2).map(l => BigInt(l));
-    const packedErcAddress = ercAddress.bigInt + top4Bytes * SHIFT;
-    witness.packedErcAddressPrivate = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
-    witness.idRemainderPrivate = generalise(remainder).field(BN128_GROUP_ORDER);
+    const [packedErcAddress, remainder] = packErcAddress(ercAddress, tokenId);
+    witness.packedErcAddressPrivate = packedErcAddress;
+    witness.idRemainderPrivate = remainder;
   }
 
   if (ephemeralKey) {
@@ -166,37 +160,26 @@ export const computeCircuitInputs = (
     witness.outputPackedAddressesPrivate = [];
     witness.outputIdRemaindersPrivate = [];
 
-    logger.debug({ inputTokens, outputTokens });
+    const emptyToken = generalise({ address: 0, id: 0 });
+    const inputTokensPadded = utils.padArray(inputTokens, emptyToken, numberNullifiers - 2);
+    const outputTokensPadded = utils.padArray(outputTokens, emptyToken, numberCommitments - 1);
+
     for (let i = 0; i < numberNullifiers - 2; i++) {
-      if (inputTokens.length > 0) {
-        const current = inputTokens.shift();
-        const inputErcAddress = current.address;
-        const inputTokenId = current.id;
-        let [packedErcAddress, remainder] = packErcAddress(inputErcAddress, inputTokenId);
-        packedErcAddress = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
-        remainder = generalise(remainder).field(BN128_GROUP_ORDER);
-        witness.inputPackedAddressesPrivate.push(packedErcAddress);
-        witness.inputIdRemaindersPrivate.push(remainder);
-      } else {
-        witness.inputPackedAddressesPrivate.push('0');
-        witness.inputIdRemaindersPrivate.push('0');
-      }
+      const current = inputTokensPadded.shift();
+      const inputErcAddress = current.address;
+      const inputTokenId = current.id;
+      const [packedErcAddress, remainder] = packErcAddress(inputErcAddress, inputTokenId);
+      witness.inputPackedAddressesPrivate.push(packedErcAddress);
+      witness.inputIdRemaindersPrivate.push(remainder);
     }
 
     for (let i = 0; i < numberCommitments - 1; i++) {
-      if (outputTokens.length > 0) {
-        const current = outputTokens.shift();
-        const outputErcAddress = current.address;
-        const outputTokenId = current.id;
-        let [packedErcAddress, remainder] = packErcAddress(outputErcAddress, outputTokenId);
-        packedErcAddress = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
-        remainder = generalise(remainder).field(BN128_GROUP_ORDER);
-        witness.outputPackedAddressesPrivate.push(packedErcAddress);
-        witness.outputIdRemaindersPrivate.push(remainder);
-      } else {
-        witness.outputPackedAddressesPrivate.push('0');
-        witness.outputIdRemaindersPrivate.push('0');
-      }
+      const current = outputTokensPadded.shift();
+      const outputErcAddress = current.address;
+      const outputTokenId = current.id;
+      const [packedErcAddress, remainder] = packErcAddress(outputErcAddress, outputTokenId);
+      witness.outputPackedAddressesPrivate.push(packedErcAddress);
+      witness.outputIdRemaindersPrivate.push(remainder);
     }
   }
   return witness;

@@ -9,6 +9,7 @@ import {
   getCircuitHash,
   generateProof,
 } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
+import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
 import gen from 'general-number';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { clearPending } from './commitment-storage.mjs';
@@ -34,50 +35,10 @@ async function transform(transformParams) {
 
   const circuitHash = await getCircuitHash('transform');
 
-  // get commitment info for every token Input
-  const commitmentInfoArray = [];
-
-  // the first two nullifiers are reserverd for paying the fee
-  // the first commitment is reserved for paying the fee change
+  // the last two nullifiers are reserverd for covering the fee
+  // the last commitment is reserved for paying the fee change
   // we modify the commitmentInfo result to preserve this order
-  logger.debug('getting fee commitments');
-  const feeCi = await getCommitmentInfo({
-    totalValueToSend: 0n,
-    fee,
-    ercAddress: maticAddress,
-    maticAddress,
-    rootKey,
-    maxNullifiers: 2,
-  });
-
-  while (feeCi.nullifiers.length < 2) {
-    feeCi.nullifiers.push(
-      generalise({
-        hash: 0,
-        preimage: { nullifierKey: 0, commitment: 0 },
-      }),
-    );
-    feeCi.oldCommitments.push(
-      generalise({
-        hash: 0,
-        preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
-      }),
-    );
-    feeCi.roots.push(0);
-    feeCi.blockNumberL2s.push(0);
-    feeCi.localSiblingPaths.push(Array(33).fill(0));
-    feeCi.leafIndices.push(0);
-  }
-
-  if (feeCi.newCommitments.length !== 1)
-    feeCi.newCommitments = [
-      {
-        hash: 0,
-        preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
-      },
-    ];
-  commitmentInfoArray.push(feeCi);
-
+  const commitmentInfoArray = [];
   for (const token of inputTokens) {
     // we don't need to rely on the user value here and could also hard code it to 1
     const ci = await getCommitmentInfo({
@@ -95,6 +56,50 @@ async function transform(transformParams) {
     commitmentInfoArray.push(ci);
   }
 
+  const numberInputCommitments = VK_IDS.transform.numberNullifiers - 2;
+  if (commitmentInfoArray.length > numberInputCommitments)
+    throw Error('too many input commitments');
+
+  const zeroCommitmentInfo = {
+    oldCommitments: [
+      generalise({
+        hash: 0,
+        preimage: { value: 0, salt: 0, zkpPublicKey: [0, 0] },
+      }),
+    ],
+    nullifiers: [
+      generalise({
+        hash: 0,
+        preimage: { nullifierKey: 0, commitment: 0 },
+      }),
+    ],
+    localSiblingPaths: [Array(33).fill(0)],
+    leafIndices: [0],
+    blockNumberL2s: [0],
+    roots: [0],
+  };
+  const paddedCommitmentInfoArray = utils.padArray(
+    commitmentInfoArray,
+    zeroCommitmentInfo,
+    numberInputCommitments,
+  );
+
+  const feeCi = await getCommitmentInfo({
+    totalValueToSend: 0n,
+    fee,
+    ercAddress: generalise(0),
+    maticAddress,
+    rootKey,
+    maxNullifiers: 2,
+    maxNonFeeNullifiers: 0,
+  });
+  feeCi.newCommitments = utils.padArray(
+    feeCi.newCommitments,
+    zeroCommitmentInfo.oldCommitments[0],
+    1,
+  );
+  paddedCommitmentInfoArray.push(feeCi);
+
   const commitmentInfo = {
     oldCommitments: [],
     nullifiers: [],
@@ -107,25 +112,34 @@ async function transform(transformParams) {
   };
 
   logger.debug('merging commitment infos');
-  commitmentInfoArray.forEach(ci => {
-    for (const attr in commitmentInfo) {
+  paddedCommitmentInfoArray.forEach(ci => {
+    for (const attr in ci) {
       if (Object.prototype.hasOwnProperty.call(commitmentInfo, attr))
         commitmentInfo[attr].push(...ci[attr]);
     }
   });
 
   // add a new commitment for each output token
-  for (const token of outputTokens) {
-    const commitment = new Commitment({
-      ercAddress: generalise(token.address.toLowerCase()),
-      tokenId: generalise(token.id),
-      value: generalise(token.value),
-      zkpPublicKey: ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey),
-      salt: token.salt ? token.salt : (await randValueLT(BN128_GROUP_ORDER)).hex(),
-    });
-    logger.debug({ msg: 'output commitment', commitment });
-    commitmentInfo.newCommitments.push(commitment);
+  const outputCommitments = [];
+  for (let i = 0; i < VK_IDS.transform.numberCommitments - 1; i++) {
+    if (outputTokens.length <= i) {
+      outputCommitments.push({
+        compressedZkpPublicKey: generalise(0),
+        ...zeroCommitmentInfo.oldCommitments[0],
+      });
+    } else {
+      const token = outputTokens[i];
+      const commitment = new Commitment({
+        ercAddress: generalise(token.address.toLowerCase()),
+        tokenId: generalise(token.id),
+        value: generalise(token.value),
+        zkpPublicKey: ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey),
+        salt: token.salt ? token.salt : (await randValueLT(BN128_GROUP_ORDER)).hex(),
+      });
+      outputCommitments.push(commitment);
+    }
   }
+  commitmentInfo.newCommitments = [...outputCommitments, ...commitmentInfo.newCommitments];
 
   try {
     logger.debug('creating transaction...');
@@ -160,7 +174,6 @@ async function transform(transformParams) {
       inputTokens,
       outputTokens,
     };
-    logger.debug(privateData.newCommitmentPreimage);
 
     logger.debug('computing witness...');
     const witness = computeCircuitInputs(
@@ -205,15 +218,13 @@ async function transform(transformParams) {
       transaction: JSON.stringify(optimisticTransformTransaction, null, 2),
     });
 
-    const st = await submitTransaction(
+    return submitTransaction(
       optimisticTransformTransaction,
       commitmentInfo,
       rootKey,
       shieldContractInstance,
       true, // offchain
     );
-    logger.debug(st);
-    return st;
   } catch (error) {
     await Promise.all(commitmentInfo.oldCommitments.map(o => clearPending(o)));
     throw new Error(error);

@@ -5,15 +5,6 @@ import transform from '../services/transform.mjs';
 const router = express.Router();
 
 router.post('/', async (req, res, next) => {
-  const filteredReq = JSON.stringify(
-    {
-      ...req.body,
-      rootKey: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    },
-    null,
-    2,
-  );
-  logger.debug(`tokenise endpoint received POST ${filteredReq}`);
   try {
     const { rawTransaction: txDataToSign, transaction } = await transform(req.body);
     logger.debug('returning raw transaction');
