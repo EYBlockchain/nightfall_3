@@ -81,7 +81,7 @@ async function checkFrontier(block) {
 }
 
 // check if there are duplicate commitments in different transactions of the same block
-export async function checkDuplicateCommitmentsWithinBlock(block, transactions) {
+async function checkDuplicateCommitmentsWithinBlock(block, transactions) {
   // Create an array containing all the commitments different than zero in a block and also the transaction index in which belongs to
   const blockCommitments = transactions
     .map(transaction => transaction.commitments)
@@ -142,7 +142,7 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
 }
 
 // check if there are duplicate nullifiers in different transactions of the same block
-export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
+async function checkDuplicateNullifiersWithinBlock(block, transactions) {
   // Create an array containing all the nullifiers different than zero in a block and also the transaction index in which belongs to
   const blockNullifiers = transactions
     .map(transaction => transaction.nullifiers)
@@ -207,8 +207,8 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
  * @param {object} block - the block being checked
  * @param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
  *
- * TODO - nullifiers
  */
+// eslint-disable-next-line import/prefer-default-export
 export async function checkBlock(block, transactions) {
   await checkLeafCount(block);
   // now we have to check the commitment root.
