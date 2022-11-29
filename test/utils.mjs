@@ -64,7 +64,7 @@ export class Web3Client {
   }
 
   getTransactionReceipt(txHash) {
-    var receipt = this.web3.eth.getTransactionReceipt(txHash);
+    const receipt = this.web3.eth.getTransactionReceipt(txHash);
     return receipt;
   }
 
