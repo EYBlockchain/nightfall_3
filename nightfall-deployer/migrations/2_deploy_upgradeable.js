@@ -38,31 +38,9 @@ function sortAscending(hexArray) {
 }
 const sortedOwners = sortAscending(APPROVERS);
 
-const waitForTimeout = async timeoutInMs => {
-  await new Promise(resolve => setTimeout(resolve, timeoutInMs));
-};
-
-const performDeploy = async (actionToPerform, retries = 10) => {
-  console.log(`Deploying...`);
-  for(let i = retries; i >= 0; i--) {
-    try {
-      await actionToPerform();
-      console.log(`Finished`);
-      break;
-    } catch (error) {
-      console.log(`Retrying... ${retries}`);
-      await waitForTimeout(1000);
-    }
-  }
-};
-
 module.exports = async function (deployer) {
-  await performDeploy(async () => {
-    await deployer.deploy(Verifier);
-  });
-  await performDeploy(async () => {
-    await deployer.link(Verifier, [Challenges, ChallengesUtil]);
-  });
+  await deployer.deploy(Verifier);
+  await deployer.link(Verifier, [Challenges, ChallengesUtil]);
   await deployer.deploy(Poseidon);
   await deployer.link(Poseidon, MerkleTree_Stateless);
   await deployer.deploy(MerkleTree_Stateless);
