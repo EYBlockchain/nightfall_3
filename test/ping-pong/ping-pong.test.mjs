@@ -301,10 +301,10 @@ describe('Ping-pong tests', () => {
       );
     }
 
-    if (environment.web3WsUrl.includes('localhost')) {
-      // user that will rotate proposers and get block statistics
-      proposerTest(optimistUrls, proposersStats, nf3User);
-    }
+    // if (environment.web3WsUrl.includes('localhost')) {
+    // user that will rotate proposers and get block statistics
+    proposerTest(optimistUrls, proposersStats, nf3User);
+    // }
 
     // wait for all the user transfers to be completed
     await waitForTransfersCompleted();

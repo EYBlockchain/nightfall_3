@@ -529,45 +529,46 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
     const stateAddress = stateContract.options.address;
 
     const proposersBlocks = [];
-    // eslint-disable-next-line no-param-reassign
-    proposersStats.proposersBlocks = proposersBlocks;
-    // eslint-disable-next-line no-param-reassign
-    proposersStats.sprints = 0;
 
     let currentProposer = await getCurrentProposer();
+    if (nf3Proposer.web3WsUrl.includes('localhost')) {
+      // eslint-disable-next-line no-param-reassign
+      proposersStats.proposersBlocks = proposersBlocks;
+      // eslint-disable-next-line no-param-reassign
+      proposersStats.sprints = 0;
+      nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
+        let proposerBlock = proposersBlocks.find(
+          // eslint-disable-next-line no-loop-func
+          p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
+        );
 
-    nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
-      let proposerBlock = proposersBlocks.find(
-        // eslint-disable-next-line no-loop-func
-        p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-      );
-
-      if (!proposerBlock) {
-        proposerBlock = {
-          proposer: currentProposer.thisAddress.toUpperCase(),
-          blocks: 0,
-        };
-        proposersBlocks.push(proposerBlock);
-      }
-
-      for (const topic of log.topics) {
-        switch (topic) {
-          case topicEventMapping.BlockProposed:
-            proposerBlock.blocks++;
-            break;
-          case topicEventMapping.TransactionSubmitted:
-            break;
-          case topicEventMapping.NewCurrentProposer:
-            break;
-          default:
-            break;
+        if (!proposerBlock) {
+          proposerBlock = {
+            proposer: currentProposer.thisAddress.toUpperCase(),
+            blocks: 0,
+          };
+          proposersBlocks.push(proposerBlock);
         }
-      }
-      console.log('BLOCKS:');
-      for (const pb of proposersBlocks) {
-        console.log(`  ${pb.proposer} : ${pb.blocks}`);
-      }
-    });
+
+        for (const topic of log.topics) {
+          switch (topic) {
+            case topicEventMapping.BlockProposed:
+              proposerBlock.blocks++;
+              break;
+            case topicEventMapping.TransactionSubmitted:
+              break;
+            case topicEventMapping.NewCurrentProposer:
+              break;
+            default:
+              break;
+          }
+        }
+        console.log('BLOCKS:');
+        for (const pb of proposersBlocks) {
+          console.log(`  ${pb.proposer} : ${pb.blocks}`);
+        }
+      });
+    }
 
     let previousSprint = await getCurrentSprint();
 
@@ -598,8 +599,9 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
           currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
         }
 
-        await makeBlockAndWaitForEmptyMempool(optimistUrls);
-
+        if (nf3Proposer.web3WsUrl.includes('localhost')) {
+          await makeBlockAndWaitForEmptyMempool(optimistUrls);
+        }
         console.log('     Change current proposer...');
         await nf3Proposer.changeCurrentProposer();
       } catch (err) {
