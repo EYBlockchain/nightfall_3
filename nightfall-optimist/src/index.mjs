@@ -44,8 +44,7 @@ const main = async () => {
         // logger.debug('Queue has emptied. Queueing block assembler.');
         const ethAddress = app.get('ethAddress');
         const ethPrivateKey = app.get('ethPrivateKey');
-        const nonce = app.get('nonce');
-        const args = { proposer, ethAddress, ethPrivateKey, nonce };
+        const args = { proposer, ethAddress, ethPrivateKey };
         return enqueueEvent(conditionalMakeBlock, 0, args);
       }
       // eslint-disable-next-line no-void, no-useless-return

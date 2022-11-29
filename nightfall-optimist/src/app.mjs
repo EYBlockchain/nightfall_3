@@ -16,7 +16,6 @@ import {
   getContractAbi,
   debug,
 } from './routes/index.mjs';
-import { getAddressNonce } from './services/transaction-sign-send.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
@@ -24,11 +23,9 @@ const app = express();
 
 const ethPrivateKey = environment.PROPOSER_KEY;
 const { address } = web3.eth.accounts.privateKeyToAccount(ethPrivateKey);
-const nonce = await getAddressNonce(address);
 
 app.set('ethPrivateKey', ethPrivateKey);
 app.set('ethAddress', address);
-app.set('nonce', nonce);
 
 const spec = swaggerJsDoc(options);
 setupHttpDefaults(

@@ -74,7 +74,7 @@ async function makeBlock(proposer, transactions) {
  * should not be called from anywhere else because we only want one instance ever
  */
 export async function conditionalMakeBlock(args) {
-  const { proposer, ethAddress, ethPrivateKey, nonce } = args;
+  const { proposer, ethAddress, ethPrivateKey } = args;
 
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
   const stateContractAddress = stateContractInstance.options.address;
@@ -180,7 +180,6 @@ export async function conditionalMakeBlock(args) {
         // Sign tx
         const blockStake = await stateContractInstance.methods.getBlockStake().call();
         const signedTx = await createSignedTransaction(
-          nonce,
           ethPrivateKey,
           ethAddress,
           stateContractAddress,

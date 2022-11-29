@@ -71,7 +71,6 @@ export function setProposer(p) {
 router.post('/register', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
-  const nonce = req.app.get('nonce');
 
   const { url = '', stake = 0, fee = 0 } = req.body;
 
@@ -95,7 +94,7 @@ router.post('/register', auth, async (req, res, next) => {
     const isRegistered = proposerAddresses.includes(ethAddress);
 
     let txDataToSign = '';
-    let signedTx;
+    let signedTx = {};
     if (!isRegistered) {
       logger.debug('Register new proposer...');
       txDataToSign = await proposersContractInstance.methods.registerProposer(url, fee).encodeABI();
@@ -103,7 +102,6 @@ router.post('/register', auth, async (req, res, next) => {
       // Sign tx
       const proposersContractAddress = proposersContractInstance.options.address;
       signedTx = await createSignedTransaction(
-        nonce,
         ethPrivateKey,
         ethAddress,
         proposersContractAddress,
@@ -198,7 +196,6 @@ router.post('/register', auth, async (req, res, next) => {
 router.post('/update', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
-  const nonce = req.app.get('nonce');
 
   const { url = '', stake = 0, fee = 0 } = req.body;
 
@@ -219,7 +216,6 @@ router.post('/update', auth, async (req, res, next) => {
     // Sign tx
     const proposersContractAddress = proposersContractInstance.options.address;
     const signedTx = await createSignedTransaction(
-      nonce,
       ethPrivateKey,
       ethAddress,
       proposersContractAddress,
@@ -334,7 +330,6 @@ router.get('/proposers', async (req, res, next) => {
 router.post('/de-register', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
-  const nonce = req.app.get('nonce');
 
   try {
     // Recreate Proposer contract
@@ -346,7 +341,6 @@ router.post('/de-register', auth, async (req, res, next) => {
     // Sign tx
     const proposersContractAddress = proposersContractInstance.options.address;
     const signedTx = await createSignedTransaction(
-      nonce,
       ethPrivateKey,
       ethAddress,
       proposersContractAddress,
@@ -407,7 +401,6 @@ router.post('/de-register', auth, async (req, res, next) => {
 router.post('/withdrawStake', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
-  const nonce = req.app.get('nonce');
 
   try {
     // Recreate Proposer contract
@@ -419,7 +412,6 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
     // Sign tx
     const proposersContractAddress = proposersContractInstance.options.address;
     const signedTx = await createSignedTransaction(
-      nonce,
       ethPrivateKey,
       ethAddress,
       proposersContractAddress,
@@ -579,7 +571,6 @@ router.get('/stake', auth, async (req, res, next) => {
 router.get('/withdraw', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
-  const nonce = req.app.get('nonce');
 
   try {
     // Recreate State contract
@@ -591,7 +582,6 @@ router.get('/withdraw', auth, async (req, res, next) => {
     // Sign tx
     const stateContractAddress = stateContractInstance.options.address;
     const signedTx = await createSignedTransaction(
-      nonce,
       ethPrivateKey,
       ethAddress,
       stateContractAddress,
@@ -651,7 +641,6 @@ router.get('/withdraw', auth, async (req, res, next) => {
 router.post('/payment', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
-  const nonce = req.app.get('nonce');
 
   const { blockHash } = req.body;
 
@@ -673,7 +662,6 @@ router.post('/payment', auth, async (req, res, next) => {
     // Sign tx
     const shieldContractAddress = shieldContractInstance.options.address;
     const signedTx = await createSignedTransaction(
-      nonce,
       ethPrivateKey,
       ethAddress,
       shieldContractAddress,
@@ -728,7 +716,6 @@ router.post('/payment', auth, async (req, res, next) => {
 router.get('/change', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
-  const nonce = req.app.get('nonce');
 
   try {
     // Recreate State contract
@@ -740,7 +727,6 @@ router.get('/change', auth, async (req, res, next) => {
     // Sign tx
     const stateContractAddress = stateContractInstance.options.address;
     const signedTx = await createSignedTransaction(
-      nonce,
       ethPrivateKey,
       ethAddress,
       stateContractAddress,
@@ -820,7 +806,6 @@ router.get('/mempool', async (req, res, next) => {
 router.post('/encode', auth, async (req, res, next) => {
   const ethAddress = req.app.get('ethAddress');
   const ethPrivateKey = req.app.get('ethPrivateKey');
-  const nonce = req.app.get('nonce');
 
   const { transactions, block } = req.body;
 
@@ -886,7 +871,6 @@ router.post('/encode', auth, async (req, res, next) => {
     // Sign and submit tx
     const stateContractAddress = stateContractInstance.options.address;
     const signedTx = await createSignedTransaction(
-      nonce,
       ethPrivateKey,
       ethAddress,
       stateContractAddress,

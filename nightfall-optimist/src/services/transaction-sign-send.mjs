@@ -19,17 +19,8 @@ const isWeb3Listening = async () => {
   }
 };
 
-export async function getAddressNonce(ethAddress) {
-  try {
-    const nonce = await web3.eth.getTransactionCount(ethAddress);
-    return nonce;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-}
-
 // TODO document
-export async function createSignedTransaction(nonce, ethPrivateKey, from, to, data, value = 0) {
+export async function createSignedTransaction(ethPrivateKey, from, to, data, value = 0) {
   // Check if web3 ws is available
   const result = await isWeb3Listening();
   if (result) {
@@ -37,11 +28,8 @@ export async function createSignedTransaction(nonce, ethPrivateKey, from, to, da
 
     let signedTx;
     await nonceMutex.runExclusive(async () => {
-      // Update nonce if necessary
-      const _nonce = await getAddressNonce(from);
-      if (nonce < _nonce) {
-        nonce = _nonce;
-      }
+      // Get nonce
+      const nonce = await web3.eth.getTransactionCount(from);
       // Estimate gasPrice
       const gasPrice = await estimateGasPrice(
         GAS_ESTIMATE_ENDPOINT,
