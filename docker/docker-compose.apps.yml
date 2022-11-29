@@ -5,6 +5,7 @@ services:
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
+    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
     ports:
       # to use with postman and etc
       - 8092:8092

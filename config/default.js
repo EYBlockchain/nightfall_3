@@ -6,8 +6,8 @@ function configureAWSBucket() {
 }
 
 module.exports = {
-  COMMITMENTS_DB: 'nightfall_commitments',
-  OPTIMIST_DB: 'optimist_data',
+  COMMITMENTS_DB: process.env.COMMITMENTS_DB || 'nightfall_commitments',
+  OPTIMIST_DB: process.env.OPTIMIST_DB || 'optimist_data',
   PROPOSER_COLLECTION: 'proposers',
   CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
@@ -36,7 +36,7 @@ module.exports = {
   LOG_HTTP_PAYLOAD_ENABLED: process.env.LOG_HTTP_PAYLOAD_ENABLED || 'true',
   LOG_HTTP_FULL_DATA: process.env.LOG_HTTP_FULL_DATA || 'false',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
-  PROTOCOL: 'http://',
+  PROTOCOL: process.env.PROTOCOL || 'http://', // connect to circom worker microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
   CIRCOM_WORKER_HOST: process.env.CIRCOM_WORKER_HOST || 'worker',
@@ -136,6 +136,7 @@ module.exports = {
     DEFAULT_CIRCUIT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
     DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
   },
+  PROPOSER_MAX_BLOCK_PERIOD_MILIS: Number(process.env.PROPOSER_MAX_BLOCK_PERIOD) || 60 * 1000,
   ENVIRONMENTS: {
     mainnet: {
       name: 'Mainnet',
@@ -219,6 +220,8 @@ module.exports = {
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: `ws://localhost:10002/ws`,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
   },
   TEST_OPTIONS: {
@@ -237,13 +240,13 @@ module.exports = {
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+        '0x955ff4fac3c1ae8a1b7b9ff197476de1f93e9f0bf5f1c21ff16456e3c84da587',
       user1:
         process.env.USER1_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
       user2:
         process.env.USER2_KEY ||
-        '0x955ff4fac3c1ae8a1b7b9ff197476de1f93e9f0bf5f1c21ff16456e3c84da587',
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
       proposer1:
         process.env.BOOT_PROPOSER_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
@@ -264,9 +267,9 @@ module.exports = {
         '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
     },
     addresses: {
-      walletTest: process.env.WALLET_TEST_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      walletTest: process.env.WALLET_TEST_ADDRESS || '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
       user1: process.env.USER1_ADDRESS || '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
-      user2: process.env.USER2_ADDRESS || '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
+      user2: process.env.USER2_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
       proposer1: process.env.BOOT_PROPOSER_ADDRESS || '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
       proposer2: process.env.PROPOSER2_ADDRESS || '0xa12D5C4921518980c57Ce3fFe275593e4BAB9211',
       proposer3: process.env.PROPOSER3_ADDRESS || '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8',
