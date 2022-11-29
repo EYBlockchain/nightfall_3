@@ -1,4 +1,4 @@
-pragma circom 2.1.0;
+pragma circom 2.1.2;
 
 include "./common/utils/calculate_keys.circom";
 include "./common/utils/array_uint32_to_bits.circom";
