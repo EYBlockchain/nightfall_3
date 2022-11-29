@@ -32,6 +32,7 @@ async function transfer(transferParams) {
   // let's extract the input items
   const { offchain = false, providedCommitments, ...items } = transferParams;
   const { tokenId, recipientData, rootKey, fee } = generalise(items);
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
@@ -52,6 +53,8 @@ async function transfer(transferParams) {
     maticAddress: maticAddress.hex(32),
   });
 
+  const circuitName = 'transfer';
+
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend,
@@ -61,7 +64,7 @@ async function transfer(transferParams) {
     maticAddress,
     tokenId,
     rootKey,
-    maxNullifiers: VK_IDS.transfer.numberNullifiers,
+    maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
   });
 
@@ -79,7 +82,7 @@ async function transfer(transferParams) {
     // Compress the public key as it will be put on-chain
     const compressedEPub = edwardsCompress(ePublic);
 
-    const circuitHash = await getCircuitHash('transfer');
+    const circuitHash = await getCircuitHash(circuitName);
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
@@ -92,8 +95,8 @@ async function transfer(transferParams) {
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-      numberNullifiers: VK_IDS.transfer.numberNullifiers,
-      numberCommitments: VK_IDS.transfer.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
 
@@ -118,8 +121,8 @@ async function transfer(transferParams) {
       privateData,
       commitmentsInfo.roots,
       maticAddress,
-      VK_IDS.transfer.numberNullifiers,
-      VK_IDS.transfer.numberCommitments,
+      VK_IDS[circuitName].numberNullifiers,
+      VK_IDS[circuitName].numberCommitments,
     );
 
     logger.debug({
@@ -128,7 +131,7 @@ async function transfer(transferParams) {
     });
 
     // call a worker to generate the proof
-    const res = await generateProof({ folderpath: 'transfer', witness });
+    const res = await generateProof({ folderpath: circuitName, witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
@@ -149,8 +152,8 @@ async function transfer(transferParams) {
       nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
       proof,
-      numberNullifiers: VK_IDS.transfer.numberNullifiers,
-      numberCommitments: VK_IDS.transfer.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
 
@@ -163,7 +166,13 @@ async function transfer(transferParams) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
-    await submitTransaction(transaction, commitmentsInfo, rootKey, offchain);
+    await submitTransaction(
+      transaction,
+      commitmentsInfo,
+      compressedZkpPublicKey,
+      nullifierKey,
+      offchain,
+    );
 
     return { rawTransaction, transaction };
   } catch (error) {

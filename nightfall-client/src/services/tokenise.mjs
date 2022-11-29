@@ -24,16 +24,14 @@ async function tokenise(items) {
   const {
     salt = (await randValueLT(BN128_GROUP_ORDER)).hex(),
     value = 0,
-    compressedZkpPublicKey,
     rootKey,
     tokenId = 0,
     fee,
   } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
-
-  const circuitHash = await getCircuitHash('tokenise');
 
   logger.debug({
     msg: 'Hash of new commitment',
@@ -47,6 +45,8 @@ async function tokenise(items) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
+  const circuitName = 'tokenise';
+
   // Currently just the fee commitments
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: 0n,
@@ -54,9 +54,11 @@ async function tokenise(items) {
     ercAddress,
     maticAddress,
     rootKey,
-    maxNullifiers: VK_IDS.tokenise.numberNullifiers,
+    maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     maxNonFeeNullifiers: 0,
   });
+
+  const circuitHash = await getCircuitHash(circuitName);
 
   // Prepend the new tokenised commitment
   commitmentsInfo.newCommitments = [commitment, ...commitmentsInfo.newCommitments];
@@ -68,8 +70,8 @@ async function tokenise(items) {
       circuitHash,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      numberNullifiers: VK_IDS.tokenise.numberNullifiers,
-      numberCommitments: VK_IDS.tokenise.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
 
@@ -95,8 +97,8 @@ async function tokenise(items) {
       privateData,
       commitmentsInfo.roots,
       maticAddress,
-      VK_IDS.tokenise.numberNullifiers,
-      VK_IDS.tokenise.numberCommitments,
+      VK_IDS[circuitName].numberNullifiers,
+      VK_IDS[circuitName].numberCommitments,
     );
 
     logger.debug({
@@ -104,7 +106,7 @@ async function tokenise(items) {
       witness: JSON.stringify(witness, 0, 2),
     });
 
-    const res = await generateProof({ folderpath: 'tokenise', witness });
+    const res = await generateProof({ folderpath: circuitName, witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
@@ -120,8 +122,8 @@ async function tokenise(items) {
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
-      numberNullifiers: VK_IDS.tokenise.numberNullifiers,
-      numberCommitments: VK_IDS.tokenise.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
 
@@ -133,7 +135,13 @@ async function tokenise(items) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
-    await submitTransaction(transaction, commitmentsInfo, rootKey, true);
+    await submitTransaction(
+      transaction,
+      commitmentsInfo,
+      compressedZkpPublicKey,
+      nullifierKey,
+      true,
+    );
     return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));

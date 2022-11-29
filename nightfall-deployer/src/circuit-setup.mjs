@@ -147,20 +147,20 @@ async function setupCircuits() {
 
       logger.trace('vk:', vk);
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
-      const folderpath = circuit.slice(0, -7); // remove the .circom extension
+      const circuitName = circuit.slice(0, -7); // remove the .circom extension
 
       // The selector will be the first 40 bits of the hash
       const circuitHash = circuitHashes[i];
 
       logger.info({
-        msg: `The circuit ${folderpath} has the following hash: ${circuitHash}`,
+        msg: `The circuit ${circuitName} has the following hash: ${circuitHash}`,
       });
 
       const call = keyRegistry.methods.registerVerificationKey(
         BigInt(circuitHash),
         vkArray,
-        config.VK_IDS[folderpath].isEscrowRequired,
-        config.VK_IDS[folderpath].isWithdrawing,
+        config.VK_IDS[circuitName].isEscrowRequired,
+        config.VK_IDS[circuitName].isWithdrawing,
       );
 
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly

@@ -103,6 +103,12 @@ module.exports = {
       isEscrowRequired: true,
       isWithdrawing: false,
     },
+    depositfee: {
+      numberNullifiers: 2,
+      numberCommitments: 2,
+      isEscrowRequired: true,
+      isWithdrawing: false,
+    },
     transfer: {
       numberNullifiers: 4,
       numberCommitments: 3,
