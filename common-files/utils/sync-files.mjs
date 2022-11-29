@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import axios from 'axios';
 import fs from 'fs';
 import config from 'config';
@@ -64,7 +65,7 @@ export async function checkContractsABI() {
   }
 }
 
-export async function getCircuitNames() {
+async function getCircuitNames() {
   const circuits = [];
   const baseUrl = CIRCUIT_FILES_URL;
   const url = `${baseUrl}/circuithash.txt`;
