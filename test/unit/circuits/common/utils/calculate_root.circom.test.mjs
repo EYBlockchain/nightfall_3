@@ -19,7 +19,7 @@ describe('Test calculate root', function () {
 
   it('Should set the correct order of the pathNode and siblingNode if order is 1', async () => {
     const circuitCode = `
-            pragma circom 2.1.0;
+            pragma circom 2.1.2;
             include "../../../../../nightfall-deployer/circuits/common/utils/calculate_root.circom";
             component main = OrderFields();
         `;
@@ -47,7 +47,7 @@ describe('Test calculate root', function () {
 
   it('Should set the correct order of the pathNode and siblingNode if order is 0', async () => {
     const circuitCode = `
-            pragma circom 2.1.0;
+            pragma circom 2.1.2;
             include "../../../../../nightfall-deployer/circuits/common/utils/calculate_root.circom";
             component main = OrderFields();
         `;
@@ -75,7 +75,7 @@ describe('Test calculate root', function () {
 
   it('Should calculate root of the merkle tree from the hash, siblingPath and order', async () => {
     const circuitCode = `
-            pragma circom 2.1.0;
+            pragma circom 2.1.2;
             include "../../../../../nightfall-deployer/circuits/common/utils/calculate_root.circom";
             component main = CalculateRoot();
         `;

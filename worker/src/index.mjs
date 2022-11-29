@@ -32,8 +32,7 @@ const checkCircuitsOutput = async () => {
       : `${DEFAULT_CIRCUIT_FILES_URL}/${env}`;
     const url = `${baseUrl}/proving_files/hash.txt`;
     const outputPath = `./output`;
-    const circuits = ['deposit', 'transfer', 'withdraw'];
-
+    const circuits = ['deposit', 'transfer', 'withdraw', 'burn', 'tokenise'];
     const res = await axios.get(url); // get all circuit files
     const files = res.data.split('\n');
 
@@ -43,16 +42,24 @@ const checkCircuitsOutput = async () => {
       files.map(async f => {
         if (f) {
           const filename = f.split('  ')[1];
-          const circuit = circuits.find(c => filename.includes(c));
+          const extension = f.split('.')[1];
+          let circuit = circuits.find(c => filename.includes(c))
+            ? `${circuits.find(c => filename.includes(c))}/`
+            : '';
+
+          if (!fs.existsSync(`${outputPath}/${circuit}`)) {
+            fs.mkdirSync(`${outputPath}/${circuit}`);
+          }
+          if (extension === 'wasm') circuit = `${circuit}${circuit.slice(0, -1)}_js/`;
 
           if (!fs.existsSync(`${outputPath}/${circuit}`)) {
             fs.mkdirSync(`${outputPath}/${circuit}`);
           }
 
-          const downloadPath = `${baseUrl}/proving_files/${circuit}/${filename}`;
+          const downloadPath = `${baseUrl}/proving_files/${circuit}${filename}`;
 
           try {
-            await downloadFile(downloadPath, `${outputPath}/${circuit}/${filename}`);
+            await downloadFile(downloadPath, `${outputPath}/${circuit}${filename}`);
           } catch (e) {
             logger.error({
               message: `ERROR downloading ${filename}`,
