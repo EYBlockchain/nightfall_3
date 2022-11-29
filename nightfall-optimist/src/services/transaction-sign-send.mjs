@@ -10,54 +10,43 @@ const { GAS, GAS_MULTIPLIER, GAS_ESTIMATE_ENDPOINT, GAS_PRICE, GAS_PRICE_MULTIPL
 
 const nonceMutex = new Mutex();
 
-const isWeb3Listening = async () => {
-  try {
-    const isListening = await web3.eth.net.isListening();
-    return isListening;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
 // TODO document
 export async function createSignedTransaction(ethPrivateKey, from, to, data, value = 0) {
   // Check if web3 ws is available
-  const result = await isWeb3Listening();
-  if (result) {
-    logger.debug('Create transaction object...');
+  const isListening = await web3.eth.net.isListening();
+  if (!isListening) throw new Error('Web3 ws not listening, try again later');
 
-    let signedTx;
-    await nonceMutex.runExclusive(async () => {
-      // Get nonce
-      const nonce = await web3.eth.getTransactionCount(from);
-      // Estimate gasPrice
-      const gasPrice = await estimateGasPrice(
-        GAS_ESTIMATE_ENDPOINT,
-        web3,
-        GAS_PRICE,
-        GAS_PRICE_MULTIPLIER,
-      );
-      // Eth tx
-      const tx = {
-        from,
-        to,
-        data,
-        value,
-        gasPrice,
-        nonce,
-      };
-      // Estimate gas
-      const gas = await estimateGas(tx, web3, GAS, GAS_MULTIPLIER);
-      tx.gas = gas;
+  logger.debug('Create transaction object...');
 
-      logger.debug({ msg: 'Sign transaction...', tx });
-      signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    });
+  let signedTx;
+  await nonceMutex.runExclusive(async () => {
+    // Get nonce
+    const nonce = await web3.eth.getTransactionCount(from);
+    // Estimate gasPrice
+    const gasPrice = await estimateGasPrice(
+      GAS_ESTIMATE_ENDPOINT,
+      web3,
+      GAS_PRICE,
+      GAS_PRICE_MULTIPLIER,
+    );
+    // Eth tx
+    const tx = {
+      from,
+      to,
+      data,
+      value,
+      gasPrice,
+      nonce,
+    };
+    // Estimate gas
+    const gas = await estimateGas(tx, web3, GAS, GAS_MULTIPLIER);
+    tx.gas = gas;
 
-    return signedTx;
-  }
+    logger.debug({ msg: 'Sign transaction...', tx });
+    signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
+  });
 
-  throw new Error('Web3 ws not listening, try again later');
+  return signedTx;
 }
 
 export async function sendSignedTransaction(tx) {
