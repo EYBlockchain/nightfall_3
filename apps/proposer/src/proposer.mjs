@@ -7,7 +7,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 /**
 Does the preliminary setup and starts listening on the websocket
 */
-export default async function startProposer(nf3, proposerBaseUrl) {
+export async function startProposer(nf3, proposerBaseUrl) {
   logger.info('Starting Proposer...');
   // Mnemonic are only required for services connecting to a client that
   // can generate a compressed PKD.
@@ -59,7 +59,11 @@ export async function checkAndChangeProposer(nf3) {
   const maxProposers = await nf3.getMaxProposers();
   const currentSprint = await nf3.currentSprint();
   const spanProposersList = await nf3.getSpanProposersList(currentSprint);
-  if ((await nf3.getBlockNumber()).sub(proposerStartBlock).gt(rotateProposerBlocks) || proposerStartBlock.eq(0) || maxProposers.eq(1)) {
+  if (
+    (await nf3.getBlockNumber()).sub(proposerStartBlock) >= rotateProposerBlocks ||
+    proposerStartBlock === 0 ||
+    maxProposers >= 1
+  ) {
     if (spanProposersList[currentSprint.mod(5)].eq(nf3.ethereumAddress)) {
       await nf3.changeCurrentProposer();
     } else if ((await nf3.getBlockNumber()).sub(proposerStartBlock).gt(maxBlockWaitTime)) {

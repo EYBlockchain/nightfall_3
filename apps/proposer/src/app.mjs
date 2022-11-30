@@ -8,7 +8,6 @@ import { setupHttpDefaults } from '@polygon-nightfall/common-files/utils/httputi
 import { proposer, contracts } from './routes/index.mjs';
 import { startProposer, checkAndChangeProposer } from './proposer.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { logger } from 'ethers';
 
 const PROPOSER_PORT = process.env.PROPOSER_PORT || 8092;
 
@@ -29,6 +28,6 @@ app.listen(PROPOSER_PORT);
 startProposer(nf3, environment.proposerBaseUrl);
 setInterval(() => {
   checkAndChangeProposer(nf3);
-}, 30000)
+}, 30000);
 
 export default app;
