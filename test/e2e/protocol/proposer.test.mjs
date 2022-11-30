@@ -9,7 +9,7 @@ import { UserFactory } from 'nightfall-sdk';
 import axios from 'axios';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { Web3Client } from '../../utils.mjs';
+import { waitTransactionToBeMined, Web3Client } from '../../utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -160,7 +160,10 @@ describe('Basic Proposer tests', () => {
     const currentUrl = proposersBeforeUpdate[0].url; // Need to pass current value
     const stake = 0; // Contract adds given value to existing amount
     const newFee = fee;
-    await bootProposer.updateProposer(currentUrl, stake, newFee);
+    const { transactionHash } = await bootProposer.updateProposer(currentUrl, stake, newFee);
+
+    // Wait for transaction to be mined
+    await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -186,7 +189,10 @@ describe('Basic Proposer tests', () => {
     const newUrl = testProposersUrl[1];
     const stake = 0; // Contract adds given value to existing amount
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    await bootProposer.updateProposer(newUrl, stake, currentFee);
+    const { transactionHash } = await bootProposer.updateProposer(newUrl, stake, currentFee);
+
+    // Wait for transaction to be mined
+    await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -211,7 +217,14 @@ describe('Basic Proposer tests', () => {
     // Update proposer url
     const currentUrl = proposersBeforeUpdate[0].url;
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    await bootProposer.updateProposer(currentUrl, minimumStake, currentFee);
+    const { transactionHash } = await bootProposer.updateProposer(
+      currentUrl,
+      minimumStake,
+      currentFee,
+    );
+
+    // Wait for transaction to be mined
+    await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);

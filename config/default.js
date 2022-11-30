@@ -486,6 +486,13 @@ module.exports = {
       ],
     },
   },
+  GAS: process.env.GAS || 4000000,
+  GAS_MULTIPLIER: Number(process.env.GAS_MULTIPLIER) || 2,
+  GAS_ESTIMATE_ENDPOINT:
+    process.env.GAS_ESTIMATE_ENDPOINT ||
+    'https://vqxy02tr5e.execute-api.us-east-2.amazonaws.com/production/estimateGas',
+  GAS_PRICE: process.env.GAS_PRICE || '10000000000',
+  GAS_PRICE_MULTIPLIER: Number(process.env.GAS_PRICE_MULTIPLIER) || 2,
 
   // for Browser use
   proposerUrl:

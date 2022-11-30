@@ -3,10 +3,8 @@ import config from 'config';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
-  getContractAddress,
   getContractInstance,
   waitForContract,
-  web3,
 } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
@@ -23,7 +21,12 @@ import {
 } from '../services/database.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import getProposers from '../services/proposer.mjs';
+import {
+  createSignedTransaction,
+  sendSignedTransaction,
+} from '../services/transaction-sign-send.mjs';
 import auth from '../utils/auth.mjs';
+import txsQueue from '../utils/transactions-queue.mjs';
 
 const router = express.Router();
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
@@ -91,20 +94,34 @@ router.post('/register', auth, async (req, res, next) => {
     const isRegistered = proposerAddresses.includes(ethAddress);
 
     let txDataToSign = '';
-    let receipt;
+    let signedTx = {};
     if (!isRegistered) {
       logger.debug('Register new proposer...');
       txDataToSign = await proposersContractInstance.methods.registerProposer(url, fee).encodeABI();
-      const tx = {
-        from: ethAddress,
-        to: proposersContractInstance.options.address,
-        data: txDataToSign,
-        value: stake,
-        gas: 8000000,
-      };
-      const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-      receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-      logger.debug(`Transaction receipt ${receipt}`);
+
+      // Sign tx
+      const proposersContractAddress = proposersContractInstance.options.address;
+      signedTx = await createSignedTransaction(
+        ethPrivateKey,
+        ethAddress,
+        proposersContractAddress,
+        txDataToSign,
+        stake,
+      );
+
+      // Submit tx and update db if tx is successful
+      // CHECK - I think the code beyond L132 can be removed (?) then db op could be moved here
+      txsQueue.push(async () => {
+        try {
+          const receipt = await sendSignedTransaction(signedTx);
+          logger.debug({ msg: 'Proposer registered', receipt });
+        } catch (err) {
+          logger.error({
+            msg: 'Something went wrong',
+            err,
+          });
+        }
+      });
     } else {
       logger.warn('Proposer was already registered, registration attempt ignored!');
     }
@@ -141,7 +158,9 @@ router.post('/register', auth, async (req, res, next) => {
       proposer.address = ethAddress;
       await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
     }
-    res.json({ receipt });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
@@ -200,19 +219,35 @@ router.post('/update', auth, async (req, res, next) => {
     const txDataToSign = await proposersContractInstance.methods
       .updateProposer(url, fee)
       .encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: proposersContractInstance.options.address,
-      data: txDataToSign,
-      value: stake,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    res.json({ receipt });
 
-    // Update db
-    await setRegisteredProposerAddress(ethAddress, url); // save the registration address and URL
+    // Sign tx
+    const proposersContractAddress = proposersContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      ethPrivateKey,
+      ethAddress,
+      proposersContractAddress,
+      txDataToSign,
+      stake,
+    );
+
+    // Submit tx and update db if tx is successful
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer updated', receipt });
+
+        await setRegisteredProposerAddress(ethAddress, url);
+        logger.debug('Proposer data updated in db');
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
@@ -283,7 +318,7 @@ router.get('/proposers', async (req, res, next) => {
  *      - Proposer
  *      summary: Deregister proposer.
  *      description: De-register a proposer - removes proposer from Proposers contract.
- *      Proposers can de-register even when they are the current proposer.
+ *        Proposers can de-register even when they are the current proposer.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -306,24 +341,39 @@ router.post('/de-register', auth, async (req, res, next) => {
   try {
     // Recreate Proposer contract
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const proposersContractAddress = await getContractAddress(PROPOSERS_CONTRACT_NAME);
 
-    // Remove the proposer by updating the blockchain state
+    // Remove proposer
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: proposersContractAddress,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
 
-    // Update db
-    await deleteRegisteredProposerAddress(ethAddress);
+    // Sign tx
+    const proposersContractAddress = proposersContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      ethPrivateKey,
+      ethAddress,
+      proposersContractAddress,
+      txDataToSign,
+    );
 
-    res.json({ receipt });
+    // Submit tx and update db if tx is successful
+    // CHECK - does this go inside a Promise? see `nf3` eg `deregisterProposer`
+    // CHECK - is await for db correct?
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer removed from contract', receipt });
+
+        await deleteRegisteredProposerAddress(ethAddress);
+        logger.debug('Proposer removed from db');
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
@@ -339,7 +389,7 @@ router.post('/de-register', auth, async (req, res, next) => {
  *      - Proposer
  *      summary: Withdraw stake.
  *      description: Withdraw stake for a de-registered proposer.
- *      Can only be called after the cooling off period.
+ *        Can only be called after the cooling off period.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -365,17 +415,31 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
 
     // Withdraw proposer stake
     const txDataToSign = await proposersContractInstance.methods.withdrawStake().encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: proposersContractInstance.options.address,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
 
-    res.json({ receipt });
+    // Sign tx
+    const proposersContractAddress = proposersContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      ethPrivateKey,
+      ethAddress,
+      proposersContractAddress,
+      txDataToSign,
+    );
+
+    // Submit tx
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer stake withdrawn', receipt });
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (error) {
     next(error);
   }
@@ -519,18 +583,33 @@ router.get('/withdraw', auth, async (req, res, next) => {
     // Recreate State contract
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
 
+    // Withdraw profits
     const txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: stateContractInstance.options.address,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
 
-    res.json({ receipt });
+    // Sign tx
+    const stateContractAddress = stateContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      ethPrivateKey,
+      ethAddress,
+      stateContractAddress,
+      txDataToSign,
+    );
+
+    // Submit tx
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer profits withdrawn', receipt });
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
@@ -546,9 +625,9 @@ router.get('/withdraw', auth, async (req, res, next) => {
  *     - Proposer
  *     summary: Initiate withdrawal.
  *     description: Request payment for new blocks successfully proposed or challenged.
- *     Also unlocks any locked stake after the cooling off period.
- *     Then /withdraw can be called to recover the money.
- *     Can only be called after the cooling off period.
+ *       Also unlocks any locked stake after the cooling off period.
+ *       Then /withdraw can be called to recover the money.
+ *       Can only be called after the cooling off period.
  *     parameters:
  *        - in: header
  *          name: api_key
@@ -582,20 +661,35 @@ router.post('/payment', auth, async (req, res, next) => {
     // Recreate Shield contract
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
+    // Request payment, unlock stake
     const txDataToSign = await shieldContractInstance.methods
       .requestBlockPayment(block)
       .encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: shieldContractInstance.options.address,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
 
-    res.json({ receipt });
+    // Sign tx
+    const shieldContractAddress = shieldContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      ethPrivateKey,
+      ethAddress,
+      shieldContractAddress,
+      txDataToSign,
+    );
+
+    // Submit tx
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer payment completed', receipt });
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
@@ -636,17 +730,31 @@ router.get('/change', auth, async (req, res, next) => {
 
     // Attempt to rotate proposer currently proposing blocks
     const txDataToSign = await stateContractInstance.methods.changeCurrentProposer().encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: stateContractInstance.options.address,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
 
-    res.json({ receipt });
+    // Sign tx
+    const stateContractAddress = stateContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      ethPrivateKey,
+      ethAddress,
+      stateContractAddress,
+      txDataToSign,
+    );
+
+    // Submit tx
+    txsQueue.push(async () => {
+      try {
+        const receipt = await sendSignedTransaction(signedTx);
+        logger.debug({ msg: 'Proposer was rotated', receipt });
+      } catch (err) {
+        logger.error({
+          msg: 'Something went wrong',
+          err,
+        });
+      }
+    });
+
+    const { transactionHash } = signedTx;
+    res.json({ transactionHash });
   } catch (err) {
     next(err);
   }
@@ -711,7 +819,6 @@ router.post('/encode', auth, async (req, res, next) => {
   try {
     // Recreate State contract
     const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-    const stateContractAddress = await getContractAddress(STATE_CONTRACT_NAME);
 
     const latestTree = await getLatestTree();
     let currentLeafCount = latestTree.leafCount;
@@ -767,15 +874,16 @@ router.post('/encode', auth, async (req, res, next) => {
         newTransactions.map(t => Transaction.buildSolidityStruct(t)),
       )
       .encodeABI();
-    const tx = {
-      from: ethAddress,
-      to: stateContractAddress,
-      data: txDataToSign,
-      gas: 8000000,
-    };
-    const signedTx = await web3.eth.accounts.signTransaction(tx, ethPrivateKey);
-    const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-    logger.debug(`Transaction receipt ${receipt}`);
+
+    // Sign and submit tx
+    const stateContractAddress = stateContractInstance.options.address;
+    const signedTx = await createSignedTransaction(
+      ethPrivateKey,
+      ethAddress,
+      stateContractAddress,
+      txDataToSign,
+    );
+    const receipt = await sendSignedTransaction(signedTx);
 
     res.json({ receipt, block: newBlock, transactions: newTransactions });
   } catch (err) {
@@ -791,8 +899,8 @@ router.post('/encode', auth, async (req, res, next) => {
  *     - Proposer
  *     summary: Add an off-chain transaction to mempool.
  *     description: Request to add an off-chain transaction from a client to this proposer mempool, for a fee.
- *     This is only available for L2 transfers amd withdrawals.
- *     Client must cover the proposer minimum fee.
+ *       This is only available for L2 transfers amd withdrawals.
+ *       Client must cover the proposer minimum fee.
  *     responses:
  *       200:
  *         $ref: '#/components/responses/Success'
