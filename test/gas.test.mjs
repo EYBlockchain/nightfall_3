@@ -111,7 +111,7 @@ describe('Gas test', async () => {
 
       const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCostDeposit).to.be.lessThan(expectedGasCostPerTx);
-      logger.debug(`Deposit L1 average gas used was, ${averageL1GasCost(receipts)}`);
+      logger.debug(`Deposit L1 average gas used was ${averageL1GasCost(receipts)}`);
 
       const mempoolTrancastions = await nf3Users[0].unprocessedTransactionCount();
       if (mempoolTrancastions > 0) {
@@ -205,7 +205,7 @@ describe('Gas test', async () => {
 
       const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCostWithdrawal).to.be.lessThan(expectedGasCostPerTx);
-      console.log('Withdraw L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
+      logger.debug(`Withdraw L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
       const mempoolTrancastions = await nf3Users[0].unprocessedTransactionCount();
       if (mempoolTrancastions > 0) {
