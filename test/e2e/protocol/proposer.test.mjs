@@ -16,7 +16,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const {
   mnemonics,
   signingKeys,
-  ROTATE_PROPOSER_BLOCKS,
   fee,
   transferValue,
   tokenConfigs: { tokenType, tokenId },
@@ -43,6 +42,7 @@ let stateAddress;
 const eventLogs = [];
 let erc20Address;
 let minimumStake;
+let rotateProposerBlocks;
 
 const CHANGE_PROPOSER_NO_TIMES = 8;
 
@@ -80,6 +80,7 @@ describe('Basic Proposer tests', () => {
     await thirdProposer.init(mnemonics.proposer);
 
     minimumStake = await bootProposer.getMinimumStake();
+    rotateProposerBlocks = await bootProposer.getRotateProposerBlocks();
     stateAddress = await bootProposer.getContractAddress('State');
     stateABI = await nf3User.getContractAbi('State');
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
@@ -231,7 +232,7 @@ describe('Basic Proposer tests', () => {
         const initBlock = await web3.eth.getBlockNumber();
         let currentBlock = initBlock;
 
-        while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
+        while (currentBlock - initBlock < rotateProposerBlocks) {
           await new Promise(resolve => setTimeout(resolve, 10000));
           currentBlock = await web3.eth.getBlockNumber();
         }
