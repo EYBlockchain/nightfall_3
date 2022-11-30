@@ -46,7 +46,7 @@ async function transactionSubmittedEventHandler(eventParams) {
       logger.info({ msg: 'Transaction checks passed' });
 
       // if transaction has duplicate commitment or nullifier
-      // and original transaction is on mempool
+      // and original transaction is in mempool
       // check its proposer payment with original transaction
       // if payment is higher then proceed and save.
       const checkStatus = await Promise.all([
