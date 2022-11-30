@@ -1,4 +1,5 @@
 /* eslint-disable import/no-unresolved */
+/* eslint-disable no-await-in-loop */
 /**
 Module that runs up as a proposer
 */
@@ -6,6 +7,37 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 const TIMER_CACP = process.env.TIMER_CACP || 30;
 const MAX_ROTATE_TIMES = process.env.MAX_ROTATE_TIMES || 2;
+
+async function checkAndChangeProposer(nf3) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    logger.info('Checking Proposer...');
+    const proposerStartBlock = await nf3.proposerStartBlock();
+    const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
+    const numproposers = await nf3.getNumProposers();
+    const currentSprint = await nf3.currentSprint();
+    const spanProposersList = await nf3.spanProposersList(currentSprint);
+    const currentBlock = await nf3.web3.eth.getBlockNumber();
+
+    logger.info(`Proposer address: ${spanProposersList} and sprint: ${currentSprint}`);
+
+    if (currentBlock - proposerStartBlock >= rotateProposerBlocks && numproposers > 1) {
+      try {
+        if (spanProposersList[currentSprint] === nf3.ethereumAddress) {
+          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
+          await nf3.changeCurrentProposer();
+        } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
+          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
+          await nf3.changeCurrentProposer();
+        }
+      } catch (err) {
+        logger.info(err);
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, TIMER_CACP * 1000));
+  }
+}
+
 /**
 Does the preliminary setup and starts listening on the websocket
 */
@@ -52,36 +84,4 @@ export default async function startProposer(nf3, proposerBaseUrl) {
       }
     });
   logger.info('Listening for incoming events');
-}
-
-async function checkAndChangeProposer(nf3) {
-  while (true) {
-    logger.info('Checking Proposer...');
-    const proposerStartBlock = await nf3.proposerStartBlock();
-    const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
-    const numproposers = await nf3.getNumProposers();
-    const currentSprint = await nf3.currentSprint();
-    const spanProposersList = await nf3.spanProposersList(currentSprint);
-    const currentBlock = await nf3.web3.eth.getBlockNumber()
-
-    logger.info(`Proposer address: ${spanProposersList} and sprint: ${currentSprint}`);
-
-    if (
-      currentBlock - proposerStartBlock >= rotateProposerBlocks &&
-      numproposers > 1
-    ) {
-      try {
-        if (spanProposersList[currentSprint] === nf3.ethereumAddress) {
-          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
-          await nf3.changeCurrentProposer();
-        } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
-          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
-          await nf3.changeCurrentProposer();
-        }
-      } catch (err) {
-        logger.info(err);
-      }
-    }
-    await new Promise(resolve => setTimeout(resolve, TIMER_CACP * 1000));
-  }
 }
