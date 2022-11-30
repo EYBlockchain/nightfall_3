@@ -5,15 +5,26 @@ and Tendermint's proposer selection algorithm, Nightfall will select next propos
 
 Terminology:
 
-- **Slots**. Units assigned to proposers based on their stake.
+- **Slots**. Units assigned to proposers based on their stake. A proposer should have at least to
+  register the minimum stake and every time a proposer propose a block this stake is reduced by the
+  block stake. This block reduced it's blocked until the challenge period is over. The minimum stake
+  and block stake are configurable through the variables `minimumStake` and `blockStake` in the
+  Config contract.
+- **Value per slot**. Amount of the stake for each slot to calculate the slots that a proposer will
+  have based on their stake. If a proposer has 10K staked and the value per slot is 1K then the
+  proposer will have 10 slots to calculate their stake power in the weighted round robin algorithm.
+  This parameter is calculated dynamically based on the proposer with the higher stake.
 - **Sprint**. The time a proposer is proposing blocks being the current proposer. It will be the
-  equivalent as ROTATE_PROPOSER_BLOCKS (L1 blocks).
+  equivalent as ROTATE_PROPOSER_BLOCKS (L1 blocks). The rotate proposer blocks is configurable
+  through the variable `rotateProposerBlocks` in the Config contract.
 - **Span**. Unit composed of various sprints in which we use the same proposer set for the Weighted
-  Round Robin algorithm to select next current proposer.
+  Round Robin algorithm to select next current proposer. The number of sprints in a span is
+  configurable through the variable `sprintsInSpan` in the Config contract.
 - **Proposer set**. Proposers with calculated weights that will be proposers during the sprints of
   next span.
 - **Proposer set count**. After shuffling the slots, we take this number of slots to build the
-  proposer set.
+  proposer set. The proposer set count is configurable through the variable `proposerSetCount` in
+  the Config contract.
 
 We need a shuffling the slots at the begining of each span in order to introduce some randomness in
 the proposer selection process.

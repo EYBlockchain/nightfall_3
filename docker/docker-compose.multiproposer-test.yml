@@ -1,0 +1,350 @@
+version: '3.5'
+# Use this script for running up 2 independent proposers with optimist and mongodb services.
+services:
+  # Temporary container to deploy contracts and circuits and populate volumes
+  deployer:
+    image: ghcr.io/eyblockchain/nightfall3-deployer:latest
+    build:
+      dockerfile: docker/deployer.Dockerfile
+      context: ..
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+      - type: bind
+        source: ../nightfall-deployer/contracts
+        target: /app/contracts/
+      - type: bind
+        source: ../nightfall-deployer/circuits
+        target: /app/circuits/
+      - type: bind
+        source: ../nightfall-deployer/src
+        target: /app/src/
+      - type: bind
+        source: ../common-files
+        target: /common-files
+      - type: bind
+        source: ../config/default.js
+        target: /app/config/default.js
+      - type: bind
+        source: ../nightfall-deployer/migrations
+        target: /app/migrations
+      - type: bind
+        source: ../nightfall-deployer/truffle-config.js
+        target: /app/truffle-config.js
+      - type: bind
+        source: ../nightfall-deployer/entrypoint.sh
+        target: /app/entrypoint.sh
+    networks:
+      - nightfall_network
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # startup routines will wait for a blockchain client to be reachable on this network
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
+      WHITELISTING: ${WHITELISTING}
+      UPGRADE: ${UPGRADE_CONTRACTS}
+      ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
+      TEST_SANCTIONS_CONTRACT: 'mock'
+
+  hosted-utils-api-server:
+    build:
+      dockerfile: docker/hosted-utils-api-server.Dockerfile
+      context: ..
+    depends_on:
+      - worker
+    ports:
+      - 8087:80
+    volumes:
+      - type: volume
+        source: proving_files
+        target: /app/public/
+
+  worker:
+    image: ghcr.io/eyblockchain/nightfall3-worker:latest
+    build:
+      dockerfile: docker/worker.Dockerfile
+      context: ..
+    volumes:
+      - type: volume
+        source: proving_files
+        target: /app/output/
+      - type: bind
+        source: ../common-files/test
+        target: /common-files/test
+      - type: bind
+        source: ../nightfall-deployer/circuits
+        target: /app/circuits/
+      - type: bind
+        source: ../worker/src
+        target: /app/src/
+      - type: bind
+        source: ../config/default.js
+        target: /app/config/default.js
+    depends_on:
+      - deployer
+      - rabbitmq
+    networks:
+      - nightfall_network
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      MPC: ${MPC}
+
+  client_1:
+    build:
+      dockerfile: docker/client.Dockerfile
+      context: ..
+    container_name: client_1
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build
+    networks:
+      - nightfall_network
+    ports:
+      - 8083:80
+    depends_on:
+      - deployer
+      - worker
+      - optimist_mongodb_1
+      - client_rabbitmq_1
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://client_rabbitmq_1}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
+      OPTIMIST_HOST: ${OPTIMIST_HOST:-proposer_optimist_1}
+      OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
+      MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://optimist_mongodb_1:27017}
+    command: ['npm', 'run', 'dev']
+
+  client_2:
+    build:
+      dockerfile: docker/client.Dockerfile
+      context: ..
+    container_name: client_2
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build
+    networks:
+      - nightfall_network
+    ports:
+      - 8086:80
+    depends_on:
+      - deployer
+      - worker
+      - optimist_mongodb_2
+      - client_rabbitmq_2
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://client_rabbitmq_2}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
+      OPTIMIST_HOST: ${OPTIMIST_HOST:-proposer_optimist_2}
+      OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
+      MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://optimist_mongodb_2:27017}
+    command: ['npm', 'run', 'dev']
+
+  proposer_optimist_1:
+    build:
+      dockerfile: docker/optimist.Dockerfile
+      context: ..
+    container_name: proposer_optimist_1
+    depends_on:
+      - optimist_mongodb_1
+    networks:
+      - nightfall_network
+    ports:
+      - 9091:80
+      # websocket port for Optimist is on localhost:9090
+      - 9090:8080
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+    environment:
+      WEBSOCKET_PORT: 8080
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://optimist_mongodb_1:27017}
+      HASH_TYPE: poseidon
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      IS_CHALLENGER: ${IS_CHALLENGER:-false}
+    command: ['npm', 'run', 'dev']
+
+  proposer_optimist_2:
+    build:
+      dockerfile: docker/optimist.Dockerfile
+      context: ..
+    container_name: proposer_optimist_2
+    depends_on:
+      - optimist_mongodb_2
+    networks:
+      - nightfall_network
+    ports:
+      - 9093:80
+      # websocket port for Optimist is on localhost:9090
+      - 9092:8080
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+    environment:
+      WEBSOCKET_PORT: 8080
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://optimist_mongodb_2:27017}
+      HASH_TYPE: poseidon
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      IS_CHALLENGER: ${IS_CHALLENGER:-false}
+    command: ['npm', 'run', 'dev']
+
+  optimist_mongodb_1:
+    image: mongo:4.4.1-bionic
+    hostname: optimist_mongodb_1
+    container_name: optimist_mongodb_1
+    ports:
+      - 27019:27017
+    command: --quiet
+    networks:
+      - nightfall_network
+    volumes:
+      - type: volume
+        source: optimist_mongodb_1
+        target: /data/db
+
+  optimist_mongodb_2:
+    image: mongo:4.4.1-bionic
+    hostname: optimist_mongodb_2
+    container_name: optimist_mongodb_2
+    ports:
+      - 27020:27017
+    command: --quiet
+    networks:
+      - nightfall_network
+    volumes:
+      - type: volume
+        source: optimist_mongodb_2
+        target: /data/db
+
+  proposer_1:
+    build:
+      dockerfile: docker/proposer.Dockerfile
+      context: ..
+    container_name: proposer_1
+    depends_on:
+      - proposer_optimist_1
+    ports:
+      # to use with postman and etc
+      - 8093:8093
+    environment:
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: 8546
+      ENABLE_QUEUE: 1
+      OPTIMIST_HOST: proposer_optimist_1
+      OPTIMIST_PORT: 80
+      OPTIMIST_WS_PORT: 8080
+      CLIENT_HOST: client
+      CLIENT_PORT: 8080
+      PROPOSER_HOST: proposer_1
+      PROPOSER_PORT: 8093
+      PROPOSER_KEY: ${PROPOSER1_KEY:-0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a}
+    networks:
+      - nightfall_network
+    volumes:
+      - type: bind
+        source: ../apps/proposer/src
+        target: /app/src
+
+  proposer_2:
+    build:
+      dockerfile: docker/proposer.Dockerfile
+      context: ..
+    container_name: proposer_2
+    depends_on:
+      - proposer_optimist_2
+    ports:
+      # to use with postman and etc
+      - 8094:8094
+    environment:
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: 8546
+      ENABLE_QUEUE: 1
+      OPTIMIST_HOST: proposer_optimist_2
+      OPTIMIST_PORT: 80
+      OPTIMIST_WS_PORT: 8080
+      CLIENT_HOST: client
+      CLIENT_PORT: 8080
+      PROPOSER_HOST: proposer_2
+      PROPOSER_PORT: 8094
+      PROPOSER_KEY: ${PROPOSER2_KEY:-0xabf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce}
+    networks:
+      - nightfall_network
+    volumes:
+      - type: bind
+        source: ../apps/proposer/src
+        target: /app/src
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '15674:15674'
+      - '5672:5672'
+    networks:
+      - nightfall_network
+
+  client_rabbitmq_1:
+    image: rabbitmq
+    container_name: client_rabbitmq_1
+    ports:
+      - '15675:15674'
+      - '5673:5672'
+    networks:
+      - nightfall_network
+
+  client_rabbitmq_2:
+    image: rabbitmq
+    container_name: client_rabbitmq_2
+    ports:
+      - '15676:15674'
+      - '5674:5672'
+    networks:
+      - nightfall_network
+
+volumes:
+  optimist_mongodb_1:
+  optimist_mongodb_2:
+  proving_files:
+  build:
+networks:
+  nightfall_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1

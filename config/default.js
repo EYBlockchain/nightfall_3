@@ -239,6 +239,19 @@ module.exports = {
     gas: 10000000,
     gasCosts: 80000000000000000,
     fee: 1,
+    ROTATE_PROPOSER_BLOCKS: 20,
+    clientApiUrls: {
+      client1: process.env.CLIENT1_API_URL || 'http://localhost:8083',
+      client2: process.env.CLIENT2_API_URL || 'http://localhost:8086',
+    },
+    optimistApiUrls: {
+      optimist1: process.env.OPTIMIST1_API_URL || 'http://localhost:9091',
+      optimist2: process.env.OPTIMIST2_API_URL || 'http://localhost:9093',
+    },
+    optimistWsUrls: {
+      optimist1: process.env.OPTIMIST1_WS_URL || 'ws://localhost:9090',
+      optimist2: process.env.OPTIMIST2_WS_URL || 'ws://localhost:9092',
+    },
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||
@@ -251,6 +264,7 @@ module.exports = {
         '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
       proposer1:
         process.env.BOOT_PROPOSER_KEY ||
+        process.env.PROPOSER1_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
       proposer2:
         process.env.PROPOSER2_KEY ||
