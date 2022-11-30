@@ -70,12 +70,16 @@ async function checkAndChangeProposer(nf3) {
       currentBlock - proposerStartBlock >= rotateProposerBlocks &&
       numproposers > 1
     ) {
-      if (spanProposersList[currentSprint] === nf3.ethereumAddress) {
-        logger.info(`Calling changeCurrentProposer`);
-        await nf3.changeCurrentProposer();
-      } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
-        logger.info(`Calling changeCurrentProposer`);
-        await nf3.changeCurrentProposer();
+      try {
+        if (spanProposersList[currentSprint] === nf3.ethereumAddress) {
+          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
+          await nf3.changeCurrentProposer();
+        } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
+          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
+          await nf3.changeCurrentProposer();
+        }
+      } catch (err) {
+        logger.info(err);
       }
     }
     await new Promise(resolve => setTimeout(resolve, TIMER_CACP * 1000));
