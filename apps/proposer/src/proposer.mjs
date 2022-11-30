@@ -4,10 +4,12 @@ Module that runs up as a proposer
 */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
+const TIMER_CACP = process.env.TIMER_CACP || 30;
+const MAX_ROTATE_TIMES = process.env.MAX_ROTATE_TIMES || 2;
 /**
 Does the preliminary setup and starts listening on the websocket
 */
-export async function startProposer(nf3, proposerBaseUrl) {
+export default async function startProposer(nf3, proposerBaseUrl) {
   logger.info('Starting Proposer...');
   // Mnemonic are only required for services connecting to a client that
   // can generate a compressed PKD.
@@ -27,6 +29,7 @@ export async function startProposer(nf3, proposerBaseUrl) {
 
   // If the emitter is not defined it causes the process to exit
   const blockProposeEmitter = await nf3.startProposer();
+  checkAndChangeProposer(nf3);
   blockProposeEmitter
     .on('receipt', (receipt, block) => {
       logger.debug(
@@ -51,23 +54,30 @@ export async function startProposer(nf3, proposerBaseUrl) {
   logger.info('Listening for incoming events');
 }
 
-export async function checkAndChangeProposer(nf3) {
-  const maxBlockWaitTime = 5;
-  logger.info('Checking Proposer...');
-  const proposerStartBlock = await nf3.proposerStartBlock();
-  const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
-  const maxProposers = await nf3.getMaxProposers();
-  const currentSprint = await nf3.currentSprint();
-  const spanProposersList = await nf3.getSpanProposersList(currentSprint);
-  if (
-    (await nf3.getBlockNumber()).sub(proposerStartBlock) >= rotateProposerBlocks ||
-    proposerStartBlock === 0 ||
-    maxProposers >= 1
-  ) {
-    if (spanProposersList[currentSprint.mod(5)].eq(nf3.ethereumAddress)) {
-      await nf3.changeCurrentProposer();
-    } else if ((await nf3.getBlockNumber()).sub(proposerStartBlock).gt(maxBlockWaitTime)) {
-      await nf3.changeCurrentProposer();
+async function checkAndChangeProposer(nf3) {
+  while (true) {
+    logger.info('Checking Proposer...');
+    const proposerStartBlock = await nf3.proposerStartBlock();
+    const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
+    const numproposers = await nf3.getNumProposers();
+    const currentSprint = await nf3.currentSprint();
+    const spanProposersList = await nf3.spanProposersList(currentSprint);
+    const currentBlock = await nf3.web3.eth.getBlockNumber()
+
+    logger.info(`Proposer address: ${spanProposersList} and sprint: ${currentSprint}`);
+
+    if (
+      currentBlock - proposerStartBlock >= rotateProposerBlocks &&
+      numproposers > 1
+    ) {
+      if (spanProposersList[currentSprint] === nf3.ethereumAddress) {
+        logger.info(`Calling changeCurrentProposer`);
+        await nf3.changeCurrentProposer();
+      } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
+        logger.info(`Calling changeCurrentProposer`);
+        await nf3.changeCurrentProposer();
+      }
     }
+    await new Promise(resolve => setTimeout(resolve, TIMER_CACP * 1000));
   }
 }
