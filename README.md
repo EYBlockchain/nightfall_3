@@ -202,23 +202,56 @@ The ping-pong test uses 2 users and 2 proposers by default to test during a peri
 - checks for the users layer 2 balances.
 - checks for the rotation, stake and statistics for the proposers.
 
-To configure the proposers there is a docker-compose file in `docker/docker-compose.proposers.yml`
-that define the containers `proposer_x`, `proposer_optimist_x` and `optimist_mongodb_x` for each
-proposer and the corresponding parameters for each container. You can add more proposers if needed
-configuring the parameters properly. The test detects the proposers parameters from the `yml` file
-and will run the test with the configured proposers.
+To configure the proposers and clients there is a `multiproposer-test.env` you can copy from
+`example.multiproposer-test.env` for the environment variables for docker-compose file in
+`docker/docker-compose.multiproposer-test.yml` that define the containers `proposer_x`,
+`proposer_optimist_x` and `optimist_mongodb_x` for each proposer and the corresponding parameters
+for each container. You can add more proposers if needed configuring the parameters properly. The
+same way you can configure different clients with `client_x` sharing the same database
+`optimist_mongodb_x` because they have access to different mongo collections.
 
-To test you can run in a terminal
+To test in local you can run in a terminal
 
 ```sh
-start-nightfall -g -d
+./bin/start-multiproposer-test-env -g
 ```
 
-And in another terminal once the Nightfall deployer has exited:
+that will start all the containers for the test, and in another terminal once the Nightfall deployer
+has exited and proposers are ready:
 
 ```sh
 npm run ping-pong
 ```
+
+The test will run by default with accounts for user1 and user2 from the config. To run the test with
+specific accounts for user1 and user2 you have to create a `multiproposer-test.env` file in the root
+folder from a copy of `example.multiproposer-test.env`. Then you should fill the information of:
+
+- CLIENT1_API_URL, CLIENT2_API_URL with the clients that user1 and user2 will connect as client API
+  to generate the transactions.
+- USER1_KEY, USER2_KEY with the private keys of the users.
+- USER1_MNEMONIC and USER2_MNEMONIC with the mnemonics of the users.
+- BLOCKCHAIN_WS_HOST with the blockchain you want to test When you execute the command
+  `npm run ping-pong` the specific environment variables will be load for this test.
+
+If you want to run specific keys for the proposer_1 and proposer_2 you also can define
+PROPOSER1_KEY, PROPOSER2_KEY environment variables in the `multiproposer-test.env` file and also
+OPTIMIST1_API_URL, OPTIMIST2_API_URL, OPTIMIST1_WS_URL, OPTIMIST2_WS_URL for the optimists of the
+proposers in order to call the make block in the test automatically for the current proposer.
+
+If you want to check the test with geth you can run the geth
+
+- Run up the private chain with `./bin/geth-standalone -s`
+- Start terminal logging with `./bin/geth-standalone -l` and wait for the DAG build to complete
+- Start multiproposer test containers in another terminal with the `-l` option
+  (`./bin/start-multiproposer-test-env -l`)
+
+To help funding the blockchain unlocked accounts of the test with some token `ERC20Mock` you have a
+script available that can run
+
+- `COMMAND=fund node ./nightfall-deployer/scripts/fund-accounts.mjs` to fund the accounts with some
+  token.
+- `node ./nightfall-deployer/scripts/fund-accounts.mjs` to check the balance of the accounts.
 
 ## Using a Geth private blockchain
 

@@ -24,3 +24,5 @@ docker/volumes
 #hardhat coverage
 coverage
 coverage.json
+
+multiproposer-test.env
