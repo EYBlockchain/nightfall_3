@@ -239,6 +239,20 @@ PROPOSER1_KEY, PROPOSER2_KEY environment variables in the `multiproposer-test.en
 OPTIMIST1_API_URL, OPTIMIST2_API_URL, OPTIMIST1_WS_URL, OPTIMIST2_WS_URL for the optimists of the
 proposers in order to call the make block in the test automatically for the current proposer.
 
+If you want to check the test with geth you can run the geth
+
+- Run up the private chain with `./bin/geth-standalone -s`
+- Start terminal logging with `./bin/geth-standalone -l` and wait for the DAG build to complete
+- Start multiproposer test containers in another terminal with the `-l` option
+  (`./bin/start-multiproposer-test-env -l`)
+
+To help funding the blockchain unlocked accounts of the test with some token `ERC20Mock` you have a
+script available that can run
+
+- `COMMAND=fund node ./nightfall-deployer/scripts/fund-accounts.mjs` to fund the accounts with some
+  token.
+- `node ./nightfall-deployer/scripts/fund-accounts.mjs` to check the balance of the accounts.
+
 ## Using a Geth private blockchain
 
 The script `./bin/geth-standalone` will run up a private blockchain consisting of a bootnode, two
