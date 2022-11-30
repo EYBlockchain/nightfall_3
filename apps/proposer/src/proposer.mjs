@@ -51,7 +51,7 @@ export default async function startProposer(nf3, proposerBaseUrl) {
   logger.info('Listening for incoming events');
 }
 
-export default async function checkAndChangeProposer(nf3) {
+export async function checkAndChangeProposer(nf3) {
   const maxBlockWaitTime = 5;
   logger.info('Checking Proposer...');
   const proposerStartBlock = await nf3.proposerStartBlock();
