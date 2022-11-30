@@ -45,7 +45,7 @@ const averageL1GasCost = receipts =>
 
 const connection = await mongo.connection(MONGO_URL);
 const db = connection.db(OPTIMIST_DB);
-const countBlocksInOptimist = async () => await db.collection('blocks').count();
+const countBlocksInOptimist = () => db.collection('blocks').count();
 
 async function getLatestBlockGasUsed() {
   const latestBlock = await db
