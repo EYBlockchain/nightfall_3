@@ -80,8 +80,16 @@ export async function conditionalMakeBlock(proposer) {
     or we're no-longer the proposer (boo).
    */
 
+  logger.info(`I am the current proposer: ${proposer.isMe}`);
+
   if (proposer.isMe) {
-    logger.info(`I am the current proposer: ${proposer.isMe}`);
+    logger.info({
+      msg: 'The maximum size of the block is',
+      blockSize: MAX_BLOCK_SIZE,
+      maxBlockTime: PROPOSER_MAX_BLOCK_PERIOD_MILIS,
+      makeNow,
+    });
+
     // Get all the mempool transactions sorted by fee
     const mempoolTransactions = await getMempoolTxsSortedByFee();
 
@@ -100,14 +108,12 @@ export async function conditionalMakeBlock(proposer) {
     const totalBytes = mempoolTransactionSizes.reduce((acc, curr) => acc + curr, 0);
     const currentTime = new Date().getTime();
 
-    if (totalBytes) {
-      logger.info({
-        msg: 'In the mempool there are the following number of transactions',
-        numberTransactions: mempoolTransactions.length,
-        totalBytes,
-        makeNow,
-      });
-    }
+    logger.info({
+      msg: 'In the mempool there are the following number of transactions',
+      numberTransactions: mempoolTransactions.length,
+      totalBytes,
+      mempoolTransactionSizes,
+    });
 
     const transactionBatches = [];
     if (totalBytes > 0) {
@@ -182,14 +188,14 @@ export async function conditionalMakeBlock(proposer) {
 
         // check that the websocket exists (it should) and its readyState is OPEN
         // before sending Proposed block. If not wait until the proposer reconnects
-        let tryCount = 0;
+        let count = 0;
         while (!ws || ws.readyState !== WebSocket.OPEN) {
           await waitForTimeout(3000); // eslint-disable-line no-await-in-loop
 
           logger.warn(`Websocket to proposer is closed. Waiting for proposer to reconnect`);
 
           increaseProposerWsClosed();
-          if (tryCount++ > 100) {
+          if (count++ > 100) {
             increaseProposerWsFailed();
 
             logger.error(`Websocket to proposer has failed. Returning...`);
