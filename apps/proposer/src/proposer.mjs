@@ -50,3 +50,20 @@ export default async function startProposer(nf3, proposerBaseUrl) {
     });
   logger.info('Listening for incoming events');
 }
+
+export default async function checkAndChangeProposer(nf3) {
+  const maxBlockWaitTime = 5;
+  logger.info('Checking Proposer...');
+  const proposerStartBlock = await nf3.proposerStartBlock();
+  const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
+  const maxProposers = await nf3.getMaxProposers();
+  const currentSprint = await nf3.currentSprint();
+  const spanProposersList = await nf3.getSpanProposersList(currentSprint);
+  if ((await nf3.getBlockNumber()).sub(proposerStartBlock).gt(rotateProposerBlocks) || proposerStartBlock.eq(0) || maxProposers.eq(1)) {
+    if (spanProposersList[currentSprint.mod(5)].eq(nf3.ethereumAddress)) {
+      await nf3.changeCurrentProposer();
+    } else if ((await nf3.getBlockNumber()).sub(proposerStartBlock).gt(maxBlockWaitTime)) {
+      await nf3.changeCurrentProposer();
+    }
+  }
+}
