@@ -18,7 +18,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 // eslint-disable-next-line import/no-unresolved
 import Nf3 from './adversary/adversary-cli/lib/nf3.mjs';
 
-import { depositNTransactions, registerProposerOnNoProposer, Web3Client } from './utils.mjs';
+import { registerProposerOnNoProposer, Web3Client } from './utils.mjs';
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -189,9 +189,7 @@ describe('Testing with an adversary', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     console.log('Creating initial deposits...');
-    await depositNTransactions(nf3User, 5, ercAddress, tokenType, value2, tokenId, 0);
-    await new Promise(resolve => setTimeout(resolve, 20000));
-
+    await nf3User.deposit('ValidTransaction', ercAddress, tokenType, 10 * value2, tokenId, 0);
     await makeBlockNow();
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   });
