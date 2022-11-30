@@ -138,6 +138,11 @@ async function verifyProof(transaction) {
     }),
   );
 
+  logger.debug({
+    msg: 'The historic roots are the following',
+    historicRoots: historicRoots.map(h => h.root),
+  });
+
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
   const maticAddress = (

@@ -12,7 +12,6 @@ import rollbackEventHandler from './rollback.mjs';
 import committedToChallengeEventHandler from './challenge-commit.mjs';
 import instantWithdrawalRequestedEventHandler from './instant-withdrawal.mjs';
 import {
-  // removeRollbackEventHandler,
   removeBlockProposedEventHandler,
   removeCommittedToChallengeEventHandler,
   removeNewCurrentProposerEventHandler,
@@ -27,7 +26,6 @@ const eventHandlers = {
   NewCurrentProposer: newCurrentProposerEventHandler,
   InstantWithdrawalRequested: instantWithdrawalRequestedEventHandler,
   removers: {
-    // Rollback: removeRollbackEventHandler,
     BlockProposed: removeBlockProposedEventHandler,
     CommittedToChallenge: removeCommittedToChallengeEventHandler,
     TransactionSubmitted: removeTransactionSubmittedEventHandler,
