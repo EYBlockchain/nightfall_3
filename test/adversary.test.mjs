@@ -265,12 +265,6 @@ describe('Testing with an adversary', () => {
     });
 
     describe('Transfers rollback', async () => {
-      before(async () => {
-        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
-        await makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      });
-
       it('Test duplicate transaction transfer', async () => {
         console.log('Testing duplicate transaction transfer...');
         await nf3User.transfer(
@@ -292,6 +286,10 @@ describe('Testing with an adversary', () => {
           challengeSelectors.challengeCommitment,
           challengeSelectors.challengeNullifier,
         ]);
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       });
@@ -378,12 +376,6 @@ describe('Testing with an adversary', () => {
     });
 
     describe('Withdraw rollbacks', async () => {
-      before(async () => {
-        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
-        await makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      });
-
       it('Test duplicate transaction withdraw', async () => {
         console.log('Testing duplicate transaction withdraw...');
         await nf3User.withdraw(
@@ -405,6 +397,10 @@ describe('Testing with an adversary', () => {
           challengeSelectors.challengeCommitment,
           challengeSelectors.challengeNullifier,
         ]);
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       });
