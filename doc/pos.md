@@ -21,15 +21,17 @@ the proposer selection process.
 Similar to Polygon approach we define these initial numbers that could be configured by the multisig
 administrator contract:
 
-- Each proposer slot is 1K MATIC. If a proposer has 10K stake of MATIC then it will have 10 slots
-  assigned. **1 Slot = 1K MATIC**
-- Proposer set for each span will be built from 5 slots after shuffling all the slots. (Random
+- Minimum stake will be 20K MATIC.
+- Block stake every time the proposer propose a block will be 200 MATIC.
+- Each proposer slot will be the calculated from the biggest stake divided by 10 in order to have 10
+  slots maximum for the proposer with the biggest stake. **1 Slot = MaxProsposerStake / 10 MATIC**
+- Proposer set for each span will be built from 10 slots after shuffling all the slots. (Random
   shuffling is employed by Ethereum 2.0 too. It helps to mitigate DoS attacks and collusion among
-  nodes) **Proposer set = 5 slots**
-- Span will have 5 sprints for a complete rotation of the proposer set. The same number as proposer
-  set count. **Span = 5 Sprints**
-- Sprint will be equal to ROTATE_PROPOSER_BLOCKS = 20. Probably we could increase this in mainnet.
-  **Sprint = 20 Blocks**.
+  nodes) **Proposer set = 10 slots**
+- Span will have 10 sprints for a complete rotation of the proposer set. The same number as proposer
+  set count. **Span = 10 Sprints**
+- Sprint will be equal to ROTATE_PROPOSER_BLOCKS = 32. Probably we could increase this in mainnet.
+  **Sprint = 32 Blocks**.
 - We will take into account to block the stake of the proposer for the blocks that are still pending
   in the CHALLENGE_PERIOD of the proposer so it could be slashed in case of bad blocks to cover this
   slash. And in the next span this proposer will have less staking power. (total stake - blocked

@@ -18,8 +18,7 @@ import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
-const { mnemonics, signingKeys, addresses, zkpPublicKeys, ROTATE_PROPOSER_BLOCKS } =
-  config.TEST_OPTIONS;
+const { mnemonics, signingKeys, addresses, zkpPublicKeys } = config.TEST_OPTIONS;
 
 const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
 
@@ -30,6 +29,7 @@ const amountMinimumStake = 100;
 let nfMultiSig;
 let multisigContract;
 let shieldContract;
+let rotateProposerBlocks;
 
 const TEST_LENGTH = 4;
 
@@ -52,6 +52,7 @@ export async function userTest(IS_TEST_RUNNER, optimistUrls) {
 
   const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress('ERC20Mock'));
 
+  rotateProposerBlocks = await nf3.getRotateProposerBlocks();
   const stateContract = await nf3.getContractInstance('State');
   const stateAddress = stateContract.options.address;
   web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
@@ -358,7 +359,7 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
         const initBlock = await nf3Proposer.web3.eth.getBlockNumber();
         let currentBlock = initBlock;
 
-        while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
+        while (currentBlock - initBlock < rotateProposerBlocks) {
           await new Promise(resolve => setTimeout(resolve, 10000));
           currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
         }

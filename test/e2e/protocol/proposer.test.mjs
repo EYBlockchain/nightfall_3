@@ -18,7 +18,7 @@ chai.use(chaiAsPromised);
 const { PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = constants;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const { mnemonics, signingKeys, ROTATE_PROPOSER_BLOCKS, fee, transferValue } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys, fee, transferValue } = config.TEST_OPTIONS;
 
 const web3Client = new Web3Client();
 const eventLogs = [];
@@ -49,9 +49,10 @@ const getCurrentSprint = async () => {
 };
 
 describe('Basic Proposer tests', () => {
-  let minimumStake;
-  let erc20Address;
   let user;
+  let minimumStake;
+  let rotateProposerBlocks;
+  let erc20Address;
 
   const feeDefault = 0;
   const bootProposer = new Nf3(signingKeys.proposer1, environment);
@@ -69,10 +70,13 @@ describe('Basic Proposer tests', () => {
     await bootProposer.init(mnemonics.proposer);
 
     minimumStake = await bootProposer.getMinimumStake();
+    rotateProposerBlocks = await bootProposer.getRotateProposerBlocks();
+
     stateABI = await bootProposer.getContractAbi(STATE_CONTRACT_NAME);
     stateAddress = await bootProposer.getContractAddress(STATE_CONTRACT_NAME);
     proposersAddress = await bootProposer.getContractAddress(PROPOSERS_CONTRACT_NAME);
     erc20Address = await bootProposer.getContractAddress('ERC20Mock');
+
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     web3Client.subscribeTo('logs', eventLogs, { address: proposersAddress });
   });
@@ -298,7 +302,7 @@ describe('Basic Proposer tests', () => {
         const initBlock = await web3.eth.getBlockNumber();
         let currentBlock = initBlock;
 
-        while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
+        while (currentBlock - initBlock < rotateProposerBlocks) {
           await new Promise(resolve => setTimeout(resolve, 10000));
           currentBlock = await web3.eth.getBlockNumber();
         }

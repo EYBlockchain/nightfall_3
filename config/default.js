@@ -239,7 +239,6 @@ module.exports = {
     gas: 10000000,
     gasCosts: 80000000000000000,
     fee: 1,
-    ROTATE_PROPOSER_BLOCKS: 20,
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||
