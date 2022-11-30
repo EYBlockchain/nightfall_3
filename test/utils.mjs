@@ -227,7 +227,7 @@ export class Web3Client {
     for (let i = 0; i < length; i++) {
       const index = eventLogs.findIndex(e => e.eventName === expectedEvents[0]);
       const removed = index !== -1 && eventLogs.splice(index, 1);
-      eventsSeen.push(removed);
+      eventsSeen.push(...removed);
     }
 
     const blockHeaders = [];
