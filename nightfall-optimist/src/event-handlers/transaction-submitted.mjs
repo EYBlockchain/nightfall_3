@@ -3,7 +3,10 @@
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { saveTransaction } from '../services/database.mjs';
-import checkTransaction from '../services/transaction-checker.mjs';
+import checkTransaction, {
+  checkCommitments,
+  checkNullifiers,
+} from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
 
@@ -41,6 +44,21 @@ async function transactionSubmittedEventHandler(eventParams) {
       logger.info({ msg: 'Checking transaction validity...' });
       await checkTransaction(transaction, true);
       logger.info({ msg: 'Transaction checks passed' });
+
+      // if transaction has duplicate commitment or nullifier
+      // and original transaction is on mempool
+      // check its proposer payment with original transaction
+      // if payment is higher then proceed and save.
+      const checkStatus = await Promise.all([
+        checkCommitments(transaction),
+        checkNullifiers(transaction),
+      ]);
+      if (checkStatus.includes(false)) {
+        logger.info({
+          msg: 'Replacment transaction does not have higher proposer fee, skipping saveTransaction',
+        });
+        return;
+      }
       await saveTransaction({ ...transaction });
     }
   } catch (err) {

@@ -20,6 +20,8 @@ import {
   getL2TransactionByNullifier,
   getTransactionHashSiblingInfo,
   getLatestBlockInfo,
+  getL2MempoolTransactionByCommitment,
+  getL2MempoolTransactionByNullifier,
 } from './database.mjs';
 
 const { generalise } = gen;
@@ -64,18 +66,6 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txB
                 }
               : undefined,
           );
-        } else if (
-          // this mean original transaction is not yet proposed
-          // compare provided proposer fee in both transactions(duplicate and original) and
-          // allow duplicate to save if it has higher proposer payment.
-          generalise(transactionL2.fee).bigInt <= generalise(transaction.fee).bigInt &&
-          inL2AndNotInL2
-        ) {
-          throw new TransactionError(
-            `The transaction has a duplicate commitment ${commitment} and transaction does not have enough proposer payment to be consider as replacement`,
-            0,
-            undefined,
-          );
         }
       }
     }
@@ -115,18 +105,6 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBl
                   duplicateNullifier2Index: transactionL2.nullifiers.indexOf(nullifier),
                 }
               : undefined,
-          );
-        } else if (
-          // this mean original transaction is not yet proposed
-          // compare provided proposer fee in both transactions(duplicate and original) and
-          // allow duplicate to save if it has higher proposer payment.
-          generalise(transactionL2.fee).bigInt <= generalise(transaction.fee).bigInt &&
-          inL2AndNotInL2
-        ) {
-          throw new TransactionError(
-            `The transaction has a duplicate nullifier ${nullifier} and transaction does not have enough proposer payment to be consider as replacement`,
-            0,
-            undefined,
           );
         }
       }
@@ -208,6 +186,36 @@ async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
     checkHistoricRootBlockNumber(transaction),
     verifyProof(transaction),
   ]);
+}
+
+export async function checkCommitments(transaction) {
+  for (const commitment of transaction.commitments) {
+    if (commitment !== ZERO) {
+      const orignalTransaction = await getL2MempoolTransactionByCommitment(commitment);
+      // compare provided proposer fee in both transactions(duplicate and original)
+      if (
+        orignalTransaction &&
+        generalise(orignalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+      )
+        return false;
+    }
+  }
+  return true;
+}
+
+export async function checkNullifiers(transaction) {
+  for (const nullifier of transaction.nullifiers) {
+    if (nullifier !== ZERO) {
+      const orignalTransaction = await getL2MempoolTransactionByNullifier(nullifier);
+      // compare provided proposer fee in both transactions(duplicate and original)
+      if (
+        orignalTransaction &&
+        generalise(orignalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+      )
+        return false;
+    }
+  }
+  return true;
 }
 
 export default checkTransaction;
