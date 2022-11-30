@@ -114,10 +114,14 @@ describe('Testing Shield Contract', function () {
     const VerifierDeployer = await ethers.getContractFactory('Verifier');
     const VerifierInstance = await VerifierDeployer.deploy();
 
+    const Utils = await ethers.getContractFactory('Utils');
+    const utils = await Utils.deploy();
+
     const ChallengesDeployed = await ethers.getContractFactory('Challenges', {
       libraries: {
         ChallengesUtil: (await ChallengesUtilInstance.deployed()).address,
         Verifier: (await VerifierInstance.deployed()).address,
+        Utils: (await utils.deployed()).address,
       },
     });
     const ChallengesInstance = await upgrades.deployProxy(ChallengesDeployed, {

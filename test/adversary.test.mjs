@@ -39,7 +39,7 @@ const challengeSelectors = {
   challengeLeafCount: '0xb8424d42',
   challengeFrontier: '0x60f611d5',
   challengeNullifier: '0xda5370ca',
-  challengeProofVerification: '0xf04b3b10',
+  challengeProofVerification: '0xa72b8d98',
 };
 
 const {

@@ -206,10 +206,46 @@ contract Challenges is Stateful, Config {
         }
     }
 
+    function decompressG1(uint256 xin) public returns (uint256[2] memory) {
+        uint8 parity = uint8((xin >> 255) & 1);
+        uint256 xMask = 0x4000000000000000000000000000000000000000000000000000000000000000; // 2**254 mask
+        uint256 xCoord = xin % xMask;
+        uint256 x3 = mulmod(
+            xCoord,
+            mulmod(xCoord, xCoord, Utils.BN128_PRIME_FIELD),
+            Utils.BN128_PRIME_FIELD
+        );
+        uint256 y2 = addmod(x3, 3, Utils.BN128_PRIME_FIELD);
+        uint256 y = Utils.modExp(y2, (Utils.BN128_PRIME_FIELD + 1) / 4, Utils.BN128_PRIME_FIELD);
+        if (parity != uint8(y % 2)) return [xCoord, Utils.BN128_PRIME_FIELD - y];
+        return [xCoord, y];
+    }
+
+    function decompressG2(uint256[2] memory xins) public pure returns (uint256[2][2] memory) {
+        uint8[2] memory parity = [uint8((xins[0] >> 255) & 1), uint8((xins[1] >> 255) & 1)];
+        uint256 xMask = 0x4000000000000000000000000000000000000000000000000000000000000000; // 2**254 mask
+        uint256 xReal = xins[0] % xMask;
+        uint256 xImg = xins[1] % xMask;
+        uint256[2] memory x = [xReal, xImg];
+        uint256[2] memory x3 = Utils.fq2Mul(Utils.fq2Mul(x, x), x);
+        uint256[2] memory d = [
+            19485874751759354771024239261021720505790618469301721065564631296452457478373,
+            266929791119991161246907387137283842545076965332900288569378510910307636690
+        ];
+        uint256[2] memory y2 = [
+            addmod(x3[0], d[0], Utils.BN128_PRIME_FIELD),
+            addmod(x3[1], d[1], Utils.BN128_PRIME_FIELD)
+        ];
+
+        uint256[2] memory y = Utils.fq2Sqrt(y2);
+        uint256 a = parity[0] == uint256(y[0] % 2) ? y[0] : Utils.BN128_PRIME_FIELD - y[0];
+        uint256 b = parity[1] == uint256(y[1] % 2) ? y[1] : Utils.BN128_PRIME_FIELD - y[1];
+        return [x, [a, b]];
+    }
+
     function challengeProofVerification(
         TransactionInfoBlock calldata transaction,
         Block[] calldata blockL2ContainingHistoricRoot,
-        uint256[8] memory uncompressedProof,
         bytes32 salt
     ) external {
         checkCommit(msg.data);
@@ -248,12 +284,26 @@ contract Challenges is Stateful, Config {
                 extraPublicInputs.roots[i] = uint256(blockL2ContainingHistoricRoot[i].root);
             }
         }
+        uint256[2] memory decompressAlpha = decompressG1(transaction.transaction.proof[0]);
+        uint256[2][2] memory decompressBeta = decompressG2(
+            [transaction.transaction.proof[1], transaction.transaction.proof[2]]
+        );
+        uint256[2] memory decompressGamma = decompressG1(transaction.transaction.proof[3]);
 
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
             transaction.transaction,
             extraPublicInputs,
-            uncompressedProof,
+            [
+                decompressAlpha[0],
+                decompressAlpha[1],
+                decompressBeta[0][0],
+                decompressBeta[0][1],
+                decompressBeta[1][0],
+                decompressBeta[1][1],
+                decompressGamma[0],
+                decompressGamma[1]
+            ],
             state.getVerificationKey(Utils.getCircuitHash(transaction.transaction.packedInfo))
         );
         challengeAccepted(transaction.blockL2);
