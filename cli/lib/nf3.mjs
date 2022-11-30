@@ -1542,7 +1542,7 @@ class Nf3 {
   @returns {uint256} A promise that resolves to the Ethereum call.
   */
   async getRotateProposerBlocks() {
-    return this.stateContract.methods.rotateProposerBlocks().call();
+    return this.stateContract.methods.getRotateProposerBlocks().call();
   }
 
   /**
@@ -1573,6 +1573,16 @@ class Nf3 {
   */
   async currentSprint() {
     return this.stateContract.methods.currentSprint().call();
+  }
+
+  /**
+  getNumProposers
+  @method
+  @async
+  @returns {uint256} A promise that resolves to the Ethereum call.
+  */
+  async getNumProposers() {
+    return this.stateContract.methods.getNumProposers().call();
   }
 }
 
