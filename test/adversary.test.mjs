@@ -18,7 +18,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 // eslint-disable-next-line import/no-unresolved
 import Nf3 from './adversary/adversary-cli/lib/nf3.mjs';
 
-import { registerProposerOnNoProposer, Web3Client } from './utils.mjs';
+import { depositNTransactions, registerProposerOnNoProposer, Web3Client } from './utils.mjs';
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -188,36 +188,10 @@ describe('Testing with an adversary', () => {
     stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
-    console.log('Creating initial deposit...');
-    await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
-    await makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    console.log('Creating initial deposits...');
+    await depositNTransactions(nf3User, 5, ercAddress, tokenType, value2, tokenId, 0);
+    await new Promise(resolve => setTimeout(resolve, 20000));
 
-    console.log('Creating initial transfer...');
-    await nf3User.transfer(
-      'ValidTransaction',
-      false,
-      ercAddress,
-      tokenType,
-      value2,
-      tokenId,
-      nf3User.zkpKeys.compressedZkpPublicKey,
-      0,
-    );
-    await makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-
-    console.log('Creating initial withdraw...');
-    await nf3User.withdraw(
-      'ValidTransaction',
-      false,
-      ercAddress,
-      tokenType,
-      value2,
-      tokenId,
-      nf3User.ethereumAddress,
-      0,
-    );
     await makeBlockNow();
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   });
@@ -286,10 +260,6 @@ describe('Testing with an adversary', () => {
           challengeSelectors.challengeCommitment,
           challengeSelectors.challengeNullifier,
         ]);
-        await makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-
-        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       });
@@ -397,10 +367,6 @@ describe('Testing with an adversary', () => {
           challengeSelectors.challengeCommitment,
           challengeSelectors.challengeNullifier,
         ]);
-        await makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-
-        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       });
