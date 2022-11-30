@@ -341,7 +341,15 @@ export async function addTransactionsToMemPool(block) {
     transactionHash: { $in: block.transactionHashes },
     blockNumberL2: { $eq: block.blockNumberL2 },
   };
-  const update = { $set: { mempool: true, blockNumberL2: -1 } };
+  const update = {
+    $set: {
+      mempool: true,
+      blockNumberL2: -1,
+      transacionHashesRoot: null,
+      transactionHashSiblingPath: null,
+      transactionHashLeafIndex: null,
+    },
+  };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 

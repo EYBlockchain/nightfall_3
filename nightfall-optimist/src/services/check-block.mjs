@@ -115,7 +115,7 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
     let siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
       .transactionHashSiblingPath;
 
-    if (siblingPath1 === undefined) {
+    if (!siblingPath1) {
       await Block.calcTransactionHashesRoot(transactions);
       siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
         .transactionHashSiblingPath;
@@ -126,7 +126,7 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
     let siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
       .transactionHashSiblingPath;
 
-    if (siblingPath2 === undefined) {
+    if (!siblingPath2) {
       await Block.calcTransactionHashesRoot(transactions);
       siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
         .transactionHashSiblingPath;
@@ -190,7 +190,7 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
     let siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
       .transactionHashSiblingPath;
 
-    if (siblingPath1 === undefined) {
+    if (!siblingPath1) {
       await Block.calcTransactionHashesRoot(transactions);
       siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
         .transactionHashSiblingPath;
@@ -201,7 +201,7 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
     let siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
       .transactionHashSiblingPath;
 
-    if (siblingPath2 === undefined) {
+    if (!siblingPath2) {
       await Block.calcTransactionHashesRoot(transactions);
       siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
         .transactionHashSiblingPath;
@@ -262,14 +262,14 @@ export async function checkBlock(block, transactions) {
       // may be this optimist never ran as proposer
       // or more likely since this tx is bad tx from a bad proposer.
       // prposer hosted in this optimist never build any block with this bad tx in it
-      if (siblingPath1 === undefined) {
+      if (!siblingPath1) {
         await Block.calcTransactionHashesRoot(transactions);
         siblingPath1 = (await getTransactionHashSiblingInfo(transaction.transactionHash))
           .transactionHashSiblingPath;
       }
       // case when block.build never was called
       // may be this optimist never ran as proposer
-      if (err.metadata.siblingPath2 === undefined) {
+      if (!err.metadata.siblingPath2) {
         await Block.calcTransactionHashesRoot(
           err.metadata.block2.transactionHashes.map(transactionHash => {
             return { transactionHash };
