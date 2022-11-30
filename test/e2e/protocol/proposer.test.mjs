@@ -9,7 +9,7 @@ import { UserFactory } from 'nightfall-sdk';
 import axios from 'axios';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { Web3Client } from '../../utils.mjs';
+import { waitTransactionToBeMined, Web3Client } from '../../utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -18,7 +18,7 @@ chai.use(chaiAsPromised);
 const { PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = constants;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const { mnemonics, signingKeys, ROTATE_PROPOSER_BLOCKS, fee, transferValue } = config.TEST_OPTIONS;
+const { mnemonics, signingKeys, fee, transferValue } = config.TEST_OPTIONS;
 
 const web3Client = new Web3Client();
 const eventLogs = [];
@@ -49,9 +49,10 @@ const getCurrentSprint = async () => {
 };
 
 describe('Basic Proposer tests', () => {
-  let minimumStake;
-  let erc20Address;
   let user;
+  let minimumStake;
+  let rotateProposerBlocks;
+  let erc20Address;
 
   const feeDefault = 0;
   const bootProposer = new Nf3(signingKeys.proposer1, environment);
@@ -69,10 +70,13 @@ describe('Basic Proposer tests', () => {
     await bootProposer.init(mnemonics.proposer);
 
     minimumStake = await bootProposer.getMinimumStake();
+    rotateProposerBlocks = await bootProposer.getRotateProposerBlocks();
+
     stateABI = await bootProposer.getContractAbi(STATE_CONTRACT_NAME);
     stateAddress = await bootProposer.getContractAddress(STATE_CONTRACT_NAME);
     proposersAddress = await bootProposer.getContractAddress(PROPOSERS_CONTRACT_NAME);
     erc20Address = await bootProposer.getContractAddress('ERC20Mock');
+
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     web3Client.subscribeTo('logs', eventLogs, { address: proposersAddress });
   });
@@ -160,7 +164,10 @@ describe('Basic Proposer tests', () => {
     const currentUrl = proposersBeforeUpdate[0].url; // Need to pass current value
     const stake = 0; // Contract adds given value to existing amount
     const newFee = fee;
-    await bootProposer.updateProposer(currentUrl, stake, newFee);
+    const { transactionHash } = await bootProposer.updateProposer(currentUrl, stake, newFee);
+
+    // Wait for transaction to be mined
+    await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -186,7 +193,10 @@ describe('Basic Proposer tests', () => {
     const newUrl = testProposersUrl[1];
     const stake = 0; // Contract adds given value to existing amount
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    await bootProposer.updateProposer(newUrl, stake, currentFee);
+    const { transactionHash } = await bootProposer.updateProposer(newUrl, stake, currentFee);
+
+    // Wait for transaction to be mined
+    await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -211,7 +221,14 @@ describe('Basic Proposer tests', () => {
     // Update proposer url
     const currentUrl = proposersBeforeUpdate[0].url;
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    await bootProposer.updateProposer(currentUrl, minimumStake, currentFee);
+    const { transactionHash } = await bootProposer.updateProposer(
+      currentUrl,
+      minimumStake,
+      currentFee,
+    );
+
+    // Wait for transaction to be mined
+    await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(bootProposer);
@@ -285,7 +302,7 @@ describe('Basic Proposer tests', () => {
         const initBlock = await web3.eth.getBlockNumber();
         let currentBlock = initBlock;
 
-        while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
+        while (currentBlock - initBlock < rotateProposerBlocks) {
           await new Promise(resolve => setTimeout(resolve, 10000));
           currentBlock = await web3.eth.getBlockNumber();
         }

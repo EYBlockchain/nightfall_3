@@ -1064,6 +1064,7 @@ class Nf3 {
       fee,
     });
     logger.debug(`Proposer /update response ${res}`);
+    return res?.data;
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
     //     try {
@@ -1109,6 +1110,16 @@ class Nf3 {
       */
   async getMinimumStake() {
     return this.stateContract.methods.getMinimumStake().call();
+  }
+
+  /**
+    Get rotate proposer blocks
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum call.
+    */
+  async getRotateProposerBlocks() {
+    return this.stateContract.methods.getRotateProposerBlocks().call();
   }
 
   /**

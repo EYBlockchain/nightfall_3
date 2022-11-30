@@ -45,7 +45,7 @@ describe('Test Kem Dem', function () {
 
   it('Should verify KEM', async () => {
     const circuitCode = `
-            pragma circom 2.1.0;
+            pragma circom 2.1.2;
             include "../../../../../nightfall-deployer/circuits/common/utils/kem_dem.circom";
             component main = Kem();
         `;
@@ -70,7 +70,7 @@ describe('Test Kem Dem', function () {
 
   it('Should verify DEM', async () => {
     const circuitCode = `
-            pragma circom 2.1.0;
+            pragma circom 2.1.2;
             include "../../../../../nightfall-deployer/circuits/common/utils/kem_dem.circom";
             component main = Dem(3);
         `;
@@ -95,7 +95,7 @@ describe('Test Kem Dem', function () {
 
   it('Should verify KEM-DEM', async () => {
     const circuitCode = `
-            pragma circom 2.1.0;
+            pragma circom 2.1.2;
             include "../../../../../nightfall-deployer/circuits/common/utils/kem_dem.circom";
             component main = KemDem(3);
         `;

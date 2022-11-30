@@ -1,4 +1,4 @@
-pragma circom 2.1.0;
+pragma circom 2.1.2;
 
 include "./common/verifiers/verify_duplicates.circom";
 include "./common/verifiers/commitments/verify_commitments.circom";

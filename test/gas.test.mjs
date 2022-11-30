@@ -104,7 +104,6 @@ describe('Gas test', async () => {
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       const numberOfBlocksAfter = await countBlocksInOptimist();
-
       expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
 
       const gasCostDeposit = await getLatestBlockGasUsed();
@@ -136,7 +135,6 @@ describe('Gas test', async () => {
       logger.debug(`Creating a block with ${txPerBlock - 1} transfers`);
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
-
       // We create enough transactions to fill blocks full of deposits.
       const receipts = await transferNTransactions(
         nf3Users[0],

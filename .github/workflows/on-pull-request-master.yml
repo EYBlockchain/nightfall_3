@@ -829,61 +829,59 @@ jobs:
           name: test-apps-logs
           path: ./test-apps.log
 
-  # test-client:
-  #   name: check client for liveliness
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v1
-  #       with:
-  #         node-version: '16.17.0'
+  test-client:
+    name: check client for liveliness
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
 
-  #     - name: Create env file
-  #       run: |
-  #         echo "ETH_NETWORK=goerli" > ./nightfall-client/client.env
-  #         echo "BLOCKCHAIN_WS_HOST=${{ secrets.GOERLI_ALCHEMY }}" >> ./nightfall-client/client.env
-  #         cat ./nightfall-client/client.env
+      - name: Create env file
+        run: |
+          echo "ETH_NETWORK=goerli" > ./nightfall-client/client.env
+          echo "BLOCKCHAIN_WS_HOST=${{ secrets.GOERLI_ALCHEMY }}" >> ./nightfall-client/client.env
+          cat ./nightfall-client/client.env
 
-  #     - name: Start client
-  #       run: |
-  #         cd nightfall-client && ./start-client &> ../test-client.log &disown
-  #         sleep 300
+      - name: Start client
+        run: |
+          cd nightfall-client && ./start-client &> ../test-client.log &disown
+          sleep 300
 
-  #     - name: Debug logs - after container startup
-  #       if: always()
-  #       run: cat test-client.log
+      - name: Debug logs - after container startup
+        if: always()
+        run: cat test-client.log
 
-  #     - name: 'Check client liveliness'
+      - name: 'Check client liveliness'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8080/healthcheck
+          attempt_limit: 10
+          attempt_delay: 30000
 
-  #       uses: Wandalen/wretry.action@v1.0.11
-  #       with:
-  #         command: |
-  #           curl -i http://localhost:8080/healthcheck
-  #         attempt_limit: 10
-  #         attempt_delay: 30000
+      - name: 'Check access to contracts'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8080/contract-address/Shield
+          attempt_limit: 10
+          attempt_delay: 30000
 
-  #     - name: 'Check access to contracts'
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat test-client.log
 
-  #       uses: Wandalen/wretry.action@v1.0.11
-  #       with:
-  #         command: |
-  #           curl -i http://localhost:8080/contract-address/Shield
-  #         attempt_limit: 10
-  #         attempt_delay: 30000
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run:
+          docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml
+          -p nightfall_3 down -v
 
-  #     - name: Debug logs - after integration test run
-  #       if: always()
-  #       run: cat test-client.log
-
-  #     - name: If integration test failed, shutdown the Containers
-  #       if: failure()
-  #       run:
-  #         docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml
-  #         -p nightfall_3 down -v
-
-  #     - name: If integration test failed, upload logs files as artifacts
-  #       if: failure()
-  #       uses: actions/upload-artifact@master
-  #       with:
-  #         name: test-client-logs
-  #         path: ./test-client.log
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: test-client-logs
+          path: ./test-client.log

@@ -6,7 +6,7 @@ import config from 'config';
 import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { emptyL2, expectTransaction, Web3Client } from './utils.mjs';
+import { emptyL2, expectTransaction, waitTransactionToBeMined, Web3Client } from './utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -24,6 +24,7 @@ const {
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 
 const web3Client = new Web3Client();
+const web3 = web3Client.getWeb3();
 
 let erc20Address;
 let stateAddress;
@@ -43,12 +44,15 @@ describe('General Circuit Test', () => {
   before(async () => {
     axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
 
-    // we must set the URL from the point of view of the client container
-    await axios.post(`${optimistApiUrl}/proposer/register`, {
+    // We must set the URL from the point of view of the client container
+    const { data } = await axios.post(`${optimistApiUrl}/proposer/register`, {
       url: optimistApiUrl,
       stake,
       fee,
     });
+
+    // Wait for transaction to be mined
+    await waitTransactionToBeMined(data.transactionHash, web3);
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
