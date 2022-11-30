@@ -265,7 +265,7 @@ describe('Testing with an adversary', () => {
     });
 
     describe('Transfers rollback', async () => {
-      it.skip('Test duplicate transaction transfer', async () => {
+      it('Test duplicate transaction transfer', async () => {
         console.log('Testing duplicate transaction transfer...');
         await nf3User.transfer(
           'ValidTransaction',
@@ -372,7 +372,7 @@ describe('Testing with an adversary', () => {
     });
 
     describe('Withdraw rollbacks', async () => {
-      it.skip('Test duplicate transaction withdraw', async () => {
+      it('Test duplicate transaction withdraw', async () => {
         console.log('Testing duplicate transaction withdraw...');
         await nf3User.withdraw(
           'ValidTransaction',
