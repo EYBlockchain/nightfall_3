@@ -96,6 +96,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         onlyCurrentProposer
         whenNotPaused
     {
+        require(t.length >= 1, 'State: Block must contain at least one transaction');
         require(
             Utils.getBlockNumberL2(b.packedInfo) == blockHashes.length,
             'State: Block out of order'
