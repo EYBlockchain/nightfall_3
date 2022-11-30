@@ -63,8 +63,8 @@ export class Web3Client {
     return address;
   }
 
-  getTransactionReceipt(txHash) {
-    const receipt = this.web3.eth.getTransactionReceipt(txHash);
+  async getTransactionReceipt(txHash) {
+    const receipt = await this.web3.eth.getTransactionReceipt(txHash);
     return receipt;
   }
 

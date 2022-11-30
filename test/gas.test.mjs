@@ -45,7 +45,8 @@ const averageL1GasCost = receipts =>
 
 const connection = await mongo.connection(MONGO_URL);
 const db = connection.db(OPTIMIST_DB);
-const countBlocksInOptimist = () => db.collection('blocks').count();
+console.log(db);
+const countBlocksInOptimist = async () => await db.collection('blocks').count();
 
 async function getLatestBlockGasUsed() {
   const latestBlock = await db
@@ -62,7 +63,7 @@ async function getLatestBlockGasUsed() {
   return receipt.gasUsed;
 }
 
-describe('Gas test', async () => {
+describe('Gas test', () => {
   let txPerBlock;
 
   before(async () => {
@@ -112,9 +113,9 @@ describe('Gas test', async () => {
       expect(gasCostDeposit).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Deposit L1 average gas used was ${averageL1GasCost(receipts)}`);
 
-      const mempoolTrancastions = await nf3Users[0].unprocessedTransactionCount();
-      if (mempoolTrancastions > 0) {
-        await nf3Users[0].makeBlockNow();
+      const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
+      if (mempoolTransactions > 0) {
+        await nf3Proposer1.makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       }
     });
@@ -158,9 +159,9 @@ describe('Gas test', async () => {
       expect(gasCostTransfer).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Transfer L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      const mempoolTrancastions = await nf3Users[0].unprocessedTransactionCount();
-      if (mempoolTrancastions > 0) {
-        await nf3Users[0].makeBlockNow();
+      const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
+      if (mempoolTransactions > 0) {
+        await nf3Proposer1.makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       }
     });
@@ -205,9 +206,9 @@ describe('Gas test', async () => {
       expect(gasCostWithdrawal).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Withdraw L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      const mempoolTrancastions = await nf3Users[0].unprocessedTransactionCount();
-      if (mempoolTrancastions > 0) {
-        await nf3Users[0].makeBlockNow();
+      const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
+      if (mempoolTransactions > 0) {
+        await nf3Proposer1.makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       }
     });
