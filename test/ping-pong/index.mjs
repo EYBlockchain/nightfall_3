@@ -101,6 +101,7 @@ export async function simpleUserTest(
         fee,
         transactionHash: res.transactionHash,
         blockHash: res.blockHash,
+        onchain: true,
       });
       await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     } catch (err) {
@@ -133,6 +134,7 @@ export async function simpleUserTest(
         fee,
         transactionHash: res.transactionHash,
         blockHash: res.blockHash,
+        onchain: !offchainTx,
       });
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
@@ -160,6 +162,7 @@ export async function simpleUserTest(
           fee,
           transactionHash: res.transactionHash,
           blockHash: res.blockHash,
+          onchain: !offchainTx,
         });
       } else {
         console.warn('Error transfer', err);
@@ -176,6 +179,7 @@ export async function simpleUserTest(
         fee,
         transactionHash: res.transactionHash,
         blockHash: res.blockHash,
+        onchain: true,
       });
     } catch (err) {
       console.warn('Error deposit', err);
