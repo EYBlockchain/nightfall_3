@@ -5,9 +5,15 @@ Module that runs up as a proposer
 */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
-const TIMER_CACP = process.env.TIMER_CACP || 5;
+const TIMER_CACP = process.env.TIMER_CACP || 15;
 const MAX_ROTATE_TIMES = process.env.MAX_ROTATE_TIMES || 2;
 
+/**
+ * check that it is possible to make the proposer change by checking the following conditions:
+ * the number of registered proposers is greater than 1
+ * the time window reserved for the previous proposer is passed
+ * if the two conditions are met, the changeCurrentProposer function is automatically called
+ */
 async function checkAndChangeProposer(nf3) {
   // eslint-disable-next-line no-constant-condition
   while (true) {
