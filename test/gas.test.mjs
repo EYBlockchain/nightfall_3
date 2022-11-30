@@ -79,6 +79,26 @@ describe('Gas test', () => {
       txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
+    // we need more deposits because we won't have enough input transactions until
+    // after this block is made, by which time it's too late.
+    // also,the first  block costs more due to one-off setup costs.
+    it('First Block', async function () {
+      // We create enough transactions to fill blocks full of deposits.
+      await depositNTransactions(
+        nf3Users[0],
+        1,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        0,
+      );
+
+      await waitForTimeout(10000);
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    });
+
     it('should be a reasonable gas cost', async function () {
       console.log(`Creating a block with ${txPerBlock - 1} deposits`);
 
