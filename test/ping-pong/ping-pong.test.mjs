@@ -101,8 +101,6 @@ const waitForCurrentProposer = async () => {
 const initializeUsersParameters = async () => {
   const signingKeysUsers = [signingKeys.user1, signingKeys.user2];
   const mnemonicsUsers = [mnemonics.user1, mnemonics.user2];
-  console.log('SIGNING KEYS: ', signingKeysUsers);
-  console.log('MNEMONICS USERS: ', mnemonicsUsers);
 
   const environmentUser1 = { ...environment };
   environmentUser1.clientApiUrl = clientApiUrls.client1 || environmentUser1.clientApiUrl;
@@ -119,13 +117,13 @@ const initializeUsersParameters = async () => {
   console.log('ENVIRONMENT FOR USER1: ', environmentUser1);
   console.log('ENVIRONMENT FOR USER2: ', environmentUser2);
   for (let i = 0; i < signingKeysUsers.length; i++) {
-    console.log(`Initializing user with menmonic ${mnemonicsUsers[i]}`);
     // eslint-disable-next-line no-await-in-loop
     await nf3Users[i].init(mnemonicsUsers[i]);
-    console.log(`USER ETH ADDRESS: ${nf3Users[i].ethereumAddress}`);
     // eslint-disable-next-line no-await-in-loop
     const balance = await nf3Users[i].getL1Balance(nf3Users[i].ethereumAddress);
-    console.log(`BALANCE user ${nf3Users[i].ethereumAddress}: ${balance}`);
+    console.log(
+      `USER ETH ADDRESS: ${nf3Users[i].ethereumAddress} - BALANCE ${nf3Users[i].ethereumAddress}: ${balance}`,
+    );
   }
 
   // add addresses of the users
@@ -143,13 +141,13 @@ const waitForTransfersCompleted = async () => {
       nTotalTransfers += listTransfersTotal[i].length;
     }
     console.log(
-      `Waiting for total transfers to be ${TEST_LENGTH * 3 * nf3Users.length}...`,
+      `Waiting for total transactions to be ${TEST_LENGTH * 3 * nf3Users.length}...`,
       nTotalTransfers,
     );
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolving => setTimeout(resolving, 20000));
   } while (nTotalTransfers < TEST_LENGTH * 3 * nf3Users.length);
-  console.log('TRANSERS: ', listTransfersTotal);
+  console.log('TRANSACTIONS: ', listTransfersTotal);
 };
 
 const waitForBalanceUpdate = async usersStats => {
@@ -199,9 +197,9 @@ const waitForBalanceUpdate = async usersStats => {
     }
 
     console.log(
-      `Final user balance for user ${nf3Users[i].zkpKeys.compressedZkpPublicKey} = ${
-        userInitialBalance + totalTransferred
-      }`,
+      `Final user balance for user ${
+        nf3Users[i].zkpKeys.compressedZkpPublicKey
+      } = ${userFinalBalance} (expected ${userInitialBalance + totalTransferred})`,
     );
 
     usersStats.usersFinalBalance.push({
