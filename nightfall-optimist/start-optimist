@@ -1,0 +1,58 @@
+#! /bin/bash
+
+if [ -f client.env ]; then
+  grep -v '^#' client.env
+  # Export env vars
+  export $(grep -v '^#' client.env | xargs)
+else
+  echo "client.env does not exist. You need to define the client.env with the needed variables to run the client."
+  exit 1
+fi
+
+VOLUME_LIST=$(docker volume ls -q)
+FILE="-f ../docker/docker-compose.client.yml"
+
+usage()
+{
+  echo "Usage:"
+  echo "  -r; to remove existing volumes for mongodb and abi contracts"
+}
+
+while [ -n "$1" ]; do
+  case $1 in
+      -r )                          REMOVE_VOLUMES="true"
+                                    ;;
+      -h  | --help )                usage
+                                    ;;
+      * )                           usage
+                              exit 1
+    esac
+  shift
+done
+# FILE should always be set.  Asking for -s on its own makes no sense
+if [ -z "$FILE" ]; then
+  usage
+  exit 1
+fi
+
+if [ -n "$REMOVE_VOLUMES" ]; then
+  # if-else block checks - volume exist and then removes it.
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_mongodb
+  fi
+
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_build
+  fi
+fi 
+
+# shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
+trap "docker-compose $FILE -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+
+docker-compose $FILE -p 'nightfall_3' down --remove-orphans
+
+echo "docker-compose $FILE -p 'nightfall_3' up -d --remove-orphans"
+docker-compose $FILE -p 'nightfall_3' up -d --remove-orphans
+docker-compose -p 'nightfall_3' $FILE logs -f

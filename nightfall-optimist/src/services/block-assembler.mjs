@@ -32,6 +32,7 @@ const { STATE_CONTRACT_NAME, ZERO } = constants;
 let ws;
 let makeNow = false;
 let lastBlockTimestamp = new Date().getTime();
+let blockPeriodMs = PROPOSER_MAX_BLOCK_PERIOD_MILIS;
 
 export function setBlockAssembledWebSocketConnection(_ws) {
   ws = _ws;
@@ -39,6 +40,10 @@ export function setBlockAssembledWebSocketConnection(_ws) {
 
 export function setMakeNow(_makeNow = true) {
   makeNow = _makeNow;
+}
+
+export function setBlockPeriodMs(timeMs) {
+  blockPeriodMs = timeMs;
 }
 
 /**
@@ -87,8 +92,16 @@ export async function conditionalMakeBlock(args) {
     or we're no-longer the proposer (boo).
    */
 
+  logger.info(`I am the current proposer: ${proposer.isMe}`);
+
   if (proposer.isMe) {
-    logger.info(`I am the current proposer: ${proposer.isMe}`);
+    logger.info({
+      msg: 'The maximum size of the block is',
+      blockSize: MAX_BLOCK_SIZE,
+      blockPeriodMs,
+      makeNow,
+    });
+
     // Get all the mempool transactions sorted by fee
     const mempoolTransactions = await getMempoolTxsSortedByFee();
 
@@ -107,14 +120,11 @@ export async function conditionalMakeBlock(args) {
     const totalBytes = mempoolTransactionSizes.reduce((acc, curr) => acc + curr, 0);
     const currentTime = new Date().getTime();
 
-    if (totalBytes) {
-      logger.info({
-        msg: 'In the mempool there are the following number of transactions',
-        numberTransactions: mempoolTransactions.length,
-        totalBytes,
-        makeNow,
-      });
-    }
+    logger.info({
+      msg: 'In the mempool there are the following number of transactions',
+      numberTransactions: mempoolTransactions.length,
+      totalBytes,
+    });
 
     const transactionBatches = [];
     if (totalBytes > 0) {
@@ -130,7 +140,7 @@ export async function conditionalMakeBlock(args) {
 
       if (
         transactionBatches.length === 0 &&
-        (makeNow || currentTime - lastBlockTimestamp >= PROPOSER_MAX_BLOCK_PERIOD_MILIS)
+        (makeNow || (blockPeriodMs > 0 && currentTime - lastBlockTimestamp >= blockPeriodMs))
       ) {
         transactionBatches.push(mempoolTransactionSizes.length);
       }

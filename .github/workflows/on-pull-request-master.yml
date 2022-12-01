@@ -598,6 +598,8 @@ jobs:
           path: ./optimist-sync-test.log
 
   adversary-test:
+    env:
+      CONFIRMATIONS: 1
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -744,9 +746,6 @@ jobs:
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-gas.log &disown
-        env:
-          MAX_BLOCK_SIZE: 25000
-          CONFIRMATIONS: 1
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11

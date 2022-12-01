@@ -2,7 +2,7 @@ import express from 'express';
 import { checkBlock } from '../services/check-block.mjs';
 import Block from '../classes/block.mjs';
 import { resetUnsuccessfulBlockProposedTransactions } from '../services/database.mjs';
-import { setMakeNow } from '../services/block-assembler.mjs';
+import { setBlockPeriodMs, setMakeNow } from '../services/block-assembler.mjs';
 import auth from '../utils/auth.mjs';
 
 const router = express.Router();
@@ -73,6 +73,16 @@ router.get('/make-now', auth, async (req, res, next) => {
   try {
     setMakeNow();
     res.send('Making short block');
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/block-time', async (req, res, next) => {
+  const { timeMs } = req.body;
+  try {
+    setBlockPeriodMs(timeMs);
+    res.sendStatus(200);
   } catch (err) {
     next(err);
   }
