@@ -12,7 +12,7 @@ import {
   getTransactionsByTransactionHashes,
   resetUnsuccessfulBlockProposedTransactions,
 } from '../services/database.mjs';
-import { setMakeNow } from '../services/block-assembler.mjs';
+import { modifyBlockPeriod, setMakeNow } from '../services/block-assembler.mjs';
 
 const router = express.Router();
 
@@ -31,6 +31,17 @@ router.get('/make-now', async (req, res, next) => {
     logger.debug(`block make-now endpoint received GET`);
     setMakeNow();
     res.send('Making short block');
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/block-time', async (req, res, next) => {
+  try {
+    const { time } = req.body;
+    logger.debug({ msg: 'New time period is', time });
+    modifyBlockPeriod(time);
+    res.send('Updating block period');
   } catch (err) {
     next(err);
   }
