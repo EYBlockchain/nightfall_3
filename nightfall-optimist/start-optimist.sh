@@ -155,6 +155,6 @@ else
     -e LOG_LEVEL=debug \
     -e AUTOSTART_RETRIES=10000 \
     -e MAX_BLOCK_SIZE=50000 \
-    -e PROPOSER_MAX_BLOCK_PERIOD_MILIS=60000
+    -e PROPOSER_MAX_BLOCK_PERIOD_MILIS=0
     nightfall-optimist:latest
 fi
