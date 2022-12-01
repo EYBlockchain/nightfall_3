@@ -40,7 +40,7 @@ export const getStakeAccount = async proposer => {
   return stakeAccount;
 };
 
-export const getRotateProposerBlocks = async () => {
+const getRotateProposerBlocks = async () => {
   const rotateProposerBlocks = await stateContract.methods.getRotateProposerBlocks().call();
   return rotateProposerBlocks;
 };
