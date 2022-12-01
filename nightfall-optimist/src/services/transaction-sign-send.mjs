@@ -24,8 +24,8 @@ export async function createSignedTransaction(ethPrivateKey, from, to, data, val
     const nonce = await web3.eth.getTransactionCount(from);
     // Estimate gasPrice
     const gasPrice = await estimateGasPrice(
-      GAS_ESTIMATE_ENDPOINT,
       web3,
+      GAS_ESTIMATE_ENDPOINT,
       GAS_PRICE,
       GAS_PRICE_MULTIPLIER,
     );
