@@ -42,9 +42,9 @@ const main = async () => {
       // We check if the queue[2] is empty, this is safe it is manually enqueued/dequeued.
       if (proposer.isMe && queues[2].length === 0) {
         // logger.debug('Queue has emptied. Queueing block assembler.');
-        const ethAddress = app.get('ethAddress');
-        const ethPrivateKey = app.get('ethPrivateKey');
-        const args = { proposer, ethAddress, ethPrivateKey };
+        const proposerEthAddress = app.get('proposerEthAddress');
+        const proposerEthPrivateKey = app.get('proposerEthPrivateKey');
+        const args = { proposer, proposerEthAddress, proposerEthPrivateKey };
         return enqueueEvent(conditionalMakeBlock, 0, args);
       }
       // eslint-disable-next-line no-void, no-useless-return

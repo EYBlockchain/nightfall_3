@@ -21,11 +21,11 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 
 const app = express();
 
-const ethPrivateKey = environment.PROPOSER_KEY;
-const { address } = web3.eth.accounts.privateKeyToAccount(ethPrivateKey);
+const proposerEthPrivateKey = environment.PROPOSER_KEY;
+const { address } = web3.eth.accounts.privateKeyToAccount(proposerEthPrivateKey);
 
-app.set('ethPrivateKey', ethPrivateKey);
-app.set('ethAddress', address);
+app.set('proposerEthPrivateKey', proposerEthPrivateKey);
+app.set('proposerEthAddress', address);
 
 const spec = swaggerJsDoc(options);
 setupHttpDefaults(
