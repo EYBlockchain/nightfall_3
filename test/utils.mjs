@@ -221,20 +221,19 @@ export class Web3Client {
   async waitForEvent(eventLogs, expectedEvents, count = 1) {
     const length = count !== 1 ? count : expectedEvents.length;
     let timeout = 100;
-    while (eventLogs.length < length) {
+    let eventLogsExpectedEvents = eventLogs.filter(e => e.eventName === expectedEvents[0]);
+    while (eventLogsExpectedEvents.length < length) {
       await waitForTimeout(3000);
+      eventLogsExpectedEvents = eventLogs.filter(e => e.eventName === expectedEvents[0]);
       timeout--;
       if (timeout === 0) throw new Error('Timeout in waitForEvent');
     }
 
-    while (eventLogs[0]?.eventName !== expectedEvents[0]) {
-      await waitForTimeout(3000);
-    }
-
-    expect(eventLogs[0].eventName).to.equal(expectedEvents[0]);
     const eventsSeen = [];
     for (let i = 0; i < length; i++) {
-      eventsSeen.push(eventLogs.shift());
+      const index = eventLogs.findIndex(e => e.eventName === expectedEvents[0]);
+      const removed = index !== -1 && eventLogs.splice(index, 1);
+      eventsSeen.push(...removed);
     }
 
     const blockHeaders = [];
