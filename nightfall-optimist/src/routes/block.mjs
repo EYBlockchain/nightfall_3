@@ -4,7 +4,6 @@
 import express from 'express';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { flushQueue } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
-import ValidationError from '@polygon-nightfall/common-files/utils/validation-error.mjs';
 import { checkBlock } from '../services/check-block.mjs';
 import Block from '../classes/block.mjs';
 import {
@@ -40,9 +39,6 @@ router.get('/make-now', async (req, res, next) => {
 router.post('/block-time', async (req, res, next) => {
   const { timeMs } = req.body;
   try {
-    if (Number.isNaN(timeMs)) {
-      throw new ValidationError('timeMs needs to be a number');
-    }
     setBlockPeriodMs(timeMs);
     res.sendStatus(200);
   } catch (err) {
