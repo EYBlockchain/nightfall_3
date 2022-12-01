@@ -114,16 +114,19 @@ const initializeUsersParameters = async () => {
   environmentUser2.optimistWsUrl = optimistWsUrls.optimist2 || environmentUser2.optimistWsUrl;
   nf3Users.push(new Nf3(signingKeys.user2, environmentUser2));
 
-  console.log('ENVIRONMENT FOR USER1: ', environmentUser1);
-  console.log('ENVIRONMENT FOR USER2: ', environmentUser2);
   for (let i = 0; i < signingKeysUsers.length; i++) {
     // eslint-disable-next-line no-await-in-loop
     await nf3Users[i].init(mnemonicsUsers[i]);
     // eslint-disable-next-line no-await-in-loop
     const balance = await nf3Users[i].getL1Balance(nf3Users[i].ethereumAddress);
-    console.log(
-      `USER ETH ADDRESS: ${nf3Users[i].ethereumAddress} - BALANCE ${nf3Users[i].ethereumAddress}: ${balance}`,
-    );
+    // eslint-disable-next-line no-await-in-loop
+    const tokenBalance = await retrieveL2Balance(nf3Users[i], ercAddress);
+    console.log(`USER:`, {
+      ethereumAddress: nf3Users[i].ethereumAddress,
+      compressedZkpPublicKey: nf3Users[i].zkpKeys.compressedZkpPublicKey,
+      l1_balance: balance,
+      l2_balance: tokenBalance,
+    });
   }
 
   // add addresses of the users
@@ -255,7 +258,6 @@ describe('Ping-pong tests', () => {
     environment.optimistApiUrl = optimistApiUrls.optimist1 || environment.optimistApiUrl;
     environment.optimistWsUrl = optimistWsUrls.optimist1 || environment.optimistWsUrl;
 
-    console.log('ENVIRONMENT FOR USER STATS', environment);
     nf3User = new Nf3(signingKeys.liquidityProvider, environment);
 
     await nf3User.init(mnemonics.liquidityProvider);
@@ -279,7 +281,6 @@ describe('Ping-pong tests', () => {
     // set user parameters
     await initializeUsersParameters();
     const usersStats = await getInitialUserStats();
-    console.log('INITIAL BALANCES', usersStats);
 
     for (let i = 0; i < nf3Users.length; i++) {
       const listAddressesToSend = listAddresses.filter(
