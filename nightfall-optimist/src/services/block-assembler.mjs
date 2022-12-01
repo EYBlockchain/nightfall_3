@@ -87,8 +87,16 @@ export async function conditionalMakeBlock(args) {
     or we're no-longer the proposer (boo).
    */
 
+  logger.info(`I am the current proposer: ${proposer.isMe}`);
+
   if (proposer.isMe) {
-    logger.info(`I am the current proposer: ${proposer.isMe}`);
+    logger.info({
+      msg: 'The maximum size of the block is',
+      blockSize: MAX_BLOCK_SIZE,
+      maxBlockTime: PROPOSER_MAX_BLOCK_PERIOD_MILIS,
+      makeNow,
+    });
+
     // Get all the mempool transactions sorted by fee
     const mempoolTransactions = await getMempoolTxsSortedByFee();
 
@@ -107,14 +115,12 @@ export async function conditionalMakeBlock(args) {
     const totalBytes = mempoolTransactionSizes.reduce((acc, curr) => acc + curr, 0);
     const currentTime = new Date().getTime();
 
-    if (totalBytes) {
-      logger.info({
-        msg: 'In the mempool there are the following number of transactions',
-        numberTransactions: mempoolTransactions.length,
-        totalBytes,
-        makeNow,
-      });
-    }
+    logger.info({
+      msg: 'In the mempool there are the following number of transactions',
+      numberTransactions: mempoolTransactions.length,
+      totalBytes,
+      mempoolTransactionSizes,
+    });
 
     const transactionBatches = [];
     if (totalBytes > 0) {
