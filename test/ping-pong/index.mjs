@@ -101,7 +101,7 @@ export async function simpleUserTest(
       listTransfersSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
-        value,
+        value: value - fee,
         fee,
         transactionHash: res.transactionHash,
         blockHash: res.blockHash,
@@ -179,7 +179,7 @@ export async function simpleUserTest(
       listTransfersSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
-        value: valueToTransfer,
+        value: valueToTransfer - fee,
         fee,
         transactionHash: res.transactionHash,
         blockHash: res.blockHash,
