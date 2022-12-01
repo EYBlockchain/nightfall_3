@@ -30,7 +30,7 @@ const { STATE_CONTRACT_NAME, ZERO } = constants;
 let ws;
 let makeNow = false;
 let lastBlockTimestamp = new Date().getTime();
-let blockPeriod = PROPOSER_MAX_BLOCK_PERIOD_MILIS;
+let blockPeriodMs = PROPOSER_MAX_BLOCK_PERIOD_MILIS;
 
 export function setBlockAssembledWebSocketConnection(_ws) {
   ws = _ws;
@@ -40,8 +40,8 @@ export function setMakeNow(_makeNow = true) {
   makeNow = _makeNow;
 }
 
-export function modifyBlockPeriod(time) {
-  blockPeriod = time;
+export function modifyBlockPeriod(timeMs) {
+  blockPeriodMs = timeMs;
 }
 
 /**
@@ -91,7 +91,7 @@ export async function conditionalMakeBlock(proposer) {
     logger.info({
       msg: 'The maximum size of the block is',
       blockSize: MAX_BLOCK_SIZE,
-      maxBlockTime: blockPeriod,
+      maxBlockTime: blockPeriodMs,
       makeNow,
     });
 
@@ -133,7 +133,7 @@ export async function conditionalMakeBlock(proposer) {
 
       if (
         transactionBatches.length === 0 &&
-        (makeNow || (blockPeriod > 0 && currentTime - lastBlockTimestamp >= blockPeriod))
+        (makeNow || (blockPeriodMs > 0 && currentTime - lastBlockTimestamp >= blockPeriodMs))
       ) {
         transactionBatches.push(mempoolTransactionSizes.length);
       }

@@ -38,9 +38,9 @@ router.get('/make-now', async (req, res, next) => {
 
 router.post('/block-time', async (req, res, next) => {
   try {
-    const { time } = req.body;
-    logger.debug({ msg: 'New time period is', time });
-    modifyBlockPeriod(time);
+    const { timeMs } = req.body;
+    logger.debug({ msg: 'New time period is', timeMs });
+    modifyBlockPeriod(timeMs);
     res.send('Updating block period');
   } catch (err) {
     next(err);
