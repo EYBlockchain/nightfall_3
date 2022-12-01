@@ -40,7 +40,7 @@ export function setMakeNow(_makeNow = true) {
   makeNow = _makeNow;
 }
 
-export function modifyBlockPeriod(timeMs) {
+export function setBlockPeriodMs(timeMs) {
   blockPeriodMs = timeMs;
 }
 
@@ -91,7 +91,7 @@ export async function conditionalMakeBlock(proposer) {
     logger.info({
       msg: 'The maximum size of the block is',
       blockSize: MAX_BLOCK_SIZE,
-      maxBlockTime: blockPeriodMs,
+      blockPeriodMs,
       makeNow,
     });
 

@@ -12,7 +12,7 @@ import {
   getTransactionsByTransactionHashes,
   resetUnsuccessfulBlockProposedTransactions,
 } from '../services/database.mjs';
-import { modifyBlockPeriod, setMakeNow } from '../services/block-assembler.mjs';
+import { setBlockPeriodMs, setMakeNow } from '../services/block-assembler.mjs';
 
 const router = express.Router();
 
@@ -37,11 +37,11 @@ router.get('/make-now', async (req, res, next) => {
 });
 
 router.post('/block-time', async (req, res, next) => {
+  const { timeMs } = req.body;
   try {
-    const { timeMs } = req.body;
-    logger.debug({ msg: 'New time period is', timeMs });
-    modifyBlockPeriod(timeMs);
-    res.send('Updating block period');
+    // validate that timeMs is of type number otherwise raise `ValidationError`
+    setBlockPeriodMs(timeMs);
+    res.sendStatus(200);
   } catch (err) {
     next(err);
   }
