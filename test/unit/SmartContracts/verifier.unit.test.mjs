@@ -157,6 +157,29 @@ describe('Verifier tests', function () {
       expect(await VerifierInstance.verify(proof, publicInputs, verificationKey)).to.equal(false);
     });
 
+    it('Fails if verification key is an empty array', async () => {
+      expect(await VerifierInstance.verify(proof, publicInputs, [])).to.equal(false);
+    });
+
+    it('Fails if verification key length is smaller than 33', async () => {
+      const fakeVerificationKey = [
+        '3098191101694324970532005417021395636402824751305649030914000850590834773070',
+        '9514834343941975482541766473805775350922666632446000390748107449665790454912',
+      ];
+      expect(await VerifierInstance.verify(proof, publicInputs, fakeVerificationKey)).to.equal(
+        false,
+      );
+    });
+
+    it('Fails if verification key has length 33', async () => {
+      const fakeVerificationKey = Array(33).fill(
+        '3098191101694324970532005417021395636402824751305649030914000850590834773070',
+      );
+      expect(await VerifierInstance.verify(proof, publicInputs, fakeVerificationKey)).to.equal(
+        false,
+      );
+    });
+
     it('Fails if proof length is invalid', async () => {
       proof.pop();
       expect(await VerifierInstance.verify(proof, publicInputs, verificationKey)).to.equal(false);

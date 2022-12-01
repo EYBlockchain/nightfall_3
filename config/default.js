@@ -171,6 +171,8 @@ module.exports = {
         : 'http://localhost:8092',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
+      adversarialClientApiUrl: 'http://localhost:8093',
+      adversarialClientWsUrl: 'ws://localhost:8094',
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
@@ -198,8 +200,10 @@ module.exports = {
       optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
       web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}${process.env.BLOCKCHAIN_PATH}`,
-      adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
-      adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      adversarialOptimistApiUrl: `https://${process.env.ADVERSARY_OPTIMIST_HTTP_HOST}`,
+      adversarialOptimistWsUrl: `wss://${process.env.ADVERSARY_OPTIMIST_HOST}`,
+      adversarialClientApiUrl: `https://${process.env.ADVERSARY_CLIENT_HTTP_HOST}`,
+      adversarialClientWsUrl: `wss://${process.env.ADVERSARY_CLIENT_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
       CHALLENGER_KEY: process.env.CHALLENGER_KEY,
       AUTH_TOKEN: process.env.AUTH_TOKEN,

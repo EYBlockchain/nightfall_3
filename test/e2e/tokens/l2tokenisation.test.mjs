@@ -66,7 +66,14 @@ describe('L2 Tokenisation tests', () => {
     await nf3Users[1].init(mnemonics.user2);
 
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-    const randomAddress = await randValueLT(1461501637330902918203684832716283019655932542976n);
+    let randomAddress = 0;
+    while (randomAddress === 0) {
+      try {
+        randomAddress = await randValueLT(SHIFT);
+      } catch {
+        // Try to get a random value again
+      }
+    }
 
     l2Address = generalise(
       randomAddress.bigInt +
