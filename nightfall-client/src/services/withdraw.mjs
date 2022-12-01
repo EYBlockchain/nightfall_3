@@ -115,7 +115,7 @@ async function withdraw(withdrawParams) {
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
 
-    const optimisticWithdrawTransaction = new Transaction({
+    const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
@@ -134,17 +134,15 @@ async function withdraw(withdrawParams) {
 
     logger.debug({
       msg: 'Client made transaction',
-      transaction: JSON.stringify(optimisticWithdrawTransaction, null, 2),
+      transaction: JSON.stringify(transaction, null, 2),
       offchain,
     });
 
-    return submitTransaction(
-      optimisticWithdrawTransaction,
-      commitmentsInfo,
-      rootKey,
-      shieldContractInstance,
-      offchain,
-    );
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
+      .encodeABI();
+    await submitTransaction(transaction, commitmentsInfo, rootKey, offchain);
+    return { rawTransaction, transaction };
   } catch (error) {
     logger.error(error);
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));

@@ -113,7 +113,7 @@ async function tokenise(items) {
 
     const { proof } = res.data;
 
-    const optimisticTokeniseTransaction = new Transaction({
+    const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
@@ -127,16 +127,14 @@ async function tokenise(items) {
 
     logger.debug({
       msg: 'Client made transaction',
-      transaction: JSON.stringify(optimisticTokeniseTransaction, null, 2),
+      transaction: JSON.stringify(transaction, null, 2),
     });
 
-    return submitTransaction(
-      optimisticTokeniseTransaction,
-      commitmentsInfo,
-      rootKey,
-      shieldContractInstance,
-      true,
-    );
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
+      .encodeABI();
+    await submitTransaction(transaction, commitmentsInfo, rootKey, true);
+    return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
     throw new Error(error);

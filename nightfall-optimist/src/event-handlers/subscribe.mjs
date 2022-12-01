@@ -72,7 +72,7 @@ export async function startEventQueue(callback, ...arg) {
     emitterC.on('data', event => callback(event, arg));
     return emitterC;
   });
-  logger.debug('Subscribed to layer 2 state events');
+  logger.debug('Subscribed to layer 2 contract events');
   return emitters;
 }
 

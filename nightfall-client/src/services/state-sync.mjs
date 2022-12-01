@@ -16,7 +16,7 @@ import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 
-const { STATE_CONTRACT_NAME } = constants;
+const { STATE_CONTRACT_NAME, CHALLENGES_CONTRACT_NAME } = constants;
 const {
   MONGO_URL,
   COMMITMENTS_DB,
@@ -35,22 +35,34 @@ export const syncState = async (
 ) => {
   logger.info({ msg: 'SyncState parameters', fromBlock, toBlock, eventFilter });
 
-  const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // Rollback, BlockProposed
+  const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // BlockProposed
+  const challengesContractInstance = await waitForContract(CHALLENGES_CONTRACT_NAME); // Rollback
 
   const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
     fromBlock,
     toBlock,
   });
 
-  for (let i = 0; i < pastStateEvents.length; i++) {
-    switch (pastStateEvents[i].event) {
+  const pastChallengeEvents = await challengesContractInstance.getPastEvents(eventFilter, {
+    fromBlock,
+    toBlock,
+  });
+
+  // Put all events together and sort chronologically as they appear on Ethereum
+  const splicedList = pastStateEvents
+    .concat(pastChallengeEvents)
+    .sort((a, b) => a.blockNumber - b.blockNumber);
+
+  for (let i = 0; i < splicedList.length; i++) {
+    const pastEvent = splicedList[i];
+    switch (pastEvent.event) {
       case 'BlockProposed':
         // eslint-disable-next-line no-await-in-loop
-        await blockProposedEventHandler(pastStateEvents[i], true);
+        await blockProposedEventHandler(pastEvent, true);
         break;
       case 'Rollback':
         // eslint-disable-next-line no-await-in-loop
-        await rollbackEventHandler(pastStateEvents[i]);
+        await rollbackEventHandler(pastEvent);
         break;
       default:
         break;
