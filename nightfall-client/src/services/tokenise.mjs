@@ -16,7 +16,7 @@ import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
+const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, TOKENISE } = constants;
 const { generalise } = gen;
 
 async function tokenise(items) {
@@ -45,7 +45,7 @@ async function tokenise(items) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
-  const circuitName = 'tokenise';
+  const circuitName = TOKENISE;
 
   // Currently just the fee commitments
   const commitmentsInfo = await getCommitmentInfo({
@@ -128,7 +128,7 @@ async function tokenise(items) {
     });
 
     logger.debug({
-      msg: 'Client made transaction',
+      msg: `Client made ${circuitName}`,
       transaction: JSON.stringify(transaction, null, 2),
     });
 

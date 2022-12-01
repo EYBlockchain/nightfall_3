@@ -24,7 +24,7 @@ import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME } = constants;
+const { SHIELD_CONTRACT_NAME, TRANSFER } = constants;
 const { generalise } = gen;
 
 async function transfer(transferParams) {
@@ -53,7 +53,7 @@ async function transfer(transferParams) {
     maticAddress: maticAddress.hex(32),
   });
 
-  const circuitName = 'transfer';
+  const circuitName = TRANSFER;
 
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
@@ -158,8 +158,8 @@ async function transfer(transferParams) {
     });
 
     logger.debug({
-      msg: 'Client made transaction',
-      transaction,
+      msg: `Client made ${circuitName}`,
+      transaction: JSON.stringify(transaction, null, 2),
       offchain,
     });
 

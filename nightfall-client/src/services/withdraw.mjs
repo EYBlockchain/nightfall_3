@@ -22,7 +22,7 @@ import { submitTransaction } from '../utils/submitTransaction.mjs';
 import { ZkpKeys } from './keys.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME } = constants;
+const { SHIELD_CONTRACT_NAME, WITHDRAW } = constants;
 const { generalise } = gen;
 
 const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
@@ -48,7 +48,7 @@ async function withdraw(withdrawParams) {
 
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
 
-  const circuitName = 'withdraw';
+  const circuitName = WITHDRAW;
 
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: withdrawValue,
@@ -137,7 +137,7 @@ async function withdraw(withdrawParams) {
     });
 
     logger.debug({
-      msg: 'Client made transaction',
+      msg: `Client made ${circuitName}`,
       transaction: JSON.stringify(transaction, null, 2),
       offchain,
     });

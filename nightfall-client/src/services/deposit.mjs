@@ -23,7 +23,7 @@ import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
+const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, DEPOSIT, DEPOSIT_FEE } = constants;
 const { generalise } = gen;
 
 async function deposit(items) {
@@ -56,7 +56,7 @@ async function deposit(items) {
     salts: [],
   };
 
-  let circuitName = 'depositfee';
+  let circuitName = DEPOSIT_FEE;
 
   if (fee.bigInt > 0) {
     if (maticAddress.hex(32) === ercAddress.hex(32)) {
@@ -64,7 +64,7 @@ async function deposit(items) {
         throw new Error('Value deposited needs to be bigger than the fee');
       }
       valueNewCommitment = generalise(value.bigInt - fee.bigInt);
-      circuitName = 'deposit';
+      circuitName = DEPOSIT;
     } else {
       commitmentsInfo = await getCommitmentInfo({
         totalValueToSend: 0n,
@@ -77,7 +77,7 @@ async function deposit(items) {
       });
     }
   } else {
-    circuitName = 'deposit';
+    circuitName = DEPOSIT;
   }
 
   const commitment = new Commitment({
@@ -171,7 +171,7 @@ async function deposit(items) {
   });
 
   logger.debug({
-    msg: 'Client made transaction',
+    msg: `Client made ${circuitName}`,
     transaction: JSON.stringify(transaction, null, 2),
   });
 

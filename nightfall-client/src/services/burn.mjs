@@ -15,7 +15,7 @@ import { submitTransaction } from '../utils/submitTransaction.mjs';
 import { ZkpKeys } from './keys.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME } = constants;
+const { SHIELD_CONTRACT_NAME, BURN } = constants;
 const { generalise } = gen;
 
 async function burn(burnParams) {
@@ -33,7 +33,7 @@ async function burn(burnParams) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
-  const circuitName = 'burn';
+  const circuitName = BURN;
 
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: generalise(value).bigInt,
@@ -124,7 +124,7 @@ async function burn(burnParams) {
     });
 
     logger.debug({
-      msg: 'Client made transaction',
+      msg: `Client made ${circuitName}`,
       transaction: JSON.stringify(transaction, null, 2),
     });
 
