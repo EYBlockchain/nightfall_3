@@ -18,11 +18,6 @@ import {
 } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
-// import {
-//   increaseProposerWsFailed,
-//   increaseProposerWsClosed,
-//   increaseProposerBlockNotSent,
-// } from './debug-counters.mjs';
 import { createSignedTransaction, sendSignedTransaction } from './transaction-sign-send.mjs';
 import txsQueue from '../utils/transactions-queue.mjs';
 
@@ -229,48 +224,6 @@ export async function conditionalMakeBlock(args) {
             });
           }
         });
-
-        // check that the websocket exists (it should) and its readyState is OPEN
-        // before sending Proposed block. If not wait until the proposer reconnects
-        // let tryCount = 0;
-        // while (!ws || ws.readyState !== WebSocket.OPEN) {
-        //   await waitForTimeout(3000); // eslint-disable-line no-await-in-loop
-
-        //   logger.warn(`Websocket to proposer is closed. Waiting for proposer to reconnect`);
-
-        //   increaseProposerWsClosed();
-        //   if (tryCount++ > 100) {
-        //     increaseProposerWsFailed();
-        //     logger.error(`Websocket to proposer has failed. Returning...`);
-        //     return;
-        //   }
-        // }
-
-        // if (ws && ws.readyState === WebSocket.OPEN) {
-        //   await ws.send(
-        //     JSON.stringify({
-        //       type: 'block',
-        //       txDataToSign: unsignedProposeBlockTransaction,
-        //       block,
-        //       transactions,
-        //     }),
-        //   );
-        //   logger.debug('Send unsigned block-assembler transactions to ws client');
-        // } else {
-        //   increaseProposerBlockNotSent();
-        //   if (ws) logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
-        //   else logger.debug('Block not sent. Non-initialized socket');
-        // }
-        // remove the transactions from the mempool so we don't keep making new
-        // blocks with them
-
-        // await removeTransactionsFromMemPool(block.transactionHashes);
-        // await removeCommitmentsFromMemPool(
-        //   transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
-        // );
-        // await removeNullifiersFromMemPool(
-        //   transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
-        // );
       }
     }
   }
