@@ -261,7 +261,7 @@ module.exports = {
         '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
       proposer1:
         process.env.BOOT_PROPOSER_KEY ||
-        process.env.PROPOSER1_KEY ||
+        process.env.PROPOSER_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
       proposer2:
         process.env.PROPOSER2_KEY ||
