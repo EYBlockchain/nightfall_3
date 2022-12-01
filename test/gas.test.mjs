@@ -33,6 +33,7 @@ const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, VK_IDS } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
+nf3Proposer1.setApiKey(environment.AUTH_TOKEN);
 
 const web3Client = new Web3Client();
 
@@ -112,6 +113,10 @@ describe('Gas test', () => {
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       const numberOfBlocksAfter = await countBlocksInOptimist();
+      logger.debug(
+        `Number of blocks before is ${numberOfBlocksBefore} and number of blocks after is ${numberOfBlocksAfter}`,
+      );
+
       expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
 
       const gasCostDeposit = await getLatestBlockGasUsed();
@@ -154,6 +159,10 @@ describe('Gas test', () => {
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const numberOfBlocksAfter = await countBlocksInOptimist();
+      logger.debug(
+        `Number of blocks before is ${numberOfBlocksBefore} and number of blocks after is ${numberOfBlocksAfter}`,
+      );
+
       expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
 
       const gasCostTransfer = await getLatestBlockGasUsed();
@@ -196,6 +205,9 @@ describe('Gas test', () => {
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       const numberOfBlocksAfter = await countBlocksInOptimist();
+      logger.debug(
+        `Number of blocks before is ${numberOfBlocksBefore} and number of blocks after is ${numberOfBlocksAfter}`,
+      );
 
       expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
 
