@@ -5,7 +5,7 @@ Module that runs up as a proposer
 */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
-const TIMER_CACP = process.env.TIMER_CACP || 5;
+const TIMER_CACP = process.env.TIMER_CACP || 30;
 const MAX_ROTATE_TIMES = process.env.MAX_ROTATE_TIMES || 2;
 
 /**
@@ -22,9 +22,11 @@ async function checkAndChangeProposer(nf3) {
     const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
     const numproposers = await nf3.getNumProposers();
     const currentSprint = await nf3.currentSprint();
-    const spanProposersList = await nf3.spanProposersList(currentSprint);
+    let spanProposersList;
+    if (currentSprint > 1) {
+      spanProposersList = await nf3.spanProposersList(currentSprint);
+    }
     const currentBlock = await nf3.web3.eth.getBlockNumber();
-
     logger.info(`Proposer address: ${spanProposersList} and sprint: ${currentSprint}`);
 
     if (currentBlock - proposerStartBlock >= rotateProposerBlocks && numproposers > 1) {
@@ -62,7 +64,11 @@ export default async function startProposer(nf3, proposerBaseUrl) {
 
   console.log(`blockStake: ${blockStake}, minimumStake: ${minimumStake}`);
 
-  await nf3.registerProposer(proposerBaseUrl, minimumStake);
+  try {
+    await nf3.registerProposer(proposerBaseUrl, minimumStake);
+  } catch (err) {
+    logger.info(err);
+  }
   logger.debug('Proposer healthcheck up');
 
   // If the emitter is not defined it causes the process to exit
