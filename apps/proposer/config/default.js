@@ -11,6 +11,6 @@ module.exports = {
   BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'localhost',
   BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || 8546,
   BLOCKCHAIN_PATH: process.env.BLOCKCHAIN_PATH || '',
-  TIMER_CACP: process.env.TIMER_CACP || 5,
+  TIMER_CACP: process.env.TIMER_CACP || 30,
   MAX_ROTATE_TIMES: process.env.MAX_ROTATE_TIMES || 2,
 };

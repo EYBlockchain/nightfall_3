@@ -5,7 +5,7 @@ Module that runs up as a proposer
 */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
-const TIMER_CACP = process.env.TIMER_CACP || 5;
+const TIMER_CACP = process.env.TIMER_CACP || 30;
 const MAX_ROTATE_TIMES = process.env.MAX_ROTATE_TIMES || 2;
 
 /**
