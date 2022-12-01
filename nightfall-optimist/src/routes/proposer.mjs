@@ -48,6 +48,7 @@ export function setProposer(p) {
  *      summary: Register proposer.
  *      description: Registers a proposer to the Proposers contract.
  *        The user must post the url, stake and fee.
+ *        A stake of 0 is taken as minimum configured stake.
  *      parameters:
  *        - in: header
  *          name: api_key
@@ -82,7 +83,11 @@ router.post('/register', auth, async (req, res, next) => {
 
     const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
     const minimumStake = await stateContractInstance.methods.getMinimumStake().call();
-    if (stake < minimumStake) {
+    let _stake = stake;
+    if (_stake === 0) {
+      _stake = minimumStake;
+    }
+    if (_stake < minimumStake) {
       throw new Error(`Given stake is below minimum required, ie ${minimumStake} Wei`);
     }
 
@@ -106,7 +111,7 @@ router.post('/register', auth, async (req, res, next) => {
         ethAddress,
         proposersContractAddress,
         txDataToSign,
-        stake,
+        _stake,
       );
 
       // Submit tx and update db if tx is successful
