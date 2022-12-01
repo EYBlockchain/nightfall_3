@@ -25,6 +25,8 @@ chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
+const { fee } = config.TEST_OPTIONS;
+
 const web3Client = new Web3Client();
 
 let stateAddress;
@@ -187,11 +189,6 @@ describe('Testing with an adversary', () => {
 
     stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
-
-    console.log('Creating initial deposits...');
-    await nf3User.deposit('ValidTransaction', ercAddress, tokenType, 10 * value2, tokenId, 0);
-    await makeBlockNow();
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   });
 
   beforeEach(async () => {
@@ -202,7 +199,7 @@ describe('Testing with an adversary', () => {
     describe('Deposits rollback', async () => {
       it('Test duplicate transaction deposit', async () => {
         console.log('Testing duplicate transaction deposit...');
-        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, fee);
         await makeBlockNow('DuplicateTransaction');
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
         console.log('Waiting for rollback...');
@@ -237,6 +234,12 @@ describe('Testing with an adversary', () => {
     });
 
     describe('Transfers rollback', async () => {
+      beforeEach(async () => {
+        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      });
+
       it('Test duplicate transaction transfer', async () => {
         console.log('Testing duplicate transaction transfer...');
         await nf3User.transfer(
@@ -247,7 +250,7 @@ describe('Testing with an adversary', () => {
           value2,
           tokenId,
           nf3User.zkpKeys.compressedZkpPublicKey,
-          0,
+          fee,
         );
         await makeBlockNow('DuplicateTransaction');
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
@@ -303,7 +306,6 @@ describe('Testing with an adversary', () => {
       });
 
       it.skip('Test incorrect proof transfer', async () => {
-        console.log('Testing incorrect proof transfer...');
         await nf3User.transfer(
           'IncorrectProof',
           false,
@@ -344,6 +346,12 @@ describe('Testing with an adversary', () => {
     });
 
     describe('Withdraw rollbacks', async () => {
+      beforeEach(async () => {
+        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      });
+
       it('Test duplicate transaction withdraw', async () => {
         console.log('Testing duplicate transaction withdraw...');
         await nf3User.withdraw(
@@ -354,7 +362,7 @@ describe('Testing with an adversary', () => {
           value2,
           tokenId,
           nf3User.ethereumAddress,
-          0,
+          fee,
         );
         await makeBlockNow('DuplicateTransaction');
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);

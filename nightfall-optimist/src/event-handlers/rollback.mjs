@@ -5,6 +5,7 @@
  * leafCount values in the Block class
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { dequeueEvent, enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import {
   addTransactionsToMemPool,
@@ -15,10 +16,6 @@ import {
   deleteTreeByBlockNumberL2,
   getAllRegisteredProposersCount,
 } from '../services/database.mjs';
-import {
-  checkDuplicateCommitmentsWithinBlock,
-  checkDuplicateNullifiersWithinBlock,
-} from '../services/check-block.mjs';
 import Block from '../classes/block.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
 import { signalRollbackCompleted as signalRollbackCompletedToProposer } from '../services/block-assembler.mjs';
@@ -26,6 +23,8 @@ import {
   signalRollbackCompleted as signalRollbackCompletedToChallenger,
   isMakeChallengesEnable,
 } from '../services/challenges.mjs';
+
+const { ZERO } = constants;
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -37,11 +36,11 @@ async function rollbackEventHandler(data) {
   await deleteTreeByBlockNumberL2(Number(blockNumberL2));
 
   /*
-  A Rollback occurs when an on-chain fraud proof (challenge) is accepted.
-  During a rollback we have to do three things:
-  1) Remove the block data from our database from the blockNumberL2 provided in the Rollback Event
-  2) Return transactions to the mempool and delete those that may have become invalid as a result of the Rollback.
-  */
+   A Rollback occurs when an on-chain fraud proof (challenge) is accepted.
+   During a rollback we have to do three things:
+   1) Remove the block data from our database from the blockNumberL2 provided in the Rollback Event
+   2) Return transactions to the mempool and delete those that may have become invalid as a result of the Rollback.
+   */
   // Get all blocks that need to be deleted
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(blockNumberL2);
   logger.info(`Rollback - rollback layer 2 blocks ${JSON.stringify(blocksToBeDeleted, null, 2)}`);
@@ -63,31 +62,44 @@ async function rollbackEventHandler(data) {
       blockTransactions,
     });
 
-    for (let j = 0; j < blockTransactions.length; j++) {
+    const transactionsSortedByFee = blockTransactions.sort((tx1, tx2) =>
+      Number(tx1.fee) < Number(tx2.fee) ? 1 : -1,
+    );
+
+    const commitmentsList = [];
+    const nullifiersList = [];
+    for (let j = 0; j < transactionsSortedByFee.length; j++) {
+      const transaction = transactionsSortedByFee[j];
       try {
         // eslint-disable-next-line no-await-in-loop
-        await checkTransaction(blockTransactions[j], false, {
+        await checkTransaction(transaction, false, {
           blockNumberL2: blocksToBeDeleted[i].blockNumberL2,
         });
+
+        for (let k = 0; k < transaction.commitments.length; k++) {
+          if (commitmentsList.includes(transaction.commitments[k])) {
+            throw new Error(
+              `The following commitment is duplicated: ${transaction.commitments[k]}`,
+            );
+          }
+        }
+
+        for (let k = 0; k < transaction.nullifiers.length; k++) {
+          if (nullifiersList.includes(transaction.nullifiers[k])) {
+            throw new Error(`The following nullifier is duplicated: ${transaction.nullifiers[k]}`);
+          }
+        }
+
+        commitmentsList.push(...transaction.commitments.filter(c => c !== ZERO));
+        nullifiersList.push(...transaction.nullifiers.filter(c => c !== ZERO));
       } catch (error) {
         logger.error({
-          msg: `Rollback - Invalid checkTransaction: ${blockTransactions[j].transactionHash}`,
+          msg: `Rollback - Invalid Transaction: ${transactionsSortedByFee[j].transactionHash}`,
           error,
         });
 
-        invalidTransactions.push(blockTransactions[j].transactionHash);
+        invalidTransactions.push(transactionsSortedByFee[j].transactionHash);
       }
-    }
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      await checkDuplicateCommitmentsWithinBlock(blocksToBeDeleted[i], blockTransactions);
-
-      // eslint-disable-next-line no-await-in-loop
-      await checkDuplicateNullifiersWithinBlock(blocksToBeDeleted[i], blockTransactions);
-    } catch (error) {
-      const { transaction2: transaction } = error.metadata; // TODO pick transaction to delete based on which transaction pays more to proposer
-      logger.debug(`Rollback - Invalid transaction: ${transaction.transactionHash}`);
-      invalidTransactions.push(transaction.transactionHash);
     }
   }
 

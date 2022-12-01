@@ -81,16 +81,17 @@ async function checkFrontier(block) {
 }
 
 // check if there are duplicate commitments in different transactions of the same block
-export async function checkDuplicateCommitmentsWithinBlock(block, transactions) {
+async function checkDuplicateCommitmentsWithinBlock(block, transactions) {
   // Create an array containing all the commitments different than zero in a block and also the transaction index in which belongs to
   const blockCommitments = transactions
-    .map(transaction => transaction.commitments)
-    .flat(Infinity)
-    .filter(c => c !== ZERO)
-    .map((c, i) => {
-      return { transactionIndex: i, commitment: c };
-    });
-
+    .map((transaction, i) =>
+      transaction.commitments
+        .filter(c => c !== ZERO)
+        .map(c => {
+          return { transactionIndex: i, commitment: c };
+        }),
+    )
+    .flat(Infinity);
   let index1 = 0;
   let index2 = 0;
   for (let index = 0; index < blockCommitments.length; ++index) {
@@ -156,15 +157,17 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
 }
 
 // check if there are duplicate nullifiers in different transactions of the same block
-export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
+async function checkDuplicateNullifiersWithinBlock(block, transactions) {
   // Create an array containing all the nullifiers different than zero in a block and also the transaction index in which belongs to
   const blockNullifiers = transactions
-    .map(transaction => transaction.nullifiers)
-    .flat(Infinity)
-    .filter(n => n !== ZERO)
-    .map((n, i) => {
-      return { transactionIndex: i, nullifier: n };
-    });
+    .map((transaction, i) =>
+      transaction.nullifiers
+        .filter(n => n !== ZERO)
+        .map(n => {
+          return { transactionIndex: i, nullifier: n };
+        }),
+    )
+    .flat(Infinity);
 
   let index1 = 0;
   let index2 = 0;
@@ -234,9 +237,8 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
  * Checks the block's properties.  It will return the first inconsistency it finds
  * @param {object} block - the block being checked
  * @param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
- *
- * TODO - nullifiers
  */
+// eslint-disable-next-line import/prefer-default-export
 export async function checkBlock(block, transactions) {
   await checkLeafCount(block);
   // now we have to check the commitment root.
