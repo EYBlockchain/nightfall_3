@@ -70,7 +70,7 @@ const transpileBlockApi = _pathToSrc => {
     }
   });`;
   const srcTxDataToSignPreamble = /(\n|.)*(?=router.get\('\/make-now',)/g;
-  const srcTxDataToSignPostamble = /router.get\('\/transaction-hash\/(\n|.)*/g;
+  const srcTxDataToSignPostamble = /router.post\('\/block-time(\n|.)*/g;
   const [srcPre] = srcFile.match(srcTxDataToSignPreamble);
   const [srcPost] = srcFile.match(srcTxDataToSignPostamble);
   srcFile = `${srcPre}\n${injectCustomMakeNow}\n${srcPost}`;
