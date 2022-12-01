@@ -40,7 +40,6 @@ async function checkAndChangeProposer(nf3) {
       }
     } else {
       logger.info(`the proposer is not changed. sprint: ${currentSprint}`);
-
     }
     await new Promise(resolve => setTimeout(resolve, TIMER_CACP * 1000));
   }
