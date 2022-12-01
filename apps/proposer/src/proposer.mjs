@@ -22,14 +22,11 @@ async function checkAndChangeProposer(nf3) {
     const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
     const numproposers = await nf3.getNumProposers();
     const currentSprint = await nf3.currentSprint();
-    let spanProposersList;
-    if (currentSprint > 1) {
-      spanProposersList = await nf3.spanProposersList(currentSprint);
-    }
     const currentBlock = await nf3.web3.eth.getBlockNumber();
-    logger.info(`Proposer address: ${spanProposersList} and sprint: ${currentSprint}`);
 
     if (currentBlock - proposerStartBlock >= rotateProposerBlocks && numproposers > 1) {
+      const spanProposersList = await nf3.spanProposersList(currentSprint);
+      logger.info(`Proposer address: ${spanProposersList} and sprint: ${currentSprint}`);
       try {
         if (spanProposersList[currentSprint] === nf3.ethereumAddress) {
           logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
@@ -41,6 +38,9 @@ async function checkAndChangeProposer(nf3) {
       } catch (err) {
         logger.info(err);
       }
+    } else {
+      logger.info(`the proposer is not changed. sprint: ${currentSprint}`);
+
     }
     await new Promise(resolve => setTimeout(resolve, TIMER_CACP * 1000));
   }
