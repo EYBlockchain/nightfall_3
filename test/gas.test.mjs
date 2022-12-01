@@ -66,6 +66,7 @@ async function getLatestBlockGasUsed() {
 async function processExistingMempoolTrasanctions() {
   const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
   if (mempoolTransactions > 0) {
+    logger.debug(`Making new block to clear transaction mempool`);
     await nf3Proposer1.makeBlockNow();
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   }
@@ -112,6 +113,7 @@ describe('Gas test', () => {
       );
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
       const numberOfBlocksAfter = await countBlocksInOptimist();
       logger.debug(
         `Number of blocks before is ${numberOfBlocksBefore} and number of blocks after is ${numberOfBlocksAfter}`,
@@ -125,7 +127,7 @@ describe('Gas test', () => {
       expect(gasCostDeposit).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Deposit L1 average gas used was ${averageL1GasCost(receipts)}`);
 
-      processExistingMempoolTrasanctions();
+      await processExistingMempoolTrasanctions();
     });
   });
 
@@ -171,7 +173,7 @@ describe('Gas test', () => {
       expect(gasCostTransfer).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Transfer L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      processExistingMempoolTrasanctions();
+      await processExistingMempoolTrasanctions();
     });
   });
 
@@ -204,6 +206,7 @@ describe('Gas test', () => {
       );
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
       const numberOfBlocksAfter = await countBlocksInOptimist();
       logger.debug(
         `Number of blocks before is ${numberOfBlocksBefore} and number of blocks after is ${numberOfBlocksAfter}`,
@@ -217,7 +220,7 @@ describe('Gas test', () => {
       expect(gasCostWithdrawal).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Withdraw L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      processExistingMempoolTrasanctions();
+      await processExistingMempoolTrasanctions();
     });
   });
 
