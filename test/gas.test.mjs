@@ -45,7 +45,6 @@ const averageL1GasCost = receipts =>
 
 const connection = await mongo.connection(MONGO_URL);
 const db = connection.db(OPTIMIST_DB);
-console.log(db);
 const countBlocksInOptimist = async () => db.collection('blocks').count();
 
 async function getLatestBlockGasUsed() {
@@ -61,6 +60,14 @@ async function getLatestBlockGasUsed() {
   const receipt = await web3Client.getTransactionReceipt(latestBlockTxHashL1);
 
   return receipt.gasUsed;
+}
+
+async function processExistingMempoolTrasanctions() {
+  const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
+  if (mempoolTransactions > 0) {
+    await nf3Proposer1.makeBlockNow();
+    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  }
 }
 
 describe('Gas test', () => {
@@ -113,11 +120,7 @@ describe('Gas test', () => {
       expect(gasCostDeposit).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Deposit L1 average gas used was ${averageL1GasCost(receipts)}`);
 
-      const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
-      if (mempoolTransactions > 0) {
-        await nf3Proposer1.makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      }
+      processExistingMempoolTrasanctions();
     });
   });
 
@@ -159,11 +162,7 @@ describe('Gas test', () => {
       expect(gasCostTransfer).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Transfer L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
-      if (mempoolTransactions > 0) {
-        await nf3Proposer1.makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      }
+      processExistingMempoolTrasanctions();
     });
   });
 
@@ -206,11 +205,7 @@ describe('Gas test', () => {
       expect(gasCostWithdrawal).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Withdraw L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
-      if (mempoolTransactions > 0) {
-        await nf3Proposer1.makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      }
+      processExistingMempoolTrasanctions();
     });
   });
 
