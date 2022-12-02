@@ -84,7 +84,7 @@ export async function simpleUserTest(
   ercAddress,
   nf3,
   listUserAddresses,
-  listTransfersSent,
+  listTransactionsSent,
 ) {
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
@@ -94,11 +94,11 @@ export async function simpleUserTest(
   let offchainTx = true;
 
   // Create a block of deposits to have enough funds
-  for (let i = 0; i < TEST_LENGTH; i++) {
+  for (let i = 0; i < TEST_LENGTH * 2; i++) {
     try {
       const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
 
-      listTransfersSent.push({
+      listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
         value: value - fee,
@@ -106,6 +106,7 @@ export async function simpleUserTest(
         transactionHash: res.transactionHash,
         blockHash: res.blockHash,
         onchain: true,
+        type: 'deposit',
       });
       await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     } catch (err) {
@@ -135,14 +136,15 @@ export async function simpleUserTest(
         fee,
       );
 
-      listTransfersSent.push({
+      listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: userAdressTo,
         value: valueToTransfer,
         fee,
-        transactionHash: res.transactionHash,
+        transactionHashL1: res.transactionHash,
         blockHash: res.blockHash,
         onchain: !offchainTx,
+        type: 'transfer',
       });
     } catch (err) {
       if (err.message.includes('No suitable commitments')) {
@@ -163,14 +165,15 @@ export async function simpleUserTest(
           userAdressTo,
           fee,
         );
-        listTransfersSent.push({
+        listTransactionsSent.push({
           from: nf3.zkpKeys.compressedZkpPublicKey,
           to: userAdressTo,
           value: valueToTransfer,
           fee,
-          transactionHash: res.transactionHash,
+          transactionHashL1: res.transactionHash,
           blockHash: res.blockHash,
           onchain: !offchainTx,
+          type: 'transfer',
         });
       } else {
         console.warn('Error transfer', err);
@@ -180,17 +183,42 @@ export async function simpleUserTest(
 
     try {
       const res = await nf3.deposit(ercAddress, tokenType, valueToTransfer, tokenId, fee);
-      listTransfersSent.push({
+      listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
         value: valueToTransfer - fee,
         fee,
-        transactionHash: res.transactionHash,
+        transactionHashL1: res.transactionHash,
         blockHash: res.blockHash,
         onchain: true,
+        type: 'deposit',
       });
     } catch (err) {
       console.warn('Error deposit', err);
+    }
+
+    try {
+      const res = await nf3.withdraw(
+        offchainTx,
+        ercAddress,
+        tokenType,
+        valueToTransfer,
+        tokenId,
+        nf3.ethereumAddress,
+        fee,
+      );
+      listTransactionsSent.push({
+        from: nf3.zkpKeys.compressedZkpPublicKey,
+        to: nf3.zkpKeys.compressedZkpPublicKey,
+        value: valueToTransfer,
+        fee,
+        transactionHashL1: res.transactionHash,
+        blockHash: res.blockHash,
+        onchain: !offchainTx,
+        type: 'withdraw',
+      });
+    } catch (err) {
+      console.warn('Error withdraw', err);
     }
 
     // await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
@@ -286,9 +314,9 @@ export async function setParametersConfig(nf3User) {
 }
 
 /**
-Proposer test for checking different points for the PoS
+  Proposer test for rotation of the proposers and making blocks
 */
-export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
+export async function proposerRotation(optimistUrls, proposersStats, nf3Proposer) {
   console.log('OPTIMISTURLS', optimistUrls);
 
   try {

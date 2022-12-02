@@ -143,6 +143,15 @@ services:
       - type: volume
         source: build
         target: /app/build
+      - type: bind
+        source: ../test/adversary/bad-client/src
+        target: /app/src
+      - type: bind
+        source: ../common-files
+        target: /common-files
+      - type: bind
+        source: ../config/default.js
+        target: /app/config/default.js
     networks:
       - nightfall_network
     ports:
@@ -153,20 +162,23 @@ services:
       - optimist_mongodb_2
       - client_rabbitmq_2
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-local}
-      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
-      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
-      RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://client_rabbitmq_2}
-      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
-      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
       OPTIMIST_HOST: ${OPTIMIST_HOST:-proposer_optimist_2}
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://optimist_mongodb_2:27017}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://client_rabbitmq_2}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
+      USE_EXTERNAL_NODE: 'true'
+      AUTOSTART_RETRIES: 600
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_1:
@@ -187,13 +199,19 @@ services:
         source: build
         target: /app/build/
     environment:
-      WEBSOCKET_PORT: 8080
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8080}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
+      MAX_BLOCK_SIZE: ${MAX_BLOCK_SIZE:-50000}
       MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://optimist_mongodb_1:27017}
       HASH_TYPE: poseidon
       LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
+      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
@@ -207,20 +225,37 @@ services:
       - nightfall_network
     ports:
       - 9093:80
-      # websocket port for Optimist is on localhost:9090
+      # websocket port for Optimist is on localhost:9092
       - 9092:8080
     volumes:
       - type: volume
         source: build
         target: /app/build/
+      - type: bind
+        source: ../test/adversary/lazy-optimist/src
+        target: /app/src
+      - type: bind
+        source: ../common-files
+        target: /common-files
+      - type: bind
+        source: ../config/default.js
+        target: /app/config/default.js
     environment:
-      WEBSOCKET_PORT: 8080
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8080}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
+      MAX_BLOCK_SIZE: ${MAX_BLOCK_SIZE:-50000}
       MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://optimist_mongodb_2:27017}
       HASH_TYPE: poseidon
       LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      # we don't want adversary who create bad block to be challenger as well
+      # so for adversary default is false unlike optimist
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
+      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
     command: ['npm', 'run', 'dev']
 
   optimist_mongodb_1:
