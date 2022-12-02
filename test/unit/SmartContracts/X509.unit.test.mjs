@@ -24,9 +24,15 @@ describe('DerParser contract functions', function () {
   const nightfallRootPublicKey = { modulus, exponent };
   let X509Instance;
   let signature;
+  let digicertSignature;
+  let entrustSignature;
   let addressToSign;
   const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user_policies.der');
+  const digicertPrivateKey = fs.readFileSync('test/unit/utils/digicert_document_signing_mock.der');
+  const entrustPrivateKey = fs.readFileSync('test/unit/utils/entrust_document_signing_mock.der');
   const certChain = []; // contains the certificate to verify chain, lowest index is lowest cert in chain (i.e. [0] = end user)
+  let digicertMock;
+  let entrustMock;
   before(async () => {
     const accounts = await ethers.getSigners();
     addressToSign = accounts[0].address;
@@ -37,8 +43,15 @@ describe('DerParser contract functions', function () {
     await X509Instance.initialize();
     await X509Instance.setTrustedPublicKey(nightfallRootPublicKey, authorityKeyIdentifier);
     await X509Instance.enableWhitelisting(true);
+    // made up values
     await X509Instance.addExtendedKeyUsage(extendedKeyUsageOIDs[0]);
     await X509Instance.addCertificatePolicies(certificatePoliciesOIDs[0]);
+    // digicert mock
+    await X509Instance.addExtendedKeyUsage(extendedKeyUsageOIDs[1]);
+    await X509Instance.addCertificatePolicies(certificatePoliciesOIDs[1]);
+    // entrust mock
+    await X509Instance.addExtendedKeyUsage(extendedKeyUsageOIDs[2]);
+    await X509Instance.addCertificatePolicies(certificatePoliciesOIDs[2]);
     derBuffer = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     certChain[1] = {
@@ -51,6 +64,14 @@ describe('DerParser contract functions', function () {
     certChain[0] = { derBuffer, tlvLength };
     // sign the ethereum address
     signature = signEthereumAddress(derPrivateKey, addressToSign);
+    derBuffer = fs.readFileSync('test/unit/utils/digicert_document_signing_mock.cer');
+    tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
+    digicertMock = { derBuffer, tlvLength };
+    digicertSignature = signEthereumAddress(digicertPrivateKey, addressToSign);
+    derBuffer = fs.readFileSync('test/unit/utils/entrust_document_signing_mock.cer');
+    tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
+    entrustMock = { derBuffer, tlvLength };
+    entrustSignature = signEthereumAddress(entrustPrivateKey, addressToSign);
   });
   it('Should parse the intermediate CA cert DER encoding', async function () {
     const intermediateCaCert = certChain[1];
@@ -70,6 +91,30 @@ describe('DerParser contract functions', function () {
   });
   it('Should parse the end-user cert DER encoding', async function () {
     const endUserCert = certChain[0];
+    const result = await X509Instance.parseDER(endUserCert.derBuffer, 0, endUserCert.tlvLength);
+    const tlvs = result.map(tlv => makeTlv(tlv));
+    // make a few checks on the output
+    expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
+    expect(tlvs[0].depth).to.equal(0);
+    expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
+    expect(tlvs[1].depth).to.equal(1);
+    expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
+  });
+  it('Should parse the end-user mock Digicert cert DER encoding', async function () {
+    const endUserCert = digicertMock;
+    const result = await X509Instance.parseDER(endUserCert.derBuffer, 0, endUserCert.tlvLength);
+    const tlvs = result.map(tlv => makeTlv(tlv));
+    // make a few checks on the output
+    expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
+    expect(tlvs[0].depth).to.equal(0);
+    expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
+    expect(tlvs[1].depth).to.equal(1);
+    expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
+    expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
+  });
+  it('Should parse the end-user mock Entrust cert DER encoding', async function () {
+    const endUserCert = entrustMock;
     const result = await X509Instance.parseDER(endUserCert.derBuffer, 0, endUserCert.tlvLength);
     const tlvs = result.map(tlv => makeTlv(tlv));
     // make a few checks on the output
@@ -118,7 +163,7 @@ describe('DerParser contract functions', function () {
       false,
       0,
     );
-    // now presenting the end user cert should work because the smart contract now trusts the Intermediate CA public key
+    // now presenting the end user cert should also work
     await X509Instance.validateCertificate(
       certChain[0].derBuffer,
       certChain[0].tlvLength,
@@ -129,5 +174,21 @@ describe('DerParser contract functions', function () {
     // we should now be able to pass an x509 check for this address
     result = await X509Instance.x509Check(addressToSign);
     expect(result).to.equal(true);
+    // now presenting the Digicert mock cert should also work
+    await X509Instance.validateCertificate(
+      digicertMock.derBuffer,
+      digicertMock.tlvLength,
+      digicertSignature,
+      true,
+      1,
+    );
+    // now presenting the Digicert mock cert should also work
+    await X509Instance.validateCertificate(
+      entrustMock.derBuffer,
+      entrustMock.tlvLength,
+      entrustSignature,
+      true,
+      2,
+    );
   });
 });

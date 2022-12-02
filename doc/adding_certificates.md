@@ -115,10 +115,14 @@ Note that default values for `Key Usage` are set during contract initialisation 
 
 The values used for `Extended Key Usage` and `Certificate Policies` are unique to each CA and have to be obtained from the Certificate Practice Statement and list of Object Identifiers (OIDs) used by them. This allows tailoring of the level of checks that the owner of the certificate has to undergo, and hence the level of identity assurance that the certificate confers. Note that at least one OID MUST be chosed for each case, they cannot simply be omitted because such a certificate would be unlikely to confer meaningful assurance of identity. Note also that a separate group of OIDs must be specificed for each CA. See the information in [X509.md](./x509.md) about `oidGroups` for more information on how to add them.
 
-The encoding of OIDs is a little tricky and so a utility is available for that purpose.  For example, to encode 1.2.3.4 do:
+The encoding of OIDs is a little tricky but there is a good utility [here](https://misc.daniel-marschall.de/asn.1/oid-converter/online.php). Use this to binary encode the OID and then right pad the result to 32 bytes.  So, for example
 
 ```sh
-node apps/utils/oid-encoder 1.2.3.4
+2.16.840.1.114412.3.21.2
+```
+becomes
+```sh
+0x060a6086480186fd6c0315020000000000000000000000000000000000000000
 ```
 
-The output is in the correct form to add to the contract.  
+This is in the correct form to add to the contract.  

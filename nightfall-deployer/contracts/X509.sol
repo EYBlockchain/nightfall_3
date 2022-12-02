@@ -266,6 +266,9 @@ contract X509 is DERParser, Whitelist, X509Interface {
         }
         require(i < tlvs.length, 'X509: OID for Key Usage not found');
         bytes memory usageBytes = tlvs[i + 1].value;
+        // usageBytes could be an octet string containing a bit string, that needs further decoding to recover Key Usage flags
+        // or it could be a boolean (code 0x01), indicating the criticality of the Key Usage (we ignore that and move on because we process Key Usage anyway)
+        if (tlvs[i + 1].octets[0] == 0x01) usageBytes = tlvs[i + 2].value; // is it a boolean?
         DecodedTlv[] memory usageTlvs = new DecodedTlv[](1);
         usageTlvs = this.parseDER(usageBytes, 0, 1);
         require(usageTlvs[0].length == 2, 'X509: Key usage bytes must be of 2 bytes');
@@ -291,6 +294,7 @@ contract X509 is DERParser, Whitelist, X509Interface {
         }
         require(i < tlvs.length, 'X509: OID for Extended Key Usage not found');
         bytes memory extendedUsageBytes = tlvs[i + 1].value;
+        if (tlvs[i + 1].octets[0] == 0x01) extendedUsageBytes = tlvs[i + 2].value; // is it a boolean indicating criticality (we ignore that)?
         uint256 tlvLength = this.computeNumberOfTlvs(extendedUsageBytes, 0); // we cannot guess how long the list might be
         DecodedTlv[] memory extendedUsageTlvs = new DecodedTlv[](tlvLength);
         extendedUsageTlvs = this.parseDER(extendedUsageBytes, 0, tlvLength);
@@ -298,7 +302,7 @@ contract X509 is DERParser, Whitelist, X509Interface {
         for (uint256 j = 0; j < extendedKeyUsageOIDs[oidGroup].length; j++) {
             bool oidFound = false;
             for (uint256 k = 0; k < tlvLength; k++) {
-                if (bytes32(extendedUsageTlvs[k].value) == extendedKeyUsageOIDs[oidGroup][j]) {
+                if (bytes32(extendedUsageTlvs[k].octets) == extendedKeyUsageOIDs[oidGroup][j]) {
                     oidFound = true;
                     break;
                 }
@@ -319,10 +323,11 @@ contract X509 is DERParser, Whitelist, X509Interface {
         }
         require(i < tlvs.length, 'X509: OID for Certificate Policies not found');
         bytes memory extendedUsageBytes = tlvs[i + 1].value;
+        if (tlvs[i + 1].octets[0] == 0x01) extendedUsageBytes = tlvs[i + 2].value; // is it a boolean indicating criticality (we ignore that)?
         uint256 tlvLength = this.computeNumberOfTlvs(extendedUsageBytes, 0); // we cannot guess how long the list might be
         DecodedTlv[] memory extendedUsageTlvs = new DecodedTlv[](tlvLength);
         extendedUsageTlvs = this.parseDER(extendedUsageBytes, 0, tlvLength);
-        // certificate policies are, unfortunately not a simple oid but a sequence themselves. The oids we want are in each sequence.
+        // certificate policies are, unfortunately not a simple oid but an octet string containing a sequence of sequences. The oids we want are in each sequence.
         // Thus extendedUsageTlvs is an array of sequences. We have to loop through it, collecting the first OID inside each.  We can ignore
         // the rest of the sequence which will be yet another sequence of policy qualifiers.  We don't care about those for this purpose.
         // We just need to ensure the policy exists.
@@ -330,17 +335,16 @@ contract X509 is DERParser, Whitelist, X509Interface {
         uint256 count = 0;
         for (uint256 j = 0; j < extendedUsageTlvs.length; j++) {
             if (extendedUsageTlvs[j].depth == 2)
-                policyOIDs[count++] = bytes32(extendedUsageTlvs[j].value);
+                policyOIDs[count++] = bytes32(extendedUsageTlvs[j].octets);
         }
         // Now we have an array containing the policy OIDs we need to loop through
         // the certificate policie OIDs, and check we have every one of them in the cert
         for (uint256 j = 0; j < certificatePoliciesOIDs[oidGroup].length; j++) {
             bool oidFound = false;
-            console.log(j);
             for (uint256 k = 0; k < count; k++) {
+                console.logBytes32(policyOIDs[k]);
                 if (policyOIDs[k] == certificatePoliciesOIDs[oidGroup][j]) {
                     oidFound = true;
-                    console.log('true');
                     break;
                 }
             }
