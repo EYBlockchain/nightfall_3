@@ -96,7 +96,7 @@ describe('Gas test', () => {
       txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
-    it.skip('should be a reasonable gas cost', async function () {
+    it('should be a reasonable gas cost', async function () {
       logger.debug(`Creating a block with ${txPerBlock - 1} deposits`);
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
@@ -115,9 +115,6 @@ describe('Gas test', () => {
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const numberOfBlocksAfter = await countBlocksInOptimist();
-      logger.debug(
-        `Number of blocks before is ${numberOfBlocksBefore} and number of blocks after is ${numberOfBlocksAfter}`,
-      );
 
       expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
 
@@ -142,12 +139,12 @@ describe('Gas test', () => {
       txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
-    it.skip('should be a reasonable gas cost', async function () {
+    it('should be a reasonable gas cost', async function () {
       logger.debug(`Creating a block with ${txPerBlock - 1} transfers`);
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
 
-      // We create enough transactions to fill blocks full of deposits.
+      // We create enough transactions to fill blocks full of transfers.
       const receipts = await transferNTransactions(
         nf3Users[0],
         txPerBlock,
@@ -162,9 +159,6 @@ describe('Gas test', () => {
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const numberOfBlocksAfter = await countBlocksInOptimist();
-      logger.debug(
-        `Number of blocks before is ${numberOfBlocksBefore} and number of blocks after is ${numberOfBlocksAfter}`,
-      );
 
       expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
 
@@ -193,8 +187,8 @@ describe('Gas test', () => {
       logger.debug(`Creating a block with ${txPerBlock - 1} withdraws`);
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
-      console.log('before', numberOfBlocksBefore);
-      // We create enough transactions to fill blocks full of deposits.
+
+      // We create enough transactions to fill blocks full of withdraws.
       const receipts = await withdrawNTransactions(
         nf3Users[0],
         txPerBlock,
@@ -209,9 +203,6 @@ describe('Gas test', () => {
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const numberOfBlocksAfter = await countBlocksInOptimist();
-      logger.debug(
-        `Number of blocks before is ${numberOfBlocksBefore} and number of blocks after is ${numberOfBlocksAfter}`,
-      );
 
       expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
 
