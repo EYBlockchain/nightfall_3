@@ -1,8 +1,49 @@
 /* eslint-disable import/no-unresolved */
+/* eslint-disable no-await-in-loop */
 /**
 Module that runs up as a proposer
 */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import config from 'config';
+
+const { TIMER_CHANGE_PROPOSER_SECOND, MAX_ROTATE_TIMES } = config;
+
+/**
+ * check that it is possible to make the proposer change by checking the following conditions:
+ * the number of registered proposers is greater than 1
+ * the time window reserved for the previous proposer is passed
+ * if the two conditions are met, the changeCurrentProposer function is automatically called
+ */
+async function checkAndChangeProposer(nf3) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    logger.info('Checking Proposer...');
+    const proposerStartBlock = await nf3.proposerStartBlock();
+    const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
+    const numproposers = await nf3.getNumProposers();
+    const currentSprint = await nf3.currentSprint();
+    const currentBlock = await nf3.web3.eth.getBlockNumber();
+
+    if (currentBlock - proposerStartBlock >= rotateProposerBlocks && numproposers > 1) {
+      const spanProposersList = await nf3.spanProposersList(currentSprint);
+      logger.info(`Proposer address: ${spanProposersList} and sprint: ${currentSprint}`);
+      try {
+        if (spanProposersList[currentSprint] === nf3.ethereumAddress) {
+          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
+          await nf3.changeCurrentProposer();
+        } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
+          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
+          await nf3.changeCurrentProposer();
+        }
+      } catch (err) {
+        logger.info(err);
+      }
+    } else {
+      logger.info(`the proposer is not changed. sprint: ${currentSprint}`);
+    }
+    await new Promise(resolve => setTimeout(resolve, TIMER_CHANGE_PROPOSER_SECOND * 1000));
+  }
+}
 
 /**
 Does the preliminary setup and starts listening on the websocket
@@ -22,11 +63,16 @@ export default async function startProposer(nf3, proposerBaseUrl) {
 
   console.log(`blockStake: ${blockStake}, minimumStake: ${minimumStake}`);
 
-  await nf3.registerProposer(proposerBaseUrl, minimumStake);
+  try {
+    await nf3.registerProposer(proposerBaseUrl, minimumStake);
+  } catch (err) {
+    logger.info(err);
+  }
   logger.debug('Proposer healthcheck up');
 
   // If the emitter is not defined it causes the process to exit
   const blockProposeEmitter = await nf3.startProposer();
+  checkAndChangeProposer(nf3);
   blockProposeEmitter
     .on('receipt', (receipt, block) => {
       logger.debug(

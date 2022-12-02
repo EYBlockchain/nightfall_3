@@ -365,8 +365,6 @@ export async function proposerTest(optimistUrls, proposersStats, nf3Proposer) {
         if (nf3Proposer.web3WsUrl.includes('localhost')) {
           await makeBlockAndWaitForEmptyMempool(optimistUrls);
         }
-        console.log('     Change current proposer...');
-        await nf3Proposer.changeCurrentProposer();
       } catch (err) {
         // containers stopped
         if (err.message.includes('connection not open')) {
