@@ -17,7 +17,7 @@ let _badBlockIndex = 0;
 async function generateBlocks() {
   _blockGenerated++;
   let badBlockType = '';
-  if (_blockGenerated % Number(OPTIMIST_ADVERSARY_BAD_BLOCK_GENERATION_PERIOD === 0)) {
+  if (_blockGenerated % Number(OPTIMIST_ADVERSARY_BAD_BLOCK_GENERATION_PERIOD) === 0) {
     const badBlockSequence = OPTIMIST_ADVERSARY_BAD_BLOCK_SEQUENCE.split(',');
     badBlockType = badBlockSequence[_badBlockIndex++];
     _badBlockIndex = _badBlockIndex % badBlockSequence.length;
