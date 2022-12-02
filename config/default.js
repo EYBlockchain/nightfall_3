@@ -526,4 +526,6 @@ module.exports = {
     SUBMIT_TRANSACTION:
       '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
   },
+  TIMER_CHANGE_PROPOSER_SECOND: process.env.TIMER_CHANGE_PROPOSER_SECOND || 30,
+  MAX_ROTATE_TIMES: process.env.MAX_ROTATE_TIMES || 2,
 };
