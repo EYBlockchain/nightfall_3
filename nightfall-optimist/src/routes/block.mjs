@@ -61,8 +61,6 @@ router.post('/check', auth, async (req, res, next) => {
  *            type: string
  *            format: uuid
  *          required: true
- *      requestBody:
- *        $ref: '#/components/requestBodies/BlockTimeSet'
  *      responses:
  *        200:
  *          $ref: '#/components/responses/SuccessBlockCreated'
@@ -88,7 +86,7 @@ router.get('/make-now', auth, async (req, res, next) => {
  *        - ApiKeyAuth: []
  *      tags:
  *      - Block
- *      summary: Make block.
+ *      summary: Automates the process of proposing blocks.
  *      description: Set the time after which a block will be proposed.
  *      parameters:
  *        - in: header
@@ -97,6 +95,8 @@ router.get('/make-now', auth, async (req, res, next) => {
  *            type: string
  *            format: uuid
  *          required: true
+ *      requestBody:
+ *        $ref: '#/components/requestBodies/BlockTimeSet'
  *      responses:
  *        200:
  *          $ref: '#/components/responses/SuccessBlockTimeSet'

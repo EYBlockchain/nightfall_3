@@ -64,8 +64,7 @@ export class Web3Client {
   }
 
   async getTransactionReceipt(txHash) {
-    const receipt = await this.web3.eth.getTransactionReceipt(txHash);
-    return receipt;
+    return await this.web3.eth.getTransactionReceipt(txHash);
   }
 
   subscribeTo(event, queue, options) {

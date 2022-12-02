@@ -66,7 +66,7 @@ async function getLatestBlockGasUsed() {
 async function processExistingMempoolTrasanctions() {
   const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
   if (mempoolTransactions > 0) {
-    logger.debug(`Making new block to clear transaction mempool`);
+    logger.debug(`Making new block to clear transaction mempool...`);
     await nf3Proposer1.makeBlockNow();
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   }
@@ -96,7 +96,7 @@ describe('Gas test', () => {
       txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
-    it('should be a reasonable gas cost', async function () {
+    it.skip('should be a reasonable gas cost', async function () {
       logger.debug(`Creating a block with ${txPerBlock - 1} deposits`);
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
@@ -142,10 +142,11 @@ describe('Gas test', () => {
       txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
-    it('should be a reasonable gas cost', async function () {
+    it.skip('should be a reasonable gas cost', async function () {
       logger.debug(`Creating a block with ${txPerBlock - 1} transfers`);
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
+
       // We create enough transactions to fill blocks full of deposits.
       const receipts = await transferNTransactions(
         nf3Users[0],
@@ -192,7 +193,7 @@ describe('Gas test', () => {
       logger.debug(`Creating a block with ${txPerBlock - 1} withdraws`);
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
-
+      console.log('before', numberOfBlocksBefore);
       // We create enough transactions to fill blocks full of deposits.
       const receipts = await withdrawNTransactions(
         nf3Users[0],
