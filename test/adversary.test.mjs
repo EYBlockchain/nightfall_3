@@ -18,7 +18,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 // eslint-disable-next-line import/no-unresolved
 import Nf3 from './adversary/adversary-cli/lib/nf3.mjs';
 
-import { registerProposerOnNoProposer, Web3Client } from './utils.mjs';
+import { registerProposerOnNoProposer, waitTransactionToBeMined, Web3Client } from './utils.mjs';
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -28,6 +28,7 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const { fee } = config.TEST_OPTIONS;
 
 const web3Client = new Web3Client();
+const web3 = web3Client.getWeb3();
 
 let stateAddress;
 const eventLogs = [];
@@ -137,10 +138,19 @@ describe('Testing with an adversary', () => {
     ercAddress = await nf3User.getContractAddress('ERC20Mock');
 
     // Proposer registration
-    await nf3AdversarialProposer.registerProposer(
-      'http://optimist',
-      await nf3AdversarialProposer.getMinimumStake(),
-    );
+    axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
+
+    // We must set the URL from the point of view of the client container
+    const stake = await nf3AdversarialProposer.getMinimumStake();
+    const { data } = await axios.post(`${adversarialOptimistApiUrl}/proposer/register`, {
+      url: adversarialOptimistApiUrl,
+      stake,
+      fee,
+    });
+
+    // Wait for transaction to be mined
+    await waitTransactionToBeMined(data.transactionHash, web3);
+
     // Proposer listening for incoming events
     blockProposeEmitter = await nf3AdversarialProposer.startProposer();
     blockProposeEmitter
@@ -501,10 +511,10 @@ describe('Testing with an adversary', () => {
   });
 
   after(async () => {
-    // stopping registerProposerOnNoProposer
     clearInterval(intervalId);
-    nf3User.close();
-    nf3AdversarialProposer.close();
-    nf3Challenger.close();
+    await nf3User.close();
+    await nf3AdversarialProposer.deregisterProposer();
+    await nf3AdversarialProposer.close();
+    await nf3Challenger.close();
   });
 });
