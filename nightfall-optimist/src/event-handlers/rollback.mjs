@@ -17,7 +17,10 @@ import {
   getAllRegisteredProposersCount,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
-import checkTransaction from '../services/transaction-checker.mjs';
+import checkTransaction, {
+  checkCommitments,
+  checkNullifiers,
+} from '../services/transaction-checker.mjs';
 import { signalRollbackCompleted as signalRollbackCompletedToProposer } from '../services/block-assembler.mjs';
 import {
   signalRollbackCompleted as signalRollbackCompletedToChallenger,
@@ -92,6 +95,21 @@ async function rollbackEventHandler(data) {
 
         commitmentsList.push(...transaction.commitments.filter(c => c !== ZERO));
         nullifiersList.push(...transaction.nullifiers.filter(c => c !== ZERO));
+
+        // eslint-disable-next-line no-await-in-loop
+        const checkStatus = await Promise.all([
+          // Now since checkTransaction succeed, let check transaction
+          // against mempool, that replacement transaction exist and
+          // has higher proposer payment if so consider this transaction as invalid transaction
+          checkCommitments(blockTransactions[j]),
+          checkNullifiers(blockTransactions[j]),
+        ]);
+        if (checkStatus.includes(false)) {
+          logger.info({
+            msg: 'Rollback - Replacment transaction does not have higher proposer fee',
+          });
+          throw Error('Rollback - Replacment transaction does not have higher proposer fee');
+        }
       } catch (error) {
         logger.error({
           msg: `Rollback - Invalid Transaction: ${transactionsSortedByFee[j].transactionHash}`,
