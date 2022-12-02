@@ -6,8 +6,7 @@ Module that runs up as a proposer
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import config from 'config';
 
-const TIMER_CHANGE_PROPOSER_SECOND = config.TIMER_CHANGE_PROPOSER_SECOND;
-const MAX_ROTATE_TIMES = config.MAX_ROTATE_TIMES;
+const { TIMER_CHANGE_PROPOSER_SECOND, MAX_ROTATE_TIMES } = config;
 
 /**
  * check that it is possible to make the proposer change by checking the following conditions:
