@@ -1,14 +1,17 @@
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
-import { queueManager } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
+import {
+  queueManager,
+  pauseQueue,
+  unpauseQueue,
+} from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
 import { initialClientSync } from './services/state-sync.mjs';
 import { startEventQueue, eventHandlers } from './event-handlers/index.mjs';
 
-let _isSyncing = true;
 const main = async () => {
   // we want to have endpoints responding as soon as possible, but prevent
   // them from taking action before syncing is complete. So, we have a variable
@@ -16,7 +19,7 @@ const main = async () => {
   // a middleware function is checking this variable. If client is still syncing,
   // it will just return a 400
   app.listen(80);
-  app.set('isSyncing', _isSyncing);
+  app.set('isSyncing', true);
   try {
     if (process.env.ENABLE_QUEUE) {
       await rabbitmq.connect();
@@ -25,9 +28,10 @@ const main = async () => {
 
     await mongo.connection(config.MONGO_URL); // get a db connection
     await startEventQueue(queueManager, eventHandlers);
+    await pauseQueue(0);
     initialClientSync().then(() => {
-      _isSyncing = false;
-      app.set('isSyncing', _isSyncing);
+      app.set('isSyncing', false);
+      unpauseQueue(0);
     });
   } catch (err) {
     logger.error(err);
