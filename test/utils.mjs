@@ -63,6 +63,10 @@ export class Web3Client {
     return address;
   }
 
+  async getTransactionReceipt(txHash) {
+    return this.web3.eth.getTransactionReceipt(txHash);
+  }
+
   subscribeTo(event, queue, options) {
     if (event === 'newBlockHeaders') {
       this.web3.eth.subscribe('newBlockHeaders').on('data', () => {

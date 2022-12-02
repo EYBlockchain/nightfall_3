@@ -78,7 +78,34 @@ router.get('/make-now', auth, async (req, res, next) => {
   }
 });
 
-router.post('/block-time', async (req, res, next) => {
+/**
+ * @openapi
+ *  /block/block-time:
+ *    post:
+ *      security:
+ *        - ApiKeyAuth: []
+ *      tags:
+ *      - Block
+ *      summary: Automates the process of proposing blocks.
+ *      description: Set the time after which a block will be proposed.
+ *      parameters:
+ *        - in: header
+ *          name: api_key
+ *          schema:
+ *            type: string
+ *            format: uuid
+ *          required: true
+ *      requestBody:
+ *        $ref: '#/components/requestBodies/BlockTimeSet'
+ *      responses:
+ *        200:
+ *          $ref: '#/components/responses/SuccessBlockTimeSet'
+ *        401:
+ *          $ref: '#/components/responses/Unauthorized'
+ *        500:
+ *          $ref: '#/components/responses/InternalServerError'
+ */
+router.post('/block-time', auth, async (req, res, next) => {
   const { timeMs } = req.body;
   try {
     setBlockPeriodMs(timeMs);
