@@ -4,23 +4,23 @@ Module that runs up as a user
 
 /* eslint-disable no-await-in-loop */
 
-import config from 'config';
+// import config from 'config';
 import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
-import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
+// import { NightfallMultiSig } from '../multisig/nightfall-multisig.mjs';
 
-const { signingKeys, addresses } = config.TEST_OPTIONS;
+// const { signingKeys, addresses } = config.TEST_OPTIONS;
 
 const { TX_WAIT = 1000 } = process.env;
 
-const { WEB3_OPTIONS } = config;
+/* const { WEB3_OPTIONS } = config;
 
 const amountBlockStake = 25;
 const amountMinimumStake = 100;
 let nfMultiSig;
-let multisigContract;
-let shieldContract;
+let multisigContract; 
+let shieldContract; */
 let stateContract;
 const tokenType = 'ERC20';
 const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
@@ -96,7 +96,7 @@ export async function simpleUserTest(
   // Create a block of deposits to have enough funds
   for (let i = 0; i < TEST_LENGTH * 2; i++) {
     try {
-      const res = await nf3.deposit(ercAddress, tokenType, value, tokenId, fee);
+      const res = await nf3.deposit('ValidTransaction', ercAddress, tokenType, value, tokenId, fee);
 
       listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
@@ -127,6 +127,7 @@ export async function simpleUserTest(
 
     try {
       const res = await nf3.transfer(
+        'ValidTransaction',
         offchainTx,
         ercAddress,
         tokenType,
@@ -157,6 +158,7 @@ export async function simpleUserTest(
         );
         await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
         const res = await nf3.transfer(
+          'ValidTransaction',
           offchainTx,
           ercAddress,
           tokenType,
@@ -182,7 +184,14 @@ export async function simpleUserTest(
     offchainTx = !offchainTx;
 
     try {
-      const res = await nf3.deposit(ercAddress, tokenType, valueToTransfer, tokenId, fee);
+      const res = await nf3.deposit(
+        'ValidTransaction',
+        ercAddress,
+        tokenType,
+        valueToTransfer,
+        tokenId,
+        fee,
+      );
       listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
@@ -199,6 +208,7 @@ export async function simpleUserTest(
 
     try {
       const res = await nf3.withdraw(
+        'ValidTransaction',
         offchainTx,
         ercAddress,
         tokenType,
@@ -229,7 +239,7 @@ export async function simpleUserTest(
 /**
 Set the block stake parameter for the proposers
 */
-const setBlockStake = async amount => {
+/* const setBlockStake = async amount => {
   let blockStake = await shieldContract.methods.getBlockStake().call();
   console.log('BLOCK STAKE GET: ', blockStake);
   if (Number(blockStake) !== amount) {
@@ -276,6 +286,7 @@ const setMinimumStake = async amount => {
   }
   console.log('MINIMUM STAKE SET: ', minimumStake);
 };
+*/
 
 /**
 Set parameters config for the test
@@ -283,14 +294,15 @@ Set parameters config for the test
 export async function setParametersConfig(nf3User) {
   console.log('Getting State contract instance...');
   stateContract = await nf3User.getContractInstance('State');
-  console.log('Getting Shield contract instance...');
+  /* console.log('Getting Shield contract instance...');
   shieldContract = await nf3User.getContractInstance('Shield');
+
   console.log('Getting Proposers contract instance...');
   const proposersContract = await nf3User.getContractInstance('Proposers');
   console.log('Getting Challenges contract instance...');
   const challengesContract = await nf3User.getContractInstance('Challenges');
 
-  if (nf3User.web3WsUrl.includes('localhost')) {
+   if (nf3User.web3WsUrl.includes('localhost')) {
     console.log('Getting Multisig contract instance...');
     multisigContract = await nf3User.getContractInstance('SimpleMultiSig');
 
@@ -310,7 +322,7 @@ export async function setParametersConfig(nf3User) {
 
     await setBlockStake(amountBlockStake);
     await setMinimumStake(amountMinimumStake);
-  }
+  } */
 }
 
 /**
