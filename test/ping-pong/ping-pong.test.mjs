@@ -18,6 +18,7 @@ const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls, 
   config.TEST_OPTIONS;
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const { TEST_ERC20_ADDRESS } = process.env;
+const CLIENT2_TX_TYPES_SEQUENCE = process.env.CLIENT2_TX_TYPES_SEQUENCE || '';
 
 const nf3Users = [];
 let blockStake;
@@ -35,26 +36,29 @@ let nf3User;
   @async
   */
 const getOptimistUrls = async () => {
-  // const optimistUrls = [];
-  // TODO: Replace when the nightfall node is available with the prop.url
-  /* const resultProposers = await nf3User.getProposers();
+  const optimistUrls = [];
+  const resultProposers = await nf3User.getProposers();
   for (const prop of resultProposers.proposers) {
     optimistUrls.push({
       proposer: prop.thisAddress,
       optimistUrl: prop.url,
     });
-  } */
+  }
 
-  const optimistUrls = [
-    {
-      proposer: nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer2).address,
-      optimistUrl: optimistApiUrls.optimist2,
-    },
-    {
-      proposer: nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer1).address,
-      optimistUrl: optimistApiUrls.optimist1,
-    },
-  ];
+  // TODO: No need to do this when the nightfall node is available with the prop.url that is the same as optimist url
+  if (environment.web3WsUrl.includes('localhost')) {
+    const optimistUrlProposer1 = optimistUrls.find(
+      o =>
+        o.proposer === nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer1).address,
+    );
+    optimistUrlProposer1.optimistUrl = optimistApiUrls.optimist1;
+
+    const optimistUrlProposer2 = optimistUrls.find(
+      o =>
+        o.proposer === nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer2).address,
+    );
+    optimistUrlProposer2.optimistUrl = optimistApiUrls.optimist2;
+  }
   return optimistUrls;
 };
 
@@ -123,6 +127,18 @@ const waitForCurrentProposer = async () => {
   console.log('CURRENT PROPOSER: ', currentProposer);
 };
 
+const getTxTypesToSend = txTypesSequence => {
+  // we will produce this types of tx after the first deposits with transfer, deposit, withdraw in the loop
+  const TxTypes = Array(TEST_LENGTH * 3).fill('ValidTransaction');
+  const replaceTxTypes = txTypesSequence;
+  const length = replaceTxTypes.length < TxTypes.length ? replaceTxTypes.length : TxTypes.length;
+  for (let i = 0; i < length; i++) {
+    TxTypes[i] = replaceTxTypes[i];
+  }
+
+  return TxTypes;
+};
+
 /**
   Initialize users and list of adreces of the users.
   @method
@@ -136,13 +152,17 @@ const initializeUsersParameters = async () => {
   environmentUser1.clientApiUrl = clientApiUrls.client1 || environmentUser1.clientApiUrl;
   environmentUser1.optimistApiUrl = optimistApiUrls.optimist1 || environmentUser1.optimistApiUrl;
   environmentUser1.optimistWsUrl = optimistWsUrls.optimist1 || environmentUser1.optimistWsUrl;
-  nf3Users.push(new Nf3(signingKeys.user1, environmentUser1));
+  const nf3User1 = new Nf3(signingKeys.user1, environmentUser1);
+  nf3User1.txTypes = getTxTypesToSend([]);
+  nf3Users.push(nf3User1);
 
   const environmentUser2 = { ...environment };
   environmentUser2.clientApiUrl = clientApiUrls.client2 || environmentUser2.clientApiUrl;
   environmentUser2.optimistApiUrl = optimistApiUrls.optimist2 || environmentUser2.optimistApiUrl;
   environmentUser2.optimistWsUrl = optimistWsUrls.optimist2 || environmentUser2.optimistWsUrl;
-  nf3Users.push(new Nf3(signingKeys.user2, environmentUser2));
+  const nf3User2 = new Nf3(signingKeys.user2, environmentUser2);
+  nf3User2.txTypes = getTxTypesToSend(CLIENT2_TX_TYPES_SEQUENCE.split(','));
+  nf3Users.push(nf3User2);
 
   for (let i = 0; i < signingKeysUsers.length; i++) {
     // eslint-disable-next-line no-await-in-loop
@@ -319,15 +339,10 @@ describe('Ping-pong tests', () => {
   });
 
   it('Runs ping-pong tests', async () => {
-    let proposersStats;
-    let optimistUrls;
-    if (environment.web3WsUrl.includes('localhost')) {
-      optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers from docker files
-      console.log(optimistUrls);
-      proposersStats = await getInitialProposerStats(optimistUrls);
-      blockStake = await nf3User.getBlockStake();
-      console.log('BLOCKSTAKE: ', blockStake);
-    }
+    const optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers
+    const proposersStats = await getInitialProposerStats(optimistUrls);
+    blockStake = await nf3User.getBlockStake();
+    console.log('BLOCKSTAKE: ', blockStake);
     // wait for the current proposer to be ready
     await waitForCurrentProposer();
 
@@ -362,10 +377,8 @@ describe('Ping-pong tests', () => {
     // wait for balances update
     await waitForBalanceUpdate(usersStats);
 
-    if (environment.web3WsUrl.includes('localhost')) {
-      // check final stats are ok
-      await finalStatsCheck(optimistUrls, proposersStats);
-    }
+    // check final stats are ok
+    await finalStatsCheck(optimistUrls, proposersStats);
   });
 
   after(async () => {
