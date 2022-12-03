@@ -101,7 +101,8 @@ describe('Test On-chain compression function', function () {
 
     const g1A = await challenges.callStatic.decompressG1(compressedG1A);
     const g1C = await challenges.callStatic.decompressG1(compressedG1C);
-    const g2B = await challenges.decompressG2(compressedG2B);
+    const [success, g2B] = await challenges.decompressG2(compressedG2B);
+    expect(success).equal(true);
     expect(testProof.pi_a).to.deep.equal(g1A.map(a => a.toHexString()));
     expect(testProof.pi_b).to.deep.equal(g2B.map(outer => outer.map(a => a.toHexString())));
     expect(testProof.pi_c).to.deep.equal(g1C.map(a => a.toHexString()));
@@ -127,8 +128,9 @@ describe('Test On-chain compression function', function () {
       fc.asyncProperty(fc.bigUint({ max: Fp - 1n }), async randFr => {
         const G2Point = await randomG2Point(randFr);
         const compressed = compressG2(G2Point);
-        const decompressed = await challenges.decompressG2(compressed);
+        const [success, decompressed] = await challenges.decompressG2(compressed);
         const localDecompress = decompressG2(compressed);
+        expect(success).equal(true);
         expect(decompressed.map(d => d.map(u => u.toBigInt()))).to.deep.eql(G2Point);
         expect(decompressed.map(d => d.map(u => u.toBigInt()))).to.deep.eql(
           localDecompress.map(a => a.map(b => BigInt(b))),

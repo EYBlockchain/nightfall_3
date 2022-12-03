@@ -100,7 +100,8 @@ export function decompressG2(xin) {
   const parity = xbin.map(xb => xb[0]); // extract parity
   const x = new Fq2(...xbin.map(xb => BigInt(`0b${xb.slice(1)}`))); // x element
   const x3 = x.mul(x).mul(x);
-  if (x3.x === 0n && x3.y === 0n) return [x.toHex(), new Fq2(1, 0).toHex()];
+  // If xin is the compressed form of the Point 0.G
+  if (x3.x === 0n && x3.y === 0n && xin[1] === 0n) return [x.toHex(), new Fq2(1, 0).toHex()];
   const d = new Fq2(3n, 0n).div(new Fq2(9n, 1n)); // TODO hardcode this?
   const y2 = x3.add(d);
   const y = y2.sqrt();

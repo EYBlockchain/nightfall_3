@@ -221,7 +221,7 @@ contract Challenges is Stateful, Config {
         return [xCoord, y];
     }
 
-    function decompressG2(uint256[2] memory xins) public pure returns (uint256[2][2] memory) {
+    function decompressG2(uint256[2] memory xins) public pure returns (bool, uint256[2][2] memory) {
         uint8[2] memory parity = [uint8((xins[0] >> 255) & 1), uint8((xins[1] >> 255) & 1)];
         uint256 xMask = 0x4000000000000000000000000000000000000000000000000000000000000000; // 2**254 mask
         uint256 xReal = xins[0] % xMask;
@@ -232,15 +232,17 @@ contract Challenges is Stateful, Config {
             19485874751759354771024239261021720505790618469301721065564631296452457478373,
             266929791119991161246907387137283842545076965332900288569378510910307636690
         ];
+        // If xin is the compressed form of the Point 0.G
+        if (x3[0] == 0 && x3[1] == 0 && xins[1] == 0) return (true, [x3, [uint256(1), uint256(0)]]);
         uint256[2] memory y2 = [
             addmod(x3[0], d[0], Utils.BN128_PRIME_FIELD),
             addmod(x3[1], d[1], Utils.BN128_PRIME_FIELD)
         ];
 
-        uint256[2] memory y = Utils.fq2Sqrt(y2);
+        (bool sqrtFound, uint256[2] memory y) = Utils.fq2Sqrt(y2);
         uint256 a = parity[0] == uint256(y[0] % 2) ? y[0] : Utils.BN128_PRIME_FIELD - y[0];
         uint256 b = parity[1] == uint256(y[1] % 2) ? y[1] : Utils.BN128_PRIME_FIELD - y[1];
-        return [x, [a, b]];
+        return (sqrtFound, [x, [a, b]]);
     }
 
     function challengeProofVerification(
@@ -285,9 +287,11 @@ contract Challenges is Stateful, Config {
             }
         }
         uint256[2] memory decompressAlpha = decompressG1(transaction.transaction.proof[0]);
-        uint256[2][2] memory decompressBeta = decompressG2(
+        (bool success, uint256[2][2] memory decompressBeta) = decompressG2(
             [transaction.transaction.proof[1], transaction.transaction.proof[2]]
         );
+        // We could not decompress the G2 Point
+        if (!success) challengeAccepted(transaction.blockL2);
         uint256[2] memory decompressGamma = decompressG1(transaction.transaction.proof[3]);
 
         // now we need to check that the proof is correct

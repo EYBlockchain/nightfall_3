@@ -313,19 +313,21 @@ library Utils {
         return [addmod(x[0], b[0], BN128_PRIME_FIELD), addmod(x[1], b[1], BN128_PRIME_FIELD)];
     }
 
-    function fq2Sqrt(uint256[2] memory x) public pure returns (uint256[2] memory) {
+    function fq2Sqrt(uint256[2] memory x) public pure returns (bool, uint256[2] memory) {
         uint256[2] memory a1 = fq2Pow(
             x,
             5472060717959818805561601436314318772174077789324455915672259473661306552145
         );
         uint256[2] memory x0 = fq2Mul(a1, x);
         uint256[2] memory alpha = fq2Mul(x0, a1);
+        uint256[2] memory a0 = fq2Mul(fq2Pow(alpha, BN128_PRIME_FIELD), alpha);
+        if (a0[0] == BN128_PRIME_FIELD - 1 && a0[1] == 0) return (false, [uint256(0), uint256(0)]);
         if (alpha[0] == (BN128_PRIME_FIELD - uint256(1)) && alpha[1] == uint256(0))
-            return fq2Mul([uint256(0), uint256(1)], x0);
+            return (true, fq2Mul([uint256(0), uint256(1)], x0));
         uint256[2] memory b = fq2Pow(
             fq2Add([uint256(1), uint256(0)], alpha),
             uint256(10944121435919637611123202872628637544348155578648911831344518947322613104291)
         );
-        return fq2Mul(b, x0);
+        return (true, fq2Mul(b, x0));
     }
 }
