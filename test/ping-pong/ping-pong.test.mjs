@@ -47,10 +47,18 @@ const getOptimistUrls = async () => {
 
   // TODO: No need to do this when the nightfall node is available with the prop.url that is the same as optimist url
   if (environment.web3WsUrl.includes('localhost')) {
-    const optimistUrlProposer1 = optimistUrls.find(
+    let optimistUrlProposer1 = optimistUrls.find(
       o =>
         o.proposer === nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer1).address,
     );
+    // this is because we use proposer3 key by default in docker-compose to avoid colision with default proposer. If not defined in the file it will be proposer3 key
+    if (!optimistUrlProposer1) {
+      optimistUrlProposer1 = optimistUrls.find(
+        o =>
+          o.proposer ===
+          nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer3).address,
+      );
+    }
     optimistUrlProposer1.optimistUrl = optimistApiUrls.optimist1;
 
     const optimistUrlProposer2 = optimistUrls.find(
