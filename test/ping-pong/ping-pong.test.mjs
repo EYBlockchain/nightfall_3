@@ -199,20 +199,20 @@ const initializeUsersParameters = async () => {
   @async
   */
 const waitForTransactionsCompleted = async () => {
-  let nTotalTransfers = 0;
+  let nTotalTransactions = 0;
 
   do {
-    nTotalTransfers = 0;
+    nTotalTransactions = 0;
     for (let i = 0; i < listTransfersTotal.length; i++) {
-      nTotalTransfers += listTransfersTotal[i].length;
+      nTotalTransactions += listTransfersTotal[i].length;
     }
     console.log(
       `Waiting for total transactions to be ${TEST_LENGTH * 5 * nf3Users.length}...`,
-      nTotalTransfers,
+      nTotalTransactions,
     );
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolving => setTimeout(resolving, 20000));
-  } while (nTotalTransfers < TEST_LENGTH * 5 * nf3Users.length);
+  } while (nTotalTransactions < TEST_LENGTH * 5 * nf3Users.length);
   console.log('TRANSACTIONS: ', listTransfersTotal);
 };
 
@@ -229,15 +229,24 @@ const waitForBalanceUpdate = async usersStats => {
     for (let j = 0; j < listTransfersTotal.length; j++) {
       // eslint-disable-next-line no-loop-func
       listTransfersTotal[j].forEach(t => {
-        if (t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey && t.type !== 'withdraw') {
+        if (
+          t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey &&
+          t.type !== 'withdraw' &&
+          t.typeSequence === 'ValidTransaction'
+        ) {
           totalTransferred += t.value;
         }
-        if (t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey && t.type === 'withdraw') {
+        if (
+          t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey &&
+          t.type === 'withdraw' &&
+          t.typeSequence === 'ValidTransaction'
+        ) {
           totalTransferred -= t.value + t.fee;
         }
         if (
           t.to !== nf3Users[i].zkpKeys.compressedZkpPublicKey &&
-          t.from === nf3Users[i].zkpKeys.compressedZkpPublicKey
+          t.from === nf3Users[i].zkpKeys.compressedZkpPublicKey &&
+          t.typeSequence === 'ValidTransaction'
         ) {
           totalTransferred -= t.value + t.fee;
         }

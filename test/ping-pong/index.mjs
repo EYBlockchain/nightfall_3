@@ -281,6 +281,9 @@ export async function proposerRotation(optimistUrls, proposersStats, nf3Proposer
             break;
           case topicEventMapping.NewCurrentProposer:
             break;
+          case topicEventMapping.Rollback:
+            console.log('ROLLBACK!!!!!!!!!!!!!!!!!!!!!!!');
+            break;
           default:
             break;
         }
