@@ -51,7 +51,7 @@ const getOptimistUrls = async () => {
       o =>
         o.proposer === nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer1).address,
     );
-    // this is because we use proposer3 key by default in docker-compose to avoid colision with default proposer. If not defined in the file it will be proposer3 key
+    // this is because we use proposer3 key by default in docker-compose to avoid collision with default proposer. If not defined in the file it will be proposer3 key
     if (!optimistUrlProposer1) {
       optimistUrlProposer1 = optimistUrls.find(
         o =>
