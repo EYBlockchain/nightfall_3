@@ -18,7 +18,7 @@ const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls, 
   config.TEST_OPTIONS;
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const { TEST_ERC20_ADDRESS } = process.env;
-const CLIENT2_TX_TYPES_SEQUENCE = process.env.CLIENT2_TX_TYPES_SEQUENCE || '';
+const CLIENT2_TX_TYPES_SEQUENCE = process.env.CLIENT2_TX_TYPES_SEQUENCE || 'ValidTransaction';
 
 const nf3Users = [];
 let blockStake;
