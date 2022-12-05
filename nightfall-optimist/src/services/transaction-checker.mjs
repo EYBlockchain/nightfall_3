@@ -20,6 +20,8 @@ import {
   getL2TransactionByNullifier,
   getTransactionHashSiblingInfo,
   getLatestBlockInfo,
+  getL2MempoolTransactionByCommitment,
+  getL2MempoolTransactionByNullifier,
 } from './database.mjs';
 
 const { generalise } = gen;
@@ -184,6 +186,36 @@ async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
     checkHistoricRootBlockNumber(transaction),
     verifyProof(transaction),
   ]);
+}
+
+export async function checkCommitments(transaction) {
+  for (const commitment of transaction.commitments) {
+    if (commitment !== ZERO) {
+      const orignalTransaction = await getL2MempoolTransactionByCommitment(commitment);
+      // compare provided proposer fee in both transactions(duplicate and original)
+      if (
+        orignalTransaction &&
+        generalise(orignalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+      )
+        return false;
+    }
+  }
+  return true;
+}
+
+export async function checkNullifiers(transaction) {
+  for (const nullifier of transaction.nullifiers) {
+    if (nullifier !== ZERO) {
+      const orignalTransaction = await getL2MempoolTransactionByNullifier(nullifier);
+      // compare provided proposer fee in both transactions(duplicate and original)
+      if (
+        orignalTransaction &&
+        generalise(orignalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+      )
+        return false;
+    }
+  }
+  return true;
 }
 
 export default checkTransaction;

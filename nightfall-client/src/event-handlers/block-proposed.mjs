@@ -27,7 +27,7 @@ import {
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
 const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
-const { ZERO } = constants;
+const { ZERO, WITHDRAW } = constants;
 
 const { generalise } = gen;
 
@@ -162,7 +162,7 @@ async function blockProposedEventHandler(data, syncing) {
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
 
-  const circuitHash = await getCircuitHash('withdraw');
+  const circuitHash = await getCircuitHash(WITHDRAW);
 
   const withdrawCircuitHash = generalise(circuitHash).hex(32);
 
