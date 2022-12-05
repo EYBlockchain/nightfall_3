@@ -225,7 +225,7 @@ describe('Testing with an adversary', () => {
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
       });
 
-      it.skip('Test failing incorrect proof deposit', async () => {
+      it('Test failing incorrect proof deposit', async () => {
         console.log('Testing incorrect proof deposit...');
         await nf3User.deposit('IncorrectProof', ercAddress, tokenType, value2, tokenId, 0);
         await makeBlockNow();
@@ -299,7 +299,7 @@ describe('Testing with an adversary', () => {
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
       });
 
-      it.skip('Test incorrect proof transfer', async () => {
+      it('Test incorrect proof transfer', async () => {
         await nf3User.transfer(
           'IncorrectProof',
           false,
@@ -399,7 +399,7 @@ describe('Testing with an adversary', () => {
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
       });
 
-      it.skip('Test incorrect proof withdraw', async () => {
+      it('Test incorrect proof withdraw', async () => {
         console.log('Testing incorrect proof withdraw...');
         await nf3User.withdraw(
           'IncorrectProof',
