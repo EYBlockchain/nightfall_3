@@ -13,14 +13,17 @@ const transpileBlockAssembler = (_pathToSrc, _pathToInject) => {
   export function setMakeNow(_makeNow = true, _badBlockType = '') { 
     makeNow = _makeNow;
     badBlockType = _badBlockType;
+    if(badBlockType) {
+      logger.debug(\`making block with the following bad Block Type: \${badBlockType}\`);
+    }
   }`;
   srcFile = srcFile.replace(regexReplaceSetMakeNowFunction, reSetMakeNowFunction);
 
   // Add generalise package import
-  const regexImportGeneralise = /let ws;/g;
-  const reImportGeneralise = `let ws;
-  import gen from 'general-number';
-  const { generalise } = gen;`;
+  const regexImportGeneralise = /let makeNow = false;/g;
+  const reImportGeneralise = `import gen from 'general-number';
+  const { generalise } = gen;
+  let makeNow = false;`;
 
   srcFile = srcFile.replace(regexImportGeneralise, reImportGeneralise);
 
@@ -37,8 +40,8 @@ const transpileBlockAssembler = (_pathToSrc, _pathToInject) => {
 
   // Inject incorrect root, incorrect leaf and incorrect frontier hash bad block type
   const injectBadBlocks = fs.readFileSync(_pathToInject, 'utf-8');
-  srcTxDataToSignPreamble = /(\n|.)*(?=const unsignedProposeBlockTransaction = await \()/g;
-  srcTxDataToSignPostamble = /let count = 0;(\n|.)*/g;
+  srcTxDataToSignPreamble = /(\n|.)*(?=const txDataToSign)/g;
+  srcTxDataToSignPostamble = /\/\/ Sign tx(\n|.)*/g;
   [srcPre] = srcFile.match(srcTxDataToSignPreamble);
   [srcPost] = srcFile.match(srcTxDataToSignPostamble);
   srcFile = `${srcPre}\n${injectBadBlocks}\n${srcPost}`;
@@ -57,12 +60,8 @@ const transpileBlockApi = _pathToSrc => {
 
   // Modify make-now route so that we can pass bad block type as a parameter
   const injectCustomMakeNow = `router.get('/make-now/:badBlockType?', async (req, res, next) => {
+    const { badBlockType } = req.params;
     try {
-      logger.debug('block make-now endpoint received GET');
-      const { badBlockType } = req.params;
-      if(badBlockType) {
-        logger.debug(\`making block with the following bad Block Type: \${badBlockType}\`);
-      }
       setMakeNow(true, badBlockType);
       res.send('Making short block');
     } catch (err) {
