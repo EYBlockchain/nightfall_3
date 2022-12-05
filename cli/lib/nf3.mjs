@@ -1496,7 +1496,7 @@ class Nf3 {
   /**
    Validates an X509 (RSA) certificate
    */
-  async validateCertificate(certificate, ethereumAddress, derPrivateKey) {
+  async validateCertificate(certificate, ethereumAddress, derPrivateKey, oidGroup = 0) {
     // sign the ethereum address
     let ethereumAddressSignature = null;
     if (derPrivateKey) {
@@ -1518,6 +1518,7 @@ class Nf3 {
     const res = await axios.post(`${this.clientBaseUrl}/x509/validate`, {
       certificate,
       ethereumAddressSignature,
+      oidGroup,
     });
     const txDataToSign = res.data;
     return this.submitTransaction(txDataToSign, this.x509ContractAddress);
