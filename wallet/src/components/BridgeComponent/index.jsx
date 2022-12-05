@@ -10,7 +10,6 @@ import withdraw from '@Nightfall/services/withdraw';
 import { getWalletBalance } from '@Nightfall/services/commitment-storage';
 import { saveTransaction } from '@Nightfall/services/database';
 import Lottie from 'lottie-react';
-import { generalise } from 'general-number';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
 import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
@@ -243,8 +242,7 @@ const BridgeComponent = () => {
             ercAddress,
             tokenId: 0,
             value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
-            compressedZkpPublicKey: state.compressedZkpPublicKey,
-            nullifierKey: zkpKeys.nullifierKey,
+            rootKey: zkpKeys.rootKey,
             fee: 0,
             tokenType: 'ERC20',
           },
@@ -278,7 +276,6 @@ const BridgeComponent = () => {
             tokenId: 0,
             value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
             recipientAddress: await Web3.getAccount(),
-            nullifierKey: generalise(zkpKeys.nullifierKey),
             rootKey: zkpKeys.rootKey,
             tokenType: 'ERC20',
             fees: 1,

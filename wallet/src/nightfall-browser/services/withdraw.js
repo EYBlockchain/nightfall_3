@@ -37,7 +37,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     fee = generalise(0),
     providedCommitments,
   } = generalise(withdrawParams);
-
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(withdrawParams.ercAddress.toLowerCase());
 
   const lastTree = await getLatestTree();
@@ -63,17 +63,17 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     maticAddress,
     tokenId,
     rootKey,
-    maxNullifiers: VK_IDS.withdraw.numberNullifiers,
+    maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
   });
 
-  const circuitHashData = await getStoreCircuit(`withdraw-hash`);
+  const circuitHashData = await getStoreCircuit(`${circuitName}-hash`);
 
   const circuitHash = circuitHashData.data;
 
   try {
     // now we have everything  we need to create a Witness and compute a proof
-    const transaction = new Transaction({
+    const publicData = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
@@ -84,8 +84,8 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       recipientAddress,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
-      numberCommitments: VK_IDS.withdraw.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: false,
     });
 
@@ -103,12 +103,12 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     };
 
     const witness = computeCircuitInputs(
-      transaction,
+      publicData,
       privateData,
       commitmentsInfo.roots,
       maticAddress,
-      VK_IDS.withdraw.numberNullifiers,
-      VK_IDS.withdraw.numberCommitments,
+      VK_IDS[circuitName].numberNullifiers,
+      VK_IDS[circuitName].numberCommitments,
     );
 
     if (!(await checkIndexDBForCircuit(circuitName)))
@@ -122,7 +122,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     const { proof } = await snarkjs.groth16.fullProve(witness, wasmData.data, zkeyData.data); // zkey, witness
 
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
-    const optimisticWithdrawTransaction = new Transaction({
+    const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
@@ -134,15 +134,13 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
-      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
-      numberCommitments: VK_IDS.withdraw.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: false,
     });
     try {
-      const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
-
       const rawTransaction = await shieldContractInstance.methods
-        .submitTransaction(Transaction.buildSolidityStruct(optimisticWithdrawTransaction))
+        .submitTransaction(Transaction.buildSolidityStruct(transaction))
         .encodeABI();
 
       // Store new commitments that are ours.
@@ -151,15 +149,12 @@ async function withdraw(withdrawParams, shieldContractAddress) {
         .map(c => storeCommitment(c, nullifierKey));
 
       const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
-        markNullified(c, optimisticWithdrawTransaction),
+        markNullified(c, transaction),
       );
 
       await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
 
-      return {
-        rawTransaction,
-        transaction: optimisticWithdrawTransaction,
-      };
+      return { rawTransaction, transaction };
     } catch (err) {
       await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
       throw new Error(err);

@@ -16,7 +16,7 @@ contract Key_Registry is Ownable, Structures {
     }
 
     /**
-  Stores verification keys (for the 'deposit', 'transfer', 'withdraw', 'tokenise' and 'burn' computations).
+  Stores verification keys (for the 'deposit', 'depositFee', 'transfer', 'withdraw', 'tokenise' and 'burn' computations).
   */
     function registerVerificationKey(
         uint40 _circuitHash,

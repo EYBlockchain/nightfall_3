@@ -12,9 +12,10 @@ import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
+import { ZkpKeys } from './keys.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME } = constants;
+const { SHIELD_CONTRACT_NAME, BURN } = constants;
 const { generalise } = gen;
 
 async function burn(burnParams) {
@@ -22,8 +23,8 @@ async function burn(burnParams) {
   // let's extract the input items
   const { providedCommitments, ...items } = burnParams;
   const { rootKey, value, fee, tokenId } = generalise(items);
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
-  const circuitHash = await getCircuitHash('burn');
 
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
@@ -32,6 +33,8 @@ async function burn(burnParams) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
+  const circuitName = BURN;
+
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: generalise(value).bigInt,
     fee,
@@ -39,10 +42,12 @@ async function burn(burnParams) {
     tokenId,
     maticAddress,
     rootKey,
-    maxNullifiers: VK_IDS.burn.numberNullifiers,
+    maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     maxNonFeeNullifiers: 1,
     providedCommitments,
   });
+
+  const circuitHash = await getCircuitHash(circuitName);
 
   // Burn will have two commitments. The first will belong to the change if commitment isn't fully burnt, and the second one to the fee.
   // Therefore, we need to make sure that if the commitment was completely burn we still keep this order.
@@ -61,8 +66,8 @@ async function burn(burnParams) {
       circuitHash,
       commitments: newCommitmentsCircuit,
       nullifiers: commitmentsInfo.nullifiers,
-      numberNullifiers: VK_IDS.burn.numberNullifiers,
-      numberCommitments: VK_IDS.burn.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
 
@@ -88,8 +93,8 @@ async function burn(burnParams) {
       privateData,
       commitmentsInfo.roots,
       maticAddress,
-      VK_IDS.burn.numberNullifiers,
-      VK_IDS.burn.numberCommitments,
+      VK_IDS[circuitName].numberNullifiers,
+      VK_IDS[circuitName].numberCommitments,
     );
 
     logger.debug({
@@ -97,7 +102,7 @@ async function burn(burnParams) {
       witness: JSON.stringify(witness, 0, 2),
     });
 
-    const res = await generateProof({ folderpath: 'burn', witness });
+    const res = await generateProof({ folderpath: circuitName, witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
@@ -113,20 +118,26 @@ async function burn(burnParams) {
       commitments: newCommitmentsCircuit,
       nullifiers: commitmentsInfo.nullifiers,
       proof,
-      numberNullifiers: VK_IDS.burn.numberNullifiers,
-      numberCommitments: VK_IDS.burn.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
 
     logger.debug({
-      msg: 'Client made transaction',
+      msg: `Client made ${circuitName}`,
       transaction: JSON.stringify(transaction, null, 2),
     });
 
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
-    await submitTransaction(transaction, commitmentsInfo, rootKey, true);
+    await submitTransaction(
+      transaction,
+      commitmentsInfo,
+      compressedZkpPublicKey,
+      nullifierKey,
+      true,
+    );
     return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
