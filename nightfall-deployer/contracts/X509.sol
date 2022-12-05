@@ -20,13 +20,15 @@ contract X509 is DERParser, Whitelist, X509Interface {
     mapping(bytes32 => RSAPublicKey) trustedPublicKeys;
     mapping(bytes32 => bool) revokedKeys;
     mapping(address => bytes32) keysByUser;
+    bytes32[][] extendedKeyUsageOIDs; // this is an array of arrays because each CA has their own set of OIDs that they use
+    bytes32[][] certificatePoliciesOIDs; // this is an array of arrays because each CA has their own set of OIDs that they use
 
     bytes1 usageBitMaskEndUser;
     bytes1 usageBitMaskIntermediate;
 
     function initialize() public override(Whitelist) initializer {
         Whitelist.initialize();
-        usageBitMaskEndUser = 0xC0;
+        usageBitMaskEndUser = 0x80;
         usageBitMaskIntermediate = 0x06;
     }
 
@@ -36,6 +38,25 @@ contract X509 is DERParser, Whitelist, X509Interface {
 
     function setUsageBitMasIntermediate(bytes1 _usageBitMask) external onlyOwner {
         usageBitMaskIntermediate = _usageBitMask;
+    }
+
+    function addExtendedKeyUsage(bytes32[] calldata oids) external onlyOwner {
+        extendedKeyUsageOIDs.push(oids);
+    }
+
+    function addCertificatePolicies(bytes32[] calldata oids) external onlyOwner {
+        certificatePoliciesOIDs.push(oids);
+    }
+
+    // NB this function removes everything.  You need to re-add all oids if you call this but removing
+    // everything has the advantage of not creating a sparse array, whihc would happend if we deleted
+    // individual elements. Of course it is unlikely that this function will ever be needed.
+    function removeExtendedKeyUsage() external onlyOwner {
+        delete extendedKeyUsageOIDs;
+    }
+
+    function removeCertificatePolicies() external onlyOwner {
+        delete certificatePoliciesOIDs;
     }
 
     function setTrustedPublicKey(
@@ -241,10 +262,13 @@ contract X509 is DERParser, Whitelist, X509Interface {
             if (
                 bytes32(tlvs[i].value) ==
                 bytes32((0x551d0f0000000000000000000000000000000000000000000000000000000000))
-            ) break; // OID for the AKID
+            ) break; // OID for keyUsage
         }
         require(i < tlvs.length, 'X509: OID for Key Usage not found');
         bytes memory usageBytes = tlvs[i + 1].value;
+        // usageBytes could be an octet string containing a bit string, that needs further decoding to recover Key Usage flags
+        // or it could be a boolean (code 0x01), indicating the criticality of the Key Usage (we ignore that and move on because we process Key Usage anyway)
+        if (tlvs[i + 1].octets[0] == 0x01) usageBytes = tlvs[i + 2].value; // is it a boolean?
         DecodedTlv[] memory usageTlvs = new DecodedTlv[](1);
         usageTlvs = this.parseDER(usageBytes, 0, 1);
         require(usageTlvs[0].length == 2, 'X509: Key usage bytes must be of 2 bytes');
@@ -256,6 +280,75 @@ contract X509 is DERParser, Whitelist, X509Interface {
             (usageFlags & _usageBitMask) == _usageBitMask,
             'X509: Key usage is not as required'
         );
+    }
+
+    function checkExtendedKeyUsage(DecodedTlv[] memory tlvs, uint256 oidGroup) private view {
+        // // The extended key usage sequence begins after the Extended Key Usage OID at depth 5
+        uint256 i;
+        for (i = 0; i < tlvs.length; i++) {
+            if (tlvs[i].depth != 5) continue;
+            if (
+                bytes32(tlvs[i].value) ==
+                bytes32((0x551d250000000000000000000000000000000000000000000000000000000000))
+            ) break; // OID for extendedKeyUsage
+        }
+        require(i < tlvs.length, 'X509: OID for Extended Key Usage not found');
+        bytes memory extendedUsageBytes = tlvs[i + 1].value;
+        if (tlvs[i + 1].octets[0] == 0x01) extendedUsageBytes = tlvs[i + 2].value; // is it a boolean indicating criticality (we ignore that)?
+        uint256 tlvLength = this.computeNumberOfTlvs(extendedUsageBytes, 0); // we cannot guess how long the list might be
+        DecodedTlv[] memory extendedUsageTlvs = new DecodedTlv[](tlvLength);
+        extendedUsageTlvs = this.parseDER(extendedUsageBytes, 0, tlvLength);
+        // Now we need to loop through the extendedKeyUsageOIDs, and check we have every one of them in the cert
+        for (uint256 j = 0; j < extendedKeyUsageOIDs[oidGroup].length; j++) {
+            bool oidFound = false;
+            for (uint256 k = 0; k < tlvLength; k++) {
+                if (bytes32(extendedUsageTlvs[k].octets) == extendedKeyUsageOIDs[oidGroup][j]) {
+                    oidFound = true;
+                    break;
+                }
+            }
+            require(oidFound, 'A required Extended Key Usage OID was not found');
+        }
+    }
+
+    function checkCertificatePolicies(DecodedTlv[] memory tlvs, uint256 oidGroup) private view {
+        // // The extended key usage sequence begins after the Extended Key Usage OID at depth 5
+        uint256 i;
+        for (i = 0; i < tlvs.length; i++) {
+            if (tlvs[i].depth != 5) continue;
+            if (
+                bytes32(tlvs[i].value) ==
+                bytes32((0x551d200000000000000000000000000000000000000000000000000000000000))
+            ) break; // OID for certificate policies
+        }
+        require(i < tlvs.length, 'X509: OID for Certificate Policies not found');
+        bytes memory extendedUsageBytes = tlvs[i + 1].value;
+        if (tlvs[i + 1].octets[0] == 0x01) extendedUsageBytes = tlvs[i + 2].value; // is it a boolean indicating criticality (we ignore that)?
+        uint256 tlvLength = this.computeNumberOfTlvs(extendedUsageBytes, 0); // we cannot guess how long the list might be
+        DecodedTlv[] memory extendedUsageTlvs = new DecodedTlv[](tlvLength);
+        extendedUsageTlvs = this.parseDER(extendedUsageBytes, 0, tlvLength);
+        // certificate policies are, unfortunately not a simple oid but an octet string containing a sequence of sequences. The oids we want are in each sequence.
+        // Thus extendedUsageTlvs is an array of sequences. We have to loop through it, collecting the first OID inside each.  We can ignore
+        // the rest of the sequence which will be yet another sequence of policy qualifiers.  We don't care about those for this purpose.
+        // We just need to ensure the policy exists.
+        bytes32[] memory policyOIDs = new bytes32[](extendedUsageTlvs.length); // we don't know how many there are but there are definitely less than this
+        uint256 count = 0;
+        for (uint256 j = 0; j < extendedUsageTlvs.length; j++) {
+            if (extendedUsageTlvs[j].depth == 2)
+                policyOIDs[count++] = bytes32(extendedUsageTlvs[j].octets);
+        }
+        // Now we have an array containing the policy OIDs we need to loop through
+        // the certificate policie OIDs, and check we have every one of them in the cert
+        for (uint256 j = 0; j < certificatePoliciesOIDs[oidGroup].length; j++) {
+            bool oidFound = false;
+            for (uint256 k = 0; k < count; k++) {
+                if (policyOIDs[k] == certificatePoliciesOIDs[oidGroup][j]) {
+                    oidFound = true;
+                    break;
+                }
+            }
+            require(oidFound, 'A required Certificate Policy OID was not found');
+        }
     }
 
     // function to check the signature over a message
@@ -285,7 +378,8 @@ contract X509 is DERParser, Whitelist, X509Interface {
         bytes calldata certificate,
         uint256 tlvLength,
         bytes calldata addressSignature,
-        bool addAddress
+        bool addAddress,
+        uint256 oidGroup
     ) external {
         DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         // decode the DER encoded binary certificate data into an array of Tag-Length-Value structs
@@ -322,6 +416,9 @@ contract X509 is DERParser, Whitelist, X509Interface {
         // as we are trying to add an address, this certificate should be an end user certificate, created for digital signature
         // and non-repudiation (or possibly other things - we can change this).
         checkKeyUsage(tlvs, usageBitMaskEndUser);
+        // we only check extended key usage for end-user certs; it's not really relevant for CA certs
+        checkExtendedKeyUsage(tlvs, oidGroup);
+        checkCertificatePolicies(tlvs, oidGroup);
         trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
         checkSignature(
             addressSignature,

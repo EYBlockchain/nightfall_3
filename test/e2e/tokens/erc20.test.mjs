@@ -5,7 +5,13 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { depositNTransactions, emptyL2, expectTransaction, Web3Client } from '../../utils.mjs';
+import {
+  depositNTransactions,
+  expectTransaction,
+  waitForSufficientBalance,
+  waitForSufficientTransactionsMempool,
+  Web3Client,
+} from '../../utils.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
@@ -80,7 +86,8 @@ describe('ERC20 tests', () => {
   beforeEach(async function () {
     if (this.currentTest.title === 'test should encounter zero rollbacks') return;
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+    await nf3Users[0].makeBlockNow();
+    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   });
 
   describe('Deposits', () => {
@@ -89,7 +96,8 @@ describe('ERC20 tests', () => {
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const afterZkpPublicKeyBalance =
         (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
@@ -108,6 +116,21 @@ describe('ERC20 tests', () => {
           message.includes('Transaction has been reverted by the EVM'),
         );
       }
+    });
+
+    it('should increment the balance after deposit some ERC20 crypto and pay fee in L2', async function () {
+      const currentZkpPublicKeyBalance =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee, true);
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      const afterZkpPublicKeyBalance =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+      expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
+        transferValue - fee,
+      );
     });
   });
 
@@ -133,7 +156,8 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(res);
 
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const afterBalances = await getBalances();
 
@@ -154,7 +178,8 @@ describe('ERC20 tests', () => {
         fee,
       );
       expectTransaction(res);
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
 
@@ -177,7 +202,8 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(rec);
 
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
@@ -198,7 +224,8 @@ describe('ERC20 tests', () => {
         );
         expectTransaction(rec);
 
-        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+        await nf3Users[0].makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
         const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
@@ -230,7 +257,8 @@ describe('ERC20 tests', () => {
         );
         expectTransaction(rec);
 
-        await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+        await nf3Users[0].makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
         const withdrawal = await nf3Users[0].getLatestWithdrawHash();
 
@@ -270,7 +298,8 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(rec);
 
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       logger.debug(`Gas used was ${Number(rec.gasUsed)}`);
       const afterBalance = (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance;
@@ -325,14 +354,16 @@ describe('ERC20 tests', () => {
         fee,
       );
 
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const latestWithdrawTransactionHash = nf3Users[0].getLatestWithdrawHash();
       expect(latestWithdrawTransactionHash).to.be.a('string').and.to.include('0x');
 
       const count = logs.instantWithdraw;
 
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // We request the instant withdraw and should wait for the liquidity provider to send the instant withdraw
       const res = await nf3Users[0].requestInstantWithdrawal(latestWithdrawTransactionHash, fee);
@@ -437,7 +468,14 @@ describe('ERC20 tests', () => {
             fee,
           );
 
-          await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+          await waitForSufficientTransactionsMempool({ nf3User: nf3Users[0], nTransactions: 6 });
+
+          await nf3Users[0].makeBlockNow();
+          await waitForSufficientBalance({
+            nf3User: nf3Users[0],
+            value: 6 * maxERC20DepositValue,
+            ercAddress: erc20Address,
+          });
 
           await nf3Users[0].transfer(
             false,
@@ -449,7 +487,13 @@ describe('ERC20 tests', () => {
             0,
           );
 
-          await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+          await nf3Users[0].makeBlockNow();
+
+          await waitForSufficientBalance({
+            nf3User: nf3Users[0],
+            value: 6 * maxERC20DepositValue,
+            ercAddress: erc20Address,
+          });
 
           const rec = await nf3Users[0].withdraw(
             false,
@@ -461,7 +505,8 @@ describe('ERC20 tests', () => {
             0,
           );
 
-          await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+          await nf3Users[0].makeBlockNow();
+          await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
           await new Promise(resolve => setTimeout(resolve, 30000));
 

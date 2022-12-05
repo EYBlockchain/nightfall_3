@@ -13,13 +13,14 @@ const router = express.Router();
  the certificate.  We might want to do this for an intermediate certificate for example.
  */
 router.post('/validate', async (req, res, next) => {
-  const { certificate, ethereumAddressSignature } = req.body;
+  const { certificate, ethereumAddressSignature, oidGroup } = req.body;
   if (!certificate) next(new Error('Certificate was null or undefined'));
   if (!certificate.type === 'Buffer') next(new Error('Certificate is not a buffer'));
   try {
     const txDataToSign = await validateCertificate(
       Buffer.from(certificate.data),
       ethereumAddressSignature ? Buffer.from(ethereumAddressSignature) : null,
+      oidGroup,
     );
     res.json(txDataToSign);
   } catch (err) {
