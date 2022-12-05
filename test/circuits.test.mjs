@@ -50,7 +50,7 @@ describe('General Circuit Test', () => {
 
   async function makeBlock() {
     logger.debug(`Make block...`);
-    await axios.get(`${this.optimistBaseUrl}/block/make-now`);
+    await axios.get(`${optimistApiUrl}/block/make-now`);
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   }
 
@@ -183,8 +183,7 @@ describe('General Circuit Test', () => {
     );
     expectTransaction(doubleTransferNoChange);
 
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    await axios.get(`${this.optimistBaseUrl}/block/make-now`);
+    await makeBlock();
 
     value = 4;
     await makeDeposit(value);
@@ -206,8 +205,7 @@ describe('General Circuit Test', () => {
     );
     expectTransaction(doubleWithdrawalChange);
 
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    await axios.get(`${this.optimistBaseUrl}/block/make-now`);
+    await makeBlock();
 
     value = 2;
     await makeDeposit(value);
