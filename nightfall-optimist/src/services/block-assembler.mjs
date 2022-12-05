@@ -28,15 +28,9 @@ import txsQueue from '../utils/transactions-queue.mjs';
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
 const { STATE_CONTRACT_NAME, ZERO } = constants;
 
-// eslint-disable-next-line no-unused-vars
-let ws;
 let makeNow = false;
 let lastBlockTimestamp = new Date().getTime();
 let blockPeriodMs = PROPOSER_MAX_BLOCK_PERIOD_MILIS;
-
-export function setBlockAssembledWebSocketConnection(_ws) {
-  ws = _ws;
-}
 
 export function setMakeNow(_makeNow = true) {
   makeNow = _makeNow;

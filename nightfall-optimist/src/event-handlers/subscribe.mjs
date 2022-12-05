@@ -88,18 +88,6 @@ export async function subscribeToChallengeWebSocketConnection(callback, ...args)
   logger.debug('Subscribed to Challenge WebSocket connection');
 }
 
-export async function subscribeToBlockAssembledWebSocketConnection(callback, ...args) {
-  wss.on('connection', ws => {
-    ws.on('message', message => {
-      if (message === 'blocks') {
-        setupWebsocketEvents(ws, 'proposer');
-        callback(ws, args);
-      }
-    });
-  });
-  logger.debug('Subscribed to BlockAssembled WebSocket connection');
-}
-
 export async function subscribeToInstantWithDrawalWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
     ws.on('message', message => {
