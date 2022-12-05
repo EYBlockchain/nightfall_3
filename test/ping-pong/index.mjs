@@ -113,7 +113,11 @@ export async function simpleUserTest(
     }
   }
   // we should have the deposits in a block before doing transfers
-  await waitForSufficientBalance(nf3, startBalance + TEST_LENGTH * (value - fee), ercAddress);
+  await waitForSufficientBalance({
+    nf3User: nf3,
+    value: startBalance + TEST_LENGTH * (value - fee),
+    ercAddress,
+  });
 
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
