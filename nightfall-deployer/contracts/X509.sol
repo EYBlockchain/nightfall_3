@@ -342,7 +342,6 @@ contract X509 is DERParser, Whitelist, X509Interface {
         for (uint256 j = 0; j < certificatePoliciesOIDs[oidGroup].length; j++) {
             bool oidFound = false;
             for (uint256 k = 0; k < count; k++) {
-                console.logBytes32(policyOIDs[k]);
                 if (policyOIDs[k] == certificatePoliciesOIDs[oidGroup][j]) {
                     oidFound = true;
                     break;
