@@ -58,11 +58,6 @@ export class Web3Client {
     }
   }
 
-  getEthAddressFromPrivateKey(privateKey) {
-    const { address } = this.web3.eth.accounts.privateKeyToAccount(privateKey);
-    return address;
-  }
-
   subscribeTo(event, queue, options) {
     if (event === 'newBlockHeaders') {
       this.web3.eth.subscribe('newBlockHeaders').on('data', () => {
@@ -103,6 +98,11 @@ export class Web3Client {
     if (process.env.FROM_ADDRESS) return [process.env.FROM_ADDRESS];
     const accounts = this.web3.eth.getAccounts();
     return accounts;
+  }
+
+  getEthAddressFromPrivateKey(privateKey) {
+    const { address } = this.web3.eth.accounts.privateKeyToAccount(privateKey);
+    return address;
   }
 
   getBalance(account) {
