@@ -1,6 +1,5 @@
 import {
   startEventQueue,
-  subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
   subscribeToInstantWithDrawalWebSocketConnection,
   subscribeToProposedBlockWebSocketConnection,
@@ -43,7 +42,6 @@ const eventHandlers = {
 
 export {
   startEventQueue,
-  subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
   subscribeToInstantWithDrawalWebSocketConnection,
   subscribeToProposedBlockWebSocketConnection,

@@ -1,5 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import chai from 'chai';
+import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
@@ -13,13 +15,12 @@ import {
   waitForTimeout,
 } from './utils.mjs';
 
-// so we can use require with mjs file
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-// we need require here to import jsons
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const { MONGO_URL, OPTIMIST_DB } = config;
 
 const {
   transferValue,
@@ -32,6 +33,7 @@ const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, VK_IDS } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
+nf3Proposer1.setApiKey(environment.AUTH_TOKEN);
 
 const web3Client = new Web3Client();
 
@@ -42,28 +44,43 @@ const eventLogs = [];
 const averageL1GasCost = receipts =>
   receipts.map(receipt => receipt.gasUsed).reduce((acc, el) => acc + el) / receipts.length;
 
+const connection = await mongo.connection(MONGO_URL);
+const db = connection.db(OPTIMIST_DB);
+const countBlocksInOptimist = async () => db.collection('blocks').count();
+
+async function getLatestBlockGasUsed() {
+  const latestBlock = await db
+    .collection('blocks')
+    .find()
+    .sort({ blockNumberL2: -1 })
+    .limit(1)
+    .toArray();
+
+  const latestBlockTxHashL1 = latestBlock[0].transactionHashL1;
+
+  const receipt = await web3Client.getTransactionReceipt(latestBlockTxHashL1);
+
+  return receipt.gasUsed;
+}
+
+async function processExistingMempoolTrasanctions() {
+  const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
+  if (mempoolTransactions > 0) {
+    logger.debug(`Making new block to clear transaction mempool...`);
+    await nf3Proposer1.makeBlockNow();
+    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  }
+}
+
 describe('Gas test', () => {
-  let gasCost;
   let txPerBlock;
+
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
     await nf3Proposer1.registerProposer('http://optimist', await nf3Proposer1.getMinimumStake());
 
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('receipt', async receipt => {
-      const { gasUsed } = receipt;
-      console.log(
-        `Block proposal gas used was ${gasUsed}, gas used per transaction was ${
-          gasUsed / txPerBlock
-        }`,
-      );
-      gasCost = gasUsed;
-    });
-
     await nf3Users[0].init(mnemonics.user1);
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
@@ -79,28 +96,10 @@ describe('Gas test', () => {
       txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
-    // we need more deposits because we won't have enough input transactions until
-    // after this block is made, by which time it's too late.
-    // also,the first  block costs more due to one-off setup costs.
-    it('First Block', async function () {
-      // We create enough transactions to fill blocks full of deposits.
-      await depositNTransactions(
-        nf3Users[0],
-        1,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        0,
-      );
-
-      await waitForTimeout(10000);
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    });
-
     it('should be a reasonable gas cost', async function () {
-      console.log(`Creating a block with ${txPerBlock - 1} deposits`);
+      logger.debug(`Creating a block with ${txPerBlock - 1} deposits`);
+
+      const numberOfBlocksBefore = await countBlocksInOptimist();
 
       // We create enough transactions to fill blocks full of deposits.
       const receipts = await depositNTransactions(
@@ -115,12 +114,17 @@ describe('Gas test', () => {
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
-      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
-      console.log('Deposit L1 average gas used was', averageL1GasCost(receipts));
+      const numberOfBlocksAfter = await countBlocksInOptimist();
 
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
+
+      const gasCostDeposit = await getLatestBlockGasUsed();
+
+      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
+      expect(gasCostDeposit).to.be.lessThan(expectedGasCostPerTx);
+      logger.debug(`Deposit L1 average gas used was ${averageL1GasCost(receipts)}`);
+
+      await processExistingMempoolTrasanctions();
     });
   });
 
@@ -136,9 +140,11 @@ describe('Gas test', () => {
     });
 
     it('should be a reasonable gas cost', async function () {
-      console.log(`Creating a block with ${txPerBlock - 1} transfers`);
+      logger.debug(`Creating a block with ${txPerBlock - 1} transfers`);
 
-      // We create enough transactions to fill blocks full of deposits.
+      const numberOfBlocksBefore = await countBlocksInOptimist();
+
+      // We create enough transactions to fill blocks full of transfers.
       const receipts = await transferNTransactions(
         nf3Users[0],
         txPerBlock,
@@ -152,12 +158,17 @@ describe('Gas test', () => {
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
-      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
-      console.log('Transfer L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
+      const numberOfBlocksAfter = await countBlocksInOptimist();
 
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
+
+      const gasCostTransfer = await getLatestBlockGasUsed();
+
+      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
+      expect(gasCostTransfer).to.be.lessThan(expectedGasCostPerTx);
+      logger.debug(`Transfer L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
+
+      await processExistingMempoolTrasanctions();
     });
   });
 
@@ -173,9 +184,11 @@ describe('Gas test', () => {
     });
 
     it('should be a reasonable gas cost', async function () {
-      console.log(`Creating a block with ${txPerBlock - 1} withdraws`);
+      logger.debug(`Creating a block with ${txPerBlock - 1} withdraws`);
 
-      // We create enough transactions to fill blocks full of deposits.
+      const numberOfBlocksBefore = await countBlocksInOptimist();
+
+      // We create enough transactions to fill blocks full of withdraws.
       const receipts = await withdrawNTransactions(
         nf3Users[0],
         txPerBlock,
@@ -189,12 +202,17 @@ describe('Gas test', () => {
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
-      expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
-      console.log('Withdraw L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
+      const numberOfBlocksAfter = await countBlocksInOptimist();
 
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      expect(numberOfBlocksBefore).to.be.equal(numberOfBlocksAfter - 1);
+
+      const gasCostWithdrawal = await getLatestBlockGasUsed();
+
+      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
+      expect(gasCostWithdrawal).to.be.lessThan(expectedGasCostPerTx);
+      logger.debug(`Withdraw L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
+
+      await processExistingMempoolTrasanctions();
     });
   });
 
@@ -219,9 +237,9 @@ describe('Gas test', () => {
         expectTransaction(res);
         const endBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
         expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
-        console.log('The gas used for finalise withdraw, back to L1, was', res.gasUsed);
+        logger.debug(`The gas used for finalise withdraw, back to L1, was ${res.gasUsed}`);
       } else {
-        console.log('Not using a time-jump capable test client so this test is skipped');
+        logger.debug('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
     });
@@ -229,6 +247,7 @@ describe('Gas test', () => {
 
   after(async () => {
     await nf3Proposer1.deregisterProposer();
+    await connection.close();
     await nf3Proposer1.close();
     await nf3Users[0].close();
     await web3Client.closeWeb3();

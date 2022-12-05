@@ -167,6 +167,10 @@ export class Web3Client {
     return receipt;
   }
 
+  async getTransactionReceipt(txHash) {
+    return this.web3.eth.getTransactionReceipt(txHash);
+  }
+
   // This only works with Ganache but it can move block time forwards
   async timeJump(secs) {
     await this.web3.currentProvider.send({

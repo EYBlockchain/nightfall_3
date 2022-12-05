@@ -84,8 +84,17 @@ const options = {
             },
           },
         },
+        BlockTimeSet: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/BlockTimeSet',
+              },
+            },
+          },
+        },
       },
-
       schemas: {
         Block: {
           type: 'object',
@@ -278,6 +287,18 @@ const options = {
           },
           example: {
             txDataToSign: '0x0d6022010000000000000',
+          },
+        },
+        BlockTimeSet: {
+          type: 'object',
+          properties: {
+            time: {
+              type: 'string',
+              description: 'Time to pass before a new block is proposed',
+            },
+          },
+          example: {
+            time: '600000',
           },
         },
         TransactionHash: {
@@ -532,6 +553,9 @@ const options = {
         },
         SuccessBlockChecked: {
           description: 'Block without inconsistency',
+        },
+        SuccessBlockTimeSet: {
+          description: 'Successful block time set',
         },
         SuccessBlockCreated: {
           description: 'Making short block',

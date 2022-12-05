@@ -14,11 +14,9 @@ import {
   getTransactionsByTransactionHashesByL2Block,
   deleteTransactionsByTransactionHashes,
   deleteTreeByBlockNumberL2,
-  getAllRegisteredProposersCount,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
 import checkTransaction from '../services/transaction-checker.mjs';
-import { signalRollbackCompleted as signalRollbackCompletedToProposer } from '../services/block-assembler.mjs';
 import {
   signalRollbackCompleted as signalRollbackCompletedToChallenger,
   isMakeChallengesEnable,
@@ -116,11 +114,6 @@ async function rollbackEventHandler(data) {
   await dequeueEvent(2); // Remove an event from the stopQueue.
   // A Rollback triggers a NewCurrentProposer event which shoudl trigger queue[0].end()
   // But to be safe we enqueue a helper event to guarantee queue[0].end() runs.
-
-  // if optimist has a register proposer, signal rollback to
-  // that proposer websocket client
-  if ((await getAllRegisteredProposersCount()) > 0)
-    await enqueueEvent(() => signalRollbackCompletedToProposer(), 0);
 
   // assumption is if optimist has makeChallenges ON there is challenger
   // websocket client waiting for signal rollback

@@ -7,17 +7,13 @@ import {
 import app from './app.mjs';
 import {
   startEventQueue,
-  subscribeToBlockAssembledWebSocketConnection,
   subscribeToChallengeWebSocketConnection,
   subscribeToInstantWithDrawalWebSocketConnection,
   subscribeToProposedBlockWebSocketConnection,
   eventHandlers,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
-import {
-  setBlockAssembledWebSocketConnection,
-  conditionalMakeBlock,
-} from './services/block-assembler.mjs';
+import { conditionalMakeBlock } from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
@@ -30,7 +26,6 @@ const main = async () => {
     setProposer(proposer); // passes the proposer instance int the proposer routes
 
     // subscribe to WebSocket events first
-    await subscribeToBlockAssembledWebSocketConnection(setBlockAssembledWebSocketConnection);
     await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
     await subscribeToInstantWithDrawalWebSocketConnection(setInstantWithdrawalWebSocketConnection);
     await subscribeToProposedBlockWebSocketConnection(setBlockProposedWebSocketConnection);
