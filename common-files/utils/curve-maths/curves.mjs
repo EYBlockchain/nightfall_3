@@ -50,7 +50,7 @@ export function compressG2(point) {
 }
 
 /**
-This compresses a GM17 proof object in its entirety, returning promises of a
+This compresses a G16 proof object in its entirety, returning promises of a
 flattened, compressed result. That's nice because you can await it with a
 Promise.all. We can turn off G2 compression as G2 decompression isn't done yet.
 It can cope with the proof as an object or as a flattened array.
@@ -79,6 +79,7 @@ export function compressProof(_proof) {
 solving Y^2 = X^3 + 3 over p
 */
 export function decompressG1(xin) {
+  if (BigInt(xin) === 2n ** 255n) return [0n, 1n];
   // first, extract the parity bit
   const xbin = BigInt(xin).toString(2).padStart(256, '0');
   const parity = xbin[0];
@@ -87,6 +88,7 @@ export function decompressG1(xin) {
   const x3 = mulMod([x, x, x], BN128_PRIME_FIELD);
   const y2 = addMod([x3, 3n], BN128_PRIME_FIELD);
   let y = squareRootModPrime(y2, BN128_PRIME_FIELD);
+  if (Number.isNaN(y)) throw new Error('Invalid G1 Point');
   if (parity !== y.toString(2).slice(-1)) y = BN128_PRIME_FIELD - y;
   return generalise([x, y]).all.hex(32);
 }
@@ -95,16 +97,18 @@ export function decompressG1(xin) {
 solving Y^2 = X^3 + 3/(i+9)
 */
 export function decompressG2(xin) {
+  // Handle the Point 0.G
+  if (BigInt(xin[0]) === 2n ** 255n && BigInt(xin[1]) === 0n)
+    return [new Fq2(0, 0).toHex(), new Fq2(1, 0).toHex()];
   // first extract parity bits
   const xbin = xin.map(c => BigInt(c).toString(2).padStart(256, '0'));
   const parity = xbin.map(xb => xb[0]); // extract parity
   const x = new Fq2(...xbin.map(xb => BigInt(`0b${xb.slice(1)}`))); // x element
   const x3 = x.mul(x).mul(x);
-  // If xin is the compressed form of the Point 0.G
-  if (x3.x === 0n && x3.y === 0n && xin[1] === 0n) return [x.toHex(), new Fq2(1, 0).toHex()];
   const d = new Fq2(3n, 0n).div(new Fq2(9n, 1n)); // TODO hardcode this?
   const y2 = x3.add(d);
   const y = y2.sqrt();
+  if (y === null) throw new Error('Invalid G2 Point');
   // fix the parity of y
   const a = parity[0] === y.real.toString(2).slice(-1) ? y.real : BN128_PRIME_FIELD - y.real;
   const b =
@@ -119,11 +123,15 @@ export function decompressProof(compressedProof) {
   // from the flattened array as an instance of the Proof class. This returns
   // and array of promises so be sure to await Promise.all.
   const [aCompressed, bCompressedReal, bCompressedImaginary, cCompressed] = compressedProof;
-  return [
-    decompressG1(aCompressed),
-    decompressG2([bCompressedReal, bCompressedImaginary]),
-    decompressG1(cCompressed),
-  ].flat(2);
+  try {
+    return [
+      decompressG1(aCompressed),
+      decompressG2([bCompressedReal, bCompressedImaginary]),
+      decompressG1(cCompressed),
+    ].flat(2);
+  } catch (error) {
+    throw new Error('Proof decompression failed');
+  }
 }
 
 function isOnCurve(p) {

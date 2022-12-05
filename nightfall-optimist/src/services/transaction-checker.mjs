@@ -13,6 +13,7 @@ import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import * as snarkjs from 'snarkjs';
+import { decompressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import {
   getBlockByBlockNumberL2,
@@ -169,11 +170,17 @@ async function verifyProof(transaction) {
 
   const vk = new VerificationKey(vkArray, CURVE, PROVING_SCHEME, inputs.length);
 
-  const proof = new Proof(transaction.proof, CURVE, PROVING_SCHEME, inputs);
+  try {
+    const uncompressedProof = decompressProof(transaction.proof);
+    const proof = new Proof(uncompressedProof, CURVE, PROVING_SCHEME, inputs);
 
-  const verifies = await snarkjs.groth16.verify(vk, inputs, proof);
+    const verifies = await snarkjs.groth16.verify(vk, inputs, proof);
 
-  if (!verifies) throw new TransactionError('The proof did not verify', 2);
+    if (!verifies) throw new TransactionError('The proof did not verify', 2);
+  } catch (e) {
+    // Decompressing the Proof failed
+    throw new TransactionError('Decompression failed', 2);
+  }
 }
 
 export async function checkTransaction(

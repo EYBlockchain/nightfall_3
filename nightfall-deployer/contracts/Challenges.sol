@@ -206,7 +206,11 @@ contract Challenges is Stateful, Config {
         }
     }
 
-    function decompressG1(uint256 xin) public returns (uint256[2] memory) {
+    function decompressG1(uint256 xin) public returns (bool, uint256[2] memory) {
+        // Handle the Point 0.G
+        if (xin == 0x8000000000000000000000000000000000000000000000000000000000000000)
+            return (false, [uint256(0), uint256(1)]);
+
         uint8 parity = uint8((xin >> 255) & 1);
         uint256 xMask = 0x4000000000000000000000000000000000000000000000000000000000000000; // 2**254 mask
         uint256 xCoord = xin % xMask;
@@ -216,9 +220,15 @@ contract Challenges is Stateful, Config {
             Utils.BN128_PRIME_FIELD
         );
         uint256 y2 = addmod(x3, 3, Utils.BN128_PRIME_FIELD);
+        // Check that the legendre symbol == 1, i.e. a sqrt exists for y2
+        bool sqrtFound = Utils.modExp(
+            y2,
+            (Utils.BN128_PRIME_FIELD - uint256(1)) / uint256(2),
+            Utils.BN128_PRIME_FIELD
+        ) == 1;
         uint256 y = Utils.modExp(y2, (Utils.BN128_PRIME_FIELD + 1) / 4, Utils.BN128_PRIME_FIELD);
-        if (parity != uint8(y % 2)) return [xCoord, Utils.BN128_PRIME_FIELD - y];
-        return [xCoord, y];
+        if (parity != uint8(y % 2)) return (sqrtFound, [xCoord, Utils.BN128_PRIME_FIELD - y]);
+        return (sqrtFound, [xCoord, y]);
     }
 
     function decompressG2(uint256[2] memory xins) public pure returns (bool, uint256[2][2] memory) {
@@ -233,7 +243,8 @@ contract Challenges is Stateful, Config {
             266929791119991161246907387137283842545076965332900288569378510910307636690
         ];
         // If xin is the compressed form of the Point 0.G
-        if (x3[0] == 0 && x3[1] == 0 && xins[1] == 0) return (true, [x3, [uint256(1), uint256(0)]]);
+        if (x3[0] == 0 && x3[1] == 0 && xins[1] == 0)
+            return (false, [x3, [uint256(1), uint256(0)]]);
         uint256[2] memory y2 = [
             addmod(x3[0], d[0], Utils.BN128_PRIME_FIELD),
             addmod(x3[1], d[1], Utils.BN128_PRIME_FIELD)
@@ -286,14 +297,23 @@ contract Challenges is Stateful, Config {
                 extraPublicInputs.roots[i] = uint256(blockL2ContainingHistoricRoot[i].root);
             }
         }
-        uint256[2] memory decompressAlpha = decompressG1(transaction.transaction.proof[0]);
-        (bool success, uint256[2][2] memory decompressBeta) = decompressG2(
+        // Variables declared here so we can reuse the bool
+        bool success = false;
+        uint256[2] memory decompressAlpha;
+        uint256[2][2] memory decompressBeta;
+        uint256[2] memory decompressGamma;
+
+        (success, decompressAlpha) = decompressG1(transaction.transaction.proof[0]);
+        // Check each step since we overwrite the bool to avoid stack too deep issues.
+        if (!success) challengeAccepted(transaction.blockL2);
+
+        (success, decompressBeta) = decompressG2(
             [transaction.transaction.proof[1], transaction.transaction.proof[2]]
         );
-        // We could not decompress the G2 Point
         if (!success) challengeAccepted(transaction.blockL2);
-        uint256[2] memory decompressGamma = decompressG1(transaction.transaction.proof[3]);
 
+        (success, decompressGamma) = decompressG1(transaction.transaction.proof[3]);
+        if (!success) challengeAccepted(transaction.blockL2);
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
             transaction.transaction,

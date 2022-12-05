@@ -64,7 +64,10 @@ function keccak(preimage) {
     compressedSecrets,
   } = preimage;
   let { proof } = preimage;
-  proof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof);
+  // Proof is uncompressed
+  if (proof.length === 8) {
+    proof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof);
+  } // Do we need a condition where the length is neither 8 nor 4?
 
   const packedInfo = packTransactionInfo(value, fee, circuitHash, tokenType);
 
@@ -140,7 +143,7 @@ class Transaction {
       commitments: commitments.map(c => c.hash),
       nullifiers: nullifiers.map(n => n.hash),
       compressedSecrets,
-      proof: flatProof,
+      proof: compressProof(flatProof),
     }).all.hex(32);
 
     // compute the solidity hash, using suitable type conversions
@@ -202,6 +205,13 @@ class Transaction {
 
     const historicRootsPacked = packHistoricRoots(historicRootBlockNumberL2);
 
+    // Proof may already be compressed
+    let compressedProof = proof;
+    if (proof.length === 8) {
+      compressedProof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0])
+        ? [0, 0, 0, 0]
+        : compressProof(proof);
+    }
     return {
       packedInfo,
       historicRootBlockNumberL2: historicRootsPacked,
@@ -211,7 +221,7 @@ class Transaction {
       commitments,
       nullifiers,
       compressedSecrets,
-      proof: arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof),
+      proof: compressedProof,
     };
   }
 }
