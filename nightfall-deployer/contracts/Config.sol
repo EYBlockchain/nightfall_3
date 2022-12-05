@@ -25,11 +25,11 @@ contract Config is Ownable, Structures {
 
     function initialize() public virtual override onlyInitializing {
         Ownable.initialize();
-        minimumStake = 1000000 wei;
-        blockStake = 1 wei;
-        rotateProposerBlocks = 20;
-        proposerSetCount = 5;
-        sprintsInSpan = 5;
+        minimumStake = 1000000 wei; // 20000000000000 wei; // 20K MATIC in mainnet
+        blockStake = 1 wei; // 200000000000 wei; 200 MATIC in mainnet
+        rotateProposerBlocks = 32;
+        proposerSetCount = 10;
+        sprintsInSpan = 10;
         maxProposers = 100;
     }
 

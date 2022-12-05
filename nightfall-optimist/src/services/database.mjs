@@ -341,7 +341,15 @@ export async function addTransactionsToMemPool(block) {
     transactionHash: { $in: block.transactionHashes },
     blockNumberL2: { $eq: block.blockNumberL2 },
   };
-  const update = { $set: { mempool: true, blockNumberL2: -1 } };
+  const update = {
+    $set: {
+      mempool: true,
+      blockNumberL2: -1,
+      transacionHashesRoot: null,
+      transactionHashSiblingPath: null,
+      transactionHashLeafIndex: null,
+    },
+  };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
 }
 
@@ -497,6 +505,13 @@ export async function getL2TransactionByCommitment(
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
+export async function getL2MempoolTransactionByCommitment(commitmentHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { commitments: commitmentHash, mempool: true };
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+}
+
 // function to return a transaction that holds a commitment with a specific commitment hash
 // and is part of an L2 block
 export async function getL2TransactionByNullifier(
@@ -512,6 +527,13 @@ export async function getL2TransactionByNullifier(
         nullifiers: nullifierHash,
         blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
       };
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+}
+
+export async function getL2MempoolTransactionByNullifier(nullifierHash) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { nullifiers: nullifierHash, mempool: true };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 

@@ -85,6 +85,7 @@ services:
     build:
       dockerfile: docker/hosted-utils-api-server.Dockerfile
       context: ..
+    image: ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server:latest
     depends_on:
       - worker
     ports:
@@ -119,6 +120,7 @@ services:
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
       IS_CHALLENGER: ${IS_CHALLENGER:-true}
+      PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
       MAX_BLOCK_SIZE: ${MAX_BLOCK_SIZE:-50000}
     command: ['npm', 'run', 'start']
 

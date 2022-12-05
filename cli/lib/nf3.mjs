@@ -1095,6 +1095,16 @@ class Nf3 {
   }
 
   /**
+    Get rotate proposer blocks
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum call.
+    */
+  async getRotateProposerBlocks() {
+    return this.stateContract.methods.getRotateProposerBlocks().call();
+  }
+
+  /**
     Starts a Proposer that listens for blocks and submits block proposal
     transactions to the blockchain.
     @method
@@ -1513,6 +1523,56 @@ class Nf3 {
     });
     const txDataToSign = res.data;
     return this.submitTransaction(txDataToSign, this.x509ContractAddress);
+  }
+
+  /**
+    Get proposerStartBlock
+    @method
+    @async
+    @returns {uint256} A promise that resolves to the Ethereum call.
+    */
+  async proposerStartBlock() {
+    return this.stateContract.methods.proposerStartBlock().call();
+  }
+
+  /**
+  getMaxProposers
+  @method
+  @async
+  @returns {uint256} A promise that resolves to the Ethereum call.
+  */
+  async getMaxProposers() {
+    return this.stateContract.methods.getMaxProposers().call();
+  }
+
+  /**
+  get spanProposersList
+  @method
+  @async
+  @returns {uint256} A promise that resolves to the Ethereum call.
+  */
+  async spanProposersList(sprint) {
+    return this.stateContract.methods.spanProposersList(sprint).call();
+  }
+
+  /**
+  get currentSprint
+  @method
+  @async
+  @returns {uint256} A promise that resolves to the Ethereum call.
+  */
+  async currentSprint() {
+    return this.stateContract.methods.currentSprint().call();
+  }
+
+  /**
+  getNumProposers
+  @method
+  @async
+  @returns {uint256} A promise that resolves to the Ethereum call.
+  */
+  async getNumProposers() {
+    return this.stateContract.methods.getNumProposers().call();
   }
 }
 

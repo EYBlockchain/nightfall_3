@@ -266,7 +266,7 @@ export async function createChallenge(block, transactions, err) {
       // may be this optimist never ran as proposer
       // or more likely since this tx is bad tx from a bad proposer.
       // prposer hosted in this optimist never build any block with this bad tx in it
-      if (transactionSiblingPath === undefined) {
+      if (!transactionSiblingPath) {
         await Block.calcTransactionHashesRoot(transactions);
         transactionSiblingPath = (
           await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
@@ -299,7 +299,7 @@ export async function createChallenge(block, transactions, err) {
       // may be this optimist never ran as proposer
       // or more likely since this tx is bad tx from a bad proposer.
       // prposer hosted in this optimist never build any block with this bad tx in it
-      if (transactionSiblingPath === undefined) {
+      if (!transactionSiblingPath) {
         await Block.calcTransactionHashesRoot(transactions);
         transactionSiblingPath = (
           await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)

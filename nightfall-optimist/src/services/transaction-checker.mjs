@@ -11,6 +11,7 @@ import config from 'config';
 import gen from 'general-number';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import * as snarkjs from 'snarkjs';
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import {
@@ -19,6 +20,8 @@ import {
   getL2TransactionByNullifier,
   getTransactionHashSiblingInfo,
   getLatestBlockInfo,
+  getL2MempoolTransactionByCommitment,
+  getL2MempoolTransactionByNullifier,
 } from './database.mjs';
 
 const { generalise } = gen;
@@ -126,6 +129,8 @@ async function verifyProof(transaction) {
   const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
   const vkArray = await stateInstance.methods.getVerificationKey(transaction.circuitHash).call();
 
+  if (vkArray.length < 33) throw new TransactionError('The proof did not verify', 2);
+
   const historicRoots = await Promise.all(
     Array.from({ length: transaction.nullifiers.length }, () => 0).map((value, index) => {
       if (transaction.nullifiers[index] === ZERO) return { root: ZERO };
@@ -134,6 +139,11 @@ async function verifyProof(transaction) {
       );
     }),
   );
+
+  logger.debug({
+    msg: 'The historic roots are the following',
+    historicRoots: historicRoots.map(h => h.root),
+  });
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
@@ -169,12 +179,43 @@ async function verifyProof(transaction) {
 }
 
 async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
+  logger.info({ msg: 'Verifying the following transaction', transaction });
   return Promise.all([
     checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
     checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumberL2),
     checkHistoricRootBlockNumber(transaction),
     verifyProof(transaction),
   ]);
+}
+
+export async function checkCommitments(transaction) {
+  for (const commitment of transaction.commitments) {
+    if (commitment !== ZERO) {
+      const orignalTransaction = await getL2MempoolTransactionByCommitment(commitment);
+      // compare provided proposer fee in both transactions(duplicate and original)
+      if (
+        orignalTransaction &&
+        generalise(orignalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+      )
+        return false;
+    }
+  }
+  return true;
+}
+
+export async function checkNullifiers(transaction) {
+  for (const nullifier of transaction.nullifiers) {
+    if (nullifier !== ZERO) {
+      const orignalTransaction = await getL2MempoolTransactionByNullifier(nullifier);
+      // compare provided proposer fee in both transactions(duplicate and original)
+      if (
+        orignalTransaction &&
+        generalise(orignalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+      )
+        return false;
+    }
+  }
+  return true;
 }
 
 export default checkTransaction;

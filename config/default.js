@@ -6,8 +6,8 @@ function configureAWSBucket() {
 }
 
 module.exports = {
-  COMMITMENTS_DB: 'nightfall_commitments',
-  OPTIMIST_DB: 'optimist_data',
+  COMMITMENTS_DB: process.env.COMMITMENTS_DB || 'nightfall_commitments',
+  OPTIMIST_DB: process.env.OPTIMIST_DB || 'optimist_data',
   PROPOSER_COLLECTION: 'proposers',
   CHALLENGER_COLLECTION: 'challengers',
   TRANSACTIONS_COLLECTION: 'transactions',
@@ -36,7 +36,7 @@ module.exports = {
   LOG_HTTP_PAYLOAD_ENABLED: process.env.LOG_HTTP_PAYLOAD_ENABLED || 'true',
   LOG_HTTP_FULL_DATA: process.env.LOG_HTTP_FULL_DATA || 'false',
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
-  PROTOCOL: 'http://',
+  PROTOCOL: process.env.PROTOCOL || 'http://', // connect to circom worker microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
   CIRCOM_WORKER_HOST: process.env.CIRCOM_WORKER_HOST || 'worker',
@@ -136,6 +136,7 @@ module.exports = {
     DEFAULT_CIRCUIT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
     DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
   },
+  PROPOSER_MAX_BLOCK_PERIOD_MILIS: Number(process.env.PROPOSER_MAX_BLOCK_PERIOD_MILIS) || 0,
   ENVIRONMENTS: {
     mainnet: {
       name: 'Mainnet',
@@ -170,6 +171,8 @@ module.exports = {
         : 'http://localhost:8092',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
+      adversarialClientApiUrl: 'http://localhost:8093',
+      adversarialClientWsUrl: 'ws://localhost:8094',
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
@@ -196,8 +199,10 @@ module.exports = {
       optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
       web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}${process.env.BLOCKCHAIN_PATH}`,
-      adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
-      adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      adversarialOptimistApiUrl: `https://${process.env.ADVERSARY_OPTIMIST_HTTP_HOST}`,
+      adversarialOptimistWsUrl: `wss://${process.env.ADVERSARY_OPTIMIST_HOST}`,
+      adversarialClientApiUrl: `https://${process.env.ADVERSARY_CLIENT_HTTP_HOST}`,
+      adversarialClientWsUrl: `wss://${process.env.ADVERSARY_CLIENT_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
       CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
@@ -219,6 +224,8 @@ module.exports = {
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
       web3WsUrl: `ws://localhost:10002/ws`,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
     mumbai: {
       name: 'mumbai',
@@ -276,18 +283,31 @@ module.exports = {
     gasCosts: 80000000000000000,
     fee: 1,
     ROTATE_PROPOSER_BLOCKS: 20,
+    clientApiUrls: {
+      client1: process.env.CLIENT1_API_URL || 'http://localhost:8083',
+      client2: process.env.CLIENT2_API_URL || 'http://localhost:8086',
+    },
+    optimistApiUrls: {
+      optimist1: process.env.OPTIMIST1_API_URL || 'http://localhost:9091',
+      optimist2: process.env.OPTIMIST2_API_URL || 'http://localhost:9093',
+    },
+    optimistWsUrls: {
+      optimist1: process.env.OPTIMIST1_WS_URL || 'ws://localhost:9090',
+      optimist2: process.env.OPTIMIST2_WS_URL || 'ws://localhost:9092',
+    },
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+        '0x955ff4fac3c1ae8a1b7b9ff197476de1f93e9f0bf5f1c21ff16456e3c84da587',
       user1:
         process.env.USER1_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
       user2:
         process.env.USER2_KEY ||
-        '0x955ff4fac3c1ae8a1b7b9ff197476de1f93e9f0bf5f1c21ff16456e3c84da587',
+        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
       proposer1:
         process.env.BOOT_PROPOSER_KEY ||
+        process.env.PROPOSER_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
       proposer2:
         process.env.PROPOSER2_KEY ||
@@ -306,9 +326,9 @@ module.exports = {
         '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
     },
     addresses: {
-      walletTest: process.env.WALLET_TEST_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+      walletTest: process.env.WALLET_TEST_ADDRESS || '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
       user1: process.env.USER1_ADDRESS || '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
-      user2: process.env.USER2_ADDRESS || '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
+      user2: process.env.USER2_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
       proposer1: process.env.BOOT_PROPOSER_ADDRESS || '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
       proposer2: process.env.PROPOSER2_ADDRESS || '0xa12D5C4921518980c57Ce3fFe275593e4BAB9211',
       proposer3: process.env.PROPOSER3_ADDRESS || '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8',
@@ -574,4 +594,6 @@ module.exports = {
     SUBMIT_TRANSACTION:
       '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
   },
+  TIMER_CHANGE_PROPOSER_SECOND: process.env.TIMER_CHANGE_PROPOSER_SECOND || 30,
+  MAX_ROTATE_TIMES: process.env.MAX_ROTATE_TIMES || 2,
 };

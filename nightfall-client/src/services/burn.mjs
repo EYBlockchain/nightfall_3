@@ -106,7 +106,7 @@ async function burn(burnParams) {
 
     const { proof } = res.data;
 
-    const optimisticBurnTransaction = new Transaction({
+    const transaction = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
@@ -120,16 +120,14 @@ async function burn(burnParams) {
 
     logger.debug({
       msg: 'Client made transaction',
-      transaction: JSON.stringify(optimisticBurnTransaction, null, 2),
+      transaction: JSON.stringify(transaction, null, 2),
     });
 
-    return submitTransaction(
-      optimisticBurnTransaction,
-      commitmentsInfo,
-      rootKey,
-      shieldContractInstance,
-      true,
-    );
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
+      .encodeABI();
+    await submitTransaction(transaction, commitmentsInfo, rootKey, true);
+    return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
     throw new Error(error);

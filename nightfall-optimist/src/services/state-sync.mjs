@@ -22,7 +22,12 @@ import { stopMakingChallenges, startMakingChallenges } from './challenges.mjs';
 
 // TODO can we remove these await-in-loops?
 
-const { SHIELD_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = constants;
+const {
+  SHIELD_CONTRACT_NAME,
+  PROPOSERS_CONTRACT_NAME,
+  STATE_CONTRACT_NAME,
+  CHALLENGES_CONTRACT_NAME,
+} = constants;
 
 const syncState = async (
   proposer,
@@ -32,7 +37,8 @@ const syncState = async (
 ) => {
   const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME); // NewCurrentProposer (register)
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME); // TransactionSubmitted
-  const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // Rollback, NewCurrentProposer, BlockProposed
+  const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // NewCurrentProposer, BlockProposed
+  const challengesContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME); // NewCurrentProposer, BlockProposed
 
   const pastProposerEvents = await proposersContractInstance.getPastEvents(eventFilter, {
     fromBlock,
@@ -47,10 +53,16 @@ const syncState = async (
     toBlock,
   });
 
+  const pastChallengeEvents = await challengesContractInstance.getPastEvents(eventFilter, {
+    fromBlock,
+    toBlock,
+  });
+
   // Put all events together and sort chronologically as they appear on Ethereum
   const splicedList = pastProposerEvents
     .concat(pastShieldEvents)
     .concat(pastStateEvents)
+    .concat(pastChallengeEvents)
     .sort((a, b) => a.blockNumber - b.blockNumber);
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];

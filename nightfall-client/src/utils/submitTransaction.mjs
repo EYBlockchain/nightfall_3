@@ -1,5 +1,4 @@
 import axios from 'axios';
-import Transaction from '@polygon-nightfall/common-files/classes/transaction.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
@@ -11,13 +10,7 @@ const { STATE_CONTRACT_NAME } = constants;
 const NEXT_N_PROPOSERS = 3;
 
 // eslint-disable-next-line import/prefer-default-export
-export const submitTransaction = async (
-  optimisticTransaction,
-  commitmentsInfo,
-  rootKey,
-  shieldContractInstance,
-  offchain,
-) => {
+export const submitTransaction = async (transaction, commitmentsInfo, rootKey, offchain) => {
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
   // Store new commitments that are ours.
@@ -26,12 +19,10 @@ export const submitTransaction = async (
     .map(c => storeCommitment(c, nullifierKey));
 
   const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
-    markNullified(c, optimisticTransaction),
+    markNullified(c, transaction),
   );
 
   await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
-
-  const returnObj = { transaction: optimisticTransaction };
 
   if (offchain) {
     // dig up connection peers
@@ -60,15 +51,10 @@ export const submitTransaction = async (
         );
         return axios.post(
           `${peerList[address]}/proposer/offchain-transaction`,
-          { transaction: optimisticTransaction },
+          { transaction },
           { timeout: 3600000 },
         );
       }),
     );
-  } else {
-    returnObj.rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(Transaction.buildSolidityStruct(optimisticTransaction))
-      .encodeABI();
   }
-  return returnObj;
 };

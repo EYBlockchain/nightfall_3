@@ -14,8 +14,6 @@ import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/util
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import crypto from 'crypto';
 
-const web3 = Web3.connection();
-
 const fsPromises = fs.promises;
 
 /**
@@ -169,16 +167,7 @@ async function setupCircuits() {
       // on networks like Edge, there's no account management so we need to encodeABI()
       // since methods like send() don't work
       if (config.ETH_PRIVATE_KEY) {
-        const tx = {
-          from: process.env.FROM_ADDRESS,
-          to: keyRegistry.options.address,
-          data: call.encodeABI(),
-          gas: config.WEB3_OPTIONS.gas,
-          gasPrice: config.WEB3_OPTIONS.gasPrice,
-        };
-
-        const signedTx = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
-        await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        await Web3.submitRawTransaction(call.encodeABI(), keyRegistry.options.address);
       } else {
         call.send();
       }
@@ -199,16 +188,7 @@ async function setupCircuits() {
       // on networks like Edge, there's no account management so we need to encodeABI()
       // since methods like send() don't work
       if (config.ETH_PRIVATE_KEY) {
-        const tx = {
-          from: process.env.FROM_ADDRESS,
-          to: keyRegistry.options.address,
-          data: call.encodeABI(),
-          gas: config.WEB3_OPTIONS.gas,
-          gasPrice: config.WEB3_OPTIONS.gasPrice,
-        };
-
-        const signedTx = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
-        await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+        await Web3.submitRawTransaction(call.encodeABI(), keyRegistry.options.address);
       } else {
         call.send();
       }

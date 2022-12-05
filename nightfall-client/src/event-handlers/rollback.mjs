@@ -35,9 +35,12 @@ async function rollbackEventHandler(data) {
   const commitments = await getCommitmentsFromBlockNumberL2(Number(blockNumberL2) + 1);
 
   // Deposit transactions should not be dropped because they are always valid even post-rollback.
-  const nonDeposit = commitments.filter(c => c.isDeposited === false).map(c => c._id);
+  const nonDepositCommitments = commitments.filter(c => c.isDeposited === false).map(c => c._id);
 
-  logger.debug({ nonDeposit });
+  logger.debug({
+    msg: 'The commitments to be rollbacked are the following',
+    nonDepositCommitments,
+  });
 
   /*
    Any commitments that have been nullified and are now no longer spent because
@@ -48,7 +51,7 @@ async function rollbackEventHandler(data) {
     clearNullifiedResult,
   });
   logger.debug({
-    msg: 'Rollback removed nullfiers',
+    msg: 'Rollback removed nullifiers',
     total: clearNullifiedResult?.result?.nModified ?? 0,
   });
 
@@ -66,7 +69,7 @@ async function rollbackEventHandler(data) {
 
   await Promise.all([
     deleteTreeByBlockNumberL2(Number(blockNumberL2)),
-    deleteCommitments(nonDeposit),
+    deleteCommitments(nonDepositCommitments),
     deleteBlocksByBlockNumberL2(Number(blockNumberL2)),
     deleteTransactionsByTransactionHashes(txsToDelete),
   ]);
