@@ -281,7 +281,7 @@ describe('ERC20 tests', () => {
         expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
       } else {
         logger.info('Not using a time-jump capable test client so this test is skipped');
-        this();
+        this.skip();
       }
     });
 
@@ -525,7 +525,7 @@ describe('ERC20 tests', () => {
         }
       } else {
         console.log('Not using a time-jump capable test client so this test is skipped');
-        this();
+        this.skip();
       }
     });
   });
