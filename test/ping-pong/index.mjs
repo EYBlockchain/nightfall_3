@@ -4,7 +4,6 @@ Module that runs up as a user
 
 /* eslint-disable no-await-in-loop */
 
-// import config from 'config';
 import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
@@ -30,22 +29,15 @@ export const getStakeAccount = async proposer => {
   return stakeAccount;
 };
 
-const getRotateProposerBlocks = async () => {
-  const rotateProposerBlocks = await stateContract.methods.getRotateProposerBlocks().call();
-  return rotateProposerBlocks;
-};
-
-const makeBlockAndWaitForEmptyMempool = async optimistUrls => {
-  const currentProposer = await getCurrentProposer();
-  console.log('CURRENT PROPOSER', currentProposer);
+const makeBlockAndWait = async (optimistUrls, currentProposer) => {
   const url = optimistUrls.find(
     // eslint-disable-next-line no-loop-func
     o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
   )?.optimistUrl;
 
   if (url) {
-    let res = await axios.get(`${url}/proposer/mempool`);
-    while (res.data.result.length > 0) {
+    const res = await axios.get(`${url}/proposer/mempool`);
+    if (res.data.result.length > 0) {
       console.log(
         ` *** ${
           res.data.result.length
@@ -54,14 +46,13 @@ const makeBlockAndWaitForEmptyMempool = async optimistUrls => {
       if (res.data.result.length > 0) {
         console.log('     Make block...');
         await axios.get(`${url}/block/make-now`);
-        console.log('     Waiting for block to be created');
-        await new Promise(resolve => setTimeout(resolve, 20000));
-        res = await axios.get(`${url}/proposer/mempool`);
       }
     }
   } else {
     console.log('This current proposer does not have optimist url defined in the compose yml file');
   }
+  console.log('     Waiting some time');
+  await new Promise(resolve => setTimeout(resolve, 20000));
 };
 
 /**
@@ -244,21 +235,21 @@ export async function setParametersConfig(nf3User) {
 /**
   Proposer test for rotation of the proposers and making blocks
 */
-export async function proposerRotation(optimistUrls, proposersStats, nf3Proposer) {
+export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
   console.log('OPTIMISTURLS', optimistUrls);
 
   try {
     const stateAddress = stateContract.options.address;
-    const rotateProposerBlocks = await getRotateProposerBlocks();
-    console.log('ROTATE PROPOSER BLOCKS: ', rotateProposerBlocks);
     const proposersBlocks = [];
 
     let currentProposer = await getCurrentProposer();
+    let currentSprint;
+    let stakeAccount;
     // eslint-disable-next-line no-param-reassign
     proposersStats.proposersBlocks = proposersBlocks;
     // eslint-disable-next-line no-param-reassign
     proposersStats.sprints = 0;
-    nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', log => {
+    nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', async log => {
       let proposerBlock = proposersBlocks.find(
         // eslint-disable-next-line no-loop-func
         p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
@@ -280,6 +271,15 @@ export async function proposerRotation(optimistUrls, proposersStats, nf3Proposer
           case topicEventMapping.TransactionSubmitted:
             break;
           case topicEventMapping.NewCurrentProposer:
+            currentSprint = await getCurrentSprint();
+            // eslint-disable-next-line no-param-reassign
+            proposersStats.sprints++;
+            currentProposer = await getCurrentProposer();
+            stakeAccount = await getStakeAccount(currentProposer.thisAddress);
+            console.log(
+              `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress}, Stake account:  ]`,
+              stakeAccount,
+            );
             break;
           case topicEventMapping.Rollback:
             console.log('ROLLBACK!!!!!!!!!!!!!!!!!!!!!!!');
@@ -297,29 +297,8 @@ export async function proposerRotation(optimistUrls, proposersStats, nf3Proposer
     // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
-        // eslint-disable-next-line no-await-in-loop
-        const currentSprint = await getCurrentSprint();
-        // eslint-disable-next-line no-param-reassign
-        proposersStats.sprints++;
-        // eslint-disable-next-line no-await-in-loop
-        currentProposer = await getCurrentProposer();
-        const stakeAccount = await getStakeAccount(currentProposer.thisAddress);
-        console.log(
-          `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress}, Stake account:  ]`,
-          stakeAccount,
-        );
-
-        console.log('     Waiting blocks to rotate current proposer...');
-        const initBlock = await nf3Proposer.web3.eth.getBlockNumber();
-        let currentBlock = initBlock;
-
-        while (currentBlock - initBlock < rotateProposerBlocks) {
-          await new Promise(resolve => setTimeout(resolve, 10000));
-          currentBlock = await nf3Proposer.web3.eth.getBlockNumber();
-        }
-
         if (nf3Proposer.web3WsUrl.includes('localhost')) {
-          await makeBlockAndWaitForEmptyMempool(optimistUrls);
+          await makeBlockAndWait(optimistUrls, currentProposer);
         }
       } catch (err) {
         // containers stopped

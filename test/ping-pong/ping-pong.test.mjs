@@ -7,7 +7,7 @@ import { retrieveL2Balance } from '../utils.mjs';
 // eslint-disable-next-line import/no-unresolved
 import Nf3 from '../adversary/adversary-cli/lib/nf3.mjs';
 import {
-  proposerRotation,
+  proposerStats,
   setParametersConfig,
   getStakeAccount,
   getCurrentProposer,
@@ -23,7 +23,7 @@ const CLIENT2_TX_TYPES_SEQUENCE = process.env.CLIENT2_TX_TYPES_SEQUENCE || 'Vali
 const nf3Users = [];
 let blockStake;
 const listAddresses = [];
-const listTransfersTotal = [];
+const listTransactionsTotal = [];
 const TEST_LENGTH = 4;
 const value = 10;
 let ercAddress;
@@ -203,8 +203,8 @@ const waitForTransactionsCompleted = async () => {
 
   do {
     nTotalTransactions = 0;
-    for (let i = 0; i < listTransfersTotal.length; i++) {
-      nTotalTransactions += listTransfersTotal[i].length;
+    for (let i = 0; i < listTransactionsTotal.length; i++) {
+      nTotalTransactions += listTransactionsTotal[i].length;
     }
     console.log(
       `Waiting for total transactions to be ${TEST_LENGTH * 5 * nf3Users.length}...`,
@@ -213,7 +213,7 @@ const waitForTransactionsCompleted = async () => {
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolving => setTimeout(resolving, 20000));
   } while (nTotalTransactions < TEST_LENGTH * 5 * nf3Users.length);
-  console.log('TRANSACTIONS: ', listTransfersTotal);
+  console.log('TRANSACTIONS: ', listTransactionsTotal);
 };
 
 /**
@@ -226,9 +226,9 @@ const waitForBalanceUpdate = async usersStats => {
   for (let i = 0; i < nf3Users.length; i++) {
     let totalTransferred = 0;
     // eslint-disable-next-line no-loop-func
-    for (let j = 0; j < listTransfersTotal.length; j++) {
+    for (let j = 0; j < listTransactionsTotal.length; j++) {
       // eslint-disable-next-line no-loop-func
-      listTransfersTotal[j].forEach(t => {
+      listTransactionsTotal[j].forEach(t => {
         if (
           t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey &&
           t.type !== 'withdraw' &&
@@ -372,8 +372,8 @@ describe('Ping-pong tests', () => {
         // eslint-disable-next-line no-loop-func
         address => address !== nf3Users[i].zkpKeys.compressedZkpPublicKey,
       );
-      const listTransfersUser = []; // transfers done in the simple user test for this user
-      listTransfersTotal.push(listTransfersUser);
+      const listTransactionsUser = []; // transfers done in the simple user test for this user
+      listTransactionsTotal.push(listTransactionsUser);
       simpleUserTest(
         TEST_LENGTH,
         value,
@@ -381,12 +381,12 @@ describe('Ping-pong tests', () => {
         ercAddress,
         nf3Users[i],
         listAddressesToSend,
-        listTransfersUser,
+        listTransactionsUser,
       );
     }
 
     // user that will rotate proposers and get block statistics
-    proposerRotation(optimistUrls, proposersStats, nf3User);
+    proposerStats(optimistUrls, proposersStats, nf3User);
 
     // wait for all the user transactions to be completed
     await waitForTransactionsCompleted();
