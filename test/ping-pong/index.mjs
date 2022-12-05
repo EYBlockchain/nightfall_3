@@ -29,7 +29,7 @@ export const getStakeAccount = async proposer => {
   return stakeAccount;
 };
 
-const makeBlockAndWait = async (optimistUrls, currentProposer) => {
+const makeBlock = async (optimistUrls, currentProposer) => {
   const url = optimistUrls.find(
     // eslint-disable-next-line no-loop-func
     o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
@@ -51,8 +51,6 @@ const makeBlockAndWait = async (optimistUrls, currentProposer) => {
   } else {
     console.log('This current proposer does not have optimist url defined in the compose yml file');
   }
-  console.log('     Waiting some time');
-  await new Promise(resolve => setTimeout(resolve, 20000));
 };
 
 /**
@@ -298,7 +296,7 @@ export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
     while (true) {
       try {
         if (nf3Proposer.web3WsUrl.includes('localhost')) {
-          await makeBlockAndWait(optimistUrls, currentProposer);
+          await makeBlock(optimistUrls, currentProposer);
         }
       } catch (err) {
         // containers stopped
@@ -310,6 +308,8 @@ export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
         console.log(err);
         await new Promise(resolve => setTimeout(resolve, 10000));
       }
+      console.log('     Waiting some time');
+      await new Promise(resolve => setTimeout(resolve, 30000));
     }
   } catch (e) {
     console.log('ERROR!!!!', e);
