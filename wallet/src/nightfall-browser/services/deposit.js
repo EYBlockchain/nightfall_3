@@ -11,6 +11,7 @@
 
 import gen from 'general-number';
 import computeCircuitInputs from '@Nightfall/utils/computeCircuitInputs';
+import getCommitmentInfo from '@Nightfall/utils/getCommitmentInfo';
 import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
@@ -24,14 +25,15 @@ import { checkIndexDBForCircuit, getLatestTree, getMaxBlock, getStoreCircuit } f
 const { VK_IDS } = global.config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.nightfallConstants;
 const { generalise } = gen;
-const circuitName = 'deposit';
+let circuitName = 'depositfee';
 
 async function deposit(items, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
-  const { tokenId, value, fee, compressedZkpPublicKey, nullifierKey } = generalise(items);
+  const { tokenId, value, fee, rootKey } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
   const shieldContractInstance = await getContractInstance(
@@ -44,22 +46,46 @@ async function deposit(items, shieldContractAddress) {
   );
 
   let valueNewCommitment = value;
+
+  let commitmentsInfo = {
+    oldCommitments: [],
+    nullifiers: [],
+    newCommitments: [],
+    localSiblingPaths: [],
+    leafIndices: [],
+    blockNumberL2s: [],
+    roots: [],
+    salts: [],
+  };
+
   if (fee.bigInt > 0) {
     if (maticAddress.hex(32) === ercAddress.hex(32)) {
+      if (value.bigInt < fee.bigInt) {
+        throw new Error('Value deposited needs to be bigger than the fee');
+      }
       valueNewCommitment = generalise(value.bigInt - fee.bigInt);
+      circuitName = 'deposit';
     } else {
-      throw new Error('When depositing, fee can only be paid in L2 if transferring MATIC');
+      commitmentsInfo = await getCommitmentInfo({
+        totalValueToSend: 0n,
+        fee,
+        ercAddress,
+        maticAddress,
+        rootKey,
+        maxNullifiers: VK_IDS[circuitName].numberNullifiers,
+        maxNonFeeNullifiers: 0,
+      });
     }
+  } else {
+    circuitName = 'deposit';
   }
-
-  if (valueNewCommitment.bigInt < 0) throw new Error('Invalid value and fee');
 
   const lastTree = await getLatestTree();
   const lastBlockNumber = await getMaxBlock();
 
   await confirmBlock(lastBlockNumber, lastTree);
 
-  const circuitHashData = await getStoreCircuit(`deposit-hash`);
+  const circuitHashData = await getStoreCircuit(`${circuitName}-hash`);
   const circuitHash = circuitHashData.data;
 
   const salt = await randValueLT(BN128_GROUP_ORDER);
@@ -71,32 +97,49 @@ async function deposit(items, shieldContractAddress) {
     salt,
   });
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
+
+  // Mark the commitment as deposited
+  commitment.isDeposited = true;
+
+  // Prepend the new tokenised commitment
+  commitmentsInfo.newCommitments = [commitment, ...commitmentsInfo.newCommitments];
+
   // now we can compute a Witness so that we can generate the proof
   const publicData = new Transaction({
     fee,
+    historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
     circuitHash,
     tokenType: items.tokenType,
     tokenId,
     value,
     ercAddress,
-    commitments: [commitment],
-    numberNullifiers: VK_IDS.deposit.numberNullifiers,
-    numberCommitments: VK_IDS.deposit.numberCommitments,
+    commitments: commitmentsInfo.newCommitments,
+    nullifiers: commitmentsInfo.nullifiers,
+    numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+    numberCommitments: VK_IDS[circuitName].numberCommitments,
     isOnlyL2: false,
   });
 
   const privateData = {
-    newCommitmentPreimage: [{ value: valueNewCommitment, salt }],
-    recipientPublicKeys: [zkpPublicKey],
+    rootKey,
+    oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+    orders: commitmentsInfo.leafIndices,
+    newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
   };
 
   const witness = computeCircuitInputs(
     publicData,
     privateData,
-    [],
+    commitmentsInfo.roots,
     maticAddress,
-    VK_IDS.deposit.numberNullifiers,
-    VK_IDS.deposit.numberCommitments,
+    VK_IDS[circuitName].numberNullifiers,
+    VK_IDS[circuitName].numberCommitments,
   );
 
   try {
@@ -116,32 +159,29 @@ async function deposit(items, shieldContractAddress) {
     );
 
     // next we need to compute the optimistic Transaction object
-    const optimisticDepositTransaction = new Transaction({
+    const transaction = new Transaction({
       fee,
+      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
       tokenType: items.tokenType,
       tokenId,
       value,
       ercAddress,
-      commitments: [commitment],
+      commitments: commitmentsInfo.newCommitments,
+      nullifiers: commitmentsInfo.nullifiers,
       proof,
-      numberNullifiers: VK_IDS.deposit.numberNullifiers,
-      numberCommitments: VK_IDS.deposit.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: false,
     });
-    logger.trace(
-      `Optimistic deposit transaction ${JSON.stringify(optimisticDepositTransaction, null, 2)}`,
-    );
+    logger.trace(`Optimistic deposit transaction ${JSON.stringify(transaction, null, 2)}`);
     // and then we can create an unsigned blockchain transaction
     const rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
-
-    // store the commitment on successful computation of the transaction
-    commitment.isDeposited = true;
     await storeCommitment(commitment, nullifierKey);
 
-    return { rawTransaction, transaction: optimisticDepositTransaction };
+    return { rawTransaction, transaction };
   } catch (err) {
     console.log('ERR', err);
     throw new Error(err); // let the caller handle the error

@@ -19,7 +19,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // global state variables
-    mapping(bytes32 => TransactionInfo) public txInfo;
+    mapping(bytes32 => bool) public isTransactionEscrowed;
     BlockData[] public blockHashes; // array containing mainly blockHashes
     mapping(address => FeeTokens) public pendingWithdrawalsFees;
     mapping(address => LinkedAddress) public proposers;
@@ -96,29 +96,37 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         onlyCurrentProposer
         whenNotPaused
     {
-        require(Utils.getBlockNumberL2(b.packedInfo) == blockHashes.length, 'State: Block out of order'); // this will fail if a tx is re-mined out of order due to a chain reorg.
+        require(t.length >= 1, 'State: Block must contain at least one transaction');
+        require(
+            Utils.getBlockNumberL2(b.packedInfo) == blockHashes.length,
+            'State: Block out of order'
+        ); // this will fail if a tx is re-mined out of order due to a chain reorg.
         if (blockHashes.length != 0) {
             require(
                 b.previousBlockHash == blockHashes[blockHashes.length - 1].blockHash,
                 'State: Block flawed or out of order'
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
         }
-        require(Utils.getProposer(b.packedInfo) == msg.sender, 'State: The sender is not the proposer');
+        require(
+            Utils.getProposer(b.packedInfo) == msg.sender,
+            'State: The sender is not the proposer'
+        );
         require(
             stakeAccounts[msg.sender].amount + msg.value >= blockStake,
             'State: Proposer does not have enough funds staked'
         );
-        stakeAccounts[msg.sender].amount = stakeAccounts[msg.sender].amount + uint112(msg.value) - blockStake;
+        stakeAccounts[msg.sender].amount =
+            stakeAccounts[msg.sender].amount +
+            uint112(msg.value) -
+            blockStake;
         stakeAccounts[msg.sender].challengeLocked += blockStake;
         stakeAccounts[msg.sender].time = 0;
 
-        uint120 feesMatic = 0;
-        uint120 feesEth = 0;
+        uint248 feesMatic = 0;
 
         bytes32 blockHash;
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
         uint256 maxBlockSize = MAX_BLOCK_SIZE;
-
 
         assembly {
             //Function that calculates the height of the Merkle Tree
@@ -132,7 +140,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                     _height := add(_height, 1)
                 }
             }
-		
+
             if lt(maxBlockSize, sub(calldatasize(), add(t.offset, calldataload(t.offset)))) {
                 mstore(0, 0x41c918e600000000000000000000000000000000000000000000000000000000) //Custom error InvalidBlockSize
                 revert(0, 4)
@@ -184,20 +192,21 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 )
 
                 // We need to check if circuit requires to escrow funds
-                mstore(x, shr(216,calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))))))
+                mstore(
+                    x,
+                    shr(216, calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i))))))
+                )
                 mstore(add(x, 0x20), circuitInfo.slot)
-                
-                let isEscrowRequired := shr(8, sload(keccak256(x, mul(0x20, 2))))
-                let fee := shr(160,shl(40,calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i)))))))
 
-                switch isEscrowRequired
-                case true {
+                let isEscrowRequired := shr(8, sload(keccak256(x, mul(0x20, 2))))
+
+                if isEscrowRequired {
                     mstore(x, mload(add(transactionHashesPos, mul(0x20, i))))
-                    mstore(add(x, 0x20), txInfo.slot)
-                    let transactionInfo := sload(keccak256(x, mul(0x20, 2)))
-                    
+                    mstore(add(x, 0x20), isTransactionEscrowed.slot)
+                    let isTxEscrowed := sload(keccak256(x, mul(0x20, 2)))
+
                     //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
-                    if iszero(shr(248,transactionInfo)) {
+                    if iszero(isTxEscrowed) {
                         mstore(
                             0,
                             0xd96541f500000000000000000000000000000000000000000000000000000000 //Custom error DepositNotEscrowed
@@ -205,25 +214,13 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                         mstore(0x04, mload(add(transactionHashesPos, mul(0x20, i))))
                         revert(0, 36)
                     }
-            
-                    // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
-                    if iszero(fee) {
-                        feesEth := add(feesEth, shr(8,shl(8,transactionInfo)))
-                    }
-                }
-                case false {
-                    // If the transaction fee is zero, check if there was any fee paid in eth and update the ETH fee payments
-                    if iszero(fee) {
-                        mstore(x, mload(add(transactionHashesPos, mul(0x20, i))))
-                        mstore(add(x, 0x20), txInfo.slot)
-                        feesEth := add(feesEth, shr(8,shl(8,sload(keccak256(x, mul(0x20, 2))))))
-                    }
                 }
 
-                // If the transaction fee is not zero, update the MATIC fee payments
-                if eq(iszero(fee),0) {
-                    feesMatic := add(feesMatic, fee)
-                }
+                let fee := shr(
+                    160,
+                    shl(40, calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i))))))
+                )
+                feesMatic := add(feesMatic, fee)
             }
 
             //Calculate the root of the transactions merkle tree
@@ -271,8 +268,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
 
         // Store block fees
         blockInfo[blockHash].feesMatic = feesMatic;
-        blockInfo[blockHash].feesEth = feesEth;
-        
+
         // blockHash is hash of all block data and hash of all the transactions data.
         blockHashes.push(
             BlockData({
@@ -288,9 +284,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         emit BlockProposed();
     }
 
-    function setTransactionInfo(bytes32 transactionHash, bool isEscrowed, uint248 ethFee) public onlyShield {
-        txInfo[transactionHash].isEscrowed = isEscrowed;
-        txInfo[transactionHash].ethFee = ethFee;
+    function setTransactionInfo(bytes32 transactionHash, bool isEscrowed) public onlyShield {
+        isTransactionEscrowed[transactionHash] = isEscrowed;
     }
 
     function setProposer(address addr, LinkedAddress calldata proposer) public onlyProposer {
@@ -310,7 +305,6 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     }
 
     function resetFeeBookBlocksInfo(bytes32 blockHash) public onlyShield {
-        blockInfo[blockHash].feesEth = 0;
         blockInfo[blockHash].feesMatic = 0;
     }
 
@@ -335,11 +329,12 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         uint256 feesEth,
         uint256 feesMatic
     ) public {
-        require(msg.sender == proposersAddress ||
-                msg.sender == shieldAddress,
-            'State: Not authorised to call this function');
+        require(
+            msg.sender == proposersAddress || msg.sender == shieldAddress,
+            'State: Not authorised to call this function'
+        );
 
-        pendingWithdrawalsFees[addr] = FeeTokens(uint120(feesEth), uint120(feesMatic)); 
+        pendingWithdrawalsFees[addr] = FeeTokens(feesEth, feesMatic);
     }
 
     function withdraw() external nonReentrant whenNotPaused {
@@ -379,9 +374,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     }
 
     function removeProposer(address proposer) public {
-         require(msg.sender == proposersAddress ||
-                msg.sender == challengesAddress,
-            'State: Not authorised to call this function');
+        require(
+            msg.sender == proposersAddress || msg.sender == challengesAddress,
+            'State: Not authorised to call this function'
+        );
         _removeProposer(proposer);
         if (proposer == currentProposer.thisAddress || currentProposer.thisAddress == address(0)) {
             currentProposer = proposers[currentProposer.nextAddress]; // we need to refresh the current proposer before the change
@@ -437,8 +433,6 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         );
     }
 
-   
-
     // Checks if a block is actually referenced in the queue of blocks waiting
     // to go into the Shield state (stops someone challenging with a non-existent
     // block). It also checks if a transaction is contained in a block using its sibling path
@@ -454,7 +448,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
             'State: Transaction hashes root is incorrect'
         );
         bytes32 transactionHash = Utils.hashTransaction(t);
-        require(Utils.checkPath(siblingPath, index, transactionHash), 'State: Transaction does not exist in block');
+        require(
+            Utils.checkPath(siblingPath, index, transactionHash),
+            'State: Transaction does not exist in block'
+        );
         return transactionHash;
     }
 
@@ -466,9 +463,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         uint256 amount,
         uint256 challengeLocked
     ) public {
-         require(msg.sender == proposersAddress ||
-                msg.sender == shieldAddress,
-            'State: Not authorised to call this function');
+        require(
+            msg.sender == proposersAddress || msg.sender == shieldAddress,
+            'State: Not authorised to call this function'
+        );
         stakeAccounts[addr] = TimeLockedStake(uint112(amount), uint112(challengeLocked), 0);
     }
 
@@ -486,7 +484,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     ) public onlyChallenger {
         removeProposer(proposer);
 
-        uint120 rewardedStake = 0;
+        uint256 rewardedStake = 0;
         for (uint256 i = 0; i < badBlocks.length; ++i) {
             TimeLockedStake memory stake = stakeAccounts[badBlocks[i].proposer];
             // Give reward to challenger from the stake locked for challenges
@@ -506,9 +504,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     }
 
     function setBlockStakeWithdrawn(bytes32 blockHash) public {
-         require(msg.sender == challengesAddress ||
-                msg.sender == shieldAddress,
-            'State: Not authorised to call this function');
+        require(
+            msg.sender == challengesAddress || msg.sender == shieldAddress,
+            'State: Not authorised to call this function'
+        );
         blockInfo[blockHash].stakeClaimed = true;
     }
 

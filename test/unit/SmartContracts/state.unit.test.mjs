@@ -677,7 +677,6 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    expect((await state.blockInfo(blockHash)).feesEth).to.equal(10);
     expect((await state.blockInfo(blockHash)).feesMatic).to.equal(1);
 
     const siblingPath = [
@@ -856,7 +855,6 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    expect((await state.blockInfo(blockHash)).feesEth).to.equal(10);
     expect((await state.blockInfo(blockHash)).feesMatic).to.equal(1);
 
     const packedInfoBlock = packBlockInfo(1, addr1.address, 1);

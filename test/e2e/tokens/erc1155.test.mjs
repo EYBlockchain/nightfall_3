@@ -83,6 +83,8 @@ describe('ERC1155 tests', () => {
           e => e.tokenId === generalise(tokenToDeposit).hex(32),
         )?.balance || 0;
 
+      const balanceL2FeeTokenBefore =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       // We create enough transactions to fill blocks full of deposits.
       const res = await nf3Users[0].deposit(
         erc1155Address,
@@ -100,7 +102,11 @@ describe('ERC1155 tests', () => {
           e => e.tokenId === generalise(tokenToDeposit).hex(32),
         )?.balance || 0;
 
+      const balanceL2FeeTokenAfter =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
+
       expect(afterBalance - beforeBalance).to.be.equal(transferValue);
+      expect(balanceL2FeeTokenAfter - balanceL2FeeTokenBefore).to.be.equal(-fee);
     });
   });
 

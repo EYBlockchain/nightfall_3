@@ -1,6 +1,7 @@
 import axios from 'axios';
 import fs from 'fs';
 import config from 'config';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import downloadFile from '@polygon-nightfall/common-files/utils/httputils.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import app from './app.mjs';
@@ -10,6 +11,8 @@ import queues from './queues/index.mjs';
 const {
   DEPLOYMENT_FILES_URL: { DEFAULT_CIRCUIT_FILES_URL },
 } = config;
+
+const { DEPOSIT, DEPOSITFEE, TRANSFER, BURN, TOKENISE, WITHDRAW } = constants;
 
 const { ETH_NETWORK, CIRCUIT_FILES_URL } = process.env;
 
@@ -32,7 +35,7 @@ const checkCircuitsOutput = async () => {
       : `${DEFAULT_CIRCUIT_FILES_URL}/${env}`;
     const url = `${baseUrl}/proving_files/hash.txt`;
     const outputPath = `./output`;
-    const circuits = ['deposit', 'transfer', 'withdraw', 'burn', 'tokenise'];
+    const circuits = [DEPOSIT, DEPOSITFEE, TRANSFER, WITHDRAW, BURN, TOKENISE];
     const res = await axios.get(url); // get all circuit files
     const files = res.data.split('\n');
 

@@ -3,16 +3,19 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { markNullified, storeCommitment } from '../services/commitment-storage.mjs';
-import { ZkpKeys } from '../services/keys.mjs';
 
 const { STATE_CONTRACT_NAME } = constants;
 
 const NEXT_N_PROPOSERS = 3;
 
 // eslint-disable-next-line import/prefer-default-export
-export const submitTransaction = async (transaction, commitmentsInfo, rootKey, offchain) => {
-  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
-
+export const submitTransaction = async (
+  transaction,
+  commitmentsInfo,
+  compressedZkpPublicKey,
+  nullifierKey,
+  offchain,
+) => {
   // Store new commitments that are ours.
   const storeNewCommitments = commitmentsInfo.newCommitments
     .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))

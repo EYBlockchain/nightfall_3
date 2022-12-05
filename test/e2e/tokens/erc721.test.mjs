@@ -83,6 +83,8 @@ describe('ERC721 tests', () => {
 
       const myPublicKey = nf3Users[0].zkpKeys.compressedZkpPublicKey;
       const balanceBefore = (await nf3Users[0].getLayer2Balances())[erc721Address]?.length || 0;
+      const balanceL2FeeTokenBefore =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       const unspentCommitmentsBefore = await nf3Users[0].getLayer2Commitments(
         [erc721Address],
         true,
@@ -99,6 +101,8 @@ describe('ERC721 tests', () => {
       await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
       const balanceAfter = (await nf3Users[0].getLayer2Balances())[erc721Address]?.length || 0;
+      const balanceL2FeeTokenAfter =
+        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
       const unspentCommitmentsAfter = await nf3Users[0].getLayer2Commitments([erc721Address], true);
       let nUnspentCommitmentsAfter = 0;
       if (myPublicKey in unspentCommitmentsAfter && unspentCommitmentsAfter[myPublicKey]) {
@@ -106,6 +110,7 @@ describe('ERC721 tests', () => {
       }
 
       expect(balanceAfter - balanceBefore).to.be.equal(1);
+      expect(balanceL2FeeTokenAfter - balanceL2FeeTokenBefore).to.be.equal(-fee);
       expect(nUnspentCommitmentsAfter - nUnspentCommitmentsBefore).to.be.equal(1);
     });
   });

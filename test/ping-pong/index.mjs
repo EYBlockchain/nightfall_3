@@ -101,7 +101,7 @@ export async function simpleUserTest(
       listTransfersSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
-        value,
+        value: value - fee,
         fee,
         transactionHash: res.transactionHash,
         blockHash: res.blockHash,
@@ -113,7 +113,7 @@ export async function simpleUserTest(
     }
   }
   // we should have the deposits in a block before doing transfers
-  await waitForSufficientBalance(nf3, startBalance + TEST_LENGTH * value, ercAddress);
+  await waitForSufficientBalance(nf3, startBalance + TEST_LENGTH * (value - fee), ercAddress);
 
   // Create a block of transfer and deposit transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
@@ -179,7 +179,7 @@ export async function simpleUserTest(
       listTransfersSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
-        value: valueToTransfer,
+        value: valueToTransfer - fee,
         fee,
         transactionHash: res.transactionHash,
         blockHash: res.blockHash,

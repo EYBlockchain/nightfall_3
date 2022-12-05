@@ -40,7 +40,7 @@ async function transfer(transferParams, shieldContractAddress) {
   // let's extract the input items
   const { providedCommitments, ...items } = transferParams;
   const { tokenId, recipientData, rootKey, fee = generalise(0) } = generalise(items);
-
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
@@ -80,7 +80,7 @@ async function transfer(transferParams, shieldContractAddress) {
       maticAddress,
       tokenId,
       rootKey,
-      maxNullifiers: VK_IDS.transfer.numberNullifiers,
+      maxNullifiers: VK_IDS[circuitName].numberNullifiers,
       providedCommitments,
     });
 
@@ -102,12 +102,12 @@ async function transfer(transferParams, shieldContractAddress) {
       // Compress the public key as it will be put on-chain
       const compressedEPub = edwardsCompress(ePublic);
 
-      const circuitHashData = await getStoreCircuit(`transfer-hash`);
+      const circuitHashData = await getStoreCircuit(`${circuitName}-hash`);
 
       const circuitHash = circuitHashData.data;
 
       // now we have everything we need to create a Witness and compute a proof
-      const transaction = new Transaction({
+      const publicData = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
         circuitHash,
@@ -117,8 +117,8 @@ async function transfer(transferParams, shieldContractAddress) {
         commitments: commitmentsInfo.newCommitments,
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-        numberNullifiers: VK_IDS.transfer.numberNullifiers,
-        numberCommitments: VK_IDS.transfer.numberCommitments,
+        numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+        numberCommitments: VK_IDS[circuitName].numberCommitments,
         isOnlyL2: true,
       });
 
@@ -139,12 +139,12 @@ async function transfer(transferParams, shieldContractAddress) {
       };
 
       const witness = computeCircuitInputs(
-        transaction,
+        publicData,
         privateData,
         commitmentsInfo.roots,
         maticAddress,
-        VK_IDS.transfer.numberNullifiers,
-        VK_IDS.transfer.numberCommitments,
+        VK_IDS[circuitName].numberNullifiers,
+        VK_IDS[circuitName].numberCommitments,
       );
 
       if (!(await checkIndexDBForCircuit(circuitName)))
@@ -157,7 +157,7 @@ async function transfer(transferParams, shieldContractAddress) {
       // generate proof
       const { proof } = await snarkjs.groth16.fullProve(witness, wasmData.data, zkeyData.data); // zkey, witness
 
-      const optimisticTransferTransaction = new Transaction({
+      const transaction = new Transaction({
         fee,
         historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
         circuitHash,
@@ -168,15 +168,13 @@ async function transfer(transferParams, shieldContractAddress) {
         nullifiers: commitmentsInfo.nullifiers,
         compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
         proof,
-        numberNullifiers: VK_IDS.transfer.numberNullifiers,
-        numberCommitments: VK_IDS.transfer.numberCommitments,
+        numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+        numberCommitments: VK_IDS[circuitName].numberCommitments,
         isOnlyL2: true,
       });
 
-      const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
-
       const rawTransaction = await shieldContractInstance.methods
-        .submitTransaction(Transaction.buildSolidityStruct(optimisticTransferTransaction))
+        .submitTransaction(Transaction.buildSolidityStruct(transaction))
         .encodeABI();
       // Store new commitments that are ours.
       const storeNewCommitments = commitmentsInfo.newCommitments
@@ -184,13 +182,10 @@ async function transfer(transferParams, shieldContractAddress) {
         .map(c => storeCommitment(c, nullifierKey));
 
       const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
-        markNullified(c, optimisticTransferTransaction),
+        markNullified(c, transaction),
       );
       await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
-      return {
-        rawTransaction,
-        transaction: optimisticTransferTransaction,
-      };
+      return { rawTransaction, transaction };
     } catch (err) {
       await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
       throw new Error(err);
