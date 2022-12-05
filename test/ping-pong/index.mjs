@@ -82,7 +82,7 @@ export async function simpleUserTest(
       listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
-        value: value - fee,
+        value,
         fee,
         transactionHash: res.transactionHash,
         blockHash: res.blockHash,
@@ -98,14 +98,14 @@ export async function simpleUserTest(
   // we should have the deposits in a block before doing transfers
   await waitForSufficientBalance({
     nf3User: nf3,
-    value: startBalance + TEST_LENGTH * (value - fee),
+    value: startBalance + TEST_LENGTH * 2 * (value - fee),
     ercAddress,
   });
 
-  // Create a block of transfer and deposit transactions
+  // Create transfer, deposit and withdraw transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
     const userAdressTo = listUserAddresses[Math.floor(Math.random() * listUserAddresses.length)];
-    const valueToTransfer = Math.floor(Math.random() * (value - fee)) + 1; // Returns a random integer from 1 to value - fee
+    const valueToTransfer = Math.floor(Math.random() * (value - fee)) + 2; // Returns a random integer from 2 to value - fee
 
     try {
       const res = await nf3.transfer(
@@ -179,7 +179,7 @@ export async function simpleUserTest(
       listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
-        value: valueToTransfer - fee,
+        value: valueToTransfer,
         fee,
         transactionHashL1: res.transactionHash,
         blockHash: res.blockHash,

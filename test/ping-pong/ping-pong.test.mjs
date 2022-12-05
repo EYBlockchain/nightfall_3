@@ -234,7 +234,7 @@ const waitForBalanceUpdate = async usersStats => {
           t.type !== 'withdraw' &&
           t.typeSequence === 'ValidTransaction'
         ) {
-          totalTransferred += t.value;
+          totalTransferred += t.value - t.fee;
         }
         if (
           t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey &&
