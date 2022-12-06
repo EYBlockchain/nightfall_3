@@ -8,7 +8,6 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { expectTransaction, waitTransactionToBeMined, Web3Client } from './utils.mjs';
 
-// chai configs
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -29,14 +28,14 @@ const web3Client = new Web3Client();
 const web3 = web3Client.getWeb3();
 
 describe('General Circuit Test', () => {
+  let erc20Address;
+  let stateAddress;
+
+  const nf3User = new Nf3(signingKeys.user1, environment);
   const proposerFee = '0';
   const proposerStake = '1000000';
 
   const eventLogs = [];
-
-  let nf3User;
-  let erc20Address;
-  let stateAddress;
 
   async function getBalance() {
     logger.debug(`Get user balance...`);
@@ -56,7 +55,6 @@ describe('General Circuit Test', () => {
 
   before(async () => {
     // Create and initialise user
-    nf3User = new Nf3(signingKeys.user1, environment);
     await nf3User.init(mnemonics.user1);
 
     // Register proposer, wait for transaction to be mined

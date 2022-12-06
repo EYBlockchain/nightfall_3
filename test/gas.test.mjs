@@ -31,22 +31,20 @@ const {
 
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, VK_IDS } = config;
 
-const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
-const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
-nf3Proposer1.setApiKey(environment.AUTH_TOKEN);
-
 const web3Client = new Web3Client();
 
-let erc20Address;
-let stateAddress;
 const eventLogs = [];
 
-const averageL1GasCost = receipts =>
-  receipts.map(receipt => receipt.gasUsed).reduce((acc, el) => acc + el) / receipts.length;
+const nf3User = new Nf3(signingKeys.user1, environment);
+const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
+nf3Proposer.setApiKey(environment.AUTH_TOKEN);
 
 const connection = await mongo.connection(MONGO_URL);
 const db = connection.db(OPTIMIST_DB);
 const countBlocksInOptimist = async () => db.collection('blocks').count();
+
+const averageL1GasCost = receipts =>
+  receipts.map(receipt => receipt.gasUsed).reduce((acc, el) => acc + el) / receipts.length;
 
 async function getLatestBlockGasUsed() {
   const latestBlock = await db
@@ -63,25 +61,27 @@ async function getLatestBlockGasUsed() {
   return receipt.gasUsed;
 }
 
-async function processExistingMempoolTrasanctions() {
-  const mempoolTransactions = await nf3Proposer1.unprocessedTransactionCount();
+async function processExistingMempoolTransactions() {
+  const mempoolTransactions = await nf3Proposer.unprocessedTransactionCount();
   if (mempoolTransactions > 0) {
     logger.debug(`Making new block to clear transaction mempool...`);
-    await nf3Proposer1.makeBlockNow();
+    await nf3Proposer.makeBlockNow();
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   }
 }
 
 describe('Gas test', () => {
   let txPerBlock;
+  let erc20Address;
+  let stateAddress;
 
   before(async () => {
-    await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer('http://optimist', await nf3Proposer1.getMinimumStake());
+    await nf3Proposer.init(mnemonics.proposer);
+    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
-    await nf3Users[0].init(mnemonics.user1);
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-    stateAddress = await nf3Users[0].stateContractAddress;
+    await nf3User.init(mnemonics.user1);
+    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
@@ -101,9 +101,9 @@ describe('Gas test', () => {
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
 
-      // We create enough transactions to fill blocks full of deposits.
+      // We create enough transactions to fill blocks full of deposits
       const receipts = await depositNTransactions(
-        nf3Users[0],
+        nf3User,
         txPerBlock,
         erc20Address,
         tokenType,
@@ -124,7 +124,7 @@ describe('Gas test', () => {
       expect(gasCostDeposit).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Deposit L1 average gas used was ${averageL1GasCost(receipts)}`);
 
-      await processExistingMempoolTrasanctions();
+      await processExistingMempoolTransactions();
     });
   });
 
@@ -144,15 +144,15 @@ describe('Gas test', () => {
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
 
-      // We create enough transactions to fill blocks full of transfers.
+      // We create enough transactions to fill blocks full of transfers
       const receipts = await transferNTransactions(
-        nf3Users[0],
+        nf3User,
         txPerBlock,
         erc20Address,
         tokenType,
         transferValue / 2,
         tokenId,
-        nf3Users[0].zkpKeys.compressedZkpPublicKey,
+        nf3User.zkpKeys.compressedZkpPublicKey,
         0,
       );
 
@@ -168,7 +168,7 @@ describe('Gas test', () => {
       expect(gasCostTransfer).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Transfer L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      await processExistingMempoolTrasanctions();
+      await processExistingMempoolTransactions();
     });
   });
 
@@ -188,15 +188,15 @@ describe('Gas test', () => {
 
       const numberOfBlocksBefore = await countBlocksInOptimist();
 
-      // We create enough transactions to fill blocks full of withdraws.
+      // We create enough transactions to fill blocks full of withdrawals
       const receipts = await withdrawNTransactions(
-        nf3Users[0],
+        nf3User,
         txPerBlock,
         erc20Address,
         tokenType,
         transferValue / 2,
         tokenId,
-        nf3Users[0].ethereumAddress,
+        nf3User.ethereumAddress,
         0,
       );
 
@@ -212,7 +212,7 @@ describe('Gas test', () => {
       expect(gasCostWithdrawal).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Withdraw L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      await processExistingMempoolTrasanctions();
+      await processExistingMempoolTransactions();
     });
   });
 
@@ -221,21 +221,21 @@ describe('Gas test', () => {
       const nodeInfo = await web3Client.getInfo();
       if (nodeInfo.includes('TestRPC')) {
         waitForTimeout(10000);
-        const startBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
-        const withdrawal = await nf3Users[0].getLatestWithdrawHash();
+        const startBalance = await web3Client.getBalance(nf3User.ethereumAddress);
+        const withdrawal = await nf3User.getLatestWithdrawHash();
         await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
-        const commitments = await nf3Users[0].getPendingWithdraws();
+        const commitments = await nf3User.getPendingWithdraws();
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].length,
+          commitments[nf3User.zkpKeys.compressedZkpPublicKey][erc20Address].length,
         ).to.be.greaterThan(0);
         expect(
-          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].filter(
+          commitments[nf3User.zkpKeys.compressedZkpPublicKey][erc20Address].filter(
             c => c.valid === true,
           ).length,
         ).to.be.greaterThan(0);
-        const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
+        const res = await nf3User.finaliseWithdrawal(withdrawal);
         expectTransaction(res);
-        const endBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
+        const endBalance = await web3Client.getBalance(nf3User.ethereumAddress);
         expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
         logger.debug(`The gas used for finalise withdraw, back to L1, was ${res.gasUsed}`);
       } else {
@@ -246,10 +246,10 @@ describe('Gas test', () => {
   });
 
   after(async () => {
-    await nf3Proposer1.deregisterProposer();
     await connection.close();
-    await nf3Proposer1.close();
-    await nf3Users[0].close();
+    await nf3Proposer.deregisterProposer();
+    await nf3Proposer.close();
+    await nf3User.close();
     await web3Client.closeWeb3();
   });
 });
