@@ -80,7 +80,6 @@ export async function simpleUserTest(
       const res = await nf3.deposit('ValidTransaction', ercAddress, tokenType, value, tokenId, fee);
 
       listTransactionsSent.push({
-        from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
         value,
         fee,
@@ -177,7 +176,6 @@ export async function simpleUserTest(
         fee,
       );
       listTransactionsSent.push({
-        from: nf3.zkpKeys.compressedZkpPublicKey,
         to: nf3.zkpKeys.compressedZkpPublicKey,
         value: valueToTransfer,
         fee,
@@ -204,7 +202,6 @@ export async function simpleUserTest(
       );
       listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
-        to: nf3.zkpKeys.compressedZkpPublicKey,
         value: valueToTransfer,
         fee,
         transactionHashL1: res.transactionHash,

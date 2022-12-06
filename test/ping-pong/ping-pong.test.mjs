@@ -104,7 +104,7 @@ const getInitialUserStats = async () => {
   const usersStats = {
     usersInitialBalance: [],
     usersFinalBalance: [],
-    usersTotalTransferred: [],
+    usersTotalValueL2: [],
   }; // initialize stats for the test
 
   for (const nf3 of nf3Users) {
@@ -224,31 +224,24 @@ const waitForTransactionsCompleted = async () => {
   */
 const waitForBalanceUpdate = async usersStats => {
   for (let i = 0; i < nf3Users.length; i++) {
-    let totalTransferred = 0;
+    let totalValueUserL2 = 0;
     // eslint-disable-next-line no-loop-func
     for (let j = 0; j < listTransactionsTotal.length; j++) {
       // eslint-disable-next-line no-loop-func
       listTransactionsTotal[j].forEach(t => {
-        if (
-          t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey &&
-          t.type !== 'withdraw' &&
-          t.typeSequence === 'ValidTransaction'
-        ) {
-          totalTransferred += t.value - t.fee;
-        }
-        if (
-          t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey &&
-          t.type === 'withdraw' &&
-          t.typeSequence === 'ValidTransaction'
-        ) {
-          totalTransferred -= t.value + t.fee;
-        }
-        if (
-          t.to !== nf3Users[i].zkpKeys.compressedZkpPublicKey &&
-          t.from === nf3Users[i].zkpKeys.compressedZkpPublicKey &&
-          t.typeSequence === 'ValidTransaction'
-        ) {
-          totalTransferred -= t.value + t.fee;
+        if (t.typeSequence === 'ValidTransaction') {
+          if (t.type === 'withdraw' && t.from === nf3Users[i].zkpKeys.compressedZkpPublicKey) {
+            totalValueUserL2 -= t.value + t.fee;
+          } else if (t.type === 'deposit' && t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey) {
+            totalValueUserL2 += t.value - t.fee;
+          } else if (t.type === 'transfer') {
+            if (t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey) {
+              totalValueUserL2 += t.value;
+            }
+            if (t.from === nf3Users[i].zkpKeys.compressedZkpPublicKey) {
+              totalValueUserL2 -= t.value + t.fee;
+            }
+          }
         }
       });
     }
@@ -258,19 +251,19 @@ const waitForBalanceUpdate = async usersStats => {
       u => u.address === nf3Users[i].zkpKeys.compressedZkpPublicKey,
     )[0]?.balance;
 
-    usersStats.usersTotalTransferred.push({
+    usersStats.usersTotalValueL2.push({
       address: nf3Users[i].zkpKeys.compressedZkpPublicKey,
-      value: totalTransferred,
+      value: totalValueUserL2,
     });
 
     // eslint-disable-next-line no-await-in-loop
     let userFinalBalance = await retrieveL2Balance(nf3Users[i], ercAddress);
 
-    while (userFinalBalance !== userInitialBalance + totalTransferred) {
+    while (userFinalBalance !== userInitialBalance + totalValueUserL2) {
       // eslint-disable-next-line no-await-in-loop
       console.log(
         `Waiting for user ${nf3Users[i].zkpKeys.compressedZkpPublicKey} balance to be ${
-          userInitialBalance + totalTransferred
+          userInitialBalance + totalValueUserL2
         }...`,
         userFinalBalance,
       );
@@ -283,7 +276,7 @@ const waitForBalanceUpdate = async usersStats => {
     console.log(
       `Final user balance for user ${
         nf3Users[i].zkpKeys.compressedZkpPublicKey
-      } = ${userFinalBalance} (expected ${userInitialBalance + totalTransferred})`,
+      } = ${userFinalBalance} (expected ${userInitialBalance + totalValueUserL2})`,
     );
 
     usersStats.usersFinalBalance.push({
