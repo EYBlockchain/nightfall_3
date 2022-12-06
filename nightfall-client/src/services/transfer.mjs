@@ -127,7 +127,7 @@ async function transfer(transferParams) {
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
     // call a worker to generate the proof
@@ -135,7 +135,7 @@ async function transfer(transferParams) {
 
     logger.trace({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
@@ -159,7 +159,7 @@ async function transfer(transferParams) {
 
     logger.debug({
       msg: `Client made ${circuitName}`,
-      transaction: JSON.stringify(transaction, null, 2),
+      transaction,
       offchain,
     });
 
@@ -177,7 +177,8 @@ async function transfer(transferParams) {
     return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-    throw new Error(error);
+    logger.error(error);
+    throw error;
   }
 }
 

@@ -99,14 +99,14 @@ async function burn(burnParams) {
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
     const res = await generateProof({ folderpath: circuitName, witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
@@ -125,7 +125,7 @@ async function burn(burnParams) {
 
     logger.debug({
       msg: `Client made ${circuitName}`,
-      transaction: JSON.stringify(transaction, null, 2),
+      transaction,
     });
 
     const rawTransaction = await shieldContractInstance.methods
@@ -141,7 +141,8 @@ async function burn(burnParams) {
     return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-    throw new Error(error);
+    logger.error(error);
+    throw error;
   }
 }
 

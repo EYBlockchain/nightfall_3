@@ -139,13 +139,13 @@ async function deposit(items) {
   );
   logger.debug({
     msg: 'witness input is',
-    witness: JSON.stringify(witness, 0, 2),
+    witness,
   });
   // call a worker to generate the proof
   const res = await generateProof({ folderpath: circuitName, witness });
 
   logger.trace({
-    msg: 'Received response from generete-proof',
+    msg: 'Received response from generate-proof',
     response: res.data,
   });
 
@@ -172,7 +172,7 @@ async function deposit(items) {
 
   logger.debug({
     msg: `Client made ${circuitName}`,
-    transaction: JSON.stringify(transaction, null, 2),
+    transaction,
   });
 
   // and then we can create an unsigned blockchain transaction
