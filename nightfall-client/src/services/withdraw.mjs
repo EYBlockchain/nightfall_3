@@ -105,7 +105,7 @@ async function withdraw(withdrawParams) {
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
     // call a worker to generate the proof
@@ -138,7 +138,7 @@ async function withdraw(withdrawParams) {
 
     logger.debug({
       msg: `Client made ${circuitName}`,
-      transaction: JSON.stringify(transaction, null, 2),
+      transaction,
       offchain,
     });
 
@@ -154,8 +154,8 @@ async function withdraw(withdrawParams) {
     );
     return { rawTransaction, transaction };
   } catch (error) {
-    logger.error(error);
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
+    logger.error(error);
     throw error;
   }
 }
