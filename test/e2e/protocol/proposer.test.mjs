@@ -5,7 +5,6 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import { UserFactory } from 'nightfall-sdk';
 import axios from 'axios';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
@@ -18,12 +17,20 @@ chai.use(chaiAsPromised);
 const { PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = constants;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const { mnemonics, signingKeys, fee, transferValue } = config.TEST_OPTIONS;
+const {
+  tokenConfigs: { tokenType, tokenId },
+  mnemonics,
+  signingKeys,
+  fee,
+  transferValue,
+} = config.TEST_OPTIONS;
 
 const web3Client = new Web3Client();
 const eventLogs = [];
 
 let web3;
+let nf3User;
+let erc20Address;
 let stateAddress;
 let proposersAddress;
 let stateABI;
@@ -43,36 +50,29 @@ const filterByThisProposer = async nf3proposer => {
   return proposers.filter(p => p.thisAddress === nf3proposer.ethereumAddress);
 };
 
-const getCurrentSprint = async () => {
-  const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
-  return stateContractInstance.methods.currentSprint().call();
+const getBalance = async () => {
+  return (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
 };
 
 describe('Basic Proposer tests', () => {
-  let user;
   let minimumStake;
-  let rotateProposerBlocks;
-  let erc20Address;
 
-  const feeDefault = 0;
+  nf3User = new Nf3(signingKeys.user1, environment);
+
   const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
   nf3Proposer.setApiKey(environment.AUTH_TOKEN);
+
   const testProposersUrl = ['http://test-proposer1', 'http://test-proposer2'];
+  const feeDefault = 0;
 
   before(async () => {
     web3 = web3Client.getWeb3();
 
-    user = await UserFactory.create({
-      blockchainWsUrl: environment.web3WsUrl,
-      clientApiUrl: environment.clientApiUrl,
-      ethereumPrivateKey: signingKeys.user1,
-    });
+    await nf3User.init(mnemonics.user1);
 
     await nf3Proposer.init(mnemonics.proposer);
 
     minimumStake = await nf3Proposer.getMinimumStake();
-    rotateProposerBlocks = await nf3Proposer.getRotateProposerBlocks();
-
     stateABI = await nf3Proposer.getContractAbi(STATE_CONTRACT_NAME);
     stateAddress = await nf3Proposer.getContractAddress(STATE_CONTRACT_NAME);
     proposersAddress = await nf3Proposer.getContractAddress(PROPOSERS_CONTRACT_NAME);
@@ -264,58 +264,19 @@ describe('Basic Proposer tests', () => {
 
   it('Should be able to make a block any time as soon as there are txs in the mempool', async () => {
     // User balance in L2 before making deposit
-    const balancesBeforeBlockProposed = await user.checkNightfallBalances();
+    const balancesBeforeBlockProposed = await getBalance();
 
     // Make deposit, then make block to settle the deposit
     const value = String(transferValue * 2);
-    await user.makeDeposit({
-      tokenContractAddress: String(erc20Address),
-      value,
-    });
+    await nf3User.deposit(erc20Address, tokenType, value, tokenId, fee);
     await nf3Proposer.makeBlockNow();
 
     // Wait before checking user balance in L2 again
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    const balancesAfterBlockProposed = await user.checkNightfallBalances();
+    const balancesAfterBlockProposed = await getBalance();
 
     // Assertions
-    expect(balancesBeforeBlockProposed).to.be.an('object').that.is.empty;
-    expect(balancesAfterBlockProposed).to.have.property(erc20Address);
-
-    const erc20balances = balancesAfterBlockProposed[erc20Address];
-    expect(erc20balances).to.have.lengthOf(1);
-    expect(String(erc20balances[0].balance)).to.have.string(value); // Balance is in Wei, so we compare strings
-  });
-
-  it.skip('Should change the current proposer', async function () {
-    // SKIP We need to spin a second optimist if we want to keep this test
-    const CHANGE_PROPOSER_NO_TIMES = 8;
-    let numChanges = 0;
-    for (let i = 0; i < CHANGE_PROPOSER_NO_TIMES; i++) {
-      try {
-        const currentSprint = await getCurrentSprint();
-        const currentProposer = await getCurrentProposer();
-        console.log(
-          `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress} ]`,
-        );
-
-        console.log('     Waiting blocks to rotate current proposer...');
-        const initBlock = await web3.eth.getBlockNumber();
-        let currentBlock = initBlock;
-
-        while (currentBlock - initBlock < rotateProposerBlocks) {
-          await new Promise(resolve => setTimeout(resolve, 10000));
-          currentBlock = await web3.eth.getBlockNumber();
-        }
-
-        // const res = await secondProposer.changeCurrentProposer();
-        // expectTransaction(res);
-        numChanges++;
-      } catch (err) {
-        console.log(err);
-      }
-    }
-    expect(numChanges).to.be.equal(CHANGE_PROPOSER_NO_TIMES);
+    expect(balancesAfterBlockProposed).to.be.above(balancesBeforeBlockProposed);
   });
 
   it('Should de-register the proposer even when it is current proposer', async () => {
@@ -375,7 +336,7 @@ describe('Basic Proposer tests', () => {
 
   after(async () => {
     await nf3Proposer.close();
-    user.close();
+    await nf3User.close();
     web3Client.closeWeb3();
   });
 });
