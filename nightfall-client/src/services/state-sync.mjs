@@ -14,7 +14,7 @@ import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 
-const { STATE_CONTRACT_NAME } = constants;
+const { STATE_CONTRACT_NAME, CHALLENGES_CONTRACT_NAME } = constants;
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_GENESIS_BLOCK } = config;
 
 export const syncState = async (
