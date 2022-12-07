@@ -33,7 +33,8 @@
     "unit-test-challenges": "npx hardhat test --bail test/unit/SmartContracts/challenges.unit.test.mjs",
     "unit-test-verifier": "npx hardhat test --bail test/unit/SmartContracts/verifier.unit.test.mjs",
     "unit-test-circuits": "npx hardhat test --bail --no-compile test/unit/circuits/common/**/*.test.mjs test/unit/circuits/common/verifiers/**/*.test.mjs test/unit/circuits/*.test.mjs",
-    "prune": "docker system prune -a && docker volume prune"
+    "prune": "docker system prune -a && docker volume prune",
+    "start-proposer": "docker-compose -f docker/docker-compose.apps.yml -p 'nightfall_3' up proposer"
   },
   "repository": {
     "type": "git",
