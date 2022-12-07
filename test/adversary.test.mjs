@@ -462,12 +462,9 @@ describe('Testing with an adversary', () => {
   });
 
   describe('Testing bad blocks', async () => {
-    before(async () => {
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
-    });
-
     it('Test incorrect leaf count', async () => {
       console.log('Testing incorrect leaf count...');
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectLeafCount');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       console.log('Waiting for rollback...');
@@ -478,6 +475,7 @@ describe('Testing with an adversary', () => {
 
     it('Test incorrect tree root', async () => {
       console.log('Testing incorrect tree root...');
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectTreeRoot');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       console.log('Waiting for rollback...');
@@ -488,6 +486,7 @@ describe('Testing with an adversary', () => {
 
     it('Test incorrect frontier hash', async () => {
       console.log('Testing incorrect frontier hash...');
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectFrontierHash');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       console.log('Waiting for rollback...');
