@@ -3,9 +3,10 @@
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { saveTransaction } from '../services/database.mjs';
-import checkTransaction, {
-  checkCommitments,
-  checkNullifiers,
+import {
+  checkTransaction,
+  checkCommitmentsMempool,
+  checkNullifiersMempool,
 } from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
@@ -38,11 +39,11 @@ async function transactionSubmittedEventHandler(eventParams) {
     if (fromBlockProposer) {
       await saveTransaction({ ...transaction, blockNumberL2 });
       logger.info({ msg: 'Checking transaction validity...' });
-      await checkTransaction(transaction, true);
+      await checkTransaction(transaction, { checkInL2Block: true, checkInMempool: true });
       logger.info({ msg: 'Transaction checks passed' });
     } else {
       logger.info({ msg: 'Checking transaction validity...' });
-      await checkTransaction(transaction, true);
+      await checkTransaction(transaction, { checkInL2Block: true, checkInMempool: true });
       logger.info({ msg: 'Transaction checks passed' });
 
       // if transaction has duplicate commitment or nullifier
@@ -50,8 +51,8 @@ async function transactionSubmittedEventHandler(eventParams) {
       // check its proposer payment with original transaction
       // if payment is higher then proceed and save.
       const checkStatus = await Promise.all([
-        checkCommitments(transaction),
-        checkNullifiers(transaction),
+        checkCommitmentsMempool(transaction),
+        checkNullifiersMempool(transaction),
       ]);
       if (checkStatus.includes(false)) {
         logger.info({

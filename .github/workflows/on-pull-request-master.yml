@@ -712,6 +712,10 @@ jobs:
         run: |
           npm run nightfall-down
 
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat ping-pong-test.log
+
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
         uses: actions/upload-artifact@master

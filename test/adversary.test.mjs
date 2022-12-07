@@ -18,7 +18,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 // eslint-disable-next-line import/no-unresolved
 import Nf3 from './adversary/adversary-cli/lib/nf3.mjs';
 
-import { registerProposerOnNoProposer, Web3Client } from './utils.mjs';
+import { clearMempool, registerProposerOnNoProposer, Web3Client } from './utils.mjs';
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -195,6 +195,14 @@ describe('Testing with an adversary', () => {
     currentRollbacks = rollbackCount;
   });
 
+  afterEach(async () => {
+    await clearMempool({
+      optimistUrl: adversarialOptimistApiUrl,
+      web3: web3Client,
+      logs: eventLogs,
+    });
+  });
+
   describe('Testing bad transactions', () => {
     describe('Deposits rollback', async () => {
       it('Test duplicate transaction deposit', async () => {
@@ -206,8 +214,6 @@ describe('Testing with an adversary', () => {
         await waitForRollback();
         console.log('Rollback duplicate transaction deposit completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeCommitment);
-        await makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       });
 
       it('Test failing incorrect input deposit', async () => {
@@ -261,8 +267,6 @@ describe('Testing with an adversary', () => {
           challengeSelectors.challengeCommitment,
           challengeSelectors.challengeNullifier,
         ]);
-        await makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       });
 
       it('Test duplicate nullifier transfer', async () => {
@@ -373,8 +377,6 @@ describe('Testing with an adversary', () => {
           challengeSelectors.challengeCommitment,
           challengeSelectors.challengeNullifier,
         ]);
-        await makeBlockNow();
-        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       });
 
       it('Test duplicate nullifier withdraw', async () => {
@@ -460,12 +462,9 @@ describe('Testing with an adversary', () => {
   });
 
   describe('Testing bad blocks', async () => {
-    before(async () => {
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
-    });
-
     it('Test incorrect leaf count', async () => {
       console.log('Testing incorrect leaf count...');
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectLeafCount');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       console.log('Waiting for rollback...');
@@ -476,6 +475,7 @@ describe('Testing with an adversary', () => {
 
     it('Test incorrect tree root', async () => {
       console.log('Testing incorrect tree root...');
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectTreeRoot');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       console.log('Waiting for rollback...');
@@ -486,17 +486,13 @@ describe('Testing with an adversary', () => {
 
     it('Test incorrect frontier hash', async () => {
       console.log('Testing incorrect frontier hash...');
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectFrontierHash');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       console.log('Waiting for rollback...');
       await waitForRollback();
       console.log('Rollback incorrect frontier hash completed');
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeFrontier);
-    });
-
-    after(async () => {
-      await makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
   });
 
