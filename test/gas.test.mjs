@@ -20,19 +20,16 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const { MONGO_URL, OPTIMIST_DB } = config;
-
 const {
   transferValue,
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
-
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, VK_IDS } = config;
+const { MONGO_URL, OPTIMIST_DB } = config;
 
 const web3Client = new Web3Client();
-
 const eventLogs = [];
 
 const nf3User = new Nf3(signingKeys.user1, environment);
@@ -61,7 +58,7 @@ async function getLatestBlockGasUsed() {
   return receipt.gasUsed;
 }
 
-async function processExistingMempoolTransactions() {
+async function processMempoolTransactions() {
   const mempoolTransactions = await nf3Proposer.unprocessedTransactionCount();
   if (mempoolTransactions > 0) {
     logger.debug(`Making new block to clear transaction mempool...`);
@@ -124,7 +121,7 @@ describe('Gas test', () => {
       expect(gasCostDeposit).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Deposit L1 average gas used was ${averageL1GasCost(receipts)}`);
 
-      await processExistingMempoolTransactions();
+      await processMempoolTransactions();
     });
   });
 
@@ -168,7 +165,7 @@ describe('Gas test', () => {
       expect(gasCostTransfer).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Transfer L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      await processExistingMempoolTransactions();
+      await processMempoolTransactions();
     });
   });
 
@@ -212,7 +209,7 @@ describe('Gas test', () => {
       expect(gasCostWithdrawal).to.be.lessThan(expectedGasCostPerTx);
       logger.debug(`Withdraw L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
-      await processExistingMempoolTransactions();
+      await processMempoolTransactions();
     });
   });
 
@@ -250,6 +247,6 @@ describe('Gas test', () => {
     await nf3Proposer.deregisterProposer();
     await nf3Proposer.close();
     await nf3User.close();
-    await web3Client.closeWeb3();
+    web3Client.closeWeb3();
   });
 });

@@ -26,15 +26,16 @@ const {
 } = config.TEST_OPTIONS;
 
 const web3Client = new Web3Client();
+const web3 = web3Client.getWeb3();
 const eventLogs = [];
 
-let web3;
-let nf3User;
+const nf3User = new Nf3(signingKeys.user1, environment);
+const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
+nf3Proposer.setApiKey(environment.AUTH_TOKEN);
+
 let erc20Address;
 let stateAddress;
-let proposersAddress;
 let stateABI;
-
 const getStakeAccount = async ethAccount => {
   const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   return stateContractInstance.methods.getStakeAccount(ethAccount).call();
@@ -55,21 +56,14 @@ const getBalance = async () => {
 };
 
 describe('Basic Proposer tests', () => {
-  let minimumStake;
-
-  nf3User = new Nf3(signingKeys.user1, environment);
-
-  const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
-  nf3Proposer.setApiKey(environment.AUTH_TOKEN);
-
   const testProposersUrl = ['http://test-proposer1', 'http://test-proposer2'];
   const feeDefault = 0;
 
+  let minimumStake;
+  let proposersAddress;
+
   before(async () => {
-    web3 = web3Client.getWeb3();
-
     await nf3User.init(mnemonics.user1);
-
     await nf3Proposer.init(mnemonics.proposer);
 
     minimumStake = await nf3Proposer.getMinimumStake();

@@ -13,7 +13,6 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-
 const {
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
@@ -22,36 +21,34 @@ const {
 
 axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
 
-const { optimistApiUrl } = environment;
-
 const web3Client = new Web3Client();
 const web3 = web3Client.getWeb3();
+const eventLogs = [];
+
+const nf3User = new Nf3(signingKeys.user1, environment);
+const { optimistApiUrl } = environment;
+
+let erc20Address;
+async function getBalance() {
+  logger.debug(`Get user balance...`);
+  return (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
+}
+
+async function makeDeposit(value, fee = 0) {
+  logger.debug(`Make deposit of ${value}...`);
+  await nf3User.deposit(erc20Address, tokenType, value, tokenId, fee);
+}
+
+async function makeBlock() {
+  logger.debug(`Make block...`);
+  await axios.get(`${optimistApiUrl}/block/make-now`);
+  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+}
 
 describe('General Circuit Test', () => {
-  let erc20Address;
   let stateAddress;
-
-  const nf3User = new Nf3(signingKeys.user1, environment);
   const proposerFee = '0';
   const proposerStake = '1000000';
-
-  const eventLogs = [];
-
-  async function getBalance() {
-    logger.debug(`Get user balance...`);
-    return (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
-  }
-
-  async function makeDeposit(value, fee = 0) {
-    logger.debug(`Make deposit of ${value}...`);
-    await nf3User.deposit(erc20Address, tokenType, value, tokenId, fee);
-  }
-
-  async function makeBlock() {
-    logger.debug(`Make block...`);
-    await axios.get(`${optimistApiUrl}/block/make-now`);
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-  }
 
   before(async () => {
     // Create and initialise user
