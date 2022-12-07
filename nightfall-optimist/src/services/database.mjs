@@ -491,15 +491,15 @@ export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
 // and is part of an L2 block
 export async function getL2TransactionByCommitment(
   commitmentHash,
-  { isAlreadyInL2, isAlreadyInMempool },
+  { checkInL2Block, checkInMempool },
   blockNumberL2OfTx,
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   let query = { commitments: commitmentHash };
-  if (isAlreadyInL2 && !isAlreadyInMempool) {
+  if (checkInL2Block && !checkInMempool) {
     query = { ...query, blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx } };
-  } else if (!isAlreadyInL2 && isAlreadyInMempool) {
+  } else if (!checkInL2Block && checkInMempool) {
     query = { ...query, mempool: true };
   }
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
@@ -509,15 +509,15 @@ export async function getL2TransactionByCommitment(
 // and is part of an L2 block
 export async function getL2TransactionByNullifier(
   nullifierHash,
-  { isAlreadyInL2, isAlreadyInMempool },
+  { checkInL2Block, checkInMempool },
   blockNumberL2OfTx,
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   let query = { nullifiers: nullifierHash };
-  if (isAlreadyInL2 && !isAlreadyInMempool) {
+  if (checkInL2Block && !checkInMempool) {
     query = { ...query, blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx } };
-  } else if (!isAlreadyInL2 && isAlreadyInMempool) {
+  } else if (!checkInL2Block && checkInMempool) {
     query = { ...query, mempool: true };
   }
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);

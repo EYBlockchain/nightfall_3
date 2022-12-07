@@ -10,7 +10,7 @@ import {
   getTreeByBlockNumberL2,
   getTreeByLeafCount,
 } from './database.mjs';
-import checkTransaction from './transaction-checker.mjs';
+import { checkTransaction } from './transaction-checker.mjs';
 import Block from '../classes/block.mjs';
 
 const { ZERO } = constants;
@@ -257,7 +257,7 @@ export async function checkBlock(block, transactions) {
       // eslint-disable-next-line no-await-in-loop
       await checkTransaction(
         transaction,
-        { isAlreadyInL2: true },
+        { checkInL2Block: true },
         { blockNumberL2: block.blockNumberL2 },
       ); // eslint-disable-line no-await-in-loop
     }

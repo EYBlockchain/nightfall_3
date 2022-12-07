@@ -17,7 +17,8 @@ import {
   getAllRegisteredProposersCount,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
-import checkTransaction, {
+import {
+  checkTransaction,
   checkCommitmentsMempool,
   checkNullifiersMempool,
 } from '../services/transaction-checker.mjs';
@@ -77,7 +78,7 @@ async function rollbackEventHandler(data) {
         // eslint-disable-next-line no-await-in-loop
         await checkTransaction(
           blockTransactions[j],
-          { isAlreadyInL2: true },
+          { checkInL2Block: true },
           {
             blockNumberL2: blocksToBeDeleted[i].blockNumberL2,
           },

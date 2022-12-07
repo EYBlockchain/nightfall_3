@@ -51,7 +51,7 @@ async function checkDuplicateCommitment(transaction, transactionFlags, txBlockNu
           throw new TransactionError(
             `The transaction has a duplicate commitment ${commitment}`,
             0,
-            transactionFlags.isAlreadyInMempool === false
+            transactionFlags.checkInMempool === false
               ? {
                   duplicateCommitment1Index: index,
                   block2: blockL2,
@@ -91,7 +91,7 @@ async function checkDuplicateNullifier(transaction, transactionFlags, txBlockNum
           throw new TransactionError(
             `The transaction has a duplicate nullifier ${nullifier}`,
             1,
-            transactionFlags.isAlreadyInMempool === false
+            transactionFlags.checkInMempool === false
               ? {
                   duplicateNullifier1Index: index,
                   block2: blockL2,
@@ -176,22 +176,14 @@ async function verifyProof(transaction) {
   if (!verifies) throw new TransactionError('The proof did not verify', 2);
 }
 
-async function checkTransaction(
+export async function checkTransaction(
   transaction,
-  { isAlreadyInL2 = false, isAlreadyInMempool = false },
+  { checkInL2Block = false, checkInMempool = false },
   args,
 ) {
   return Promise.all([
-    checkDuplicateCommitment(
-      transaction,
-      { isAlreadyInL2, isAlreadyInMempool },
-      args?.blockNumberL2,
-    ),
-    checkDuplicateNullifier(
-      transaction,
-      { isAlreadyInL2, isAlreadyInMempool },
-      args?.blockNumberL2,
-    ),
+    checkDuplicateCommitment(transaction, { checkInL2Block, checkInMempool }, args?.blockNumberL2),
+    checkDuplicateNullifier(transaction, { checkInL2Block, checkInMempool }, args?.blockNumberL2),
     checkHistoricRootBlockNumber(transaction),
     verifyProof(transaction),
   ]);
@@ -201,7 +193,7 @@ export async function checkCommitmentsMempool(transaction) {
   for (const commitment of transaction.commitments) {
     if (commitment !== ZERO) {
       const originalTransaction = await getL2TransactionByCommitment(commitment, {
-        isAlreadyInMempool: true,
+        checkInMempool: true,
       });
       // compare provided proposer fee in both transactions(duplicate and original)
       if (
@@ -218,7 +210,7 @@ export async function checkNullifiersMempool(transaction) {
   for (const nullifier of transaction.nullifiers) {
     if (nullifier !== ZERO) {
       const originalTransaction = await getL2TransactionByNullifier(nullifier, {
-        isAlreadyInMempool: true,
+        checkInMempool: true,
       });
       // compare provided proposer fee in both transactions(duplicate and original)
       if (
@@ -230,5 +222,3 @@ export async function checkNullifiersMempool(transaction) {
   }
   return true;
 }
-
-export default checkTransaction;

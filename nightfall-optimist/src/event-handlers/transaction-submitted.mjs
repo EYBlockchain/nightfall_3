@@ -3,7 +3,8 @@
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { saveTransaction } from '../services/database.mjs';
-import checkTransaction, {
+import {
+  checkTransaction,
   checkCommitmentsMempool,
   checkNullifiersMempool,
 } from '../services/transaction-checker.mjs';
@@ -38,11 +39,11 @@ async function transactionSubmittedEventHandler(eventParams) {
     if (fromBlockProposer) {
       await saveTransaction({ ...transaction, blockNumberL2 });
       logger.info({ msg: 'Checking transaction validity...' });
-      await checkTransaction(transaction, { isAlreadyInL2: true, isAlreadyInMempool: true });
+      await checkTransaction(transaction, { checkInL2Block: true, checkInMempool: true });
       logger.info({ msg: 'Transaction checks passed' });
     } else {
       logger.info({ msg: 'Checking transaction validity...' });
-      await checkTransaction(transaction, { isAlreadyInL2: true, isAlreadyInMempool: true });
+      await checkTransaction(transaction, { checkInL2Block: true, checkInMempool: true });
       logger.info({ msg: 'Transaction checks passed' });
 
       // if transaction has duplicate commitment or nullifier
