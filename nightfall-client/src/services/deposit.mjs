@@ -16,6 +16,7 @@ import {
   generateProof,
 } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import Proof from '@polygon-nightfall/common-files/classes/proof.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
@@ -154,21 +155,8 @@ async function deposit(items) {
   // first, get the contract instance
 
   // next we need to compute the optimistic Transaction object
-  const transaction = new Transaction({
-    fee,
-    historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-    circuitHash,
-    tokenType: items.tokenType,
-    tokenId,
-    value,
-    ercAddress,
-    commitments: commitmentsInfo.newCommitments,
-    nullifiers: commitmentsInfo.nullifiers,
-    proof,
-    numberNullifiers: VK_IDS[circuitName].numberNullifiers,
-    numberCommitments: VK_IDS[circuitName].numberCommitments,
-    isOnlyL2: false,
-  });
+  const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+  transaction.transactionHash = Transaction.calcHash(transaction);
 
   logger.debug({
     msg: `Client made ${circuitName}`,
