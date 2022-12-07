@@ -23,7 +23,6 @@ import {
   increaseProposerWsClosed,
   increaseProposerBlockNotSent,
 } from './debug-counters.mjs';
-import checkTransaction from './transaction-checker.mjs';
 
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
 const { STATE_CONTRACT_NAME, ZERO } = constants;
@@ -68,10 +67,6 @@ export async function signalRollbackCompleted(data) {
 
 async function makeBlock(proposer, transactions) {
   logger.debug('Block Assembler - about to make a new block');
-
-  // check transction before building block
-  await Promise.all(transactions.map(t => checkTransaction(t, { isAlreadyInL2: true })));
-
   // then we make new block objects until we run out of unprocessed transactions
   return Block.build({ proposer, transactions });
 }

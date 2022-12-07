@@ -496,20 +496,12 @@ export async function getL2TransactionByCommitment(
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query =
-    isAlreadyInL2 && isAlreadyInMempool
-      ? { commitments: commitmentHash }
-      : {
-          commitments: commitmentHash,
-          blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
-        };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-}
-
-export async function getL2MempoolTransactionByCommitment(commitmentHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { commitments: commitmentHash, mempool: true };
+  let query = { commitments: commitmentHash };
+  if (isAlreadyInL2 && !isAlreadyInMempool) {
+    query = { ...query, blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx } };
+  } else if (!isAlreadyInL2 && isAlreadyInMempool) {
+    query = { ...query, mempool: true };
+  }
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
@@ -522,20 +514,12 @@ export async function getL2TransactionByNullifier(
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query =
-    isAlreadyInL2 && isAlreadyInMempool
-      ? { nullifiers: nullifierHash }
-      : {
-          nullifiers: nullifierHash,
-          blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
-        };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-}
-
-export async function getL2MempoolTransactionByNullifier(nullifierHash) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { nullifiers: nullifierHash, mempool: true };
+  let query = { nullifiers: nullifierHash };
+  if (isAlreadyInL2 && !isAlreadyInMempool) {
+    query = { ...query, blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx } };
+  } else if (!isAlreadyInL2 && isAlreadyInMempool) {
+    query = { ...query, mempool: true };
+  }
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 

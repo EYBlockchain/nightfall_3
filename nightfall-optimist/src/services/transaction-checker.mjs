@@ -20,8 +20,6 @@ import {
   getL2TransactionByNullifier,
   getTransactionHashSiblingInfo,
   getLatestBlockInfo,
-  getL2MempoolTransactionByCommitment,
-  getL2MempoolTransactionByNullifier,
 } from './database.mjs';
 
 const { generalise } = gen;
@@ -199,14 +197,16 @@ async function checkTransaction(
   ]);
 }
 
-export async function checkCommitments(transaction) {
+export async function checkCommitmentsMempool(transaction) {
   for (const commitment of transaction.commitments) {
     if (commitment !== ZERO) {
-      const orignalTransaction = await getL2MempoolTransactionByCommitment(commitment);
+      const originalTransaction = await getL2TransactionByCommitment(commitment, {
+        isAlreadyInMempool: true,
+      });
       // compare provided proposer fee in both transactions(duplicate and original)
       if (
-        orignalTransaction &&
-        generalise(orignalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+        originalTransaction &&
+        generalise(originalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
       )
         return false;
     }
@@ -214,14 +214,16 @@ export async function checkCommitments(transaction) {
   return true;
 }
 
-export async function checkNullifiers(transaction) {
+export async function checkNullifiersMempool(transaction) {
   for (const nullifier of transaction.nullifiers) {
     if (nullifier !== ZERO) {
-      const orignalTransaction = await getL2MempoolTransactionByNullifier(nullifier);
+      const originalTransaction = await getL2TransactionByNullifier(nullifier, {
+        isAlreadyInMempool: true,
+      });
       // compare provided proposer fee in both transactions(duplicate and original)
       if (
-        orignalTransaction &&
-        generalise(orignalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+        originalTransaction &&
+        generalise(originalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
       )
         return false;
     }

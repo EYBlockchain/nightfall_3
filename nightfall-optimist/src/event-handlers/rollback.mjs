@@ -18,8 +18,8 @@ import {
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
 import checkTransaction, {
-  checkCommitments,
-  checkNullifiers,
+  checkCommitmentsMempool,
+  checkNullifiersMempool,
 } from '../services/transaction-checker.mjs';
 import { signalRollbackCompleted as signalRollbackCompletedToProposer } from '../services/block-assembler.mjs';
 import {
@@ -105,8 +105,8 @@ async function rollbackEventHandler(data) {
           // Now since checkTransaction succeed, let check transaction
           // against mempool, that replacement transaction exist and
           // has higher proposer payment if so consider this transaction as invalid transaction
-          checkCommitments(blockTransactions[j]),
-          checkNullifiers(blockTransactions[j]),
+          checkCommitmentsMempool(blockTransactions[j]),
+          checkNullifiersMempool(blockTransactions[j]),
         ]);
         if (checkStatus.includes(false)) {
           logger.info({

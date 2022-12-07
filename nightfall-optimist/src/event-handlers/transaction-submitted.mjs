@@ -4,8 +4,8 @@
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { saveTransaction } from '../services/database.mjs';
 import checkTransaction, {
-  checkCommitments,
-  checkNullifiers,
+  checkCommitmentsMempool,
+  checkNullifiersMempool,
 } from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
@@ -50,8 +50,8 @@ async function transactionSubmittedEventHandler(eventParams) {
       // check its proposer payment with original transaction
       // if payment is higher then proceed and save.
       const checkStatus = await Promise.all([
-        checkCommitments(transaction),
-        checkNullifiers(transaction),
+        checkCommitmentsMempool(transaction),
+        checkNullifiersMempool(transaction),
       ]);
       if (checkStatus.includes(false)) {
         logger.info({
