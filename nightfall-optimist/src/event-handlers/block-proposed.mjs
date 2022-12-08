@@ -10,13 +10,13 @@ import BlockError from '../classes/block-error.mjs';
 import { createChallenge, commitToChallenge } from '../services/challenges.mjs';
 import {
   removeTransactionsFromMemPool,
-  removeCommitmentsFromMemPool,
-  removeNullifiersFromMemPool,
   saveBlock,
   getLatestTree,
   saveTree,
   getTransactionByTransactionHash,
   saveInvalidBlock,
+  deleteDuplicateCommitmentsFromMemPool,
+  deleteDuplicateNullifiersFromMemPool,
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
@@ -101,8 +101,8 @@ async function blockProposedEventHandler(data) {
     const blockNullifiers = transactions
       .map(t => t.nullifiers.filter(c => c !== ZERO))
       .flat(Infinity);
-    await removeCommitmentsFromMemPool(blockCommitments, block.transactionHashes);
-    await removeNullifiersFromMemPool(blockNullifiers, block.transactionHashes);
+    await deleteDuplicateCommitmentsFromMemPool(blockCommitments, block.transactionHashes);
+    await deleteDuplicateNullifiersFromMemPool(blockNullifiers, block.transactionHashes);
 
     const latestTree = await getLatestTree();
     const updatedTimber = Timber.statelessUpdate(

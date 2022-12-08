@@ -373,7 +373,7 @@ export async function removeTransactionsFromMemPool(
 Function to remove a set of commitments from the layer 2 mempool once they've
 been processed into an L2 block
 */
-export async function removeCommitmentsFromMemPool(commitments, transactionHashes) {
+export async function deleteDuplicateCommitmentsFromMemPool(commitments, transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { commitments: { $in: commitments }, transactionHash: { $nin: transactionHashes } };
@@ -384,7 +384,7 @@ export async function removeCommitmentsFromMemPool(commitments, transactionHashe
 Function to remove a set of nullifiers from the layer 2 mempool once they've
 been processed into an L2 block
 */
-export async function removeNullifiersFromMemPool(nullifiers, transactionHashes) {
+export async function deleteDuplicateNullifiersFromMemPool(nullifiers, transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { nullifiers: { $in: nullifiers }, transactionHash: { $nin: transactionHashes } };
