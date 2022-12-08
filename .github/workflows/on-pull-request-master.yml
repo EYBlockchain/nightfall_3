@@ -650,7 +650,6 @@ jobs:
   ping-pong-test:
     env:
       CONFIRMATIONS: 1
-      PROPOSER_MAX_BLOCK_PERIOD_MILIS: 20000
       NF_SERVICES_TO_START: blockchain,deployer,worker
     runs-on: ubuntu-20.04
     steps:

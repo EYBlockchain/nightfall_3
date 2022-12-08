@@ -167,9 +167,19 @@ async function verifyProof(transaction) {
     ].flat(Infinity),
   ).all.bigInt.map(inp => inp.toString());
 
+  logger.debug({ msg: 'INPUTS', inputs });
   const vk = new VerificationKey(vkArray, CURVE, PROVING_SCHEME, inputs.length);
 
+  logger.debug({
+    msg: 'PROOF BEFORE',
+    proof: transaction.proof,
+    proof0: transaction.proof[0],
+    proof0Generalised: generalise(transaction.proof[0]),
+  });
+
   const proof = new Proof(transaction.proof, CURVE, PROVING_SCHEME, inputs);
+
+  logger.debug({ msg: 'PROOF', proof });
 
   const verifies = await snarkjs.groth16.verify(vk, inputs, proof);
 
