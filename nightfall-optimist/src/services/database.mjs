@@ -376,7 +376,11 @@ been processed into an L2 block
 export async function deleteDuplicateCommitmentsFromMemPool(commitments, transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { commitments: { $in: commitments }, transactionHash: { $nin: transactionHashes } };
+  const query = {
+    commitments: { $in: commitments },
+    transactionHash: { $nin: transactionHashes },
+    mempool: true,
+  };
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
@@ -387,7 +391,11 @@ been processed into an L2 block
 export async function deleteDuplicateNullifiersFromMemPool(nullifiers, transactionHashes) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { nullifiers: { $in: nullifiers }, transactionHash: { $nin: transactionHashes } };
+  const query = {
+    nullifiers: { $in: nullifiers },
+    transactionHash: { $nin: transactionHashes },
+    mempool: true,
+  };
   return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
 }
 
