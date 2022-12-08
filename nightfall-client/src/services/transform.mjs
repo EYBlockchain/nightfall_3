@@ -187,7 +187,7 @@ async function transform(transformParams) {
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
     // call a worker to generate the proof
@@ -195,7 +195,7 @@ async function transform(transformParams) {
 
     logger.debug({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
@@ -215,7 +215,7 @@ async function transform(transformParams) {
 
     logger.debug({
       msg: 'Client made transaction',
-      transaction: JSON.stringify(optimisticTransformTransaction, null, 2),
+      transaction: optimisticTransformTransaction,
     });
 
     return submitTransaction(
@@ -227,7 +227,7 @@ async function transform(transformParams) {
     );
   } catch (error) {
     await Promise.all(commitmentInfo.oldCommitments.map(o => clearPending(o)));
-    throw new Error(error);
+    throw error;
   }
 }
 
