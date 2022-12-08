@@ -101,8 +101,8 @@ async function blockProposedEventHandler(data) {
     const blockNullifiers = transactions
       .map(t => t.nullifiers.filter(c => c !== ZERO))
       .flat(Infinity);
-    await removeCommitmentsFromMemPool(blockCommitments);
-    await removeNullifiersFromMemPool(blockNullifiers);
+    await removeCommitmentsFromMemPool(blockCommitments, block.transactionHashes);
+    await removeNullifiersFromMemPool(blockNullifiers, block.transactionHashes);
 
     const latestTree = await getLatestTree();
     const updatedTimber = Timber.statelessUpdate(
