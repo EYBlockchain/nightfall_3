@@ -116,9 +116,6 @@ async function tokenise(items) {
 
     const { proof } = res.data;
 
-    logger.debug({ msg: 'PUBLIC DATA', publicData });
-    logger.debug({ msg: 'PROOF', proof });
-
     const transaction = { ...publicData, proof: Proof.flatProof(proof) };
     transaction.transactionHash = Transaction.calcHash(transaction);
 
