@@ -6,6 +6,7 @@ import {
   getCircuitHash,
   generateProof,
 } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
+import Proof from '@polygon-nightfall/common-files/classes/proof.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import gen from 'general-number';
 import { ZkpKeys } from './keys.mjs';
@@ -103,33 +104,24 @@ async function tokenise(items) {
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
     const res = await generateProof({ folderpath: circuitName, witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
 
-    const transaction = new Transaction({
-      fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      circuitHash,
-      commitments: commitmentsInfo.newCommitments,
-      nullifiers: commitmentsInfo.nullifiers,
-      proof,
-      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
-      numberCommitments: VK_IDS[circuitName].numberCommitments,
-      isOnlyL2: true,
-    });
+    const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+    transaction.transactionHash = Transaction.calcHash(transaction);
 
     logger.debug({
       msg: `Client made ${circuitName}`,
-      transaction: JSON.stringify(transaction, null, 2),
+      transaction,
     });
 
     const rawTransaction = await shieldContractInstance.methods
@@ -145,7 +137,8 @@ async function tokenise(items) {
     return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-    throw new Error(error);
+    logger.error(error);
+    throw error;
   }
 }
 

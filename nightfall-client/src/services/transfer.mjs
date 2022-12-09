@@ -10,6 +10,7 @@ import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { edwardsCompress } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import Proof from '@polygon-nightfall/common-files/classes/proof.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   getCircuitHash,
@@ -127,7 +128,7 @@ async function transfer(transferParams) {
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
     // call a worker to generate the proof
@@ -135,31 +136,17 @@ async function transfer(transferParams) {
 
     logger.trace({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
-
-    const transaction = new Transaction({
-      fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      circuitHash,
-      ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-      tokenId: compressedEPub, // this is the encrypted tokenID
-      recipientAddress: compressedSecrets[1],
-      commitments: commitmentsInfo.newCommitments,
-      nullifiers: commitmentsInfo.nullifiers,
-      compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-      proof,
-      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
-      numberCommitments: VK_IDS[circuitName].numberCommitments,
-      isOnlyL2: true,
-    });
+    const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+    transaction.transactionHash = Transaction.calcHash(transaction);
 
     logger.debug({
       msg: `Client made ${circuitName}`,
-      transaction: JSON.stringify(transaction, null, 2),
+      transaction,
       offchain,
     });
 
@@ -177,7 +164,8 @@ async function transfer(transferParams) {
     return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-    throw new Error(error);
+    logger.error(error);
+    throw error;
   }
 }
 
