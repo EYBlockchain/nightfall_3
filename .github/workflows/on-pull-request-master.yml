@@ -668,6 +668,9 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd ..
 
+      - name: Build adversary
+        run: npm run build-adversary
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
