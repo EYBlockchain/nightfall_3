@@ -13,10 +13,15 @@ import {
 } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
+import { txsQueueChallenger } from '../utils/transactions-queue.mjs';
+import { sendSignedTransaction } from './transaction-sign-send.mjs';
 
+const web3 = Web3.connection();
 const { TIMBER_HEIGHT } = config;
 const { CHALLENGES_CONTRACT_NAME, ZERO } = constants;
-
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const challengerKey = environment.CHALLENGER_KEY;
+const { challengerEthAddress } = web3.eth.accounts.privateKeyToAccount(challengerKey);
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
 let ws;
 
@@ -34,6 +39,8 @@ Function to indicate to a listening challenger that a rollback has been complete
 export async function signalRollbackCompleted(data) {
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending. If not wait until the challenger reconnects
+
+  //challenger rollback
   let tryCount = 0;
   while (!ws || ws.readyState !== WebSocket.OPEN) {
     await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
@@ -66,31 +73,44 @@ export async function commitToChallenge(txDataToSign) {
   const web3 = Web3.connection();
   const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
   const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const challengeContractAddress = challengeContractInstance.options.address;
+
   const commitToSign = await challengeContractInstance.methods
     .commitToChallenge(commitHash)
     .encodeABI();
+
+  const signedTx = await createSignedTransaction(
+    challengerKey,
+    challengerEthAddress,
+    challengeContractAddress,
+    commitToSign,
+  );
+
+  const receipt = sendSignedTransaction(signedTx);
+  //encode, sign and send transaction
 
   await saveCommit(commitHash, txDataToSign);
 
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects
   let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+  // while (!ws || ws.readyState !== WebSocket.OPEN) {
+  //   await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
 
-    logger.warn(
-      'Websocket to challenger is closed for commit.  Waiting for challenger to reconnect',
-    );
+  //   logger.warn(
+  //     'Websocket to challenger is closed for commit.  Waiting for challenger to reconnect',
+  //   );
 
-    if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
-  }
+  //   if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
+  // }
 
-  ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
+  // ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
 
-  logger.debug({
-    msg: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
-    rawTransaction: commitToSign,
-  });
+  // logger.debug({
+  //   msg: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
+  //   rawTransaction: commitToSign,
+  // });
+  return receipt;
 }
 
 export async function revealChallenge(txDataToSign, sender) {
@@ -121,6 +141,9 @@ export async function createChallenge(block, transactions, err) {
     case 0: {
       logger.debug(`Challenging incorrect leaf count for block ${JSON.stringify(block, null, 2)}`);
       const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+
+      // sign and submit transactions
+
       txDataToSign = await challengeContractInstance.methods
         .challengeLeafCountCorrect(
           Block.buildSolidityStruct(priorBlockL2), // the block immediately prior to this one
@@ -132,6 +155,7 @@ export async function createChallenge(block, transactions, err) {
       break;
     }
     // Challenge wrong root
+    //sign and send tx
     case 1: {
       logger.debug(`Challenging incorrect root`);
 

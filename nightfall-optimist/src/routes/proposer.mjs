@@ -26,7 +26,7 @@ import {
   sendSignedTransaction,
 } from '../services/transaction-sign-send.mjs';
 import auth from '../utils/auth.mjs';
-import txsQueue from '../utils/transactions-queue.mjs';
+import { txsQueue } from '../utils/transactions-queue.mjs';
 
 const router = express.Router();
 const { TIMBER_HEIGHT, HASH_TYPE } = config;

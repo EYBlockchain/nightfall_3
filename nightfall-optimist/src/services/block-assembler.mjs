@@ -24,7 +24,7 @@ import { Transaction } from '../classes/index.mjs';
 //   increaseProposerBlockNotSent,
 // } from './debug-counters.mjs';
 import { createSignedTransaction, sendSignedTransaction } from './transaction-sign-send.mjs';
-import txsQueue from '../utils/transactions-queue.mjs';
+import { txsQueue } from '../utils/transactions-queue.mjs';
 
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
 const { STATE_CONTRACT_NAME, ZERO } = constants;
