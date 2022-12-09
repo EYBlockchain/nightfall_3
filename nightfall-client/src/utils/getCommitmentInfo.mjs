@@ -132,11 +132,6 @@ export const getCommitmentInfo = async txInfo => {
         JSON.stringify({ addr: c.preimage.ercAddress.hex(32), value: c.preimage.value.bigInt }),
       ),
     });
-    logger.debug(
-      `Found commitments ${addedFee > 0n ? 'including fee' : ''} ${oldCommitments.map(c =>
-        JSON.stringify({ addr: c.preimage.ercAddress.hex(32), value: c.preimage.value.bigInt }),
-      )}`,
-    );
 
     if (feeValue > 0n) {
       logger.debug({ msg: 'Found commitments fee', oldCommitmentsFee });
