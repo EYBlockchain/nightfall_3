@@ -92,6 +92,7 @@ describe('Testing with an adversary', () => {
   let challengeSelector;
 
   const waitForRollback = async () => {
+    console.log('Waiting for rollback...');
     while (rollbackCount !== currentRollbacks + 1) {
       console.log(
         'Rollback count: ',
@@ -102,6 +103,7 @@ describe('Testing with an adversary', () => {
       );
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
+    console.log('Rollback completed');
   };
 
   before(async () => {
@@ -210,9 +212,7 @@ describe('Testing with an adversary', () => {
         await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, fee);
         await makeBlockNow('DuplicateTransaction');
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback duplicate transaction deposit completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeCommitment);
       });
 
@@ -221,9 +221,7 @@ describe('Testing with an adversary', () => {
         await nf3User.deposit('IncorrectInput', ercAddress, tokenType, value2, tokenId, 0);
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback incorrect proof deposit completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
       });
 
@@ -232,9 +230,7 @@ describe('Testing with an adversary', () => {
         await nf3User.deposit('IncorrectProof', ercAddress, tokenType, value2, tokenId, 0);
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback incorrect proof deposit completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
       });
     });
@@ -260,9 +256,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow('DuplicateTransaction');
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback duplicate transaction transfer completed');
         expect(challengeSelector).to.be.oneOf([
           challengeSelectors.challengeCommitment,
           challengeSelectors.challengeNullifier,
@@ -283,9 +277,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback duplicate nullifier transfer completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
       });
 
@@ -303,9 +295,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback  incorrect proof transfer completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
       });
 
@@ -322,9 +312,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback  incorrect proof transfer completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
       });
 
@@ -342,9 +330,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback incorrect historic root completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeHistoricRoot);
       });
     });
@@ -370,9 +356,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow('DuplicateTransaction');
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback duplicate transaction withdraw completed');
         expect(challengeSelector).to.be.oneOf([
           challengeSelectors.challengeCommitment,
           challengeSelectors.challengeNullifier,
@@ -393,9 +377,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback  duplicate nullifier withdraw completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
       });
 
@@ -413,9 +395,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback incorrect proof withdraw completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
       });
 
@@ -433,9 +413,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback incorrect proof withdraw completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
       });
 
@@ -453,9 +431,7 @@ describe('Testing with an adversary', () => {
         );
         await makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-        console.log('Waiting for rollback...');
         await waitForRollback();
-        console.log('Rollback incorrect historic root completed');
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeHistoricRoot);
       });
     });
@@ -467,9 +443,7 @@ describe('Testing with an adversary', () => {
       await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectLeafCount');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      console.log('Waiting for rollback...');
       await waitForRollback();
-      console.log('Rollback incorrect leaf count completed');
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeLeafCount);
     });
 
@@ -478,9 +452,7 @@ describe('Testing with an adversary', () => {
       await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectTreeRoot');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      console.log('Waiting for rollback...');
       await waitForRollback();
-      console.log('Rollback incorrect tree root completed');
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeRoot);
     });
 
@@ -489,9 +461,7 @@ describe('Testing with an adversary', () => {
       await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectFrontierHash');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      console.log('Waiting for rollback...');
       await waitForRollback();
-      console.log('Rollback incorrect frontier hash completed');
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeFrontier);
     });
   });
