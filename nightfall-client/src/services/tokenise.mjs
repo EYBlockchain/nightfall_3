@@ -6,8 +6,8 @@ import {
   getCircuitHash,
   generateProof,
 } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
-import Proof from '@polygon-nightfall/common-files/classes/proof.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import gen from 'general-number';
 import { ZkpKeys } from './keys.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
@@ -116,7 +116,7 @@ async function tokenise(items) {
 
     const { proof } = res.data;
 
-    const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+    const transaction = { ...publicData, proof: compressProof(proof) };
     transaction.transactionHash = Transaction.calcHash(transaction);
 
     logger.debug({

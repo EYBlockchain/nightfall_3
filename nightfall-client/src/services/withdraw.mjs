@@ -9,8 +9,8 @@ import config from 'config';
 import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import Proof from '@polygon-nightfall/common-files/classes/proof.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import {
   getCircuitHash,
   generateProof,
@@ -119,7 +119,7 @@ async function withdraw(withdrawParams) {
 
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
-    const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+    const transaction = { ...publicData, proof: compressProof(proof) };
     transaction.transactionHash = Transaction.calcHash(transaction);
 
     logger.debug({

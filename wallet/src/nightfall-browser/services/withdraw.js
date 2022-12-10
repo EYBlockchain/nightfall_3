@@ -13,7 +13,7 @@ import confirmBlock from './confirm-block';
 import computeCircuitInputs from '../utils/computeCircuitInputs';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
-import Proof from '../../common-files/classes/proof.js';
+import { compressProof } from '../../common-files/utils/curve-maths/curves';
 import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
 import { checkIndexDBForCircuit, getLatestTree, getMaxBlock, getStoreCircuit } from './database';
@@ -123,7 +123,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     const { proof } = await snarkjs.groth16.fullProve(witness, wasmData.data, zkeyData.data); // zkey, witness
 
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
-    const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+    const transaction = { ...publicData, proof: compressProof(proof) };
     transaction.transactionHash = Transaction.calcHash(transaction);
     try {
       const rawTransaction = await shieldContractInstance.methods

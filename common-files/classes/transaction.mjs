@@ -9,7 +9,6 @@ import gen from 'general-number';
 import Web3 from 'web3';
 import utils from '../utils/crypto/merkle-tree/utils.mjs';
 import { compressProof } from '../utils/curve-maths/curves.mjs';
-import Proof from './proof.mjs';
 
 const { generalise } = gen;
 
@@ -108,16 +107,16 @@ class Transaction {
     commitments: _commitments, // this must be an array of objects from the Commitments class
     nullifiers: _nullifiers, // this must be an array of objects from the Nullifier class
     compressedSecrets: _compressedSecrets, // this must be array of objects that are compressed from Secrets class
-    proof, // this must be a proof object, as computed by circom worker
+    _proof, // this must be a proof object, as computed by circom worker
     numberNullifiers,
     numberCommitments,
     isOnlyL2,
   }) {
     let compressedSecrets;
-    let flatProof;
-    if (proof === undefined) flatProof = [0, 0, 0, 0, 0, 0, 0, 0];
+    let proof;
+    if (_proof === undefined) proof = [0, 0, 0, 0, 0, 0, 0, 0];
     else {
-      flatProof = Proof.flatProof(proof);
+      proof = compressProof(_proof);
     }
 
     const commitments = utils.padArray(_commitments, { hash: 0 }, numberCommitments);
@@ -143,7 +142,7 @@ class Transaction {
       commitments: commitments.map(c => c.hash),
       nullifiers: nullifiers.map(n => n.hash),
       compressedSecrets,
-      proof: compressProof(flatProof),
+      proof,
     }).all.hex(32);
 
     // compute the solidity hash, using suitable type conversions

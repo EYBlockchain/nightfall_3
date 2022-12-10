@@ -16,7 +16,7 @@ import * as snarkjs from 'snarkjs';
 import confirmBlock from './confirm-block';
 import { randValueLT } from '../../common-files/utils/crypto/crypto-random';
 import { getContractInstance } from '../../common-files/utils/contract';
-import Proof from '../../common-files/classes/proof.js';
+import { compressProof } from '../../common-files/utils/curve-maths/curves';
 import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
 import { storeCommitment } from './commitment-storage';
@@ -160,7 +160,7 @@ async function deposit(items, shieldContractAddress) {
     );
 
     // next we need to compute the optimistic Transaction object
-    const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+    const transaction = { ...publicData, proof: compressProof(proof) };
     transaction.transactionHash = Transaction.calcHash(transaction);
     logger.trace(`Optimistic deposit transaction ${JSON.stringify(transaction, null, 2)}`);
     // and then we can create an unsigned blockchain transaction

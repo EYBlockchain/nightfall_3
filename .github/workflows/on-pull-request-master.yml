@@ -2,7 +2,7 @@ name: Check PR
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master, onchain-decompression]
 
 jobs:
   dependency-review:
