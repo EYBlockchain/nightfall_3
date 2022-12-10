@@ -9,7 +9,6 @@ import Nf3 from '../cli/lib/nf3.mjs';
 import {
   expectTransaction,
   getLayer2Balances,
-  makeDeposit,
   waitTransactionToBeMined,
   Web3Client,
 } from './utils.mjs';
@@ -34,6 +33,12 @@ const eventLogs = [];
 const nf3User = new Nf3(signingKeys.user1, environment);
 const { optimistApiUrl } = environment;
 
+let erc20Address;
+async function makeDeposit(value, fee = 0) {
+  logger.debug(`Make deposit of ${value}...`);
+  return nf3User.deposit(erc20Address, tokenType, value, tokenId, fee);
+}
+
 async function makeBlock() {
   logger.debug(`Make block...`);
   await axios.get(`${optimistApiUrl}/block/make-now`);
@@ -41,7 +46,6 @@ async function makeBlock() {
 }
 
 describe('General Circuit Test', function () {
-  let erc20Address;
   let stateAddress;
   const proposerFee = '0';
   const proposerStake = '1000000';
@@ -77,7 +81,7 @@ describe('General Circuit Test', function () {
     });
 
     it('Should deposit', async function () {
-      const deposit = await makeDeposit(nf3User, erc20Address, tokenType, value, tokenId);
+      const deposit = await makeDeposit(value);
       expectTransaction(deposit);
       logger.debug(`Gas used was ${Number(deposit.gasUsed)}`);
     });
@@ -148,7 +152,7 @@ describe('General Circuit Test', function () {
     it(`Should transfer ${value}, ie double transfer with change`, async function () {
       // Arrange
       value = 8;
-      await makeDeposit(nf3User, erc20Address, tokenType, value, tokenId);
+      await makeDeposit(value);
       await makeBlock();
 
       // Act, assert
@@ -186,7 +190,7 @@ describe('General Circuit Test', function () {
     it(`Should withdraw ${value}, ie double withdrawal with change`, async function () {
       // Arrange
       value = 4;
-      await makeDeposit(nf3User, erc20Address, tokenType, value, tokenId);
+      await makeDeposit(value);
       await makeBlock();
 
       // Act, assert
@@ -208,7 +212,7 @@ describe('General Circuit Test', function () {
     it(`Should withdraw ${value}, ie double withdrawal with no change`, async function () {
       // Arrange
       value = 2;
-      await makeDeposit(nf3User, erc20Address, tokenType, value, tokenId);
+      await makeDeposit(value);
       await makeBlock();
 
       // Act, assert

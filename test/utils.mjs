@@ -544,11 +544,5 @@ export async function waitTransactionToBeMined(txHash, web3, counter = 50) {
 }
 
 export async function getLayer2Balances(_nf3User, tokenAddress) {
-  logger.debug(`Get user balance...`);
   return (await _nf3User.getLayer2Balances())[tokenAddress]?.[0].balance || 0;
-}
-
-export async function makeDeposit(_nf3User, tokenAddress, tokenType, value, tokenId, fee = 0) {
-  logger.debug(`Make deposit of ${value}...`);
-  return _nf3User.deposit(tokenAddress, tokenType, value, tokenId, fee);
 }
