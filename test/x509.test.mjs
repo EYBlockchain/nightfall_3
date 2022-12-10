@@ -105,7 +105,7 @@ describe('x509 tests', () => {
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       logger.debug('Getting withdrawal hash');
-      withdrawal = await nf3Users[0].getLatestWithdrawHash();
+      withdrawal = nf3Users[0].getLatestWithdrawHash();
       await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
     });
 
