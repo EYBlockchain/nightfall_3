@@ -11,8 +11,6 @@ import {
   transferNTransactions,
   withdrawNTransactions,
   Web3Client,
-  expectTransaction,
-  waitForTimeout,
 } from './utils.mjs';
 
 const { expect } = chai;
@@ -210,35 +208,6 @@ describe('Gas test', () => {
       logger.debug(`Withdraw L1 average gas used, if on-chain, was ${averageL1GasCost(receipts)}`);
 
       await processMempoolTransactions();
-    });
-  });
-
-  describe('Finalise withdraws', () => {
-    it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
-      const nodeInfo = await web3Client.getInfo();
-      if (nodeInfo.includes('TestRPC')) {
-        waitForTimeout(10000);
-        const startBalance = await web3Client.getBalance(nf3User.ethereumAddress);
-        const withdrawal = await nf3User.getLatestWithdrawHash();
-        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
-        const commitments = await nf3User.getPendingWithdraws();
-        expect(
-          commitments[nf3User.zkpKeys.compressedZkpPublicKey][erc20Address].length,
-        ).to.be.greaterThan(0);
-        expect(
-          commitments[nf3User.zkpKeys.compressedZkpPublicKey][erc20Address].filter(
-            c => c.valid === true,
-          ).length,
-        ).to.be.greaterThan(0);
-        const res = await nf3User.finaliseWithdrawal(withdrawal);
-        expectTransaction(res);
-        const endBalance = await web3Client.getBalance(nf3User.ethereumAddress);
-        expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
-        logger.debug(`The gas used for finalise withdraw, back to L1, was ${res.gasUsed}`);
-      } else {
-        logger.debug('Not using a time-jump capable test client so this test is skipped');
-        this.skip();
-      }
     });
   });
 
