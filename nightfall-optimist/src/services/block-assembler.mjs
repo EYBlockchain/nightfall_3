@@ -180,15 +180,7 @@ export async function conditionalMakeBlock(args) {
             const receipt = await sendSignedTransaction(signedTx);
             logger.debug({ msg: 'Block proposed', receipt });
 
-            await Promise.all([
-              removeTransactionsFromMemPool(block.transactionHashes),
-              removeCommitmentsFromMemPool(
-                transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
-              ),
-              removeNullifiersFromMemPool(
-                transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
-              ),
-            ]);
+            await removeTransactionsFromMemPool(block.transactionHashes);
             logger.debug('Db updates successful');
           } catch (err) {
             logger.error({
