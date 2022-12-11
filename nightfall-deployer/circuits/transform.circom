@@ -11,6 +11,7 @@ include "./common/verifiers/verify_encryption.circom";
 
 include "../node_modules/circomlib/circuits/bitify.circom";
 include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/gates.circom";
 include "../node_modules/circomlib/circuits/mux1.circom";
 
 /**
@@ -66,11 +67,11 @@ template Transform(N,C) {
     signal input commitmentsSalts[C];
     signal input recipientPublicKey[C][2];
     
-    signal input inputPackedAddressesPrivate[N-2];
-    signal input inputIdRemaindersPrivate[N-2];
+    signal input inputPackedAddressesPrivate[N];
+    signal input inputIdRemaindersPrivate[N];
 
-    signal input outputPackedAddressesPrivate[C-1];
-    signal input outputIdRemaindersPrivate[C-1];
+    signal input outputPackedAddressesPrivate[C];
+    signal input outputIdRemaindersPrivate[C];
     
     // Check that the transaction does not have nullifiers nor commitments duplicated
     var checkDuplicates = VerifyDuplicates(N,C)(nullifiers, commitments);
@@ -109,48 +110,45 @@ template Transform(N,C) {
       commitmentValueBits[252] === 0;
     }
 
-    // Convert the fee nullifiers values to numbers and calculate its sum
+    // check the fee nullifiers and fee commitments by looking at the input addresses
     var feeNullifiersSum = 0;
-    for (var i = N-2; i < N; i++) {
-      feeNullifiersSum += nullifiersValues[i];
+    for (var i = 0; i < N; i++) {
+      var isFee = inputPackedAddressesPrivate[i] == feeAddress;
+      feeNullifiersSum += nullifiersValues[i] * isFee;
+    }
+
+    var feeCommitmentSum = 0;
+    for (var i = 0; i < C; i++) {
+      var isFee = outputPackedAddressesPrivate[i] == feeAddress;
+      feeCommitmentSum += commitmentsValues[i] * isFee;
     }
 
     // Check that the value holds
-    // the last commitment is reserved for fee change
-    feeNullifiersSum === commitmentsValues[C-1] + fee;
+    var feeIsCovered = feeNullifiersSum - feeCommitmentSum - fee;
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
     var nullifierKeys, zkpPublicKeys[2];
     (nullifierKeys, zkpPublicKeys) = CalculateKeys()(rootKey);
 
-    // Check that the fee nullfiers are valid
-    var checkFeeNullifier = VerifyNullifiersOptional(2)(
-      feeAddress, 
-      0, 
-      nullifierKeys, 
-      zkpPublicKeys, 
-      [nullifiers[N-2], nullifiers[N-1]], 
-      [roots[N-2], roots[N-1]], 
-      [nullifiersValues[N-2], nullifiersValues[N-1]], 
-      [nullifiersSalts[N-2], nullifiersSalts[N-1]], 
-      [paths[N-2],paths[N-1] ], 
-      [orders[N-2], orders[N-1]]
-    );
-    checkFeeNullifier === 1;
-
-    // Check the L2 nullifiers
-    for (var i = 0; i < N - 2; i++) {
+    // Check the nullifiers
+    for (var i = 0; i < N; i++) {
       // Check that the top most two bits of all packed ercAddresses are equal to 1
+      // Unless the address is the fee address or zero
       var ercAddressBits[254] = Num2Bits(254)(inputPackedAddressesPrivate[i]);
-      var isZero = IsZero()(inputPackedAddressesPrivate[i]);
-      var valid1 = Mux1()([ercAddressBits[253], 1], isZero);
-      var valid2 = Mux1()([ercAddressBits[252], 1], isZero);
-      valid1 === 1;
-      valid2 === 1;
+
+      // var isZero = IsZero()(inputPackedAddressesPrivate[i]);
+      var isFee = IsEqual()([inputPackedAddressesPrivate[i], feeAddress]);
+      var isL2 = AND()(ercAddressBits[253], ercAddressBits[252]);
+
+
+      // the only types of valid nullifiers are L2 and fee
+      // if a provided commitment falls outside these two categories
+      // verify nullifiers will fail unless the value is 0
+      var isSet = XOR()(isFee, isL2);
 
       // Check that the input nullifiers are valid
       var checkInputNullifier = VerifyNullifiersOptional(1)(
-        inputPackedAddressesPrivate[i], 
+        inputPackedAddressesPrivate[i] * isSet, 
         inputIdRemaindersPrivate[i], 
         nullifierKeys, 
         zkpPublicKeys, 
@@ -164,28 +162,21 @@ template Transform(N,C) {
       checkInputNullifier === 1;
     }
 
-    // Check that the fee Commitment is valid
-    var checkFeeCommitment = VerifyCommitmentsOptional(1)(
-      feeAddress, 
-      0, 
-      [commitments[C-1]], 
-      [commitmentsValues[C-1]], 
-      [commitmentsSalts[C-1]], 
-      [recipientPublicKey[C-1]]
-    );
-    checkFeeCommitment === 1;
-
-    // verify the L2 commitments 
-    for (var i = 0; i < C-1; i++) {
+    // verify the commitments 
+    for (var i = 0; i < C; i++) {
       // Check that the top most two bits of all packed ercAddresses are equal to 1
+      // Unless the address is the fee address or zero
       var ercAddressBits[254] = Num2Bits(254)(outputPackedAddressesPrivate[i]);
-      var isZero = IsZero()(outputPackedAddressesPrivate[i]);
-      var valid1 = Mux1()([ercAddressBits[253], 1], isZero);
-      var valid2 = Mux1()([ercAddressBits[252], 1], isZero);
+
+      // var isZero = IsZero()(inputPackedAddressesPrivate[i]);
+      var isFee = IsEqual()([outputPackedAddressesPrivate[i], feeAddress]);
+      var isL2 = AND()(ercAddressBits[253], ercAddressBits[252]);
+
+      var isSet = XOR()(isFee, isL2);
 
       // Check the output commitments
       var checkOutputCommitment = VerifyCommitmentsOptional(1)(
-        outputPackedAddressesPrivate[i], 
+        outputPackedAddressesPrivate[i] * isSet,
         outputIdRemaindersPrivate[i],
         [commitments[i]], 
         [commitmentsValues[i]], 
