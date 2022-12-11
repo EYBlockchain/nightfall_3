@@ -2,9 +2,9 @@
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
-import getTimeByBlock from '@polygon-nightfall/common-files/utils/block-info.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { getCircuitHash } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
+import { getTimeByBlock } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
 import gen from 'general-number';
 import {
   markNullifiedOnChain,

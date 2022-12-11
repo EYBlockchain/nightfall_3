@@ -9,12 +9,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import {
-  removeTransactionsFromMemPool,
-  removeCommitmentsFromMemPool,
-  removeNullifiersFromMemPool,
-  getMempoolTxsSortedByFee,
-} from './database.mjs';
+import { removeTransactionsFromMemPool, getMempoolTxsSortedByFee } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 // import {
@@ -26,7 +21,7 @@ import { createSignedTransaction, sendSignedTransaction } from './transaction-si
 import txsQueue from '../utils/transactions-queue.mjs';
 
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
-const { STATE_CONTRACT_NAME, ZERO } = constants;
+const { STATE_CONTRACT_NAME } = constants;
 
 let makeNow = false;
 let lastBlockTimestamp = new Date().getTime();

@@ -89,8 +89,8 @@ const transpileTransactionSubmitEventHandler = _pathToSrc => {
       /(const checkStatus = await Promise.all\(\[)/g,
       `// const checkStatus = await Promise.all([`,
     )
-    .replace(/(checkCommitments\(transaction\))/g, `// checkCommitments(transaction)`)
-    .replace(/(checkNullifiers\(transaction\),\n {6}\]\))/g, `const checkStatus = [true]`);
+    .replace(/(checkCommitmentsMempool\(transaction\))/g, `// checkCommitmentsMempool(transaction)`)
+    .replace(/(checkNullifiersMempool\(transaction\),\n {6}\]\))/g, `const checkStatus = [true]`);
 
   fs.writeFileSync(_pathToSrc, srcFile);
 };

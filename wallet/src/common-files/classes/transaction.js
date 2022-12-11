@@ -146,12 +146,6 @@ class Transaction {
     return preimage;
   }
 
-  static checkHash(transaction) {
-    // compute the solidity hash, using suitable type conversions
-    const transactionHash = keccak(transaction);
-    return transactionHash === transaction.transactionHash;
-  }
-
   static calcHash(transaction) {
     // compute the solidity hash, using suitable type conversions
     const transactionHash = keccak(transaction);

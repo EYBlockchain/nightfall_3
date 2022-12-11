@@ -2,7 +2,6 @@
 Route for transferring a crypto commitment.
 */
 import express from 'express';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import withdraw from '../services/withdraw.mjs';
 
 const router = express.Router();
@@ -12,11 +11,11 @@ router.post('/', async (req, res, next) => {
     const { rawTransaction: txDataToSign, transaction } = await withdraw(req.body);
     res.json({ txDataToSign, transaction });
   } catch (err) {
-    if (err.message.includes('invalid commitment hashes')) {
-      logger.info('Returning "invalid commitment hashes" error');
+    if (err.message.includes('no commitment')) {
+      res.json({ error: 'No suitable commitments' });
+    } else if (err.message.includes('invalid commitment hashes')) {
       res.json({ error: err.message });
     }
-    logger.error(err);
     next(err);
   }
 });

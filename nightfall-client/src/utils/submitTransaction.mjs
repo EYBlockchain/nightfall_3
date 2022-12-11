@@ -46,7 +46,7 @@ export const submitTransaction = async (
       proposerIdx += 1;
     }
 
-    logger.debug(`Peer List: ${JSON.stringify(peerList, null, 2)}`);
+    logger.debug({ msg: 'Peer List', peerList });
     await Promise.all(
       Object.keys(peerList).map(async address => {
         logger.debug(
