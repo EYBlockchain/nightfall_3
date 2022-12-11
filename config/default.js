@@ -242,28 +242,7 @@ module.exports = {
       proposerBaseUrl: process.env.PROPOSER_HOST
         ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
         : 'http://localhost:8092',
-      web3WsUrl: `wss://polygon-mumbai.g.alchemy.com/v2/rQInXX0BGBazbLhH4BRco6YRm9648Mhr`,
-      adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
-      adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
-      PROPOSER_KEY: process.env.PROPOSER_KEY,
-      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
-    },
-    matic: {
-      name: 'mumbai',
-      chainId: 137,
-      clientApiUrl: process.env.CLIENT_HOST
-        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
-        : 'http://localhost:8080',
-      optimistApiUrl: process.env.OPTIMIST_HOST
-        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
-        : 'http://localhost:8081',
-      optimistWsUrl: process.env.OPTIMIST_HOST
-        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
-        : 'ws://localhost:8082',
-      proposerBaseUrl: process.env.PROPOSER_HOST
-        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
-        : 'http://localhost:8092',
-      web3WsUrl: `wss://distinguished-hardworking-frog.matic-testnet.discover.quiknode.pro/5ad1de04078c5fcf53e27839e8414875d4d4d2c3/`,
+      web3WsUrl: `wss://ws-matic-mumbai.chainstacklabs.com`,
       adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
       adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
@@ -521,23 +500,6 @@ module.exports = {
           name: 'stMATIC',
           address: '0x9A7c69A167160C507602ecB3Df4911e8E98e1279',
           amount: process.env.STMATIC_TESTNET_RESTRICT || '1000000000',
-        },
-      ],
-      ropsten: [
-        {
-          name: 'WETH',
-          address: '0xc778417E063141139Fce010982780140Aa0cD5Ab',
-          amount: process.env.WETH_TESTNET_RESTRICT || '1000000000000000000',
-        },
-        {
-          name: 'MATIC',
-          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
-          amount: process.env.MATIC_TESTNET_RESTRICT || '1000000000000000000000',
-        },
-        {
-          name: 'USDC',
-          address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
-          amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
         },
       ],
       mumbai: [

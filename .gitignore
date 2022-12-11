@@ -19,7 +19,7 @@ artifacts/
 cache/
 config/geth/data/
 backup
-docker/volumes
+#docker/volumes
 
 #hardhat coverage
 coverage

@@ -61,6 +61,8 @@ services:
       - type: volume
         source: build
         target: /app/build/
+    depends_on:
+      - worker
     networks:
       - nightfall_network
     environment:
@@ -152,7 +154,6 @@ services:
         source: proving_files
         target: /app/output/
     depends_on:
-      - deployer
       - rabbitmq
     networks:
       - nightfall_network
@@ -161,7 +162,6 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      MPC: ${MPC}
     entrypoint: ['npm', 'run', 'start']
 
 volumes:

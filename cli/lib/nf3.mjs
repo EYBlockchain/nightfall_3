@@ -337,6 +337,7 @@ class Nf3 {
   async _sendTransaction(tx) {
     if (this.ethereumSigningKey) {
       const promiseTest = new Promise((resolve, reject) => {
+        logger.info('Sending signed transaction...');
         this.web3.eth
           .sendSignedTransaction(tx.rawTransaction)
           .once('receipt', receipt => {
@@ -363,7 +364,9 @@ class Nf3 {
   @returns {Promise} This will resolve into a transaction receipt.
   */
   async submitTransaction(unsignedTransaction, contractAddress = this.shieldContractAddress, fee) {
+    logger.info(`Signing transaction...`);
     const tx = await this._signTransaction(unsignedTransaction, contractAddress, fee);
+    logger.info(`Transaction signed!`);
     return this._sendTransaction(tx);
   }
 
@@ -530,6 +533,7 @@ class Nf3 {
   ) {
     let txDataToSign;
     try {
+      logger.info(`Aproving trx...${this.ethereumAddress}`);
       txDataToSign = await approve(
         ercAddress,
         this.ethereumAddress,
@@ -539,18 +543,26 @@ class Nf3 {
         this.web3,
         !!this.ethereumSigningKey,
       );
+      logger.info(`Trx approved! ${this.ethereumAddress}`);
     } catch (err) {
       logger.error(`Approve transaction failed`);
-      throw new Error(err);
+      throw err;
     }
     if (txDataToSign) {
       userQueue.push(() => {
-        return this.submitTransaction(txDataToSign, ercAddress, 0);
+        logger.info(`Submitting approval...${this.ethereumAddress}`);
+        try {
+          return this.submitTransaction(txDataToSign, ercAddress, 0);
+        } finally {
+          logger.info(`Approval ok - ${this.ethereumAddress}`);
+        }
       });
     }
 
     const feeL1 = feePaidL2 ? 0 : fee;
     const feeL2 = feePaidL2 ? fee : 0;
+
+    logger.info(`Posting deposit...${this.ethereumAddress}`);
 
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
@@ -561,6 +573,9 @@ class Nf3 {
       nullifierKey: this.zkpKeys.nullifierKey,
       fee: feeL2,
     });
+
+    logger.info(`response deposit ok - ${this.ethereumAddress}`);
+
     return new Promise((resolve, reject) => {
       userQueue.push(async () => {
         try {

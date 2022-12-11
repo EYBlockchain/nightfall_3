@@ -127,17 +127,6 @@ module.exports = {
       gasPrice: config.WEB3_OPTIONS.gasPrice,
       gas: config.WEB3_OPTIONS.gas,
     },
-    matic: {
-      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
-      network_id: 137,
-      networkCheckTimeout: 1000000000,
-      timeoutBlocks: 2000,
-      confirmations: 2,
-      skipDryRun: true,
-      websockets: true,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: config.WEB3_OPTIONS.gas,
-    },
   },
 
   // Set default mocha options here, use special reporters etc.

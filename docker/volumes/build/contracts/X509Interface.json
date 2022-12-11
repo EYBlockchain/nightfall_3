@@ -1,0 +1,180 @@
+{
+  "contractName": "X509Interface",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "x509Check",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.8.17+commit.8df45f5f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"x509Check\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/X509Interface.sol\":\"X509Interface\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":1},\"remappings\":[]},\"sources\":{\"project:/contracts/X509Interface.sol\":{\"keccak256\":\"0x1ad5a7440d3c5cfc38003f8b49961265cfe5877c27d779f3fbeaf2492795c3c3\",\"license\":\"CC0-1.0\",\"urls\":[\"bzz-raw://a664420ea6ba2df792afcc98f2609814b92567fbd08c9073cf5277c31875099b\",\"dweb:/ipfs/QmWAJUMS2jvJXyECphv1xxTYGdBgTndqgGkyxZXG961G52\"]}},\"version\":1}",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "immutableReferences": {},
+  "generatedSources": [],
+  "deployedGeneratedSources": [],
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "// SPDX-License-Identifier: CC0-1.0\n\npragma solidity ^0.8.3;\n\ninterface X509Interface {\n    function x509Check(address user) external view returns (bool);\n}\n",
+  "sourcePath": "/app/contracts/X509Interface.sol",
+  "ast": {
+    "absolutePath": "project:/contracts/X509Interface.sol",
+    "exportedSymbols": {
+      "X509Interface": [
+        24034
+      ]
+    },
+    "id": 24035,
+    "license": "CC0-1.0",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 24026,
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".3"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "37:23:49"
+      },
+      {
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "X509Interface",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "id": 24034,
+        "linearizedBaseContracts": [
+          24034
+        ],
+        "name": "X509Interface",
+        "nameLocation": "72:13:49",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "functionSelector": "e23c27e9",
+            "id": 24033,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "x509Check",
+            "nameLocation": "101:9:49",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 24029,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 24028,
+                  "mutability": "mutable",
+                  "name": "user",
+                  "nameLocation": "119:4:49",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24033,
+                  "src": "111:12:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 24027,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "111:7:49",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "110:14:49"
+            },
+            "returnParameters": {
+              "id": 24032,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 24031,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 24033,
+                  "src": "148:4:49",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 24030,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "148:4:49",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "147:6:49"
+            },
+            "scope": 24034,
+            "src": "92:62:49",
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "scope": 24035,
+        "src": "62:94:49",
+        "usedErrors": []
+      }
+    ],
+    "src": "37:120:49"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.8.17+commit.8df45f5f.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.4.10",
+  "updatedAt": "2022-12-08T15:14:18.009Z",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  }
+}
