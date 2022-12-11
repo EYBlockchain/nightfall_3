@@ -126,14 +126,15 @@ export const getCommitmentInfo = async txInfo => {
     spentCommitments.push(...oldCommitmentsFee);
     oldCommitments.push(...validatedProvidedCommitments);
 
-    logger.debug(
-      `Found commitments ${addedFee > 0n ? 'including fee' : ''} ${oldCommitments.map(c =>
+    logger.debug({
+      msg: `Found commitments ${addedFee > 0n ? 'including fee' : ''}`,
+      oldCommitments: oldCommitments.map(c =>
         JSON.stringify({ addr: c.preimage.ercAddress.hex(32), value: c.preimage.value.bigInt }),
-      )}`,
-    );
+      ),
+    });
 
     if (feeValue > 0n) {
-      logger.debug(`Found commitments fee ${JSON.stringify(oldCommitmentsFee, null, 2)}`);
+      logger.debug({ msg: 'Found commitments fee', oldCommitmentsFee });
     }
 
     // Compute the nullifiers

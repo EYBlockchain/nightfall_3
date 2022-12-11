@@ -1,9 +1,13 @@
 import config from 'config';
 import { expect } from 'chai';
 import { retrieveL2Balance } from '../utils.mjs';
-import Nf3 from '../../cli/lib/nf3.mjs';
+// instead of our usual cli we need to import
+// adversary transpiled version of cli.
+// please do not forget to run `npm run build-adversary`
+// eslint-disable-next-line import/no-unresolved
+import Nf3 from '../adversary/adversary-cli/lib/nf3.mjs';
 import {
-  proposerTest,
+  proposerStats,
   setParametersConfig,
   getStakeAccount,
   getCurrentProposer,
@@ -14,41 +18,64 @@ const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls, 
   config.TEST_OPTIONS;
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const { TEST_ERC20_ADDRESS } = process.env;
+const CLIENT2_TX_TYPES_SEQUENCE = process.env.CLIENT2_TX_TYPES_SEQUENCE || 'ValidTransaction';
 
 const nf3Users = [];
 let blockStake;
 const listAddresses = [];
-const listTransfersTotal = [];
+const listTransactionsTotal = [];
 const TEST_LENGTH = 4;
 const value = 10;
 let ercAddress;
 
 let nf3User;
 
+/**
+  Get the 2 proposers in local with the corresponding optimists url to call makeblock when they are current proposer.
+  @method
+  @async
+  */
 const getOptimistUrls = async () => {
-  // const optimistUrls = [];
-  // TODO: Replace when the nightfall node is available with the prop.url
-  /* const resultProposers = await nf3User.getProposers();
+  const optimistUrls = [];
+  const resultProposers = await nf3User.getProposers();
   for (const prop of resultProposers.proposers) {
     optimistUrls.push({
       proposer: prop.thisAddress,
       optimistUrl: prop.url,
     });
-  } */
+  }
 
-  const optimistUrls = [
-    {
-      proposer: nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer2).address,
-      optimistUrl: optimistApiUrls.optimist2,
-    },
-    {
-      proposer: nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer1).address,
-      optimistUrl: optimistApiUrls.optimist1,
-    },
-  ];
+  // TODO: No need to do this when the nightfall node is available with the prop.url that is the same as optimist url
+  if (environment.web3WsUrl.includes('localhost')) {
+    let optimistUrlProposer1 = optimistUrls.find(
+      o =>
+        o.proposer === nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer1).address,
+    );
+    // this is because we use proposer3 key by default in docker-compose to avoid collision with default proposer. If not defined in the file it will be proposer3 key
+    if (!optimistUrlProposer1) {
+      optimistUrlProposer1 = optimistUrls.find(
+        o =>
+          o.proposer ===
+          nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer3).address,
+      );
+    }
+    optimistUrlProposer1.optimistUrl = optimistApiUrls.optimist1;
+
+    const optimistUrlProposer2 = optimistUrls.find(
+      o =>
+        o.proposer === nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer2).address,
+    );
+    optimistUrlProposer2.optimistUrl = optimistApiUrls.optimist2;
+  }
   return optimistUrls;
 };
 
+/**
+  Get initial proposer statistics for checking at the end the results after the test.
+  @method
+  @async
+  @param {object} optimistUls - otimist urls for each proposer
+  */
 const getInitialProposerStats = async optimistUrls => {
   const proposersStats = {
     proposersBlocks: {},
@@ -68,11 +95,16 @@ const getInitialProposerStats = async optimistUrls => {
   return proposersStats;
 };
 
+/**
+  Get initial statistics for the users about balances.
+  @method
+  @async
+  */
 const getInitialUserStats = async () => {
   const usersStats = {
     usersInitialBalance: [],
     usersFinalBalance: [],
-    usersTotalTransferred: [],
+    usersTotalValueL2: [],
   }; // initialize stats for the test
 
   for (const nf3 of nf3Users) {
@@ -86,6 +118,11 @@ const getInitialUserStats = async () => {
   return usersStats;
 };
 
+/**
+  Wait for current proposer to be assigned.
+  @method
+  @async
+  */
 const waitForCurrentProposer = async () => {
   let currentProposer = await getCurrentProposer();
   // let proposers boot and wait until we have the current proposer registered from the services
@@ -98,6 +135,23 @@ const waitForCurrentProposer = async () => {
   console.log('CURRENT PROPOSER: ', currentProposer);
 };
 
+const getTxTypesToSend = txTypesSequence => {
+  // we will produce this types of tx after the first deposits with transfer, deposit, withdraw in the loop
+  const TxTypes = Array(TEST_LENGTH * 3).fill('ValidTransaction');
+  const replaceTxTypes = txTypesSequence;
+  const length = replaceTxTypes.length < TxTypes.length ? replaceTxTypes.length : TxTypes.length;
+  for (let i = 0; i < length; i++) {
+    TxTypes[i] = replaceTxTypes[i];
+  }
+
+  return TxTypes;
+};
+
+/**
+  Initialize users and list of adreces of the users.
+  @method
+  @async
+  */
 const initializeUsersParameters = async () => {
   const signingKeysUsers = [signingKeys.user1, signingKeys.user2];
   const mnemonicsUsers = [mnemonics.user1, mnemonics.user2];
@@ -106,13 +160,17 @@ const initializeUsersParameters = async () => {
   environmentUser1.clientApiUrl = clientApiUrls.client1 || environmentUser1.clientApiUrl;
   environmentUser1.optimistApiUrl = optimistApiUrls.optimist1 || environmentUser1.optimistApiUrl;
   environmentUser1.optimistWsUrl = optimistWsUrls.optimist1 || environmentUser1.optimistWsUrl;
-  nf3Users.push(new Nf3(signingKeys.user1, environmentUser1));
+  const nf3User1 = new Nf3(signingKeys.user1, environmentUser1);
+  nf3User1.txTypes = getTxTypesToSend([]);
+  nf3Users.push(nf3User1);
 
   const environmentUser2 = { ...environment };
   environmentUser2.clientApiUrl = clientApiUrls.client2 || environmentUser2.clientApiUrl;
   environmentUser2.optimistApiUrl = optimistApiUrls.optimist2 || environmentUser2.optimistApiUrl;
   environmentUser2.optimistWsUrl = optimistWsUrls.optimist2 || environmentUser2.optimistWsUrl;
-  nf3Users.push(new Nf3(signingKeys.user2, environmentUser2));
+  const nf3User2 = new Nf3(signingKeys.user2, environmentUser2);
+  nf3User2.txTypes = getTxTypesToSend(CLIENT2_TX_TYPES_SEQUENCE.split(','));
+  nf3Users.push(nf3User2);
 
   for (let i = 0; i < signingKeysUsers.length; i++) {
     // eslint-disable-next-line no-await-in-loop
@@ -135,39 +193,55 @@ const initializeUsersParameters = async () => {
   }
 };
 
-const waitForTransfersCompleted = async () => {
-  let nTotalTransfers = 0;
+/**
+  Wait for all the transactions of the users to be completed.
+  @method
+  @async
+  */
+const waitForTransactionsCompleted = async () => {
+  let nTotalTransactions = 0;
 
   do {
-    nTotalTransfers = 0;
-    for (let i = 0; i < listTransfersTotal.length; i++) {
-      nTotalTransfers += listTransfersTotal[i].length;
+    nTotalTransactions = 0;
+    for (let i = 0; i < listTransactionsTotal.length; i++) {
+      nTotalTransactions += listTransactionsTotal[i].length;
     }
     console.log(
-      `Waiting for total transactions to be ${TEST_LENGTH * 3 * nf3Users.length}...`,
-      nTotalTransfers,
+      `Waiting for total transactions to be ${TEST_LENGTH * 5 * nf3Users.length}...`,
+      nTotalTransactions,
     );
     // eslint-disable-next-line no-await-in-loop
     await new Promise(resolving => setTimeout(resolving, 20000));
-  } while (nTotalTransfers < TEST_LENGTH * 3 * nf3Users.length);
-  console.log('TRANSACTIONS: ', listTransfersTotal);
+  } while (nTotalTransactions < TEST_LENGTH * 5 * nf3Users.length);
+  console.log('TRANSACTIONS: ', listTransactionsTotal);
 };
 
+/**
+  Wait for the balance of all the users to be updated.
+  @method
+  @async
+  @param {object} usersStats - Statistics for the user
+  */
 const waitForBalanceUpdate = async usersStats => {
   for (let i = 0; i < nf3Users.length; i++) {
-    let totalTransferred = 0;
+    let totalValueUserL2 = 0;
     // eslint-disable-next-line no-loop-func
-    for (let j = 0; j < listTransfersTotal.length; j++) {
+    for (let j = 0; j < listTransactionsTotal.length; j++) {
       // eslint-disable-next-line no-loop-func
-      listTransfersTotal[j].forEach(t => {
-        if (t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey) {
-          totalTransferred += t.value;
-        }
-        if (
-          t.to !== nf3Users[i].zkpKeys.compressedZkpPublicKey &&
-          t.from === nf3Users[i].zkpKeys.compressedZkpPublicKey
-        ) {
-          totalTransferred -= t.value + t.fee;
+      listTransactionsTotal[j].forEach(t => {
+        if (t.typeSequence === 'ValidTransaction') {
+          if (t.type === 'withdraw' && t.from === nf3Users[i].zkpKeys.compressedZkpPublicKey) {
+            totalValueUserL2 -= t.value + t.fee;
+          } else if (t.type === 'deposit' && t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey) {
+            totalValueUserL2 += t.value - t.fee;
+          } else if (t.type === 'transfer') {
+            if (t.to === nf3Users[i].zkpKeys.compressedZkpPublicKey) {
+              totalValueUserL2 += t.value;
+            }
+            if (t.from === nf3Users[i].zkpKeys.compressedZkpPublicKey) {
+              totalValueUserL2 -= t.value + t.fee;
+            }
+          }
         }
       });
     }
@@ -177,19 +251,19 @@ const waitForBalanceUpdate = async usersStats => {
       u => u.address === nf3Users[i].zkpKeys.compressedZkpPublicKey,
     )[0]?.balance;
 
-    usersStats.usersTotalTransferred.push({
+    usersStats.usersTotalValueL2.push({
       address: nf3Users[i].zkpKeys.compressedZkpPublicKey,
-      value: totalTransferred,
+      value: totalValueUserL2,
     });
 
     // eslint-disable-next-line no-await-in-loop
     let userFinalBalance = await retrieveL2Balance(nf3Users[i], ercAddress);
 
-    while (userFinalBalance !== userInitialBalance + totalTransferred) {
+    while (userFinalBalance !== userInitialBalance + totalValueUserL2) {
       // eslint-disable-next-line no-await-in-loop
       console.log(
         `Waiting for user ${nf3Users[i].zkpKeys.compressedZkpPublicKey} balance to be ${
-          userInitialBalance + totalTransferred
+          userInitialBalance + totalValueUserL2
         }...`,
         userFinalBalance,
       );
@@ -202,7 +276,7 @@ const waitForBalanceUpdate = async usersStats => {
     console.log(
       `Final user balance for user ${
         nf3Users[i].zkpKeys.compressedZkpPublicKey
-      } = ${userFinalBalance} (expected ${userInitialBalance + totalTransferred})`,
+      } = ${userFinalBalance} (expected ${userInitialBalance + totalValueUserL2})`,
     );
 
     usersStats.usersFinalBalance.push({
@@ -213,6 +287,13 @@ const waitForBalanceUpdate = async usersStats => {
   }
 };
 
+/**
+  Check statistics at the end of the tests about proposers.
+  @method
+  @async
+  @param {object} optimistUrls - optimist urls for each proposer
+  @param {object} proposersStats - proposer statistics during the test
+  */
 const finalStatsCheck = async (optimistUrls, proposersStats) => {
   for (const prop of optimistUrls) {
     // eslint-disable-next-line no-await-in-loop
@@ -251,7 +332,9 @@ const finalStatsCheck = async (optimistUrls, proposersStats) => {
   }
 };
 
-// ************ Test ************
+/**
+  Ping pong test for doing deposits, transfers and withdraws between users and check final balance
+  */
 describe('Ping-pong tests', () => {
   before(async () => {
     environment.clientApiUrl = clientApiUrls.client1 || environment.clientApiUrl;
@@ -266,15 +349,10 @@ describe('Ping-pong tests', () => {
   });
 
   it('Runs ping-pong tests', async () => {
-    let proposersStats;
-    let optimistUrls;
-    if (environment.web3WsUrl.includes('localhost')) {
-      optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers from docker files
-      console.log(optimistUrls);
-      proposersStats = await getInitialProposerStats(optimistUrls);
-      blockStake = await nf3User.getBlockStake();
-      console.log('BLOCKSTAKE: ', blockStake);
-    }
+    const optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers
+    const proposersStats = await getInitialProposerStats(optimistUrls);
+    blockStake = await nf3User.getBlockStake();
+    console.log('BLOCKSTAKE: ', blockStake);
     // wait for the current proposer to be ready
     await waitForCurrentProposer();
 
@@ -287,8 +365,8 @@ describe('Ping-pong tests', () => {
         // eslint-disable-next-line no-loop-func
         address => address !== nf3Users[i].zkpKeys.compressedZkpPublicKey,
       );
-      const listTransfersUser = []; // transfers done in the simple user test for this user
-      listTransfersTotal.push(listTransfersUser);
+      const listTransactionsUser = []; // transfers done in the simple user test for this user
+      listTransactionsTotal.push(listTransactionsUser);
       simpleUserTest(
         TEST_LENGTH,
         value,
@@ -296,25 +374,21 @@ describe('Ping-pong tests', () => {
         ercAddress,
         nf3Users[i],
         listAddressesToSend,
-        listTransfersUser,
+        listTransactionsUser,
       );
     }
 
-    // if (environment.web3WsUrl.includes('localhost')) {
     // user that will rotate proposers and get block statistics
-    proposerTest(optimistUrls, proposersStats, nf3User);
-    // }
+    proposerStats(optimistUrls, proposersStats, nf3User);
 
-    // wait for all the user transfers to be completed
-    await waitForTransfersCompleted();
+    // wait for all the user transactions to be completed
+    await waitForTransactionsCompleted();
 
     // wait for balances update
     await waitForBalanceUpdate(usersStats);
 
-    if (environment.web3WsUrl.includes('localhost')) {
-      // check final stats are ok
-      await finalStatsCheck(optimistUrls, proposersStats);
-    }
+    // check final stats are ok
+    await finalStatsCheck(optimistUrls, proposersStats);
   });
 
   after(async () => {

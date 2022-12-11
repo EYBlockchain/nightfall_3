@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 /* ignore unused exports */
+import axios from 'axios';
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
@@ -512,6 +513,22 @@ export const pendingCommitmentCount = async client => {
   const pendingCommitments = Object.keys(pendingDeposit).length + Object.keys(pendingSpent).length;
 
   return pendingCommitments;
+};
+
+export const clearMempool = async ({ optimistUrl, web3, logs }) => {
+  await new Promise(resolve => setTimeout(resolve, 6000));
+  let transactionsMempool = (await axios.get(`${optimistUrl}/proposer/mempool`)).data.result.filter(
+    e => e.mempool,
+  ).length;
+  while (transactionsMempool > 0) {
+    console.log(`Transactions still in the mempool: ${transactionsMempool}`);
+    await axios.get(`${optimistUrl}/block/make-now`);
+    await web3.waitForEvent(logs, ['blockProposed']);
+    transactionsMempool = (await axios.get(`${optimistUrl}/proposer/mempool`)).data.result.filter(
+      e => e.mempool,
+    ).length;
+  }
+  console.log(`There are no transactions in the mempool`);
 };
 
 export const emptyL2 = async ({ nf3User, web3, logs }) => {

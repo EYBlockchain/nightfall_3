@@ -14,6 +14,7 @@ import confirmBlock from './confirm-block';
 import computeCircuitInputs from '../utils/computeCircuitInputs';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
+import Proof from '../../common-files/classes/proof.js';
 import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
 import { edwardsCompress } from '../../common-files/utils/curve-maths/curves';
@@ -157,21 +158,8 @@ async function transfer(transferParams, shieldContractAddress) {
       // generate proof
       const { proof } = await snarkjs.groth16.fullProve(witness, wasmData.data, zkeyData.data); // zkey, witness
 
-      const transaction = new Transaction({
-        fee,
-        historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-        circuitHash,
-        ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-        tokenId: compressedEPub, // this is the encrypted tokenID
-        recipientAddress: compressedSecrets[1],
-        commitments: commitmentsInfo.newCommitments,
-        nullifiers: commitmentsInfo.nullifiers,
-        compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-        proof,
-        numberNullifiers: VK_IDS[circuitName].numberNullifiers,
-        numberCommitments: VK_IDS[circuitName].numberCommitments,
-        isOnlyL2: true,
-      });
+      const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+      transaction.transactionHash = Transaction.calcHash(transaction);
 
       const rawTransaction = await shieldContractInstance.methods
         .submitTransaction(Transaction.buildSolidityStruct(transaction))

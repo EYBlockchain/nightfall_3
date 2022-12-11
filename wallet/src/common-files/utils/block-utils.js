@@ -1,7 +1,7 @@
 /* ignore unused exports */
 
 import gen from 'general-number';
-import Web3 from 'web3';
+import Web3 from './web3.js';
 import logger from './logger.js';
 
 const { generalise } = gen;
@@ -29,7 +29,7 @@ export function packBlockInfo(leafCount, proposer, blockNumberL2) {
 }
 
 export function calcBlockHash(block) {
-  const web3 = new Web3();
+  const web3 = Web3.connection();
   const {
     proposer,
     root,
@@ -80,7 +80,7 @@ export function buildBlockSolidityStruct(block) {
 
 export function calculateFrontierHash(frontier) {
   const frontierPadded = frontier.concat(Array(TIMBER_HEIGHT + 1 - frontier.length).fill(ZERO));
-  const web3 = new Web3();
+  const web3 = Web3.connection();
   const encodedTransaction = web3.eth.abi.encodeParameter(
     `bytes32[${TIMBER_HEIGHT + 1}]`,
     frontierPadded,
