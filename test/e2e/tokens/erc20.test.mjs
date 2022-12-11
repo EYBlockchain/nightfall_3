@@ -259,7 +259,7 @@ describe('ERC20 tests', () => {
     console.log('************************maxERC20DepositValue', maxERC20DepositValue);
 
     it('Should restrict deposits', async () => {
-      // anything equal or above the restricted amount should fail
+      // Anything equal or above the restricted amount should fail
       try {
         await nf3User.deposit(erc20Address, tokenType, maxERC20DepositValue + 1, tokenId, fee);
         expect.fail('Test failed and transaction has not failed');
@@ -289,7 +289,7 @@ describe('ERC20 tests', () => {
     // Transfer 600 + 200 to self       Input [600, 250]   Output [800, 50]     Commitment List after [50, 50, 100, 250, 250, 800]
     // Transfer 800 + 200 to self       Input [800, 250]   Output [800, 50]     Commitment List after [50, 50, 50, 100, 250, 1000]
     // Transfer 1000 + 200 to self      Input [1000, 250]  Output [1200, 50]    Commitment List after [50, 50, 50, 50, 100, 1200]
-    it('Should restrict withdrawals', async function () {
+    it.skip('Should restrict withdrawals', async function () {
       const nodeInfo = await web3Client.getInfo();
       if (!nodeInfo.includes('TestRPC')) {
         logger.info('Not using a time-jump capable test client so this test is skipped');
