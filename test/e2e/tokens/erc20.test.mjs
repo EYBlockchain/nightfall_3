@@ -84,9 +84,9 @@ describe('ERC20 tests', () => {
     it('Should fail to deposit if the user is sanctioned', async function () {
       try {
         await nf3UserSanctioned.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-        expect.fail('Test failed and transaction has not failed');
-      } catch (error) {
-        expect(error.message).to.include('Transaction has been reverted by the EVM');
+        expect.fail('Throw error, deposit did not fail');
+      } catch (err) {
+        expect(err.message).to.include('Transaction has been reverted by the EVM');
       }
     });
   });
@@ -166,9 +166,9 @@ describe('ERC20 tests', () => {
       try {
         const withdrawalTxHash = nf3User.getLatestWithdrawHash();
         await nf3User.finaliseWithdrawal(withdrawalTxHash);
-        expect.fail('Test failed and transaction has not failed');
-      } catch (error) {
-        expect(error.message).to.include('Transaction has been reverted by the EVM');
+        expect.fail('Throw error, finalising withdrawal did not fail');
+      } catch (err) {
+        expect(err.message).to.include('Transaction has been reverted by the EVM');
       }
     });
 
@@ -262,9 +262,9 @@ describe('ERC20 tests', () => {
       // Anything equal or above the restricted amount should fail
       try {
         await nf3User.deposit(erc20Address, tokenType, maxERC20DepositValue + 1, tokenId, fee);
-        expect.fail('Test failed and transaction has not failed');
-      } catch (error) {
-        expect(error.message).to.include('Transaction has been reverted by the EVM');
+        expect.fail('Throw error, deposit not restricted');
+      } catch (err) {
+        expect(err.message).to.include('Transaction has been reverted by the EVM');
       }
     });
 
@@ -359,11 +359,9 @@ describe('ERC20 tests', () => {
         // anything equal or above the restricted amount should fail
         await nf3User.finaliseWithdrawal(withdrawal);
 
-        expect.fail('Transaction has not been reverted by the EVM');
-      } catch (error) {
-        expect(error.message).to.satisfy(message =>
-          message.includes('Transaction has been reverted by the EVM'),
-        );
+        expect.fail('Throw error, withdrawal not restricted');
+      } catch (err) {
+        expect(err.message).to.include('Transaction has been reverted by the EVM');
       }
     });
   });

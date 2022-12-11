@@ -239,21 +239,13 @@ describe('Basic Proposer tests', () => {
     expect(Number(proposersAfterUpdate[0].fee)).to.be.equal(currentFee);
   });
 
-  it.skip('Should fail to change current proposer because insufficient blocks have passed', async () => {
-    // SKIP Call fails as expected but revert reason `State: Too soon to rotate proposer` is not captured
-    // TODO We should be able to assert that it is actually too soon
-
-    // Note that the test operates with one proposer, which is why we use the current proposer
-    // to call `changeCurrentProposer`, in reality this proposer would be the least interested
-    let error = null;
+  it('Should fail to change current proposer because insufficient blocks have passed', async () => {
     try {
       await nf3Proposer.changeCurrentProposer();
+      expect.fail('Throw error, change proposer did not fail');
     } catch (err) {
-      error = err;
+      expect(err.message).to.include('Transaction has been reverted by the EVM');
     }
-    expect(error.message).to.satisfy(message =>
-      message.includes('Transaction has been reverted by the EVM'),
-    );
   });
 
   it('Should be able to make a block any time as soon as there are txs in the mempool', async () => {
