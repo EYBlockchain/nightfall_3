@@ -8,7 +8,7 @@ import config from 'config';
 import axios from 'axios';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { waitTransactionToBeMined, Web3Client } from '../../utils.mjs';
+import { getLayer2Balances, waitTransactionToBeMined, Web3Client } from '../../utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -33,7 +33,6 @@ const nf3User = new Nf3(signingKeys.user1, environment);
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 nf3Proposer.setApiKey(environment.AUTH_TOKEN);
 
-let erc20Address;
 let stateAddress;
 let stateABI;
 const getStakeAccount = async ethAccount => {
@@ -51,14 +50,11 @@ const filterByThisProposer = async nf3proposer => {
   return proposers.filter(p => p.thisAddress === nf3proposer.ethereumAddress);
 };
 
-const getBalance = async () => {
-  return (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
-};
-
 describe('Basic Proposer tests', () => {
   const testProposersUrl = ['http://test-proposer1', 'http://test-proposer2'];
   const feeDefault = 0;
 
+  let erc20Address;
   let minimumStake;
   let proposersAddress;
 
@@ -112,7 +108,7 @@ describe('Basic Proposer tests', () => {
     }
   });
 
-  it('Should register the a proposer - await for this to become current', async () => {
+  it('Should register a proposer, then wait for this to become current', async () => {
     // Before registering proposer
     const proposersBeforeRegister = await filterByThisProposer(nf3Proposer);
     const stakeBeforeRegister = await getStakeAccount(nf3Proposer.ethereumAddress);
@@ -251,7 +247,7 @@ describe('Basic Proposer tests', () => {
 
   it('Should be able to make a block any time as soon as there are txs in the mempool', async () => {
     // User balance in L2 before making deposit
-    const balancesBeforeBlockProposed = await getBalance();
+    const balancesBeforeBlockProposed = await getLayer2Balances(nf3User, erc20Address);
 
     // Make deposit, then make block to settle the deposit
     const value = String(transferValue * 2);
@@ -260,7 +256,7 @@ describe('Basic Proposer tests', () => {
 
     // Wait before checking user balance in L2 again
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    const balancesAfterBlockProposed = await getBalance();
+    const balancesAfterBlockProposed = await getLayer2Balances(nf3User, erc20Address);
 
     // Assertions
     expect(balancesAfterBlockProposed).to.be.above(balancesBeforeBlockProposed);
