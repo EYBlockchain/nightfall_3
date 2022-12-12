@@ -161,10 +161,10 @@ export const computeCircuitInputs = (
     witness.outputIdRemaindersPrivate = [];
 
     const emptyToken = generalise({ address: 0, id: 0 });
-    const inputTokensPadded = utils.padArray(inputTokens, emptyToken, numberNullifiers - 2);
-    const outputTokensPadded = utils.padArray(outputTokens, emptyToken, numberCommitments - 1);
+    const inputTokensPadded = utils.padArray(inputTokens, emptyToken, numberNullifiers);
+    const outputTokensPadded = utils.padArray(outputTokens, emptyToken, numberCommitments);
 
-    for (let i = 0; i < numberNullifiers - 2; i++) {
+    for (let i = 0; i < numberNullifiers; i++) {
       const current = inputTokensPadded.shift();
       const inputErcAddress = current.address;
       const inputTokenId = current.id;
@@ -173,7 +173,7 @@ export const computeCircuitInputs = (
       witness.inputIdRemaindersPrivate.push(remainder);
     }
 
-    for (let i = 0; i < numberCommitments - 1; i++) {
+    for (let i = 0; i < numberCommitments; i++) {
       const current = outputTokensPadded.shift();
       const outputErcAddress = current.address;
       const outputTokenId = current.id;

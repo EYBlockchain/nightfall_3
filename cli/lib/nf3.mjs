@@ -539,7 +539,6 @@ class Nf3 {
   async transform(inputTokens, outputTokens, fee = this.defaultFeeMatic) {
     const res = await axios.post(`${this.clientBaseUrl}/transform`, {
       rootKey: this.zkpKeys.rootKey,
-      compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
       inputTokens,
       outputTokens,
       fee,

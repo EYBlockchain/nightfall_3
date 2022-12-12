@@ -136,7 +136,6 @@ template Transform(N,C) {
       // Unless the address is the fee address or zero
       var ercAddressBits[254] = Num2Bits(254)(inputPackedAddressesPrivate[i]);
 
-      // var isZero = IsZero()(inputPackedAddressesPrivate[i]);
       var isFee = IsEqual()([inputPackedAddressesPrivate[i], feeAddress]);
       var isL2 = AND()(ercAddressBits[253], ercAddressBits[252]);
 
@@ -168,7 +167,6 @@ template Transform(N,C) {
       // Unless the address is the fee address or zero
       var ercAddressBits[254] = Num2Bits(254)(outputPackedAddressesPrivate[i]);
 
-      // var isZero = IsZero()(inputPackedAddressesPrivate[i]);
       var isFee = IsEqual()([outputPackedAddressesPrivate[i], feeAddress]);
       var isL2 = AND()(ercAddressBits[253], ercAddressBits[252]);
 
@@ -187,5 +185,5 @@ template Transform(N,C) {
     }
 }
 
-component main {public [value, fee, circuitHash, tokenType, historicRootBlockNumberL2, tokenId, ercAddress, recipientAddress, commitments, nullifiers, compressedSecrets,roots, feeAddress]} = Transform(6, 5);
+component main {public [value, fee, circuitHash, tokenType, historicRootBlockNumberL2, tokenId, ercAddress, recipientAddress, commitments, nullifiers, compressedSecrets,roots, feeAddress]} = Transform(4, 6);
 

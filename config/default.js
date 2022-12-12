@@ -126,8 +126,8 @@ module.exports = {
       isWithdrawing: false,
     },
     transform: {
-      numberNullifiers: 6,
-      numberCommitments: 5,
+      numberNullifiers: 4,
+      numberCommitments: 6,
       isEscrowRequired: false,
       isWithdrawing: false,
     },

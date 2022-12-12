@@ -119,7 +119,6 @@
     "ws": "^7.5.0"
   },
   "dependencies": {
-    "@nomicfoundation/solidity-analyzer-darwin-arm64": "^0.1.0",
     "@polygon-nightfall/common-files": "*",
     "async-mutex": "^0.4.0",
     "docker-cli-js": "^2.9.0",
