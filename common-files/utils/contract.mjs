@@ -42,7 +42,6 @@ export async function getContractAddress(contractName) {
   const contractInterface = await getContractInterface(contractName);
   const networkId = await web3.eth.getChainId();
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
-    logger.debug(`Contract Address: ${contractInterface.networks[networkId].address}`);
     deployedAddress = contractInterface.networks[networkId].address;
   }
   return deployedAddress;
