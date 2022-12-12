@@ -16,7 +16,7 @@ export default function receiveMessage() {
       const txDataToSign = await burn(JSON.parse(message.content.toString()));
       logger.debug({
         msg: 'Returning raw transaction',
-        rawTransaction: JSON.stringify(txDataToSign, null, 2),
+        rawTransaction: txDataToSign,
       });
 
       response.data = { txDataToSign };

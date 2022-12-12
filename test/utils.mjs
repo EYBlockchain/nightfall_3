@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 /* ignore unused exports */
+import axios from 'axios';
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
@@ -468,12 +469,12 @@ export const registerProposerOnNoProposer = async proposer => {
   function to wait for sufficient balance by waiting for pending transaction
   to be proposed
 */
-export const waitForSufficientBalance = (client, value, ercAddress) => {
+export const waitForSufficientBalance = ({ nf3User, value, ercAddress }) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
-      const balance = await retrieveL2Balance(client, ercAddress);
+      const balance = await retrieveL2Balance(nf3User, ercAddress);
       logger.debug(
-        ` Balance needed for ${client.ethereumAddress} is ${value}. Current balance ${balance}.`,
+        ` Balance needed for ${nf3User.ethereumAddress} is ${value}. Current balance ${balance}.`,
       );
       if (balance < value) {
         await waitForTimeout(10000);
@@ -485,20 +486,21 @@ export const waitForSufficientBalance = (client, value, ercAddress) => {
 };
 
 /**
-  function to wait for no pending commitments
+  function to wait for a number of transactions in the mempool before creating block
 */
-export const waitForNoPendingCommitments = client => {
+export const waitForSufficientTransactionsMempool = ({ nf3User, nTransactions }) => {
   return new Promise(resolve => {
-    async function pendingCommitments() {
-      const pendingDeposit = await client.getLayer2PendingDepositBalances(undefined, true);
-      const pendingSpent = await client.getLayer2PendingSpentBalances(undefined, true);
-      if (Object.keys(pendingDeposit).length !== 0 || Object.keys(pendingSpent).length !== 0) {
-        logger.debug(`Nonzero Pending commitments.`);
+    async function isSufficientTransactions() {
+      const numberTxs = await nf3User.unprocessedTransactionCount();
+      logger.debug(
+        ` Waiting for ${nTransactions} to create a block. Current transactions: ${numberTxs}`,
+      );
+      if (numberTxs < nTransactions) {
         await waitForTimeout(10000);
-        pendingCommitments();
+        isSufficientTransactions();
       } else resolve();
     }
-    pendingCommitments();
+    isSufficientTransactions();
   });
 };
 
@@ -511,6 +513,22 @@ export const pendingCommitmentCount = async client => {
   const pendingCommitments = Object.keys(pendingDeposit).length + Object.keys(pendingSpent).length;
 
   return pendingCommitments;
+};
+
+export const clearMempool = async ({ optimistUrl, web3, logs }) => {
+  await new Promise(resolve => setTimeout(resolve, 6000));
+  let transactionsMempool = (await axios.get(`${optimistUrl}/proposer/mempool`)).data.result.filter(
+    e => e.mempool,
+  ).length;
+  while (transactionsMempool > 0) {
+    console.log(`Transactions still in the mempool: ${transactionsMempool}`);
+    await axios.get(`${optimistUrl}/block/make-now`);
+    await web3.waitForEvent(logs, ['blockProposed']);
+    transactionsMempool = (await axios.get(`${optimistUrl}/proposer/mempool`)).data.result.filter(
+      e => e.mempool,
+    ).length;
+  }
+  console.log(`There are no transactions in the mempool`);
 };
 
 export const emptyL2 = async ({ nf3User, web3, logs }) => {

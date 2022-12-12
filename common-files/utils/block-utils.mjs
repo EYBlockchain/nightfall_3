@@ -1,8 +1,8 @@
 /* ignore unused exports */
 
 import gen from 'general-number';
-import Web3 from 'web3';
 import config from 'config';
+import Web3 from './web3.mjs';
 import constants from '../constants/index.mjs';
 import logger from './logger.mjs';
 
@@ -31,7 +31,7 @@ export function packBlockInfo(leafCount, proposer, blockNumberL2) {
 }
 
 export function calcBlockHash(block) {
-  const web3 = new Web3();
+  const web3 = Web3.connection();
   const {
     proposer,
     root,
@@ -82,7 +82,7 @@ export function buildBlockSolidityStruct(block) {
 
 export function calculateFrontierHash(frontier) {
   const frontierPadded = frontier.concat(Array(TIMBER_HEIGHT + 1 - frontier.length).fill(ZERO));
-  const web3 = new Web3();
+  const web3 = Web3.connection();
   const encodedTransaction = web3.eth.abi.encodeParameter(
     `bytes32[${TIMBER_HEIGHT + 1}]`,
     frontierPadded,
@@ -91,4 +91,12 @@ export function calculateFrontierHash(frontier) {
     t: 'bytes',
     v: encodedTransaction,
   });
+}
+
+export async function getTimeByBlock(txHash) {
+  const web3 = Web3.connection();
+  const blockN = await web3.eth.getTransaction(txHash);
+  const blockData = await web3.eth.getBlock(blockN.blockNumber);
+
+  return blockData.timestamp;
 }

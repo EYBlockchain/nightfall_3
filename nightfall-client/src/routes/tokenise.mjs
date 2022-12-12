@@ -1,5 +1,4 @@
 import express from 'express';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import tokenise from '../services/tokenise.mjs';
 
 const router = express.Router();
@@ -7,12 +6,9 @@ const router = express.Router();
 router.post('/', async (req, res, next) => {
   try {
     const { rawTransaction: txDataToSign, transaction } = await tokenise(req.body);
-    logger.debug('returning raw transaction');
-    logger.trace(`raw transaction is ${JSON.stringify(txDataToSign, null, 2)}`);
     // convert commitment from GN to hex form for transmission
     res.json({ txDataToSign, transaction });
   } catch (err) {
-    logger.error(err);
     next(err);
   }
 });

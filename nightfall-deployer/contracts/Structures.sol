@@ -122,14 +122,13 @@ contract Structures {
     }
 
     struct BlockInfo {
-        uint120 feesEth;
-        uint120 feesMatic;
+        uint248 feesMatic;
         bool stakeClaimed;
     }
 
     struct FeeTokens {
-        uint120 feesEth;
-        uint120 feesMatic;
+        uint256 feesEth;
+        uint256 feesMatic;
     }
 
     struct CircuitInfo {

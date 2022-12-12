@@ -4,18 +4,12 @@
  * This module does all of the heaving lifting for a Proposer: It assembles blocks
  * from posted transactions and proposes these blocks.
  */
-import WebSocket from 'ws';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import {
-  removeTransactionsFromMemPool,
-  removeCommitmentsFromMemPool,
-  removeNullifiersFromMemPool,
-  getMempoolTxsSortedByFee,
-} from './database.mjs';
+import { removeTransactionsFromMemPool, getMempoolTxsSortedByFee } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 // import {
@@ -27,16 +21,11 @@ import { createSignedTransaction, sendSignedTransaction } from './transaction-si
 import { txsQueue } from '../utils/transactions-queue.mjs';
 
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
-const { STATE_CONTRACT_NAME, ZERO } = constants;
+const { STATE_CONTRACT_NAME } = constants;
 
-let ws;
 let makeNow = false;
 let lastBlockTimestamp = new Date().getTime();
 let blockPeriodMs = PROPOSER_MAX_BLOCK_PERIOD_MILIS;
-
-export function setBlockAssembledWebSocketConnection(_ws) {
-  ws = _ws;
-}
 
 export function setMakeNow(_makeNow = true) {
   makeNow = _makeNow;
@@ -44,27 +33,6 @@ export function setMakeNow(_makeNow = true) {
 
 export function setBlockPeriodMs(timeMs) {
   blockPeriodMs = timeMs;
-}
-
-/**
-Function to indicate to a listening proposer that a rollback has been completed. This
-is of little use at the moment but will enable the proposer to take actions such as
-checking they haven't been removed. This function may be a little out of place here but
-we need to use the proposer's websocket!
-*/
-export async function signalRollbackCompleted(data) {
-  // check that the websocket exists (it should) and its readyState is OPEN
-  // before sending. If not wait until the challenger reconnects
-  let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await waitForTimeout(3000);
-    logger.warn(
-      `Websocket to proposer is closed for rollback complete.  Waiting for proposer to reconnect`,
-    );
-    if (tryCount++ > 100) throw new Error(`Websocket to proposer has failed`);
-  }
-  logger.debug('Rollback completed');
-  ws.send(JSON.stringify({ type: 'rollback', data }));
 }
 
 async function makeBlock(proposer, transactions) {
@@ -212,15 +180,7 @@ export async function conditionalMakeBlock(args) {
             const receipt = await sendSignedTransaction(signedTx);
             logger.debug({ msg: 'Block proposed', receipt });
 
-            await Promise.all([
-              removeTransactionsFromMemPool(block.transactionHashes),
-              removeCommitmentsFromMemPool(
-                transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
-              ),
-              removeNullifiersFromMemPool(
-                transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
-              ),
-            ]);
+            await removeTransactionsFromMemPool(block.transactionHashes);
             logger.debug('Db updates successful');
           } catch (err) {
             logger.error({

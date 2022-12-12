@@ -26,7 +26,7 @@ const { generalise } = gen;
 const { PROVING_SCHEME, CURVE } = config;
 const { ZERO, STATE_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
 
-async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
+async function checkDuplicateCommitment(transaction, transactionFlags, txBlockNumberL2) {
   // Note: There is no need to check the duplicate commitment in the same transaction since this is already checked in the circuit
   // check if any commitment in the transaction is already part of an L2 block
 
@@ -36,7 +36,7 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txB
       // Search if there is any transaction in L2 that already contains the commitment
       const transactionL2 = await getL2TransactionByCommitment(
         commitment,
-        inL2AndNotInL2,
+        transactionFlags,
         txBlockNumberL2,
       );
 
@@ -51,7 +51,7 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txB
           throw new TransactionError(
             `The transaction has a duplicate commitment ${commitment}`,
             0,
-            inL2AndNotInL2 === false
+            transactionFlags.checkInMempool === false
               ? {
                   duplicateCommitment1Index: index,
                   block2: blockL2,
@@ -70,7 +70,7 @@ async function checkDuplicateCommitment(transaction, inL2AndNotInL2 = false, txB
   }
 }
 
-async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBlockNumberL2) {
+async function checkDuplicateNullifier(transaction, transactionFlags, txBlockNumberL2) {
   // Note: There is no need to check the duplicate nullifiers in the same transaction since this is already checked in the circuit
   // check if any nullifier in the transction is already part of an L2 block
   for (const [index, nullifier] of transaction.nullifiers.entries()) {
@@ -78,7 +78,7 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBl
       // Search if there is any transaction in L2 that already contains the nullifier
       const transactionL2 = await getL2TransactionByNullifier(
         nullifier,
-        inL2AndNotInL2,
+        transactionFlags,
         txBlockNumberL2,
       );
 
@@ -91,7 +91,7 @@ async function checkDuplicateNullifier(transaction, inL2AndNotInL2 = false, txBl
           throw new TransactionError(
             `The transaction has a duplicate nullifier ${nullifier}`,
             1,
-            inL2AndNotInL2 === false
+            transactionFlags.checkInMempool === false
               ? {
                   duplicateNullifier1Index: index,
                   block2: blockL2,
@@ -176,14 +176,49 @@ async function verifyProof(transaction) {
   if (!verifies) throw new TransactionError('The proof did not verify', 2);
 }
 
-async function checkTransaction(transaction, inL2AndNotInL2 = false, args) {
-  logger.info({ msg: 'Verifying the following transaction', transaction });
+export async function checkTransaction(
+  transaction,
+  { checkInL2Block = false, checkInMempool = false },
+  args,
+) {
   return Promise.all([
-    checkDuplicateCommitment(transaction, inL2AndNotInL2, args?.blockNumberL2),
-    checkDuplicateNullifier(transaction, inL2AndNotInL2, args?.blockNumberL2),
+    checkDuplicateCommitment(transaction, { checkInL2Block, checkInMempool }, args?.blockNumberL2),
+    checkDuplicateNullifier(transaction, { checkInL2Block, checkInMempool }, args?.blockNumberL2),
     checkHistoricRootBlockNumber(transaction),
     verifyProof(transaction),
   ]);
 }
 
-export default checkTransaction;
+export async function checkCommitmentsMempool(transaction) {
+  for (const commitment of transaction.commitments) {
+    if (commitment !== ZERO) {
+      const originalTransaction = await getL2TransactionByCommitment(commitment, {
+        checkInMempool: true,
+      });
+      // compare provided proposer fee in both transactions(duplicate and original)
+      if (
+        originalTransaction &&
+        generalise(originalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+      )
+        return false;
+    }
+  }
+  return true;
+}
+
+export async function checkNullifiersMempool(transaction) {
+  for (const nullifier of transaction.nullifiers) {
+    if (nullifier !== ZERO) {
+      const originalTransaction = await getL2TransactionByNullifier(nullifier, {
+        checkInMempool: true,
+      });
+      // compare provided proposer fee in both transactions(duplicate and original)
+      if (
+        originalTransaction &&
+        generalise(originalTransaction.fee).bigInt >= generalise(transaction.fee).bigInt
+      )
+        return false;
+    }
+  }
+  return true;
+}

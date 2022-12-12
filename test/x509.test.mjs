@@ -31,8 +31,8 @@ let erc20Address;
 let stateAddress;
 const eventLogs = [];
 const intermediateCaCert = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
-const endUserCert = fs.readFileSync('test/unit/utils/Nightfall_end_user.cer');
-const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user.der');
+const endUserCert = fs.readFileSync('test/unit/utils/Nightfall_end_user_policies.cer');
+const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user_policies.der');
 
 describe('x509 tests', () => {
   before(async () => {
@@ -66,11 +66,14 @@ describe('x509 tests', () => {
       );
     });
     it('deposits to a x509-validated account should work', async function () {
+      logger.debug('Validating intermediate CA cert');
       await nf3Users[0].validateCertificate(intermediateCaCert);
+      logger.debug('Validating end-user cert');
       await nf3Users[0].validateCertificate(
         endUserCert,
         nf3Users[0].ethereumAddress,
         derPrivateKey,
+        0,
       );
       logger.debug('doing whitelisted account');
       const res = await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);

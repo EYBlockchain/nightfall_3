@@ -14,11 +14,9 @@ import {
   getTransactionsByTransactionHashesByL2Block,
   deleteTransactionsByTransactionHashes,
   deleteTreeByBlockNumberL2,
-  getAllRegisteredProposersCount,
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
-import checkTransaction from '../services/transaction-checker.mjs';
-import { signalRollbackCompleted as signalRollbackCompletedToProposer } from '../services/block-assembler.mjs';
+import { checkTransaction } from '../services/transaction-checker.mjs';
 import {
   signalRollbackCompleted as signalRollbackCompletedToChallenger,
   isMakeChallengesEnable,
@@ -43,12 +41,17 @@ async function rollbackEventHandler(data) {
    */
   // Get all blocks that need to be deleted
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(blockNumberL2);
-  logger.info(`Rollback - rollback layer 2 blocks ${JSON.stringify(blocksToBeDeleted, null, 2)}`);
+  logger.info({ msg: 'Rollback - rollback layer 2 blocks', blocksToBeDeleted });
 
   const invalidTransactions = [];
+  const validTransactionsBlock = {};
 
   // For valid transactions that have made it to this point, we run them through our transaction checker for validity
   for (let i = 0; i < blocksToBeDeleted.length; i++) {
+    const blockNumber = blocksToBeDeleted[i].blockNumberL2;
+    // Add new block to validTransactionsBlock
+    validTransactionsBlock[blockNumber] = [];
+
     // Get the trannsaction hashes included in these blocks
     const transactionHashesInBlock = blocksToBeDeleted[i].transactionHashes.flat(Infinity);
     // Use the transaction hashes to grab the actual transactions filtering out deposits - In Order.
@@ -72,9 +75,13 @@ async function rollbackEventHandler(data) {
       const transaction = transactionsSortedByFee[j];
       try {
         // eslint-disable-next-line no-await-in-loop
-        await checkTransaction(transaction, false, {
-          blockNumberL2: blocksToBeDeleted[i].blockNumberL2,
-        });
+        await checkTransaction(
+          transaction,
+          { checkInL2Block: true },
+          {
+            blockNumberL2: blockNumber,
+          },
+        );
 
         for (let k = 0; k < transaction.commitments.length; k++) {
           if (commitmentsList.includes(transaction.commitments[k])) {
@@ -92,35 +99,40 @@ async function rollbackEventHandler(data) {
 
         commitmentsList.push(...transaction.commitments.filter(c => c !== ZERO));
         nullifiersList.push(...transaction.nullifiers.filter(c => c !== ZERO));
+
+        // Add the transaction to the list of valid transactions to be rollbacked
+        validTransactionsBlock[blockNumber].push(transaction.transactionHash);
       } catch (error) {
         logger.error({
-          msg: `Rollback - Invalid Transaction: ${transactionsSortedByFee[j].transactionHash}`,
+          msg: `Rollback - Invalid Transaction: ${transaction.transactionHash}`,
           error,
         });
 
-        invalidTransactions.push(transactionsSortedByFee[j].transactionHash);
+        invalidTransactions.push(transaction.transactionHash);
       }
     }
   }
 
   // We can now reset or delete the local database.
-  await Promise.all(
-    blocksToBeDeleted
-      .map(async block => [addTransactionsToMemPool(block), deleteBlock(block.blockHash)])
-      .flat(1),
-  );
+  logger.debug({
+    msg: 'Rollback - Updating Optimist DB',
+    validTransactionsBlock,
+    invalidTransactions,
+  });
 
-  logger.debug(`Rollback - Deleting transactions: ${invalidTransactions}`);
-  await deleteTransactionsByTransactionHashes(invalidTransactions);
+  await Promise.all([
+    deleteTransactionsByTransactionHashes(invalidTransactions),
+    ...Object.keys(validTransactionsBlock)
+      .map(async blockL2Number => [
+        addTransactionsToMemPool(validTransactionsBlock[blockL2Number], blockL2Number),
+        deleteBlock(blockL2Number),
+      ])
+      .flat(Infinity),
+  ]);
 
   await dequeueEvent(2); // Remove an event from the stopQueue.
   // A Rollback triggers a NewCurrentProposer event which shoudl trigger queue[0].end()
   // But to be safe we enqueue a helper event to guarantee queue[0].end() runs.
-
-  // if optimist has a register proposer, signal rollback to
-  // that proposer websocket client
-  if ((await getAllRegisteredProposersCount()) > 0)
-    await enqueueEvent(() => signalRollbackCompletedToProposer(), 0);
 
   // assumption is if optimist has makeChallenges ON there is challenger
   // websocket client waiting for signal rollback
