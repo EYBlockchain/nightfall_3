@@ -10,21 +10,21 @@ import { waitTransactionToBeMined, Web3Client } from '../utils.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { NightfallMultiSig } from './nightfall-multisig.mjs';
 
-const { WEB3_OPTIONS } = config;
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
-const amount1 = 10;
-const amount2 = 100;
-const value1 = 1;
-const fee = '0';
-const stake = '1000000';
-const { optimistApiUrl } = environment;
+const { WEB3_OPTIONS } = config;
+
+axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
+
 const web3Client = new Web3Client();
 const web3 = web3Client.getWeb3();
+
+const nf3User = new Nf3(signingKeys.user1, environment);
+const { optimistApiUrl } = environment;
 
 const getContractInstance = async (contractName, nf3) => {
   const abi = await nf3.getContractAbi(contractName);
@@ -34,18 +34,21 @@ const getContractInstance = async (contractName, nf3) => {
 };
 
 describe(`Testing Administrator`, () => {
+  const amount1 = 10;
+  const amount2 = 100;
+  const value1 = 1;
+  const fee = '0';
+  const stake = '1000000';
+
   let stateContract;
   let proposersContract;
   let shieldContract;
   let challengesContract;
   let multisigContract;
   let nfMultiSig;
-  const nf3User = new Nf3(signingKeys.user1, environment);
 
   before(async () => {
     await nf3User.init(mnemonics.user1);
-
-    axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
 
     stateContract = await getContractInstance('State', nf3User);
     proposersContract = await getContractInstance('Proposers', nf3User);
@@ -242,23 +245,6 @@ describe(`Testing Administrator`, () => {
       // Assert
       expect(fProposersBeforeRegister).to.be.an('array').that.is.empty;
       expect(fProposersAfterRegister).to.have.lengthOf(1);
-    });
-
-    it.skip('Should not allow to register other proposers', async () => {
-      // SKIP We need to spin a second optimist if we want to keep this test
-      let error = null;
-      try {
-        await axios.post(`${optimistApiUrl}/proposer/register`, {
-          url: optimistApiUrl,
-          stake,
-          fee,
-        });
-      } catch (err) {
-        error = err;
-      }
-      expect(error.message).to.satisfy(message =>
-        message.includes('Transaction has been reverted by the EVM'),
-      );
     });
 
     it('Should set boot proposer with the multisig', async () => {
