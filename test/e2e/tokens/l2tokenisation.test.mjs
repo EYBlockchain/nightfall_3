@@ -5,22 +5,16 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import gen from 'general-number';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { /* expectTransaction, */ emptyL2, Web3Client } from '../../utils.mjs';
+import { Web3Client } from '../../utils.mjs';
 import poseidonHash from '../../../common-files/utils/crypto/poseidon/poseidon.mjs';
 import constants from '../../../common-files/constants/index.mjs';
 
-// so we can use require with mjs file
-// const { expect } = chai;
-const { generalise } = gen;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
+
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-
-const { BN128_GROUP_ORDER, SHIFT } = constants;
-
 const {
   transferValue,
   tokenConfigs: { tokenType, tokenId },
@@ -28,44 +22,38 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 
-const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
-const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
+const { generalise } = gen;
+
+const { BN128_GROUP_ORDER, SHIFT } = constants;
 
 const web3Client = new Web3Client();
-
-// why do we need an ERC20 token in an ERC721 test, you ask?
-// let me tell you I also don't know, but I guess we just want to fill some blocks?
-let erc20Address;
-let l2Address;
-let stateAddress;
 const eventLogs = [];
-let rollbackCount = 0;
 
-/*
-  This function tries to zero the number of unprocessed transactions in the optimist node
-  that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
-  L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
-  of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
-*/
+const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
+const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
+nf3Proposer.setApiKey(environment.AUTH_TOKEN);
+
+async function makeBlock() {
+  await nf3Proposer.makeBlockNow();
+  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+}
 
 describe('L2 Tokenisation tests', () => {
+  let erc20Address;
+  let l2Address;
+  let stateAddress;
+
   before(async () => {
-    await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer('http://optimist', await nf3Proposer1.getMinimumStake());
-
-    // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer1.startProposer();
-    newGasBlockEmitter.on('rollback', () => {
-      rollbackCount += 1;
-      logger.debug(
-        `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
-      );
-    });
-
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
 
+    await nf3Proposer.init(mnemonics.proposer);
+    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
+
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
+    stateAddress = await nf3Users[0].stateContractAddress;
+    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+
     let randomAddress = 0;
     while (randomAddress === 0) {
       try {
@@ -80,12 +68,8 @@ describe('L2 Tokenisation tests', () => {
         21711016731996786641919559689128982722488122124807605757398297001483711807488n,
     ).hex(32);
 
-    stateAddress = await nf3Users[0].stateContractAddress;
-    web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
-
     await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+    await makeBlock();
   });
 
   describe('Tokenise tests', () => {
@@ -102,8 +86,7 @@ describe('L2 Tokenisation tests', () => {
           ?.balance || 0;
 
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
-
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await makeBlock();
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
@@ -137,8 +120,7 @@ describe('L2 Tokenisation tests', () => {
       ).hex(32);
 
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
-
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await makeBlock();
 
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
@@ -148,8 +130,7 @@ describe('L2 Tokenisation tests', () => {
           ?.balance || 0;
 
       await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [commitmentHash], 1);
-
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await makeBlock();
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
@@ -180,8 +161,7 @@ describe('L2 Tokenisation tests', () => {
       ).hex(32);
 
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
-
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await makeBlock();
 
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
@@ -191,8 +171,7 @@ describe('L2 Tokenisation tests', () => {
           ?.balance || 0;
 
       await nf3Users[0].burn(l2Address, value, privateTokenId, [commitmentHash], 1);
-
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await makeBlock();
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
@@ -210,8 +189,7 @@ describe('L2 Tokenisation tests', () => {
       const salt = await randValueLT(BN128_GROUP_ORDER);
 
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
-
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await makeBlock();
 
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
@@ -221,8 +199,7 @@ describe('L2 Tokenisation tests', () => {
           ?.balance || 0;
 
       await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [], 1);
-
-      await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+      await makeBlock();
 
       const afterBalance = await nf3Users[0].getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
@@ -234,17 +211,11 @@ describe('L2 Tokenisation tests', () => {
     });
   });
 
-  describe('Rollback checks', () => {
-    it('test should encounter zero rollbacks', function () {
-      expect(rollbackCount).to.be.equal(0);
-    });
-  });
-
   after(async () => {
-    await nf3Proposer1.deregisterProposer();
-    await nf3Proposer1.close();
+    await nf3Proposer.deregisterProposer();
+    await nf3Proposer.close();
     await nf3Users[0].close();
     await nf3Users[1].close();
-    await web3Client.closeWeb3();
+    web3Client.closeWeb3();
   });
 });
