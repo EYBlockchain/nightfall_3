@@ -23,10 +23,7 @@ do
 
   echo "Generating self-signed certificate for user '$user_name'"
 
-  #openssl genrsa -out $user_name.priv_key 4096
-  openssl genpkey -outform DER -pass pass:$user_name -aes256 -pkeyopt rsa_keygen_bits:4096 -algorithm RSA -out user/$user_name.pass.priv_key -quiet
-
-  openssl rsa -traditional -outform DER -passin pass:$user_name -in user/$user_name.pass.priv_key -out user/$user_name.priv_key
+  openssl genpkey -outform DER -pkeyopt rsa_keygen_bits:4096 -algorithm RSA -out user/$user_name.priv_key -quiet
 
   # Attributes to be used with the flag 'addext' - for more info see the command 'man x509v3_config':
   #
@@ -66,10 +63,6 @@ do
   echo -e "\nGenerating certificate with incorrect key usage"
 
   # generates a new request with the wrong key usage
-  openssl req -new \
-    -subj "/C=IN/ST=Mumbai/O=Polygon Technology/OU=Nightfall Team/CN=$user_name/emailAddress=$user_name@polygon.technology" \
-    -key user/$user_name.priv_key -out user/$user_name.csr
-
   openssl x509 -req \
     -CA root_ca.crt \
     -CAkey root_ca.priv_key \
@@ -80,7 +73,7 @@ do
     -in user/$user_name.csr \
     -out user/invalid/unproper-key-usage/$user_name.crt
 
-  rm user/$user_name.csr user/$user_name.pass.priv_key
+  rm user/$user_name.csr
 
   echo "---"
 done

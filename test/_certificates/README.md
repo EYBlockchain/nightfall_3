@@ -1,11 +1,14 @@
 # Certificates for Testing
 
-For generating the certificates use the script `gen-user-certs.sh`. One should tunning the parameters accordingly with the necessity (e.g. total_users, cert key usage, etc).
-All information related to the Certificate Authority are prefixed by 'root_':
+For generating the certificates use the script `gen-end_user-certificates.sh [total_users]` passing over the total users one wishes to generate. 
+One should tunning the parameters accordingly with the necessity (e.g. total_users, cert key usage, etc). All information related to the Certificate 
+Authority are prefixed by 'root_':
 - root_ca.authority_key: contains the Authority Key that is used to initialize the X509 contract;
 - root_ca.public_key.modulus: contains the Modulus that that is used to initialize the X509 contract;
 - root_ca.crt: the X509 CA certificate;
 - root_ca.pub_key & root_ca.priv_key: the CA pub & private keys respectively.
+
+The root certificates are already generated. If a re-generation is needed, one should run `./gen-root_ca-certificate.sh`.
 
 The certificates are by default generated in the DER format.
 
