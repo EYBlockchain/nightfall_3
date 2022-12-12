@@ -303,7 +303,7 @@ describe('Basic Proposer tests', () => {
 
   it.skip('Should be able to withdraw stake', async () => {
     // TODO
-    if ((await web3Client.getInfo()).includes('TestRPC')) await web3Client.timeJump(3600 * 24 * 10); // jump in time by 7 days
+    if ((await web3Client.getInfo()).includes('TestRPC')) await web3Client.timeJump(3600 * 24 * 10);
     if ((await web3Client.getInfo()).includes('TestRPC')) {
       await nf3Proposer.withdrawStake();
     } else {

@@ -116,6 +116,7 @@ describe('ERC20 tests', () => {
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
+
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-(transferValue + fee));
       expect(user2L2BalanceAfter - user2L2BalanceBefore).to.be.equal(transferValue);
     });
@@ -141,7 +142,7 @@ describe('ERC20 tests', () => {
     });
   });
 
-  describe('Normal withdraws from L2', () => {
+  describe('Withdrawals', () => {
     let userL2BalanceBefore;
     let withdrawalTx;
     let withdrawalTxHash;
@@ -201,7 +202,7 @@ describe('ERC20 tests', () => {
     });
   });
 
-  describe('Instant withdrawals from L2', () => {
+  describe('Instant withdrawals', () => {
     const nf3LiquidityProvider = new Nf3(signingKeys.liquidityProvider, environment);
     let withdrawalTxHash;
 
@@ -264,7 +265,7 @@ describe('ERC20 tests', () => {
     What is this, you wonder? We're just testing restrictions, since for an initial release phase
     we want to restrict the amount of deposits/withdraws. Take a look at #516 if you want to know more
     */
-  describe('Testing deposit and withdraw restrictions', () => {
+  describe('Deposit and withdrawal restrictions', () => {
     const maxERC20WithdrawValue =
       maxWithdrawValue.find(e => e.address.toLowerCase() === erc20Address)?.amount || erc20default;
     console.log('************************maxERC20WithdrawValue', maxERC20WithdrawValue);
