@@ -481,7 +481,7 @@ export async function getTransactionL2ByCommitment(commitmentHash, blockNumberL2
   const db = connection.db(OPTIMIST_DB);
   const query = {
     commitments: commitmentHash,
-    blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+    blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
@@ -498,7 +498,7 @@ export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2Of
   const db = connection.db(OPTIMIST_DB);
   const query = {
     nullifiers: nullifierHash,
-    blockNumberL2: { $gte: -1, $ne: blockNumberL2OfTx },
+    blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
