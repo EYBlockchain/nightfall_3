@@ -75,10 +75,15 @@ describe('State contract State functions', function () {
     const challengesUtil = await ChallengesUtil.deploy();
     await challengesUtil.deployed();
 
+    const Utils = await ethers.getContractFactory('Utils');
+    const utils = await Utils.deploy();
+    await utils.deployed();
+
     const Challenges = await ethers.getContractFactory('Challenges', {
       libraries: {
         Verifier: verifier.address,
         ChallengesUtil: challengesUtil.address,
+        Utils: utils.address,
       },
     });
     const challenges = await upgrades.deployProxy(Challenges, [], {
@@ -101,10 +106,6 @@ describe('State contract State functions', function () {
       initializer: 'initializeState',
     });
     await shield.deployed();
-
-    const Utils = await ethers.getContractFactory('Utils');
-    const utils = await Utils.deploy();
-    await utils.deployed();
 
     const State = await ethers.getContractFactory('State', {
       libraries: {
@@ -677,7 +678,6 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    expect((await state.blockInfo(blockHash)).feesEth).to.equal(10);
     expect((await state.blockInfo(blockHash)).feesMatic).to.equal(1);
 
     const siblingPath = [
@@ -732,7 +732,7 @@ describe('State contract State functions', function () {
         [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
         { value: 10 },
       ),
-    ).to.be.revertedWithCustomError(shield, 'DepositNotEscrowed');
+    ).to.be.revertedWithCustomError(state, 'DepositNotEscrowed');
   });
 
   it('should not proposeBlock: transaction hashes root', async function () {
@@ -779,7 +779,7 @@ describe('State contract State functions', function () {
         [transactionsCreated.withdrawTransaction, transactionsCreated.depositTransaction],
         { value: 10 },
       ),
-    ).to.be.revertedWithCustomError(shield, 'InvalidTransactionHash');
+    ).to.be.revertedWithCustomError(state, 'InvalidTransactionHash');
   });
 
   it('should not proposeBlock: The block has an invalid size', async function () {
@@ -856,7 +856,6 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    expect((await state.blockInfo(blockHash)).feesEth).to.equal(10);
     expect((await state.blockInfo(blockHash)).feesMatic).to.equal(1);
 
     const packedInfoBlock = packBlockInfo(1, addr1.address, 1);

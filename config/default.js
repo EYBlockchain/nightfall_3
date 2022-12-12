@@ -54,14 +54,6 @@ module.exports = {
           '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
         ],
   },
-  RSA_TRUST_ROOTS: [
-    {
-      modulus:
-        '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
-      exponent: 65537,
-      authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`,
-    },
-  ],
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
@@ -103,6 +95,12 @@ module.exports = {
       isEscrowRequired: true,
       isWithdrawing: false,
     },
+    depositfee: {
+      numberNullifiers: 2,
+      numberCommitments: 2,
+      isEscrowRequired: true,
+      isWithdrawing: false,
+    },
     transfer: {
       numberNullifiers: 4,
       numberCommitments: 3,
@@ -136,7 +134,7 @@ module.exports = {
     DEFAULT_CIRCUIT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
     DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
   },
-  PROPOSER_MAX_BLOCK_PERIOD_MILIS: Number(process.env.PROPOSER_MAX_BLOCK_PERIOD) || 60 * 1000,
+  PROPOSER_MAX_BLOCK_PERIOD_MILIS: Number(process.env.PROPOSER_MAX_BLOCK_PERIOD_MILIS) || 0,
   ENVIRONMENTS: {
     mainnet: {
       name: 'Mainnet',
@@ -171,6 +169,8 @@ module.exports = {
         : 'http://localhost:8092',
       adversarialOptimistApiUrl: 'http://localhost:8088',
       adversarialOptimistWsUrl: 'ws://localhost:8089',
+      adversarialClientApiUrl: 'http://localhost:8093',
+      adversarialClientWsUrl: 'ws://localhost:8094',
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
@@ -197,8 +197,10 @@ module.exports = {
       optimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
       proposerBaseUrl: `https://${process.env.PROPOSER_HOST}`,
       web3WsUrl: `wss://${process.env.BLOCKCHAIN_WS_HOST}${process.env.BLOCKCHAIN_PATH}`,
-      adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
-      adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      adversarialOptimistApiUrl: `https://${process.env.ADVERSARY_OPTIMIST_HTTP_HOST}`,
+      adversarialOptimistWsUrl: `wss://${process.env.ADVERSARY_OPTIMIST_HOST}`,
+      adversarialClientApiUrl: `https://${process.env.ADVERSARY_CLIENT_HTTP_HOST}`,
+      adversarialClientWsUrl: `wss://${process.env.ADVERSARY_CLIENT_HOST}`,
       PROPOSER_KEY: process.env.PROPOSER_KEY,
       CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
@@ -236,6 +238,19 @@ module.exports = {
     gas: 10000000,
     gasCosts: 80000000000000000,
     fee: 1,
+    ROTATE_PROPOSER_BLOCKS: 20,
+    clientApiUrls: {
+      client1: process.env.CLIENT1_API_URL || 'http://localhost:8083',
+      client2: process.env.CLIENT2_API_URL || 'http://localhost:8086',
+    },
+    optimistApiUrls: {
+      optimist1: process.env.OPTIMIST1_API_URL || 'http://localhost:9091',
+      optimist2: process.env.OPTIMIST2_API_URL || 'http://localhost:9093',
+    },
+    optimistWsUrls: {
+      optimist1: process.env.OPTIMIST1_WS_URL || 'ws://localhost:9090',
+      optimist2: process.env.OPTIMIST2_WS_URL || 'ws://localhost:9092',
+    },
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||
@@ -248,6 +263,7 @@ module.exports = {
         '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
       proposer1:
         process.env.BOOT_PROPOSER_KEY ||
+        process.env.PROPOSER_KEY ||
         '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
       proposer2:
         process.env.PROPOSER2_KEY ||
@@ -482,6 +498,51 @@ module.exports = {
       ],
     },
   },
+  X509: {
+    blockchain: {
+      RSA_TRUST_ROOTS: [
+        {
+          modulus:
+            '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
+          exponent: 65537,
+          authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(
+            64,
+            '0',
+          )}`,
+        },
+      ],
+      // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
+      certificatePoliciesOIDs: [
+        // made up
+        [
+          '0x06032a0304000000000000000000000000000000000000000000000000000000',
+          '0x06032d0607000000000000000000000000000000000000000000000000000000',
+        ],
+        // Digicert
+        [
+          '0x06096086480186fd6c0315000000000000000000000000000000000000000000',
+          '0x060a6086480186fd6c0315020000000000000000000000000000000000000000',
+        ],
+        // Entrust
+        ['0x060a6086480186fa6c0a01060000000000000000000000000000000000000000'],
+      ],
+      extendedKeyUsageOIDs: [
+        // made up
+        [
+          '0x06082b0601050507030300000000000000000000000000000000000000000000',
+          '0x06082b0601050507030400000000000000000000000000000000000000000000',
+          '0x06082b0601050507030800000000000000000000000000000000000000000000',
+        ],
+        // Digicert
+        ['0x06082b0601050507030300000000000000000000000000000000000000000000'],
+        // Entrust
+        [
+          '0x06096086480186fa6b280b000000000000000000000000000000000000000000',
+          '0x060a2b0601040182370a030c0000000000000000000000000000000000000000',
+        ],
+      ],
+    },
+  },
 
   // for Browser use
   proposerUrl:
@@ -512,4 +573,6 @@ module.exports = {
     SUBMIT_TRANSACTION:
       '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
   },
+  TIMER_CHANGE_PROPOSER_SECOND: process.env.TIMER_CHANGE_PROPOSER_SECOND || 30,
+  MAX_ROTATE_TIMES: process.env.MAX_ROTATE_TIMES || 2,
 };

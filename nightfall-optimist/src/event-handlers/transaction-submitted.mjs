@@ -3,7 +3,11 @@
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { saveTransaction } from '../services/database.mjs';
-import checkTransaction from '../services/transaction-checker.mjs';
+import {
+  checkTransaction,
+  checkCommitmentsMempool,
+  checkNullifiersMempool,
+} from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
 
@@ -35,12 +39,27 @@ async function transactionSubmittedEventHandler(eventParams) {
     if (fromBlockProposer) {
       await saveTransaction({ ...transaction, blockNumberL2 });
       logger.info({ msg: 'Checking transaction validity...' });
-      await checkTransaction(transaction, true);
+      await checkTransaction(transaction, { checkInL2Block: true, checkInMempool: true });
       logger.info({ msg: 'Transaction checks passed' });
     } else {
       logger.info({ msg: 'Checking transaction validity...' });
-      await checkTransaction(transaction, true);
+      await checkTransaction(transaction, { checkInL2Block: true, checkInMempool: true });
       logger.info({ msg: 'Transaction checks passed' });
+
+      // if transaction has duplicate commitment or nullifier
+      // and original transaction is in mempool
+      // check its proposer payment with original transaction
+      // if payment is higher then proceed and save.
+      const checkStatus = await Promise.all([
+        checkCommitmentsMempool(transaction),
+        checkNullifiersMempool(transaction),
+      ]);
+      if (checkStatus.includes(false)) {
+        logger.info({
+          msg: 'Replacment transaction does not have higher proposer fee, skipping saveTransaction',
+        });
+        return;
+      }
       await saveTransaction({ ...transaction });
     }
   } catch (err) {

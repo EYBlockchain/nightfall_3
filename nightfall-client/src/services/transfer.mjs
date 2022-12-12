@@ -8,7 +8,10 @@
 import config from 'config';
 import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { edwardsCompress } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
+import {
+  edwardsCompress,
+  compressProof,
+} from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
@@ -24,7 +27,7 @@ import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME } = constants;
+const { SHIELD_CONTRACT_NAME, TRANSFER } = constants;
 const { generalise } = gen;
 
 async function transfer(transferParams) {
@@ -32,6 +35,7 @@ async function transfer(transferParams) {
   // let's extract the input items
   const { offchain = false, providedCommitments, ...items } = transferParams;
   const { tokenId, recipientData, rootKey, fee } = generalise(items);
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
@@ -52,6 +56,8 @@ async function transfer(transferParams) {
     maticAddress: maticAddress.hex(32),
   });
 
+  const circuitName = TRANSFER;
+
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend,
@@ -61,7 +67,7 @@ async function transfer(transferParams) {
     maticAddress,
     tokenId,
     rootKey,
-    maxNullifiers: VK_IDS.transfer.numberNullifiers,
+    maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
   });
 
@@ -79,7 +85,7 @@ async function transfer(transferParams) {
     // Compress the public key as it will be put on-chain
     const compressedEPub = edwardsCompress(ePublic);
 
-    const circuitHash = await getCircuitHash('transfer');
+    const circuitHash = await getCircuitHash(circuitName);
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
@@ -92,8 +98,8 @@ async function transfer(transferParams) {
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-      numberNullifiers: VK_IDS.transfer.numberNullifiers,
-      numberCommitments: VK_IDS.transfer.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
 
@@ -118,58 +124,50 @@ async function transfer(transferParams) {
       privateData,
       commitmentsInfo.roots,
       maticAddress,
-      VK_IDS.transfer.numberNullifiers,
-      VK_IDS.transfer.numberCommitments,
+      VK_IDS[circuitName].numberNullifiers,
+      VK_IDS[circuitName].numberCommitments,
     );
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
     // call a worker to generate the proof
-    const res = await generateProof({ folderpath: 'transfer', witness });
+    const res = await generateProof({ folderpath: circuitName, witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
-
-    const optimisticTransferTransaction = new Transaction({
-      fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      circuitHash,
-      ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-      tokenId: compressedEPub, // this is the encrypted tokenID
-      recipientAddress: compressedSecrets[1],
-      commitments: commitmentsInfo.newCommitments,
-      nullifiers: commitmentsInfo.nullifiers,
-      compressedSecrets: compressedSecrets.slice(2), // these are the [value, salt]
-      proof,
-      numberNullifiers: VK_IDS.transfer.numberNullifiers,
-      numberCommitments: VK_IDS.transfer.numberCommitments,
-      isOnlyL2: true,
-    });
+    const transaction = { ...publicData, proof: compressProof(proof) };
+    transaction.transactionHash = Transaction.calcHash(transaction);
 
     logger.debug({
-      msg: 'Client made transaction',
-      transaction: optimisticTransferTransaction,
+      msg: `Client made ${circuitName}`,
+      transaction,
       offchain,
     });
 
-    return submitTransaction(
-      optimisticTransferTransaction,
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
+      .encodeABI();
+    await submitTransaction(
+      transaction,
       commitmentsInfo,
-      rootKey,
-      shieldContractInstance,
+      compressedZkpPublicKey,
+      nullifierKey,
       offchain,
     );
+
+    return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-    throw new Error(error);
+    logger.error(error);
+    throw error;
   }
 }
 

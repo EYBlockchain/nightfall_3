@@ -4,6 +4,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import gen from 'general-number';
@@ -27,6 +28,7 @@ const {
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
+const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
@@ -66,7 +68,14 @@ describe('L2 Tokenisation tests', () => {
     await nf3Users[1].init(mnemonics.user2);
 
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-    const randomAddress = await randValueLT(1461501637330902918203684832716283019655932542976n);
+    let randomAddress = 0;
+    while (randomAddress === 0) {
+      try {
+        randomAddress = await randValueLT(SHIFT);
+      } catch {
+        // Try to get a random value again
+      }
+    }
 
     l2Address = generalise(
       randomAddress.bigInt +
@@ -76,7 +85,7 @@ describe('L2 Tokenisation tests', () => {
     stateAddress = await nf3Users[0].stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
-    await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
+    await nf3Users[0].deposit(erc20Address, tokenType, 3 * transferValue, tokenId, 0);
 
     await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
   });
@@ -224,6 +233,148 @@ describe('L2 Tokenisation tests', () => {
           ?.balance || 0;
       expect(l2AddressBalanceAfter - l2AddressBalanceBefore).to.be.equal(-valueBurnt);
       expect(erc20AddressBalanceAfter - erc20AddressBalanceBefore).to.be.equal(-1);
+    });
+  });
+
+  describe('Commitment Selection tests', () => {
+    it('should transfer a specified commitment', async function () {
+      const value = 5;
+      const privateTokenId = 11;
+      const salt = await randValueLT(BN128_GROUP_ORDER);
+      const { compressedZkpPublicKey } = nf3Users[0].zkpKeys;
+
+      const [top4Bytes, remainder] = generalise(privateTokenId)
+        .limbs(224, 2)
+        .map(l => BigInt(l));
+      const packedErcAddress = generalise(l2Address).bigInt + top4Bytes * SHIFT;
+      const commitmentHash = poseidonHash(
+        generalise([
+          packedErcAddress,
+          remainder,
+          generalise(value).field(BN128_GROUP_ORDER),
+          ...generalise(nf3Users[0].zkpKeys.zkpPublicKey).all.field(BN128_GROUP_ORDER),
+          salt.field(BN128_GROUP_ORDER),
+        ]),
+      ).hex(32);
+
+      // tokenise twice to produce two commitment
+      // the commitment we will provide and a commitment that would otherwise be selected
+      await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      await nf3Users[0].tokenise(l2Address, 1, privateTokenId, 1);
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      const beforeCommitments = await nf3Users[0].getLayer2Commitments([l2Address], true);
+      const beforeCommitmentValues = beforeCommitments[compressedZkpPublicKey][l2Address].map(
+        c => c.balance,
+      );
+      expect(beforeCommitmentValues).to.include.members([1, 5]);
+
+      await nf3Users[0].transfer(
+        true,
+        l2Address,
+        tokenType,
+        1,
+        privateTokenId,
+        nf3Users[1].zkpKeys.compressedZkpPublicKey,
+        1,
+        [commitmentHash],
+      );
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      const afterCommitments = await nf3Users[0].getLayer2Commitments([l2Address], true);
+      const afterCommitmentValues = afterCommitments[compressedZkpPublicKey][l2Address].map(
+        c => c.balance,
+      );
+      expect(afterCommitmentValues).to.include.members([1, 4]);
+
+      const beforeCount = beforeCommitments[compressedZkpPublicKey][l2Address].filter(
+        c => c.balance === 5,
+      ).length;
+      const beforeChangeCount = beforeCommitments[compressedZkpPublicKey][l2Address].filter(
+        c => c.balance === 4,
+      ).length;
+
+      const afterCount = afterCommitments[compressedZkpPublicKey][l2Address].filter(
+        c => c.balance === 5,
+      ).length;
+      const afterChangeCount = afterCommitments[compressedZkpPublicKey][l2Address].filter(
+        c => c.balance === 4,
+      ).length;
+
+      expect(beforeCount - afterCount).to.equal(1);
+      expect(afterChangeCount - beforeChangeCount).to.equal(1);
+    });
+
+    it('should transfer a specified commitment for the fee token', async function () {
+      // this commitment would be selected if we don't provide a commitment
+      await nf3Users[0].deposit(erc20Address, tokenType, 1, tokenId, 0);
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      const { compressedZkpPublicKey } = nf3Users[0].zkpKeys;
+      const beforeCommitments = await nf3Users[0].getLayer2Commitments([erc20Address], true);
+      const largestCommitmentValue = Math.max(
+        ...beforeCommitments[compressedZkpPublicKey][erc20Address].map(c => c.balance),
+      );
+
+      logger.debug({ beforeCommitments });
+      logger.debug({ largestCommitmentValue });
+
+      // since we don't have the salt we need to get the hash from the DB
+      const connection = await mongo.connection(MONGO_URL);
+      const db = connection.db(COMMITMENTS_DB);
+      const commitment = await db.collection(COMMITMENTS_COLLECTION).findOne({
+        compressedZkpPublicKey: nf3Users[0].zkpKeys.compressedZkpPublicKey,
+        isNullified: false,
+        isPendingNullification: false,
+        'preimage.ercAddress': generalise(erc20Address).hex(32),
+        'preimage.tokenId': generalise(tokenId).hex(32),
+        'preimage.value': generalise(largestCommitmentValue).hex(32),
+      });
+      const commitmentHash = commitment._id;
+
+      await nf3Users[0].transfer(
+        true,
+        erc20Address,
+        tokenType,
+        1,
+        tokenId,
+        nf3Users[1].zkpKeys.compressedZkpPublicKey,
+        1,
+        [commitmentHash],
+      );
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      const afterCommitments = await nf3Users[0].getLayer2Commitments([erc20Address], true);
+
+      // check number of commitments here
+      const beforeCount = beforeCommitments[compressedZkpPublicKey][erc20Address].filter(
+        c => c.balance === largestCommitmentValue,
+      ).length;
+      const beforeChangeCount = beforeCommitments[compressedZkpPublicKey][erc20Address].filter(
+        c => c.balance === largestCommitmentValue - 2,
+      ).length;
+
+      const afterCount = afterCommitments[compressedZkpPublicKey][erc20Address].filter(
+        c => c.balance === largestCommitmentValue,
+      ).length;
+      const afterChangeCount = afterCommitments[compressedZkpPublicKey][erc20Address].filter(
+        c => c.balance === largestCommitmentValue - 2,
+      ).length;
+
+      expect(beforeCount - afterCount).to.equal(1);
+      expect(afterChangeCount - beforeChangeCount).to.equal(1);
     });
   });
 

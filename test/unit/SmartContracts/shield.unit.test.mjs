@@ -114,10 +114,14 @@ describe('Testing Shield Contract', function () {
     const VerifierDeployer = await ethers.getContractFactory('Verifier');
     const VerifierInstance = await VerifierDeployer.deploy();
 
+    const Utils = await ethers.getContractFactory('Utils');
+    const utils = await Utils.deploy();
+
     const ChallengesDeployed = await ethers.getContractFactory('Challenges', {
       libraries: {
         ChallengesUtil: (await ChallengesUtilInstance.deployed()).address,
         Verifier: (await VerifierInstance.deployed()).address,
+        Utils: (await utils.deployed()).address,
       },
     });
     const ChallengesInstance = await upgrades.deployProxy(ChallengesDeployed, {
@@ -179,14 +183,9 @@ describe('Testing Shield Contract', function () {
       await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
       await Erc20MockInstance.approve(shieldAddress, '10');
 
-      const tx = await ShieldInstance.submitTransaction(depositTransaction, {
-        value: 15,
-      });
+      const tx = await ShieldInstance.submitTransaction(depositTransaction);
 
-      expect((await StateInstance.txInfo(depositTransactionHash)).isEscrowed).to.equal(true);
-      expect(await Erc20MockInstance.balanceOf(await owner[0].address)).to.equal(99999990);
-      expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(10);
-      expect((await StateInstance.txInfo(depositTransactionHash)).ethFee).to.equal(15);
+      expect(await StateInstance.isTransactionEscrowed(depositTransactionHash)).to.equal(true);
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 
@@ -248,7 +247,9 @@ describe('Testing Shield Contract', function () {
       };
       const tx = await ShieldInstance.submitTransaction(depositTransactionERC721);
       expect(
-        (await StateInstance.txInfo(calculateTransactionHash(depositTransactionERC721))).isEscrowed,
+        await StateInstance.isTransactionEscrowed(
+          calculateTransactionHash(depositTransactionERC721),
+        ),
       ).to.equal(true);
       expect(
         await Erc721MockInstance.ownerOf(
@@ -302,8 +303,9 @@ describe('Testing Shield Contract', function () {
       };
       const tx = await ShieldInstance.submitTransaction(depositTransactionERC1155);
       expect(
-        (await StateInstance.txInfo(calculateTransactionHash(depositTransactionERC1155)))
-          .isEscrowed,
+        await StateInstance.isTransactionEscrowed(
+          calculateTransactionHash(depositTransactionERC1155),
+        ),
       ).to.equal(true);
       expect(await Erc1155MockInstance.balanceOf(await owner[0].address, 0)).to.equal(1099995);
       expect(await Erc1155MockInstance.balanceOf(shieldAddress, 0)).to.equal(5);
@@ -312,7 +314,7 @@ describe('Testing Shield Contract', function () {
 
     it('succeeds for a non deposit transaction', async function () {
       const tx = await ShieldInstance.submitTransaction(withdrawTransaction);
-      expect((await StateInstance.txInfo(withdrawTransactionHash)).isEscrowed).to.equal(false);
+      expect(await StateInstance.isTransactionEscrowed(withdrawTransactionHash)).to.equal(false);
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 
@@ -321,52 +323,6 @@ describe('Testing Shield Contract', function () {
       await expect(ShieldInstance.submitTransaction(withdrawTransaction)).to.be.revertedWith(
         'Shield: You are not authorised to transact using Nightfall',
       );
-    });
-
-    it('fails to submit deposit transaction if fee > 0 and msg.value > 0 ', async function () {
-      const packedInfo = packTransactionInfo(10, 10, 0, 0);
-
-      const historicRootBlockNumberL2 = [
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-        '0x0000000000000000000000000000000000000000000000000000000000000000',
-      ];
-
-      const packedHistoricRootBlockNumber = packHistoricRoots(historicRootBlockNumberL2);
-
-      const depositTransactionInvalid = {
-        packedInfo,
-        historicRootBlockNumberL2: packedHistoricRootBlockNumber,
-        tokenId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ercAddress: ethers.utils.hexZeroPad(erc20MockAddress, 32),
-        recipientAddress: '0x0000000000000000000000000000000000000000000000000000000000000000',
-        commitments: [
-          '0x078ba912b4169b22fb2d9b6fba6229ccd4ae9c2610c72312d0c6d18d85fd22cf',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
-        nullifiers: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
-        compressedSecrets: [
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
-        proof: [
-          '0x2e608465669d24b9f8f0cf93b76d68e10e2ab6d5e24a6097217334960088b63',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-        ],
-      };
-
-      await expect(
-        ShieldInstance.submitTransaction(depositTransactionInvalid, { value: 15 }),
-      ).to.be.revertedWith('Shield: Fee cannot be paid in both tokens');
     });
 
     it('fails to submit deposit transaction if ercAddress is invalid', async function () {
@@ -467,14 +423,9 @@ describe('Testing Shield Contract', function () {
     it('allows a deposit transaction (of any size) if tokenType is ERC20 and deposit restriction has not been set', async function () {
       await Erc20MockInstance.approve(shieldAddress, '10');
 
-      const tx = await ShieldInstance.submitTransaction(depositTransaction, {
-        value: 15,
-      });
+      const tx = await ShieldInstance.submitTransaction(depositTransaction);
 
-      expect((await StateInstance.txInfo(depositTransactionHash)).isEscrowed).to.equal(true);
-      expect(await Erc20MockInstance.balanceOf(await owner[0].address)).to.equal(99999990);
-      expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(10);
-      expect((await StateInstance.txInfo(depositTransactionHash)).ethFee).to.equal(15);
+      expect(await StateInstance.isTransactionEscrowed(depositTransactionHash)).to.equal(true);
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 
@@ -660,14 +611,12 @@ describe('Testing Shield Contract', function () {
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
       await time.increase(86400 * 7 + 1);
-      await setBlockInfo(stateAddress, blockHash, 15, 20, false);
+      await setBlockInfo(stateAddress, blockHash, 20, false);
 
       await ShieldInstance.setRestriction(erc20MockAddress, '10000', '10000');
       await Erc20MockInstance.approve(shieldAddress, '10');
 
-      await ShieldInstance.submitTransaction(depositTransaction, {
-        value: 15,
-      });
+      await ShieldInstance.submitTransaction(depositTransaction);
 
       const amount = 5;
       const challengeLocked = 2;
@@ -688,17 +637,9 @@ describe('Testing Shield Contract', function () {
         ethers.utils.solidityPack(['address', 'uint256'], [proposer, blockNumberL2]),
       );
 
-      expect((await StateInstance.blockInfo(proposerBlockHash)).feesEth).to.equal(0);
       expect((await StateInstance.blockInfo(proposerBlockHash)).feesMatic).to.equal(0);
 
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(15);
       expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(20);
-
-      expect(await ethers.provider.getBalance(shieldAddress)).to.equal(0);
-      expect(await ethers.provider.getBalance(stateAddress)).to.equal(15);
-
-      expect(await Erc20MockInstance.balanceOf(shieldAddress)).to.equal(90);
-      expect(await Erc20MockInstance.balanceOf(stateAddress)).to.equal(20);
 
       const stake = await StateInstance.stakeAccounts(owner[0].address);
       expect(stake.challengeLocked).to.equal(Number(challengeLocked) - Number(blockStake));
@@ -752,7 +693,7 @@ describe('Testing Shield Contract', function () {
 
       await time.increase(86400 * 7 + 1);
 
-      await setBlockInfo(stateAddress, blockHash, 15, 20, true);
+      await setBlockInfo(stateAddress, blockHash, 20, true);
 
       await expect(ShieldInstance.requestBlockPayment(block)).to.be.revertedWith(
         'Shield: Block stake for this block already claimed',
@@ -786,7 +727,7 @@ describe('Testing Shield Contract', function () {
     it('fails if block payment has been claimed', async function () {
       await setBlockData(StateInstance, stateAddress, blockHash, blockStake, owner[0].address);
 
-      await setBlockInfo(stateAddress, blockHash, 15, 20, true);
+      await setBlockInfo(stateAddress, blockHash, 20, true);
 
       await time.increase(86400 * 7 + 1);
 

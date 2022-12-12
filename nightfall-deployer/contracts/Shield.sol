@@ -38,7 +38,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         Pausable.initialize();
     }
 
-    function submitTransaction(Transaction calldata t) external payable nonReentrant whenNotPaused {
+    function submitTransaction(Transaction calldata t) external nonReentrant whenNotPaused {
         // let everyone know what you did
         emit TransactionSubmitted();
         require(
@@ -48,10 +48,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         require(
             !sanctionsList.isSanctioned(msg.sender),
             'Shield: You are on the Chainalysis sanctions list'
-        );
-        require(
-            msg.value == 0 || Utils.getFee(t.packedInfo) == 0,
-            'Shield: Fee cannot be paid in both tokens'
         );
 
         uint256 maxBlockSize = MAX_BLOCK_SIZE;
@@ -63,12 +59,10 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         }
 
         (, bool isEscrowRequired) = state.circuitInfo(Utils.getCircuitHash(t.packedInfo));
-        if (isEscrowRequired || msg.value > 0) {
+        if (isEscrowRequired) {
             bytes32 transactionHash = Utils.hashTransaction(t);
-            state.setTransactionInfo(transactionHash, isEscrowRequired, uint248(msg.value));
-            if (isEscrowRequired) {
-                payIn(t);
-            }
+            state.setTransactionInfo(transactionHash, isEscrowRequired);
+            payIn(t);
         }
     }
 
@@ -87,21 +81,13 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
             'Shield: Too soon to get paid for this block'
         );
 
-        (uint120 feesEth, uint120 feesMatic, bool stakeClaimed) = state.blockInfo(
-            blockData.blockHash
-        );
+        (uint248 feesMatic, bool stakeClaimed) = state.blockInfo(blockData.blockHash);
         require(proposer == msg.sender, 'Shield: Not the proposer of this block');
         require(!stakeClaimed, 'Shield: Block stake for this block already claimed');
         state.setBlockStakeWithdrawn(blockHash);
 
         //Request fees
-
         state.resetFeeBookBlocksInfo(blockHash);
-
-        if (feesEth > 0) {
-            (bool success, ) = payable(address(state)).call{value: feesEth}('');
-            require(success, 'Shield: Transfer failed.');
-        }
 
         if (feesMatic > 0) {
             IERC20Upgradeable(super.getMaticAddress()).safeTransfer(address(state), feesMatic);
@@ -113,7 +99,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         stake.challengeLocked -= blockData.blockStake;
         state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
 
-        state.addPendingWithdrawal(msg.sender, feesEth, feesMatic);
+        state.addPendingWithdrawal(msg.sender, 0, feesMatic);
     }
 
     /**
@@ -125,7 +111,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
             blockData.time + CHALLENGE_PERIOD < block.timestamp,
             'Shield: Too soon to get paid for this block'
         );
-        (, , bool stakeClaimed) = state.blockInfo(blockData.blockHash);
+        (, bool stakeClaimed) = state.blockInfo(blockData.blockHash);
         require(!stakeClaimed, 'Shield: Block stake for this block already claimed');
 
         return true;

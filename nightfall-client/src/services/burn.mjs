@@ -8,13 +8,15 @@ import {
 } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import gen from 'general-number';
 import Transaction from '@polygon-nightfall/common-files/classes/transaction.mjs';
+import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
+import { ZkpKeys } from './keys.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME } = constants;
+const { SHIELD_CONTRACT_NAME, BURN } = constants;
 const { generalise } = gen;
 
 async function burn(burnParams) {
@@ -22,8 +24,8 @@ async function burn(burnParams) {
   // let's extract the input items
   const { providedCommitments, ...items } = burnParams;
   const { rootKey, value, fee, tokenId } = generalise(items);
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
-  const circuitHash = await getCircuitHash('burn');
 
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
@@ -32,6 +34,8 @@ async function burn(burnParams) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
+  const circuitName = BURN;
+
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: generalise(value).bigInt,
     fee,
@@ -39,10 +43,12 @@ async function burn(burnParams) {
     tokenId,
     maticAddress,
     rootKey,
-    maxNullifiers: VK_IDS.burn.numberNullifiers,
+    maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     maxNonFeeNullifiers: 1,
     providedCommitments,
   });
+
+  const circuitHash = await getCircuitHash(circuitName);
 
   // Burn will have two commitments. The first will belong to the change if commitment isn't fully burnt, and the second one to the fee.
   // Therefore, we need to make sure that if the commitment was completely burn we still keep this order.
@@ -61,8 +67,8 @@ async function burn(burnParams) {
       circuitHash,
       commitments: newCommitmentsCircuit,
       nullifiers: commitmentsInfo.nullifiers,
-      numberNullifiers: VK_IDS.burn.numberNullifiers,
-      numberCommitments: VK_IDS.burn.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
 
@@ -88,51 +94,47 @@ async function burn(burnParams) {
       privateData,
       commitmentsInfo.roots,
       maticAddress,
-      VK_IDS.burn.numberNullifiers,
-      VK_IDS.burn.numberCommitments,
+      VK_IDS[circuitName].numberNullifiers,
+      VK_IDS[circuitName].numberCommitments,
     );
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
-    const res = await generateProof({ folderpath: 'burn', witness });
+    const res = await generateProof({ folderpath: circuitName, witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
 
-    const optimisticBurnTransaction = new Transaction({
-      fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      circuitHash,
-      commitments: newCommitmentsCircuit,
-      nullifiers: commitmentsInfo.nullifiers,
-      proof,
-      numberNullifiers: VK_IDS.burn.numberNullifiers,
-      numberCommitments: VK_IDS.burn.numberCommitments,
-      isOnlyL2: true,
-    });
+    const transaction = { ...publicData, proof: compressProof(proof) };
+    transaction.transactionHash = Transaction.calcHash(transaction);
 
     logger.debug({
-      msg: 'Client made transaction',
-      transaction: JSON.stringify(optimisticBurnTransaction, null, 2),
+      msg: `Client made ${circuitName}`,
+      transaction,
     });
 
-    return submitTransaction(
-      optimisticBurnTransaction,
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
+      .encodeABI();
+    await submitTransaction(
+      transaction,
       commitmentsInfo,
-      rootKey,
-      shieldContractInstance,
+      compressedZkpPublicKey,
+      nullifierKey,
       true,
     );
+    return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-    throw new Error(error);
+    logger.error(error);
+    throw error;
   }
 }
 

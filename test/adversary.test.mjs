@@ -5,6 +5,7 @@
  */
 
 /* eslint-disable no-await-in-loop */
+import axios from 'axios';
 import chai, { expect } from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
@@ -17,12 +18,14 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 // eslint-disable-next-line import/no-unresolved
 import Nf3 from './adversary/adversary-cli/lib/nf3.mjs';
 
-import { registerProposerOnNoProposer, Web3Client } from './utils.mjs';
+import { clearMempool, registerProposerOnNoProposer, Web3Client } from './utils.mjs';
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
+const { fee } = config.TEST_OPTIONS;
 
 const web3Client = new Web3Client();
 
@@ -36,8 +39,26 @@ const challengeSelectors = {
   challengeLeafCount: '0xb8424d42',
   challengeFrontier: '0x60f611d5',
   challengeNullifier: '0xda5370ca',
-  challengeProofVerification: '0xf04b3b10',
+  challengeProofVerification: '0xa72b8d98',
 };
+
+const {
+  optimistApiUrl,
+  optimistWsUrl,
+  adversarialOptimistApiUrl,
+  adversarialOptimistWsUrl,
+  adversarialClientApiUrl,
+  adversarialClientWsUrl,
+  ...others
+} = environment;
+
+async function makeBlockNow(badBlockType) {
+  if (badBlockType) {
+    await axios.get(`${adversarialOptimistApiUrl}/block/make-now/${badBlockType}`);
+  } else {
+    await axios.get(`${adversarialOptimistApiUrl}/block/make-now`);
+  }
+}
 
 describe('Testing with an adversary', () => {
   let nf3User;
@@ -71,6 +92,7 @@ describe('Testing with an adversary', () => {
   let challengeSelector;
 
   const waitForRollback = async () => {
+    console.log('Waiting for rollback...');
     while (rollbackCount !== currentRollbacks + 1) {
       console.log(
         'Rollback count: ',
@@ -81,19 +103,16 @@ describe('Testing with an adversary', () => {
       );
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
+    console.log('Rollback completed');
   };
 
   before(async () => {
     console.log('ENV:\n', environment);
-    nf3User = new Nf3(ethereumSigningKeyUser, environment);
+    nf3User = new Nf3(ethereumSigningKeyUser, {
+      ...others,
+      clientApiUrl: adversarialClientApiUrl,
+    });
 
-    const {
-      optimistApiUrl,
-      optimistWsUrl,
-      adversarialOptimistApiUrl,
-      adversarialOptimistWsUrl,
-      ...others
-    } = environment;
     nf3AdversarialProposer = new Nf3(ethereumSigningKeyProposer, {
       ...others,
       optimistApiUrl: adversarialOptimistApiUrl,
@@ -172,179 +191,277 @@ describe('Testing with an adversary', () => {
 
     stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
-
-    await nf3User.deposit(ercAddress, tokenType, value2, tokenId, 0);
-    await nf3AdversarialProposer.makeBlockNow('ValidTransaction');
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-
-    await nf3User.transfer(
-      false,
-      ercAddress,
-      tokenType,
-      value2,
-      tokenId,
-      nf3User.zkpKeys.compressedZkpPublicKey,
-      0,
-    );
-    await nf3AdversarialProposer.makeBlockNow('ValidTransaction');
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-
-    await nf3User.withdraw(
-      false,
-      ercAddress,
-      tokenType,
-      value2,
-      tokenId,
-      nf3User.ethereumAddress,
-      0,
-    );
-    await nf3AdversarialProposer.makeBlockNow('ValidTransaction');
-    await web3Client.waitForEvent(eventLogs, ['blockProposed']);
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     currentRollbacks = rollbackCount;
   });
 
+  afterEach(async () => {
+    await clearMempool({
+      optimistUrl: adversarialOptimistApiUrl,
+      web3: web3Client,
+      logs: eventLogs,
+    });
+  });
+
   describe('Testing bad transactions', () => {
-    it('Test duplicate commitment transfer', async () => {
-      console.log('Testing duplicate commitment transfer...');
-      await nf3AdversarialProposer.makeBlockNow('DuplicateCommitmentTransfer');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback duplicate commitment transfer completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeCommitment);
+    describe('Deposits rollback', async () => {
+      it('Test duplicate transaction deposit', async () => {
+        console.log('Testing duplicate transaction deposit...');
+        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, fee);
+        await makeBlockNow('DuplicateTransaction');
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeCommitment);
+      });
+
+      it('Test failing incorrect input deposit', async () => {
+        console.log('Testing incorrect input deposit...');
+        await nf3User.deposit('IncorrectInput', ercAddress, tokenType, value2, tokenId, 0);
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+      });
+
+      it('Test failing incorrect proof deposit', async () => {
+        console.log('Testing incorrect proof deposit...');
+        await nf3User.deposit('IncorrectProof', ercAddress, tokenType, value2, tokenId, 0);
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+      });
     });
 
-    it('Test duplicate commitment deposit', async () => {
-      console.log('Testing duplicate commitment deposit...');
-      await nf3AdversarialProposer.makeBlockNow('DuplicateCommitmentDeposit');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback duplicate commitment deposit completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeCommitment);
+    describe('Transfers rollback', async () => {
+      beforeEach(async () => {
+        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      });
+
+      it('Test duplicate transaction transfer', async () => {
+        console.log('Testing duplicate transaction transfer...');
+        await nf3User.transfer(
+          'ValidTransaction',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.zkpKeys.compressedZkpPublicKey,
+          fee,
+        );
+        await makeBlockNow('DuplicateTransaction');
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.oneOf([
+          challengeSelectors.challengeCommitment,
+          challengeSelectors.challengeNullifier,
+        ]);
+      });
+
+      it('Test duplicate nullifier transfer', async () => {
+        console.log('Testing duplicate nullifier transfer...');
+        await nf3User.transfer(
+          'DuplicateNullifier',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.zkpKeys.compressedZkpPublicKey,
+          0,
+        );
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
+      });
+
+      it('Test incorrect input transfer', async () => {
+        console.log('Testing incorrect input transfer...');
+        await nf3User.transfer(
+          'IncorrectInput',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.zkpKeys.compressedZkpPublicKey,
+          0,
+        );
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+      });
+
+      it('Test incorrect proof transfer', async () => {
+        await nf3User.transfer(
+          'IncorrectProof',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.zkpKeys.compressedZkpPublicKey,
+          0,
+        );
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+      });
+
+      it('Test incorrect historic root transfer', async () => {
+        console.log('Testing incorrect root...');
+        await nf3User.transfer(
+          'IncorrectHistoricBlockNumber',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.zkpKeys.compressedZkpPublicKey,
+          0,
+        );
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeHistoricRoot);
+      });
     });
 
-    it('Test duplicate nullifier transfer', async () => {
-      console.log('Testing duplicate nullifier transfer...');
-      await nf3AdversarialProposer.makeBlockNow('DuplicateNullifierTransfer');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback duplicate nullifier transfer completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
-    });
+    describe('Withdraw rollbacks', async () => {
+      beforeEach(async () => {
+        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      });
 
-    it('Test duplicate nullifier withdraw', async () => {
-      console.log('Testing duplicate nullifier withdraw...');
-      await nf3AdversarialProposer.makeBlockNow('DuplicateNullifierWithdraw');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback  duplicate nullifier withdraw completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
-    });
+      it('Test duplicate transaction withdraw', async () => {
+        console.log('Testing duplicate transaction withdraw...');
+        await nf3User.withdraw(
+          'ValidTransaction',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.ethereumAddress,
+          fee,
+        );
+        await makeBlockNow('DuplicateTransaction');
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.oneOf([
+          challengeSelectors.challengeCommitment,
+          challengeSelectors.challengeNullifier,
+        ]);
+      });
 
-    it('Test incorrect proof deposit', async () => {
-      console.log('Testing incorrect proof deposit...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectProofDeposit');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect proof deposit completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
+      it('Test duplicate nullifier withdraw', async () => {
+        console.log('Testing duplicate nullifier withdraw...');
+        await nf3User.withdraw(
+          'DuplicateNullifier',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.ethereumAddress,
+          0,
+        );
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
+      });
 
-    it('Test incorrect proof transfer', async () => {
-      console.log('Testing incorrect proof transfer...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectProofTransfer');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback  incorrect proof transfer completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
+      it('Test incorrect input withdraw', async () => {
+        console.log('Testing incorrect input withdraw...');
+        await nf3User.withdraw(
+          'IncorrectInput',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.ethereumAddress,
+          0,
+        );
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+      });
 
-    it('Test incorrect proof withdraw', async () => {
-      console.log('Testing incorrect proof withdraw...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectProofWithdraw');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect proof withdraw completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
+      it('Test incorrect proof withdraw', async () => {
+        console.log('Testing incorrect proof withdraw...');
+        await nf3User.withdraw(
+          'IncorrectProof',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.ethereumAddress,
+          0,
+        );
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+      });
 
-    it('Test incorrect public input commitment deposit', async () => {
-      console.log('Testing incorrect public input commitment deposit...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputDepositCommitment');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect public input commitment deposit completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
-
-    it('Test incorrect public input transfer commitment', async () => {
-      console.log('Testing incorrect public input transfer commitment...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputTransferCommitment');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect public input transfer commitment completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
-
-    it('Test incorrect public input transfer nullifier', async () => {
-      console.log('Testing incorrect public input transfer nullifier...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputTransferCommitment');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect public input transfer nullifier completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
-
-    it('Test incorrect public input withdraw nullifier', async () => {
-      console.log('Testing incorrect public input withdraw nullifier...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectPublicInputWithdrawNullifier');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect public input withdraw completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
-    });
-
-    it('Test incorrect historic root', async () => {
-      console.log('Testing incorrect root...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectHistoricRoot');
-      console.log('Waiting for rollback...');
-      await waitForRollback();
-      console.log('Rollback incorrect historic root completed');
-      expect(challengeSelector).to.be.equal(challengeSelectors.challengeHistoricRoot);
+      it('Test incorrect historic root withdraw', async () => {
+        console.log('Testing incorrect root...');
+        await nf3User.withdraw(
+          'IncorrectHistoricBlockNumber',
+          false,
+          ercAddress,
+          tokenType,
+          value2,
+          tokenId,
+          nf3User.ethereumAddress,
+          0,
+        );
+        await makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+        await waitForRollback();
+        expect(challengeSelector).to.be.equal(challengeSelectors.challengeHistoricRoot);
+      });
     });
   });
 
   describe('Testing bad blocks', async () => {
-    before(async () => {
-      await nf3User.deposit(ercAddress, tokenType, value2, tokenId, 0);
-    });
-
     it('Test incorrect leaf count', async () => {
       console.log('Testing incorrect leaf count...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectLeafCount');
-      console.log('Waiting for rollback...');
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+      await makeBlockNow('IncorrectLeafCount');
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await waitForRollback();
-      console.log('Rollback incorrect leaf count completed');
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeLeafCount);
     });
 
     it('Test incorrect tree root', async () => {
       console.log('Testing incorrect tree root...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectTreeRoot');
-      console.log('Waiting for rollback...');
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+      await makeBlockNow('IncorrectTreeRoot');
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await waitForRollback();
-      console.log('Rollback incorrect tree root completed');
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeRoot);
     });
 
     it('Test incorrect frontier hash', async () => {
       console.log('Testing incorrect frontier hash...');
-      await nf3AdversarialProposer.makeBlockNow('IncorrectFrontierHash');
-      console.log('Waiting for rollback...');
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+      await makeBlockNow('IncorrectFrontierHash');
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await waitForRollback();
-      console.log('Rollback incorrect frontier hash completed');
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeFrontier);
     });
   });

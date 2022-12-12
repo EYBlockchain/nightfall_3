@@ -1,0 +1,57 @@
+version: '3.5'
+# Use this script for running up nightfall_3 in 'developer' mode with local
+# bindings and expects a pre-existing blockchain client on localhost.
+# Use it as an override file for docker-compose.yml
+# See the readme for more information.
+services:
+  client_1:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
+
+  client_2:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
+
+  deployer:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      LOG_LEVEL: debug
+      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # startup routines will wait for a blockchain client to be reachable on this network
+      ETH_NETWORK: development
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+
+  proposer_optimist_1:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
+
+  proposer_optimist_2:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
+
+  proposer_1:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100
+
+  proposer_2:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      BLOCKCHAIN_WS_HOST: host.docker.internal
+      AUTOSTART_RETRIES: 100

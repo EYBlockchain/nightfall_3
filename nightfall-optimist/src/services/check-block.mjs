@@ -10,7 +10,7 @@ import {
   getTreeByBlockNumberL2,
   getTreeByLeafCount,
 } from './database.mjs';
-import checkTransaction from './transaction-checker.mjs';
+import { checkTransaction } from './transaction-checker.mjs';
 import Block from '../classes/block.mjs';
 
 const { ZERO } = constants;
@@ -81,16 +81,17 @@ async function checkFrontier(block) {
 }
 
 // check if there are duplicate commitments in different transactions of the same block
-export async function checkDuplicateCommitmentsWithinBlock(block, transactions) {
+async function checkDuplicateCommitmentsWithinBlock(block, transactions) {
   // Create an array containing all the commitments different than zero in a block and also the transaction index in which belongs to
   const blockCommitments = transactions
-    .map(transaction => transaction.commitments)
-    .flat(Infinity)
-    .filter(c => c !== ZERO)
-    .map((c, i) => {
-      return { transactionIndex: i, commitment: c };
-    });
-
+    .map((transaction, i) =>
+      transaction.commitments
+        .filter(c => c !== ZERO)
+        .map(c => {
+          return { transactionIndex: i, commitment: c };
+        }),
+    )
+    .flat(Infinity);
   let index1 = 0;
   let index2 = 0;
   for (let index = 0; index < blockCommitments.length; ++index) {
@@ -112,11 +113,25 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
   if (index2 !== 0) {
     const transaction1Index = blockCommitments[index1].transactionIndex;
     const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
-    const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
+    let siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
+      .transactionHashSiblingPath;
+
+    if (!siblingPath1) {
+      await Block.calcTransactionHashesRoot(transactions);
+      siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
+        .transactionHashSiblingPath;
+    }
 
     const transaction2Index = blockCommitments[index2].transactionIndex;
     const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
-    const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
+    let siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
+      .transactionHashSiblingPath;
+
+    if (!siblingPath2) {
+      await Block.calcTransactionHashesRoot(transactions);
+      siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
+        .transactionHashSiblingPath;
+    }
 
     throw new BlockError(
       `The block check failed due to duplicate commitments in different transactions of the same block`,
@@ -126,15 +141,15 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
         transaction1: transactions[transaction1Index],
         transaction1Index,
         siblingPath1,
-        duplicateCommitment1Index: transactions[transaction1Index].commitments.find(
-          c => c === blockCommitments[index1].commitment,
+        duplicateCommitment1Index: transactions[transaction1Index].commitments.indexOf(
+          blockCommitments[index1].commitment,
         ),
         block2: block,
         transaction2: transactions[transaction2Index],
         transaction2Index,
         siblingPath2,
-        duplicateCommitment2Index: transactions[transaction2Index].commitments.find(
-          c => c === blockCommitments[index1].commitment,
+        duplicateCommitment2Index: transactions[transaction2Index].commitments.indexOf(
+          blockCommitments[index1].commitment,
         ),
       },
     );
@@ -142,15 +157,17 @@ export async function checkDuplicateCommitmentsWithinBlock(block, transactions) 
 }
 
 // check if there are duplicate nullifiers in different transactions of the same block
-export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
+async function checkDuplicateNullifiersWithinBlock(block, transactions) {
   // Create an array containing all the nullifiers different than zero in a block and also the transaction index in which belongs to
   const blockNullifiers = transactions
-    .map(transaction => transaction.nullifiers)
-    .flat(Infinity)
-    .filter(n => n !== ZERO)
-    .map((n, i) => {
-      return { transactionIndex: i, nullifier: n };
-    });
+    .map((transaction, i) =>
+      transaction.nullifiers
+        .filter(n => n !== ZERO)
+        .map(n => {
+          return { transactionIndex: i, nullifier: n };
+        }),
+    )
+    .flat(Infinity);
 
   let index1 = 0;
   let index2 = 0;
@@ -173,11 +190,25 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
   if (index2 !== 0) {
     const transaction1Index = blockNullifiers[index1].transactionIndex;
     const transaction1Hash = Transaction.calcHash(transactions[transaction1Index]);
-    const siblingPath1 = await getTransactionHashSiblingInfo(transaction1Hash);
+    let siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
+      .transactionHashSiblingPath;
+
+    if (!siblingPath1) {
+      await Block.calcTransactionHashesRoot(transactions);
+      siblingPath1 = (await getTransactionHashSiblingInfo(transaction1Hash))
+        .transactionHashSiblingPath;
+    }
 
     const transaction2Index = blockNullifiers[index2].transactionIndex;
     const transaction2Hash = Transaction.calcHash(transactions[transaction2Index]);
-    const siblingPath2 = await getTransactionHashSiblingInfo(transaction2Hash);
+    let siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
+      .transactionHashSiblingPath;
+
+    if (!siblingPath2) {
+      await Block.calcTransactionHashesRoot(transactions);
+      siblingPath2 = (await getTransactionHashSiblingInfo(transaction2Hash))
+        .transactionHashSiblingPath;
+    }
 
     throw new BlockError(
       `The block check failed due to duplicate nullifiers in different transactions of the same block`,
@@ -187,15 +218,15 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
         transaction1: transactions[transaction1Index],
         transaction1Index,
         siblingPath1,
-        duplicateNullifier1Index: transactions[transaction1Index].nullifiers.find(
-          n => n === blockNullifiers[index1].nullifier,
+        duplicateNullifier1Index: transactions[transaction1Index].nullifiers.indexOf(
+          blockNullifiers[index1].nullifier,
         ),
         block2: block,
         transaction2: transactions[transaction2Index],
         transaction2Index,
         siblingPath2,
-        duplicateNullifier2Index: transactions[transaction2Index].nullifiers.find(
-          n => n === blockNullifiers[index1].nullifier,
+        duplicateNullifier2Index: transactions[transaction2Index].nullifiers.indexOf(
+          blockNullifiers[index1].nullifier,
         ),
       },
     );
@@ -206,9 +237,8 @@ export async function checkDuplicateNullifiersWithinBlock(block, transactions) {
  * Checks the block's properties.  It will return the first inconsistency it finds
  * @param {object} block - the block being checked
  * @param {array} transactions - array of transaction objects whose transaction hashes are contained in the block (in hash order).
- *
- * TODO - nullifiers
  */
+// eslint-disable-next-line import/prefer-default-export
 export async function checkBlock(block, transactions) {
   await checkLeafCount(block);
   // now we have to check the commitment root.
@@ -224,7 +254,12 @@ export async function checkBlock(block, transactions) {
   try {
     for (let i = 0; i < transactions.length; i++) {
       transaction = transactions[i];
-      await checkTransaction(transaction, false, { blockNumberL2: block.blockNumberL2 }); // eslint-disable-line no-await-in-loop
+      // eslint-disable-next-line no-await-in-loop
+      await checkTransaction(
+        transaction,
+        { checkInL2Block: true },
+        { blockNumberL2: block.blockNumberL2 },
+      ); // eslint-disable-line no-await-in-loop
     }
   } catch (err) {
     if (err.code === 0 || err.code === 1) {
@@ -234,14 +269,14 @@ export async function checkBlock(block, transactions) {
       // may be this optimist never ran as proposer
       // or more likely since this tx is bad tx from a bad proposer.
       // prposer hosted in this optimist never build any block with this bad tx in it
-      if (siblingPath1 === undefined) {
+      if (!siblingPath1) {
         await Block.calcTransactionHashesRoot(transactions);
         siblingPath1 = (await getTransactionHashSiblingInfo(transaction.transactionHash))
           .transactionHashSiblingPath;
       }
       // case when block.build never was called
       // may be this optimist never ran as proposer
-      if (err.metadata.siblingPath2 === undefined) {
+      if (!err.metadata.siblingPath2) {
         await Block.calcTransactionHashesRoot(
           err.metadata.block2.transactionHashes.map(transactionHash => {
             return { transactionHash };

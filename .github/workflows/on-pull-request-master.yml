@@ -2,7 +2,7 @@ name: Check PR
 
 on:
   pull_request:
-    branches: [master, tokenisation-l2]
+    branches: [master]
 
 jobs:
   dependency-review:
@@ -598,6 +598,8 @@ jobs:
           path: ./optimist-sync-test.log
 
   adversary-test:
+    env:
+      CONFIRMATIONS: 1
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -648,7 +650,7 @@ jobs:
   ping-pong-test:
     env:
       CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain, client,deployer,optimist,worker
+      NF_SERVICES_TO_START: blockchain,deployer,worker
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -666,10 +668,13 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd ..
 
+      - name: Build adversary
+        run: npm run build-adversary
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ping-pong-test.log &disown
+          ./bin/start-multiproposer-test-env -g &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -683,6 +688,22 @@ jobs:
         if: always()
         run: cat ping-pong-test.log
 
+      - name: 'Check client1 liveliness'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8083/healthcheck
+          attempt_limit: 10
+          attempt_delay: 30000
+
+      - name: 'Check client2 liveliness'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8086/healthcheck
+          attempt_limit: 10
+          attempt_delay: 30000
+
       - name: Run ping-pong test
         run: |
           npm ci
@@ -693,6 +714,10 @@ jobs:
         if: failure()
         run: |
           npm run nightfall-down
+
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat ping-pong-test.log
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -728,9 +753,6 @@ jobs:
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-gas.log &disown
-        env:
-          MAX_BLOCK_SIZE: 25000
-          CONFIRMATIONS: 1
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11

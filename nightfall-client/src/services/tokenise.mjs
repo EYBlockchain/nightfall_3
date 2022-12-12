@@ -7,6 +7,7 @@ import {
   generateProof,
 } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import gen from 'general-number';
 import { ZkpKeys } from './keys.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
@@ -16,7 +17,7 @@ import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
+const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, TOKENISE } = constants;
 const { generalise } = gen;
 
 async function tokenise(items) {
@@ -24,16 +25,14 @@ async function tokenise(items) {
   const {
     salt = (await randValueLT(BN128_GROUP_ORDER)).hex(),
     value = 0,
-    compressedZkpPublicKey,
     rootKey,
     tokenId = 0,
     fee,
   } = generalise(items);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
-
-  const circuitHash = await getCircuitHash('tokenise');
 
   logger.debug({
     msg: 'Hash of new commitment',
@@ -47,6 +46,8 @@ async function tokenise(items) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
+  const circuitName = TOKENISE;
+
   // Currently just the fee commitments
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: 0n,
@@ -54,9 +55,11 @@ async function tokenise(items) {
     ercAddress,
     maticAddress,
     rootKey,
-    maxNullifiers: VK_IDS.tokenise.numberNullifiers,
+    maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     maxNonFeeNullifiers: 0,
   });
+
+  const circuitHash = await getCircuitHash(circuitName);
 
   // Prepend the new tokenised commitment
   commitmentsInfo.newCommitments = [commitment, ...commitmentsInfo.newCommitments];
@@ -68,8 +71,8 @@ async function tokenise(items) {
       circuitHash,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      numberNullifiers: VK_IDS.tokenise.numberNullifiers,
-      numberCommitments: VK_IDS.tokenise.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
 
@@ -95,51 +98,47 @@ async function tokenise(items) {
       privateData,
       commitmentsInfo.roots,
       maticAddress,
-      VK_IDS.tokenise.numberNullifiers,
-      VK_IDS.tokenise.numberCommitments,
+      VK_IDS[circuitName].numberNullifiers,
+      VK_IDS[circuitName].numberCommitments,
     );
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
-    const res = await generateProof({ folderpath: 'tokenise', witness });
+    const res = await generateProof({ folderpath: circuitName, witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
-      response: JSON.stringify(res.data, null, 2),
+      response: res.data,
     });
 
     const { proof } = res.data;
 
-    const optimisticTokeniseTransaction = new Transaction({
-      fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      circuitHash,
-      commitments: commitmentsInfo.newCommitments,
-      nullifiers: commitmentsInfo.nullifiers,
-      proof,
-      numberNullifiers: VK_IDS.tokenise.numberNullifiers,
-      numberCommitments: VK_IDS.tokenise.numberCommitments,
-      isOnlyL2: true,
-    });
+    const transaction = { ...publicData, proof: compressProof(proof) };
+    transaction.transactionHash = Transaction.calcHash(transaction);
 
     logger.debug({
-      msg: 'Client made transaction',
-      transaction: JSON.stringify(optimisticTokeniseTransaction, null, 2),
+      msg: `Client made ${circuitName}`,
+      transaction,
     });
 
-    return submitTransaction(
-      optimisticTokeniseTransaction,
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
+      .encodeABI();
+    await submitTransaction(
+      transaction,
       commitmentsInfo,
-      rootKey,
-      shieldContractInstance,
+      compressedZkpPublicKey,
+      nullifierKey,
       true,
     );
+    return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
-    throw new Error(error);
+    logger.error(error);
+    throw error;
   }
 }
 

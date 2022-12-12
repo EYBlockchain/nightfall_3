@@ -5,6 +5,9 @@ pragma solidity ^0.8.0;
 import './Structures.sol';
 
 library Utils {
+    uint256 constant BN128_PRIME_FIELD =
+        21888242871839275222246405745257275088696311157297823662689037894645226208583;
+
     bytes32 public constant ZERO = bytes32(0);
 
     function hashTransaction(Structures.Transaction calldata t) internal pure returns (bytes32) {
@@ -243,5 +246,88 @@ library Utils {
             leafIndex = leafIndex >> 1;
         }
         return (siblingPath[0] == node);
+    }
+
+    function modExp(
+        uint256 _b,
+        uint256 _e,
+        uint256 _m
+    ) internal returns (uint256 result) {
+        assembly {
+            // Free memory pointer
+            let pointer := mload(0x40)
+            // Define length of base, exponent and modulus. 0x20 == 32 bytes
+            mstore(pointer, 0x20)
+            mstore(add(pointer, 0x20), 0x20)
+            mstore(add(pointer, 0x40), 0x20)
+            // Define variables base, exponent and modulus
+            mstore(add(pointer, 0x60), _b)
+            mstore(add(pointer, 0x80), _e)
+            mstore(add(pointer, 0xa0), _m)
+            // Store the result
+            let value := mload(0xc0)
+            // Call the precompiled contract 0x05 = bigModExp
+            if iszero(call(not(0), 0x05, 0, pointer, 0xc0, value, 0x20)) {
+                revert(0, 0)
+            }
+            result := mload(value)
+        }
+    }
+
+    function fq2Mul(uint256[2] memory x, uint256[2] memory b)
+        public
+        pure
+        returns (uint256[2] memory)
+    {
+        return [
+            addmod(
+                mulmod(x[0], b[0], BN128_PRIME_FIELD),
+                BN128_PRIME_FIELD - mulmod(x[1], b[1], BN128_PRIME_FIELD),
+                BN128_PRIME_FIELD
+            ),
+            addmod(
+                mulmod(x[1], b[0], BN128_PRIME_FIELD),
+                mulmod(x[0], b[1], BN128_PRIME_FIELD),
+                BN128_PRIME_FIELD
+            )
+        ];
+    }
+
+    function fq2Pow(uint256[2] memory x, uint256 exp) internal pure returns (uint256[2] memory) {
+        uint256[2] memory result = [uint256(1), uint256(0)];
+        uint256[2] memory b = x;
+        uint256 e = exp;
+        while (e > uint256(0)) {
+            if (e % uint256(2) == uint256(1)) result = fq2Mul(result, b);
+            e >>= uint256(1);
+            b = fq2Mul(b, b);
+        }
+        return result;
+    }
+
+    function fq2Add(uint256[2] memory x, uint256[2] memory b)
+        internal
+        pure
+        returns (uint256[2] memory)
+    {
+        return [addmod(x[0], b[0], BN128_PRIME_FIELD), addmod(x[1], b[1], BN128_PRIME_FIELD)];
+    }
+
+    function fq2Sqrt(uint256[2] memory x) public pure returns (bool, uint256[2] memory) {
+        uint256[2] memory a1 = fq2Pow(
+            x,
+            5472060717959818805561601436314318772174077789324455915672259473661306552145
+        );
+        uint256[2] memory x0 = fq2Mul(a1, x);
+        uint256[2] memory alpha = fq2Mul(x0, a1);
+        uint256[2] memory a0 = fq2Mul(fq2Pow(alpha, BN128_PRIME_FIELD), alpha);
+        if (a0[0] == BN128_PRIME_FIELD - 1 && a0[1] == 0) return (false, [uint256(0), uint256(0)]);
+        if (alpha[0] == (BN128_PRIME_FIELD - uint256(1)) && alpha[1] == uint256(0))
+            return (true, fq2Mul([uint256(0), uint256(1)], x0));
+        uint256[2] memory b = fq2Pow(
+            fq2Add([uint256(1), uint256(0)], alpha),
+            uint256(10944121435919637611123202872628637544348155578648911831344518947322613104291)
+        );
+        return (true, fq2Mul(b, x0));
     }
 }
