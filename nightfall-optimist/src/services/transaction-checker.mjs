@@ -13,6 +13,7 @@ import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import * as snarkjs from 'snarkjs';
+import { decompressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import {
   getBlockByBlockNumberL2,
@@ -127,7 +128,7 @@ async function verifyProof(transaction) {
   const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
   const vkArray = await stateInstance.methods.getVerificationKey(transaction.circuitHash).call();
 
-  if (vkArray.length < 33) throw new TransactionError('The proof did not verify', 2);
+  if (vkArray.length < 33) throw new TransactionError('The verification key is incorrect', 2);
 
   const historicRoots = await Promise.all(
     Array.from({ length: transaction.nullifiers.length }, () => 0).map((value, index) => {
@@ -169,11 +170,21 @@ async function verifyProof(transaction) {
 
   const vk = new VerificationKey(vkArray, CURVE, PROVING_SCHEME, inputs.length);
 
-  const proof = new Proof(transaction.proof, CURVE, PROVING_SCHEME, inputs);
+  try {
+    const uncompressedProof = decompressProof(transaction.proof);
+    const proof = new Proof(uncompressedProof, CURVE, PROVING_SCHEME, inputs);
 
-  const verifies = await snarkjs.groth16.verify(vk, inputs, proof);
+    const verifies = await snarkjs.groth16.verify(vk, inputs, proof);
 
-  if (!verifies) throw new TransactionError('The proof did not verify', 2);
+    if (!verifies) throw new TransactionError('The proof did not verify', 2);
+  } catch (e) {
+    if (e instanceof TransactionError) {
+      throw e;
+    } else {
+      // Decompressing the Proof failed
+      throw new TransactionError('Decompression failed', 2);
+    }
+  }
 }
 
 export async function checkTransaction(
