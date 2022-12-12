@@ -29,7 +29,7 @@ const { BN128_GROUP_ORDER, SHIFT } = constants;
 const web3Client = new Web3Client();
 const eventLogs = [];
 
-const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
+const nf3User = new Nf3(signingKeys.user1, environment);
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 nf3Proposer.setApiKey(environment.AUTH_TOKEN);
 
@@ -44,14 +44,13 @@ describe('L2 Tokenisation tests', () => {
   let stateAddress;
 
   before(async () => {
-    await nf3Users[0].init(mnemonics.user1);
-    await nf3Users[1].init(mnemonics.user2);
+    await nf3User.init(mnemonics.user1);
 
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-    stateAddress = await nf3Users[0].stateContractAddress;
+    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
 
     let randomAddress = 0;
@@ -68,13 +67,13 @@ describe('L2 Tokenisation tests', () => {
         21711016731996786641919559689128982722488122124807605757398297001483711807488n,
     ).hex(32);
 
-    await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, 0);
+    await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, 0);
     await makeBlock();
   });
 
   describe('Tokenise tests', () => {
     it('should create a l2 tokenisation successfully', async function () {
-      const beforeBalance = await nf3Users[0].getLayer2Balances();
+      const beforeBalance = await nf3User.getLayer2Balances();
 
       const value = 1;
       const privateTokenId = 11;
@@ -85,10 +84,10 @@ describe('L2 Tokenisation tests', () => {
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
+      await nf3User.tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
       await makeBlock();
 
-      const afterBalance = await nf3Users[0].getLayer2Balances();
+      const afterBalance = await nf3User.getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
       const l2AddressBalanceAfter =
         afterBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
@@ -114,25 +113,25 @@ describe('L2 Tokenisation tests', () => {
           packedErcAddress,
           remainder,
           generalise(value).field(BN128_GROUP_ORDER),
-          ...generalise(nf3Users[0].zkpKeys.zkpPublicKey).all.field(BN128_GROUP_ORDER),
+          ...generalise(nf3User.zkpKeys.zkpPublicKey).all.field(BN128_GROUP_ORDER),
           salt.field(BN128_GROUP_ORDER),
         ]),
       ).hex(32);
 
-      await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
+      await nf3User.tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
       await makeBlock();
 
-      const beforeBalance = await nf3Users[0].getLayer2Balances();
+      const beforeBalance = await nf3User.getLayer2Balances();
 
       const erc20AddressBalanceBefore = beforeBalance[erc20Address]?.[0].balance || 0;
       const l2AddressBalanceBefore =
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [commitmentHash], 1);
+      await nf3User.burn(l2Address, valueBurnt, privateTokenId, [commitmentHash], 1);
       await makeBlock();
 
-      const afterBalance = await nf3Users[0].getLayer2Balances();
+      const afterBalance = await nf3User.getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
       const l2AddressBalanceAfter =
         afterBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
@@ -155,25 +154,25 @@ describe('L2 Tokenisation tests', () => {
           packedErcAddress,
           remainder,
           generalise(value).field(BN128_GROUP_ORDER),
-          ...generalise(nf3Users[0].zkpKeys.zkpPublicKey).all.field(BN128_GROUP_ORDER),
+          ...generalise(nf3User.zkpKeys.zkpPublicKey).all.field(BN128_GROUP_ORDER),
           salt.field(BN128_GROUP_ORDER),
         ]),
       ).hex(32);
 
-      await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
+      await nf3User.tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
       await makeBlock();
 
-      const beforeBalance = await nf3Users[0].getLayer2Balances();
+      const beforeBalance = await nf3User.getLayer2Balances();
 
       const erc20AddressBalanceBefore = beforeBalance[erc20Address]?.[0].balance || 0;
       const l2AddressBalanceBefore =
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].burn(l2Address, value, privateTokenId, [commitmentHash], 1);
+      await nf3User.burn(l2Address, value, privateTokenId, [commitmentHash], 1);
       await makeBlock();
 
-      const afterBalance = await nf3Users[0].getLayer2Balances();
+      const afterBalance = await nf3User.getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
       const l2AddressBalanceAfter =
         afterBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
@@ -188,20 +187,20 @@ describe('L2 Tokenisation tests', () => {
       const privateTokenId = 11;
       const salt = await randValueLT(BN128_GROUP_ORDER);
 
-      await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
+      await nf3User.tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
       await makeBlock();
 
-      const beforeBalance = await nf3Users[0].getLayer2Balances();
+      const beforeBalance = await nf3User.getLayer2Balances();
 
       const erc20AddressBalanceBefore = beforeBalance[erc20Address]?.[0].balance || 0;
       const l2AddressBalanceBefore =
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [], 1);
+      await nf3User.burn(l2Address, valueBurnt, privateTokenId, [], 1);
       await makeBlock();
 
-      const afterBalance = await nf3Users[0].getLayer2Balances();
+      const afterBalance = await nf3User.getLayer2Balances();
       const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
       const l2AddressBalanceAfter =
         afterBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
@@ -214,8 +213,7 @@ describe('L2 Tokenisation tests', () => {
   after(async () => {
     await nf3Proposer.deregisterProposer();
     await nf3Proposer.close();
-    await nf3Users[0].close();
-    await nf3Users[1].close();
+    await nf3User.close();
     web3Client.closeWeb3();
   });
 });

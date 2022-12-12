@@ -36,6 +36,7 @@ nf3Proposer.setApiKey(environment.AUTH_TOKEN);
 
 const connection = await mongo.connection(MONGO_URL);
 const db = connection.db(OPTIMIST_DB);
+
 const countBlocksInOptimist = async () => db.collection('blocks').count();
 
 const averageL1GasCost = receipts =>
@@ -212,7 +213,7 @@ describe('Gas test', () => {
   });
 
   after(async () => {
-    await connection.close();
+    await mongo.disconnect(MONGO_URL);
     await nf3Proposer.deregisterProposer();
     await nf3Proposer.close();
     await nf3User.close();

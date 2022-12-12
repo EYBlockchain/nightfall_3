@@ -24,7 +24,7 @@ const {
 const web3Client = new Web3Client();
 const eventLogs = [];
 
-const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
+const nf3User = new Nf3(signingKeys.user1, environment);
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 nf3Proposer.setApiKey(environment.AUTH_TOKEN);
 
@@ -37,17 +37,15 @@ describe('x509 tests', () => {
   let stateAddress;
 
   before(async () => {
-    await nf3Users[0].init(mnemonics.user1);
-    await nf3Users[1].init(mnemonics.user2);
+    await nf3User.init(mnemonics.user1);
 
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
-    await nf3Proposer.startProposer();
 
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-    stateAddress = await nf3Users[0].stateContractAddress;
+    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
-    logger.debug(`User[0] has ethereum address ${nf3Users[0].ethereumAddress}`);
+    logger.debug(`User has ethereum address ${nf3User.ethereumAddress}`);
   });
 
   describe('Deposits from a non-x509-validated then x509-validated account', () => {
@@ -55,7 +53,7 @@ describe('x509 tests', () => {
       logger.debug('Send failing deposit');
       let error;
       try {
-        await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+        await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
         expect.fail('A deposit that does not pass the X509 check should fail but it did not');
       } catch (err) {
         error = err;
@@ -67,16 +65,11 @@ describe('x509 tests', () => {
 
     it('deposits to a x509-validated account should work', async function () {
       logger.debug('Validating intermediate CA cert');
-      await nf3Users[0].validateCertificate(intermediateCaCert);
+      await nf3User.validateCertificate(intermediateCaCert);
       logger.debug('Validating end-user cert');
-      await nf3Users[0].validateCertificate(
-        endUserCert,
-        nf3Users[0].ethereumAddress,
-        derPrivateKey,
-        0,
-      );
+      await nf3User.validateCertificate(endUserCert, nf3User.ethereumAddress, derPrivateKey, 0);
       logger.debug('doing whitelisted account');
-      const res = await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       expectTransaction(res);
 
       await nf3Proposer.makeBlockNow();
@@ -91,13 +84,13 @@ describe('x509 tests', () => {
       nodeInfo = await web3Client.getInfo();
       if (!nodeInfo.includes('TestRPC')) this.skip(); // only works with timejump clients
       logger.debug('Sending withdraw transaction');
-      await nf3Users[0].withdraw(
+      await nf3User.withdraw(
         false,
         erc20Address,
         tokenType,
         Math.floor(transferValue / 2),
         tokenId,
-        nf3Users[0].ethereumAddress,
+        nf3User.ethereumAddress,
         fee,
       );
 
@@ -105,13 +98,13 @@ describe('x509 tests', () => {
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       logger.debug('Getting withdrawal hash');
-      withdrawal = nf3Users[0].getLatestWithdrawHash();
+      withdrawal = nf3User.getLatestWithdrawHash();
       await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
     });
 
     it('Should do the x509 validation and succeed', async function () {
       if (!nodeInfo.includes('TestRPC')) this.skip();
-      const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
+      const res = await nf3User.finaliseWithdrawal(withdrawal);
       expectTransaction(res);
     });
   });
@@ -119,8 +112,7 @@ describe('x509 tests', () => {
   after(async () => {
     await nf3Proposer.deregisterProposer();
     await nf3Proposer.close();
-    await nf3Users[0].close();
-    await nf3Users[1].close();
+    await nf3User.close();
     web3Client.closeWeb3();
   });
 });
