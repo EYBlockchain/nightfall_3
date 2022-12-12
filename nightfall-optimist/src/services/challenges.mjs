@@ -14,7 +14,7 @@ import {
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { txsQueueChallenger } from '../utils/transactions-queue.mjs';
-import { sendSignedTransaction } from './transaction-sign-send.mjs';
+import { createSignedTransaction, sendSignedTransaction } from './transaction-sign-send.mjs';
 
 const web3 = Web3.connection();
 const { TIMBER_HEIGHT } = config;
@@ -86,10 +86,21 @@ export async function commitToChallenge(txDataToSign) {
     commitToSign,
   );
 
-  const receipt = sendSignedTransaction(signedTx);
-  //encode, sign and send transaction
+  // Submit tx and update db if tx is successful
+  // CHECK - I think the code beyond L132 can be removed (?) then db op could be moved here
+  txsQueueChallenger.push(async () => {
+    try {
+      const receipt = await sendSignedTransaction(signedTx);
+      logger.debug({ msg: 'Commit to challenge', receipt });
 
-  await saveCommit(commitHash, txDataToSign);
+      await saveCommit(commitHash, txDataToSign);
+    } catch (err) {
+      logger.error({
+        msg: 'Something went wrong',
+        err,
+      });
+    }
+  });
 
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects

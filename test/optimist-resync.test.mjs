@@ -241,6 +241,8 @@ describe('Optimist synchronisation tests', () => {
       const { block, transactions } = await p;
       const firstBlock = { ...block };
       // turn off challenging.  We're going to make a bad block and we don't want it challenged
+
+      // potentially update this
       await nf3Challenger.challengeEnable(false);
       // update the block so we can submit it again
       // we'll do the easiest thing and submit it again with no change other than to increment
