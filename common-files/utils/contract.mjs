@@ -137,8 +137,7 @@ export async function waitForContract(contractName) {
       instance = await getContractInstance(contractName, address); // eslint-disable-line no-await-in-loop
       return instance;
     } catch (err) {
-      if(errorCount % 20 === 0)
-        logger.error(err);
+      if (errorCount % 20 === 0) logger.error(err);
 
       error = err;
       errorCount++;
