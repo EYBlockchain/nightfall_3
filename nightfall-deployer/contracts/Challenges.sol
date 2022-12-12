@@ -305,15 +305,24 @@ contract Challenges is Stateful, Config {
 
         (success, decompressAlpha) = decompressG1(transaction.transaction.proof[0]);
         // Check each step since we overwrite the bool to avoid stack too deep issues.
-        if (!success) challengeAccepted(transaction.blockL2);
+        if (!success) {
+            challengeAccepted(transaction.blockL2);
+            return;
+        }
 
         (success, decompressBeta) = decompressG2(
             [transaction.transaction.proof[1], transaction.transaction.proof[2]]
         );
-        if (!success) challengeAccepted(transaction.blockL2);
+        if (!success) {
+            challengeAccepted(transaction.blockL2);
+            return;
+        }
 
         (success, decompressGamma) = decompressG1(transaction.transaction.proof[3]);
-        if (!success) challengeAccepted(transaction.blockL2);
+        if (!success) {
+            challengeAccepted(transaction.blockL2);
+            return;
+        }
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
             transaction.transaction,

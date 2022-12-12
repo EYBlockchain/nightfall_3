@@ -128,7 +128,7 @@ async function verifyProof(transaction) {
   const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
   const vkArray = await stateInstance.methods.getVerificationKey(transaction.circuitHash).call();
 
-  if (vkArray.length < 33) throw new TransactionError('The proof did not verify', 2);
+  if (vkArray.length < 33) throw new TransactionError('The verification key is incorrect', 2);
 
   const historicRoots = await Promise.all(
     Array.from({ length: transaction.nullifiers.length }, () => 0).map((value, index) => {
@@ -178,8 +178,12 @@ async function verifyProof(transaction) {
 
     if (!verifies) throw new TransactionError('The proof did not verify', 2);
   } catch (e) {
-    // Decompressing the Proof failed
-    throw new TransactionError('Decompression failed', 2);
+    if (e instanceof TransactionError) {
+      throw e;
+    } else {
+      // Decompressing the Proof failed
+      throw new TransactionError('Decompression failed', 2);
+    }
   }
 }
 
