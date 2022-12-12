@@ -142,10 +142,16 @@ describe('ERC20 tests', () => {
   });
 
   describe('Normal withdraws from L2', () => {
-    it('Should withdraw from L2', async function () {
-      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+    let userL2BalanceBefore;
+    let withdrawalTx;
+    let withdrawalTxHash;
 
-      const res = await nf3User.withdraw(
+    before(async function () {
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+
+      userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+      withdrawalTx = await nf3User.withdraw(
         false,
         erc20Address,
         tokenType,
@@ -154,8 +160,12 @@ describe('ERC20 tests', () => {
         nf3User.ethereumAddress,
         fee,
       );
-      expectTransaction(res);
-      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      withdrawalTxHash = nf3User.getLatestWithdrawHash();
+    });
+
+    it('Should withdraw from L2', async function () {
+      expectTransaction(withdrawalTx);
+      logger.debug(`Gas used was ${Number(withdrawalTx.gasUsed)}`);
       await makeBlock();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
@@ -164,7 +174,6 @@ describe('ERC20 tests', () => {
 
     it('Should fail at finalising previous withdrawal because it is too soon', async function () {
       try {
-        const withdrawalTxHash = nf3User.getLatestWithdrawHash();
         await nf3User.finaliseWithdrawal(withdrawalTxHash);
         expect.fail('Throw error, finalising withdrawal did not fail');
       } catch (err) {
@@ -179,15 +188,16 @@ describe('ERC20 tests', () => {
         this.skip();
       }
 
-      const user0L1BalanceBefore = await web3Client.getBalance(nf3User.ethereumAddress);
+      const userL1BalanceBefore = await web3Client.getBalance(nf3User.ethereumAddress);
 
       await web3Client.timeJump(3600 * 24 * 10);
-      const withdrawalTxHash = nf3User.getLatestWithdrawHash();
-      await nf3User.finaliseWithdrawal(withdrawalTxHash);
+      const res = await nf3User.finaliseWithdrawal(withdrawalTxHash);
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
 
-      const user0L1BalanceAfter = await web3Client.getBalance(nf3User.ethereumAddress);
+      const userL1BalanceAfter = await web3Client.getBalance(nf3User.ethereumAddress);
       // Final L1 balance to be lesser than initial balance because of fees
-      expect(parseInt(user0L1BalanceAfter, 10)).to.be.lessThan(parseInt(user0L1BalanceBefore, 10));
+      expect(parseInt(userL1BalanceAfter, 10)).to.be.lessThan(parseInt(userL1BalanceBefore, 10));
     });
   });
 
@@ -211,6 +221,9 @@ describe('ERC20 tests', () => {
         await nf3LiquidityProvider.submitTransaction(txDataToSign, erc20Address, 0);
       }
 
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+
       await nf3User.withdraw(
         false,
         erc20Address,
@@ -229,7 +242,7 @@ describe('ERC20 tests', () => {
     });
 
     it('Should allow instant withdraw of existing withdraw', async function () {
-      const user0L1BalanceBefore = await web3Client.getBalance(nf3User.ethereumAddress);
+      const userL1BalanceBefore = await web3Client.getBalance(nf3User.ethereumAddress);
 
       await makeBlock();
 
@@ -237,9 +250,9 @@ describe('ERC20 tests', () => {
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
 
-      const user0L1BalanceAfter = await web3Client.getBalance(nf3User.ethereumAddress);
+      const userL1BalanceAfter = await web3Client.getBalance(nf3User.ethereumAddress);
       // Final L1 balance to be lesser than initial balance because of fees
-      expect(parseInt(user0L1BalanceAfter, 10)).to.be.lessThan(parseInt(user0L1BalanceBefore, 10));
+      expect(parseInt(userL1BalanceAfter, 10)).to.be.lessThan(parseInt(userL1BalanceBefore, 10));
     });
 
     after(async () => {
@@ -354,10 +367,10 @@ describe('ERC20 tests', () => {
 
         expectTransaction(rec);
 
-        const withdrawal = nf3User.getLatestWithdrawHash();
-        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 50 days
+        const withdrawalTxHash = nf3User.getLatestWithdrawHash();
+        await web3Client.timeJump(3600 * 24 * 10);
         // anything equal or above the restricted amount should fail
-        await nf3User.finaliseWithdrawal(withdrawal);
+        await nf3User.finaliseWithdrawal(withdrawalTxHash);
 
         expect.fail('Throw error, withdrawal not restricted');
       } catch (err) {

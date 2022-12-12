@@ -143,10 +143,20 @@ describe('Basic Proposer tests', () => {
     expect(currentProposer).to.be.equal(nf3Proposer.ethereumAddress);
   });
 
+  it('Should fail to change current proposer because insufficient blocks have passed', async () => {
+    const { thisAddress: currentProposerBefore } = await getCurrentProposer();
+
+    const { transactionHash } = await nf3Proposer.changeCurrentProposer();
+    await waitTransactionToBeMined(transactionHash, web3);
+
+    const { thisAddress: currentProposerAfter } = await getCurrentProposer();
+    expect(currentProposerAfter).to.be.equal(currentProposerBefore);
+  });
+
   it('Should fail to register a proposer twice', async () => {
     const res = await nf3Proposer.registerProposer('potato', minimumStake);
     // Registration attempt will be ignored at the endpoint since the Eth address will be the same
-    expect(res.data).to.be.an('object').that.is.empty;
+    expect(res.data).to.be.undefined;
   });
 
   it('Should update the proposer fee', async () => {
@@ -237,15 +247,6 @@ describe('Basic Proposer tests', () => {
 
     expect(proposersAfterUpdate[0].url).to.be.equal(currentUrl);
     expect(Number(proposersAfterUpdate[0].fee)).to.be.equal(currentFee);
-  });
-
-  it('Should fail to change current proposer because insufficient blocks have passed', async () => {
-    try {
-      await nf3Proposer.changeCurrentProposer();
-      expect.fail('Throw error, change proposer did not fail');
-    } catch (err) {
-      expect(err.message).to.include('Transaction has been reverted by the EVM');
-    }
   });
 
   it('Should be able to make a block any time as soon as there are txs in the mempool', async () => {
