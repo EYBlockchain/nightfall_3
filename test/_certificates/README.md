@@ -12,7 +12,6 @@ The good certificates will go under the folder `_certificates/user` while the in
 One should tunning the parameters accordingly with the necessity (e.g. cert key usage, oid, etc). All stuff related to the Certificate Authority (CA) are prefixed by `root_`:
 - root_ca.authority_key: contains the Authority Key that is used to initialize the X509 contract;
 - root_ca.public_key.modulus: contains the Modulus that that is used to initialize the X509 contract;
-- root_ca.crt: the X509 CA certificate;
 - root_ca.pub_key & root_ca.priv_key: the CA pub & private keys respectively.
 
 The root & intermediate certificates are already generated. If a re-generation is needed, one should run `./gen-root_ca-certificate.sh`. Remember that after 
