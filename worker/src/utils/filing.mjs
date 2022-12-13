@@ -13,8 +13,17 @@ export const getVerificationKeyByCircuitPath = async circuitPath => {
   if (fs.existsSync(vkPath)) {
     logger.debug(`Exporting verification key with snarkjs for ${vkPath}`);
 
-    const vk = await snarkjs.zKey.exportVerificationKey(vkPath);
-    logger.debug(`Exported verification key for ${vkPath}`);
+    let vk;
+    try {
+      vk = await snarkjs.zKey.exportVerificationKey(vkPath);
+      logger.debug(`Exported verification key for ${vkPath}`);
+    } catch (error) {
+      logger.error({
+        msg: 'Error snarkjs exportVerificationKey',
+        error,
+      });
+      throw new Error(error);
+    }
     return vk;
   }
 
