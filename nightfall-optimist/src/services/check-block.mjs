@@ -255,11 +255,11 @@ export async function checkBlock(block, transactions) {
     for (let i = 0; i < transactions.length; i++) {
       transaction = transactions[i];
       // eslint-disable-next-line no-await-in-loop
-      await checkTransaction(
+      await checkTransaction({
         transaction,
-        { checkInL2Block: true },
-        { blockNumberL2: block.blockNumberL2 },
-      ); // eslint-disable-line no-await-in-loop
+        checkDuplicatesInL2: true,
+        blockNumberL2: block.blockNumberL2,
+      }); // eslint-disable-line no-await-in-loop
     }
   } catch (err) {
     if (err.code === 0 || err.code === 1) {
