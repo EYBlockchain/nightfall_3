@@ -38,7 +38,6 @@ let rollbackCount = 0;
 const nf3User = new Nf3(signingKeys.user1, environment);
 const nf3User2 = new Nf3(signingKeys.user2, environment);
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
-nf3Proposer.setApiKey(environment.AUTH_TOKEN);
 
 let erc721Address;
 async function getLayer2Erc721s(_nf3User) {

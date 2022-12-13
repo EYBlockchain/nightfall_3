@@ -30,7 +30,7 @@ const { generalise } = gen;
 async function deposit(depositParams) {
   logger.info('Creating a deposit transaction');
   const { tokenType, providedCommitmentsFee, ...items } = depositParams;
-  const ercAddress = generalise(depositParams.ercAddress.toLowerCase());
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
   const { tokenId, value, fee, rootKey } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
