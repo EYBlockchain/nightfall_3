@@ -37,6 +37,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     rootKey,
     fee = generalise(0),
     providedCommitments,
+    providedCommitmentsFee,
   } = generalise(withdrawParams);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(withdrawParams.ercAddress.toLowerCase());
@@ -66,6 +67,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
+    providedCommitmentsFee,
   });
 
   const circuitHashData = await getStoreCircuit(`${circuitName}-hash`);

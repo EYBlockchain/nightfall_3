@@ -686,7 +686,7 @@ async function verifyEnoughCommitments(
     );
 
     // If not commitments are found, the fee cannot be paid, so throw an error
-    if (commitmentArrayFee.length === 0) throw new Error('no commitments found');
+    if (commitmentArrayFee.length === 0) throw new Error('no commitments found to cover the fee');
 
     // Turn the fee commitments into real commitment object and sort it
     commitmentsFee = commitmentArrayFee
@@ -1004,29 +1004,16 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
   return commitmentsByListOfCompressedZkpPublicKey;
 }
 
-export async function getCommitmentsByHash(hashes, compressedZkpPublicKey, ercAddress, tokenId) {
+export async function getCommitmentsByHash(hashes, compressedZkpPublicKey) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  logger.debug({
-    msg: 'DB lookup',
+  const query = {
+    _id: { $in: hashes },
     compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-    'preimage.ercAddress': generalise(ercAddress).hex(32),
-    'preimage.tokenId': generalise(tokenId).hex(32),
-    isNullified: false,
     isPendingNullification: false,
-  });
-  const commitment = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .find({
-      _id: { $in: hashes },
-      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-      'preimage.ercAddress': generalise(ercAddress).hex(32),
-      'preimage.tokenId': generalise(tokenId).hex(32),
-      isNullified: false,
-      isPendingNullification: false,
-    })
-    .toArray();
-  return commitment;
+    isNullifiedOnChain: -1,
+  };
+  return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
 
 /**
