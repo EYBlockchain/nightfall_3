@@ -11,12 +11,12 @@ import gen from 'general-number';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import {
   getCircuitHash,
   generateProof,
 } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import Proof from '@polygon-nightfall/common-files/classes/proof.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
@@ -155,7 +155,7 @@ async function deposit(items) {
   // first, get the contract instance
 
   // next we need to compute the optimistic Transaction object
-  const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+  const transaction = { ...publicData, proof: compressProof(proof) };
   transaction.transactionHash = Transaction.calcHash(transaction);
 
   logger.debug({

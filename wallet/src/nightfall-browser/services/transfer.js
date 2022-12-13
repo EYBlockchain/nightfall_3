@@ -14,10 +14,9 @@ import confirmBlock from './confirm-block';
 import computeCircuitInputs from '../utils/computeCircuitInputs';
 import getCommitmentInfo from '../utils/getCommitmentInfo';
 import { getContractInstance } from '../../common-files/utils/contract';
-import Proof from '../../common-files/classes/proof.js';
 import logger from '../../common-files/utils/logger';
 import { Transaction } from '../classes/index';
-import { edwardsCompress } from '../../common-files/utils/curve-maths/curves';
+import { compressProof, edwardsCompress } from '../../common-files/utils/curve-maths/curves';
 import { ZkpKeys } from './keys';
 import {
   checkIndexDBForCircuit,
@@ -158,7 +157,7 @@ async function transfer(transferParams, shieldContractAddress) {
       // generate proof
       const { proof } = await snarkjs.groth16.fullProve(witness, wasmData.data, zkeyData.data); // zkey, witness
 
-      const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+      const transaction = { ...publicData, proof: compressProof(proof) };
       transaction.transactionHash = Transaction.calcHash(transaction);
 
       const rawTransaction = await shieldContractInstance.methods

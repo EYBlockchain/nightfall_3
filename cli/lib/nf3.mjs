@@ -608,6 +608,7 @@ class Nf3 {
     tokenId,
     compressedZkpPublicKey,
     fee = this.defaultFeeMatic,
+    providedCommitments = undefined,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
       offchain,
@@ -619,6 +620,7 @@ class Nf3 {
       },
       rootKey: this.zkpKeys.rootKey,
       fee,
+      providedCommitments,
     });
 
     if (res.data.error && res.data.error === 'No suitable commitments') {
