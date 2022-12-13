@@ -17,18 +17,19 @@ const {
 } = config;
 
 const AUTHORITY_KEY_IDENTIFIER = process.env.AUTHORITY_KEY_IDENTIFIER || `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0',)}`;
-const MODULUS = process.env.MODULUS || '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195';
+const MODULUS = process.env.MODULUS || modulus;
 const END_USER_PRIV_KEY_PATH = process.env.END_USER_PRIV_KEY_PATH || 'test/unit/utils/Nightfall_end_user_policies.der';
+const INTERMEDIATE_CERTIFICATE_PATH = process.env.INTERMEDIATE_CERTIFICATE_PATH || 'test/unit/utils/Nightfall_Intermediate_CA.cer';
 const END_USER_CERTIFICATE_PATH = process.env.END_USER_CERTIFICATE_PATH || 'test/unit/utils/Nightfall_end_user_policies.cer';
-const SKIP_INTERMEDIATE_CERTS_TEST = process.env.SKIP_INTERMEDIATE_CERTS_TEST;
-
-console.log(AUTHORITY_KEY_IDENTIFIER, MODULUS, END_USER_PRIV_KEY_PATH, END_USER_CERTIFICATE_PATH);
+const EXTENDED_KEY_USAGE_OID = process.env.EXTENDED_KEY_USAGE_OID;
+const CERTIFICATE_POLICIES_OID = process.env.CERTIFICATE_POLICIES_OID;
+const TEST_SELF_GENERATED_CERTS = !!process.env.END_USER_PRIV_KEY_PATH;
 
 describe('DerParser contract functions', function () {
   const authorityKeyIdentifier = AUTHORITY_KEY_IDENTIFIER;
   const nightfallRootPublicKey = {
     modulus: MODULUS,
-    exponent: 65537,
+    exponent: exponent,
   };
 
   let X509Instance;
@@ -67,7 +68,12 @@ describe('DerParser contract functions', function () {
     await X509Instance.addExtendedKeyUsage(extendedKeyUsageOIDs[2]);
     await X509Instance.addCertificatePolicies(certificatePoliciesOIDs[2]);
 
-    derBuffer = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
+    if (TEST_SELF_GENERATED_CERTS) { // refer to index 3 in the contract
+      await X509Instance.addExtendedKeyUsage(EXTENDED_KEY_USAGE_OID.split(','));
+      await X509Instance.addCertificatePolicies(CERTIFICATE_POLICIES_OID.split(','));  
+    }
+
+    derBuffer = fs.readFileSync(INTERMEDIATE_CERTIFICATE_PATH);
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     certChain[1] = {
       derBuffer,
@@ -122,7 +128,7 @@ describe('DerParser contract functions', function () {
     expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
     expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
   });
-
+  
   it('Should parse the end-user mock Digicert cert DER encoding', async function () {
     const endUserCert = digicertMock;
     const result = await X509Instance.parseDER(endUserCert.derBuffer, 0, endUserCert.tlvLength);
@@ -164,26 +170,8 @@ describe('DerParser contract functions', function () {
   });
 
   it('Should fail to validate the user certificate until it has validated the intermediate CA cert', async function () {
-    let result;
-    if (! SKIP_INTERMEDIATE_CERTS_TEST) {
-      // presenting the end user cert should fail because the smart contract doesn't have the intermediate CA cert
-      try {
-        await X509Instance.validateCertificate(
-          certChain[0].derBuffer,
-          certChain[0].tlvLength,
-          signature,
-          true,
-        );
-        expect.fail('The certificate check passed, but it should have failed');
-      } catch (err) {
-        expect(err.message.includes('VM Exception')).to.equal(true);
-      }
-
-      // an x509 check should also fail
-      result = await X509Instance.x509Check(addressToSign);
-      expect(result).to.equal(false);
-
-      // presenting the Intermediate CA cert should work because the smart contact trusts the root public key
+    // presenting the end user cert should fail because the smart contract doesn't have the intermediate CA cert
+    try {
       await X509Instance.validateCertificate(
         certChain[0].derBuffer,
         certChain[0].tlvLength,
@@ -191,10 +179,13 @@ describe('DerParser contract functions', function () {
         true,
         0,
       );
+      expect.fail('The certificate check passed, but it should have failed');
+    } catch (err) {
+      expect(err.message.includes('VM Exception')).to.equal(true);
     }
 
     // an x509 check should also fail
-    result = await X509Instance.x509Check(addressToSign);
+    let result = await X509Instance.x509Check(addressToSign);
     expect(result).to.equal(false);
     // presenting the Intermediate CA cert should work because the smart contact trusts the root public key
     await X509Instance.validateCertificate(
@@ -205,35 +196,39 @@ describe('DerParser contract functions', function () {
       0,
     );
 
+    if (! TEST_SELF_GENERATED_CERTS) {
+      // now presenting the Digicert mock cert should also work
+      await X509Instance.validateCertificate(
+        digicertMock.derBuffer,
+        digicertMock.tlvLength,
+        digicertSignature,
+        true,
+        1,
+      );
+
+      // now presenting the Digicert mock cert should also work
+      await X509Instance.validateCertificate(
+        entrustMock.derBuffer,
+        entrustMock.tlvLength,
+        entrustSignature,
+        true,
+        2,
+      );
+    }
+
+    const oidIndex = TEST_SELF_GENERATED_CERTS ? 3 : 0;
+
     // now presenting the end user cert should also work
     await X509Instance.validateCertificate(
       certChain[0].derBuffer,
       certChain[0].tlvLength,
       signature,
       true,
-      0,
+      oidIndex,
     );
 
     // we should now be able to pass an x509 check for this address
     result = await X509Instance.x509Check(addressToSign);
     expect(result).to.equal(true);
-
-    // now presenting the Digicert mock cert should also work
-    await X509Instance.validateCertificate(
-      digicertMock.derBuffer,
-      digicertMock.tlvLength,
-      digicertSignature,
-      true,
-      1,
-    );
-
-    // now presenting the Digicert mock cert should also work
-    await X509Instance.validateCertificate(
-      entrustMock.derBuffer,
-      entrustMock.tlvLength,
-      entrustSignature,
-      true,
-      2,
-    );
   });
 });

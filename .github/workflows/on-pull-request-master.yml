@@ -57,6 +57,14 @@ jobs:
           npm ci
           cd ../
           npm run unit-test
+          MODULUS=$(cat test/_certificates/root_ca.pub_key.modulus) \
+            AUTHORITY_KEY_IDENTIFIER=$(cat test/_certificates/root_ca.authority_key) \          
+            INTERMEDIATE_CERTIFICATE_PATH=test/_certificates/intermediate_ca.crt \
+            END_USER_CERTIFICATE_PATH=test/_certificates/user/user-1.crt \
+            END_USER_PRIV_KEY_PATH=test/_certificates/user/user-1.priv_key \
+            EXTENDED_KEY_USAGE_OID='0x06082b0601050507030800000000000000000000000000000000000000000000,0x06082b0601050507030400000000000000000000000000000000000000000000' \
+            CERTIFICATE_POLICIES_OID='0x06032a0304000000000000000000000000000000000000000000000000000000,0x06032d0607000000000000000000000000000000000000000000000000000000' \
+            npm run unit-test-x509
 
   unit-test-circuits:
     runs-on: ubuntu-20.04
