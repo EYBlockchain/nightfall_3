@@ -1,3 +1,5 @@
+/* eslint object-shorthand: off */
+
 import { expect } from 'chai';
 import hardhat from 'hardhat';
 import fs from 'fs';
@@ -16,21 +18,21 @@ const {
   },
 } = config;
 
-const AUTHORITY_KEY_IDENTIFIER = process.env.AUTHORITY_KEY_IDENTIFIER || `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0',)}`;
+const AUTHORITY_KEY_IDENTIFIER =
+  process.env.AUTHORITY_KEY_IDENTIFIER ||
+  `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`;
 const MODULUS = process.env.MODULUS || modulus;
-const END_USER_PRIV_KEY_PATH = process.env.END_USER_PRIV_KEY_PATH || 'test/unit/utils/Nightfall_end_user_policies.der';
-const INTERMEDIATE_CERTIFICATE_PATH = process.env.INTERMEDIATE_CERTIFICATE_PATH || 'test/unit/utils/Nightfall_Intermediate_CA.cer';
-const END_USER_CERTIFICATE_PATH = process.env.END_USER_CERTIFICATE_PATH || 'test/unit/utils/Nightfall_end_user_policies.cer';
-const EXTENDED_KEY_USAGE_OID = process.env.EXTENDED_KEY_USAGE_OID;
-const CERTIFICATE_POLICIES_OID = process.env.CERTIFICATE_POLICIES_OID;
+const END_USER_PRIV_KEY_PATH =
+  process.env.END_USER_PRIV_KEY_PATH || 'test/unit/utils/Nightfall_end_user_policies.der';
+const INTERMEDIATE_CERTIFICATE_PATH =
+  process.env.INTERMEDIATE_CERTIFICATE_PATH || 'test/unit/utils/Nightfall_Intermediate_CA.cer';
+const END_USER_CERTIFICATE_PATH =
+  process.env.END_USER_CERTIFICATE_PATH || 'test/unit/utils/Nightfall_end_user_policies.cer';
 const TEST_SELF_GENERATED_CERTS = !!process.env.END_USER_PRIV_KEY_PATH;
 
 describe('DerParser contract functions', function () {
   const authorityKeyIdentifier = AUTHORITY_KEY_IDENTIFIER;
-  const nightfallRootPublicKey = {
-    modulus: MODULUS,
-    exponent: exponent,
-  };
+  const nightfallRootPublicKey = { modulus: MODULUS, exponent: exponent };
 
   let X509Instance;
   let signature;
@@ -68,9 +70,9 @@ describe('DerParser contract functions', function () {
     await X509Instance.addExtendedKeyUsage(extendedKeyUsageOIDs[2]);
     await X509Instance.addCertificatePolicies(certificatePoliciesOIDs[2]);
 
-    if (TEST_SELF_GENERATED_CERTS) { // refer to index 3 in the contract
-      await X509Instance.addExtendedKeyUsage(EXTENDED_KEY_USAGE_OID.split(','));
-      await X509Instance.addCertificatePolicies(CERTIFICATE_POLICIES_OID.split(','));  
+    if (TEST_SELF_GENERATED_CERTS) {
+      await X509Instance.addExtendedKeyUsage(process.env.EXTENDED_KEY_USAGE_OID.split(','));
+      await X509Instance.addCertificatePolicies(process.env.CERTIFICATE_POLICIES_OID.split(','));
     }
 
     derBuffer = fs.readFileSync(INTERMEDIATE_CERTIFICATE_PATH);
@@ -128,7 +130,7 @@ describe('DerParser contract functions', function () {
     expect(tlvs[endUserCert.tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
     expect(tlvs[endUserCert.tlvLength - 1].depth).to.equal(1);
   });
-  
+
   it('Should parse the end-user mock Digicert cert DER encoding', async function () {
     const endUserCert = digicertMock;
     const result = await X509Instance.parseDER(endUserCert.derBuffer, 0, endUserCert.tlvLength);
@@ -196,7 +198,7 @@ describe('DerParser contract functions', function () {
       0,
     );
 
-    if (! TEST_SELF_GENERATED_CERTS) {
+    if (!TEST_SELF_GENERATED_CERTS) {
       // now presenting the Digicert mock cert should also work
       await X509Instance.validateCertificate(
         digicertMock.derBuffer,
@@ -216,6 +218,7 @@ describe('DerParser contract functions', function () {
       );
     }
 
+    // refer to index 3 in the contract if testing self-signed certs
     const oidIndex = TEST_SELF_GENERATED_CERTS ? 3 : 0;
 
     // now presenting the end user cert should also work

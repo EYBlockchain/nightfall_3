@@ -58,7 +58,7 @@ jobs:
           cd ../
           npm run unit-test
           MODULUS=$(cat test/_certificates/root_ca.pub_key.modulus) \
-            AUTHORITY_KEY_IDENTIFIER=$(cat test/_certificates/root_ca.authority_key) \          
+            AUTHORITY_KEY_IDENTIFIER=$(cat test/_certificates/root_ca.authority_key) \
             INTERMEDIATE_CERTIFICATE_PATH=test/_certificates/intermediate_ca.crt \
             END_USER_CERTIFICATE_PATH=test/_certificates/user/user-1.crt \
             END_USER_PRIV_KEY_PATH=test/_certificates/user/user-1.priv_key \
