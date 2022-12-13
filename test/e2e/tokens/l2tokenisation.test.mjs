@@ -72,7 +72,7 @@ describe('L2 Tokenisation tests', () => {
         21711016731996786641919559689128982722488122124807605757398297001483711807488n,
     ).hex(32);
 
-    await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, 0);
+    await nf3User.deposit(erc20Address, tokenType, transferValue * 3, tokenId, 0);
     await makeBlock();
   });
 
