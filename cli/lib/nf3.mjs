@@ -1562,6 +1562,16 @@ class Nf3 {
   async getNumProposers() {
     return this.stateContract.methods.getNumProposers().call();
   }
+
+  /**
+    getSprintsInSpan
+    @method
+    @async
+    @returns {uint256} A promise that resolves to the Ethereum call.
+    */
+  async getSprintsInSpan() {
+    return this.stateContract.methods.getSprintsInSpan().call();
+  }
 }
 
 export default Nf3;
