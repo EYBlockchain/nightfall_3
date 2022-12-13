@@ -23,23 +23,30 @@ async function checkAndChangeProposer(nf3) {
     const numproposers = await nf3.getNumProposers();
     const currentSprint = await nf3.currentSprint();
     const currentBlock = await nf3.web3.eth.getBlockNumber();
+    const sprintInSpan = await nf3.getSprintsInSpan();
 
     if (currentBlock - proposerStartBlock >= rotateProposerBlocks && numproposers > 1) {
       const spanProposersListAtPosition = await nf3.spanProposersList(currentSprint);
-      logger.info(`Proposer address: ${spanProposersListAtPosition} and sprint: ${currentSprint}`);
+      if (currentSprint === 0) {
+        let spanProposersList = [];
+        for (let i = 0; i < sprintInSpan; i++) {
+          spanProposersList.push(nf3.spanProposersList(i))
+        }
+        spanProposersList = await Promise.all(spanProposersList);
+        logger.info(`list of next proposer: ${spanProposersList}`);
+      }
+      logger.info(`Next proposer address: ${spanProposersListAtPosition} and sprint: ${currentSprint}`);
       try {
         if (spanProposersListAtPosition === nf3.ethereumAddress) {
           logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
           await nf3.changeCurrentProposer();
         } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
-          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
+          logger.info(`${nf3.ethereumAddress} is not the next proposer and is Calling changeCurrentProposer`);
           await nf3.changeCurrentProposer();
         }
       } catch (err) {
         logger.info(err);
       }
-    } else {
-      logger.info(`the proposer is not changed. sprint: ${currentSprint}`);
     }
     await new Promise(resolve => setTimeout(resolve, TIMER_CHANGE_PROPOSER_SECOND * 1000));
   }
