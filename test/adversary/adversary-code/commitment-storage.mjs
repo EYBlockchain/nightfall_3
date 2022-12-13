@@ -3,12 +3,7 @@
 /* eslint-disable no-undef */
 
 // ignore unused exports
-export async function getCommitmentsByHashFaulty(
-  hashes,
-  compressedZkpPublicKey,
-  ercAddress,
-  tokenId,
-) {
+export async function getCommitmentsByHashFaulty(hashes, compressedZkpPublicKey) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = {
@@ -22,20 +17,10 @@ async function getAvailableCommitmentsFaulty(db, compressedZkpPublicKey, ercAddr
   return db
     .collection(COMMITMENTS_COLLECTION)
     .find({
-      $or: [
-        {
-          compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-          'preimage.ercAddress': ercAddress.hex(32),
-          'preimage.tokenId': tokenId.hex(32),
-          isPendingNullification: true,
-        },
-        {
-          compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-          'preimage.ercAddress': ercAddress.hex(32),
-          'preimage.tokenId': tokenId.hex(32),
-          isNullified: true,
-        },
-      ],
+      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
+      'preimage.ercAddress': ercAddress.hex(32),
+      'preimage.tokenId': tokenId.hex(32),
+      isNullifiedOnChain: { $ne: -1 },
     })
     .toArray();
 }
