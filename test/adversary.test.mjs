@@ -133,7 +133,9 @@ describe('Testing with an adversary', () => {
     // Generate a random mnemonic (uses crypto.randomBytes under the hood), defaults to 128-bits of entropy
     await nf3User.init(mnemonicUser);
     await nf3AdversarialProposer.init(mnemonicProposer);
+    nf3AdversarialProposer.setApiKey(environment.AUTH_TOKEN);
     await nf3Challenger.init(mnemonicChallenger);
+    nf3Challenger.setApiKey(environment.AUTH_TOKEN);
 
     if (!(await nf3User.healthcheck('client'))) throw new Error('Healthcheck failed');
     if (!(await nf3AdversarialProposer.healthcheck('optimist')))
@@ -181,8 +183,10 @@ describe('Testing with an adversary', () => {
       registerProposerOnNoProposer(nf3AdversarialProposer);
     }, 5000);
 
+    console.log('test');
     // Chalenger listening for incoming events
     challengeEmitter = await nf3Challenger.startChallenger();
+    // console.lo;
     challengeEmitter
       .on('receipt', (receipt, type, txSelector) => {
         logger.debug(

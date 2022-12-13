@@ -28,29 +28,9 @@ let ws;
 export function isMakeChallengesEnable() {
   return makeChallenges;
 }
-
+//delete this because it is setting a ws connection
 export function setChallengeWebSocketConnection(_ws) {
   ws = _ws;
-}
-
-/**
-Function to indicate to a listening challenger that a rollback has been completed.
-*/
-export async function signalRollbackCompleted(data) {
-  // check that the websocket exists (it should) and its readyState is OPEN
-  // before sending. If not wait until the challenger reconnects
-
-  //challenger rollback
-  let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-    logger.warn(
-      `Websocket to challenger is closed for rollback complete. Waiting for challenger to reconnect`,
-    );
-    if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
-  }
-  logger.debug('Rollback completed');
-  ws.send(JSON.stringify({ type: 'rollback', data }));
 }
 
 export function startMakingChallenges() {
@@ -65,87 +45,12 @@ export function stopMakingChallenges() {
   makeChallenges = false;
 }
 
-export async function commitToChallenge(txDataToSign) {
-  if (!makeChallenges) {
-    logger.debug('makeChallenges is off, no challenge commitment was sent');
-    return;
-  }
-  const web3 = Web3.connection();
-  const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
+export async function createChallenge(block, transactions, err) {
+  let txDataToSign;
+  let receipt;
   const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   const challengeContractAddress = challengeContractInstance.options.address;
 
-  const commitToSign = await challengeContractInstance.methods
-    .commitToChallenge(commitHash)
-    .encodeABI();
-
-  const signedTx = await createSignedTransaction(
-    challengerKey,
-    challengerEthAddress,
-    challengeContractAddress,
-    commitToSign,
-  );
-
-  // Submit tx and update db if tx is successful
-  // CHECK - I think the code beyond L132 can be removed (?) then db op could be moved here
-  txsQueueChallenger.push(async () => {
-    try {
-      const receipt = await sendSignedTransaction(signedTx);
-      logger.debug({ msg: 'Commit to challenge', receipt });
-
-      await saveCommit(commitHash, txDataToSign);
-    } catch (err) {
-      logger.error({
-        msg: 'Something went wrong',
-        err,
-      });
-    }
-  });
-
-  // check that the websocket exists (it should) and its readyState is OPEN
-  // before sending commit. If not wait until the challenger reconnects
-  let tryCount = 0;
-  // while (!ws || ws.readyState !== WebSocket.OPEN) {
-  //   await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-
-  //   logger.warn(
-  //     'Websocket to challenger is closed for commit.  Waiting for challenger to reconnect',
-  //   );
-
-  //   if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
-  // }
-
-  // ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
-
-  // logger.debug({
-  //   msg: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
-  //   rawTransaction: commitToSign,
-  // });
-  return receipt;
-}
-
-export async function revealChallenge(txDataToSign, sender) {
-  logger.debug('Revealing challenge');
-  // check that the websocket exists (it should) and its readyState is OPEN
-  // before sending commit. If not wait until the challenger reconnects
-  let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-
-    logger.warn(
-      'Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect',
-    );
-
-    if (tryCount++ > 100) {
-      throw new Error(`Websocket to $challenger has failed`);
-    }
-  }
-  ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
-}
-
-export async function createChallenge(block, transactions, err) {
-  let txDataToSign;
-  const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   const salt = (await rand(32)).hex(32);
   switch (err.code) {
     // challenge incorrect leaf count
@@ -386,5 +291,130 @@ export async function createChallenge(block, transactions, err) {
   // to intiate the challenge transaction (after checking we haven't been
   // front-run)
   logger.info("Faulty block detected. Don't submit new blocks until the faulty blocks are removed");
+
+  // const signedTx = await createSignedTransaction(
+  //   challengerKey,
+  //   challengerEthAddress,
+  //   challengeContractAddress,
+  //   txDataToSign,
+  // );
+
+  // // Submit tx and update db if tx is successful
+  // // CHECK - I think the code beyond L132 can be removed (?) then db op could be moved here
+  // txsQueueChallenger.push(async () => {
+  //   try {
+  //     receipt = await sendSignedTransaction(signedTx);
+  //     logger.debug({ msg: 'Commit to challenge', receipt });
+
+  //     await saveCommit(commitHash, txDataToSign);
+  //   } catch (err) {
+  //     logger.error({
+  //       msg: 'Something went wrong',
+  //       err,
+  //     });
+  //   }
+  // });
+
   return txDataToSign;
+}
+
+export async function commitToChallenge(txDataToSign) {
+  let receipt;
+  if (!makeChallenges) {
+    logger.debug('makeChallenges is off, no challenge commitment was sent');
+    return;
+  }
+  const web3 = Web3.connection();
+  const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
+  const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const challengeContractAddress = challengeContractInstance.options.address;
+
+  const commitToSign = await challengeContractInstance.methods
+    .commitToChallenge(commitHash)
+    .encodeABI();
+
+  const signedTx = await createSignedTransaction(
+    challengerKey,
+    challengerEthAddress,
+    challengeContractAddress,
+    commitToSign,
+  );
+
+  // Submit tx and update db if tx is successful
+  // CHECK - I think the code beyond L132 can be removed (?) then db op could be moved here
+  txsQueueChallenger.push(async () => {
+    try {
+      receipt = await sendSignedTransaction(signedTx);
+      logger.debug({ msg: 'Commit to challenge', receipt });
+
+      await saveCommit(commitHash, txDataToSign);
+    } catch (err) {
+      logger.error({
+        msg: 'Something went wrong',
+        err,
+      });
+    }
+  });
+
+  // check that the websocket exists (it should) and its readyState is OPEN
+  // before sending commit. If not wait until the challenger reconnects
+  // let tryCount = 0;
+  // while (!ws || ws.readyState !== WebSocket.OPEN) {
+  //   await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+
+  //   logger.warn(
+  //     'Websocket to challenger is closed for commit.  Waiting for challenger to reconnect',
+  //   );
+
+  //   if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
+  // }
+
+  // ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
+
+  // logger.debug({
+  //   msg: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
+  //   rawTransaction: commitToSign,
+  // });
+  // return receipt;
+}
+
+export async function revealChallenge(txDataToSign, sender) {
+  logger.debug('Revealing challenge');
+  // check that the websocket exists (it should) and its readyState is OPEN
+  // before sending commit. If not wait until the challenger reconnects
+  let tryCount = 0;
+  while (!ws || ws.readyState !== WebSocket.OPEN) {
+    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+
+    logger.warn(
+      'Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect',
+    );
+
+    if (tryCount++ > 100) {
+      throw new Error(`Websocket to $challenger has failed`);
+    }
+  }
+  ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
+  //sign it here w/o ws
+}
+/**
+Function to indicate to a listening challenger that a rollback has been completed.
+*/
+export async function signalRollbackCompleted(data) {
+  // check that the websocket exists (it should) and its readyState is OPEN
+  // before sending. If not wait until the challenger reconnects
+
+  //challenger rollback
+  let tryCount = 0;
+  while (!ws || ws.readyState !== WebSocket.OPEN) {
+    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+    logger.warn(
+      `Websocket to challenger is closed for rollback complete. Waiting for challenger to reconnect`,
+    );
+    if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
+  }
+  logger.debug('Rollback completed');
+
+  //ws
+  ws.send(JSON.stringify({ type: 'rollback', data }));
 }

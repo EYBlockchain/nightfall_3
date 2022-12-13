@@ -1202,51 +1202,51 @@ class Nf3 {
     */
   async startChallenger() {
     const challengeEmitter = new EventEmitter();
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
-    this.websockets.push(connection); // save so we can close it properly later
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      logger.debug('Challenge websocket connection opened');
-      connection.send('challenge');
-    };
-    connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign, sender } = msg;
-      logger.debug(`Challenger received websocket message of type ${type}`);
-      // if we're about to challenge, check it's actually our challenge, so as not to waste gas
-      if (type === 'challenge' && sender !== this.ethereumAddress) return null;
-      if (type === 'commit' || type === 'challenge') {
-        // Get the function selector from the encoded ABI, which corresponds to the first 4 bytes.
-        // In hex, it will correspond to the first 8 characters + 2 extra characters (0x), hence we
-        // do slice(0,10)
-        const txSelector = txDataToSign.slice(0, 10);
-        challengerQueue.push(async () => {
-          try {
-            const receipt = await this.submitTransaction(
-              txDataToSign,
-              this.challengesContractAddress,
-              0,
-            );
-            challengeEmitter.emit('receipt', receipt, type, txSelector);
-          } catch (err) {
-            challengeEmitter.emit('error', err, type, txSelector);
-          }
-        });
-        logger.debug(`queued ${type} ${txDataToSign}`);
-      }
-      if (type === 'rollback') {
-        challengeEmitter.emit('rollback', 'rollback complete');
-      }
-      return null;
-    };
-    connection.onerror = () => logger.error('websocket connection error');
-    connection.onclosed = () => logger.warn('websocket connection closed');
+    // const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
+    // this.websockets.push(connection); // save so we can close it properly later
+    // connection.onopen = () => {
+    //   // setup a ping every 15s
+    //   this.intervalIDs.push(
+    //     setInterval(() => {
+    //       connection._ws.ping();
+    //     }, WEBSOCKET_PING_TIME),
+    //   );
+    //   // and a listener for the pong
+    //   logger.debug('Challenge websocket connection opened');
+    //   connection.send('challenge');
+    // };
+    // connection.onmessage = async message => {
+    //   const msg = JSON.parse(message.data);
+    //   const { type, txDataToSign, sender } = msg;
+    //   logger.debug(`Challenger received websocket message of type ${type}`);
+    //   // if we're about to challenge, check it's actually our challenge, so as not to waste gas
+    //   if (type === 'challenge' && sender !== this.ethereumAddress) return null;
+    //   if (type === 'commit' || type === 'challenge') {
+    //     // Get the function selector from the encoded ABI, which corresponds to the first 4 bytes.
+    //     // In hex, it will correspond to the first 8 characters + 2 extra characters (0x), hence we
+    //     // do slice(0,10)
+    //     const txSelector = txDataToSign.slice(0, 10);
+    //     challengerQueue.push(async () => {
+    //       try {
+    //         const receipt = await this.submitTransaction(
+    //           txDataToSign,
+    //           this.challengesContractAddress,
+    //           0,
+    //         );
+    //         challengeEmitter.emit('receipt', receipt, type, txSelector);
+    //       } catch (err) {
+    //         challengeEmitter.emit('error', err, type, txSelector);
+    //       }
+    //     });
+    //     logger.debug(`queued ${type} ${txDataToSign}`);
+    //   }
+    //   if (type === 'rollback') {
+    //     challengeEmitter.emit('rollback', 'rollback complete');
+    //   }
+    //   return null;
+    // };
+    // connection.onerror = () => logger.error('websocket connection error');
+    // connection.onclosed = () => logger.warn('websocket connection closed');
     return challengeEmitter;
   }
 
