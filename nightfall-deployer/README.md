@@ -162,6 +162,12 @@ To perfom a deployment follow the instructions bellow:
     During the deployment an instance of the `worker` application is required to be up, so that the Circuits can be generated accordingly. This instance is started up 
     automatically, but it is possible configure the worker server if one is already available, for this set `CIRCOM_WORKER_HOST` in the .env file.
 
+    There is a variable in the .env file called `DEPLOYMENT_SERVICES`. It allows one to set the services to start up. This variable can be passed over with the command
+    as well.
+    ```
+    DEPLOYMENT_SERVICES=client,optimist,worker ./bin/deploy-contracts .env.deployment.my_network
+    ```
+
 One should remember to have enough funds when performing the deployment so that it can finish properly.
 
 After the deployment finishs successfully, one can find the files that were generated during the deployment under the folder `docker/volumes`:
