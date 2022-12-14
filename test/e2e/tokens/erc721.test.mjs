@@ -185,7 +185,10 @@ describe('ERC721 tests', () => {
       const user2L2Erc721Before = await getLayer2Erc721s(nf3User2);
       const userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
-      const userCommitments = await getUserCommitments(nf3User.zkpKeys.compressedZkpPublicKey);
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
 
       const erc20Commitments = userCommitments
         .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
@@ -236,7 +239,10 @@ describe('ERC721 tests', () => {
       const user2L2Erc721Before = await getLayer2Erc721s(nf3User2);
       const userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
-      const userCommitments = await getUserCommitments(nf3User.zkpKeys.compressedZkpPublicKey);
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
 
       const erc721Commitments = userCommitments.filter(
         c =>
@@ -277,7 +283,10 @@ describe('ERC721 tests', () => {
       expectTransaction(deposit);
       await makeBlock();
 
-      const userCommitments = await getUserCommitments(nf3User.zkpKeys.compressedZkpPublicKey);
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
 
       const erc20Commitments = userCommitments
         .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
@@ -320,7 +329,10 @@ describe('ERC721 tests', () => {
       expectTransaction(deposit);
       await makeBlock();
 
-      const userCommitments = await getUserCommitments(nf3User.zkpKeys.compressedZkpPublicKey);
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
 
       const erc20Commitments = userCommitments
         .filter(c => c.ercAddress === generalise(erc20Address).hex(32))

@@ -38,6 +38,10 @@ const transpileTransactionType = (_pathToSrc, _pathToInject) => {
   const reModifyGetCommitmentsCall = `providedCommitments, transactionType});`;
   srcFile = srcFile.replace(regexModifyGetCommitmentsCall, reModifyGetCommitmentsCall);
 
+  const regexModifyGetCommitmentsCall2 = /providedCommitmentsFee,(\s)*}\);/g;
+  const reModifyGetCommitmentsCall2 = `providedCommitmentsFee, transactionType});`;
+  srcFile = srcFile.replace(regexModifyGetCommitmentsCall2, reModifyGetCommitmentsCall2);
+
   // Add incorrectTransactions file
   const srcPreamble = /(\n|.)*(?=const rawTransaction)/g;
   const srcPostamble = /const rawTransaction(\n|.)*/g;
