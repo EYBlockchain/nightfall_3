@@ -75,13 +75,11 @@ async function rollbackEventHandler(data) {
       const transaction = transactionsSortedByFee[j];
       try {
         // eslint-disable-next-line no-await-in-loop
-        await checkTransaction(
+        await checkTransaction({
           transaction,
-          { checkInL2Block: true },
-          {
-            blockNumberL2: blockNumber,
-          },
-        );
+          checkDuplicatesInL2: true,
+          blockNumberL2: blockNumber,
+        });
 
         for (let k = 0; k < transaction.commitments.length; k++) {
           if (commitmentsList.includes(transaction.commitments[k])) {
