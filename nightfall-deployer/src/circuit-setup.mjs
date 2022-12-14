@@ -69,20 +69,18 @@ async function setupCircuits() {
   const circuitsToSetup = await await walk(config.CIRCUITS_HOME);
   // then we'll get all of the vks (some may not exist but we'll handle that in
   // a moments). We'll grab promises and then resolve them after the loop.
-  const resp = [];
+  const vks = [];
 
   for (const circuit of circuitsToSetup) {
     logger.debug(`checking for existing setup for ${circuit}`);
 
     const folderpath = circuit.slice(0, -7); // remove the .circom extension
-    resp.push(
-      axios.get(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/vk`, {
-        params: { folderpath },
-      }),
-    );
+    const r = await axios.get(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/vk`, {
+      params: { folderpath },
+    });
+    vks.push(r.data.vk);
   }
 
-  const vks = (await Promise.all(resp)).map(r => r.data.vk);
   const circuitHashes = [];
   const oldCircuitHashes = [];
 
