@@ -20,7 +20,7 @@ export const waitForTimeout = async timeoutInMs => {
 
 export const topicEventMapping = {
   BlockProposed: '0x566d835e602d4aa5802ee07d3e452e755bc77623507825de7bc163a295d76c0b',
-  Rollback: '0xea34b0bc565cb5f2ac54eaa86422ae05651f84522ef100e16b54a422f2053852',
+  Rollback: '0x03404b6979bc5ed297ee1fc6daf00fcb29bbd74b934488ef775c1d70c5e7cd8d',
   CommittedToChallenge: '0d5ea452ac7e354069d902d41e41e24f605467acd037b8f5c1c6fee5e27fb5e2',
   TransactionSubmitted: '0xd9364d1faedd45a064f9090dd61ade3de8d1c1fd83caaa8ebdc4b9808f4eb989',
   NewCurrentProposer: '0xeaa94fa30970548bf8b78ce068ba600b923a4a62ce3c523d09bf308102ff1bab',

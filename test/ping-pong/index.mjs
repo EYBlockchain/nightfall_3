@@ -4,6 +4,7 @@ Module that runs up as a user
 
 /* eslint-disable no-await-in-loop */
 
+import config from 'config';
 import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
@@ -13,6 +14,9 @@ const { TX_WAIT = 1000 } = process.env;
 let stateContract;
 const tokenType = 'ERC20';
 const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
 
 export const getCurrentProposer = async () => {
   const currentProposer = await stateContract.methods.getCurrentProposer().call();

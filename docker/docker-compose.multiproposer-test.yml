@@ -212,6 +212,8 @@ services:
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
+      PROPOSER_KEY: ${PROPOSER_KEY:-0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a}
+      AUTH_TOKEN: ${AUTH_TOKEN:-0ce4fee0-c765-43d6-973c-d404bfdde2e9}
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
@@ -256,6 +258,8 @@ services:
       # so for adversary default is false unlike optimist
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
+      PROPOSER_KEY: ${PROPOSER2_KEY:-0xabf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce}
+      AUTH_TOKEN: ${AUTH_TOKEN:-0ce4fee0-c765-43d6-973c-d404bfdde2e9}
     command: ['npm', 'run', 'dev']
 
   optimist_mongodb_1:
@@ -307,6 +311,7 @@ services:
       PROPOSER_PORT: 8093
       PROPOSER_KEY: ${PROPOSER_KEY:-0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a}
       DEPLOYER_HOST: ${DEPLOYER_HOST:-deployer}
+      AUTH_TOKEN: ${AUTH_TOKEN:-0ce4fee0-c765-43d6-973c-d404bfdde2e9}
     networks:
       - nightfall_network
     volumes:
@@ -335,6 +340,7 @@ services:
       PROPOSER_PORT: 8094
       PROPOSER_KEY: ${PROPOSER2_KEY:-0xabf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce}
       DEPLOYER_HOST: ${DEPLOYER_HOST:-deployer}
+      AUTH_TOKEN: ${AUTH_TOKEN:-0ce4fee0-c765-43d6-973c-d404bfdde2e9}
     networks:
       - nightfall_network
     volumes:
