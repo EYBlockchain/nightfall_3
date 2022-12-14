@@ -1259,9 +1259,9 @@ describe('State contract State functions', function () {
     await state.setNumProposers(2);
 
     const sprintInSpan = await state.getSprintsInSpan();
-    let spanProposersList = [];
+    const spanProposersList = [];
     for (let i = 0; i < sprintInSpan; i++) {
-      spanProposersList.push(state.spanProposersList(i))
+      spanProposersList.push(state.spanProposersList(i));
     }
     console.log(`list of next proposer: ${await Promise.all(spanProposersList)}`);
 

@@ -30,18 +30,22 @@ async function checkAndChangeProposer(nf3) {
       if (currentSprint === '0') {
         let spanProposersList = [];
         for (let i = 0; i < sprintInSpan; i++) {
-          spanProposersList.push(nf3.spanProposersList(i))
+          spanProposersList.push(nf3.spanProposersList(i));
         }
         spanProposersList = await Promise.all(spanProposersList);
         logger.info(`list of next proposer: ${spanProposersList}`);
       }
-      logger.info(`Next proposer address: ${spanProposersListAtPosition} and sprint: ${currentSprint}`);
+      logger.info(
+        `Next proposer address: ${spanProposersListAtPosition} and sprint: ${currentSprint}`,
+      );
       try {
         if (spanProposersListAtPosition === nf3.ethereumAddress) {
           logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
           await nf3.changeCurrentProposer();
         } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
-          logger.info(`${nf3.ethereumAddress} is not the next proposer and is Calling changeCurrentProposer`);
+          logger.info(
+            `${nf3.ethereumAddress} is not the next proposer and is Calling changeCurrentProposer`,
+          );
           await nf3.changeCurrentProposer();
         }
       } catch (err) {
