@@ -60,10 +60,6 @@ async function makeBlockNow(badBlockType) {
   }
 }
 
-// async function enableChallenger(enable) {
-//   await axios.post(`${optimistApiUrl}/challenger/enable`, { enable });
-// }
-
 describe('Testing with an adversary', () => {
   let nf3User;
   let nf3AdversarialProposer;
@@ -201,7 +197,11 @@ describe('Testing with an adversary', () => {
     currentRollbacks = rollbackCount;
   });
 
-  describe('Testing optimist deep rollbacks', async () => {
+  describe('Testing block zero challenges', async () => {
+    before(async () => {
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+    });
+
     it('Challenging block zero for having an invalid leaf count', async () => {
       console.log('Testing incorrect leaf count in block zero...');
       await makeBlockNow('IncorrectLeafCount');
@@ -217,37 +217,12 @@ describe('Testing with an adversary', () => {
       await waitForRollback();
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeFrontier);
     });
+
+    after(async () => {
+      await makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    });
   });
-
-  // describe('Testing optimist deep rollbacks', async () => {
-  //   before(async () => {
-  //     await nf3User.deposit('ValidTransaction', ercAddress, tokenType, 2 * value2, tokenId, fee);
-  //     await makeBlockNow();
-  //     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-  //   });
-  //   it('Testing', async () => {
-  //     console.log('Testing deep rollback at distance 2...');
-  //     await enableChallenger(false);
-  //     await nf3User.deposit('ValidTransaction', ercAddress, tokenType, 2 * value2, tokenId, fee);
-  //     await makeBlockNow('IncorrectLeafCount');
-  //     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-  //     await enableChallenger(true);
-  //     await nf3User.transfer(
-  //       'ValidTransaction',
-  //       false,
-  //       ercAddress,
-  //       tokenType,
-  //       value2,
-  //       tokenId,
-  //       nf3User.zkpKeys.compressedZkpPublicKey,
-  //       fee,
-  //     );
-  //     await makeBlockNow();
-  //     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-
-  //     await waitForRollback();
-  //   });
-  // });
 
   describe('Testing bad transactions', () => {
     describe('Deposits rollback', async () => {
