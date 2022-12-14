@@ -27,7 +27,7 @@ async function checkAndChangeProposer(nf3) {
 
     if (currentBlock - proposerStartBlock >= rotateProposerBlocks && numproposers > 1) {
       const spanProposersListAtPosition = await nf3.spanProposersList(currentSprint);
-      if (currentSprint === 0) {
+      if (currentSprint === '0') {
         let spanProposersList = [];
         for (let i = 0; i < sprintInSpan; i++) {
           spanProposersList.push(nf3.spanProposersList(i))
