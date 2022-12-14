@@ -60,6 +60,10 @@ async function makeBlockNow(badBlockType) {
   }
 }
 
+// async function enableChallenger(enable) {
+//   await axios.post(`${optimistApiUrl}/challenger/enable`, { enable });
+// }
+
 describe('Testing with an adversary', () => {
   let nf3User;
   let nf3AdversarialProposer;
@@ -197,13 +201,53 @@ describe('Testing with an adversary', () => {
     currentRollbacks = rollbackCount;
   });
 
-  afterEach(async () => {
-    await clearMempool({
-      optimistUrl: adversarialOptimistApiUrl,
-      web3: web3Client,
-      logs: eventLogs,
+  describe('Testing optimist deep rollbacks', async () => {
+    it('Challenging block zero for having an invalid leaf count', async () => {
+      console.log('Testing incorrect leaf count in block zero...');
+      await makeBlockNow('IncorrectLeafCount');
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      await waitForRollback();
+      expect(challengeSelector).to.be.equal(challengeSelectors.challengeLeafCount);
+    });
+
+    it('Challenging block zero for having an invalid frontier hash', async () => {
+      console.log('Testing incorrect frontier hash in block zero...');
+      await makeBlockNow('IncorrectFrontierHash');
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      await waitForRollback();
+      expect(challengeSelector).to.be.equal(challengeSelectors.challengeFrontier);
     });
   });
+
+  // describe('Testing optimist deep rollbacks', async () => {
+  //   before(async () => {
+  //     await nf3User.deposit('ValidTransaction', ercAddress, tokenType, 2 * value2, tokenId, fee);
+  //     await makeBlockNow();
+  //     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  //   });
+  //   it('Testing', async () => {
+  //     console.log('Testing deep rollback at distance 2...');
+  //     await enableChallenger(false);
+  //     await nf3User.deposit('ValidTransaction', ercAddress, tokenType, 2 * value2, tokenId, fee);
+  //     await makeBlockNow('IncorrectLeafCount');
+  //     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  //     await enableChallenger(true);
+  //     await nf3User.transfer(
+  //       'ValidTransaction',
+  //       false,
+  //       ercAddress,
+  //       tokenType,
+  //       value2,
+  //       tokenId,
+  //       nf3User.zkpKeys.compressedZkpPublicKey,
+  //       fee,
+  //     );
+  //     await makeBlockNow();
+  //     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+  //     await waitForRollback();
+  //   });
+  // });
 
   describe('Testing bad transactions', () => {
     describe('Deposits rollback', async () => {
@@ -435,12 +479,23 @@ describe('Testing with an adversary', () => {
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeHistoricRoot);
       });
     });
+
+    afterEach(async () => {
+      await clearMempool({
+        optimistUrl: adversarialOptimistApiUrl,
+        web3: web3Client,
+        logs: eventLogs,
+      });
+    });
   });
 
   describe('Testing bad blocks', async () => {
+    before(async () => {
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
+    });
+
     it('Test incorrect leaf count', async () => {
       console.log('Testing incorrect leaf count...');
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectLeafCount');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await waitForRollback();
@@ -449,7 +504,6 @@ describe('Testing with an adversary', () => {
 
     it('Test incorrect tree root', async () => {
       console.log('Testing incorrect tree root...');
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectTreeRoot');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await waitForRollback();
@@ -458,11 +512,15 @@ describe('Testing with an adversary', () => {
 
     it('Test incorrect frontier hash', async () => {
       console.log('Testing incorrect frontier hash...');
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, value2, tokenId, 0);
       await makeBlockNow('IncorrectFrontierHash');
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       await waitForRollback();
       expect(challengeSelector).to.be.equal(challengeSelectors.challengeFrontier);
+    });
+
+    after(async () => {
+      await makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
   });
 
