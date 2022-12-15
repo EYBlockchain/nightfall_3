@@ -36,7 +36,7 @@ services:
         target: /config/default.js
     ports:
       - 9239:9229
-    command: ['npm', 'run', 'start:debug']
+    command: ['npm', 'run', 'dev']
 
   deployer:
     build:
@@ -86,7 +86,7 @@ services:
         target: /app/config/default.js
     ports:
       - 9229:9229
-    command: ['npm', 'run', 'start:debug']
+    command: ['npm', 'run', 'dev']
 
   worker:
     build:
@@ -113,4 +113,4 @@ services:
   hosted-utils-api-server:
     ports:
       - 9249:9229
-    command: ['npm', 'run', 'start:debug']
+    command: ['npm', 'run', 'dev']

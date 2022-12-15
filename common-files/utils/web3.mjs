@@ -2,6 +2,7 @@
 
 import Web3 from 'web3';
 import config from 'config';
+import { estimateGas, estimateGasPrice } from './gas.mjs';
 import logger from './logger.mjs';
 
 export default {
@@ -43,21 +44,9 @@ export default {
     }
     return false;
   },
+
   disconnect() {
     this.web3.currentProvider.connection.close();
-  },
-
-  async estimateGas(tx) {
-    let gas;
-    try {
-      gas = await this.web3.eth.estimateGas(tx);
-      logger.debug({ msg: 'Gas estimated at', gas });
-    } catch (error) {
-      gas = config.WEB3_OPTIONS.gas;
-      logger.warn({ msg: 'Gas estimation failed, use default', gas });
-    }
-    gas = Math.ceil(gas * 2); // 50% seems a more than reasonable buffer
-    return gas;
   },
 
   // function only needed for infura deployment
@@ -68,15 +57,15 @@ export default {
     if (!config.ETH_PRIVATE_KEY) throw Error('config ETH_PRIVATE_KEY not set');
 
     const fromAddress = await this.web3.eth.accounts.privateKeyToAccount(config.ETH_PRIVATE_KEY);
-
+    const gasPrice = await estimateGasPrice(this.web3);
     const tx = {
       from: fromAddress.address,
       to: contractAddress,
       data: rawTransaction,
       value,
-      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gasPrice,
     };
-    tx.gas = await this.estimateGas(tx);
+    tx.gas = await estimateGas(tx, this.web3);
 
     const signed = await this.web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
     return this.web3.eth.sendSignedTransaction(signed.rawTransaction);

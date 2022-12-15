@@ -70,8 +70,8 @@ export function setProposer(p) {
  *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/register', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
-  const ethPrivateKey = req.app.get('ethPrivateKey');
+  const ethAddress = req.app.get('proposerEthAddress');
+  const ethPrivateKey = req.app.get('proposerEthPrivateKey');
 
   const { url = '', stake = 0, fee = 0 } = req.body;
 
@@ -206,8 +206,8 @@ router.post('/register', auth, async (req, res, next) => {
  *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/update', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
-  const ethPrivateKey = req.app.get('ethPrivateKey');
+  const ethAddress = req.app.get('proposerEthAddress');
+  const ethPrivateKey = req.app.get('proposerEthPrivateKey');
 
   const { url = '', stake = 0, fee = 0 } = req.body;
 
@@ -340,8 +340,8 @@ router.get('/proposers', async (req, res, next) => {
  *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/de-register', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
-  const ethPrivateKey = req.app.get('ethPrivateKey');
+  const ethAddress = req.app.get('proposerEthAddress');
+  const ethPrivateKey = req.app.get('proposerEthPrivateKey');
 
   try {
     // Recreate Proposer contract
@@ -411,8 +411,8 @@ router.post('/de-register', auth, async (req, res, next) => {
  *          $ref: '#/components/responses/InternalServerError'
  */
 router.post('/withdrawStake', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
-  const ethPrivateKey = req.app.get('ethPrivateKey');
+  const ethAddress = req.app.get('proposerEthAddress');
+  const ethPrivateKey = req.app.get('proposerEthPrivateKey');
 
   try {
     // Recreate Proposer contract
@@ -476,7 +476,7 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
  *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/pending-payments', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
+  const ethAddress = req.app.get('proposerEthAddress');
   const pendingPayments = [];
 
   try {
@@ -538,7 +538,7 @@ router.get('/pending-payments', auth, async (req, res, next) => {
  *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/stake', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
+  const ethAddress = req.app.get('proposerEthAddress');
 
   try {
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
@@ -581,8 +581,8 @@ router.get('/stake', auth, async (req, res, next) => {
  *          $ref: '#/components/responses/InternalServerError'
  */
 router.get('/withdraw', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
-  const ethPrivateKey = req.app.get('ethPrivateKey');
+  const ethAddress = req.app.get('proposerEthAddress');
+  const ethPrivateKey = req.app.get('proposerEthPrivateKey');
 
   try {
     // Recreate State contract
@@ -651,8 +651,8 @@ router.get('/withdraw', auth, async (req, res, next) => {
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/payment', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
-  const ethPrivateKey = req.app.get('ethPrivateKey');
+  const ethAddress = req.app.get('proposerEthAddress');
+  const ethPrivateKey = req.app.get('proposerEthPrivateKey');
 
   const { blockHash } = req.body;
 
@@ -726,8 +726,8 @@ router.post('/payment', auth, async (req, res, next) => {
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/change', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
-  const ethPrivateKey = req.app.get('ethPrivateKey');
+  const ethAddress = req.app.get('proposerEthAddress');
+  const ethPrivateKey = req.app.get('proposerEthPrivateKey');
 
   try {
     // Recreate State contract
@@ -816,8 +816,8 @@ router.get('/mempool', async (req, res, next) => {
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/encode', auth, async (req, res, next) => {
-  const ethAddress = req.app.get('ethAddress');
-  const ethPrivateKey = req.app.get('ethPrivateKey');
+  const ethAddress = req.app.get('proposerEthAddress');
+  const ethPrivateKey = req.app.get('proposerEthPrivateKey');
 
   const { transactions, block } = req.body;
 

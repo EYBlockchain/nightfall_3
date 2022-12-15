@@ -75,10 +75,15 @@ describe('State contract State functions', function () {
     const challengesUtil = await ChallengesUtil.deploy();
     await challengesUtil.deployed();
 
+    const Utils = await ethers.getContractFactory('Utils');
+    const utils = await Utils.deploy();
+    await utils.deployed();
+
     const Challenges = await ethers.getContractFactory('Challenges', {
       libraries: {
         Verifier: verifier.address,
         ChallengesUtil: challengesUtil.address,
+        Utils: utils.address,
       },
     });
     const challenges = await upgrades.deployProxy(Challenges, [], {
@@ -101,10 +106,6 @@ describe('State contract State functions', function () {
       initializer: 'initializeState',
     });
     await shield.deployed();
-
-    const Utils = await ethers.getContractFactory('Utils');
-    const utils = await Utils.deploy();
-    await utils.deployed();
 
     const State = await ethers.getContractFactory('State', {
       libraries: {
@@ -1256,6 +1257,13 @@ describe('State contract State functions', function () {
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
     await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
     await state.setNumProposers(2);
+
+    const sprintInSpan = await state.getSprintsInSpan();
+    const spanProposersList = [];
+    for (let i = 0; i < sprintInSpan; i++) {
+      spanProposersList.push(state.spanProposersList(i));
+    }
+    console.log(`list of next proposer: ${await Promise.all(spanProposersList)}`);
 
     for (let i = 0; i < signers.length; i++) {
       await state.setProposer(signers[i].address, [

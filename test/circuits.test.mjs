@@ -1,265 +1,249 @@
 /* eslint-disable no-await-in-loop */
+import axios from 'axios';
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { emptyL2, expectTransaction, waitTransactionToBeMined, Web3Client } from './utils.mjs';
+import {
+  expectTransaction,
+  getLayer2Balances,
+  waitTransactionToBeMined,
+  Web3Client,
+} from './utils.mjs';
 
-// so we can use require with mjs file
 const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-
 const {
   tokenConfigs: { tokenType, tokenId },
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
 
-const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
+axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
 
 const web3Client = new Web3Client();
 const web3 = web3Client.getWeb3();
-
-let erc20Address;
-let stateAddress;
 const eventLogs = [];
-const fee = '0';
-const stake = '1000000';
 
+const nf3User = new Nf3(signingKeys.user1, environment);
 const { optimistApiUrl } = environment;
 
-/*
-  This function tries to zero the number of unprocessed transactions in the optimist node
-  that nf3 is connected to. We call it extensively on the tests, as we want to query stuff from the
-  L2 layer, which is dependent on a block being made. We also need 0 unprocessed transactions by the end
-  of the tests, otherwise the optimist will become out of sync with the L2 block count on-chain.
-*/
-describe('General Circuit Test', () => {
-  before(async () => {
-    axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
+let erc20Address;
+async function makeDeposit(value, fee = 0) {
+  logger.debug(`Make deposit of ${value}...`);
+  return nf3User.deposit(erc20Address, tokenType, value, tokenId, fee);
+}
 
-    // We must set the URL from the point of view of the client container
+async function makeBlock() {
+  logger.debug(`Make block...`);
+  await axios.get(`${optimistApiUrl}/block/make-now`);
+  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+}
+
+describe('General Circuit Test', function () {
+  let stateAddress;
+  const proposerFee = '0';
+  const proposerStake = '1000000';
+  const LAST_TEST_FINAL_BALANCES = 'Should expect finalBalance to be initialBalance, ie 0';
+
+  before(async function () {
+    // Create and initialise user
+    await nf3User.init(mnemonics.user1);
+
+    // Register proposer, wait for transaction to be mined
     const { data } = await axios.post(`${optimistApiUrl}/proposer/register`, {
       url: optimistApiUrl,
-      stake,
-      fee,
+      stake: proposerStake,
+      fee: proposerFee,
     });
-
-    // Wait for transaction to be mined
     await waitTransactionToBeMined(data.transactionHash, web3);
 
-    await nf3Users[0].init(mnemonics.user1);
-    await nf3Users[1].init(mnemonics.user2);
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-
-    stateAddress = await nf3Users[0].stateContractAddress;
+    // Get contract addresses, subscribe to events
+    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
-  it.skip('Test that matic transfers pays the fee from the same transfer commitment', async () => {
-    async function getBalance() {
-      return Promise.all([
-        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0,
-        (await nf3Users[1].getLayer2Balances())[erc20Address]?.[0].balance || 0,
-      ]);
-    }
-    logger.debug(`Sending 1 deposit of 10...`);
-    await nf3Users[0].deposit(erc20Address, tokenType, 10, tokenId, 0);
+  describe('Test that all circuits are working without fees', function () {
+    const noFee = 0;
+    let value = 10;
 
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+    let initialBalance;
+    let finalBalance;
 
-    const beforeBalances = await getBalance();
+    before(async function () {
+      initialBalance = await getLayer2Balances(nf3User, erc20Address);
+    });
 
-    const singleTransfer = await nf3Users[0].transfer(
-      false,
-      erc20Address,
-      tokenType,
-      7,
-      tokenId,
-      nf3Users[1].zkpKeys.compressedZkpPublicKey,
-      1,
-    );
-    expectTransaction(singleTransfer);
+    it('Should deposit', async function () {
+      const deposit = await makeDeposit(value);
+      expectTransaction(deposit);
+      logger.debug(`Gas used was ${Number(deposit.gasUsed)}`);
+    });
 
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
+    // l2Balance: 10
+    it(`Should transfer ${value}, ie single transfer with no change`, async function () {
+      const singleTransferNoChange = await nf3User.transfer(
+        false,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+        noFee,
+      );
+      expectTransaction(singleTransferNoChange);
+      logger.debug(`Gas used was ${Number(singleTransferNoChange.gasUsed)}`);
+    });
 
-    const afterBalances = await getBalance();
+    // l2Balance: 10
+    it(`Should transfer ${value}, ie single transfer with change`, async function () {
+      value = 5;
+      const singleTransferChange = await nf3User.transfer(
+        false,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+        noFee,
+      );
+      expectTransaction(singleTransferChange);
+      logger.debug(`Gas used was ${Number(singleTransferChange.gasUsed)}`);
+    });
 
-    expect(afterBalances[0] - beforeBalances[0]).to.be.equal(-8);
-    expect(afterBalances[1] - beforeBalances[1]).to.be.equal(7);
+    // l2Balance: 5 + 5
+    it(`Should withdraw ${value}, ie single withdrawal with no change`, async function () {
+      const withdrawalNoChange = await nf3User.withdraw(
+        false,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        nf3User.ethereumAddress,
+        noFee,
+      );
+      expectTransaction(withdrawalNoChange);
+      logger.debug(`Gas used was ${Number(withdrawalNoChange.gasUsed)}`);
+    });
+
+    // l2Balance: 5
+    it(`Should withdraw ${value}, ie single withdrawal with change`, async function () {
+      value = 2;
+      const withdrawalChange = await nf3User.withdraw(
+        false,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        nf3User.ethereumAddress,
+        noFee,
+      );
+      expectTransaction(withdrawalChange);
+      logger.debug(`Gas used was ${Number(withdrawalChange.gasUsed)}`);
+    });
+
+    // l2Balance: 3 + 8
+    it(`Should transfer ${value}, ie double transfer with change`, async function () {
+      // Arrange
+      value = 8;
+      await makeDeposit(value);
+      await makeBlock();
+
+      // Act, assert
+      value = 9;
+      const doubleTransferChange = await nf3User.transfer(
+        false,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+        noFee,
+      );
+      expectTransaction(doubleTransferChange);
+      logger.debug(`Gas used was ${Number(doubleTransferChange.gasUsed)}`);
+    });
+
+    // l2Balance: 9 + 2
+    it(`Should transfer ${value}, ie double transfer with no change`, async function () {
+      value = 11;
+      const doubleTransferNoChange = await nf3User.transfer(
+        false,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+        noFee,
+      );
+      expectTransaction(doubleTransferNoChange);
+      logger.debug(`Gas used was ${Number(doubleTransferNoChange.gasUsed)}`);
+    });
+
+    // l2Balance: 11 + 4
+    it(`Should withdraw ${value}, ie double withdrawal with change`, async function () {
+      // Arrange
+      value = 4;
+      await makeDeposit(value);
+      await makeBlock();
+
+      // Act, assert
+      value = 12;
+      const doubleWithdrawalChange = await nf3User.withdraw(
+        false,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        nf3User.ethereumAddress,
+        noFee,
+      );
+      expectTransaction(doubleWithdrawalChange);
+      logger.debug(`Gas used was ${Number(doubleWithdrawalChange.gasUsed)}`);
+    });
+
+    // l2Balance: 3 + 2
+    it(`Should withdraw ${value}, ie double withdrawal with no change`, async function () {
+      // Arrange
+      value = 2;
+      await makeDeposit(value);
+      await makeBlock();
+
+      // Act, assert
+      value = 5;
+      const doubleWithdrawalNoChange = await nf3User.withdraw(
+        false,
+        erc20Address,
+        tokenType,
+        value,
+        tokenId,
+        nf3User.ethereumAddress,
+        noFee,
+      );
+      expectTransaction(doubleWithdrawalNoChange);
+      logger.debug(`Gas used was ${Number(doubleWithdrawalNoChange.gasUsed)}`);
+    });
+
+    it(LAST_TEST_FINAL_BALANCES, async function () {
+      finalBalance = await getLayer2Balances(nf3User, erc20Address);
+      expect(finalBalance - initialBalance).to.be.equal(0);
+    });
+
+    afterEach(async function () {
+      if (this.currentTest.title === LAST_TEST_FINAL_BALANCES) return;
+      await makeBlock();
+    });
   });
 
-  it('Test that all circuits are working without fees', async () => {
-    async function getBalance() {
-      return (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;
-    }
-
-    const initialBalance = await getBalance();
-
-    logger.debug(`Sending 1 deposit of 10...`);
-    await nf3Users[0].deposit(erc20Address, tokenType, 10, tokenId, 0);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    // Deposit checks here
-
-    logger.debug(`Sending single transfer with no change...`);
-    const singleTransferNoChange = await nf3Users[0].transfer(
-      false,
-      erc20Address,
-      tokenType,
-      10,
-      tokenId,
-      nf3Users[0].zkpKeys.compressedZkpPublicKey,
-      0,
-    );
-    expectTransaction(singleTransferNoChange);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    // Single Transfer No Change checks here
-
-    logger.debug(`Sending single transfer with change...`);
-    const singleTransferChange = await nf3Users[0].transfer(
-      false,
-      erc20Address,
-      tokenType,
-      5,
-      tokenId,
-      nf3Users[0].zkpKeys.compressedZkpPublicKey,
-      0,
-    );
-    expectTransaction(singleTransferChange);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    logger.debug(`Sending withdrawal with no change...`);
-    const withdrawalNoChange = await nf3Users[0].withdraw(
-      false,
-      erc20Address,
-      tokenType,
-      5,
-      tokenId,
-      nf3Users[0].ethereumAddress,
-      0,
-    );
-
-    expectTransaction(withdrawalNoChange);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    // Withdrawal No Change checks here
-
-    logger.debug(`Sending withdrawal with change...`);
-    const withdrawalChange = await nf3Users[0].withdraw(
-      false,
-      erc20Address,
-      tokenType,
-      2,
-      tokenId,
-      nf3Users[0].ethereumAddress,
-      0,
-    );
-
-    expectTransaction(withdrawalChange);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    // Withdrawal Change checks here
-
-    logger.debug(`Sending deposit of 8...`);
-    await nf3Users[0].deposit(erc20Address, tokenType, 8, tokenId, 0);
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    logger.debug(`Sending double transfer with change...`);
-    const doubleTransferChange = await nf3Users[0].transfer(
-      false,
-      erc20Address,
-      tokenType,
-      9,
-      tokenId,
-      nf3Users[0].zkpKeys.compressedZkpPublicKey,
-      0,
-    );
-
-    expectTransaction(doubleTransferChange);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    // Double transfer Change checks here
-
-    logger.debug(`Sending double transfer with no change...`);
-    const doubleTransferNoChange = await nf3Users[0].transfer(
-      false,
-      erc20Address,
-      tokenType,
-      11,
-      tokenId,
-      nf3Users[0].zkpKeys.compressedZkpPublicKey,
-      0,
-    );
-
-    expectTransaction(doubleTransferNoChange);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    // Double transfer No Change checks here
-
-    logger.debug(`Sending deposit of 4...`);
-    await nf3Users[0].deposit(erc20Address, tokenType, 4, tokenId, 0);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    logger.debug(`Sending double withdrawal with change...`);
-    const doubleWithdrawalChange = await nf3Users[0].withdraw(
-      false,
-      erc20Address,
-      tokenType,
-      12,
-      tokenId,
-      nf3Users[0].ethereumAddress,
-      0,
-    );
-
-    expectTransaction(doubleWithdrawalChange);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-    // Double Withdrawal Change checks here
-
-    logger.debug(`Sending deposit of 2...`);
-    await nf3Users[0].deposit(erc20Address, tokenType, 2, tokenId, 0);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    logger.debug(`Sending double Withdrawal with no change...`);
-    const doubleWithdrawalNoChange = await nf3Users[0].withdraw(
-      false,
-      erc20Address,
-      tokenType,
-      5,
-      tokenId,
-      nf3Users[0].ethereumAddress,
-      0,
-    );
-
-    expectTransaction(doubleWithdrawalNoChange);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    // Double Withdrawal No Change
-
-    const finalBalance = await getBalance();
-    expect(finalBalance - initialBalance).to.be.equal(0);
-  });
-
-  after(async () => {
+  after(async function () {
     await axios.post(`${optimistApiUrl}/proposer/de-register`);
-    await web3Client.closeWeb3();
+    await nf3User.close();
+    web3Client.closeWeb3();
   });
 });

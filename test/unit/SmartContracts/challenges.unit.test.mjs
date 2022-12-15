@@ -67,10 +67,15 @@ describe('Challenges contract Challenges functions', function () {
     challengesUtil = await ChallengesUtil.deploy();
     await challengesUtil.deployed();
 
+    const Utils = await ethers.getContractFactory('Utils');
+    const utils = await Utils.deploy();
+    await utils.deployed();
+
     const Challenges = await ethers.getContractFactory('Challenges', {
       libraries: {
         Verifier: verifier.address,
         ChallengesUtil: challengesUtil.address,
+        Utils: utils.address,
       },
     });
     challenges = await upgrades.deployProxy(Challenges, [], {
@@ -92,10 +97,6 @@ describe('Challenges contract Challenges functions', function () {
       initializer: 'initializeState',
     });
     await shield.deployed();
-
-    const Utils = await ethers.getContractFactory('Utils');
-    const utils = await Utils.deploy();
-    await utils.deployed();
 
     const State = await ethers.getContractFactory('State', {
       libraries: {

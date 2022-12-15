@@ -45,28 +45,6 @@ const getOptimistUrls = async () => {
     });
   }
 
-  // TODO: No need to do this when the nightfall node is available with the prop.url that is the same as optimist url
-  if (environment.web3WsUrl.includes('localhost')) {
-    let optimistUrlProposer1 = optimistUrls.find(
-      o =>
-        o.proposer === nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer1).address,
-    );
-    // this is because we use proposer3 key by default in docker-compose to avoid collision with default proposer. If not defined in the file it will be proposer3 key
-    if (!optimistUrlProposer1) {
-      optimistUrlProposer1 = optimistUrls.find(
-        o =>
-          o.proposer ===
-          nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer3).address,
-      );
-    }
-    optimistUrlProposer1.optimistUrl = optimistApiUrls.optimist1;
-
-    const optimistUrlProposer2 = optimistUrls.find(
-      o =>
-        o.proposer === nf3User.web3.eth.accounts.privateKeyToAccount(signingKeys.proposer2).address,
-    );
-    optimistUrlProposer2.optimistUrl = optimistApiUrls.optimist2;
-  }
   return optimistUrls;
 };
 
@@ -74,7 +52,7 @@ const getOptimistUrls = async () => {
   Get initial proposer statistics for checking at the end the results after the test.
   @method
   @async
-  @param {object} optimistUls - otimist urls for each proposer
+  @param {object} optimistUrls - otimist urls for each proposer
   */
 const getInitialProposerStats = async optimistUrls => {
   const proposersStats = {
@@ -327,8 +305,8 @@ const finalStatsCheck = async (optimistUrls, proposersStats) => {
       }
     }
     console.log(`  - SPRINTS: ${proposersStats.sprints}`);
-
-    expect(proposersStats.sprints).to.be.greaterThan(0);
+    // TODO: enable when changecurrentproposer is integrated in the Nightfall Node
+    // expect(proposersStats.sprints).to.be.greaterThan(0);
   }
 };
 
@@ -379,7 +357,7 @@ describe('Ping-pong tests', () => {
     }
 
     // user that will rotate proposers and get block statistics
-    proposerStats(optimistUrls, proposersStats, nf3User);
+    proposerStats(proposersStats, nf3User);
 
     // wait for all the user transactions to be completed
     await waitForTransactionsCompleted();

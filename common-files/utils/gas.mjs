@@ -14,8 +14,8 @@ import logger from './logger.mjs';
  * @function estimateGas
  * @param {object} tx A tx object
  * @param {Web3} web3
- * @param {number} gasDefault Has default
- * @param {number} gasMultiplier Buffer to apply to estimated gas - Has default
+ * @param {number} [gasDefault] Has default
+ * @param {number} [gasMultiplier] Buffer to apply to estimated gas - Has default
  * @returns {Promise<number>}
  */
 export async function estimateGas(tx, web3, gasDefault = 4000000, gasMultiplier = 2) {
@@ -37,15 +37,15 @@ export async function estimateGas(tx, web3, gasDefault = 4000000, gasMultiplier 
  *
  * @async
  * @function estimateGasPrice
- * @param {string} gasEstimateEndpoint URL for querying gas prices
  * @param {Web3} web3
- * @param {number} gasPriceDefault Has default
- * @param {number} gasPriceMultiplier Buffer to apply to estimated gas price - Has default
+ * @param {string} [gasEstimateEndpoint] URL for querying gas prices - Has default
+ * @param {number} [gasPriceDefault] Has default
+ * @param {number} [gasPriceMultiplier] Buffer to apply to estimated gas price - Has default
  * @returns {Promise<number>}
  */
 export async function estimateGasPrice(
-  gasEstimateEndpoint,
   web3,
+  gasEstimateEndpoint = 'https://vqxy02tr5e.execute-api.us-east-2.amazonaws.com/production/estimateGas',
   gasPriceDefault = 10000000000,
   gasPriceMultiplier = 2,
 ) {
