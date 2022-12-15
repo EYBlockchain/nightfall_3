@@ -30,7 +30,7 @@ async function getAvailableCommitmentsFaulty(db, compressedZkpPublicKey, ercAddr
       compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
       'preimage.ercAddress': ercAddress.hex(32),
       'preimage.tokenId': tokenId.hex(32),
-      $or: [{ isNullified: true }, { isPendingNullification: true }],
+      isNullifiedOnChain: { $ne: -1 },
     })
     .toArray();
 }
