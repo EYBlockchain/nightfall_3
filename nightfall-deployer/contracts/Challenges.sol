@@ -206,10 +206,59 @@ contract Challenges is Stateful, Config {
         }
     }
 
+    function decompressG1(uint256 xin) public returns (bool, uint256[2] memory) {
+        // Handle the Point 0.G
+        if (xin == 0x8000000000000000000000000000000000000000000000000000000000000000)
+            return (false, [uint256(0), uint256(1)]);
+
+        uint8 parity = uint8((xin >> 255) & 1);
+        uint256 xMask = 0x4000000000000000000000000000000000000000000000000000000000000000; // 2**254 mask
+        uint256 xCoord = xin % xMask;
+        uint256 x3 = mulmod(
+            xCoord,
+            mulmod(xCoord, xCoord, Utils.BN128_PRIME_FIELD),
+            Utils.BN128_PRIME_FIELD
+        );
+        uint256 y2 = addmod(x3, 3, Utils.BN128_PRIME_FIELD);
+        // Check that the legendre symbol == 1, i.e. a sqrt exists for y2
+        bool sqrtFound = Utils.modExp(
+            y2,
+            (Utils.BN128_PRIME_FIELD - uint256(1)) / uint256(2),
+            Utils.BN128_PRIME_FIELD
+        ) == 1;
+        uint256 y = Utils.modExp(y2, (Utils.BN128_PRIME_FIELD + 1) / 4, Utils.BN128_PRIME_FIELD);
+        if (parity != uint8(y % 2)) return (sqrtFound, [xCoord, Utils.BN128_PRIME_FIELD - y]);
+        return (sqrtFound, [xCoord, y]);
+    }
+
+    function decompressG2(uint256[2] memory xins) public pure returns (bool, uint256[2][2] memory) {
+        uint8[2] memory parity = [uint8((xins[0] >> 255) & 1), uint8((xins[1] >> 255) & 1)];
+        uint256 xMask = 0x4000000000000000000000000000000000000000000000000000000000000000; // 2**254 mask
+        uint256 xReal = xins[0] % xMask;
+        uint256 xImg = xins[1] % xMask;
+        uint256[2] memory x = [xReal, xImg];
+        uint256[2] memory x3 = Utils.fq2Mul(Utils.fq2Mul(x, x), x);
+        uint256[2] memory d = [
+            19485874751759354771024239261021720505790618469301721065564631296452457478373,
+            266929791119991161246907387137283842545076965332900288569378510910307636690
+        ];
+        // If xin is the compressed form of the Point 0.G
+        if (x3[0] == 0 && x3[1] == 0 && xins[1] == 0)
+            return (false, [x3, [uint256(1), uint256(0)]]);
+        uint256[2] memory y2 = [
+            addmod(x3[0], d[0], Utils.BN128_PRIME_FIELD),
+            addmod(x3[1], d[1], Utils.BN128_PRIME_FIELD)
+        ];
+
+        (bool sqrtFound, uint256[2] memory y) = Utils.fq2Sqrt(y2);
+        uint256 a = parity[0] == uint256(y[0] % 2) ? y[0] : Utils.BN128_PRIME_FIELD - y[0];
+        uint256 b = parity[1] == uint256(y[1] % 2) ? y[1] : Utils.BN128_PRIME_FIELD - y[1];
+        return (sqrtFound, [x, [a, b]]);
+    }
+
     function challengeProofVerification(
         TransactionInfoBlock calldata transaction,
         Block[] calldata blockL2ContainingHistoricRoot,
-        uint256[8] memory uncompressedProof,
         bytes32 salt
     ) external {
         checkCommit(msg.data);
@@ -248,12 +297,46 @@ contract Challenges is Stateful, Config {
                 extraPublicInputs.roots[i] = uint256(blockL2ContainingHistoricRoot[i].root);
             }
         }
+        // Variables declared here so we can reuse the bool
+        bool success = false;
+        uint256[2] memory decompressAlpha;
+        uint256[2][2] memory decompressBeta;
+        uint256[2] memory decompressGamma;
 
+        (success, decompressAlpha) = decompressG1(transaction.transaction.proof[0]);
+        // Check each step since we overwrite the bool to avoid stack too deep issues.
+        if (!success) {
+            challengeAccepted(transaction.blockL2);
+            return;
+        }
+
+        (success, decompressBeta) = decompressG2(
+            [transaction.transaction.proof[1], transaction.transaction.proof[2]]
+        );
+        if (!success) {
+            challengeAccepted(transaction.blockL2);
+            return;
+        }
+
+        (success, decompressGamma) = decompressG1(transaction.transaction.proof[3]);
+        if (!success) {
+            challengeAccepted(transaction.blockL2);
+            return;
+        }
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
             transaction.transaction,
             extraPublicInputs,
-            uncompressedProof,
+            [
+                decompressAlpha[0],
+                decompressAlpha[1],
+                decompressBeta[0][0],
+                decompressBeta[0][1],
+                decompressBeta[1][0],
+                decompressBeta[1][1],
+                decompressGamma[0],
+                decompressGamma[1]
+            ],
             state.getVerificationKey(Utils.getCircuitHash(transaction.transaction.packedInfo))
         );
         challengeAccepted(transaction.blockL2);

@@ -247,7 +247,6 @@ export async function createChallenge(block, transactions, err) {
 
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
-      const uncompressedProof = transactions[transactionIndex].proof;
       const historicRoots = await Promise.all(
         transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
           if (transactions[transactionIndex].nullifiers[i] === 0) {
@@ -282,7 +281,6 @@ export async function createChallenge(block, transactions, err) {
             transactionSiblingPath,
           },
           historicRoots,
-          uncompressedProof,
           salt,
         )
         .encodeABI();

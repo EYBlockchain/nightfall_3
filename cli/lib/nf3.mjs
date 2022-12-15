@@ -588,6 +588,7 @@ class Nf3 {
     tokenId,
     compressedZkpPublicKey,
     fee = this.defaultFeeMatic,
+    providedCommitments = undefined,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
       offchain,
@@ -599,6 +600,7 @@ class Nf3 {
       },
       rootKey: this.zkpKeys.rootKey,
       fee,
+      providedCommitments,
     });
 
     if (res.data.error && res.data.error === 'No suitable commitments') {
@@ -1559,6 +1561,16 @@ class Nf3 {
   */
   async getNumProposers() {
     return this.stateContract.methods.getNumProposers().call();
+  }
+
+  /**
+    getSprintsInSpan
+    @method
+    @async
+    @returns {uint256} A promise that resolves to the Ethereum call.
+    */
+  async getSprintsInSpan() {
+    return this.stateContract.methods.getSprintsInSpan().call();
   }
 }
 

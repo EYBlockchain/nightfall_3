@@ -8,7 +8,7 @@ import {
 } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import gen from 'general-number';
 import Transaction from '@polygon-nightfall/common-files/classes/transaction.mjs';
-import Proof from '@polygon-nightfall/common-files/classes/proof.mjs';
+import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
@@ -112,7 +112,7 @@ async function burn(burnParams) {
 
     const { proof } = res.data;
 
-    const transaction = { ...publicData, proof: Proof.flatProof(proof) };
+    const transaction = { ...publicData, proof: compressProof(proof) };
     transaction.transactionHash = Transaction.calcHash(transaction);
 
     logger.debug({
