@@ -66,7 +66,10 @@ async function blockProposedEventHandler(data, syncing) {
     let isDecrypted = false;
     // In order to check if the transaction is a transfer, we check if the compressed secrets
     // are different than zero. All other transaction types have compressedSecrets = [0,0]
-    if (transaction.compressedSecrets[0] !== ZERO || transaction.compressedSecrets[1] !== ZERO) {
+    if (
+      (transaction.compressedSecrets[0] !== ZERO || transaction.compressedSecrets[1] !== ZERO) &&
+      !countOfNonZeroCommitments
+    ) {
       const transactionDecrypted = await decryptCommitment(
         transaction,
         zkpPrivateKeys,

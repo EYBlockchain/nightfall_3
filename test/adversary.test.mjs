@@ -204,7 +204,7 @@ describe('Testing with an adversary', () => {
     currentRollbacks = rollbackCount;
   });
 
-  describe.skip('Testing block zero challenges', async () => {
+  describe('Testing block zero challenges', async () => {
     before(async () => {
       await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
     });
@@ -233,26 +233,27 @@ describe('Testing with an adversary', () => {
   });
 
   describe('Testing optimist deep rollbacks', async () => {
+    const userL2BalanceBefore = await getLayer2BalancesBadClient(ercAddress);
+    const user2L2BalanceBefore = await getLayer2Balances(nf3User2, ercAddress);
+
     before(async () => {
-      await nf3User2.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
       await makeBlock();
       await waitForTimeout(10000);
     });
     it('Deep rollback', async () => {
       console.log('Testing deep rollback at distance 2...');
-      const userL2BalanceBefore = await getLayer2BalancesBadClient(ercAddress);
-      const user2L2BalanceBefore = await getLayer2Balances(nf3User2, ercAddress);
 
       await enableChallenger(false);
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
-      await nf3User2.transfer(
+      await nf3User2.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+      await nf3User.transfer(
         'ValidTransaction',
         false,
         ercAddress,
         tokenType,
         transferValue / 2,
         tokenId,
-        nf3User.zkpKeys.compressedZkpPublicKey,
+        nf3User2.zkpKeys.compressedZkpPublicKey,
         0,
       );
       await nf3User.deposit('IncorrectInput', ercAddress, tokenType, transferValue, tokenId, 0);
@@ -262,14 +263,14 @@ describe('Testing with an adversary', () => {
       });
 
       await makeBlock('IncorrectTreeRoot');
-      await nf3User.transfer(
+      await nf3User2.transfer(
         'ValidTransaction',
         false,
         ercAddress,
         tokenType,
         transferValue,
         tokenId,
-        nf3User2.zkpKeys.compressedZkpPublicKey,
+        nf3User.zkpKeys.compressedZkpPublicKey,
         0,
       );
       await makeBlock();
@@ -282,7 +283,7 @@ describe('Testing with an adversary', () => {
       const numberTxs = mempool.filter(e => e.mempool).length;
       expect(numberTxs).to.be.equal(2);
 
-      await nf3User2.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
 
       await waitForSufficientTransactionsMempool({
         optimistBaseUrl: environment.adversarialOptimistApiUrl,
