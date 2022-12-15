@@ -568,6 +568,12 @@ module.exports = {
         ],
       ],
     },
+    mumbai: {
+      RSA_TRUST_ROOTS: [],
+      // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
+      certificatePoliciesOIDs: [],
+      extendedKeyUsageOIDs: [],
+    },
   },
 
   // for Browser use
