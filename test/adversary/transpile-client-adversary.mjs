@@ -1,27 +1,21 @@
 import fs from 'fs';
 import { copyDir } from './adversary-code/utils.mjs';
 
-const duplicateNullifier = (
-  storedVariable,
-  functionCalled,
-  firstParameter,
-  ercAddress,
-  tokenId,
-) => {
+const duplicateNullifier = (storedVariable, ercAddress, tokenId) => {
   const duplicateNullifierCode = `let ${storedVariable} = [];
     if(transactionType && transactionType.includes('DuplicateNullifier')) {
-      ${storedVariable} = await ${functionCalled}Faulty(
-          ${firstParameter},
+      ${storedVariable} = await getAvailableCommitmentsFaulty(
+          db,
           compressedZkpPublicKey,
           ${ercAddress},
           ${tokenId},
       );
   } else {
-      ${storedVariable} = await ${functionCalled}(
-          ${firstParameter},
+      ${storedVariable} = await getAvailableCommitments(
+          db,
           compressedZkpPublicKey,
-          ercAddress,
-          tokenId,
+          ${ercAddress},
+          ${tokenId},
       );
   }`;
   return duplicateNullifierCode;
@@ -43,6 +37,10 @@ const transpileTransactionType = (_pathToSrc, _pathToInject) => {
   const regexModifyGetCommitmentsCall = /providedCommitments,(\s)*}\);/g;
   const reModifyGetCommitmentsCall = `providedCommitments, transactionType});`;
   srcFile = srcFile.replace(regexModifyGetCommitmentsCall, reModifyGetCommitmentsCall);
+
+  const regexModifyGetCommitmentsCall2 = /providedCommitmentsFee,(\s)*}\);/g;
+  const reModifyGetCommitmentsCall2 = `providedCommitmentsFee, transactionType});`;
+  srcFile = srcFile.replace(regexModifyGetCommitmentsCall2, reModifyGetCommitmentsCall2);
 
   // Add incorrectTransactions file
   const srcPreamble = /(\n|.)*(?=const rawTransaction)/g;
@@ -70,23 +68,10 @@ const transpileGetCommitmentInfo = _pathToSrc => {
     transactionType,`;
   srcFile = srcFile.replace(regexPassTransactionTypeParam, rePassTransactionTypeParam);
 
-  // Add import for getCommitmentsByHashFaulty
-  const regexAddImport = /getCommitmentsByHash,/g;
-  const reAddImport = `getCommitmentsByHash, 
-  getCommitmentsByHashFaulty,`;
-  srcFile = srcFile.replace(regexAddImport, reAddImport);
-
   // Modify getCommitmentsByHash logic in order to call faulty function if transaction type is
   // duplicateNulifier
-  const regexModifyGetCommitmentsCall =
-    /const rawCommitments = await getCommitmentsByHash\((\s)*commitmentHashes,(\s)*compressedZkpPublicKey,(\s)*ercAddress,(\s)*tokenId,(\s)*\);/g;
-  const reModifyGetCommitmentsCall = duplicateNullifier(
-    'rawCommitments',
-    'getCommitmentsByHash',
-    'commitmentHashes',
-    'ercAddress',
-    'tokenId',
-  );
+  const regexModifyGetCommitmentsCall = /getCommitmentsByHash/g;
+  const reModifyGetCommitmentsCall = `getCommitmentsByHashFaulty`;
   srcFile = srcFile.replace(regexModifyGetCommitmentsCall, reModifyGetCommitmentsCall);
 
   // Add incorrect Historic Block Number code, which modifies the blockNumberL2s array,
@@ -153,8 +138,6 @@ const transpileCommitmentStorage = (_pathToSrc, _pathToInject) => {
     /const commitmentArrayFee = await getAvailableCommitments\((\s)*db,(\s)*compressedZkpPublicKey,(\s)*ercAddressFee,(\s)*generalise\(0\),(\s)*\);/g;
   const reModifyGetCommitmentsCallFee = duplicateNullifier(
     'commitmentArrayFee',
-    'getAvailableCommitments',
-    'db',
     'ercAddressFee',
     'generalise(0)',
   );
@@ -162,13 +145,7 @@ const transpileCommitmentStorage = (_pathToSrc, _pathToInject) => {
 
   const regexModifyGetCommitmentsCall =
     /const commitmentArray = await getAvailableCommitments\((\s)*db,(\s)*compressedZkpPublicKey,(\s)*ercAddress,(\s)*tokenId,(\s)*\);/g;
-  const reModifyGetCommitmentsCall = duplicateNullifier(
-    'commitmentArray',
-    'getAvailableCommitments',
-    'db',
-    'ercAddress',
-    'tokenId',
-  );
+  const reModifyGetCommitmentsCall = duplicateNullifier('commitmentArray', 'ercAddress', 'tokenId');
   srcFile = srcFile.replace(regexModifyGetCommitmentsCall, reModifyGetCommitmentsCall);
 
   fs.writeFileSync(_pathToSrc, srcFile);

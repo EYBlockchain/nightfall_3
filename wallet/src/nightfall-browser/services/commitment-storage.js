@@ -867,16 +867,14 @@ export async function findUsableCommitmentsMutex(
   );
 }
 
-export async function getCommitmentsByHash(hashes, compressedZkpPublicKey, ercAddress, tokenId) {
+export async function getCommitmentsByHash(hashes, compressedZkpPublicKey) {
   const db = await connectDB();
   const vals = db.getAll(COMMITMENTS_COLLECTION);
   const commitment = vals.filter(
     v =>
       hashes.includes(v._id) &&
       v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
-      v.preimage.ercAddress === generalise(ercAddress).hex(32) &&
-      v.preimage.tokenId === generalise(tokenId).hex(32) &&
-      !v.isNullified &&
+      v.isNullifiedOnChain === -1 &&
       !v.isPendingNullification,
   );
 

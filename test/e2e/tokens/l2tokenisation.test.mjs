@@ -149,7 +149,7 @@ describe('L2 Tokenisation tests', () => {
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [commitmentHash], 1);
+      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, 1, [commitmentHash]);
 
       await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
@@ -192,7 +192,7 @@ describe('L2 Tokenisation tests', () => {
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].burn(l2Address, value, privateTokenId, [commitmentHash], 1);
+      await nf3Users[0].burn(l2Address, value, privateTokenId, 1, [commitmentHash]);
 
       await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
@@ -222,7 +222,7 @@ describe('L2 Tokenisation tests', () => {
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [], 1);
+      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, 1, []);
 
       await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
