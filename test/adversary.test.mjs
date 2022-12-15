@@ -204,7 +204,7 @@ describe('Testing with an adversary', () => {
     currentRollbacks = rollbackCount;
   });
 
-  describe('Testing block zero challenges', async () => {
+  describe.skip('Testing block zero challenges', async () => {
     before(async () => {
       await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
     });
@@ -224,7 +224,11 @@ describe('Testing with an adversary', () => {
     });
 
     after(async () => {
-      await makeBlock();
+      await clearMempool({
+        optimistUrl: adversarialOptimistApiUrl,
+        web3: web3Client,
+        logs: eventLogs,
+      });
     });
   });
 
@@ -236,6 +240,9 @@ describe('Testing with an adversary', () => {
     });
     it('Deep rollback', async () => {
       console.log('Testing deep rollback at distance 2...');
+      const userL2BalanceBefore = await getLayer2BalancesBadClient(ercAddress);
+      const user2L2BalanceBefore = await getLayer2Balances(nf3User2, ercAddress);
+
       await enableChallenger(false);
       await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
       await nf3User2.transfer(
@@ -287,8 +294,20 @@ describe('Testing with an adversary', () => {
       const userL2BalanceAfter = await getLayer2BalancesBadClient(ercAddress);
       const user2L2BalanceAfter = await getLayer2Balances(nf3User2, ercAddress);
 
-      expect(userL2BalanceAfter).to.be.equal(transferValue + transferValue / 2);
-      expect(user2L2BalanceAfter).to.be.equal(transferValue + transferValue / 2);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(
+        transferValue + transferValue / 2,
+      );
+      expect(user2L2BalanceAfter - user2L2BalanceBefore).to.be.equal(
+        transferValue + transferValue / 2,
+      );
+    });
+
+    after(async () => {
+      await clearMempool({
+        optimistUrl: adversarialOptimistApiUrl,
+        web3: web3Client,
+        logs: eventLogs,
+      });
     });
   });
 
