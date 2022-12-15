@@ -22,8 +22,7 @@ openssl genpkey -outform DER -pkeyopt rsa_keygen_bits:4096 -algorithm RSA -out u
 
 # generates a certification request
 openssl req -new \
-  -subj "/C=IN/ST=Mumbai/O=Polygon Technology/OU=Nightfall Team/CN=$user_name/emailAddress=$user_name@polygon.technology" \
-  -config conf/oid.conf \
+  -subj "/C=IN/ST=Mumbai/O=User-$1/OU=Nightfall Team/CN=$user_name/emailAddress=$user_name@user.com" \
   -key user/invalid/$user_name.priv_key -out user/invalid/$user_name.csr
 
 echo -e "\nGenerating one-day certificate"

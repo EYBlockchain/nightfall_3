@@ -21,7 +21,7 @@ openssl genpkey -outform DER -pkeyopt rsa_keygen_bits:4096 -algorithm RSA -out u
 
 # generates a certification request
 openssl req -new \
-  -subj "/C=IN/ST=Mumbai/O=Polygon Technology/OU=Nightfall Team/CN=$user_name/emailAddress=$user_name@polygon.technology" \
+  -subj "/C=IN/ST=Mumbai/O=User-$1/OU=Nightfall Team/CN=$user_name/emailAddress=$user_name@user.com" \
   -key user/$user_name.priv_key -out user/$user_name.csr
 
 # generates a valid certificate

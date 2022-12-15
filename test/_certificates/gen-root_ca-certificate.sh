@@ -15,7 +15,6 @@ openssl req -new -x509 \
   -key root_ca.priv_key \
   -out root_ca.crt \
   -addext keyUsage=keyCertSign,cRLSign
-  #-subj "/C=/ST=/O=Polygon Technology/OU=Nightfall Team/CN=Polygon Technology CA/emailAddress="
 
 # outputs the authority key with the correct padding
 { echo "0x"; printf %064s $(openssl x509 -noout -in root_ca.crt -text -ext authorityKeyIdentifier | tail -n 1 | sed 's/ //g' | sed 's/://g') | sed 's/ /0/g'; } | tr -d '\n'> root_ca.authority_key
@@ -25,7 +24,7 @@ openssl genpkey -outform DER -pkeyopt rsa_keygen_bits:4096 -algorithm RSA -out i
 
 # generates a certification request
 openssl req -new \
-  -subj "/C=IN/ST=Mumbai/O=Polygon Technology Intermediate/OU=Nightfall Team/CN=Polygon Intermediate CA/emailAddress=polygon_intermediate_ca@polygon.technology" \
+  -subj "/C=IN/ST=Mumbai/O=Intermediate CA/OU=Nightfall Team/CN=Intermediate CA/emailAddress=intermediate_ca@ca.com" \
   -addext keyUsage=keyCertSign,cRLSign \
   -key intermediate_ca.priv_key \
   -out intermediate_ca.csr
