@@ -396,8 +396,6 @@ export async function revealChallenge(txDataToSign, sender) {
   // if the challange is sent from a different address
 
   // ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
-
-  //sign it here w/o ws
 }
 /**
 Function to indicate to a listening challenger that a rollback has been completed.
@@ -415,6 +413,5 @@ export async function signalRollbackCompleted(data) {
   //   if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
   // }
   // logger.debug('Rollback completed');
-  //ws
   // ws.send(JSON.stringify({ type: 'rollback', data }));
 }
