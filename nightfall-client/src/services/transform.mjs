@@ -25,7 +25,7 @@ const { generalise } = gen;
 async function transform(transformParams) {
   logger.info('Creating a transform transaction');
 
-  const { inputTokens, outputTokens, ...items } = transformParams;
+  const { inputTokens, outputTokens, providedCommitmentsFee, ...items } = transformParams;
   const { rootKey, fee } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
@@ -62,6 +62,7 @@ async function transform(transformParams) {
     rootKey,
     maxNullifiers: VK_IDS.transform.numberNullifiers - inputTokens.length,
     maxNonFeeNullifiers: 0,
+    providedCommitmentsFee,
   });
   commitmentInfoArray.push(feeCi);
   const paddedInputTokens = [
