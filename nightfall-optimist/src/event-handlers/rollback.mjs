@@ -52,7 +52,7 @@ async function rollbackEventHandler(data) {
     // Add new block to validTransactionsBlock
     validTransactionsBlock[blockNumber] = [];
 
-    // Get the trannsaction hashes included in these blocks
+    // Get the transaction hashes included in these blocks
     const transactionHashesInBlock = blocksToBeDeleted[i].transactionHashes.flat(Infinity);
     // Use the transaction hashes to grab the actual transactions filtering out deposits - In Order.
     // eslint-disable-next-line no-await-in-loop
@@ -129,7 +129,7 @@ async function rollbackEventHandler(data) {
   ]);
 
   await dequeueEvent(2); // Remove an event from the stopQueue.
-  // A Rollback triggers a NewCurrentProposer event which shoudl trigger queue[0].end()
+  // A Rollback triggers a NewCurrentProposer event which should trigger queue[0].end()
   // But to be safe we enqueue a helper event to guarantee queue[0].end() runs.
 
   // assumption is if optimist has makeChallenges ON there is challenger

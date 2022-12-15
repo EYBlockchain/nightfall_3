@@ -5,11 +5,10 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import { UserFactory } from 'nightfall-sdk';
 import axios from 'axios';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { waitTransactionToBeMined, Web3Client } from '../../utils.mjs';
+import { getLayer2Balances, waitTransactionToBeMined, Web3Client } from '../../utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -18,16 +17,24 @@ chai.use(chaiAsPromised);
 const { PROPOSERS_CONTRACT_NAME, STATE_CONTRACT_NAME } = constants;
 
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
-const { mnemonics, signingKeys, fee, transferValue } = config.TEST_OPTIONS;
+const {
+  tokenConfigs: { tokenType, tokenId },
+  mnemonics,
+  signingKeys,
+  fee,
+  transferValue,
+} = config.TEST_OPTIONS;
 
 const web3Client = new Web3Client();
+const web3 = web3Client.getWeb3();
 const eventLogs = [];
 
-let web3;
-let stateAddress;
-let proposersAddress;
-let stateABI;
+const nf3User = new Nf3(signingKeys.user1, environment);
+const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
+nf3Proposer.setApiKey(environment.AUTH_TOKEN);
 
+let stateAddress;
+let stateABI;
 const getStakeAccount = async ethAccount => {
   const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
   return stateContractInstance.methods.getStakeAccount(ethAccount).call();
@@ -43,93 +50,77 @@ const filterByThisProposer = async nf3proposer => {
   return proposers.filter(p => p.thisAddress === nf3proposer.ethereumAddress);
 };
 
-const getCurrentSprint = async () => {
-  const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
-  return stateContractInstance.methods.currentSprint().call();
-};
-
 describe('Basic Proposer tests', () => {
-  let user;
-  let minimumStake;
-  let rotateProposerBlocks;
-  let erc20Address;
-
-  const feeDefault = 0;
-  const bootProposer = new Nf3(signingKeys.proposer1, environment);
   const testProposersUrl = ['http://test-proposer1', 'http://test-proposer2'];
+  const feeDefault = 0;
+
+  let erc20Address;
+  let minimumStake;
+  let proposersAddress;
 
   before(async () => {
-    web3 = web3Client.getWeb3();
+    await nf3User.init(mnemonics.user1);
+    await nf3Proposer.init(mnemonics.proposer);
 
-    user = await UserFactory.create({
-      blockchainWsUrl: environment.web3WsUrl,
-      clientApiUrl: environment.clientApiUrl,
-      ethereumPrivateKey: signingKeys.user1,
-    });
-
-    await bootProposer.init(mnemonics.proposer);
-
-    minimumStake = await bootProposer.getMinimumStake();
-    rotateProposerBlocks = await bootProposer.getRotateProposerBlocks();
-
-    stateABI = await bootProposer.getContractAbi(STATE_CONTRACT_NAME);
-    stateAddress = await bootProposer.getContractAddress(STATE_CONTRACT_NAME);
-    proposersAddress = await bootProposer.getContractAddress(PROPOSERS_CONTRACT_NAME);
-    erc20Address = await bootProposer.getContractAddress('ERC20Mock');
+    minimumStake = await nf3Proposer.getMinimumStake();
+    stateABI = await nf3Proposer.getContractAbi(STATE_CONTRACT_NAME);
+    stateAddress = await nf3Proposer.getContractAddress(STATE_CONTRACT_NAME);
+    proposersAddress = await nf3Proposer.getContractAddress(PROPOSERS_CONTRACT_NAME);
+    erc20Address = await nf3Proposer.getContractAddress('ERC20Mock');
 
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     web3Client.subscribeTo('logs', eventLogs, { address: proposersAddress });
   });
 
   it('Should access any public route with any API key', async () => {
-    bootProposer.resetApiKey();
+    nf3Proposer.resetApiKey();
     const { status } = await axios.get(`${environment.optimistApiUrl}/proposer/mempool`);
     expect(status).to.equal(200);
   });
 
   it('Should access any public route with the correct API key', async () => {
-    bootProposer.setApiKey(environment.AUTH_TOKEN);
+    nf3Proposer.setApiKey(environment.AUTH_TOKEN);
     const { status } = await axios.get(`${environment.optimistApiUrl}/proposer/mempool`);
     expect(status).to.equal(200);
   });
 
   it('Should fail to register a proposer without an API key', async () => {
     try {
-      bootProposer.resetApiKey();
-      await bootProposer.registerProposer(testProposersUrl[0], minimumStake);
+      nf3Proposer.resetApiKey();
+      await nf3Proposer.registerProposer(testProposersUrl[0], minimumStake);
       expect.fail();
     } catch (err) {
       expect(err);
     } finally {
-      bootProposer.setApiKey(environment.AUTH_TOKEN);
+      nf3Proposer.setApiKey(environment.AUTH_TOKEN);
     }
   });
 
   it('Should fail to register a proposer without a valid API key', async () => {
     try {
-      bootProposer.setApiKey('test');
-      await bootProposer.registerProposer(testProposersUrl[0], minimumStake);
+      nf3Proposer.setApiKey('test');
+      await nf3Proposer.registerProposer(testProposersUrl[0], minimumStake);
       expect.fail();
     } catch (err) {
       expect(err);
     } finally {
-      bootProposer.setApiKey(environment.AUTH_TOKEN);
+      nf3Proposer.setApiKey(environment.AUTH_TOKEN);
     }
   });
 
-  it('Should register the boot proposer - await for this to become current', async () => {
+  it('Should register a proposer, then wait for this to become current', async () => {
     // Before registering proposer
-    const proposersBeforeRegister = await filterByThisProposer(bootProposer);
-    const stakeBeforeRegister = await getStakeAccount(bootProposer.ethereumAddress);
+    const proposersBeforeRegister = await filterByThisProposer(nf3Proposer);
+    const stakeBeforeRegister = await getStakeAccount(nf3Proposer.ethereumAddress);
 
     // Register proposer, wait for proposer to become current proposer
     const url = testProposersUrl[0];
-    await bootProposer.registerProposer(url, minimumStake, feeDefault);
+    await nf3Proposer.registerProposer(url, minimumStake, feeDefault);
     await web3Client.waitForEvent(eventLogs, ['NewCurrentProposer']);
 
     // After registering proposer
-    const proposersAfterRegister = await filterByThisProposer(bootProposer);
-    const stakeAfterRegister = await getStakeAccount(bootProposer.ethereumAddress);
+    const proposersAfterRegister = await filterByThisProposer(nf3Proposer);
+    const stakeAfterRegister = await getStakeAccount(nf3Proposer.ethereumAddress);
 
     // Assertions, before registering
     expect(proposersBeforeRegister).to.be.an('array').that.is.empty;
@@ -145,33 +136,43 @@ describe('Basic Proposer tests', () => {
 
   it('Should return registered proposer as current proposer', async () => {
     const { thisAddress: currentProposer } = await getCurrentProposer();
-    expect(currentProposer).to.be.equal(bootProposer.ethereumAddress);
+    expect(currentProposer).to.be.equal(nf3Proposer.ethereumAddress);
+  });
+
+  it('Should fail to change current proposer because insufficient blocks have passed', async () => {
+    const { thisAddress: currentProposerBefore } = await getCurrentProposer();
+
+    const { transactionHash } = await nf3Proposer.changeCurrentProposer();
+    await waitTransactionToBeMined(transactionHash, web3);
+
+    const { thisAddress: currentProposerAfter } = await getCurrentProposer();
+    expect(currentProposerAfter).to.be.equal(currentProposerBefore);
   });
 
   it('Should fail to register a proposer twice', async () => {
-    const res = await bootProposer.registerProposer('potato', minimumStake);
+    const res = await nf3Proposer.registerProposer('potato', minimumStake);
     // Registration attempt will be ignored at the endpoint since the Eth address will be the same
-    expect(res.data).to.be.an('object').that.is.empty;
+    expect(res.data).to.be.undefined;
   });
 
   it('Should update the proposer fee', async () => {
     // Before updating proposer
-    const proposersBeforeUpdate = await filterByThisProposer(bootProposer);
-    const stakeBeforeUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    const proposersBeforeUpdate = await filterByThisProposer(nf3Proposer);
+    const stakeBeforeUpdate = await getStakeAccount(nf3Proposer.ethereumAddress);
     expect(proposersBeforeUpdate).to.have.lengthOf(1); // Leave here to safely access array by idx
 
     // Update proposer fee
     const currentUrl = proposersBeforeUpdate[0].url; // Need to pass current value
     const stake = 0; // Contract adds given value to existing amount
     const newFee = fee;
-    const { transactionHash } = await bootProposer.updateProposer(currentUrl, stake, newFee);
+    const { transactionHash } = await nf3Proposer.updateProposer(currentUrl, stake, newFee);
 
     // Wait for transaction to be mined
     await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
-    const proposersAfterUpdate = await filterByThisProposer(bootProposer);
-    const stakeAfterUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    const proposersAfterUpdate = await filterByThisProposer(nf3Proposer);
+    const stakeAfterUpdate = await getStakeAccount(nf3Proposer.ethereumAddress);
 
     // Assertions, before updating fee
     expect(Number(proposersBeforeUpdate[0].fee)).to.be.equal(feeDefault);
@@ -185,22 +186,22 @@ describe('Basic Proposer tests', () => {
 
   it('Should update the proposer url', async () => {
     // Before updating proposer
-    const proposersBeforeUpdate = await filterByThisProposer(bootProposer);
-    const stakeBeforeUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    const proposersBeforeUpdate = await filterByThisProposer(nf3Proposer);
+    const stakeBeforeUpdate = await getStakeAccount(nf3Proposer.ethereumAddress);
     expect(proposersBeforeUpdate).to.have.lengthOf(1); // Leave here to safely access array by idx
 
     // Update proposer url
     const newUrl = testProposersUrl[1];
     const stake = 0; // Contract adds given value to existing amount
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    const { transactionHash } = await bootProposer.updateProposer(newUrl, stake, currentFee);
+    const { transactionHash } = await nf3Proposer.updateProposer(newUrl, stake, currentFee);
 
     // Wait for transaction to be mined
     await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
-    const proposersAfterUpdate = await filterByThisProposer(bootProposer);
-    const stakeAfterUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    const proposersAfterUpdate = await filterByThisProposer(nf3Proposer);
+    const stakeAfterUpdate = await getStakeAccount(nf3Proposer.ethereumAddress);
 
     // Assertions, before updating url
     expect(proposersBeforeUpdate[0].url).to.be.equal(testProposersUrl[0]);
@@ -214,14 +215,14 @@ describe('Basic Proposer tests', () => {
 
   it('Should update the proposer stake', async () => {
     // Before updating proposer
-    const proposersBeforeUpdate = await filterByThisProposer(bootProposer);
-    const stakeBeforeUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    const proposersBeforeUpdate = await filterByThisProposer(nf3Proposer);
+    const stakeBeforeUpdate = await getStakeAccount(nf3Proposer.ethereumAddress);
     expect(proposersBeforeUpdate).to.have.lengthOf(1); // Leave here to safely access array by idx
 
     // Update proposer url
     const currentUrl = proposersBeforeUpdate[0].url;
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    const { transactionHash } = await bootProposer.updateProposer(
+    const { transactionHash } = await nf3Proposer.updateProposer(
       currentUrl,
       minimumStake,
       currentFee,
@@ -231,8 +232,8 @@ describe('Basic Proposer tests', () => {
     await waitTransactionToBeMined(transactionHash, web3);
 
     // After updating proposer
-    const proposersAfterUpdate = await filterByThisProposer(bootProposer);
-    const stakeAfterUpdate = await getStakeAccount(bootProposer.ethereumAddress);
+    const proposersAfterUpdate = await filterByThisProposer(nf3Proposer);
+    const stakeAfterUpdate = await getStakeAccount(nf3Proposer.ethereumAddress);
 
     // Assertions - url and fee remain the same
     expect(proposersAfterUpdate).to.have.lengthOf(1);
@@ -244,94 +245,38 @@ describe('Basic Proposer tests', () => {
     expect(Number(proposersAfterUpdate[0].fee)).to.be.equal(currentFee);
   });
 
-  it.skip('Should fail to change current proposer because insufficient blocks have passed', async () => {
-    // SKIP Call fails as expected but revert reason `State: Too soon to rotate proposer` is not captured
-    // TODO We should be able to assert that it is actually too soon
-
-    // Note that the test operates with one proposer, which is why we use the current proposer
-    // to call `changeCurrentProposer`, in reality this proposer would be the least interested
-    let error = null;
-    try {
-      await bootProposer.changeCurrentProposer();
-    } catch (err) {
-      error = err;
-    }
-    expect(error.message).to.satisfy(message =>
-      message.includes('Transaction has been reverted by the EVM'),
-    );
-  });
-
   it('Should be able to make a block any time as soon as there are txs in the mempool', async () => {
     // User balance in L2 before making deposit
-    const balancesBeforeBlockProposed = await user.checkNightfallBalances();
+    const balancesBeforeBlockProposed = await getLayer2Balances(nf3User, erc20Address);
 
     // Make deposit, then make block to settle the deposit
     const value = String(transferValue * 2);
-    await user.makeDeposit({
-      tokenContractAddress: String(erc20Address),
-      value,
-    });
-    await bootProposer.makeBlockNow();
+    await nf3User.deposit(erc20Address, tokenType, value, tokenId, fee);
+    await nf3Proposer.makeBlockNow();
 
     // Wait before checking user balance in L2 again
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    const balancesAfterBlockProposed = await user.checkNightfallBalances();
+    const balancesAfterBlockProposed = await getLayer2Balances(nf3User, erc20Address);
 
     // Assertions
-    expect(balancesBeforeBlockProposed).to.be.an('object').that.is.empty;
-    expect(balancesAfterBlockProposed).to.have.property(erc20Address);
-
-    const erc20balances = balancesAfterBlockProposed[erc20Address];
-    expect(erc20balances).to.have.lengthOf(1);
-    expect(String(erc20balances[0].balance)).to.have.string(value); // Balance is in Wei, so we compare strings
-  });
-
-  it.skip('Should change the current proposer', async function () {
-    // SKIP We need to spin a second optimist if we want to keep this test
-    const CHANGE_PROPOSER_NO_TIMES = 8;
-    let numChanges = 0;
-    for (let i = 0; i < CHANGE_PROPOSER_NO_TIMES; i++) {
-      try {
-        const currentSprint = await getCurrentSprint();
-        const currentProposer = await getCurrentProposer();
-        console.log(
-          `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress} ]`,
-        );
-
-        console.log('     Waiting blocks to rotate current proposer...');
-        const initBlock = await web3.eth.getBlockNumber();
-        let currentBlock = initBlock;
-
-        while (currentBlock - initBlock < rotateProposerBlocks) {
-          await new Promise(resolve => setTimeout(resolve, 10000));
-          currentBlock = await web3.eth.getBlockNumber();
-        }
-
-        // const res = await secondProposer.changeCurrentProposer();
-        // expectTransaction(res);
-        numChanges++;
-      } catch (err) {
-        console.log(err);
-      }
-    }
-    expect(numChanges).to.be.equal(CHANGE_PROPOSER_NO_TIMES);
+    expect(balancesAfterBlockProposed).to.be.above(balancesBeforeBlockProposed);
   });
 
   it('Should de-register the proposer even when it is current proposer', async () => {
     // Before de-registering proposer
-    const proposersBeforeDeregister = await filterByThisProposer(bootProposer);
+    const proposersBeforeDeregister = await filterByThisProposer(nf3Proposer);
     const { thisAddress: currentProposer } = await getCurrentProposer();
 
     // De-register proposer
-    await bootProposer.deregisterProposer();
+    await nf3Proposer.deregisterProposer();
     await web3Client.waitForEvent(eventLogs, ['NewCurrentProposer']);
 
     // After de-registering proposer
-    const proposersAfterDeregister = await filterByThisProposer(bootProposer);
+    const proposersAfterDeregister = await filterByThisProposer(nf3Proposer);
 
     // Assertions, before de-registering
     expect(proposersBeforeDeregister).to.have.lengthOf(1);
-    expect(currentProposer).to.be.equal(bootProposer.ethereumAddress);
+    expect(currentProposer).to.be.equal(nf3Proposer.ethereumAddress);
     // After
     expect(proposersAfterDeregister).to.be.an('array').that.is.empty;
   });
@@ -344,7 +289,7 @@ describe('Basic Proposer tests', () => {
   it.skip('Should fail to withdraw stake due to the cooling off period', async () => {
     // TODO
     try {
-      await bootProposer.withdrawStake();
+      await nf3Proposer.withdrawStake();
       expect.fail();
     } catch (err) {
       expect(err.message).to.satisfy(
@@ -358,13 +303,13 @@ describe('Basic Proposer tests', () => {
 
   it.skip('Should be able to withdraw stake', async () => {
     // TODO
-    if ((await web3Client.getInfo()).includes('TestRPC')) await web3Client.timeJump(3600 * 24 * 10); // jump in time by 7 days
+    if ((await web3Client.getInfo()).includes('TestRPC')) await web3Client.timeJump(3600 * 24 * 10);
     if ((await web3Client.getInfo()).includes('TestRPC')) {
-      await bootProposer.withdrawStake();
+      await nf3Proposer.withdrawStake();
     } else {
       let error = null;
       try {
-        await bootProposer.withdrawStake();
+        await nf3Proposer.withdrawStake();
       } catch (err) {
         error = err;
       }
@@ -373,8 +318,8 @@ describe('Basic Proposer tests', () => {
   });
 
   after(async () => {
-    await bootProposer.close();
-    user.close();
+    await nf3Proposer.close();
+    await nf3User.close();
     web3Client.closeWeb3();
   });
 });

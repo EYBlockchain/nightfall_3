@@ -4,51 +4,11 @@
 Module that runs up as a proposer
 */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import config from 'config';
-
-const { TIMER_CHANGE_PROPOSER_SECOND, MAX_ROTATE_TIMES } = config;
-
-/**
- * check that it is possible to make the proposer change by checking the following conditions:
- * the number of registered proposers is greater than 1
- * the time window reserved for the previous proposer is passed
- * if the two conditions are met, the changeCurrentProposer function is automatically called
- */
-async function checkAndChangeProposer(nf3) {
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    logger.info('Checking Proposer...');
-    const proposerStartBlock = await nf3.proposerStartBlock();
-    const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
-    const numproposers = await nf3.getNumProposers();
-    const currentSprint = await nf3.currentSprint();
-    const currentBlock = await nf3.web3.eth.getBlockNumber();
-
-    if (currentBlock - proposerStartBlock >= rotateProposerBlocks && numproposers > 1) {
-      const spanProposersListAtPosition = await nf3.spanProposersList(currentSprint);
-      logger.info(`Proposer address: ${spanProposersListAtPosition} and sprint: ${currentSprint}`);
-      try {
-        if (spanProposersListAtPosition === nf3.ethereumAddress) {
-          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
-          await nf3.changeCurrentProposer();
-        } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
-          logger.info(`${nf3.ethereumAddress} is Calling changeCurrentProposer`);
-          await nf3.changeCurrentProposer();
-        }
-      } catch (err) {
-        logger.info(err);
-      }
-    } else {
-      logger.info(`the proposer is not changed. sprint: ${currentSprint}`);
-    }
-    await new Promise(resolve => setTimeout(resolve, TIMER_CHANGE_PROPOSER_SECOND * 1000));
-  }
-}
 
 /**
 Does the preliminary setup and starts listening on the websocket
 */
-export default async function startProposer(nf3, proposerBaseUrl) {
+export default async function startProposer(nf3, optimistApiUrl) {
   logger.info('Starting Proposer...');
   // Mnemonic are only required for services connecting to a client that
   // can generate a compressed PKD.
@@ -63,36 +23,24 @@ export default async function startProposer(nf3, proposerBaseUrl) {
 
   console.log(`blockStake: ${blockStake}, minimumStake: ${minimumStake}`);
 
-  try {
-    await nf3.registerProposer(proposerBaseUrl, minimumStake);
-  } catch (err) {
-    logger.info(err);
-  }
-  logger.debug('Proposer healthcheck up');
+  let nTimes = 0;
+  while (nTimes < 10) {
+    try {
+      await nf3.registerProposer(optimistApiUrl, minimumStake);
+    } catch (err) {
+      logger.info(err);
+    }
 
-  // If the emitter is not defined it causes the process to exit
-  const blockProposeEmitter = await nf3.startProposer();
-  checkAndChangeProposer(nf3);
-  blockProposeEmitter
-    .on('receipt', (receipt, block) => {
-      logger.debug(
-        `L2 Block with L2 block number ${block.blockNumberL2} was proposed. The L1 transaction hash is ${receipt.transactionHash}`,
-      );
-    })
-    .on('error', async (error, block) => {
-      logger.error(error);
-      logger.error(
-        `ERROR!!!! Proposing L2 Block with L2 block number ${block.blockNumberL2} failed due to error: ${error.message} `,
-      );
-      if (error.message.includes('Transaction has been reverted by the EVM')) {
-        const stakeAccount = await nf3.getProposerStake();
-        console.log('CURRENT STAKE: ', stakeAccount);
-        if (stakeAccount.amount <= blockStake) {
-          logger.info('Updating the stake...');
-          await nf3.updateProposer(proposerBaseUrl, minimumStake, 0);
-          logger.info('Stake updated!!!!!');
-        }
-      }
-    });
-  logger.info('Listening for incoming events');
+    const { proposers } = await nf3.getProposers();
+    const proposerFound = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
+    if (proposerFound.length > 0) break;
+
+    nTimes++;
+    logger.warn(`Unable to register will try again in 3 seconds`);
+    await new Promise(resolve => setTimeout(() => resolve(), 10000));
+  }
+
+  logger.debug('Proposer healthcheck up');
+  await nf3.close();
+  process.exit(0);
 }

@@ -32,8 +32,9 @@ export default {
     }
     return connection[url];
   },
+
   async disconnect(url) {
-    connection[url].close();
+    await connection[url].close();
     delete connection[url];
   },
 };

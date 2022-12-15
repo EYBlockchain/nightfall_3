@@ -872,8 +872,7 @@ class Nf3 {
       url,
       fee,
     });
-    logger.debug(`Proposer /register response ${res}`);
-    return res;
+    return res?.data;
     // if (res.data.txDataToSign === '') return false; // already registered
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
@@ -900,8 +899,7 @@ class Nf3 {
     @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
     */
   async deregisterProposer() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/de-register`);
-    logger.debug(`Proposer /de-register response ${res}`);
+    return axios.post(`${this.optimistBaseUrl}/proposer/de-register`);
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
     //     try {
@@ -928,7 +926,7 @@ class Nf3 {
     */
   async changeCurrentProposer() {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`);
-    logger.debug(`Proposer /change response ${res}`);
+    return res?.data;
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
     //     try {
@@ -954,8 +952,7 @@ class Nf3 {
     */
   async withdrawStake() {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawStake`);
-    logger.debug(`Proposer /withdrawStake response ${res}`);
-    return res;
+    return res?.data;
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {
     //     try {
@@ -1004,8 +1001,7 @@ class Nf3 {
     const res = await axios.post(`${this.optimistBaseUrl}/proposer/payment`, {
       blockHash,
     });
-    logger.debug(`Proposer /payment response ${res}`);
-    return res;
+    return res?.data;
   }
 
   /**
@@ -1045,7 +1041,6 @@ class Nf3 {
       url,
       fee,
     });
-    logger.debug(`Proposer /update response ${res}`);
     return res?.data;
     // return new Promise((resolve, reject) => {
     //   proposerQueue.push(async () => {

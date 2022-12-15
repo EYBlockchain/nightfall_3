@@ -4,6 +4,7 @@ Module that runs up as a user
 
 /* eslint-disable no-await-in-loop */
 
+import config from 'config';
 import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
@@ -13,6 +14,9 @@ const { TX_WAIT = 1000 } = process.env;
 let stateContract;
 const tokenType = 'ERC20';
 const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
+
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
 
 export const getCurrentProposer = async () => {
   const currentProposer = await stateContract.methods.getCurrentProposer().call();
@@ -27,30 +31,6 @@ const getCurrentSprint = async () => {
 export const getStakeAccount = async proposer => {
   const stakeAccount = await stateContract.methods.getStakeAccount(proposer).call();
   return stakeAccount;
-};
-
-const makeBlock = async (optimistUrls, currentProposer) => {
-  const url = optimistUrls.find(
-    // eslint-disable-next-line no-loop-func
-    o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-  )?.optimistUrl;
-
-  if (url) {
-    const res = await axios.get(`${url}/proposer/mempool`);
-    if (res.data.result.length > 0) {
-      console.log(
-        ` *** ${
-          res.data.result.length
-        } transactions in the mempool (${currentProposer.thisAddress.toUpperCase()} - ${url})`,
-      );
-      if (res.data.result.length > 0) {
-        console.log('     Make block...');
-        await axios.get(`${url}/block/make-now`);
-      }
-    }
-  } else {
-    console.log('This current proposer does not have optimist url defined in the compose yml file');
-  }
 };
 
 /**
@@ -230,9 +210,7 @@ export async function setParametersConfig(nf3User) {
 /**
   Proposer test for rotation of the proposers and making blocks
 */
-export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
-  console.log('OPTIMISTURLS', optimistUrls);
-
+export async function proposerStats(proposersStats, nf3Proposer) {
   try {
     const stateAddress = stateContract.options.address;
     const proposersBlocks = [];
@@ -288,26 +266,6 @@ export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
         console.log(`  ${pb.proposer} : ${pb.blocks}`);
       }
     });
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      try {
-        if (nf3Proposer.web3WsUrl.includes('localhost')) {
-          await makeBlock(optimistUrls, currentProposer);
-        }
-      } catch (err) {
-        // containers stopped
-        if (err.message.includes('connection not open')) {
-          console.log('Containers stopped!');
-          return;
-        }
-
-        console.log(err);
-        await new Promise(resolve => setTimeout(resolve, 10000));
-      }
-      console.log('     Waiting some time');
-      await new Promise(resolve => setTimeout(resolve, 30000));
-    }
   } catch (e) {
     console.log('ERROR!!!!', e);
   }
