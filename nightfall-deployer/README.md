@@ -98,9 +98,70 @@ To perfom a deployment follow the instructions bellow:
         },
     ```
 
-  - If whitelist functionality is required to perform transactions on the contracts, one is going to need to setup the `RSA_TRUST_ROOTS`. Under this 
-    setting are the Root Certificate Authorities that the contracts will trust for intermediate/end-user certificates. The `WHITELISTING` should
-    have the value `enable` to enable the whitelisting functionality. This setting can be found in the file created in the `Step 1.`.
+  - If whitelist functionality is required to perform transactions on the contracts, the `WHITELISTING` environment variable should have the value 
+  set to `enable` to enable the whitelisting functionality. This setting can be found in the file created in the `Step 1.`. If needed, then one is 
+  going to need to setup the Root Certificate Authorities information that the contracts will trust for intermediate/end-user certificates and the 
+  Extended Key Usages & Object Identifiers for each Certificate Authority that is going to be used. An entry should be added under the `X509` similar
+  to the following:
+    ```
+      X509: {
+        [NETWORK_NAME]: {
+          RSA_TRUST_ROOTS: [
+            {
+              modulus: '0x00...',
+              exponent: 65537,
+              authorityKeyIdentifier: `0x...`,
+            },
+          ],
+          certificatePoliciesOIDs: [
+            [
+              '0x...',
+            ],
+          ],
+          extendedKeyUsageOIDs: [
+            [
+              '0x...',
+            ],
+          ],
+        },
+      },
+    ```
+    The properties `certificatePoliciesOIDs` and `extendedKeyUsageOIDs` are arrays and each entry are also arrays 
+    with specific values for each Certificate Authority that are expected to be used for the whistelisting. For more details see the documentation 
+    on how to add certificates (/doc/x509.md & /doc/adding_certificates.md). Follows a sample of a fake entry:
+    ```
+      X509: {
+        blockchain: {
+          RSA_TRUST_ROOTS: [
+            {
+              modulus:
+                '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
+              exponent: 65537,
+              authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`,
+            },
+          ],
+          certificatePoliciesOIDs: [
+            // Digicert
+            [
+              '0x06096086480186fd6c0315000000000000000000000000000000000000000000',
+              '0x060a6086480186fd6c0315020000000000000000000000000000000000000000',
+            ],
+            // Entrust
+            ['0x060a6086480186fa6c0a01060000000000000000000000000000000000000000'],
+          ],
+          extendedKeyUsageOIDs: [
+            // Digicert
+            ['0x06082b0601050507030300000000000000000000000000000000000000000000'],
+            // Entrust
+            [
+              '0x06096086480186fa6b280b000000000000000000000000000000000000000000',
+              '0x060a2b0601040182370a030c0000000000000000000000000000000000000000',
+            ],
+          ],
+        },
+      },
+    ```
+
 
   - For the section `RESTRICTIONS`, the tokens' information should be added for the network that is going to be used in the deployment. For each token 
     that is going the be handled by the network, one entry should be added. The `address` should point to the respective address of the cryptocurrency and
