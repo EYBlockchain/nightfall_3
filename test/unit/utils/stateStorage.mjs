@@ -34,23 +34,17 @@ export async function setTransactionInfo(
 export async function setBlockInfo(
   stateAddress,
   blockHash,
-  feePaymentsEth = 0,
   feePaymentsMatic = 0,
   blockClaimed = false,
 ) {
   const index = ethers.utils.solidityKeccak256(['uint256', 'uint256'], [blockHash, blockInfoSlot]);
 
-  const txInfoStruct = ethers.utils.hexZeroPad(
-    ethers.utils.hexlify(
-      ethers.utils.concat([
-        ethers.utils.hexlify(Number(blockClaimed)),
-        ethers.utils.hexZeroPad(ethers.utils.hexlify(feePaymentsMatic), 15),
-        ethers.utils.hexZeroPad(ethers.utils.hexlify(feePaymentsEth), 15),
-      ]),
-    ),
-    32,
+  const txInfoStruct = ethers.utils.hexlify(
+    ethers.utils.concat([
+      ethers.utils.hexlify(Number(blockClaimed)),
+      ethers.utils.hexZeroPad(ethers.utils.hexlify(feePaymentsMatic), 31),
+    ]),
   );
-
   await setStorageAt(stateAddress, index, txInfoStruct);
 }
 

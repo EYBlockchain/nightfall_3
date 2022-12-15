@@ -5,6 +5,7 @@
 import express from 'express';
 import gen from 'general-number';
 import { getCircuitHash } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import {
   getCommitmentBySalt,
   getWalletBalance,
@@ -21,6 +22,8 @@ import {
 const router = express.Router();
 
 const { generalise } = gen;
+
+const { WITHDRAW } = constants;
 
 router.get('/salt', async (req, res, next) => {
   try {
@@ -122,7 +125,7 @@ router.get('/', async (req, res, next) => {
 
 router.get('/withdraws', async (req, res, next) => {
   try {
-    const circuitHash = await getCircuitHash('withdraw');
+    const circuitHash = await getCircuitHash(WITHDRAW);
 
     const withdrawCircuitHash = generalise(circuitHash).hex(32);
 

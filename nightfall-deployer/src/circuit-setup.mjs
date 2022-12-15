@@ -69,20 +69,18 @@ async function setupCircuits() {
   const circuitsToSetup = await await walk(config.CIRCUITS_HOME);
   // then we'll get all of the vks (some may not exist but we'll handle that in
   // a moments). We'll grab promises and then resolve them after the loop.
-  const resp = [];
+  const vks = [];
 
   for (const circuit of circuitsToSetup) {
     logger.debug(`checking for existing setup for ${circuit}`);
 
     const folderpath = circuit.slice(0, -7); // remove the .circom extension
-    resp.push(
-      axios.get(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/vk`, {
-        params: { folderpath },
-      }),
-    );
+    const r = await axios.get(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/vk`, {
+      params: { folderpath },
+    });
+    vks.push(r.data.vk);
   }
 
-  const vks = (await Promise.all(resp)).map(r => r.data.vk);
   const circuitHashes = [];
   const oldCircuitHashes = [];
 
@@ -147,20 +145,20 @@ async function setupCircuits() {
 
       logger.trace('vk:', vk);
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
-      const folderpath = circuit.slice(0, -7); // remove the .circom extension
+      const circuitName = circuit.slice(0, -7); // remove the .circom extension
 
       // The selector will be the first 40 bits of the hash
       const circuitHash = circuitHashes[i];
 
       logger.info({
-        msg: `The circuit ${folderpath} has the following hash: ${circuitHash}`,
+        msg: `The circuit ${circuitName} has the following hash: ${circuitHash}`,
       });
 
       const call = keyRegistry.methods.registerVerificationKey(
         BigInt(circuitHash),
         vkArray,
-        config.VK_IDS[folderpath].isEscrowRequired,
-        config.VK_IDS[folderpath].isWithdrawing,
+        config.VK_IDS[circuitName].isEscrowRequired,
+        config.VK_IDS[circuitName].isWithdrawing,
       );
 
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly

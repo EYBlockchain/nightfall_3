@@ -10,6 +10,7 @@ import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import {
   getCircuitHash,
   generateProof,
@@ -19,9 +20,10 @@ import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
+import { ZkpKeys } from './keys.mjs';
 
 const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME } = constants;
+const { SHIELD_CONTRACT_NAME, WITHDRAW } = constants;
 const { generalise } = gen;
 
 const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
@@ -31,6 +33,7 @@ async function withdraw(withdrawParams) {
   // let's extract the input items
   const { offchain = false, providedCommitments, ...items } = withdrawParams;
   const { tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
@@ -46,6 +49,8 @@ async function withdraw(withdrawParams) {
 
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
 
+  const circuitName = WITHDRAW;
+
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: withdrawValue,
     fee,
@@ -53,12 +58,12 @@ async function withdraw(withdrawParams) {
     maticAddress,
     tokenId,
     rootKey,
-    maxNullifiers: VK_IDS.withdraw.numberNullifiers,
+    maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
   });
 
   try {
-    const circuitHash = await getCircuitHash('withdraw');
+    const circuitHash = await getCircuitHash(circuitName);
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
@@ -72,8 +77,8 @@ async function withdraw(withdrawParams) {
       recipientAddress,
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
-      numberCommitments: VK_IDS.withdraw.numberCommitments,
+      numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+      numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: false,
     });
 
@@ -95,17 +100,17 @@ async function withdraw(withdrawParams) {
       privateData,
       commitmentsInfo.roots,
       maticAddress,
-      VK_IDS.withdraw.numberNullifiers,
-      VK_IDS.withdraw.numberCommitments,
+      VK_IDS[circuitName].numberNullifiers,
+      VK_IDS[circuitName].numberCommitments,
     );
 
     logger.debug({
       msg: 'witness input is',
-      witness: JSON.stringify(witness, 0, 2),
+      witness,
     });
 
     // call a worker to generate the proof
-    const res = await generateProof({ folderpath: 'withdraw', witness });
+    const res = await generateProof({ folderpath: circuitName, witness });
 
     logger.trace({
       msg: 'Received response from generate-proof',
@@ -114,38 +119,29 @@ async function withdraw(withdrawParams) {
 
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
-
-    const transaction = new Transaction({
-      fee,
-      historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
-      circuitHash,
-      tokenType: items.tokenType,
-      tokenId,
-      value,
-      ercAddress,
-      recipientAddress,
-      commitments: commitmentsInfo.newCommitments,
-      nullifiers: commitmentsInfo.nullifiers,
-      proof,
-      numberNullifiers: VK_IDS.withdraw.numberNullifiers,
-      numberCommitments: VK_IDS.withdraw.numberCommitments,
-      isOnlyL2: false,
-    });
+    const transaction = { ...publicData, proof: compressProof(proof) };
+    transaction.transactionHash = Transaction.calcHash(transaction);
 
     logger.debug({
-      msg: 'Client made transaction',
-      transaction: JSON.stringify(transaction, null, 2),
+      msg: `Client made ${circuitName}`,
+      transaction,
       offchain,
     });
 
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
-    await submitTransaction(transaction, commitmentsInfo, rootKey, offchain);
+    await submitTransaction(
+      transaction,
+      commitmentsInfo,
+      compressedZkpPublicKey,
+      nullifierKey,
+      offchain,
+    );
     return { rawTransaction, transaction };
   } catch (error) {
-    logger.error(error);
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));
+    logger.error(error);
     throw error;
   }
 }

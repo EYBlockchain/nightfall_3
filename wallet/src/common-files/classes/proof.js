@@ -19,7 +19,7 @@ class Proof {
   static flatProof(proof) {
     const flatArray = generalise(
       [proof.pi_a.slice(0, 2), proof.pi_b.slice(0, 2), proof.pi_c.slice(0, 2)].flat(Infinity),
-    ).all.bigInt;
+    ).all.bigInt.map(inp => inp.toString());
     return flatArray;
   }
 }

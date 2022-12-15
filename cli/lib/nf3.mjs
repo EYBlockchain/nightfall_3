@@ -15,7 +15,6 @@ import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 
 import {
-  DEFAULT_FEE_ETH,
   DEFAULT_FEE_MATIC,
   WEBSOCKET_PING_TIME,
   GAS_MULTIPLIER,
@@ -73,8 +72,6 @@ class Nf3 {
   ethereumAddress;
 
   zkpKeys;
-
-  defaultFeeEth = DEFAULT_FEE_ETH;
 
   defaultFeeMatic = DEFAULT_FEE_MATIC;
 
@@ -469,7 +466,6 @@ class Nf3 {
       salt,
       value,
       rootKey: this.zkpKeys.rootKey,
-      compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
       fee,
     });
 
@@ -523,14 +519,7 @@ class Nf3 {
     @param {object} keys - The ZKP private key set.
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
-  async deposit(
-    ercAddress,
-    tokenType,
-    value,
-    tokenId,
-    fee = this.defaultFeeEth,
-    feePaidL2 = false,
-  ) {
+  async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFeeMatic) {
     let txDataToSign;
     try {
       logger.info(`Aproving trx...${this.ethereumAddress}`);
@@ -559,9 +548,6 @@ class Nf3 {
       });
     }
 
-    const feeL1 = feePaidL2 ? 0 : fee;
-    const feeL2 = feePaidL2 ? fee : 0;
-
     logger.info(`Posting deposit...${this.ethereumAddress}`);
 
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
@@ -569,9 +555,8 @@ class Nf3 {
       tokenId,
       tokenType,
       value,
-      compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
-      nullifierKey: this.zkpKeys.nullifierKey,
-      fee: feeL2,
+      rootKey: this.zkpKeys.rootKey,
+      fee,
     });
 
     logger.info(`response deposit ok - ${this.ethereumAddress}`);
@@ -582,7 +567,7 @@ class Nf3 {
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.shieldContractAddress,
-            feeL1,
+            0,
           );
           resolve(receipt);
         } catch (err) {
@@ -618,6 +603,7 @@ class Nf3 {
     tokenId,
     compressedZkpPublicKey,
     fee = this.defaultFeeMatic,
+    providedCommitments = undefined,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
       offchain,
@@ -629,6 +615,7 @@ class Nf3 {
       },
       rootKey: this.zkpKeys.rootKey,
       fee,
+      providedCommitments,
     });
 
     if (res.data.error && res.data.error === 'No suitable commitments') {
@@ -1513,7 +1500,7 @@ class Nf3 {
   /**
    Validates an X509 (RSA) certificate
    */
-  async validateCertificate(certificate, ethereumAddress, derPrivateKey) {
+  async validateCertificate(certificate, ethereumAddress, derPrivateKey, oidGroup = 0) {
     // sign the ethereum address
     let ethereumAddressSignature = null;
     if (derPrivateKey) {
@@ -1535,6 +1522,7 @@ class Nf3 {
     const res = await axios.post(`${this.clientBaseUrl}/x509/validate`, {
       certificate,
       ethereumAddressSignature,
+      oidGroup,
     });
     const txDataToSign = res.data;
     return this.submitTransaction(txDataToSign, this.x509ContractAddress);
@@ -1588,6 +1576,16 @@ class Nf3 {
   */
   async getNumProposers() {
     return this.stateContract.methods.getNumProposers().call();
+  }
+
+  /**
+    getSprintsInSpan
+    @method
+    @async
+    @returns {uint256} A promise that resolves to the Ethereum call.
+    */
+  async getSprintsInSpan() {
+    return this.stateContract.methods.getSprintsInSpan().call();
   }
 }
 

@@ -5,7 +5,6 @@ much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
-import { decompressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { unpackBlockInfo } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
 import Block from '../classes/block.mjs';
@@ -70,7 +69,7 @@ export async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       compressedSecrets,
-      proof: decompressProof(proof),
+      proof,
     };
     transaction.transactionHash = Transaction.calcHash(transaction);
     // note, this transaction is incomplete in that the 'fee' field is empty.
@@ -128,7 +127,7 @@ export async function getTransactionSubmittedCalldata(eventData) {
     commitments,
     nullifiers,
     compressedSecrets,
-    proof: decompressProof(proof),
+    proof,
   };
   transaction.transactionHash = Transaction.calcHash(transaction);
   return transaction;

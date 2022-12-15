@@ -213,7 +213,7 @@ describe('Basic Proposer tests', () => {
 
     const afterZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
-    expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(transferValue);
+    expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(transferValue - fee);
   });
 
   it('Should create a valid changeCurrentProposer (because blocks has passed)', async function () {

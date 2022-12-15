@@ -54,14 +54,6 @@ module.exports = {
           '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
         ],
   },
-  RSA_TRUST_ROOTS: [
-    {
-      modulus:
-        '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
-      exponent: 65537,
-      authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`,
-    },
-  ],
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
@@ -100,6 +92,12 @@ module.exports = {
     deposit: {
       numberNullifiers: 0,
       numberCommitments: 1,
+      isEscrowRequired: true,
+      isWithdrawing: false,
+    },
+    depositfee: {
+      numberNullifiers: 2,
+      numberCommitments: 2,
       isEscrowRequired: true,
       isWithdrawing: false,
     },
@@ -523,6 +521,51 @@ module.exports = {
           address: '0xa337f0B897a874DE1E9F75944629a03F911cFbE8',
           amount: process.env.STMATIC_TESTNET_RESTRICT || '1000000000',
         },
+      ],
+    },
+  },
+  X509: {
+    blockchain: {
+      RSA_TRUST_ROOTS: [
+        {
+          modulus:
+            '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
+          exponent: 65537,
+          authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(
+            64,
+            '0',
+          )}`,
+        },
+      ],
+      // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
+      certificatePoliciesOIDs: [
+        // made up
+        [
+          '0x06032a0304000000000000000000000000000000000000000000000000000000',
+          '0x06032d0607000000000000000000000000000000000000000000000000000000',
+        ],
+        // Digicert
+        [
+          '0x06096086480186fd6c0315000000000000000000000000000000000000000000',
+          '0x060a6086480186fd6c0315020000000000000000000000000000000000000000',
+        ],
+        // Entrust
+        ['0x060a6086480186fa6c0a01060000000000000000000000000000000000000000'],
+      ],
+      extendedKeyUsageOIDs: [
+        // made up
+        [
+          '0x06082b0601050507030300000000000000000000000000000000000000000000',
+          '0x06082b0601050507030400000000000000000000000000000000000000000000',
+          '0x06082b0601050507030800000000000000000000000000000000000000000000',
+        ],
+        // Digicert
+        ['0x06082b0601050507030300000000000000000000000000000000000000000000'],
+        // Entrust
+        [
+          '0x06096086480186fa6b280b000000000000000000000000000000000000000000',
+          '0x060a2b0601040182370a030c0000000000000000000000000000000000000000',
+        ],
       ],
     },
   },

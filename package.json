@@ -24,7 +24,7 @@
     "test-optimist-sync": "npx hardhat test --no-compile --bail test/optimist-resync.test.mjs",
     "test-adversary": "npx hardhat test --no-compile --bail test/adversary.test.mjs",
     "test-general-stuff": "npx hardhat test --bail --no-compile test/kem-dem.test.mjs test/timber.test.mjs",
-    "test-x509": "LOG_LEVEL=silent npx hardhat test --bail --no-compile test/x509.test.mjs",
+    "test-x509": "LOG_LEVEL=debug npx hardhat test --bail --no-compile test/x509.test.mjs",
     "unit-test": "npx hardhat test --bail test/unit/SmartContracts/*",
     "unit-test-whitelist": "npx hardhat test --bail test/unit/SmartContracts/whitelist.unit.test.mjs",
     "unit-test-x509": "npx hardhat test --bail test/unit/SmartContracts/x509.unit.test.mjs",
@@ -33,6 +33,7 @@
     "unit-test-proposers": "npx hardhat test --bail test/unit/SmartContracts/proposers.unit.test.mjs",
     "unit-test-challenges": "npx hardhat test --bail test/unit/SmartContracts/challenges.unit.test.mjs",
     "unit-test-verifier": "npx hardhat test --bail test/unit/SmartContracts/verifier.unit.test.mjs",
+    "unit-test-compression": "npx hardhat test --bail test/unit/SmartContracts/compression.unit.test.mjs",
     "unit-test-circuits": "npx hardhat test --bail --no-compile test/unit/circuits/common/**/*.test.mjs test/unit/circuits/common/verifiers/**/*.test.mjs test/unit/circuits/*.test.mjs",
     "prune": "docker system prune -a && docker volume prune"
   },
@@ -124,6 +125,7 @@
     "docker-cli-js": "^2.9.0",
     "docker-compose": "^0.23.13",
     "ethereumjs-wallet": "^1.0.2",
+    "ffjavascript": "^0.2.57",
     "general-number": "^1.0.1",
     "js-yaml": "^4.1.0",
     "typescript": "^4.6.2"

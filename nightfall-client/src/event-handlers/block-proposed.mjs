@@ -2,9 +2,9 @@
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
-import getTimeByBlock from '@polygon-nightfall/common-files/utils/block-info.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { getCircuitHash } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
+import { getTimeByBlock } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
 import gen from 'general-number';
 import {
   markNullifiedOnChain,
@@ -27,7 +27,7 @@ import {
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
 const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
-const { ZERO } = constants;
+const { ZERO, WITHDRAW } = constants;
 
 const { generalise } = gen;
 
@@ -162,7 +162,7 @@ async function blockProposedEventHandler(data, syncing) {
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
 
-  const circuitHash = await getCircuitHash('withdraw');
+  const circuitHash = await getCircuitHash(WITHDRAW);
 
   const withdrawCircuitHash = generalise(circuitHash).hex(32);
 

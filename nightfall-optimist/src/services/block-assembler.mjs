@@ -10,12 +10,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import {
-  removeTransactionsFromMemPool,
-  removeCommitmentsFromMemPool,
-  removeNullifiersFromMemPool,
-  getMempoolTxsSortedByFee,
-} from './database.mjs';
+import { removeTransactionsFromMemPool, getMempoolTxsSortedByFee } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import {
@@ -25,7 +20,7 @@ import {
 } from './debug-counters.mjs';
 
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
-const { STATE_CONTRACT_NAME, ZERO } = constants;
+const { STATE_CONTRACT_NAME } = constants;
 
 let ws;
 let makeNow = false;
@@ -227,12 +222,6 @@ export async function conditionalMakeBlock(proposer) {
         // remove the transactions from the mempool so we don't keep making new
         // blocks with them
         await removeTransactionsFromMemPool(block.transactionHashes);
-        await removeCommitmentsFromMemPool(
-          transactions.map(t => t.commitments.filter(c => c !== ZERO)).flat(Infinity),
-        );
-        await removeNullifiersFromMemPool(
-          transactions.map(t => t.nullifiers.filter(c => c !== ZERO)).flat(Infinity),
-        );
       }
     }
   }
