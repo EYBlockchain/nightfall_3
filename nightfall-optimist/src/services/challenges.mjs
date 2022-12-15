@@ -47,9 +47,9 @@ export function stopMakingChallenges() {
 
 export async function createChallenge(block, transactions, err) {
   let txDataToSign;
-  let receipt;
+  // let receipt;
   const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
-  const challengeContractAddress = challengeContractInstance.options.address;
+  // const challengeContractAddress = challengeContractInstance.options.address;
 
   const salt = (await rand(32)).hex(32);
   switch (err.code) {
@@ -322,7 +322,7 @@ export async function commitToChallenge(txDataToSign) {
     logger.debug('makeChallenges is off, no challenge commitment was sent');
     return;
   }
-  const web3 = Web3.connection();
+  // const web3 = Web3.connection();
   const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
   const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   const challengeContractAddress = challengeContractInstance.options.address;
