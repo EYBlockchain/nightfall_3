@@ -2,7 +2,6 @@ import {
   startEventQueue,
   subscribeToChallengeWebSocketConnection,
   subscribeToInstantWithDrawalWebSocketConnection,
-  subscribeToProposedBlockWebSocketConnection,
 } from './subscribe.mjs';
 import blockProposedEventHandler from './block-proposed.mjs';
 import newCurrentProposerEventHandler from './new-current-proposer.mjs';
@@ -44,6 +43,5 @@ export {
   startEventQueue,
   subscribeToChallengeWebSocketConnection,
   subscribeToInstantWithDrawalWebSocketConnection,
-  subscribeToProposedBlockWebSocketConnection,
   eventHandlers,
 };
