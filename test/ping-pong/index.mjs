@@ -33,30 +33,6 @@ export const getStakeAccount = async proposer => {
   return stakeAccount;
 };
 
-const makeBlock = async (optimistUrls, currentProposer) => {
-  const url = optimistUrls.find(
-    // eslint-disable-next-line no-loop-func
-    o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
-  )?.optimistUrl;
-
-  if (url) {
-    const res = await axios.get(`${url}/proposer/mempool`);
-    if (res.data.result.length > 0) {
-      console.log(
-        ` *** ${
-          res.data.result.length
-        } transactions in the mempool (${currentProposer.thisAddress.toUpperCase()} - ${url})`,
-      );
-      if (res.data.result.length > 0) {
-        console.log('     Make block...');
-        await axios.get(`${url}/block/make-now`);
-      }
-    }
-  } else {
-    console.log('This current proposer does not have optimist url defined in the compose yml file');
-  }
-};
-
 /**
   Does deposits and transfer opertations
 */
@@ -234,9 +210,7 @@ export async function setParametersConfig(nf3User) {
 /**
   Proposer test for rotation of the proposers and making blocks
 */
-export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
-  console.log('OPTIMISTURLS', optimistUrls);
-
+export async function proposerStats(proposersStats, nf3Proposer) {
   try {
     const stateAddress = stateContract.options.address;
     const proposersBlocks = [];
@@ -292,26 +266,6 @@ export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
         console.log(`  ${pb.proposer} : ${pb.blocks}`);
       }
     });
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      try {
-        if (nf3Proposer.web3WsUrl.includes('localhost')) {
-          await makeBlock(optimistUrls, currentProposer);
-        }
-      } catch (err) {
-        // containers stopped
-        if (err.message.includes('connection not open')) {
-          console.log('Containers stopped!');
-          return;
-        }
-
-        console.log(err);
-        await new Promise(resolve => setTimeout(resolve, 10000));
-      }
-      console.log('     Waiting some time');
-      await new Promise(resolve => setTimeout(resolve, 30000));
-    }
   } catch (e) {
     console.log('ERROR!!!!', e);
   }

@@ -11,4 +11,4 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const nf3 = new Nf3(environment.PROPOSER_KEY, environment);
 nf3.setApiKey(environment.AUTH_TOKEN);
 
-startProposer(nf3, environment.proposerBaseUrl);
+startProposer(nf3, environment.optimistApiUrl);

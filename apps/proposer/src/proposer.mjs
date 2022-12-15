@@ -8,7 +8,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 /**
 Does the preliminary setup and starts listening on the websocket
 */
-export default async function startProposer(nf3, proposerBaseUrl) {
+export default async function startProposer(nf3, optimistApiUrl) {
   logger.info('Starting Proposer...');
   // Mnemonic are only required for services connecting to a client that
   // can generate a compressed PKD.
@@ -26,15 +26,13 @@ export default async function startProposer(nf3, proposerBaseUrl) {
   let nTimes = 0;
   while (nTimes < 10) {
     try {
-      const res = await nf3.registerProposer(proposerBaseUrl, minimumStake);
-      console.log('RESULT REGISTER:', res);
+      await nf3.registerProposer(optimistApiUrl, minimumStake);
     } catch (err) {
       logger.info(err);
     }
 
     const { proposers } = await nf3.getProposers();
     const proposerFound = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
-    console.log('PROPOSER FOUND:', proposerFound);
     if (proposerFound.length > 0) break;
 
     nTimes++;
