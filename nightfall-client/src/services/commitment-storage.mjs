@@ -192,23 +192,32 @@ Without that number, we can't tell which spends to roll back.
 Once these properties are cleared, the commitment will automatically become
 available for spending again.
 */
-export async function clearNullified(blockNumberL2) {
+export async function clearNullifiedOnChain(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { isNullifiedOnChain: { $gte: Number(blockNumberL2) } };
+  const query = { isNullifiedOnChain: { $gte: blockNumberL2 } };
   const update = {
-    $set: { isNullifiedOnChain: -1, blockNumber: -1 },
+    $set: { isNullifiedOnChain: -1, blockNumber: -1, transactionHashNullifiedL1: null },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
 
-// as above, but removes isOnChain for deposit commitments
-export async function clearOnChain(blockNumberL2) {
+export async function clearNullifiers(nullifiers) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = { nullifier: { $in: nullifiers }, isNullified: true };
+  const update = {
+    $set: { isNullified: false },
+  };
+  return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
+}
+
+export async function clearOnChain(commitments) {
   const connection = await mongo.connection(MONGO_URL);
   // Clear all onchains
-  const query = { isOnChain: { $gte: Number(blockNumberL2) } };
+  const query = { _id: { $in: commitments } };
   const update = {
-    $set: { isOnChain: -1, blockNumber: -1 },
+    $set: { isOnChain: -1, blockNumber: -1, transactionHashCommittedL1: null },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -578,19 +587,11 @@ export async function getCommitmentsByCircuitHash(circuitHash) {
   }, {});
 }
 
-// as above, but removes output commitments
 export async function deleteCommitments(commitments) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
+  const query = { _id: { $in: commitments } };
   return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
-}
-
-export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(COMMITMENTS_DB);
-  const query = { isOnChain: { $gte: blockNumberL2 } };
-  return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
 
 async function getAvailableCommitments(db, compressedZkpPublicKey, ercAddress, tokenId) {

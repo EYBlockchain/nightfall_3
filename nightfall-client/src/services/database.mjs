@@ -249,3 +249,25 @@ export async function getTransactionHashSiblingInfo(transactionHash) {
     },
   );
 }
+
+/**
+function to find transactions with a transactionHash in the array transactionHashes.
+*/
+export async function getTransactionsByTransactionHashesByL2Block(transactionHashes, block) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = {
+    transactionHash: { $in: transactionHashes },
+    blockNumberL2: { $eq: block.blockNumberL2 },
+  };
+  const returnedTransactions = await db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+  // Create a dictionary where we will store the correct position ordering
+  const positions = {};
+  // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
+  // eslint-disable-next-line no-return-assign
+  transactionHashes.forEach((t, index) => (positions[t] = index));
+  const transactions = returnedTransactions.sort(
+    (a, b) => positions[a.transactionHash] - positions[b.transactionHash],
+  );
+  return transactions;
+}

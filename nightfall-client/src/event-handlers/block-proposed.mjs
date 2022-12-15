@@ -57,24 +57,24 @@ async function blockProposedEventHandler(data, syncing) {
     let saveTxToDb = false;
 
     // filter out non zero commitments and nullifiers
-    const nonZeroCommitments = transaction.commitments.filter(n => n !== ZERO);
+    const nonZeroCommitments = transaction.commitments.filter(c => c !== ZERO);
     const nonZeroNullifiers = transaction.nullifiers.filter(n => n !== ZERO);
 
     const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
     const countOfNonZeroNullifiers = await countNullifiers(nonZeroNullifiers);
 
+    let isDecrypted = false;
     // In order to check if the transaction is a transfer, we check if the compressed secrets
     // are different than zero. All other transaction types have compressedSecrets = [0,0]
-    if (
-      (transaction.compressedSecrets[0] !== 0 || transaction.compressedSecrets[1] !== 0) &&
-      !countOfNonZeroCommitments
-    ) {
-      try {
-        const isDecrypted = await decryptCommitment(transaction, zkpPrivateKeys, nullifierKeys);
-        if (isDecrypted) saveTxToDb = true;
-      } catch (err) {
-        // This error will be caught regularly if the commitment isn't for us
-        // We dont print anything in order not to pollute the logs
+    if (transaction.compressedSecrets[0] !== ZERO || transaction.compressedSecrets[1] !== ZERO) {
+      const transactionDecrypted = await decryptCommitment(
+        transaction,
+        zkpPrivateKeys,
+        nullifierKeys,
+      );
+      if (transactionDecrypted) {
+        saveTxToDb = true;
+        isDecrypted = true;
       }
     }
 
@@ -82,17 +82,24 @@ async function blockProposedEventHandler(data, syncing) {
       saveTxToDb = true;
     }
 
-    if (saveTxToDb)
+    logger.trace({
+      transaction: transaction.transactionHash,
+      saveTxToDb,
+      countOfNonZeroCommitments,
+      countOfNonZeroNullifiers,
+    });
+
+    if (saveTxToDb) {
+      logger.info({ msg: 'Saving transaction', transaction: transaction.transactionHash });
       await saveTransaction({
         transactionHashL1,
         blockNumber: data.blockNumber,
         blockNumberL2: block.blockNumberL2,
         timeBlockL2,
         ...transaction,
-      }).catch(function (err) {
-        if (!syncing || !err.message.includes('replay existing transaction')) throw err;
-        logger.warn('Attempted to replay existing transaction. This is expected while syncing');
+        isDecrypted,
       });
+    }
 
     return Promise.all([
       saveTxToDb,

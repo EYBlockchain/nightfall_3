@@ -1,3 +1,4 @@
+/* eslint-disable no-continue */
 /* eslint-disable import/no-cycle */
 /**
  * Each time the Shield contract removes a block from the blockHash linked-list,
@@ -5,19 +6,37 @@
  * same blocks from our local database record and to reset cached Frontier and
  * leafCount values in the Block class
  */
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
-  clearNullified,
+  clearNullifiers,
+  clearNullifiedOnChain,
   clearOnChain,
   deleteCommitments,
-  getCommitmentsFromBlockNumberL2,
 } from '../services/commitment-storage.mjs';
 import {
   deleteTreeByBlockNumberL2,
   deleteBlocksByBlockNumberL2,
   findBlocksFromBlockNumberL2,
   deleteTransactionsByTransactionHashes,
+  getTransactionsByTransactionHashesByL2Block,
 } from '../services/database.mjs';
+
+const { ZERO, STATE_CONTRACT_NAME } = constants;
+
+function checkValidHistoricRootsBlockNumber(transaction, latestBlockNumberL2) {
+  for (let i = 0; i < transaction.historicRootBlockNumberL2.length; ++i) {
+    if (
+      transaction.nullifiers[i] !== ZERO &&
+      Number(transaction.historicRootBlockNumberL2[i]) > latestBlockNumberL2
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -27,51 +46,86 @@ async function rollbackEventHandler(data) {
     blockNumberL2,
   });
 
-  /*
-   We get the commitments from blockNumberL2 + 1 because the bad block itself (except
-   the reason it is bad) contains valid transactions, we should not drop these.
-   If we clear the commitments in blockNumberL2, we may spend them again while they are in an optimist mempool.
-   */
-  const commitments = await getCommitmentsFromBlockNumberL2(Number(blockNumberL2) + 1);
+  const blocksToBeDeleted = await findBlocksFromBlockNumberL2(Number(blockNumberL2));
 
-  // Deposit transactions should not be dropped because they are always valid even post-rollback.
-  const nonDepositCommitments = commitments.filter(c => c.isDeposited === false).map(c => c._id);
+  logger.info({ msg: 'Rollback - rollback layer 2 blocks', blocksToBeDeleted });
+
+  // Get the latest valid block number from the blockchain
+  const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
+  const latestBlockNumberL2 = Number(
+    (await stateInstance.methods.getNumberOfL2Blocks().call()) - 1,
+  );
+
+  const validTransactions = [];
+  const validCommitments = [];
+
+  const invalidTransactions = [];
+  const invalidNullifiers = [];
+  const invalidCommitments = [];
+
+  // We will assume that all transactions that the client contains are valid. However,
+  // all transactions that are using a commitment that were nullified in a block that
+  // that was rollbacked will need to be deleted from the database
+  for (let i = 0; i < blocksToBeDeleted.length; i++) {
+    // Get the trannsaction hashes included in these blocks
+    const transactionHashesInBlock = blocksToBeDeleted[i].transactionHashes.flat(Infinity);
+    // Use the transaction hashes to grab the actual transactions filtering out deposits - In Order.
+    // eslint-disable-next-line no-await-in-loop
+    const blockTransactions = await getTransactionsByTransactionHashesByL2Block(
+      transactionHashesInBlock,
+      blocksToBeDeleted[i],
+    );
+    logger.info({
+      msg: 'Rollback - blockTransactions to check:',
+      blockTransactions: transactionHashesInBlock,
+      clientTransactions: blockTransactions.map(t => t.transactionHash),
+    });
+
+    for (let j = 0; j < blockTransactions.length; ++j) {
+      const transaction = blockTransactions[j];
+
+      const commitments = transaction.commitments.filter(c => c !== ZERO);
+      const nullifiers = transaction.nullifiers.filter(n => n !== ZERO);
+
+      if (transaction.isDecrypted) {
+        invalidTransactions.push(transaction.transactionHash);
+        invalidCommitments.push(commitments[0]);
+        continue;
+      }
+
+      if (!checkValidHistoricRootsBlockNumber(transaction, latestBlockNumberL2)) {
+        invalidTransactions.push(transaction.transactionHash);
+        invalidCommitments.push(...commitments);
+        invalidNullifiers.push(...nullifiers);
+        continue;
+      }
+
+      validTransactions.push(transaction.transactionHash);
+      validCommitments.push(...commitments);
+    }
+  }
 
   logger.debug({
-    msg: 'The commitments to be rollbacked are the following',
-    nonDepositCommitments,
+    msg: 'Rollback - Updating Client DB',
+    validTransactions,
+    invalidTransactions,
   });
 
-  /*
-   Any commitments that have been nullified and are now no longer spent because
-   of the rollback should be made available to be spent again.
-   */
-  const clearNullifiedResult = await clearNullified(Number(blockNumberL2));
   logger.debug({
-    clearNullifiedResult,
+    msg: 'Updating commitments && nullifiers',
+    validCommitments,
+    invalidCommitments,
+    invalidNullifiers,
   });
-  logger.debug({
-    msg: 'Rollback removed nullifiers',
-    total: clearNullifiedResult?.result?.nModified ?? 0,
-  });
-
-  const cResult = await clearOnChain(Number(blockNumberL2));
-  logger.debug({
-    cResult,
-  });
-  logger.debug({
-    msg: 'Rollback moved commitments off-chain',
-    total: cResult?.result?.nModified ?? 0,
-  });
-
-  const blocksToDelete = await findBlocksFromBlockNumberL2(Number(blockNumberL2));
-  const txsToDelete = blocksToDelete.map(b => b.transactionHashes).flat(Infinity);
 
   await Promise.all([
     deleteTreeByBlockNumberL2(Number(blockNumberL2)),
-    deleteCommitments(nonDepositCommitments),
     deleteBlocksByBlockNumberL2(Number(blockNumberL2)),
-    deleteTransactionsByTransactionHashes(txsToDelete),
+    clearNullifiedOnChain(Number(blockNumberL2)),
+    clearNullifiers(invalidNullifiers),
+    clearOnChain(validCommitments),
+    deleteCommitments(invalidCommitments),
+    deleteTransactionsByTransactionHashes(invalidTransactions),
   ]);
 }
 

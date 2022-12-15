@@ -18,7 +18,6 @@ import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import {
   getBlockByBlockNumberL2,
   getTransactionHashSiblingInfo,
-  getLatestBlockInfo,
   getTransactionMempoolByCommitment,
   getTransactionMempoolByNullifier,
   getTransactionL2ByCommitment,
@@ -33,7 +32,7 @@ async function checkDuplicateCommitment({
   transaction,
   checkDuplicatesInL2,
   checkDuplicatesInMempool,
-  blockNumberL2,
+  transactionBlockNumberL2,
 }) {
   // Note: There is no need to check the duplicate commitment in the same transaction since this is already checked in the circuit
   // check if any commitment in the transaction is already part of an L2 block
@@ -58,7 +57,10 @@ async function checkDuplicateCommitment({
 
       if (checkDuplicatesInL2) {
         // Search if there is any transaction in L2 that already contains the commitment
-        const transactionL2 = await getTransactionL2ByCommitment(commitment, blockNumberL2);
+        const transactionL2 = await getTransactionL2ByCommitment(
+          commitment,
+          transactionBlockNumberL2,
+        );
         // If a transaction was found, means that the commitment is duplicated
         if (transactionL2 !== null) {
           // Get the number of the block in L2 containing the duplicated commitment
@@ -91,7 +93,7 @@ async function checkDuplicateNullifier({
   transaction,
   checkDuplicatesInL2,
   checkDuplicatesInMempool,
-  blockNumberL2,
+  transactionBlockNumberL2,
 }) {
   // Note: There is no need to check the duplicate nullifiers in the same transaction since this is already checked in the circuit
   // check if any nullifier in the transction is already part of an L2 block
@@ -114,7 +116,10 @@ async function checkDuplicateNullifier({
 
       if (checkDuplicatesInL2) {
         // Search if there is any transaction in L2 that already contains the commitment
-        const transactionL2 = await getTransactionL2ByNullifier(nullifier, blockNumberL2);
+        const transactionL2 = await getTransactionL2ByNullifier(
+          nullifier,
+          transactionBlockNumberL2,
+        );
         // If a transaction was found, means that the commitment is duplicated
         if (transactionL2 !== null) {
           // Get the number of the block in L2 containing the duplicated commitment
@@ -144,10 +149,18 @@ async function checkDuplicateNullifier({
 }
 
 async function checkHistoricRootBlockNumber(transaction) {
-  const { blockNumberL2: LatestL2BlockNumber } = await getLatestBlockInfo();
-  transaction.historicRootBlockNumberL2.forEach(L2BlockNumber => {
-    if (Number(L2BlockNumber) === 0 && LatestL2BlockNumber === -1) return;
-    if (Number(L2BlockNumber) > LatestL2BlockNumber) {
+  const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
+  const latestBlockNumberL2 = Number(
+    (await stateInstance.methods.getNumberOfL2Blocks().call()) - 1,
+  );
+  transaction.historicRootBlockNumberL2.forEach((blockNumberL2, i) => {
+    if (transaction.nullifiers[i] === ZERO) {
+      if (Number(blockNumberL2) !== 0) {
+        throw new TransactionError('Invalid historic root', 3, {
+          transactionHash: transaction.transactionHash,
+        });
+      }
+    } else if (Number(blockNumberL2) > latestBlockNumberL2) {
       throw new TransactionError('Historic root has block number L2 greater than on chain', 3, {
         transactionHash: transaction.transactionHash,
       });
@@ -224,20 +237,20 @@ export async function checkTransaction({
   transaction,
   checkDuplicatesInL2 = false,
   checkDuplicatesInMempool = false,
-  blockNumberL2,
+  transactionBlockNumberL2,
 }) {
   return Promise.all([
     checkDuplicateCommitment({
       transaction,
       checkDuplicatesInL2,
       checkDuplicatesInMempool,
-      blockNumberL2,
+      transactionBlockNumberL2,
     }),
     checkDuplicateNullifier({
       transaction,
       checkDuplicatesInL2,
       checkDuplicatesInMempool,
-      blockNumberL2,
+      transactionBlockNumberL2,
     }),
     checkHistoricRootBlockNumber(transaction),
     verifyProof(transaction),

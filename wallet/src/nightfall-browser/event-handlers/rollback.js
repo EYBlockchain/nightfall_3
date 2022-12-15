@@ -1,3 +1,4 @@
+/* eslint-disable no-continue */
 // ignore unused exports default
 
 /**
@@ -8,44 +9,123 @@ leafCount values in the Block class
 */
 import logger from '../../common-files/utils/logger';
 import {
-  clearNullified,
+  clearNullifiedOnChain,
+  clearNullifiers,
   clearOnChain,
   deleteCommitments,
-  getCommitmentsFromBlockNumberL2,
 } from '../services/commitment-storage';
 import {
   deleteTreeByBlockNumberL2,
   deleteBlocksByBlockNumberL2,
   findBlocksFromBlockNumberL2,
   deleteTransactionsByTransactionHashes,
+  getTransactionsByTransactionHashesByL2Block,
 } from '../services/database';
+import { waitForContract } from './subscribe';
+
+const { ZERO, STATE_CONTRACT_NAME } = global.nightfallConstants;
+
+function checkValidHistoricRootsBlockNumber(transaction, latestBlockNumberL2) {
+  for (let i = 0; i < transaction.historicRootBlockNumberL2.length; ++i) {
+    if (
+      transaction.nullifiers[i] !== ZERO &&
+      Number(transaction.historicRootBlockNumberL2[i]) > latestBlockNumberL2
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
-  logger.info(`Received Rollback event, with layer 2 block number ${blockNumberL2}`);
 
-  // We get the commitments from blockNumberL2 + 1 because the bad block itself (except
-  // the reason it is bad) contains valid transactions, we should not drop these.
-  // If we clear the commitments in blockNumberL2, we may spend them again while they are in an optimist mempool.
-  const commitments = await getCommitmentsFromBlockNumberL2(Number(blockNumberL2) + 1);
-  // Deposit transactions should not be dropped because they are always valid even post-rollback.
-  const nonDeposit = commitments.filter(c => c.isDeposited === false).map(c => c._id);
-  logger.debug(`nonDeposit: ${JSON.stringify(nonDeposit)}`);
-  // Any commitments that have been nullified and are now no longer spent because
-  // of the rollback should be made available to be spent again.
-  const { result } = await clearNullified(Number(blockNumberL2));
-  logger.debug(`Rollback removed ${result.nModified} nullfiers`);
-  const cResult = await clearOnChain(Number(blockNumberL2));
-  logger.debug(`Rollback moved ${cResult.result.nModified} commitments off-chain`);
+  logger.info({
+    msg: 'Received Rollback event, with layer 2 block number',
+    blockNumberL2,
+  });
 
-  const blocksToDelete = await findBlocksFromBlockNumberL2(Number(blockNumberL2));
-  const txsToDelete = blocksToDelete.map(b => b.transactionHashes).flat(Infinity);
+  const blocksToBeDeleted = await findBlocksFromBlockNumberL2(Number(blockNumberL2));
+
+  logger.info({ msg: 'Rollback - rollback layer 2 blocks', blocksToBeDeleted });
+
+  // Get the latest valid block number from the blockchain
+  const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
+  const latestBlockNumberL2 = Number(
+    (await stateInstance.methods.getNumberOfL2Blocks().call()) - 1,
+  );
+
+  const validTransactions = [];
+  const validCommitments = [];
+
+  const invalidTransactions = [];
+  const invalidNullifiers = [];
+  const invalidCommitments = [];
+
+  // We will assume that all transactions that the client contains are valid. However,
+  // all transactions that are using a commitment that were nullified in a block that
+  // that was rollbacked will need to be deleted from the database
+  for (let i = 0; i < blocksToBeDeleted.length; i++) {
+    // Get the trannsaction hashes included in these blocks
+    const transactionHashesInBlock = blocksToBeDeleted[i].transactionHashes.flat(Infinity);
+    // Use the transaction hashes to grab the actual transactions filtering out deposits - In Order.
+    // eslint-disable-next-line no-await-in-loop
+    const blockTransactions = await getTransactionsByTransactionHashesByL2Block(
+      transactionHashesInBlock,
+      blocksToBeDeleted[i],
+    );
+    logger.info({
+      msg: 'Rollback - blockTransactions to check:',
+      blockTransactions: transactionHashesInBlock,
+      clientTransactions: blockTransactions.map(t => t.transactionHash),
+    });
+
+    for (let j = 0; j < blockTransactions.length; ++j) {
+      const transaction = blockTransactions[j];
+
+      const commitments = transaction.commitments.filter(c => c !== ZERO);
+      const nullifiers = transaction.nullifiers.filter(n => n !== ZERO);
+
+      if (transaction.isDecrypted) {
+        invalidTransactions.push(transaction.transactionHash);
+        invalidCommitments.push(commitments[0]);
+        continue;
+      }
+
+      if (!checkValidHistoricRootsBlockNumber(transaction, latestBlockNumberL2)) {
+        invalidTransactions.push(transaction.transactionHash);
+        invalidCommitments.push(...commitments);
+        invalidNullifiers.push(...nullifiers);
+        continue;
+      }
+
+      validTransactions.push(transaction.transactionHash);
+      validCommitments.push(...commitments);
+    }
+  }
+
+  logger.debug({
+    msg: 'Rollback - Updating Client DB',
+    validTransactions,
+    invalidTransactions,
+  });
+
+  logger.debug({
+    msg: 'Updating commitments && nullifiers',
+    validCommitments,
+    invalidCommitments,
+    invalidNullifiers,
+  });
 
   await Promise.all([
     deleteTreeByBlockNumberL2(Number(blockNumberL2)),
-    deleteCommitments(nonDeposit),
     deleteBlocksByBlockNumberL2(Number(blockNumberL2)),
-    deleteTransactionsByTransactionHashes(txsToDelete),
+    clearNullifiedOnChain(Number(blockNumberL2)),
+    clearNullifiers(invalidNullifiers),
+    clearOnChain(validCommitments),
+    deleteCommitments(invalidCommitments),
+    deleteTransactionsByTransactionHashes(invalidTransactions),
   ]);
 }
 

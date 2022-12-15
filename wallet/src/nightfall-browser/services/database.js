@@ -338,3 +338,23 @@ export async function setTransactionHashSiblingInfo(
   }
   return null;
 }
+
+/**
+function to find transactions with a transactionHash in the array transactionHashes.
+*/
+export async function getTransactionsByTransactionHashesByL2Block(transactionHashes, block) {
+  const db = await connectDB();
+  const res = await db.getAll(TRANSACTIONS_COLLECTION);
+  const filteredTransactions = res.filter(
+    t => t.blockNumberL2 === block.blockNumberL2 && transactionHashes.includes(t.transactionHash),
+  );
+  // Create a dictionary where we will store the correct position ordering
+  const positions = {};
+  // Use the ordering of txHashes in the block to fill the dictionary-indexed by txHash
+  // eslint-disable-next-line no-return-assign
+  transactionHashes.forEach((t, index) => (positions[t] = index));
+  const transactions = filteredTransactions.sort(
+    (a, b) => positions[a.transactionHash] - positions[b.transactionHash],
+  );
+  return transactions;
+}
