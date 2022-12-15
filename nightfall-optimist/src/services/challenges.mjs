@@ -382,19 +382,23 @@ export async function revealChallenge(txDataToSign, sender) {
   logger.debug('Revealing challenge');
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects
-  let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+  // let tryCount = 0;
+  // while (!ws || ws.readyState !== WebSocket.OPEN) {
+  //   await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
 
-    logger.warn(
-      'Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect',
-    );
+  //   logger.warn(
+  //     'Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect',
+  //   );
 
-    if (tryCount++ > 100) {
-      throw new Error(`Websocket to $challenger has failed`);
-    }
-  }
-  ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
+  //   if (tryCount++ > 100) {
+  //     throw new Error(`Websocket to $challenger has failed`);
+  //   }
+  // }
+
+  // if the challange is sent from a different address
+
+  // ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
+
   //sign it here w/o ws
 }
 /**
@@ -403,18 +407,16 @@ Function to indicate to a listening challenger that a rollback has been complete
 export async function signalRollbackCompleted(data) {
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending. If not wait until the challenger reconnects
-
   //challenger rollback
-  let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-    logger.warn(
-      `Websocket to challenger is closed for rollback complete. Waiting for challenger to reconnect`,
-    );
-    if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
-  }
-  logger.debug('Rollback completed');
-
+  // let tryCount = 0;
+  // while (!ws || ws.readyState !== WebSocket.OPEN) {
+  //   await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+  //   logger.warn(
+  //     `Websocket to challenger is closed for rollback complete. Waiting for challenger to reconnect`,
+  //   );
+  //   if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
+  // }
+  // logger.debug('Rollback completed');
   //ws
-  ws.send(JSON.stringify({ type: 'rollback', data }));
+  // ws.send(JSON.stringify({ type: 'rollback', data }));
 }
