@@ -1258,6 +1258,13 @@ describe('State contract State functions', function () {
     await state.setStakeAccount(addr2.address, amount.mul(100000), challengeLocked);
     await state.setNumProposers(2);
 
+    const sprintInSpan = await state.getSprintsInSpan();
+    const spanProposersList = [];
+    for (let i = 0; i < sprintInSpan; i++) {
+      spanProposersList.push(state.spanProposersList(i));
+    }
+    console.log(`list of next proposer: ${await Promise.all(spanProposersList)}`);
+
     for (let i = 0; i < signers.length; i++) {
       await state.setProposer(signers[i].address, [
         signers[i].address,
