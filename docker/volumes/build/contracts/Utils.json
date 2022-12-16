@@ -26774,12 +26774,12 @@
     "80001": {
       "events": {},
       "links": {},
-      "address": "0xD2D7014197ed459b64d403c588F6F9D4833B416B",
-      "transactionHash": "0xf55347c964024d83b031b0c9e296c016320d4ba061f3b9fda2db86b6d9df5abe"
+      "address": "0x54E8a8Db5fC50454a74C05909aA545a2f7D049d9",
+      "transactionHash": "0x35b51d5dd63baaea1b2967073939c29278a97a00f0542c37ca5b86c5131954e5"
     }
   },
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-15T14:25:41.305Z",
+  "updatedAt": "2022-12-16T22:06:08.794Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

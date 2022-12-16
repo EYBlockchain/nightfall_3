@@ -11108,14 +11108,14 @@
     "80001": {
       "events": {},
       "links": {
-        "MerkleTree_Stateless": "0x31a5Ae515F8c443B58a848E875fDD10Ba32b4311"
+        "MerkleTree_Stateless": "0xED2610db01d5d0c32eD548D1ddf12fe132974228"
       },
-      "address": "0x6e4C55475C00675e158fB532f6D3a3688C7609F7",
-      "transactionHash": "0x075e01401c84a4170ab10cc735562927916e2b3ab3fb14530d2a9d8216eae95a"
+      "address": "0xA2Ba702e7A094228269A8429fB9AE69662A59Fe7",
+      "transactionHash": "0xaf4117fb0cf52165104b9296edc983294d0a10d1f476e91a302fd0f9c46ac43f"
     }
   },
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-15T14:25:41.314Z",
+  "updatedAt": "2022-12-16T22:06:08.801Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

@@ -48,7 +48,7 @@ export default async function localTest(IS_TEST_RUNNER) {
       await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
       await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     } catch (err) {
-      logger.warn(`Error in deposit ${err}`);
+      console.warn(`Error deposit ${nf3.ethereumAddress}`, err);
     }
   }
 
@@ -95,7 +95,7 @@ export default async function localTest(IS_TEST_RUNNER) {
       await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
       console.log(`Completed ${i + 1} pings`);
     } catch (err) {
-      console.warn('Error deposit', err);
+      console.warn(`Error deposit ${nf3.ethereumAddress}`, err);
     }
   }
 

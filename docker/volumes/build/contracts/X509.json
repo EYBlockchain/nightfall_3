@@ -52604,12 +52604,12 @@
     "80001": {
       "events": {},
       "links": {},
-      "address": "0x1BEC4DA60435fd4A39047Fe856c4b7494d094c88",
-      "transactionHash": "0x95025b9fe3feecb3789c2a877d10f7d1043b2bc9ca401ddae1beb068a09d8628"
+      "address": "0x1717Bf48F33B62d158a70b07b2DB5BA2CE8B8695",
+      "transactionHash": "0x56e994d0b5fb1a7b8d80db7d2226903ea916973bd46798d23373462c36af59e1"
     }
   },
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-15T14:25:41.391Z",
+  "updatedAt": "2022-12-16T22:06:08.868Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
