@@ -891,7 +891,7 @@ export async function findUsableCommitmentsMutex(
   );
 }
 
-export async function getCommitmentsByHash(hashes, compressedZkpPublicKey) {
+export async function getCommitmentsAvailableByHash(hashes, compressedZkpPublicKey) {
   const db = await connectDB();
   const vals = db.getAll(COMMITMENTS_COLLECTION);
   const commitment = vals.filter(

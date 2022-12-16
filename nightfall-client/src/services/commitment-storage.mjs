@@ -23,31 +23,32 @@ const { generalise } = gen;
 const mutex = new Mutex();
 
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment(commitment, nullifierKey) {
+export async function storeCommitment(_commitment, nullifierKey, commitmentTransactionHash) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   // we'll also compute and store the nullifier hash.  This will be useful for
   // spotting if the commitment spend is ever rolled back, which would mean the
   // commitment is once again available to spend
-  const nullifierHash = new Nullifier(commitment, nullifierKey).hash.hex(32);
-  const preimage = commitment.preimage.all.hex(32);
+  const nullifierHash = new Nullifier(_commitment, nullifierKey).hash.hex(32);
+  const preimage = _commitment.preimage.all.hex(32);
   preimage.ercAddress = preimage.ercAddress.toLowerCase();
-  const data = {
-    _id: commitment.hash.hex(32),
-    compressedZkpPublicKey: commitment.compressedZkpPublicKey.hex(32),
+  const commitment = {
+    _id: _commitment.hash.hex(32),
+    compressedZkpPublicKey: _commitment.compressedZkpPublicKey.hex(32),
     preimage,
-    isDeposited: commitment.isDeposited || false,
-    isOnChain: Number(commitment.isOnChain) || -1,
+    isDeposited: _commitment.isDeposited || false,
+    isOnChain: Number(_commitment.isOnChain) || -1,
     isPendingNullification: false, // will not be pending when stored
-    isNullified: commitment.isNullified,
-    isNullifiedOnChain: Number(commitment.isNullifiedOnChain) || -1,
+    isNullified: _commitment.isNullified,
+    isNullifiedOnChain: Number(_commitment.isNullifiedOnChain) || -1,
     nullifier: nullifierHash,
     blockNumber: -1,
+    commitmentTransactionHash,
   };
-  logger.debug(`Storing commitment ${data._id}`);
-  // a chain reorg may cause an attempted overwrite. We should allow this, hence
-  // the use of replaceOne.
-  return db.collection(COMMITMENTS_COLLECTION).insertOne(data);
+  logger.debug(`Storing commitment ${commitment._id}`);
+  const query = { _id: commitment._id };
+  const update = { $set: commitment };
+  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update, { upsert: true });
 }
 // function to update an existing commitment
 export async function updateCommitment(commitment, updates) {
@@ -78,7 +79,7 @@ export async function countNullifiers(nullifiers) {
 export async function countCircuitTransactions(transactionHashes, circuitHash) {
   const connection = await mongo.connection(MONGO_URL);
   const query = {
-    transactionHash: { $in: transactionHashes },
+    nullifierTransactionHash: { $in: transactionHashes },
     nullifierCircuitHash: circuitHash,
   };
   const db = connection.db(COMMITMENTS_DB);
@@ -88,7 +89,7 @@ export async function countCircuitTransactions(transactionHashes, circuitHash) {
 // function to get if the transaction hash belongs to a withdraw transaction
 export async function isTransactionHashBelongCircuit(transactionHash, circuitHash) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { transactionHash, nullifierCircuitHash: circuitHash };
+  const query = { nullifierTransactionHash: transactionHash, nullifierCircuitHash: circuitHash };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
@@ -97,13 +98,19 @@ export async function isTransactionHashBelongCircuit(transactionHash, circuitHas
 export async function markOnChain(
   commitments,
   blockNumberL2,
+  commitmentTransactionHash,
   blockNumber,
   transactionHashCommittedL1,
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
   const update = {
-    $set: { isOnChain: Number(blockNumberL2), blockNumber, transactionHashCommittedL1 },
+    $set: {
+      isOnChain: Number(blockNumberL2),
+      blockNumber,
+      transactionHashCommittedL1,
+      commitmentTransactionHash,
+    },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -136,7 +143,7 @@ export async function markNullified(commitment, transaction) {
       isPendingNullification: false,
       isNullified: true,
       nullifierCircuitHash: transaction.circuitHash,
-      transactionHash: transaction.transactionHash,
+      nullifierTransactionHash: transaction.transactionHash,
     },
   };
   const db = connection.db(COMMITMENTS_DB);
@@ -152,6 +159,12 @@ export async function getCommitmentBySalt(salt) {
     .find({ 'preimage.salt': generalise(salt).hex(32) })
     .toArray();
   return commitments;
+}
+
+export async function getCommitmentByHash(commitment) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(COMMITMENTS_COLLECTION).findOne({ _id: commitment.hash.hex(32) });
 }
 
 // function to retrieve commitments by transactionHash of the block in which they were
@@ -212,10 +225,10 @@ export async function clearNullifiers(nullifiers) {
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
 }
 
-export async function clearOnChain(commitments) {
+export async function clearOnChain(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   // Clear all onchains
-  const query = { _id: { $in: commitments } };
+  const query = { isOnChain: { $gte: blockNumberL2 } };
   const update = {
     $set: { isOnChain: -1, blockNumber: -1, transactionHashCommittedL1: null },
   };
@@ -236,13 +249,19 @@ export async function clearPending(commitment) {
 export async function markNullifiedOnChain(
   nullifiers,
   blockNumberL2,
+  nullifierTransactionHash,
   blockNumber,
   transactionHashNullifiedL1, // the tx in which the nullification happened
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
   const update = {
-    $set: { isNullifiedOnChain: Number(blockNumberL2), blockNumber, transactionHashNullifiedL1 },
+    $set: {
+      isNullifiedOnChain: Number(blockNumberL2),
+      blockNumber,
+      transactionHashNullifiedL1,
+      nullifierTransactionHash,
+    },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -590,8 +609,12 @@ export async function getCommitmentsByCircuitHash(circuitHash) {
 export async function deleteCommitments(commitments) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const query = { _id: { $in: commitments } };
-  return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
+  const queryNonDepositCommitments = { _id: { $in: commitments }, isDeposited: false };
+  await db.collection(COMMITMENTS_COLLECTION).deleteMany(queryNonDepositCommitments);
+
+  const queryDepositCommitments = { _id: { $in: commitments }, isDeposited: true };
+  const update = { $set: { commitmentTransactionHash: null } };
+  await db.collection(COMMITMENTS_COLLECTION).updateMany(queryDepositCommitments, update);
 }
 
 async function getAvailableCommitments(db, compressedZkpPublicKey, ercAddress, tokenId) {
@@ -1019,7 +1042,7 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
   return commitmentsByListOfCompressedZkpPublicKey;
 }
 
-export async function getCommitmentsByHash(hashes, compressedZkpPublicKey) {
+export async function getCommitmentsAvailableByHash(hashes, compressedZkpPublicKey) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = {

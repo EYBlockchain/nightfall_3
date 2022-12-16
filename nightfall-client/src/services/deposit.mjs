@@ -22,6 +22,7 @@ import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
+import { getCommitmentByHash } from './commitment-storage.mjs';
 
 const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, DEPOSIT, DEPOSIT_FEE } = constants;
@@ -32,10 +33,15 @@ async function deposit(depositParams) {
   const { tokenType, providedCommitmentsFee, ...items } = depositParams;
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
-  const { tokenId, value, fee, rootKey } = generalise(items);
+  const {
+    salt = (await randValueLT(BN128_GROUP_ORDER)).hex(),
+    tokenId,
+    value,
+    fee,
+    rootKey,
+  } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
-  const salt = await randValueLT(BN128_GROUP_ORDER);
 
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
@@ -82,7 +88,7 @@ async function deposit(depositParams) {
     circuitName = DEPOSIT;
   }
 
-  const commitment = new Commitment({
+  let commitment = new Commitment({
     ercAddress,
     tokenId,
     value: valueNewCommitment,
@@ -100,6 +106,19 @@ async function deposit(depositParams) {
     msg: 'Hash of new commitment',
     hash: commitment.hash.hex(),
   });
+
+  const commitmentDB = await getCommitmentByHash(commitment);
+
+  console.log('COMMITMENT DB', commitmentDB);
+
+  if (commitmentDB) {
+    logger.info({ msg: 'ON CHAIN', onChain: commitmentDB.isOnChain });
+    if (commitmentDB.isOnChain !== -1) {
+      throw new Error('You can not re-send a commitment that is already on-chain');
+    } else {
+      commitment = commitmentDB;
+    }
+  }
 
   const circuitHash = await getCircuitHash(circuitName);
 

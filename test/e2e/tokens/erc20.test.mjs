@@ -5,6 +5,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import {
   depositNTransactions,
@@ -16,6 +17,7 @@ import {
   getUserCommitments,
 } from '../../utils.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
+import constants from '../../../common-files/constants/index.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -36,6 +38,8 @@ const {
     tokens: { blockchain: maxWithdrawValue },
   },
 } = config;
+
+const { BN128_GROUP_ORDER } = constants;
 
 const web3Client = new Web3Client();
 const web3 = web3Client.getWeb3();
@@ -102,6 +106,25 @@ describe('ERC20 tests', () => {
         expect.fail('Throw error, deposit did not fail');
       } catch (err) {
         expect(err.message).to.include('Transaction has been reverted by the EVM');
+      }
+    });
+
+    it('Should fail to send a deposit if commitment is already on chain', async function () {
+      const salt = (await randValueLT(BN128_GROUP_ORDER)).hex();
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee, [], salt);
+      await makeBlock();
+      try {
+        await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee, [], salt);
+      } catch (err) {
+        expect(err.message).to.include('You can not re-send a commitment that is already on-chain');
+      }
+    });
+
+    it('Should fail to send a deposit if fee is higher or equal than the value', async function () {
+      try {
+        await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, transferValue);
+      } catch (err) {
+        expect(err.message).to.include('Value deposited needs to be bigger than the fee');
       }
     });
   });

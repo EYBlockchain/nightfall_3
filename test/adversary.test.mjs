@@ -27,6 +27,7 @@ import {
   waitForTimeout,
   Web3Client,
 } from './utils.mjs';
+import { getERCInfo } from '../cli/lib/tokens.mjs';
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
@@ -37,11 +38,12 @@ const {
   fee,
   signingKeys,
   mnemonics,
-  tokenConfigs: { tokenType, tokenId },
+  tokenConfigs: { tokenTypeERC1155, tokenType, tokenId },
   transferValue,
 } = config.TEST_OPTIONS;
 
 const web3Client = new Web3Client();
+const web3 = web3Client.getWeb3();
 const eventLogs = [];
 
 const challengeSelectors = {
@@ -105,9 +107,11 @@ async function enableChallenger(enable) {
 describe('Testing with an adversary', () => {
   let blockProposeEmitter;
   let challengeEmitter;
-  let ercAddress;
+  let erc20Address;
+  let erc1155Address;
   let stateAddress;
   let intervalId;
+  let availableTokenIds;
 
   let rollbackCount = 0;
   let currentRollbacks = 0;
@@ -195,18 +199,25 @@ describe('Testing with an adversary', () => {
       });
 
     // retrieve initial balance
-    ercAddress = await nf3User.getContractAddress('ERC20Mock');
+    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    erc1155Address = await nf3User.getContractAddress('ERC1155Mock');
     stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+
+    availableTokenIds = (
+      await getERCInfo(erc1155Address, nf3User.ethereumAddress, web3, {
+        details: true,
+      })
+    ).details.map(t => t.tokenId);
   });
 
   beforeEach(async () => {
     currentRollbacks = rollbackCount;
   });
 
-  describe('Testing block zero challenges', async () => {
+  describe.skip('Testing block zero challenges', async () => {
     before(async () => {
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+      await nf3User.deposit('ValidTransaction', erc20Address, tokenType, transferValue, tokenId, 0);
     });
 
     it('Challenging block zero for having an invalid leaf count', async () => {
@@ -232,46 +243,52 @@ describe('Testing with an adversary', () => {
     });
   });
 
-  describe('Testing optimist deep rollbacks', async () => {
-    const userL2BalanceBefore = await getLayer2BalancesBadClient(ercAddress);
-    const user2L2BalanceBefore = await getLayer2Balances(nf3User2, ercAddress);
+  describe('Testing optimist deep rollbacks', () => {
+    let userL2BalanceBefore;
+    let user2L2BalanceBefore;
 
     before(async () => {
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+      userL2BalanceBefore = await getLayer2BalancesBadClient(erc20Address);
+      user2L2BalanceBefore = await getLayer2Balances(nf3User2, erc20Address);
+      await nf3User.deposit('ValidTransaction', erc20Address, tokenType, transferValue, tokenId, 0);
       await makeBlock();
-      await waitForTimeout(10000);
     });
     it('Deep rollback', async () => {
       console.log('Testing deep rollback at distance 2...');
 
       await enableChallenger(false);
-      await nf3User2.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+      await nf3User2.deposit(
+        'ValidTransaction',
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        0,
+      );
       await nf3User.transfer(
         'ValidTransaction',
         false,
-        ercAddress,
+        erc20Address,
         tokenType,
         transferValue / 2,
         tokenId,
         nf3User2.zkpKeys.compressedZkpPublicKey,
         0,
       );
-      await nf3User.deposit('IncorrectInput', ercAddress, tokenType, transferValue, tokenId, 0);
+      await nf3User.deposit('IncorrectInput', erc20Address, tokenType, transferValue, tokenId, 0);
       await waitForSufficientTransactionsMempool({
         optimistBaseUrl: environment.adversarialOptimistApiUrl,
         nTransactions: 3,
       });
 
       await makeBlock('IncorrectTreeRoot');
-      await nf3User2.transfer(
+      await nf3User2.deposit(
         'ValidTransaction',
-        false,
-        ercAddress,
-        tokenType,
+        erc1155Address,
+        tokenTypeERC1155,
         transferValue,
-        tokenId,
-        nf3User.zkpKeys.compressedZkpPublicKey,
-        0,
+        availableTokenIds[1],
+        fee,
       );
       await makeBlock();
       await restartOptimist(nf3Challenger);
@@ -283,7 +300,7 @@ describe('Testing with an adversary', () => {
       const numberTxs = mempool.filter(e => e.mempool).length;
       expect(numberTxs).to.be.equal(2);
 
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+      await nf3User.deposit('ValidTransaction', erc20Address, tokenType, transferValue, tokenId, 0);
 
       await waitForSufficientTransactionsMempool({
         optimistBaseUrl: environment.adversarialOptimistApiUrl,
@@ -292,8 +309,8 @@ describe('Testing with an adversary', () => {
 
       await makeBlock();
 
-      const userL2BalanceAfter = await getLayer2BalancesBadClient(ercAddress);
-      const user2L2BalanceAfter = await getLayer2Balances(nf3User2, ercAddress);
+      const userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+      const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
 
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(
         transferValue + transferValue / 2,
@@ -301,6 +318,8 @@ describe('Testing with an adversary', () => {
       expect(user2L2BalanceAfter - user2L2BalanceBefore).to.be.equal(
         transferValue + transferValue / 2,
       );
+
+      await waitForTimeout(50000);
     });
 
     after(async () => {
@@ -318,7 +337,7 @@ describe('Testing with an adversary', () => {
         console.log('Testing duplicate transaction deposit...');
         await nf3User.deposit(
           'ValidTransaction',
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -331,7 +350,7 @@ describe('Testing with an adversary', () => {
 
       it('Test failing incorrect input deposit', async () => {
         console.log('Testing incorrect input deposit...');
-        await nf3User.deposit('IncorrectInput', ercAddress, tokenType, transferValue, tokenId, 0);
+        await nf3User.deposit('IncorrectInput', erc20Address, tokenType, transferValue, tokenId, 0);
         await makeBlock();
         await waitForRollback();
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
@@ -339,7 +358,7 @@ describe('Testing with an adversary', () => {
 
       it('Test failing incorrect proof deposit', async () => {
         console.log('Testing incorrect proof deposit...');
-        await nf3User.deposit('IncorrectProof', ercAddress, tokenType, transferValue, tokenId, 0);
+        await nf3User.deposit('IncorrectProof', erc20Address, tokenType, transferValue, tokenId, 0);
         await makeBlock();
         await waitForRollback();
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
@@ -348,7 +367,14 @@ describe('Testing with an adversary', () => {
 
     describe('Transfers rollback', async () => {
       beforeEach(async () => {
-        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+        await nf3User.deposit(
+          'ValidTransaction',
+          erc20Address,
+          tokenType,
+          transferValue,
+          tokenId,
+          0,
+        );
         await makeBlock();
       });
 
@@ -357,7 +383,7 @@ describe('Testing with an adversary', () => {
         await nf3User.transfer(
           'ValidTransaction',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -377,7 +403,7 @@ describe('Testing with an adversary', () => {
         await nf3User.transfer(
           'DuplicateNullifier',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -394,7 +420,7 @@ describe('Testing with an adversary', () => {
         await nf3User.transfer(
           'IncorrectInput',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -410,7 +436,7 @@ describe('Testing with an adversary', () => {
         await nf3User.transfer(
           'IncorrectProof',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -427,7 +453,7 @@ describe('Testing with an adversary', () => {
         await nf3User.transfer(
           'IncorrectHistoricBlockNumber',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -442,7 +468,14 @@ describe('Testing with an adversary', () => {
 
     describe('Withdraw rollbacks', async () => {
       beforeEach(async () => {
-        await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+        await nf3User.deposit(
+          'ValidTransaction',
+          erc20Address,
+          tokenType,
+          transferValue,
+          tokenId,
+          0,
+        );
         await makeBlock();
       });
 
@@ -451,7 +484,7 @@ describe('Testing with an adversary', () => {
         await nf3User.withdraw(
           'ValidTransaction',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -471,7 +504,7 @@ describe('Testing with an adversary', () => {
         await nf3User.withdraw(
           'DuplicateNullifier',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -488,7 +521,7 @@ describe('Testing with an adversary', () => {
         await nf3User.withdraw(
           'IncorrectInput',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -505,7 +538,7 @@ describe('Testing with an adversary', () => {
         await nf3User.withdraw(
           'IncorrectProof',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -522,7 +555,7 @@ describe('Testing with an adversary', () => {
         await nf3User.withdraw(
           'IncorrectHistoricBlockNumber',
           false,
-          ercAddress,
+          erc20Address,
           tokenType,
           transferValue,
           tokenId,
@@ -546,7 +579,7 @@ describe('Testing with an adversary', () => {
 
   describe('Testing bad blocks', async () => {
     before(async () => {
-      await nf3User.deposit('ValidTransaction', ercAddress, tokenType, transferValue, tokenId, 0);
+      await nf3User.deposit('ValidTransaction', erc20Address, tokenType, transferValue, tokenId, 0);
     });
 
     it('Test incorrect leaf count', async () => {

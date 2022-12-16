@@ -60,8 +60,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
 
         (, bool isEscrowRequired) = state.circuitInfo(Utils.getCircuitHash(t.packedInfo));
         if (isEscrowRequired) {
-            bytes32 transactionHash = Utils.hashTransaction(t);
-            state.setTransactionInfo(transactionHash, isEscrowRequired);
+            state.setCommitmentEscrowed(t.commitments[0]);
             payIn(t);
         }
     }

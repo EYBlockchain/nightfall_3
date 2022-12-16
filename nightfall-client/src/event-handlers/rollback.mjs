@@ -50,7 +50,6 @@ async function rollbackEventHandler(data) {
   logger.info({ msg: 'Rollback - rollback layer 2 blocks', blocksToBeDeleted });
 
   const validTransactions = [];
-  const validCommitments = [];
 
   const invalidTransactions = [];
   const invalidNullifiers = [];
@@ -101,7 +100,6 @@ async function rollbackEventHandler(data) {
       }
 
       validTransactions.push(transaction.transactionHash);
-      validCommitments.push(...commitments);
     }
   }
 
@@ -112,8 +110,7 @@ async function rollbackEventHandler(data) {
   });
 
   logger.debug({
-    msg: 'Updating commitments && nullifiers',
-    validCommitments,
+    msg: 'Invalid commitments && nullifiers',
     invalidCommitments,
     invalidNullifiers,
   });
@@ -122,9 +119,9 @@ async function rollbackEventHandler(data) {
     deleteTreeByBlockNumberL2(Number(blockNumberL2)),
     deleteBlocksByBlockNumberL2(Number(blockNumberL2)),
     clearNullifiedOnChain(Number(blockNumberL2)),
+    clearOnChain(Number(blockNumberL2)),
     clearNullifiers(invalidNullifiers),
     deleteCommitments(invalidCommitments),
-    clearOnChain(validCommitments),
     deleteTransactionsByTransactionHashes(invalidTransactions),
   ]);
 }

@@ -14,12 +14,13 @@ import './Utils.sol';
 import './Config.sol';
 import './Pausable.sol';
 import './Key_Registry.sol';
+import 'hardhat/console.sol';
 
 contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // global state variables
-    mapping(bytes32 => bool) public isTransactionEscrowed;
+    mapping(bytes32 => bool) public isCommitmentEscrowed;
     BlockData[] public blockHashes; // array containing mainly blockHashes
     mapping(address => FeeTokens) public pendingWithdrawalsFees;
     mapping(address => LinkedAddress) public proposers;
@@ -107,10 +108,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 'State: Block flawed or out of order'
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
         }
-        require(
-            Utils.getProposer(b.packedInfo) == msg.sender,
-            'State: The sender is not the proposer'
-        );
+        // require(
+        //     Utils.getProposer(b.packedInfo) == msg.sender,
+        //     'State: The sender is not the proposer'
+        // );
         require(
             stakeAccounts[msg.sender].amount + msg.value >= blockStake,
             'State: Proposer does not have enough funds staked'
@@ -201,18 +202,32 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 let isEscrowRequired := shr(8, sload(keccak256(x, mul(0x20, 2))))
 
                 if isEscrowRequired {
-                    mstore(x, mload(add(transactionHashesPos, mul(0x20, i))))
-                    mstore(add(x, 0x20), isTransactionEscrowed.slot)
-                    let isTxEscrowed := sload(keccak256(x, mul(0x20, 2)))
-
-                    //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
-                    if iszero(isTxEscrowed) {
-                        mstore(
-                            0,
-                            0xd96541f500000000000000000000000000000000000000000000000000000000 //Custom error DepositNotEscrowed
+                    let commitment := calldataload(
+                        add(
+                            add(t.offset, add(mul(0x20, t.length), 0x20)),
+                            calldataload(
+                                add(
+                                    t.offset,
+                                    add(calldataload(add(t.offset, mul(0x20, i))), mul(0x20, 5))
+                                )
+                            )
                         )
-                        mstore(0x04, mload(add(transactionHashesPos, mul(0x20, i))))
-                        revert(0, 36)
+                    )
+
+                    if commitment {
+                        mstore(x, commitment)
+                        mstore(add(x, 0x20), isCommitmentEscrowed.slot)
+                        let commitmentEscrowed := sload(keccak256(x, mul(0x20, 2)))
+
+                        //If the funds weren't deposited, means the user sent the deposit off-chain, which is not allowed. Revert
+                        if iszero(commitmentEscrowed) {
+                            mstore(
+                                0,
+                                0x30584a2900000000000000000000000000000000000000000000000000000000 //Custom error CommitmentNotEscrowed
+                            )
+                            mstore(0x04, commitment)
+                            revert(0, 36)
+                        }
                     }
                 }
 
@@ -284,8 +299,12 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         emit BlockProposed();
     }
 
-    function setTransactionInfo(bytes32 transactionHash, bool isEscrowed) public onlyShield {
-        isTransactionEscrowed[transactionHash] = isEscrowed;
+    function setCommitmentEscrowed(bytes32 commitmentHash) public onlyShield {
+        isCommitmentEscrowed[commitmentHash] = true;
+    }
+
+    function getCommitmentEscrowed(bytes32 commitmentHash) public view returns (bool) {
+        return isCommitmentEscrowed[commitmentHash];
     }
 
     function setProposer(address addr, LinkedAddress calldata proposer) public onlyProposer {
