@@ -4,9 +4,15 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { expectTransaction, getLayer2Balances, Web3Client } from '../../utils.mjs';
+import {
+  expectTransaction,
+  getLayer2Balances,
+  getUserCommitments,
+  Web3Client,
+} from '../../utils.mjs';
 import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 const { expect } = chai;
@@ -21,6 +27,8 @@ const {
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
+
+const { generalise } = gen;
 
 const web3Client = new Web3Client();
 const web3 = web3Client.getWeb3();
@@ -86,6 +94,41 @@ describe('ERC721 tests', () => {
       expect(userL2Erc721After - userL2Erc721Before).to.be.equal(1);
       expect(userL2FeesBalanceAfter - userL2FeesBalanceBefore).to.be.equal(-fee);
     });
+
+    it('Should perform a deposit in which the user specifies which commitments they want to use to pay for the fee', async function () {
+      const userL2Erc721Before = await getLayer2Erc721s(nf3User);
+      const userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
+
+      const erc20Commitments = userCommitments
+        .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
+        .filter(c => c.value >= generalise(fee).hex(32));
+
+      const usedCommitmentsFee = [erc20Commitments[0].commitmentHash];
+
+      const _tokenId = availableTokenIds.shift();
+      const res = await nf3User.deposit(
+        erc721Address,
+        tokenTypeERC721,
+        0,
+        _tokenId,
+        fee,
+        usedCommitmentsFee,
+      );
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      await makeBlock();
+
+      const userL2Erc721After = await getLayer2Erc721s(nf3User);
+      const userL2FeesBalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+
+      expect(userL2Erc721After - userL2Erc721Before).to.be.equal(1);
+      expect(userL2FeesBalanceAfter - userL2FeesBalanceBefore).to.be.equal(-fee);
+    });
   });
 
   describe('Transfers', () => {
@@ -120,6 +163,213 @@ describe('ERC721 tests', () => {
       expect(userL2FeesBalanceAfter - userL2FeesBalanceBefore).to.be.equal(-fee);
       // user 2
       expect(user2L2Erc721After - user2L2Erc721Before).to.be.equal(1);
+    });
+
+    it('Should perform a transfer by specifying the commitment that provides enough value to cover value + fee', async function () {
+      const _tokenId = availableTokenIds.shift();
+
+      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, noValue, _tokenId, fee);
+      expectTransaction(deposit);
+      await makeBlock();
+
+      const userL2Erc721Before = await getLayer2Erc721s(nf3User);
+      const user2L2Erc721Before = await getLayer2Erc721s(nf3User2);
+      const userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
+
+      const erc20Commitments = userCommitments
+        .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
+        .filter(c => c.value >= generalise(fee).hex(32));
+
+      const erc721Commitments = userCommitments.filter(
+        c =>
+          c.ercAddress === generalise(erc721Address).hex(32) &&
+          c.tokenId === generalise(_tokenId).hex(32),
+      );
+
+      console.log('ERC721Commitments', erc721Commitments);
+
+      const res = await nf3User.transfer(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        0,
+        _tokenId,
+        nf3User2.zkpKeys.compressedZkpPublicKey,
+        fee,
+        [erc721Commitments[0].commitmentHash],
+        [erc20Commitments[0].commitmentHash],
+      );
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      await makeBlock();
+
+      const userL2Erc721After = await getLayer2Erc721s(nf3User);
+      const user2L2Erc721After = await getLayer2Erc721s(nf3User2);
+      const userL2FeesBalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+
+      // Assertions user
+      expect(userL2Erc721After - userL2Erc721Before).to.be.equal(-1);
+      expect(userL2FeesBalanceAfter - userL2FeesBalanceBefore).to.be.equal(-fee);
+      // user 2
+      expect(user2L2Erc721After - user2L2Erc721Before).to.be.equal(1);
+    });
+
+    it('Should perform a transfer by specifying the commitment that provides enough value to cover value', async function () {
+      const _tokenId = availableTokenIds.shift();
+
+      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
+      expectTransaction(deposit);
+      await makeBlock();
+
+      const userL2Erc721Before = await getLayer2Erc721s(nf3User);
+      const user2L2Erc721Before = await getLayer2Erc721s(nf3User2);
+      const userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
+
+      const erc721Commitments = userCommitments.filter(
+        c =>
+          c.ercAddress === generalise(erc721Address).hex(32) &&
+          c.tokenId === generalise(_tokenId).hex(32),
+      );
+
+      const res = await nf3User.transfer(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        0,
+        _tokenId,
+        nf3User2.zkpKeys.compressedZkpPublicKey,
+        fee,
+        [erc721Commitments[0].commitmentHash],
+        [],
+      );
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      await makeBlock();
+
+      const userL2Erc721After = await getLayer2Erc721s(nf3User);
+      const user2L2Erc721After = await getLayer2Erc721s(nf3User2);
+      const userL2FeesBalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+
+      // Assertions user
+      expect(userL2Erc721After - userL2Erc721Before).to.be.equal(-1);
+      expect(userL2FeesBalanceAfter - userL2FeesBalanceBefore).to.be.equal(-fee);
+      // user 2
+      expect(user2L2Erc721After - user2L2Erc721Before).to.be.equal(1);
+    });
+
+    it('Should perform a transfer by specifying the commitment that provides enough value to cover fee', async function () {
+      const _tokenId = availableTokenIds.shift();
+
+      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
+      expectTransaction(deposit);
+      await makeBlock();
+
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
+
+      const erc20Commitments = userCommitments
+        .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
+        .filter(c => c.value >= generalise(fee).hex(32));
+
+      const userL2Erc721Before = await getLayer2Erc721s(nf3User);
+      const user2L2Erc721Before = await getLayer2Erc721s(nf3User2);
+      const userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      const res = await nf3User.transfer(
+        false,
+        erc721Address,
+        tokenTypeERC721,
+        0,
+        _tokenId,
+        nf3User2.zkpKeys.compressedZkpPublicKey,
+        fee,
+        [],
+        [erc20Commitments[0].commitmentHash],
+      );
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      await makeBlock();
+
+      const userL2Erc721After = await getLayer2Erc721s(nf3User);
+      const user2L2Erc721After = await getLayer2Erc721s(nf3User2);
+      const userL2FeesBalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+
+      // Assertions user
+      expect(userL2Erc721After - userL2Erc721Before).to.be.equal(-1);
+      expect(userL2FeesBalanceAfter - userL2FeesBalanceBefore).to.be.equal(-fee);
+      // user 2
+      expect(user2L2Erc721After - user2L2Erc721Before).to.be.equal(1);
+    });
+
+    it('Should fail to transfer if user specifies commitments for the fee but it does not cover the whole value', async function () {
+      const _tokenId = availableTokenIds.shift();
+
+      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
+      expectTransaction(deposit);
+      await makeBlock();
+
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
+
+      const erc20Commitments = userCommitments
+        .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
+        .filter(c => c.value >= generalise(fee).hex(32));
+
+      try {
+        await nf3User.transfer(
+          false,
+          erc721Address,
+          tokenTypeERC721,
+          0,
+          _tokenId,
+          nf3User2.zkpKeys.compressedZkpPublicKey,
+          Number(generalise(erc20Commitments[0].value).bigInt + 1n),
+          [],
+          [erc20Commitments[0].commitmentHash],
+        );
+        expect.fail('Throw error, transfer did not fail');
+      } catch (err) {
+        expect(err.message).to.be.equal('provided commitments do not cover the fee');
+      }
+    });
+
+    it('Should fail to transfer if user specifies commitments and some of them are invalid', async function () {
+      const _tokenId = availableTokenIds.shift();
+
+      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
+      expectTransaction(deposit);
+      await makeBlock();
+
+      try {
+        await nf3User.transfer(
+          false,
+          erc721Address,
+          tokenTypeERC721,
+          0,
+          _tokenId,
+          nf3User2.zkpKeys.compressedZkpPublicKey,
+          fee,
+          [],
+          [generalise(34).hex(43)],
+        );
+        expect.fail('Throw error, transfer did not fail');
+      } catch (err) {
+        expect(err.message).to.include('Some of the commitments provided for the fee were invalid');
+      }
     });
   });
 

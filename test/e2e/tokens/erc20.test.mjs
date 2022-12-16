@@ -1,9 +1,9 @@
 /* eslint-disable no-await-in-loop */
 import chai from 'chai';
-import gen from 'general-number';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import {
@@ -225,7 +225,7 @@ describe('ERC20 tests', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
     });
 
-    it('Should fail to transfer because specified commitments are not enough to cover the transfer value', async function () {
+    it('Should fail to transfer if user specifies commitments for the value but it does not cover the whole value', async function () {
       const userCommitments = await getUserCommitments(
         environment.clientApiUrl,
         nf3User.zkpKeys.compressedZkpPublicKey,
