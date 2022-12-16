@@ -73,7 +73,7 @@ describe('ERC721 tests', () => {
       })
     ).details.map(t => t.tokenId);
 
-    await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, 0);
+    await nf3User.deposit(erc20Address, tokenType, transferValue * 10, tokenId, 0);
     await makeBlock();
   });
 
@@ -114,7 +114,7 @@ describe('ERC721 tests', () => {
       const res = await nf3User.deposit(
         erc721Address,
         tokenTypeERC721,
-        0,
+        noValue,
         _tokenId,
         fee,
         usedCommitmentsFee,
@@ -167,9 +167,7 @@ describe('ERC721 tests', () => {
 
     it('Should perform a transfer by specifying the commitment that provides enough value to cover value + fee', async function () {
       const _tokenId = availableTokenIds.shift();
-
-      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, noValue, _tokenId, fee);
-      expectTransaction(deposit);
+      await nf3User.deposit(erc721Address, tokenTypeERC721, noValue, _tokenId, fee);
       await makeBlock();
 
       const userL2Erc721Before = await getLayer2Erc721s(nf3User);
@@ -197,7 +195,7 @@ describe('ERC721 tests', () => {
         false,
         erc721Address,
         tokenTypeERC721,
-        0,
+        noValue,
         _tokenId,
         nf3User2.zkpKeys.compressedZkpPublicKey,
         fee,
@@ -221,9 +219,7 @@ describe('ERC721 tests', () => {
 
     it('Should perform a transfer by specifying the commitment that provides enough value to cover value', async function () {
       const _tokenId = availableTokenIds.shift();
-
-      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
-      expectTransaction(deposit);
+      await nf3User.deposit(erc721Address, tokenTypeERC721, noValue, _tokenId, fee);
       await makeBlock();
 
       const userL2Erc721Before = await getLayer2Erc721s(nf3User);
@@ -245,7 +241,7 @@ describe('ERC721 tests', () => {
         false,
         erc721Address,
         tokenTypeERC721,
-        0,
+        noValue,
         _tokenId,
         nf3User2.zkpKeys.compressedZkpPublicKey,
         fee,
@@ -269,9 +265,7 @@ describe('ERC721 tests', () => {
 
     it('Should perform a transfer by specifying the commitment that provides enough value to cover fee', async function () {
       const _tokenId = availableTokenIds.shift();
-
-      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
-      expectTransaction(deposit);
+      await nf3User.deposit(erc721Address, tokenTypeERC721, noValue, _tokenId, fee);
       await makeBlock();
 
       const userCommitments = await getUserCommitments(
@@ -291,7 +285,7 @@ describe('ERC721 tests', () => {
         false,
         erc721Address,
         tokenTypeERC721,
-        0,
+        noValue,
         _tokenId,
         nf3User2.zkpKeys.compressedZkpPublicKey,
         fee,
@@ -315,9 +309,7 @@ describe('ERC721 tests', () => {
 
     it('Should fail to transfer if user specifies commitments for the fee but it does not cover the whole value', async function () {
       const _tokenId = availableTokenIds.shift();
-
-      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
-      expectTransaction(deposit);
+      await nf3User.deposit(erc721Address, tokenTypeERC721, noValue, _tokenId, fee);
       await makeBlock();
 
       const userCommitments = await getUserCommitments(
@@ -334,7 +326,7 @@ describe('ERC721 tests', () => {
           false,
           erc721Address,
           tokenTypeERC721,
-          0,
+          noValue,
           _tokenId,
           nf3User2.zkpKeys.compressedZkpPublicKey,
           Number(generalise(erc20Commitments[0].value).bigInt + 1n),
@@ -349,9 +341,7 @@ describe('ERC721 tests', () => {
 
     it('Should fail to transfer if user specifies commitments and some of them are invalid', async function () {
       const _tokenId = availableTokenIds.shift();
-
-      const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
-      expectTransaction(deposit);
+      await nf3User.deposit(erc721Address, tokenTypeERC721, noValue, _tokenId, fee);
       await makeBlock();
 
       try {
@@ -359,7 +349,7 @@ describe('ERC721 tests', () => {
           false,
           erc721Address,
           tokenTypeERC721,
-          0,
+          noValue,
           _tokenId,
           nf3User2.zkpKeys.compressedZkpPublicKey,
           fee,
