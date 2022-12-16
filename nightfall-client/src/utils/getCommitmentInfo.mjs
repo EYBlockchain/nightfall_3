@@ -21,7 +21,7 @@ const { BN128_GROUP_ORDER } = constants;
 export const getCommitmentInfo = async txInfo => {
   const {
     totalValueToSend,
-    fee = 0n,
+    fee = generalise(0),
     recipientZkpPublicKeysArray = [],
     ercAddress,
     maticAddress,

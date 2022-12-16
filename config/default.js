@@ -125,6 +125,12 @@ module.exports = {
       isEscrowRequired: false,
       isWithdrawing: false,
     },
+    transform: {
+      numberNullifiers: 4,
+      numberCommitments: 6,
+      isEscrowRequired: false,
+      isWithdrawing: false,
+    },
   }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   MPC: {
     MPC_PARAMS_URL:
