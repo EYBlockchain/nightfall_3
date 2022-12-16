@@ -1,7 +1,7 @@
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Block from '../classes/block.mjs';
 import {
-  isRegisteredProposerAddressMine,
+  findRegisteredProposerAddress,
   resetUnsuccessfulBlockProposedTransactions,
 } from '../services/database.mjs';
 
@@ -34,7 +34,7 @@ async function newCurrentProposerEventHandler(data, args) {
 
     // !! converts this to a "is not null" check - i.e. false if is null
     // are we the next proposer?
-    proposer.isMe = !!(await isRegisteredProposerAddressMine(currentProposer));
+    proposer.isMe = !!(await findRegisteredProposerAddress(currentProposer));
   } catch (err) {
     // handle errors
     logger.error(err);

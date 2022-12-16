@@ -169,14 +169,13 @@ export async function conditionalMakeBlock(args) {
         );
 
         // Submit tx and update db if tx is successful
-        // CHECK - db ops
         txsQueue.push(async () => {
           try {
             const receipt = await sendSignedTransaction(signedTx);
             logger.debug({ msg: 'Block proposed', receipt });
 
             await removeTransactionsFromMemPool(block.transactionHashes);
-            logger.debug('Db updates successful');
+            logger.debug('Transactions updated in db');
           } catch (err) {
             logger.error({
               msg: 'Something went wrong',
