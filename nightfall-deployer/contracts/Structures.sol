@@ -6,11 +6,10 @@ Basic data structures for an optimistic rollup
 pragma solidity ^0.8.0;
 
 contract Structures {
-    enum TransactionTypes {
-        DEPOSIT,
-        TRANSFER,
-        WITHDRAW
-    }
+    error InvalidTransactionHash();
+    error DepositNotEscrowed(bytes32 depositHash);
+    error InvalidBlockSize();
+    error InvalidTransactionSize();
 
     enum TokenType {
         ERC20,
@@ -18,7 +17,7 @@ contract Structures {
         ERC1155
     }
 
-    event Rollback(uint256 blockNumberL2);
+    event Rollback(uint64 blockNumberL2);
 
     event BlockProposed();
 
@@ -47,28 +46,23 @@ contract Structures {
     // will hold default values for any specific tranaction, e.g. there are no
     // nullifiers for a Deposit transaction.
     struct Transaction {
-        uint112 value;
-        uint112 fee;
-        TransactionTypes transactionType;
-        TokenType tokenType;
-        uint64[4] historicRootBlockNumberL2;
+        uint256 packedInfo;
+        uint256[] historicRootBlockNumberL2;
         bytes32 tokenId;
         bytes32 ercAddress;
         bytes32 recipientAddress;
-        bytes32[3] commitments;
-        bytes32[4] nullifiers;
+        bytes32[] commitments;
+        bytes32[] nullifiers;
         bytes32[2] compressedSecrets;
         uint256[4] proof;
     }
 
     struct Block {
-        uint48 leafCount; // note this is defined to be the number of leaves AFTER the commitments in this block are added
-        address proposer;
+        uint256 packedInfo;
         bytes32 root; // the 'output' commmitment root after adding all commitments
-        uint256 blockNumberL2;
         bytes32 previousBlockHash;
         bytes32 frontierHash;
-        bytes32 transactionHashesRoot;
+        bytes32 transactionHashesRoot; // This variable needs to be the last one in order proposeBlock to work
     }
 
     struct BlockData {
@@ -89,18 +83,13 @@ contract Structures {
     }
 
     struct TimeLockedStake {
-        uint256 amount; // The amount held
-        uint256 challengeLocked; // The amount locked by block proposed still in CHALLENGE_PERIOD and not claimed
-        uint256 time; // The time the funds were locked from
-    }
-
-    struct Fee {
-        address proposer;
-        uint256 blockNumberL2;
+        uint112 amount; // The amount held
+        uint112 challengeLocked; // The amount locked by block proposed still in CHALLENGE_PERIOD and not claimed
+        uint32 time; // The time the funds were locked from
     }
 
     struct PublicInputs {
-        uint256[4] roots;
+        uint256[] roots;
         address maticAddress;
     }
 
@@ -123,11 +112,27 @@ contract Structures {
 
     struct AdvanceWithdrawal {
         address currentOwner;
-        uint96 advanceFee;
+        uint88 advanceFee;
+        bool isWithdrawn;
     }
 
     struct TransactionInfo {
+        uint248 ethFee;
         bool isEscrowed;
-        bool isWithdrawn;
+    }
+
+    struct BlockInfo {
+        uint248 feesMatic;
+        bool stakeClaimed;
+    }
+
+    struct FeeTokens {
+        uint256 feesEth;
+        uint256 feesMatic;
+    }
+
+    struct CircuitInfo {
+        bool isWithdrawing;
+        bool isEscrowRequired;
     }
 }

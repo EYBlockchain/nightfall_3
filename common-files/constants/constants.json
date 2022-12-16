@@ -3,5 +3,12 @@
   "SHIELD_CONTRACT_NAME": "Shield",
   "CHALLENGES_CONTRACT_NAME": "Challenges",
   "STATE_CONTRACT_NAME": "State",
+  "X509_CONTRACT_NAME": "X509",
+  "DEPOSIT": "deposit",
+  "DEPOSIT_FEE": "depositfee",
+  "TRANSFER": "transfer",
+  "WITHDRAW": "withdraw",
+  "TOKENISE": "tokenise",
+  "BURN": "burn",
   "ZERO": "0x0000000000000000000000000000000000000000000000000000000000000000"
 }

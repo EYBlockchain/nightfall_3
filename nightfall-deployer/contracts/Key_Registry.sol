@@ -6,27 +6,41 @@ import './Structures.sol';
 import './Ownable.sol';
 
 contract Key_Registry is Ownable, Structures {
+    event VkChanged(uint40 circuitHash);
 
-  event VkChanged(TransactionTypes txType);
+    mapping(uint40 => uint256[]) public verificationKey;
+    mapping(uint40 => CircuitInfo) public circuitInfo;
 
-  mapping(TransactionTypes => uint256[]) public vks;
+    function initialize() public virtual override onlyInitializing {
+        Ownable.initialize();
+    }
 
-  function initialize() override virtual public onlyInitializing {
-    Ownable.initialize();
-  }
-  /**
-  Stores verification keys (for the 'deposit', 'transfer' and 'withdraw' computations).
+    /**
+  Stores verification keys (for the 'deposit', 'depositFee', 'transfer', 'withdraw', 'tokenise' and 'burn' computations).
   */
-  function registerVerificationKey(
-    uint256[] calldata _vk,
-    TransactionTypes _txType)
-    external onlyOwner {
-      // CAUTION: we do not prevent overwrites of vk's. Users must listen for the emitted event to detect updates to a vk.
-      vks[_txType] = _vk;
-      emit VkChanged(_txType);
-  }
+    function registerVerificationKey(
+        uint40 _circuitHash,
+        uint256[] calldata _vk,
+        bool isEscrowRequired,
+        bool isWithdrawing
+    ) external onlyOwner {
+        // CAUTION: we do not prevent overwrites of vk's. Users must listen for the emitted event to detect updates to a vk.
+        verificationKey[_circuitHash] = _vk;
+        circuitInfo[_circuitHash].isEscrowRequired = isEscrowRequired;
+        circuitInfo[_circuitHash].isWithdrawing = isWithdrawing;
+        emit VkChanged(_circuitHash);
+    }
 
-  function getVerificationKey(TransactionTypes txType) public view returns(uint[] memory) {
-    return vks[txType];
-  }
+    function getVerificationKey(uint40 circuitHash) public view returns (uint256[] memory) {
+        return verificationKey[circuitHash];
+    }
+
+    function getCircuitInfo(uint40 circuitHash) public view returns (CircuitInfo memory) {
+        return circuitInfo[circuitHash];
+    }
+
+    function deleteVerificationKey(uint40 circuitHash) external onlyOwner {
+        delete verificationKey[circuitHash];
+        delete circuitInfo[circuitHash];
+    }
 }

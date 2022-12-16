@@ -66,6 +66,8 @@ router.post('/register', async (req, res, next) => {
       or we're just about to register them. We may or may not be registed locally
       with optimist though. Let's check and fix that if needed.
      */
+    const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+    const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
     if (!(await isRegisteredProposerAddressMine(address))) {
       logger.debug('Registering proposer locally');
       await setRegisteredProposerAddress(address, url); // save the registration address
@@ -79,13 +81,18 @@ router.post('/register', async (req, res, next) => {
         logger.warn(
           'Proposer was already registered on the blockchain but not with this Optimist instance - registering locally',
         );
-        const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-        const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
         if (address === currentProposer.thisAddress) {
           proposer.isMe = true;
           await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
         }
       }
+    } else if (address === currentProposer.thisAddress && !proposer.isMe) {
+      logger.warn(
+        'Proposer was already registered on the blockchain and with this Optimist instance, but proposer flag wasnt set - setting isMe flag',
+      );
+      proposer.isMe = true;
+      proposer.address = address;
+      await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
     }
     res.json({ txDataToSign });
   } catch (err) {
@@ -179,11 +186,12 @@ router.post('/withdrawStake', async (req, res, next) => {
  * Function to get pending blocks payments for a proposer.
  */
 router.get('/pending-payments', async (req, res, next) => {
-  const { proposerPayments = proposer } = req.query;
+  const { proposerAddress } = req.query;
+
   const pendingPayments = [];
   // get blocks by proposer
   try {
-    const blocks = await findBlocksByProposer(proposerPayments);
+    const blocks = await findBlocksByProposer(proposerAddress);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
     for (let i = 0; i < blocks.length; i++) {
@@ -209,6 +217,31 @@ router.get('/pending-payments', async (req, res, next) => {
     }
     res.json({ pendingPayments });
   } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * Function to get stake for a proposer.
+ */
+router.get('/stake', async (req, res, next) => {
+  logger.debug(`stake endpoint received GET`);
+  const { proposerAddress } = req.query;
+  logger.debug(`requested stake for proposer ${proposerAddress}`);
+
+  try {
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const stakeAccount = await stateContractInstance.methods
+      .getStakeAccount(proposerAddress)
+      .call();
+
+    res.json({
+      amount: Number(stakeAccount[0]),
+      challengeLocked: Number(stakeAccount[1]),
+      time: Number(stakeAccount[2]),
+    });
+  } catch (err) {
+    logger.error(err);
     next(err);
   }
 });
@@ -279,6 +312,12 @@ router.get('/mempool', async (req, res, next) => {
   }
 });
 
+/**
+ * Function to Propose a state update block  This just
+ * provides the tx data, the user will need to call the blockchain client
+ * @deprecated - this is now an automated process - no need to manually propose
+ * a block
+ */
 router.post('/encode', async (req, res, next) => {
   try {
     const { transactions, block } = req.body;
@@ -352,28 +391,26 @@ router.post('/offchain-transaction', async (req, res) => {
     The response from on-chain events converts them to saner string values (e.g. uint64 etc).
     Since we do the transfer off-chain, we do the conversation manually here.
    */
-  const { transactionType, fee } = transaction;
+  const { circuitHash, fee } = transaction;
+
   try {
-    switch (Number(transactionType)) {
-      case 1:
-      case 2: {
-        /*
+    const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
+    const circuitInfo = await stateInstance.methods.getCircuitInfo(circuitHash).call();
+    if (circuitInfo.isEscrowRequired) {
+      res.sendStatus(400);
+    } else {
+      /*
           When comparing this with getTransactionSubmittedCalldata,
           note we dont need to decompressProof as proofs are only compressed if they go on-chain.
           let's not directly call transactionSubmittedEventHandler, instead, we'll queue it
          */
-        await enqueueEvent(transactionSubmittedEventHandler, 1, {
-          offchain: true,
-          ...transaction,
-          fee: Number(fee),
-        });
+      await enqueueEvent(transactionSubmittedEventHandler, 1, {
+        offchain: true,
+        ...transaction,
+        fee: Number(fee),
+      });
 
-        res.sendStatus(200);
-        break;
-      }
-      default:
-        res.sendStatus(400);
-        break;
+      res.sendStatus(200);
     }
   } catch (err) {
     if (err instanceof TransactionError) {

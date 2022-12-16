@@ -1,4 +1,0 @@
-from "hashes/poseidon/poseidon.zok" import main as poseidon
-
-def main(field[5] inputs)-> (field):
-    return poseidon(inputs)

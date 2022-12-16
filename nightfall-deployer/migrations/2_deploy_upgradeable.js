@@ -10,14 +10,24 @@ const Proposers = artifacts.require('Proposers.sol');
 const Challenges = artifacts.require('Challenges.sol');
 const State = artifacts.require('State.sol');
 const SimpleMultiSig = artifacts.require('SimpleMultiSig.sol');
-const KYC = artifacts.require('KYC.sol');
+const X509 = artifacts.require('X509.sol');
+const SanctionsListMock = artifacts.require('SanctionsListMock.sol');
 
 const config = require('config');
 
-const { RESTRICTIONS, MULTISIG, WHITELIST_MANAGERS } = config;
+const {
+  RESTRICTIONS,
+  MULTISIG,
+  X509: x509Params,
+  SANCTIONS_CONTRACT,
+  TEST_OPTIONS: {
+    addresses: { sanctionedUser },
+  },
+} = config;
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
+const { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS } = x509Params[process.env.ETH_NETWORK];
 
 // function to sort addresses into ascending order (required for SimpleMultiSig)
 function sortAscending(hexArray) {
@@ -42,9 +52,22 @@ module.exports = async function (deployer) {
   await deployer.link(ChallengesUtil, Challenges);
   await deployer.deploy(SimpleMultiSig, SIGNATURE_THRESHOLD, sortedOwners, network_id);
 
+  // if we're just testing, we want to deploy a mock sanctions list. We do it here because
+  // we need to know the address to give to the Shield contract
+  let sanctionsContractAddress = SANCTIONS_CONTRACT;
+  if (!web3.utils.isAddress(SANCTIONS_CONTRACT)) {
+    await deployer.deploy(SanctionsListMock, sanctionedUser);
+    sanctionsContractAddress = SanctionsListMock.address;
+    console.log('SANTIONED', sanctionsContractAddress, sanctionedUser);
+  }
+  await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
-  await deployProxy(Shield, [], { deployer, unsafeAllowLinkedLibraries: true });
+  await deployProxy(Shield, [sanctionsContractAddress, X509.address], {
+    deployer,
+    unsafeAllowLinkedLibraries: true,
+    initializer: 'initializeState',
+  });
   await deployProxy(State, [Proposers.address, Challenges.address, Shield.address], {
     deployer,
     unsafeAllowLinkedLibraries: true,
@@ -54,6 +77,7 @@ module.exports = async function (deployer) {
   const proposers = await Proposers.deployed();
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
+  const x509 = await X509.deployed();
   await State.deployed();
   const { bootProposer, bootChallenger } = addresses;
   await proposers.setBootProposer(bootProposer);
@@ -78,10 +102,18 @@ module.exports = async function (deployer) {
     token => token.name === 'MATIC',
   ).address;
   await shield.setMaticAddress(maticAddress.toLowerCase());
-  // set initial whitelist managers
-  for (const whitelistManager of WHITELIST_MANAGERS) {
-    await shield.createWhitelistManager(whitelistManager.groupId, whitelistManager.address);
-  }
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
-  if (process.env.WHITELISTING==='enable') await shield.enableWhitelisting(true);
+  if (process.env.WHITELISTING === 'enable') await x509.enableWhitelisting(true);
+  // set a trusted RSA root public key for X509 certificate checks
+  console.log('setting trusted public key and extended key usage OIDs');
+  for (publicKey of RSA_TRUST_ROOTS) {
+    const { modulus, exponent, authorityKeyIdentifier } = publicKey;
+    await x509.setTrustedPublicKey({ modulus, exponent }, authorityKeyIdentifier);
+  }
+  for (extendedKeyUsageOIDGroup of extendedKeyUsageOIDs) {
+    await x509.addExtendedKeyUsage(extendedKeyUsageOIDGroup);
+  }
+  for (certificatePoliciesOIDGroup of certificatePoliciesOIDs) {
+    await x509.addCertificatePolicies(certificatePoliciesOIDGroup);
+  }
 };

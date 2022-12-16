@@ -5,35 +5,47 @@ import { setStorageAt, time } from '@nomicfoundation/hardhat-network-helpers';
 
 const { ethers } = hardhat;
 
-const blockHashesSlot = 162;
-const stakeAccountsSlot = 165;
-const feeBookIndex = 166;
-const claimedBlockStakesSlot = 167;
+const txInfoSlot = 163;
+const blockHashesSlot = 164;
+const stakeAccountsSlot = 167;
+const blockInfoSlot = 168;
 
-export async function setBlockPaymentClaimed(stateAddress, blockHash) {
+export async function setTransactionInfo(
+  stateAddress,
+  transactionHash,
+  isEscrowed = false,
+  ethFee = 0,
+) {
   const index = ethers.utils.solidityKeccak256(
     ['uint256', 'uint256'],
-    [blockHash, claimedBlockStakesSlot],
+    [transactionHash, txInfoSlot],
   );
-  await setStorageAt(stateAddress, index, ethers.utils.hexlify(ethers.utils.zeroPad(1, 32)));
+
+  const txInfoStruct = ethers.utils.hexlify(
+    ethers.utils.concat([
+      ethers.utils.hexlify(Number(isEscrowed)),
+      ethers.utils.hexZeroPad(ethers.utils.hexlify(ethFee), 31),
+    ]),
+  );
+
+  await setStorageAt(stateAddress, index, txInfoStruct);
 }
 
-export async function setFeeBookInfo(stateAddress, block, feePaymentsEth, feePaymentsMatic) {
-  const proposerBlockHash = ethers.utils.keccak256(
-    ethers.utils.solidityPack(['address', 'uint256'], [block.proposer, block.blockNumberL2]),
-  );
+export async function setBlockInfo(
+  stateAddress,
+  blockHash,
+  feePaymentsMatic = 0,
+  blockClaimed = false,
+) {
+  const index = ethers.utils.solidityKeccak256(['uint256', 'uint256'], [blockHash, blockInfoSlot]);
 
-  const index = ethers.utils.solidityKeccak256(
-    ['uint256', 'uint256'],
-    [proposerBlockHash, feeBookIndex],
+  const txInfoStruct = ethers.utils.hexlify(
+    ethers.utils.concat([
+      ethers.utils.hexlify(Number(blockClaimed)),
+      ethers.utils.hexZeroPad(ethers.utils.hexlify(feePaymentsMatic), 31),
+    ]),
   );
-
-  await setStorageAt(stateAddress, index, feePaymentsEth);
-  await setStorageAt(
-    stateAddress,
-    ethers.utils.hexlify(BigNumber.from(index).add(1)),
-    feePaymentsMatic,
-  );
+  await setStorageAt(stateAddress, index, txInfoStruct);
 }
 
 export async function setStakeAccount(stateAddress, proposer, amount, challengeLocked, timeStake) {
@@ -41,17 +53,19 @@ export async function setStakeAccount(stateAddress, proposer, amount, challengeL
     ['uint256', 'uint256'],
     [proposer, stakeAccountsSlot],
   );
-  await setStorageAt(stateAddress, index, ethers.utils.hexlify(ethers.utils.zeroPad(amount, 32)));
-  await setStorageAt(
-    stateAddress,
-    ethers.utils.hexlify(BigNumber.from(index).add(1)),
-    ethers.utils.hexlify(ethers.utils.zeroPad(challengeLocked, 32)),
+
+  const stakeAccountStruct = ethers.utils.hexZeroPad(
+    ethers.utils.hexlify(
+      ethers.utils.concat([
+        ethers.utils.hexZeroPad(ethers.utils.hexlify(timeStake), 4),
+        ethers.utils.hexZeroPad(ethers.utils.hexlify(challengeLocked), 14),
+        ethers.utils.hexZeroPad(ethers.utils.hexlify(amount), 14),
+      ]),
+    ),
+    32,
   );
-  await setStorageAt(
-    stateAddress,
-    ethers.utils.hexlify(BigNumber.from(index).add(2)),
-    ethers.utils.hexZeroPad(ethers.utils.hexlify(timeStake), 32),
-  );
+
+  await setStorageAt(stateAddress, index, stakeAccountStruct);
 }
 
 export async function setBlockData(

@@ -5,6 +5,7 @@
 An optimistic Transaction class
 */
 import gen from 'general-number';
+import utils from '../utils/crypto/merkle-tree/utils.js';
 import Web3 from '../utils/web3';
 import { compressProof } from '../utils/curve-maths/curves';
 
@@ -20,13 +21,35 @@ const arrayEquality = (as, bs) => {
   return false;
 };
 
+export const packTransactionInfo = (value, fee, circuitHash, tokenType) => {
+  const valuePacked = generalise(value).hex(14).slice(2);
+  const feePacked = generalise(fee).hex(12).slice(2);
+  const circuitHashPacked = generalise(circuitHash).hex(5).slice(2);
+  const tokenTypePacked = generalise(tokenType).hex(1).slice(2);
+
+  return '0x'.concat(circuitHashPacked, feePacked, valuePacked, tokenTypePacked);
+};
+
+export const packHistoricRoots = historicRootBlockNumberL2 => {
+  const historicRootsHex = historicRootBlockNumberL2
+    .map(h => generalise(h).hex(8).slice(2))
+    .join('');
+
+  const historicRootsPacked = [];
+  for (let i = 0; i < historicRootsHex.length; i += 64) {
+    historicRootsPacked.push(`0x${historicRootsHex.substring(i, i + 64)}`);
+  }
+
+  return historicRootsPacked;
+};
+
 // function to compute the keccak hash of a transaction
 function keccak(preimage) {
   const web3 = Web3.connection();
   const {
     value,
     fee,
-    transactionType,
+    circuitHash,
     tokenType,
     historicRootBlockNumberL2,
     tokenId,
@@ -38,12 +61,14 @@ function keccak(preimage) {
   } = preimage;
   let { proof } = preimage;
   proof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof);
+
+  const packedInfo = packTransactionInfo(value, fee, circuitHash, tokenType);
+
+  const historicRootsPacked = packHistoricRoots(historicRootBlockNumberL2);
+
   const transaction = [
-    value,
-    fee,
-    transactionType,
-    tokenType,
-    historicRootBlockNumberL2,
+    packedInfo,
+    historicRootsPacked,
     tokenId,
     ercAddress,
     recipientAddress,
@@ -52,7 +77,9 @@ function keccak(preimage) {
     compressedSecrets,
     proof,
   ];
+
   const encodedTransaction = web3.eth.abi.encodeParameters([SIGNATURES.TRANSACTION], [transaction]);
+
   return web3.utils.soliditySha3({
     t: 'bytes',
     v: encodedTransaction,
@@ -66,7 +93,7 @@ class Transaction {
   constructor({
     fee,
     historicRootBlockNumberL2: _historicRoot,
-    transactionType,
+    circuitHash,
     tokenType,
     tokenId,
     value,
@@ -75,44 +102,33 @@ class Transaction {
     commitments: _commitments, // this must be an array of objects from the Commitments class
     nullifiers: _nullifiers, // this must be an array of objects from the Nullifier class
     compressedSecrets: _compressedSecrets, // this must be array of objects that are compressed from Secrets class
-    proof, // this must be a proof object, as computed by zokrates worker
+    _proof, // this must be a proof object, as computed by circom worker
+    numberNullifiers,
+    numberCommitments,
+    isOnlyL2,
   }) {
-    let commitments;
-    let nullifiers;
     let compressedSecrets;
-    let flatProof;
-    let historicRootBlockNumberL2;
-    if (proof === undefined) flatProof = [0, 0, 0, 0, 0, 0, 0, 0];
-    else flatProof = Object.values(proof).flat(Infinity);
-    if (_commitments === undefined || _commitments.length === 0)
-      commitments = [{ hash: 0 }, { hash: 0 }, { hash: 0 }];
-    else if (_commitments.length === 1) commitments = [..._commitments, { hash: 0 }, { hash: 0 }];
-    else if (_commitments.length === 2) commitments = [..._commitments, { hash: 0 }];
-    else commitments = _commitments;
-    if (_nullifiers === undefined || _nullifiers.length === 0)
-      nullifiers = [{ hash: 0 }, { hash: 0 }, { hash: 0 }, { hash: 0 }];
-    else if (_nullifiers.length === 1)
-      nullifiers = [..._nullifiers, { hash: 0 }, { hash: 0 }, { hash: 0 }];
-    else if (_nullifiers.length === 2) nullifiers = [..._nullifiers, { hash: 0 }, { hash: 0 }];
-    else if (_nullifiers.length === 3) nullifiers = [..._nullifiers, { hash: 0 }];
-    else nullifiers = _nullifiers;
+    let proof;
+    if (_proof === undefined) proof = [0, 0, 0, 0, 0, 0, 0, 0];
+    else {
+      proof = compressProof(proof);
+    }
+
+    const commitments = utils.padArray(_commitments, { hash: 0 }, numberCommitments);
+    const nullifiers = utils.padArray(_nullifiers, { hash: 0 }, numberNullifiers);
+    const historicRootBlockNumberL2 = utils.padArray(_historicRoot, 0, numberNullifiers);
+
     if (_compressedSecrets === undefined || _compressedSecrets.length === 0)
       compressedSecrets = [0, 0];
     else compressedSecrets = _compressedSecrets;
-    if (_historicRoot === undefined || _historicRoot.length === 0)
-      historicRootBlockNumberL2 = [0, 0, 0, 0];
-    else if (_historicRoot.length === 1) historicRootBlockNumberL2 = [..._historicRoot, 0, 0, 0];
-    else if (_historicRoot.length === 2) historicRootBlockNumberL2 = [..._historicRoot, 0, 0];
-    else if (_historicRoot.length === 3) historicRootBlockNumberL2 = [..._historicRoot, 0];
-    else historicRootBlockNumberL2 = _historicRoot;
 
-    if ((transactionType === 0 || transactionType === 2) && TOKEN_TYPES[tokenType] === undefined)
+    if (!isOnlyL2 && TOKEN_TYPES[tokenType] === undefined)
       throw new Error('Unrecognized token type');
     // convert everything to hex(32) for interfacing with web3
     const preimage = generalise({
       value: value || 0,
       fee: fee || 0,
-      transactionType: transactionType || 0,
+      circuitHash: circuitHash || 0,
       tokenType: TOKEN_TYPES[tokenType] || 0, // tokenType does not matter for transfer
       historicRootBlockNumberL2,
       tokenId: tokenId || 0,
@@ -121,17 +137,12 @@ class Transaction {
       commitments: commitments.map(c => c.hash),
       nullifiers: nullifiers.map(n => n.hash),
       compressedSecrets,
-      proof: flatProof,
+      proof,
     }).all.hex(32);
+
     // compute the solidity hash, using suitable type conversions
     preimage.transactionHash = keccak(preimage);
     return preimage;
-  }
-
-  static checkHash(transaction) {
-    // compute the solidity hash, using suitable type conversions
-    const transactionHash = keccak(transaction);
-    return transactionHash === transaction.transactionHash;
   }
 
   static calcHash(transaction) {
@@ -140,13 +151,39 @@ class Transaction {
     return transactionHash;
   }
 
+  static unpackTransactionInfo(packedInfo) {
+    const packedInfoHex = generalise(packedInfo).hex(32).slice(2);
+
+    const circuitHash = generalise(`0x${packedInfoHex.slice(0, 10)}`).hex(5);
+    const fee = generalise(`0x${packedInfoHex.slice(10, 34)}`).hex(12);
+    const value = generalise(`0x${packedInfoHex.slice(34, 62)}`).hex(14);
+    const tokenType = generalise(`0x${packedInfoHex.slice(62, 64)}`).hex(1);
+
+    return { value, fee, circuitHash, tokenType };
+  }
+
+  static unpackHistoricRoot(nRoots, historicRootsPacked) {
+    const historicRootPackedHex = historicRootsPacked
+      .map(h => generalise(h).hex(32).slice(2))
+      .join('');
+
+    const historicRootBlockNumberL2 = [];
+
+    for (let i = 0; i < historicRootPackedHex.length; i += 16) {
+      if (historicRootBlockNumberL2.length === nRoots) break;
+      historicRootBlockNumberL2.push(`0x${historicRootPackedHex.substring(i, i + 16)}`);
+    }
+
+    return historicRootBlockNumberL2;
+  }
+
   static buildSolidityStruct(transaction) {
     // return a version without properties that are not sent to the blockchain
     const {
       value,
       fee,
       historicRootBlockNumberL2,
-      transactionType,
+      circuitHash,
       tokenType,
       tokenId,
       ercAddress,
@@ -156,12 +193,14 @@ class Transaction {
       compressedSecrets,
       proof,
     } = transaction;
+
+    const packedInfo = packTransactionInfo(value, fee, circuitHash, tokenType);
+
+    const historicRootsPacked = packHistoricRoots(historicRootBlockNumberL2);
+
     return {
-      value,
-      fee,
-      transactionType,
-      tokenType,
-      historicRootBlockNumberL2,
+      packedInfo,
+      historicRootBlockNumberL2: historicRootsPacked,
       tokenId,
       ercAddress,
       recipientAddress,

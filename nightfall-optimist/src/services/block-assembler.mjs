@@ -7,13 +7,10 @@
 import WebSocket from 'ws';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import {
-  removeTransactionsFromMemPool,
-  getMostProfitableTransactions,
-  numberOfUnprocessedTransactions,
-} from './database.mjs';
+import { removeTransactionsFromMemPool, getMempoolTxsSortedByFee } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import {
@@ -22,11 +19,13 @@ import {
   increaseProposerBlockNotSent,
 } from './debug-counters.mjs';
 
-const { TRANSACTIONS_PER_BLOCK } = config;
+const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
 const { STATE_CONTRACT_NAME } = constants;
 
 let ws;
 let makeNow = false;
+let lastBlockTimestamp = new Date().getTime();
+let blockPeriodMs = PROPOSER_MAX_BLOCK_PERIOD_MILIS;
 
 export function setBlockAssembledWebSocketConnection(_ws) {
   ws = _ws;
@@ -34,6 +33,10 @@ export function setBlockAssembledWebSocketConnection(_ws) {
 
 export function setMakeNow(_makeNow = true) {
   makeNow = _makeNow;
+}
+
+export function setBlockPeriodMs(timeMs) {
+  blockPeriodMs = timeMs;
 }
 
 /**
@@ -47,7 +50,7 @@ export async function signalRollbackCompleted(data) {
   // before sending. If not wait until the challenger reconnects
   let tryCount = 0;
   while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+    await waitForTimeout(3000);
     logger.warn(
       `Websocket to proposer is closed for rollback complete.  Waiting for proposer to reconnect`,
     );
@@ -57,14 +60,10 @@ export async function signalRollbackCompleted(data) {
   ws.send(JSON.stringify({ type: 'rollback', data }));
 }
 
-async function makeBlock(proposer, number = TRANSACTIONS_PER_BLOCK) {
+async function makeBlock(proposer, transactions) {
   logger.debug('Block Assembler - about to make a new block');
-  // we retrieve un-processed transactions from our local database, relying on
-  // the transaction service to keep the database current
-  const transactions = await getMostProfitableTransactions(number);
   // then we make new block objects until we run out of unprocessed transactions
-  const block = await Block.build({ proposer, transactions });
-  return { block, transactions };
+  return Block.build({ proposer, transactions });
 }
 
 /**
@@ -80,15 +79,68 @@ export async function conditionalMakeBlock(proposer) {
     transaction. If not, we must wait until either we have enough (hooray)
     or we're no-longer the proposer (boo).
    */
-  if (proposer.isMe) {
-    const unprocessed = await numberOfUnprocessedTransactions();
-    let numberOfProposableL2Blocks = Math.floor(unprocessed / TRANSACTIONS_PER_BLOCK);
-    // if we want to make a block right now but there aren't enough transactions, this logic
-    // tells us to go anyway
-    if (makeNow && unprocessed > 0 && numberOfProposableL2Blocks === 0)
-      numberOfProposableL2Blocks = 1;
 
-    if (numberOfProposableL2Blocks >= 1) {
+  logger.info(`I am the current proposer: ${proposer.isMe}`);
+
+  if (proposer.isMe) {
+    logger.info({
+      msg: 'The maximum size of the block is',
+      blockSize: MAX_BLOCK_SIZE,
+      blockPeriodMs,
+      makeNow,
+    });
+
+    // Get all the mempool transactions sorted by fee
+    const mempoolTransactions = await getMempoolTxsSortedByFee();
+
+    // Map each mempool transaction to their byte size
+    const mempoolTransactionSizes = mempoolTransactions.map(tx => {
+      const txSlots =
+        MINIMUM_TRANSACTION_SLOTS +
+        tx.nullifiers.length +
+        Math.ceil(tx.historicRootBlockNumberL2.length / 4) +
+        tx.commitments.length;
+
+      return txSlots * 32;
+    });
+
+    // Calculate the total number of bytes that are in the mempool
+    const totalBytes = mempoolTransactionSizes.reduce((acc, curr) => acc + curr, 0);
+    const currentTime = new Date().getTime();
+
+    logger.info({
+      msg: 'In the mempool there are the following number of transactions',
+      numberTransactions: mempoolTransactions.length,
+      totalBytes,
+    });
+
+    const transactionBatches = [];
+    if (totalBytes > 0) {
+      let bytesSum = 0;
+      for (let i = 0; i < mempoolTransactionSizes.length; ++i) {
+        if (bytesSum + mempoolTransactionSizes[i] > MAX_BLOCK_SIZE) {
+          bytesSum = mempoolTransactionSizes[i];
+          transactionBatches.push(i);
+        } else {
+          bytesSum += mempoolTransactionSizes[i];
+        }
+      }
+
+      if (
+        transactionBatches.length === 0 &&
+        (makeNow || (blockPeriodMs > 0 && currentTime - lastBlockTimestamp >= blockPeriodMs))
+      ) {
+        transactionBatches.push(mempoolTransactionSizes.length);
+      }
+    }
+
+    logger.info({
+      msg: 'The proposer can create the following number of blocks',
+      transactionBatches: transactionBatches.length,
+    });
+
+    if (transactionBatches.length >= 1) {
+      lastBlockTimestamp = currentTime;
       // TODO set an upper limit to numberOfProposableL2Blocks because a proposer
       /*
         might not be able to submit a large number of blocks before the next proposer becomes
@@ -97,22 +149,30 @@ export async function conditionalMakeBlock(proposer) {
       */
       logger.debug({
         msg: 'Block Assembler will create blocks at once',
-        numberOfProposableL2Blocks,
+        numberBlocks: transactionBatches.length,
       });
 
-      for (let i = 0; i < numberOfProposableL2Blocks; i++) {
-        // work out if this is a normal size block or a short one
-        const numberOfTransactionsInBlock =
-          unprocessed >= TRANSACTIONS_PER_BLOCK ? TRANSACTIONS_PER_BLOCK : unprocessed;
+      for (let i = 0; i < transactionBatches.length; i++) {
+        // we retrieve un-processed transactions from our local database, relying on
+        // the transaction service to keep the database current
+
+        const start = i === 0 ? 0 : transactionBatches[i - 1];
+        const end = transactionBatches[i];
+
+        const transactions = mempoolTransactions.slice(start, end);
+
         makeNow = false; // reset the makeNow so we only make one block with a short number of transactions
-        const { block, transactions } = await makeBlock(
-          proposer.address,
-          numberOfTransactionsInBlock,
-        );
+
+        const block = await makeBlock(proposer.address, transactions);
+
+        const blockSize = mempoolTransactionSizes
+          .slice(start, end)
+          .reduce((acc, curr) => acc + curr, 0);
 
         logger.info({
           msg: 'Block Assembler - New Block created',
           block,
+          blockSize,
         });
 
         // propose this block to the Shield contract here
@@ -127,18 +187,21 @@ export async function conditionalMakeBlock(proposer) {
 
         // check that the websocket exists (it should) and its readyState is OPEN
         // before sending Proposed block. If not wait until the proposer reconnects
-        let tryCount = 0;
+        let count = 0;
         while (!ws || ws.readyState !== WebSocket.OPEN) {
-          await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
+          await waitForTimeout(3000); // eslint-disable-line no-await-in-loop
 
-          logger.warn(`Websocket to proposer is closed.  Waiting for proposer to reconnect`);
+          logger.warn(`Websocket to proposer is closed. Waiting for proposer to reconnect`);
 
           increaseProposerWsClosed();
-          if (tryCount++ > 100) {
+          if (count++ > 100) {
             increaseProposerWsFailed();
-            throw new Error(`Websocket to proposer has failed`);
+
+            logger.error(`Websocket to proposer has failed. Returning...`);
+            return;
           }
         }
+
         if (ws && ws.readyState === WebSocket.OPEN) {
           await ws.send(
             JSON.stringify({
@@ -149,13 +212,13 @@ export async function conditionalMakeBlock(proposer) {
             }),
           );
           logger.debug('Send unsigned block-assembler transactions to ws client');
-        } else if (ws) {
-          increaseProposerBlockNotSent();
-          logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
         } else {
           increaseProposerBlockNotSent();
-          logger.debug('Block not sent. Uinitialized socket');
+
+          if (ws) logger.debug({ msg: 'Block not sent', socketState: ws.readyState });
+          else logger.debug('Block not sent. Non-initialized socket');
         }
+
         // remove the transactions from the mempool so we don't keep making new
         // blocks with them
         await removeTransactionsFromMemPool(block.transactionHashes);
@@ -163,5 +226,5 @@ export async function conditionalMakeBlock(proposer) {
     }
   }
   // Let's slow down here so we don't slam the database.
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  await waitForTimeout(3000);
 }

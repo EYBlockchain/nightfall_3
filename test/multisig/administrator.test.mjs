@@ -153,27 +153,6 @@ describe(`Testing Administrator`, () => {
       expect(Number(rotateProposerBlocks)).to.be.equal(amount2);
     });
 
-    it('Set value per slot in PoS with the multisig', async () => {
-      const transactions = await nfMultiSig.setValuePerSlot(
-        amount1,
-        signingKeys.user1,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        [],
-      );
-      const approved = await nfMultiSig.setValuePerSlot(
-        amount1,
-        signingKeys.user2,
-        addresses.user1,
-        await multisigContract.methods.nonce().call(),
-        transactions,
-      );
-      await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const rotateProposerBlocks = await shieldContract.methods.getValuePerSlot().call();
-
-      expect(Number(rotateProposerBlocks)).to.be.equal(amount1);
-    });
-
     it('Set proposer set count in PoS with the multisig', async () => {
       const transactions = await nfMultiSig.setProposerSetCount(
         amount1 / 2,
@@ -376,10 +355,10 @@ describe(`Testing Administrator`, () => {
 
       await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
       const restrictionDeposit = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 0)
+        .getRestrictionDeposit(nf3User.ethereumAddress)
         .call();
       const restrictionWithdraw = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 1)
+        .getRestrictionWithdraw(nf3User.ethereumAddress)
         .call();
 
       expect(Number(restrictionDeposit)).to.be.equal(amount1);
@@ -404,10 +383,10 @@ describe(`Testing Administrator`, () => {
 
       await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
       const restrictionDeposit = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 0)
+        .getRestrictionDeposit(nf3User.ethereumAddress)
         .call();
       const restrictionWithdraw = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 1)
+        .getRestrictionWithdraw(nf3User.ethereumAddress)
         .call();
 
       expect(Number(restrictionDeposit)).to.be.equal(0);
@@ -526,13 +505,6 @@ describe(`Testing Administrator`, () => {
       expect(Number(rotateProposerBlocks)).to.be.equal(amount2);
     });
 
-    it('Set value per slot in PoS without multisig', async () => {
-      await shieldContract.methods.setValuePerSlot(amount1).send({ from: nf3User.ethereumAddress });
-      const rotateProposerBlocks = await shieldContract.methods.getValuePerSlot().call();
-
-      expect(Number(rotateProposerBlocks)).to.be.equal(amount1);
-    });
-
     it('Set proposer set count in PoS without multisig', async () => {
       await shieldContract.methods
         .setProposerSetCount(amount1 / 2)
@@ -581,10 +553,10 @@ describe(`Testing Administrator`, () => {
         .setRestriction(nf3User.ethereumAddress, amount1, amount2)
         .send({ from: nf3User.ethereumAddress });
       const restrictionDeposit = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 0)
+        .getRestrictionDeposit(nf3User.ethereumAddress)
         .call();
       const restrictionWithdraw = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 1)
+        .getRestrictionWithdraw(nf3User.ethereumAddress)
         .call();
 
       expect(Number(restrictionDeposit)).to.be.equal(amount1);
@@ -596,10 +568,10 @@ describe(`Testing Administrator`, () => {
         .removeRestriction(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
       const restrictionDeposit = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 0)
+        .getRestrictionDeposit(nf3User.ethereumAddress)
         .call();
       const restrictionWithdraw = await shieldContract.methods
-        .getRestriction(nf3User.ethereumAddress, 1)
+        .getRestrictionWithdraw(nf3User.ethereumAddress)
         .call();
 
       expect(Number(restrictionDeposit)).to.be.equal(0);

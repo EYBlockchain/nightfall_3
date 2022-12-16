@@ -39,9 +39,10 @@ class Commitment {
     // this is consistent to what we do in the ZKP circuits
     const [top4Bytes, remainder] = this.preimage.tokenId.limbs(224, 2).map(l => BigInt(l));
     const SHIFT = 1461501637330902918203684832716283019655932542976n;
+    const packedErcAddress = this.preimage.ercAddress.bigInt + top4Bytes * SHIFT;
     this.hash = poseidon(
       generalise([
-        this.preimage.ercAddress.bigInt + top4Bytes * SHIFT,
+        packedErcAddress,
         remainder,
         this.preimage.value.field(BN128_GROUP_ORDER),
         ...this.preimage.zkpPublicKey.all.field(BN128_GROUP_ORDER),

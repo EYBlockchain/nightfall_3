@@ -5,27 +5,26 @@
  * leafCount values in the Block class
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { dequeueEvent, enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import {
   addTransactionsToMemPool,
   deleteBlock,
   findBlocksFromBlockNumberL2,
-  getTransactionsByTransactionHashes,
+  getTransactionsByTransactionHashesByL2Block,
   deleteTransactionsByTransactionHashes,
   deleteTreeByBlockNumberL2,
   getAllRegisteredProposersCount,
 } from '../services/database.mjs';
-import {
-  checkDuplicateCommitmentsWithinBlock,
-  checkDuplicateNullifiersWithinBlock,
-} from '../services/check-block.mjs';
 import Block from '../classes/block.mjs';
-import checkTransaction from '../services/transaction-checker.mjs';
+import { checkTransaction } from '../services/transaction-checker.mjs';
 import { signalRollbackCompleted as signalRollbackCompletedToProposer } from '../services/block-assembler.mjs';
 import {
   signalRollbackCompleted as signalRollbackCompletedToChallenger,
   isMakeChallengesEnable,
 } from '../services/challenges.mjs';
+
+const { ZERO } = constants;
 
 async function rollbackEventHandler(data) {
   const { blockNumberL2 } = data.returnValues;
@@ -37,62 +36,99 @@ async function rollbackEventHandler(data) {
   await deleteTreeByBlockNumberL2(Number(blockNumberL2));
 
   /*
-  A Rollback occurs when an on-chain fraud proof (challenge) is accepted.
-  During a rollback we have to do three things:
-  1) Remove the block data from our database from the blockNumberL2 provided in the Rollback Event
-  2) Return transactions to the mempool and delete those that may have become invalid as a result of the Rollback.
-  */
+   A Rollback occurs when an on-chain fraud proof (challenge) is accepted.
+   During a rollback we have to do three things:
+   1) Remove the block data from our database from the blockNumberL2 provided in the Rollback Event
+   2) Return transactions to the mempool and delete those that may have become invalid as a result of the Rollback.
+   */
   // Get all blocks that need to be deleted
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(blockNumberL2);
-  logger.info(`Rollback - rollback layer 2 blocks ${JSON.stringify(blocksToBeDeleted, null, 2)}`);
+  logger.info({ msg: 'Rollback - rollback layer 2 blocks', blocksToBeDeleted });
 
   const invalidTransactions = [];
+  const validTransactionsBlock = {};
+
   // For valid transactions that have made it to this point, we run them through our transaction checker for validity
   for (let i = 0; i < blocksToBeDeleted.length; i++) {
+    const blockNumber = blocksToBeDeleted[i].blockNumberL2;
+    // Add new block to validTransactionsBlock
+    validTransactionsBlock[blockNumber] = [];
+
     // Get the trannsaction hashes included in these blocks
     const transactionHashesInBlock = blocksToBeDeleted[i].transactionHashes.flat(Infinity);
     // Use the transaction hashes to grab the actual transactions filtering out deposits - In Order.
     // eslint-disable-next-line no-await-in-loop
-    const blockTransactions = await getTransactionsByTransactionHashes(transactionHashesInBlock); // TODO move this to getTransactionsByTransactionHashes by l2 block number because transaction hash is not unique and might not pull the right l2 block number
+    const blockTransactions = await getTransactionsByTransactionHashesByL2Block(
+      transactionHashesInBlock,
+      blocksToBeDeleted[i],
+    );
     logger.info({
       msg: 'Rollback - blockTransactions to check:',
       blockTransactions,
     });
 
-    for (let j = 0; j < blockTransactions.length; j++) {
+    const transactionsSortedByFee = blockTransactions.sort((tx1, tx2) =>
+      Number(tx1.fee) < Number(tx2.fee) ? 1 : -1,
+    );
+
+    const commitmentsList = [];
+    const nullifiersList = [];
+    for (let j = 0; j < transactionsSortedByFee.length; j++) {
+      const transaction = transactionsSortedByFee[j];
       try {
         // eslint-disable-next-line no-await-in-loop
-        await checkTransaction(blockTransactions[j], false, {
-          blockNumberL2: blocksToBeDeleted[i].blockNumberL2,
+        await checkTransaction({
+          transaction,
+          checkDuplicatesInL2: true,
+          blockNumberL2: blockNumber,
         });
+
+        for (let k = 0; k < transaction.commitments.length; k++) {
+          if (commitmentsList.includes(transaction.commitments[k])) {
+            throw new Error(
+              `The following commitment is duplicated: ${transaction.commitments[k]}`,
+            );
+          }
+        }
+
+        for (let k = 0; k < transaction.nullifiers.length; k++) {
+          if (nullifiersList.includes(transaction.nullifiers[k])) {
+            throw new Error(`The following nullifier is duplicated: ${transaction.nullifiers[k]}`);
+          }
+        }
+
+        commitmentsList.push(...transaction.commitments.filter(c => c !== ZERO));
+        nullifiersList.push(...transaction.nullifiers.filter(c => c !== ZERO));
+
+        // Add the transaction to the list of valid transactions to be rollbacked
+        validTransactionsBlock[blockNumber].push(transaction.transactionHash);
       } catch (error) {
         logger.error({
-          msg: `Rollback - Invalid checkTransaction: ${blockTransactions[j].transactionHash}`,
+          msg: `Rollback - Invalid Transaction: ${transaction.transactionHash}`,
           error,
         });
 
-        invalidTransactions.push(blockTransactions[j].transactionHash);
+        invalidTransactions.push(transaction.transactionHash);
       }
-    }
-    try {
-      checkDuplicateCommitmentsWithinBlock(blocksToBeDeleted[i], blockTransactions);
-      checkDuplicateNullifiersWithinBlock(blocksToBeDeleted[i], blockTransactions);
-    } catch (error) {
-      const { transaction2: transaction } = error.metadata; // TODO pick transaction to delete based on which transaction pays more to proposer
-      logger.debug(`Rollback - Invalid transaction: ${transaction.transactionHash}`);
-      invalidTransactions.push(transaction.transactionHash);
     }
   }
 
   // We can now reset or delete the local database.
-  await Promise.all(
-    blocksToBeDeleted
-      .map(async block => [addTransactionsToMemPool(block), deleteBlock(block.blockHash)])
-      .flat(1),
-  );
+  logger.debug({
+    msg: 'Rollback - Updating Optimist DB',
+    validTransactionsBlock,
+    invalidTransactions,
+  });
 
-  logger.debug(`Rollback - Deleting transactions: ${invalidTransactions}`);
-  await deleteTransactionsByTransactionHashes(invalidTransactions);
+  await Promise.all([
+    deleteTransactionsByTransactionHashes(invalidTransactions),
+    ...Object.keys(validTransactionsBlock)
+      .map(async blockL2Number => [
+        addTransactionsToMemPool(validTransactionsBlock[blockL2Number], blockL2Number),
+        deleteBlock(blockL2Number),
+      ])
+      .flat(Infinity),
+  ]);
 
   await dequeueEvent(2); // Remove an event from the stopQueue.
   // A Rollback triggers a NewCurrentProposer event which shoudl trigger queue[0].end()

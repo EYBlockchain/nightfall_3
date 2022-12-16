@@ -5,8 +5,8 @@ much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
-import { decompressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { unpackBlockInfo } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 
@@ -22,15 +22,10 @@ export async function getProposeBlockCalldata(eventData) {
   const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
   const blockData = decoded['0'];
   const transactionsData = decoded['1'];
-  const [
-    leafCount,
-    proposer,
-    root,
-    blockNumberL2,
-    previousBlockHash,
-    frontierHash,
-    transactionHashesRoot,
-  ] = blockData;
+  const [packedBlockInfo, root, previousBlockHash, frontierHash, transactionHashesRoot] = blockData;
+
+  const { proposer, leafCount, blockNumberL2 } = unpackBlockInfo(packedBlockInfo);
+
   const block = {
     proposer,
     root,
@@ -40,11 +35,32 @@ export async function getProposeBlockCalldata(eventData) {
     frontierHash,
     transactionHashesRoot,
   };
+
   const transactions = transactionsData.map(t => {
     const [
+      packedTransactionInfo,
+      historicRootBlockNumberL2Packed,
+      tokenId,
+      ercAddress,
+      recipientAddress,
+      commitments,
+      nullifiers,
+      compressedSecrets,
+      proof,
+    ] = t;
+
+    const { value, fee, circuitHash, tokenType } =
+      Transaction.unpackTransactionInfo(packedTransactionInfo);
+
+    const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
+      nullifiers.length,
+      historicRootBlockNumberL2Packed,
+    );
+
+    const transaction = {
       value,
       fee,
-      transactionType,
+      circuitHash,
       tokenType,
       historicRootBlockNumberL2,
       tokenId,
@@ -54,20 +70,6 @@ export async function getProposeBlockCalldata(eventData) {
       nullifiers,
       compressedSecrets,
       proof,
-    ] = t;
-    const transaction = {
-      value,
-      fee,
-      transactionType,
-      tokenType,
-      historicRootBlockNumberL2,
-      tokenId,
-      ercAddress,
-      recipientAddress,
-      commitments,
-      nullifiers,
-      compressedSecrets,
-      proof: decompressProof(proof),
     };
     transaction.transactionHash = Transaction.calcHash(transaction);
     // note, this transaction is incomplete in that the 'fee' field is empty.
@@ -94,9 +96,29 @@ export async function getTransactionSubmittedCalldata(eventData) {
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const transactionData = web3.eth.abi.decodeParameter(SIGNATURES.SUBMIT_TRANSACTION, abiBytecode);
   const [
+    packedTransactionInfo,
+    historicRootBlockNumberL2Packed,
+    tokenId,
+    ercAddress,
+    recipientAddress,
+    commitments,
+    nullifiers,
+    compressedSecrets,
+    proof,
+  ] = transactionData;
+
+  const { value, fee, circuitHash, tokenType } =
+    Transaction.unpackTransactionInfo(packedTransactionInfo);
+
+  const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
+    nullifiers.length,
+    historicRootBlockNumberL2Packed,
+  );
+
+  const transaction = {
     value,
     fee,
-    transactionType,
+    circuitHash,
     tokenType,
     historicRootBlockNumberL2,
     tokenId,
@@ -106,20 +128,6 @@ export async function getTransactionSubmittedCalldata(eventData) {
     nullifiers,
     compressedSecrets,
     proof,
-  ] = transactionData;
-  const transaction = {
-    fee,
-    value,
-    transactionType,
-    tokenType,
-    historicRootBlockNumberL2,
-    tokenId,
-    ercAddress,
-    recipientAddress,
-    commitments,
-    nullifiers,
-    compressedSecrets,
-    proof: decompressProof(proof),
   };
   transaction.transactionHash = Transaction.calcHash(transaction);
   return transaction;

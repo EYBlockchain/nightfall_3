@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 /* ignore unused exports */
+import axios from 'axios';
 import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
@@ -215,20 +216,19 @@ export class Web3Client {
   async waitForEvent(eventLogs, expectedEvents, count = 1) {
     const length = count !== 1 ? count : expectedEvents.length;
     let timeout = 100;
-    while (eventLogs.length < length) {
+    let eventLogsExpectedEvents = eventLogs.filter(e => e.eventName === expectedEvents[0]);
+    while (eventLogsExpectedEvents.length < length) {
       await waitForTimeout(3000);
+      eventLogsExpectedEvents = eventLogs.filter(e => e.eventName === expectedEvents[0]);
       timeout--;
       if (timeout === 0) throw new Error('Timeout in waitForEvent');
     }
 
-    while (eventLogs[0]?.eventName !== expectedEvents[0]) {
-      await waitForTimeout(3000);
-    }
-
-    expect(eventLogs[0].eventName).to.equal(expectedEvents[0]);
     const eventsSeen = [];
     for (let i = 0; i < length; i++) {
-      eventsSeen.push(eventLogs.shift());
+      const index = eventLogs.findIndex(e => e.eventName === expectedEvents[0]);
+      const removed = index !== -1 && eventLogs.splice(index, 1);
+      eventsSeen.push(...removed);
     }
 
     const blockHeaders = [];
@@ -368,6 +368,8 @@ export const depositNTransactions = async (nf3, N, ercAddress, tokenType, value,
     depositTransactions.push(res);
     await waitForTimeout(1000);
   }
+  await new Promise(resolve => setTimeout(resolve, 6000));
+
   return depositTransactions;
 };
 
@@ -395,6 +397,8 @@ export const transferNTransactions = async (
     expectTransaction(res);
     transferTransactions.push(res);
   }
+  await new Promise(resolve => setTimeout(resolve, 6000));
+
   return transferTransactions;
 };
 
@@ -422,6 +426,7 @@ export const withdrawNTransactions = async (
     expectTransaction(res);
     withdrawTransactions.push(res);
   }
+  await new Promise(resolve => setTimeout(resolve, 6000));
   return withdrawTransactions;
 };
 
@@ -454,11 +459,13 @@ export const registerProposerOnNoProposer = async proposer => {
   function to wait for sufficient balance by waiting for pending transaction
   to be proposed
 */
-export const waitForSufficientBalance = (client, value, ercAddress) => {
+export const waitForSufficientBalance = ({ nf3User, value, ercAddress }) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
-      const balance = await retrieveL2Balance(client, ercAddress);
-      logger.debug(` Balance needed ${value}. Current balance ${balance}.`);
+      const balance = await retrieveL2Balance(nf3User, ercAddress);
+      logger.debug(
+        ` Balance needed for ${nf3User.ethereumAddress} is ${value}. Current balance ${balance}.`,
+      );
       if (balance < value) {
         await waitForTimeout(10000);
         isSufficientBalance();
@@ -469,20 +476,21 @@ export const waitForSufficientBalance = (client, value, ercAddress) => {
 };
 
 /**
-  function to wait for no pending commitments
+  function to wait for a number of transactions in the mempool before creating block
 */
-export const waitForNoPendingCommitments = client => {
+export const waitForSufficientTransactionsMempool = ({ nf3User, nTransactions }) => {
   return new Promise(resolve => {
-    async function pendingCommitments() {
-      const pendingDeposit = await client.getLayer2PendingDepositBalances(undefined, true);
-      const pendingSpent = await client.getLayer2PendingSpentBalances(undefined, true);
-      if (Object.keys(pendingDeposit).length !== 0 || Object.keys(pendingSpent).length !== 0) {
-        logger.debug(`Nonzero Pending commitments.`);
+    async function isSufficientTransactions() {
+      const numberTxs = await nf3User.unprocessedTransactionCount();
+      logger.debug(
+        ` Waiting for ${nTransactions} to create a block. Current transactions: ${numberTxs}`,
+      );
+      if (numberTxs < nTransactions) {
         await waitForTimeout(10000);
-        pendingCommitments();
+        isSufficientTransactions();
       } else resolve();
     }
-    pendingCommitments();
+    isSufficientTransactions();
   });
 };
 
@@ -496,3 +504,55 @@ export const pendingCommitmentCount = async client => {
 
   return pendingCommitments;
 };
+
+export const clearMempool = async ({ optimistUrl, web3, logs }) => {
+  await new Promise(resolve => setTimeout(resolve, 6000));
+  let transactionsMempool = (await axios.get(`${optimistUrl}/proposer/mempool`)).data.result.filter(
+    e => e.mempool,
+  ).length;
+  while (transactionsMempool > 0) {
+    console.log(`Transactions still in the mempool: ${transactionsMempool}`);
+    await axios.get(`${optimistUrl}/block/make-now`);
+    await web3.waitForEvent(logs, ['blockProposed']);
+    transactionsMempool = (await axios.get(`${optimistUrl}/proposer/mempool`)).data.result.filter(
+      e => e.mempool,
+    ).length;
+  }
+  console.log(`There are no transactions in the mempool`);
+};
+
+export const emptyL2 = async ({ nf3User, web3, logs }) => {
+  await new Promise(resolve => setTimeout(resolve, 6000));
+  let count = await pendingCommitmentCount(nf3User);
+  while (count !== 0) {
+    await nf3User.makeBlockNow();
+    try {
+      await web3.waitForEvent(logs, ['blockProposed']);
+      count = await pendingCommitmentCount(nf3User);
+    } catch (err) {
+      break;
+    }
+  }
+  await new Promise(resolve => setTimeout(resolve, 6000));
+};
+
+export async function getLayer2Balances(_nf3User, tokenAddress) {
+  return (await _nf3User.getLayer2Balances())[tokenAddress]?.[0].balance || 0;
+}
+
+export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {
+  const userCommitments = (
+    await axios.post(`${clientApiUrl}/commitment/compressedZkpPublicKeys`, [compressedZkpPublicKey])
+  ).data.commitmentsByListOfCompressedZkpPublicKey;
+
+  return userCommitments
+    .filter(c => c.isNullifiedOnChain === -1)
+    .map(c => {
+      return {
+        commitmentHash: c._id,
+        ercAddress: c.preimage.ercAddress,
+        tokenId: c.preimage.tokenId,
+        value: c.preimage.value,
+      };
+    });
+}

@@ -8,6 +8,12 @@ describe('Proposers contract Proposers functions', function () {
   let addr1;
   let addr2;
   let state;
+  let sanctionedSigner;
+
+  before(async () => {
+    const owner = await ethers.getSigners();
+    [, , , , sanctionedSigner] = owner;
+  });
 
   beforeEach(async () => {
     [addr1, addr2] = await ethers.getSigners();
@@ -40,10 +46,15 @@ describe('Proposers contract Proposers functions', function () {
     const challengesUtil = await ChallengesUtil.deploy();
     await challengesUtil.deployed();
 
+    const Utils = await ethers.getContractFactory('Utils');
+    const utils = await Utils.deploy();
+    await utils.deployed();
+
     const Challenges = await ethers.getContractFactory('Challenges', {
       libraries: {
         Verifier: verifier.address,
         ChallengesUtil: challengesUtil.address,
+        Utils: utils.address,
       },
     });
     const challenges = await upgrades.deployProxy(Challenges, [], {
@@ -51,13 +62,20 @@ describe('Proposers contract Proposers functions', function () {
     });
     await challenges.deployed();
 
-    const Shield = await ethers.getContractFactory('Shield');
-    const shield = await upgrades.deployProxy(Shield, []);
-    await shield.deployed();
+    const X509 = await ethers.getContractFactory('X509');
+    const x509 = await upgrades.deployProxy(X509, []);
 
-    const Utils = await ethers.getContractFactory('Utils');
-    const utils = await Utils.deploy();
-    await utils.deployed();
+    const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
+    const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
+      sanctionedSigner.address,
+    );
+    const sanctionsListAddress = sanctionsListMockInstance.address;
+
+    const Shield = await ethers.getContractFactory('Shield');
+    const shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, x509.address], {
+      initializer: 'initializeState',
+    });
+    await shield.deployed();
 
     const State = await ethers.getContractFactory('State', {
       libraries: {
@@ -351,10 +369,10 @@ describe('Proposers contract Proposers functions', function () {
 
       expect((await state.stakeAccounts(addr1.address)).amount).to.equal(0);
 
-      expect(await state.pendingWithdrawals(addr1.address, 0)).to.equal(
+      expect((await state.pendingWithdrawalsFees(addr1.address)).feesEth).to.equal(
         TimeLockedStakeBefore.amount.add(TimeLockedStakeBefore.challengeLocked),
       );
-      expect(await state.pendingWithdrawals(addr1.address, 1)).to.equal(0);
+      expect((await state.pendingWithdrawalsFees(addr1.address)).feesMatic).to.equal(0);
     } else {
       console.log('Test skipped');
     }

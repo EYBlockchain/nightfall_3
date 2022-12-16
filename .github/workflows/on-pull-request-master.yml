@@ -57,6 +57,40 @@ jobs:
           npm ci
           cd ../
           npm run unit-test
+          MODULUS=$(cat test/_certificates/root_ca.pub_key.modulus) \
+            AUTHORITY_KEY_IDENTIFIER=$(cat test/_certificates/root_ca.authority_key) \
+            INTERMEDIATE_CERTIFICATE_PATH=test/_certificates/intermediate_ca.crt \
+            END_USER_CERTIFICATE_PATH=test/_certificates/user/user-1.crt \
+            END_USER_PRIV_KEY_PATH=test/_certificates/user/user-1.priv_key \
+            EXTENDED_KEY_USAGE_OID='0x06082b0601050507030800000000000000000000000000000000000000000000,0x06082b0601050507030400000000000000000000000000000000000000000000' \
+            CERTIFICATE_POLICIES_OID='0x06032a0304000000000000000000000000000000000000000000000000000000,0x06032d0607000000000000000000000000000000000000000000000000000000' \
+            npm run unit-test-x509
+
+  unit-test-circuits:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+      - name: Install Circom
+        run: |
+          curl https://sh.rustup.rs -sSf -o rust.sh
+          bash -f rust.sh -y
+          git clone https://github.com/iden3/circom.git
+          cd circom
+          cargo build --release
+          cargo install --path circom
+
+      - name: Unit Circuit Tests
+        run: |
+          npm ci
+          cd common-files
+          npm ci
+          cd ../nightfall-deployer
+          npm ci
+          cd ../
+          npm run unit-test-circuits
 
   circuits-test:
     env:
@@ -77,7 +111,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -135,7 +168,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -193,7 +225,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -251,7 +282,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -309,7 +339,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -348,7 +377,64 @@ jobs:
           name: ganache-test-logs
           path: ./ganache-test.log
 
-  kyc-test:
+  ganache-tokenisation-l2-test:
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          npm link @polygon-nightfall/common-files
+          cd cli
+          npm link @polygon-nightfall/common-files
+          npm ci
+          cd ..
+
+      - name: Start Containers
+        run: |
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat ganache-test.log
+
+      - name: Run integration test
+        run: |
+          npm run test-l2tokenisation
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat ganache-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: ganache-test-logs
+          path: ./ganache-test.log
+  x509-test:
     env:
       WHITELISTING: enable
       CONFIRMATIONS: 1
@@ -368,13 +454,12 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> kyc-test.log &disown
+          ./bin/start-nightfall -g -d &> x509-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -386,14 +471,14 @@ jobs:
 
       - name: Debug logs - after image builds
         if: always()
-        run: cat kyc-test.log
+        run: cat x509-test.log
 
       - name: Run integration test
-        run: npm run test-kyc
+        run: npm run test-x509
 
       - name: Debug logs - after integration test run
         if: always()
-        run: cat kyc-test.log
+        run: cat x509-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -403,8 +488,8 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: kyc-test-logs
-          path: ./ganackyche-test.log
+          name: x509-test-logs
+          path: ./ganacx509he-test.log
 
   administrator-test:
     runs-on: ubuntu-20.04
@@ -425,7 +510,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -483,7 +567,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers
@@ -523,62 +606,59 @@ jobs:
           path: ./optimist-sync-test.log
 
   adversary-test:
-     runs-on: ubuntu-20.04
-     env:
-       TRANSACTIONS_PER_BLOCK: 32
-     steps:
-       - uses: actions/checkout@v3
-       - uses: actions/setup-node@v1
-         with:
-           node-version: '16.17.0'
+    env:
+      CONFIRMATIONS: 1
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
 
-       - name: Build adversary
-         run: npm run build-adversary
+      - name: Build adversary
+        run: npm run build-adversary
 
-       - name: Start Containers with geth
-         run: |
-           ./bin/setup-nightfall
-           ./bin/geth-standalone -s
-           sleep 300
-           ./bin/start-nightfall -l -d -a &> adversary-test.log &disown
+      - name: Start Containers
+        run: |
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d -a &> adversary-test.log &disown
 
-       - name: Wait for images to be ready
-         uses: Wandalen/wretry.action@v1.0.11
-         with:
-           command: |
-             docker wait nightfall_3_deployer_1
-           attempt_limit: 100
-           attempt_delay: 20000
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
 
-       - name: debug logs - after container startup
-         if: always()
-         run: cat adversary-test.log
+      - name: debug logs - after container startup
+        if: always()
+        run: cat adversary-test.log
 
-       - name: Run integration test
-         run: |
-           VERBOSE=true npm run test-adversary
+      - name: Run adversary test
+        run: |
+          VERBOSE=true npm run test-adversary
 
-       - name: debug logs - after integration test run
-         if: always()
-         run: cat adversary-test.log
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat adversary-test.log
 
-       - name: If integration test failed, shutdown the Containers
-         if: failure()
-         run: |
-           npm run nightfall-down
-           ./bin/geth-standalone -d
+      - name: If adversary test failed, shutdown the Containers
+        if: failure()
+        run: |
+          npm run nightfall-down
 
-       - name: If integration test failed, upload logs files as artifacts
-         if: failure()
-         uses: actions/upload-artifact@v3
-         with:
-           name: adversary-test-logs
-           path: ./adversary-test.log
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: adversary-test-logs
+          path: ./adversary-test.log
 
   ping-pong-test:
     env:
       CONFIRMATIONS: 1
-      NF_SERVICES_TO_START: blockchain, client,deployer,optimist,worker
+      NF_SERVICES_TO_START: blockchain,deployer,worker
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -594,13 +674,15 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
+
+      - name: Build adversary
+        run: npm run build-adversary
 
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ping-pong-test.log &disown
+          ./bin/start-multiproposer-test-env -g &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -614,6 +696,22 @@ jobs:
         if: always()
         run: cat ping-pong-test.log
 
+      - name: 'Check client1 liveliness'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8083/healthcheck
+          attempt_limit: 10
+          attempt_delay: 30000
+
+      - name: 'Check client2 liveliness'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8086/healthcheck
+          attempt_limit: 10
+          attempt_delay: 30000
+
       - name: Run ping-pong test
         run: |
           npm ci
@@ -624,7 +722,10 @@ jobs:
         if: failure()
         run: |
           npm run nightfall-down
-          ./bin/geth-standalone -d
+
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat ping-pong-test.log
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -635,9 +736,10 @@ jobs:
 
   test-gas:
     env:
+      MAX_BLOCK_SIZE: 25000
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    name: check gas for 32 transactions per block
+    name: check gas transactions per block
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -653,16 +755,12 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers with ganache
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-gas.log &disown
-        env:
-          TRANSACTIONS_PER_BLOCK: 32
-          CONFIRMATIONS: 1
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
@@ -699,7 +797,6 @@ jobs:
     name: check apps for liveliness
     runs-on: ubuntu-20.04
     env:
-      TRANSACTIONS_PER_BLOCK: 32
       NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
     steps:
       - uses: actions/checkout@v3
@@ -715,7 +812,6 @@ jobs:
           npm link @polygon-nightfall/common-files
           cd cli
           npm link @polygon-nightfall/common-files
-          npm ci
           cd ..
 
       - name: Start Containers with ganache
@@ -788,7 +884,6 @@ jobs:
         run: cat test-client.log
 
       - name: 'Check client liveliness'
-
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
@@ -797,7 +892,6 @@ jobs:
           attempt_delay: 30000
 
       - name: 'Check access to contracts'
-
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
@@ -811,7 +905,9 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml -p nightfall_3 down -v
+        run:
+          docker-compose -f docker/docker-compose.client.yml -f docker/docker-compose.client.dev.yml
+          -p nightfall_3 down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()

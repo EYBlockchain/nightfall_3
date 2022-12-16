@@ -8,7 +8,7 @@ import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random
 import {
   saveCommit,
   getBlockByBlockNumberL2,
-  getTreeByRoot,
+  getTreeByBlockNumberL2,
   getTransactionHashSiblingInfo,
 } from './database.mjs';
 import Block from '../classes/block.mjs';
@@ -116,14 +116,27 @@ export async function createChallenge(block, transactions, err) {
   let txDataToSign;
   const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
   const salt = (await rand(32)).hex(32);
+  logger.debug({ msg: `Challenging the L2 block with ${block.blockNumberL2} block number` });
   switch (err.code) {
     // challenge incorrect leaf count
     case 0: {
       logger.debug(`Challenging incorrect leaf count for block ${JSON.stringify(block, null, 2)}`);
-      const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+      let priorBlockL2Solidity = {
+        packedInfo: ZERO,
+        root: ZERO,
+        previousBlockHash: ZERO,
+        frontierHash: ZERO,
+        transactionHashesRoot: ZERO,
+      };
+
+      if (block.blockNumberL2 !== 0) {
+        const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+        priorBlockL2Solidity = Block.buildSolidityStruct(priorBlockL2); // the block immediately prior to this one
+      }
+
       txDataToSign = await challengeContractInstance.methods
         .challengeLeafCountCorrect(
-          Block.buildSolidityStruct(priorBlockL2), // the block immediately prior to this one
+          priorBlockL2Solidity, // the block immediately prior to this one
           Block.buildSolidityStruct(block),
           transactions.map(t => Transaction.buildSolidityStruct(t)),
           salt,
@@ -135,7 +148,7 @@ export async function createChallenge(block, transactions, err) {
     case 1: {
       logger.debug(`Challenging incorrect root`);
 
-      const tree = await getTreeByRoot(block.root);
+      const tree = await getTreeByBlockNumberL2(block.blockNumberL2);
       // We need to pad our frontier as we don't store them with the trailing zeroes.
       const frontierAfterBlock = tree.frontier.concat(
         Array(TIMBER_HEIGHT - tree.frontier.length + 1).fill(ZERO),
@@ -247,8 +260,7 @@ export async function createChallenge(block, transactions, err) {
 
       const { transactionHashIndex: transactionIndex } = err.metadata;
       // Create a challenge
-      const uncompressedProof = transactions[transactionIndex].proof;
-      const [historicBlock1, historicBlock2, historicBlock3, historicBlock4] = await Promise.all(
+      const historicRoots = await Promise.all(
         transactions[transactionIndex].historicRootBlockNumberL2.map(async (b, i) => {
           if (transactions[transactionIndex].nullifiers[i] === 0) {
             return {};
@@ -266,7 +278,7 @@ export async function createChallenge(block, transactions, err) {
       // may be this optimist never ran as proposer
       // or more likely since this tx is bad tx from a bad proposer.
       // prposer hosted in this optimist never build any block with this bad tx in it
-      if (transactionSiblingPath === undefined) {
+      if (!transactionSiblingPath) {
         await Block.calcTransactionHashesRoot(transactions);
         transactionSiblingPath = (
           await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
@@ -281,18 +293,30 @@ export async function createChallenge(block, transactions, err) {
             transactionIndex,
             transactionSiblingPath,
           },
-          [historicBlock1, historicBlock2, historicBlock3, historicBlock4],
-          uncompressedProof,
+          historicRoots,
           salt,
         )
         .encodeABI();
       break;
     }
+    // historic root block number not correct
     case 5: {
       const { transactionHashIndex: transactionIndex } = err.metadata;
-      const transactionSiblingPath = await getTransactionHashSiblingInfo(
-        transactions[transactionIndex].transactionHash,
-      );
+      let transactionSiblingPath = (
+        await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+      ).transactionHashSiblingPath;
+
+      // case when block.build never was called
+      // may be this optimist never ran as proposer
+      // or more likely since this tx is bad tx from a bad proposer.
+      // prposer hosted in this optimist never build any block with this bad tx in it
+      if (!transactionSiblingPath) {
+        await Block.calcTransactionHashesRoot(transactions);
+        transactionSiblingPath = (
+          await getTransactionHashSiblingInfo(transactions[transactionIndex].transactionHash)
+        ).transactionHashSiblingPath;
+      }
+
       txDataToSign = await challengeContractInstance.methods
         .challengeHistoricRootBlockNumber({
           blockL2: Block.buildSolidityStruct(block),
@@ -307,21 +331,29 @@ export async function createChallenge(block, transactions, err) {
     case 6: {
       logger.debug('Challenging incorrect frontier');
       // Getting prior block for the current block
-      const priorBlock = await getBlockByBlockNumberL2(Number(block.blockNumberL2) - 1);
-      if (priorBlock === null)
-        throw new Error(
-          `Could not find prior block with block number ${Number(block.blockNumberL2) - 1}`,
-        );
+      let priorBlockL2Solidity = {
+        packedInfo: ZERO,
+        root: ZERO,
+        previousBlockHash: ZERO,
+        frontierHash: ZERO,
+        transactionHashesRoot: ZERO,
+      };
 
-      const priorTree = await getTreeByRoot(priorBlock.root);
-      // We need to pad our frontier as we don't store them with the trailing zeroes.
-      const frontierBeforeBlock = priorTree.frontier.concat(
-        Array(TIMBER_HEIGHT - priorTree.frontier.length + 1).fill(ZERO),
-      );
+      let frontierBeforeBlock = Array(TIMBER_HEIGHT + 1).fill(ZERO);
+      if (block.blockNumberL2 !== 0) {
+        const priorBlockL2 = await getBlockByBlockNumberL2(block.blockNumberL2 - 1);
+        priorBlockL2Solidity = Block.buildSolidityStruct(priorBlockL2); // the block immediately prior to this one
+        const priorTree = await getTreeByBlockNumberL2(priorBlockL2.blockNumberL2);
+        // We need to pad our frontier as we don't store them with the trailing zeroes.
+        frontierBeforeBlock = priorTree.frontier.concat(
+          Array(TIMBER_HEIGHT - priorTree.frontier.length + 1).fill(ZERO),
+        );
+      }
+
       // Create a challenge
       txDataToSign = await challengeContractInstance.methods
         .challengeNewFrontierCorrect(
-          Block.buildSolidityStruct(priorBlock),
+          priorBlockL2Solidity,
           frontierBeforeBlock,
           Block.buildSolidityStruct(block),
           transactions.map(t => Transaction.buildSolidityStruct(t)),

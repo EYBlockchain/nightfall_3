@@ -8,18 +8,16 @@ grounds.
 
 pragma solidity ^0.8.0;
 
-import './Key_Registry.sol';
 import './Utils.sol';
 import './ChallengesUtil.sol';
 import './Config.sol';
 import './Stateful.sol';
 
-contract Challenges is Stateful, Key_Registry, Config {
+contract Challenges is Stateful, Config {
     mapping(bytes32 => address) public committers;
 
-    function initialize() public override(Stateful, Key_Registry, Config) initializer {
+    function initialize() public override(Stateful, Config) initializer {
         Stateful.initialize();
-        Key_Registry.initialize();
         Config.initialize();
     }
 
@@ -34,17 +32,24 @@ contract Challenges is Stateful, Key_Registry, Config {
         bytes32 salt
     ) external {
         checkCommit(msg.data);
-        // check if the block hash is correct and the block hash exists for the block and prior block. Also if the transactions are part of these block
-        state.isBlockReal(priorBlockL2);
-        state.areBlockAndTransactionsReal(blockL2, transactions);
 
-        require(
-            priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2,
-            'Blocks needs to be subsequent'
-        );
+        state.areBlockAndTransactionsReal(blockL2, transactions);
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(blockL2.packedInfo);
+        uint64 blockLeafCount = Utils.getLeafCount(blockL2.packedInfo);
+
+        uint32 priorBlockLeafCount = 0;
+        if (blockNumberL2 != 0) {
+            state.isBlockReal(priorBlockL2);
+            require(
+                Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 == blockNumberL2,
+                'Blocks needs to be subsequent'
+            );
+            priorBlockLeafCount = Utils.getLeafCount(priorBlockL2.packedInfo);
+        }
+
         ChallengesUtil.libChallengeLeafCountCorrect(
-            priorBlockL2.leafCount,
-            blockL2.leafCount,
+            priorBlockLeafCount,
+            blockLeafCount,
             transactions
         );
         challengeAccepted(blockL2);
@@ -58,25 +63,30 @@ contract Challenges is Stateful, Key_Registry, Config {
         bytes32 salt
     ) external {
         checkCommit(msg.data);
-        // check if the block hash is correct and the block hash exists for the block and prior block
-        state.isBlockReal(priorBlockL2);
+
         state.areBlockAndTransactionsReal(blockL2, transactions);
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(blockL2.packedInfo);
 
-        require(
-            priorBlockL2.blockNumberL2 + 1 == blockL2.blockNumberL2,
-            'Blocks needs to be subsequent'
-        );
+        if (blockNumberL2 == 0) {
+            for (uint256 i = 0; i < frontierBeforeBlock.length; ++i) {
+                require(frontierBeforeBlock[i] == Utils.ZERO, 'Frontier needs to be uninitialized');
+            }
+        } else {
+            state.isBlockReal(priorBlockL2);
 
-        bytes32 frontierBeforeHash = keccak256(abi.encodePacked(frontierBeforeBlock));
-        require(frontierBeforeHash == priorBlockL2.frontierHash, 'Invalid prior block frontier');
+            require(
+                Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 == blockNumberL2,
+                'Blocks needs to be subsequent'
+            );
 
-        // see if the challenge is valid
-        ChallengesUtil.libChallengeNewFrontierCorrect(
-            priorBlockL2,
-            frontierBeforeBlock,
-            blockL2,
-            transactions
-        );
+            bytes32 frontierBeforeHash = keccak256(abi.encodePacked(frontierBeforeBlock));
+            require(
+                frontierBeforeHash == priorBlockL2.frontierHash,
+                'Invalid prior block frontier'
+            );
+        }
+
+        ChallengesUtil.libChallengeNewFrontierCorrect(frontierBeforeBlock, blockL2, transactions);
         challengeAccepted(blockL2);
     }
 
@@ -88,7 +98,7 @@ contract Challenges is Stateful, Key_Registry, Config {
   is compared to the root stored within the block.
   */
     function challengeNewRootCorrect(
-        bytes32[33] calldata frontierAfterBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
+        bytes32[33] calldata frontierAfterBlock, // frontier after all the block commitments has been added.
         Block calldata blockL2,
         bytes32 salt
     ) external {
@@ -97,7 +107,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         // check that the current block hash is correct
         state.isBlockReal(blockL2);
 
-        bytes32 frontierAfterHash = keccak256(abi.encodePacked(frontierAfterBlock));
+        bytes32 frontierAfterHash = Utils.hashFrontier(frontierAfterBlock);
         require(frontierAfterHash == blockL2.frontierHash, 'Invalid prior block frontier');
 
         // see if the challenge is valid
@@ -133,7 +143,10 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction2.transactionSiblingPath
         );
 
-        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+        uint64 blockL2NumberTx1 = Utils.getBlockNumberL2(transaction1.blockL2.packedInfo);
+        uint64 blockL2NumberTx2 = Utils.getBlockNumberL2(transaction2.blockL2.packedInfo);
+
+        if (blockL2NumberTx1 == blockL2NumberTx2) {
             require(
                 transaction1.transactionIndex != transaction2.transactionIndex,
                 'Cannot be the same transactionIndex'
@@ -148,7 +161,7 @@ contract Challenges is Stateful, Key_Registry, Config {
         );
 
         // Delete the latest block of the two
-        if (transaction1.blockL2.blockNumberL2 > transaction2.blockL2.blockNumberL2) {
+        if (blockL2NumberTx1 > blockL2NumberTx2) {
             challengeAccepted(transaction1.blockL2);
         } else {
             challengeAccepted(transaction2.blockL2);
@@ -183,7 +196,10 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction2.transactionSiblingPath
         );
 
-        if (transaction1.blockL2.blockNumberL2 == transaction2.blockL2.blockNumberL2) {
+        uint64 blockL2NumberTx1 = Utils.getBlockNumberL2(transaction1.blockL2.packedInfo);
+        uint64 blockL2NumberTx2 = Utils.getBlockNumberL2(transaction2.blockL2.packedInfo);
+
+        if (blockL2NumberTx1 == blockL2NumberTx2) {
             require(
                 transaction1.transactionIndex != transaction2.transactionIndex,
                 'Cannot be the same transactionIndex'
@@ -198,17 +214,66 @@ contract Challenges is Stateful, Key_Registry, Config {
         );
 
         // Delete the latest block of the two
-        if (transaction1.blockL2.blockNumberL2 > transaction2.blockL2.blockNumberL2) {
+        if (blockL2NumberTx1 > blockL2NumberTx2) {
             challengeAccepted(transaction1.blockL2);
         } else {
             challengeAccepted(transaction2.blockL2);
         }
     }
 
+    function decompressG1(uint256 xin) public returns (bool, uint256[2] memory) {
+        // Handle the Point 0.G
+        if (xin == 0x8000000000000000000000000000000000000000000000000000000000000000)
+            return (false, [uint256(0), uint256(1)]);
+
+        uint8 parity = uint8((xin >> 255) & 1);
+        uint256 xMask = 0x4000000000000000000000000000000000000000000000000000000000000000; // 2**254 mask
+        uint256 xCoord = xin % xMask;
+        uint256 x3 = mulmod(
+            xCoord,
+            mulmod(xCoord, xCoord, Utils.BN128_PRIME_FIELD),
+            Utils.BN128_PRIME_FIELD
+        );
+        uint256 y2 = addmod(x3, 3, Utils.BN128_PRIME_FIELD);
+        // Check that the legendre symbol == 1, i.e. a sqrt exists for y2
+        bool sqrtFound = Utils.modExp(
+            y2,
+            (Utils.BN128_PRIME_FIELD - uint256(1)) / uint256(2),
+            Utils.BN128_PRIME_FIELD
+        ) == 1;
+        uint256 y = Utils.modExp(y2, (Utils.BN128_PRIME_FIELD + 1) / 4, Utils.BN128_PRIME_FIELD);
+        if (parity != uint8(y % 2)) return (sqrtFound, [xCoord, Utils.BN128_PRIME_FIELD - y]);
+        return (sqrtFound, [xCoord, y]);
+    }
+
+    function decompressG2(uint256[2] memory xins) public pure returns (bool, uint256[2][2] memory) {
+        uint8[2] memory parity = [uint8((xins[0] >> 255) & 1), uint8((xins[1] >> 255) & 1)];
+        uint256 xMask = 0x4000000000000000000000000000000000000000000000000000000000000000; // 2**254 mask
+        uint256 xReal = xins[0] % xMask;
+        uint256 xImg = xins[1] % xMask;
+        uint256[2] memory x = [xReal, xImg];
+        uint256[2] memory x3 = Utils.fq2Mul(Utils.fq2Mul(x, x), x);
+        uint256[2] memory d = [
+            19485874751759354771024239261021720505790618469301721065564631296452457478373,
+            266929791119991161246907387137283842545076965332900288569378510910307636690
+        ];
+        // If xin is the compressed form of the Point 0.G
+        if (x3[0] == 0 && x3[1] == 0 && xins[1] == 0)
+            return (false, [x3, [uint256(1), uint256(0)]]);
+        uint256[2] memory y2 = [
+            addmod(x3[0], d[0], Utils.BN128_PRIME_FIELD),
+            addmod(x3[1], d[1], Utils.BN128_PRIME_FIELD)
+        ];
+
+        (bool sqrtFound, uint256[2] memory y) = Utils.fq2Sqrt(y2);
+        uint256 a = parity[0] == uint256(y[0] % 2) ? y[0] : Utils.BN128_PRIME_FIELD - y[0];
+        uint256 b = parity[1] == uint256(y[1] % 2) ? y[1] : Utils.BN128_PRIME_FIELD - y[1];
+        return (sqrtFound, [x, [a, b]]);
+    }
+
     function challengeProofVerification(
         TransactionInfoBlock calldata transaction,
-        Block[4] calldata blockL2ContainingHistoricRoot,
-        uint256[8] memory uncompressedProof,
+        Block[] calldata blockL2ContainingHistoricRoot,
         bytes32 salt
     ) external {
         checkCommit(msg.data);
@@ -219,31 +284,75 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction.transactionSiblingPath
         );
 
+        require(
+            blockL2ContainingHistoricRoot.length == transaction.transaction.nullifiers.length,
+            'Invalid number of blocks L2 containing historic root'
+        );
+
         PublicInputs memory extraPublicInputs = PublicInputs(
-            [uint256(0), 0, 0, 0],
+            new uint256[](transaction.transaction.nullifiers.length),
             super.getMaticAddress()
         );
 
-        for (uint256 i = 0; i < 4; ++i) {
+        for (uint256 i = 0; i < transaction.transaction.nullifiers.length; ++i) {
             if (uint256(transaction.transaction.nullifiers[i]) != 0) {
                 state.isBlockReal(blockL2ContainingHistoricRoot[i]);
 
+                uint64 historicblockNumberL2 = Utils.getHistoricRoot(
+                    transaction.transaction.historicRootBlockNumberL2,
+                    i
+                );
+
                 require(
-                    transaction.transaction.historicRootBlockNumberL2[i] ==
-                        blockL2ContainingHistoricRoot[i].blockNumberL2,
+                    historicblockNumberL2 ==
+                        Utils.getBlockNumberL2(blockL2ContainingHistoricRoot[i].packedInfo),
                     'Incorrect historic root block'
                 );
 
                 extraPublicInputs.roots[i] = uint256(blockL2ContainingHistoricRoot[i].root);
             }
         }
+        // Variables declared here so we can reuse the bool
+        bool success = false;
+        uint256[2] memory decompressAlpha;
+        uint256[2][2] memory decompressBeta;
+        uint256[2] memory decompressGamma;
 
+        (success, decompressAlpha) = decompressG1(transaction.transaction.proof[0]);
+        // Check each step since we overwrite the bool to avoid stack too deep issues.
+        if (!success) {
+            challengeAccepted(transaction.blockL2);
+            return;
+        }
+
+        (success, decompressBeta) = decompressG2(
+            [transaction.transaction.proof[1], transaction.transaction.proof[2]]
+        );
+        if (!success) {
+            challengeAccepted(transaction.blockL2);
+            return;
+        }
+
+        (success, decompressGamma) = decompressG1(transaction.transaction.proof[3]);
+        if (!success) {
+            challengeAccepted(transaction.blockL2);
+            return;
+        }
         // now we need to check that the proof is correct
         ChallengesUtil.libChallengeProofVerification(
             transaction.transaction,
             extraPublicInputs,
-            uncompressedProof,
-            vks[transaction.transaction.transactionType]
+            [
+                decompressAlpha[0],
+                decompressAlpha[1],
+                decompressBeta[0][0],
+                decompressBeta[0][1],
+                decompressBeta[1][0],
+                decompressBeta[1][1],
+                decompressGamma[0],
+                decompressGamma[1]
+            ],
+            state.getVerificationKey(Utils.getCircuitHash(transaction.transaction.packedInfo))
         );
         challengeAccepted(transaction.blockL2);
     }
@@ -256,11 +365,36 @@ contract Challenges is Stateful, Key_Registry, Config {
             transaction.transactionIndex,
             transaction.transactionSiblingPath
         );
-        for (uint256 i = 0; i < 4; ++i) {
-            if (
-                transaction.transaction.historicRootBlockNumberL2[i] >= state.getNumberOfL2Blocks()
-            ) {
+
+        // Unpack the historic block numbers, they are packed in 256bits and so 4 x 64 historicRootBlockNumbers are unpacked.
+        uint64[] memory historicRootBlockNumbers = new uint64[](
+            transaction.transaction.historicRootBlockNumberL2.length * 4
+        );
+
+        for (uint256 i = 0; i < historicRootBlockNumbers.length; ++i) {
+            historicRootBlockNumbers[i] = Utils.getHistoricRoot(
+                transaction.transaction.historicRootBlockNumberL2,
+                i
+            );
+        }
+
+        for (uint256 i = 0; i < transaction.transaction.nullifiers.length; ++i) {
+            if (uint256(historicRootBlockNumbers[i]) >= state.getNumberOfL2Blocks()) {
                 challengeAccepted(transaction.blockL2);
+                return;
+            }
+        }
+
+        // Historic Block Numbers are packed in 256bits and so always results in multiples of 4
+        // if nullifiers are not multiple of 4 we need to ensure these "extra" historic block numbers are zero.
+        for (
+            uint256 i = historicRootBlockNumbers.length - 1;
+            i >= transaction.transaction.nullifiers.length;
+            --i
+        ) {
+            if (historicRootBlockNumbers[i] != uint64(0)) {
+                challengeAccepted(transaction.blockL2);
+                return;
             }
         }
 
@@ -270,8 +404,9 @@ contract Challenges is Stateful, Key_Registry, Config {
     // This gets called when a challenge succeeds
     function challengeAccepted(Block calldata badBlock) private {
         // Check to ensure that the block being challenged is less than a week old
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(badBlock.packedInfo);
         require(
-            state.getBlockData(badBlock.blockNumberL2).time >= (block.timestamp - 7 days),
+            state.getBlockData(blockNumberL2).time >= (block.timestamp - 7 days),
             'Cannot challenge block'
         );
         // emit the leafCount where the bad block was added. Timber will pick this
@@ -279,24 +414,27 @@ contract Challenges is Stateful, Key_Registry, Config {
         // State.sol because Timber gets confused if its events come from two
         // different contracts (it uses the contract name as part of the db
         // connection - we need to change that).
-        state.emitRollback(badBlock.blockNumberL2);
+        emit Rollback(blockNumberL2);
         // we need to remove the block that has been successfully
         // challenged from the linked list of blocks and all of the subsequent
         // blocks
-        BlockData[] memory badBlocks = removeBlockHashes(badBlock.blockNumberL2);
+        BlockData[] memory badBlocks = removeBlockHashes(blockNumberL2);
         // remove the proposer and give the proposer's block stake to the challenger
-        state.rewardChallenger(msg.sender, badBlock.proposer, badBlocks);
+        state.rewardChallenger(msg.sender, Utils.getProposer(badBlock.packedInfo), badBlocks);
     }
 
-    function removeBlockHashes(uint256 blockNumberL2) internal returns (BlockData[] memory) {
+    function removeBlockHashes(uint64 blockNumberL2) internal returns (BlockData[] memory) {
         uint256 lastBlock = state.getNumberOfL2Blocks() - 1;
         BlockData[] memory badBlocks = new BlockData[](lastBlock - blockNumberL2 + 1);
-        for (uint256 i = 0; i <= lastBlock - blockNumberL2; i++) {
+        for (uint256 i = 0; i <= uint256(lastBlock - blockNumberL2); i++) {
             BlockData memory blockData = state.popBlockData();
             state.setBlockStakeWithdrawn(blockData.blockHash);
             badBlocks[i] = blockData;
         }
-        require(state.getNumberOfL2Blocks() == blockNumberL2, 'Number remaining not as expected.');
+        require(
+            state.getNumberOfL2Blocks() == uint256(blockNumberL2),
+            'Number remaining not as expected.'
+        );
         return badBlocks;
     }
 

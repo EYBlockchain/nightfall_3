@@ -17,7 +17,6 @@ library ChallengesUtil {
     }
 
     function libChallengeNewFrontierCorrect(
-        Structures.Block calldata priorBlockL2, // the block immediately prior to this one
         bytes32[33] calldata frontierBeforeBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Structures.Block calldata blockL2,
         Structures.Transaction[] calldata transactions
@@ -27,7 +26,7 @@ library ChallengesUtil {
         _frontier = MerkleTree_Stateless.updateFrontier(
             Utils.filterCommitments(transactions),
             frontierBeforeBlock,
-            blockL2.leafCount
+            Utils.getLeafCount(blockL2.packedInfo)
         );
 
         bytes32 frontierAfterHash = keccak256(abi.encodePacked(_frontier));
@@ -38,8 +37,10 @@ library ChallengesUtil {
         bytes32[33] calldata frontierAfterBlock, // frontier path before prior block is added. The same frontier used in calculating root when prior block is added
         Structures.Block calldata blockL2
     ) public {
-        uint256 commitmentIndex = blockL2.leafCount;
-        bytes32 root = MerkleTree_Stateless.calculateRoot(frontierAfterBlock, commitmentIndex);
+        bytes32 root = MerkleTree_Stateless.calculateRoot(
+            frontierAfterBlock,
+            Utils.getLeafCount(blockL2.packedInfo)
+        );
 
         require(root != blockL2.root, 'The root is actually fine');
     }
@@ -49,7 +50,7 @@ library ChallengesUtil {
         Structures.PublicInputs memory extraPublicInputs,
         uint256[8] memory proof,
         uint256[] memory vk
-    ) internal {
+    ) internal view {
         libCheckCompressedProof(transaction.proof, proof);
         uint256[] memory proof1 = new uint256[](proof.length);
         for (uint256 i = 0; i < proof.length; i++) {

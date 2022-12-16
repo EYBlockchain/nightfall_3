@@ -1,9 +1,7 @@
 version: '3.5'
 # Use this script for making an adversary service
 services:
-  adversary:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
+  lazy-optimist:
     build:
       dockerfile: docker/optimist.Dockerfile
       context: ..
@@ -20,7 +18,7 @@ services:
         source: build
         target: /app/build/
       - type: bind
-        source: ../test/adversary/nightfall-adversary/src
+        source: ../test/adversary/lazy-optimist/src
         target: /app/src
       - type: bind
         source: ../common-files
@@ -31,8 +29,10 @@ services:
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8080}
-      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-host.docker.internal}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
+      MAX_BLOCK_SIZE: ${MAX_BLOCK_SIZE:-50000}
       MONGO_URL: ${MONGO_URL:-mongodb://mongodb-adversary:27017}
       HASH_TYPE: poseidon
       LOG_LEVEL: ${LOG_LEVEL:-debug}
@@ -41,11 +41,53 @@ services:
       # we don't want adversary who create bad block to be challenger as well
       # so for adversary default is false unlike optimist
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
-      NONSTOP_QUEUE_AFTER_INVALID_BLOCK: ${NONSTOP_QUEUE_AFTER_INVALID_BLOCK:-false}
-      TRANSACTIONS_PER_BLOCK: ${TRANSACTIONS_PER_BLOCK:-2}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
-      BAD_BLOCK_SEQUENCE: ${BAD_BLOCK_SEQUENCE}
-      BAD_TX_SEQUENCE: ${BAD_TX_SEQUENCE}
+    command: ['npm', 'run', 'dev']
+
+  bad-client:
+    build:
+      dockerfile: docker/client.Dockerfile
+      context: ..
+    depends_on:
+      - mongodb-adversary
+    networks:
+      - nightfall_network
+    ports:
+      - 8093:80
+      # websocket port for adversary is on localhost:8082
+      - 8094:8080
+    volumes:
+      - type: volume
+        source: build
+        target: /app/build/
+      - type: bind
+        source: ../test/adversary/bad-client/src
+        target: /app/src
+      - type: bind
+        source: ../common-files
+        target: /common-files
+      - type: bind
+        source: ../config/default.js
+        target: /app/config/default.js
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      CIRCOM_WORKER_HOST: worker
+      OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
+      OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
+      MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb-adversary:27017}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
+      USE_EXTERNAL_NODE: 'true'
+      AUTOSTART_RETRIES: 600
+      ETH_NETWORK: ${ETH_NETWORK}
+      CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+
     command: ['npm', 'run', 'dev']
 
   mongodb-adversary:
@@ -59,7 +101,6 @@ services:
       - type: volume
         source: mongodb-adversary-db
         target: /data/db
-
 
 volumes:
   mongodb-adversary-db:

@@ -1,7 +1,10 @@
+/* eslint class-methods-use-this: "off" */
+
 import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
+import crypto from 'crypto';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
@@ -12,7 +15,6 @@ import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 
 import {
-  DEFAULT_FEE_ETH,
   DEFAULT_FEE_MATIC,
   WEBSOCKET_PING_TIME,
   GAS_MULTIPLIER,
@@ -70,8 +72,6 @@ class Nf3 {
   ethereumAddress;
 
   zkpKeys;
-
-  defaultFeeEth = DEFAULT_FEE_ETH;
 
   defaultFeeMatic = DEFAULT_FEE_MATIC;
 
@@ -131,6 +131,7 @@ class Nf3 {
         throw new Error('Unknown contract address server');
     }
     // once we know where to ask, we can get the contract addresses
+    this.x509ContractAddress = await this.contractGetter('X509');
     this.shieldContractAddress = await this.contractGetter('Shield');
     this.proposersContractAddress = await this.contractGetter('Proposers');
     this.challengesContractAddress = await this.contractGetter('Challenges');
@@ -226,7 +227,7 @@ class Nf3 {
 
   /**
   Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
-  until it has TRANSACTIONS_PER_BLOCK of them
+  until the block is full
   @method
   @async
   */
@@ -445,6 +446,111 @@ class Nf3 {
   }
 
   /**
+    Mint an L2 token
+    @method
+    @async
+    @param {number} fee - The amount (Wei) to pay a proposer for the transaction
+    @param {string} ercAddress - The "fake" ercAddress
+    @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  Since the token was minted on thin
+    air, it can be any value
+    @param {string} salt - The salt used to mint the new token. It is optional
+    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    */
+  async tokenise(
+    ercAddress,
+    value = 0,
+    tokenId = 0,
+    salt = undefined,
+    fee = this.defaultFeeMatic,
+    providedCommitmentsFee,
+  ) {
+    const res = await axios.post(`${this.clientBaseUrl}/tokenise`, {
+      ercAddress,
+      tokenId,
+      salt,
+      value,
+      rootKey: this.zkpKeys.rootKey,
+      fee,
+      providedCommitmentsFee,
+    });
+
+    if (res.data.error) {
+      throw new Error(res.data.error);
+    }
+    return res.status;
+  }
+
+  /**
+    Burn an L2 token
+    @method
+    @async
+    @param {number} fee - The amount (Wei) to pay a proposer for the transaction
+    @param {string} ercAddress - The "fake" ercAddress
+    @param {string} tokenId - The ID of an ERC721 or ERC1155 token.  Since the token was minted on thin
+    air, it can be any value
+    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    */
+  async burn(
+    ercAddress,
+    value,
+    tokenId,
+    fee = this.defaultFeeMatic,
+    providedCommitments,
+    providedCommitmentsFee,
+  ) {
+    const res = await axios.post(`${this.clientBaseUrl}/burn`, {
+      ercAddress,
+      tokenId,
+      value,
+      providedCommitments,
+      providedCommitmentsFee,
+      rootKey: this.zkpKeys.rootKey,
+      fee,
+    });
+
+    if (res.data.error) {
+      throw new Error(res.data.error);
+    }
+    return res.status;
+  }
+
+  /**
+    Transform a set of input L2 tokens into a set of output L2 tokens 
+    @method
+    @async
+
+    @param {Object[]} inputTokens
+    @param {number} inputTokens[].id - the token id
+    @param {string} inputTokens[].address - the L2 address
+    @param {number} inputTokens[].value - this needs to be less than the total total value of the commitment but is ignored otherwise
+    @param {number} inputTokens[].salt
+    @param {string} inputTokens[].commitmentHash - the hash of the input commitment
+
+    @param {Object[]} outputTokens
+    @param {number} outputTokens[].id - the token id
+    @param {string} outputTokens[].address - the L2 address
+    @param {number} outputTokens[].value - this needs to be less than the total total value of the commitment but is ignored otherwise
+    @param {number} outputTokens[].salt
+
+    @param {number} fee - The amount (Wei) to pay a proposer for the transaction
+
+    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    */
+  async transform(inputTokens, outputTokens, fee = this.defaultFeeMatic) {
+    const res = await axios.post(`${this.clientBaseUrl}/transform`, {
+      rootKey: this.zkpKeys.rootKey,
+      inputTokens,
+      outputTokens,
+      fee,
+    });
+
+    if (res.data.error && res.data.error === 'No suitable commitments') {
+      throw new Error('No suitable commitments');
+    }
+    return res.status;
+  }
+
+  /**
     Deposits a Layer 1 token into Layer 2, so that it can be transacted
     privately.
     @method
@@ -462,7 +568,14 @@ class Nf3 {
     @param {object} keys - The ZKP private key set.
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
-  async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFeeEth) {
+  async deposit(
+    ercAddress,
+    tokenType,
+    value,
+    tokenId,
+    fee = this.defaultFeeMatic,
+    providedCommitmentsFee,
+  ) {
     let txDataToSign;
     try {
       txDataToSign = await approve(
@@ -483,22 +596,28 @@ class Nf3 {
         return this.submitTransaction(txDataToSign, ercAddress, 0);
       });
     }
+
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
       tokenType,
       value,
-      compressedZkpPublicKey: this.zkpKeys.compressedZkpPublicKey,
-      nullifierKey: this.zkpKeys.nullifierKey,
+      rootKey: this.zkpKeys.rootKey,
       fee,
+      providedCommitmentsFee,
     });
+
+    if (res.data.error) {
+      throw new Error(res.data.error);
+    }
+
     return new Promise((resolve, reject) => {
       userQueue.push(async () => {
         try {
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.shieldContractAddress,
-            fee,
+            0,
           );
           resolve(receipt);
         } catch (err) {
@@ -534,6 +653,8 @@ class Nf3 {
     tokenId,
     compressedZkpPublicKey,
     fee = this.defaultFeeMatic,
+    providedCommitments,
+    providedCommitmentsFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
       offchain,
@@ -545,10 +666,12 @@ class Nf3 {
       },
       rootKey: this.zkpKeys.rootKey,
       fee,
+      providedCommitments,
+      providedCommitmentsFee,
     });
 
-    if (res.data.error && res.data.error === 'No suitable commitments') {
-      throw new Error('No suitable commitments');
+    if (res.data.error) {
+      throw new Error(res.data.error);
     }
     if (!offchain) {
       return new Promise((resolve, reject) => {
@@ -597,6 +720,8 @@ class Nf3 {
     tokenId,
     recipientAddress,
     fee = this.defaultFeeMatic,
+    providedCommitments,
+    providedCommitmentsFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/withdraw`, {
       offchain,
@@ -607,7 +732,12 @@ class Nf3 {
       recipientAddress,
       rootKey: this.zkpKeys.rootKey,
       fee,
+      providedCommitments,
+      providedCommitmentsFee,
     });
+    if (res.data.error) {
+      throw new Error(res.data.error);
+    }
     this.latestWithdrawHash = res.data.transaction.transactionHash;
     if (!offchain) {
       return new Promise((resolve, reject) => {
@@ -905,7 +1035,22 @@ class Nf3 {
   async getProposerPendingPayments() {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`, {
       params: {
-        proposer: this.ethereumAddress,
+        proposerAddress: this.ethereumAddress,
+      },
+    });
+    return res.data.pendingPayments;
+  }
+
+  /**
+    Get all the proposer stake.
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum transaction receipt.
+    */
+  async getProposerStake() {
+    const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`, {
+      params: {
+        proposerAddress: this.ethereumAddress,
       },
     });
     return res.data;
@@ -979,6 +1124,17 @@ class Nf3 {
     });
   }
 
+  createEmitter() {
+    const emitter = new EventEmitter();
+
+    /*
+      Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
+     */
+    emitter.on('error', error => logger.error({ msg: 'Error caught by emitter', error }));
+
+    return emitter;
+  }
+
   /**
     Get block stake
     @method
@@ -1000,18 +1156,32 @@ class Nf3 {
   }
 
   /**
+    Get rotate proposer blocks
+    @method
+    @async
+    @returns {array} A promise that resolves to the Ethereum call.
+    */
+  async getRotateProposerBlocks() {
+    return this.stateContract.methods.getRotateProposerBlocks().call();
+  }
+
+  /**
     Starts a Proposer that listens for blocks and submits block proposal
     transactions to the blockchain.
     @method
     @async
     */
   async startProposer() {
-    const proposeEmitter = new EventEmitter();
+    const proposeEmitter = this.createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
+
     this.websockets.push(connection); // save so we can close it properly later
-    // we can't setup up a ping until the connection is made because the ping function
-    // only exists in the underlying 'ws' object (_ws) and that is undefined until the
-    // websocket is opened, it seems. Hence, we put all this code inside the onopen.
+
+    /*
+      we can't setup up a ping until the connection is made because the ping function
+      only exists in the underlying 'ws' object (_ws) and that is undefined until the
+      websocket is opened, it seems. Hence, we put all this code inside the onopen.
+     */
     connection.onopen = () => {
       // setup a ping every 15s
       this.intervalIDs.push(
@@ -1021,6 +1191,7 @@ class Nf3 {
       );
       // and a listener for the pong
       logger.debug('Proposer websocket connection opened');
+
       connection.send('blocks');
     };
 
@@ -1033,11 +1204,7 @@ class Nf3 {
       if (type === 'block') {
         // First sign transaction, and send it within asynchronous queue. This will
         // ensure that blockProposed events are emitted in order and with the correct nonce.
-        const tx = await this._signTransaction(
-          txDataToSign,
-          this.stateContractAddress,
-          await this.getBlockStake(), // the block stake could have changed, so we get it from the blockchain
-        );
+        const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0); // we don't send more stake
         proposerQueue.push(async () => {
           try {
             const receipt = await this._sendTransaction(tx);
@@ -1060,38 +1227,8 @@ class Nf3 {
             proposeEmitter.emit('error', err, block, transactions);
           }
         });
-      }
-
-      if (type === 'rollback') proposeEmitter.emit('rollback', data);
-
-      // this is used by adversary proposer for submitting bad transaction.
-      if (type === 'submit-transaction') {
-        try {
-          const ercAddress = await this.getContractAddressOptimist('ERC20Mock');
-          const approvetxDataToSign = await approve(
-            ercAddress,
-            this.ethereumAddress,
-            this.shieldContractAddress,
-            (transactions[0].tokenType === '0' && 'ERC20') ||
-              (transactions[0].tokenType === '1' && 'ERC721') ||
-              (transactions[0].tokenType === '2' && 'ERC1155'),
-            transactions[0].value,
-            this.web3,
-            !!this.ethereumSigningKey,
-          );
-          if (approvetxDataToSign) await this.submitTransaction(approvetxDataToSign, ercAddress, 0);
-          const receipt = await this.submitTransaction(
-            txDataToSign,
-            this.shieldContractAddress,
-            Number(transactions[0].fee),
-          );
-          proposeEmitter.emit('submit-transaction-receipt', receipt, transactions);
-        } catch (err) {
-          logger.error({
-            msg: 'Error while trying to submit a submit-transaction',
-            err,
-          });
-        }
+      } else if (type === 'rollback') {
+        proposeEmitter.emit('rollback', data);
       }
 
       return null;
@@ -1099,6 +1236,7 @@ class Nf3 {
 
     connection.onerror = () => logger.error('Proposer websocket connection error');
     connection.onclosed = () => logger.warn('Proposer websocket connection closed');
+
     // add this proposer to the list of peers that can accept direct transfers and withdraws
     return proposeEmitter;
   }
@@ -1147,6 +1285,10 @@ class Nf3 {
       // if we're about to challenge, check it's actually our challenge, so as not to waste gas
       if (type === 'challenge' && sender !== this.ethereumAddress) return null;
       if (type === 'commit' || type === 'challenge') {
+        // Get the function selector from the encoded ABI, which corresponds to the first 4 bytes.
+        // In hex, it will correspond to the first 8 characters + 2 extra characters (0x), hence we
+        // do slice(0,10)
+        const txSelector = txDataToSign.slice(0, 10);
         challengerQueue.push(async () => {
           try {
             const receipt = await this.submitTransaction(
@@ -1154,9 +1296,9 @@ class Nf3 {
               this.challengesContractAddress,
               0,
             );
-            challengeEmitter.emit('receipt', receipt, type);
+            challengeEmitter.emit('receipt', receipt, type, txSelector);
           } catch (err) {
-            challengeEmitter.emit('error', err, type);
+            challengeEmitter.emit('error', err, type, txSelector);
           }
         });
         logger.debug(`queued ${type} ${txDataToSign}`);
@@ -1276,12 +1418,20 @@ class Nf3 {
     Returns the commitments of tokens held in layer 2
     @method
     @async
+    @param {Array} ercList - list of erc contract addresses to filter.
+    @param {Boolean} filterByCompressedZkpPublicKey- flag to indicate if request is filtered
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
     value of each propery is an array of commitments originating from that contract.
     */
-  async getLayer2Commitments() {
-    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`);
+  async getLayer2Commitments(ercList, filterByCompressedZkpPublicKey) {
+    const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`, {
+      params: {
+        compressedZkpPublicKey:
+          filterByCompressedZkpPublicKey === true ? [this.zkpKeys.compressedZkpPublicKey] : [],
+        ercList,
+      },
+    });
     return res.data.commitments;
   }
 
@@ -1407,37 +1557,94 @@ class Nf3 {
   }
 
   /**
-   Adds a user to a whitelist (only works of the calling address is that of a Whitelist Manager)
-  */
-  async addUserToWhitelist(groupId, address) {
-    const res = await axios.post(`${this.clientBaseUrl}/whitelist/add`, {
-      address,
+   Validates an X509 (RSA) certificate
+   */
+  async validateCertificate(certificate, ethereumAddress, derPrivateKey, oidGroup = 0) {
+    // sign the ethereum address
+    let ethereumAddressSignature = null;
+    if (derPrivateKey) {
+      const privateKey = crypto.createPrivateKey({
+        key: derPrivateKey,
+        format: 'der',
+        type: 'pkcs1',
+      });
+      ethereumAddressSignature = crypto.sign(
+        'sha256',
+        Buffer.from(ethereumAddress.toLowerCase().slice(2), 'hex'),
+        {
+          key: privateKey,
+          padding: crypto.constants.RSA_PKCS1_PADDING,
+        },
+      );
+    }
+    // now validate the cert
+    const res = await axios.post(`${this.clientBaseUrl}/x509/validate`, {
+      certificate,
+      ethereumAddressSignature,
+      oidGroup,
     });
     const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign);
+    return this.submitTransaction(txDataToSign, this.x509ContractAddress);
   }
 
   /**
-   Removes a user from a whitelist (only works of the calling address is that of a Whitelist Manager)
-  */
-  async removeUserFromWhitelist(address) {
-    const res = await axios.post(`${this.clientBaseUrl}/whitelist/remove`, {
-      address,
-    });
-    const txDataToSign = res.data;
-    return this.submitTransaction(txDataToSign);
+    Get proposerStartBlock
+    @method
+    @async
+    @returns {uint256} A promise that resolves to the Ethereum call.
+    */
+  async proposerStartBlock() {
+    return this.stateContract.methods.proposerStartBlock().call();
   }
 
   /**
-   checks if a user is whitelisted
+  getMaxProposers
+  @method
+  @async
+  @returns {uint256} A promise that resolves to the Ethereum call.
   */
-  async isWhitelisted(address) {
-    const res = await axios.get(`${this.clientBaseUrl}/whitelist/check`, {
-      params: {
-        address,
-      },
-    });
-    return res.data.isWhitelisted;
+  async getMaxProposers() {
+    return this.stateContract.methods.getMaxProposers().call();
+  }
+
+  /**
+  get spanProposersList
+  @method
+  @async
+  @returns {uint256} A promise that resolves to the Ethereum call.
+  */
+  async spanProposersList(sprint) {
+    return this.stateContract.methods.spanProposersList(sprint).call();
+  }
+
+  /**
+  get currentSprint
+  @method
+  @async
+  @returns {uint256} A promise that resolves to the Ethereum call.
+  */
+  async currentSprint() {
+    return this.stateContract.methods.currentSprint().call();
+  }
+
+  /**
+  getNumProposers
+  @method
+  @async
+  @returns {uint256} A promise that resolves to the Ethereum call.
+  */
+  async getNumProposers() {
+    return this.stateContract.methods.getNumProposers().call();
+  }
+
+  /**
+    getSprintsInSpan
+    @method
+    @async
+    @returns {uint256} A promise that resolves to the Ethereum call.
+    */
+  async getSprintsInSpan() {
+    return this.stateContract.methods.getSprintsInSpan().call();
   }
 }
 

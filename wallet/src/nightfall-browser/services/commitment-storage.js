@@ -8,9 +8,6 @@ import { Mutex } from 'async-mutex';
 import gen from 'general-number';
 import { openDB } from 'idb';
 import { Commitment, Nullifier } from '../classes/index';
-// eslint-disable-next-line import/no-cycle
-import { isValidWithdrawal } from './valid-withdrawal';
-import { getBlockByBlockNumberL2, getTransactionByTransactionHash } from './database';
 
 const {
   COMMITMENTS_DB,
@@ -85,23 +82,25 @@ export async function countTransactionHashes(transactionHashes) {
   return filtered.length;
 }
 
-// function to get count of transaction hashes of withdraw type. Used to decide if we should store sibling path of transaction hash to be used later for finalising or instant withdrawal
-export async function countWithdrawTransactionHashes(transactionHashes) {
+// function to get count of transaction hashes that belongs to the circuitHash specified
+export async function countCircuitTransactions(transactionHashes, circuitHash) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return transactionHashes.includes(tx.transactionHash) && tx.nullifierTransactionType === '2';
+    return (
+      transactionHashes.includes(tx.transactionHash) && tx.nullifierCircuitHash === circuitHash
+    );
   });
   // const filtered = res.filter(r => transactionHashes.includes(r.transactionHash));
   return filtered.length;
 }
 
 // function to get if the transaction hash belongs to a withdraw transaction
-export async function isTransactionHashWithdraw(transactionHash) {
+export async function isTransactionHashBelongCircuit(transactionHash, circuitHash) {
   const db = await connectDB();
   const txs = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = txs.filter(tx => {
-    return tx.transactionHash === transactionHash && tx.nullifierTransactionType === '2';
+    return tx.transactionHash === transactionHash && tx.nullifierCircuitHash === circuitHash;
   });
   return filtered.length;
 }
@@ -155,7 +154,7 @@ export async function setSiblingInfo(commitment, siblingPath, leafIndex, root) {
 }
 
 // function to mark a commitment as pending nullication for a mongo db
-async function markPending(commitment) {
+export async function markPending(commitment) {
   const db = await connectDB();
   const { isPendingNullification, ...rest } = await db.get(
     COMMITMENTS_COLLECTION,
@@ -174,19 +173,14 @@ async function markPending(commitment) {
 // function to mark a commitment as nullified for a mongo db
 export async function markNullified(commitment, transaction) {
   const db = await connectDB();
-  const {
-    isPendingNullification,
-    isNullified,
-    nullifierTransactionType,
-    transactionHash,
-    ...rest
-  } = await db.get(COMMITMENTS_COLLECTION, commitment.hash.hex(32));
+  const { isPendingNullification, isNullified, nullifierCircuitHash, transactionHash, ...rest } =
+    await db.get(COMMITMENTS_COLLECTION, commitment.hash.hex(32));
   return db.put(
     COMMITMENTS_COLLECTION,
     {
       isPendingNullification: false,
       isNullified: true,
-      nullifierTransactionType: BigInt(transaction.transactionType).toString(),
+      nullifierCircuitHash: transaction.circuitHash,
       transactionHash: transaction.transactionHash,
       ...rest,
     },
@@ -527,59 +521,6 @@ export async function getWalletCommitments() {
     }, {});
 }
 
-// function to get the withdraw commitments for each ERC address of a compressedZkpPublicKey
-export async function getWithdrawCommitments() {
-  const db = await connectDB();
-  const vals = await db.getAll(COMMITMENTS_COLLECTION);
-  const withdraws =
-    Object.keys(vals).length > 0
-      ? vals.filter(v => v.isNullified && v.isOnChain >= 0 && v.nullifierTransactionType === '2')
-      : [];
-
-  // To check validity we need the withdrawal transaction, the block the transaction is in and all other
-  // transactions in the block. We need this for on-chain validity checks.
-  const blockTxs = await Promise.all(
-    withdraws.map(async w => {
-      const block = await getBlockByBlockNumberL2(w.isNullifiedOnChain);
-      const transactions = await Promise.all(
-        block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
-      );
-      const index = block.transactionHashes.findIndex(t => t === w.transactionHash);
-      return {
-        block,
-        transactions,
-        index,
-        compressedZkpPublicKey: w.compressedZkpPublicKey,
-        ercAddress: `0x${BigInt(w.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to be a correct address length
-        balance: w.preimage.tokenId ? 1 : w.preimage.value,
-      };
-    }),
-  );
-
-  // Run the validity check for each of the potential withdraws we have.
-  const withdrawsDetailsValid = await Promise.all(
-    blockTxs.map(async wt => {
-      const { block, transactions, index } = wt;
-      // TODO isValidWithdrawal is called with wrong parameters
-      const valid = await isValidWithdrawal(block, transactions, index);
-      return {
-        compressedZkpPublicKey: wt.compressedZkpPublicKey,
-        ercAddress: wt.ercAddress,
-        balance: wt.balance,
-        valid,
-      };
-    }),
-  );
-
-  return withdrawsDetailsValid.reduce((acc, e) => {
-    if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
-    if (!acc[e.compressedZkpPublicKey][e.ercAddress])
-      acc[e.compressedZkpPublicKey][e.ercAddress] = [];
-    acc[e.compressedZkpPublicKey][e.ercAddress].push(e);
-    return acc;
-  }, {});
-}
-
 // as above, but removes output commitments
 export async function deleteCommitments(commitments) {
   const db = await connectDB();
@@ -602,13 +543,67 @@ async function verifyEnoughCommitments(
   value,
   ercAddressFee,
   fee,
+  maxNullifiers,
+  maxNonFeeNullifiers,
 ) {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
 
-  let fc = 0; // Number of fee commitments
   let minFc = 0; // Minimum number of fee commitments required to pay the fee
   let commitmentsFee = []; // Array containing the fee commitments available sorted
+  let minC = 0;
+  let commitments = [];
+
+  if (maxNonFeeNullifiers !== 0) {
+    // Get the commitments from the database
+    const commitmentArray = vals.filter(
+      v =>
+        v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
+        v.preimage.ercAddress === ercAddress.hex(32) &&
+        v.preimage.tokenId === tokenId.hex(32) &&
+        !v.isNullified &&
+        !v.isPendingNullification,
+    );
+
+    // If not commitments are found, the transfer/withdrawal cannot be paid, so throw an error
+    if (commitmentArray.length === 0)
+      throw new Error('no commitment for the actual transfer found');
+
+    // Turn the fee commitments into real commitment object and sort it
+    commitments = commitmentArray
+      .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
+      .map(ct => new Commitment(ct.preimage))
+      .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
+
+    const c = commitments.length; // Store the number of commitments
+
+    // At most, we can use (maxNullifiers - number of fee commitments needed) commitments to pay for the
+    // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
+    // Therefore, the maximum number of commitments the user will be able to use is the minimum between
+    // maxNullifiers - minFc and the number of commitments (c)
+
+    const minimumFeeCommits = fee.bigInt > 0n ? 1 : 0;
+    const maxPossibleCommitments = Math.min(c, maxNullifiers - minimumFeeCommits);
+
+    let j = 1;
+    let sumHighestCommitments = 0n;
+    // We try to find the minimum number of commitments whose sum is higher than the value sent.
+    // Since the array is sorted, we just need to try to sum the highest commitments.
+    while (j <= maxPossibleCommitments) {
+      sumHighestCommitments += commitments[c - j].preimage.value.bigInt;
+      if (sumHighestCommitments >= value.bigInt) {
+        minC = j;
+        break;
+      }
+      ++j;
+    }
+
+    // If after the loop minC is still zero means that we didn't found any sum of commitments
+    // higher or equal than the amount required. Therefore the user can not pay it
+    if (minC === 0 || minC > maxNonFeeNullifiers) {
+      throw new Error('no commitments found to cover the value');
+    }
+  }
 
   // If there is a fee and the ercAddress of the fee doesn't match the ercAddress, get
   // the fee commitments available and check the minimum number of commitments the user
@@ -624,8 +619,8 @@ async function verifyEnoughCommitments(
         !v.isPendingNullification,
     );
 
-    // If not commitments are found, the fee cannot be paid, so return null
-    if (commitmentArrayFee === []) return null;
+    // If not commitments are found, the fee cannot be paid, so throw an error
+    if (commitmentArrayFee === []) throw new Error('no commitments found');
 
     // Turn the fee commitments into real commitment object and sort it
     commitmentsFee = commitmentArrayFee
@@ -633,22 +628,15 @@ async function verifyEnoughCommitments(
       .map(ct => new Commitment(ct.preimage))
       .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
 
-    fc = commitmentsFee.length; // Store the number of fee commitments
+    const fc = commitmentsFee.length; // Store the number of fee commitments
 
-    // At most, we can use 3 commitments to pay for the fee. However, it is possible that
-    // the user has less than 3 matic commitments. Therefore, the maximum number of commitments
-    // the user will be able to use is the minimum between 3 and the number of fee commitments (fc)
-    const maxPossibleCommitmentsFee = Math.min(fc, 3);
-
-    console.log('maxPossibleCommitments', maxPossibleCommitmentsFee);
+    const maxPossibleCommitmentsFee = Math.min(fc, maxNullifiers - minC);
 
     let i = 1;
     let sumHighestCommitmentsFee = 0n;
     // We try to find the minimum number of commitments whose sum is higher than the fee.
     // Since the array is sorted, we just need to try to sum the highest commitments.
     while (i <= maxPossibleCommitmentsFee) {
-      console.log('FC', fc);
-      console.log('i', i);
       sumHighestCommitmentsFee += commitmentsFee[fc - i].preimage.value.bigInt;
       if (sumHighestCommitmentsFee >= fee.bigInt) {
         minFc = i;
@@ -659,69 +647,10 @@ async function verifyEnoughCommitments(
 
     // If after the loop minFc is still zero means that we didn't found any sum of commitments
     // higher or equal than the fee required. Therefore the user can not pay it
-    if (minFc === 0) return null;
+    if (minFc === 0) throw new Error('no commitments to cover the fee');
   }
-
-  // Get the commitments from the database
-  const commitmentArray = vals.filter(
-    v =>
-      v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
-      v.preimage.ercAddress === ercAddressFee.hex(32) &&
-      v.preimage.tokenId === tokenId.hex(32) &&
-      !v.isNullified &&
-      !v.isPendingNullification,
-  );
-
-  // If not commitments are found, the transfer/withdrawal cannot be paid, so return null
-  if (commitmentArray === []) return null;
-
-  // Turn the fee commitments into real commitment object and sort it
-  const commitments = commitmentArray
-    .filter(commitment => Number(commitment.isOnChain) > Number(-1)) // filters for on chain commitments
-    .map(ct => new Commitment(ct.preimage))
-    .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
-
-  const c = commitments.length; // Store the number of commitments
-  let minC = 0;
-
-  // At most, we can use (4 - number of fee commitments needed) commitments to pay for the
-  // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
-  // Therefore, the maximum number of commitments the user will be able to use is the minimum between
-  // 4 - minFc and the number of commitments (c)
-  const maxPossibleCommitments = Math.min(c, 4 - minFc);
-
-  let j = 1;
-  let sumHighestCommitments = 0n;
-  // We try to find the minimum number of commitments whose sum is higher than the value sent.
-  // Since the array is sorted, we just need to try to sum the highest commitments.
-  while (j <= maxPossibleCommitments) {
-    sumHighestCommitments += commitments[c - j].preimage.value.bigInt;
-    if (sumHighestCommitments >= value.bigInt) {
-      minC = j;
-      break;
-    }
-    ++j;
-  }
-
-  // If after the loop minC is still zero means that we didn't found any sum of commitments
-  // higher or equal than the amount required. Therefore the user can not pay it
-  if (minC === 0) return null;
 
   return { commitmentsFee, minFc, commitments, minC };
-}
-
-/**
- * This function find if there is any single commitment
- * whose value is equal or higher.
- */
-function findSubsetOneCommitment(commitments, value) {
-  for (let i = 0; i < commitments.length; ++i) {
-    if (commitments[i].preimage.value.bigInt >= value.bigInt) {
-      return [commitments[i]];
-    }
-  }
-
-  return [];
 }
 
 /**
@@ -772,107 +701,66 @@ function findSubsetTwoCommitments(commitments, value) {
   return commitmentsToUse;
 }
 
-/**
- * This function finds if there is any triplet of commitments
- * whose sum value is equal or higher
- */
-function findSubsetThreeCommitments(commitments, value) {
+function findSubsetNCommitments(N, commitments, value) {
+  if (N === 1) {
+    for (let i = 0; i < commitments.length; ++i) {
+      if (commitments[i].preimage.value.bigInt >= value.bigInt) {
+        return [commitments[i]];
+      }
+    }
+    return [];
+  }
+
   // Since all commitments has a positive value, if target value is smaller than zero return
   if (value.bigInt <= 0n) return [];
 
-  // We are only interested in subsets of 3 in which all the commitments are
+  // We are only interested in subsets of N in which all the commitments are
   // smaller than the target value
   const commitmentsFiltered = commitments.filter(s => s.preimage.value.bigInt < value.bigInt);
 
-  // If there isn't any valid subset of 3 in which all values are smaller, return
-  if (commitmentsFiltered.length < 3) return [];
+  // If there isn't any valid subset of N in which all values are smaller, return
+  if (commitmentsFiltered.length < N) return [];
+
+  if (N === 2) {
+    return findSubsetTwoCommitments(commitmentsFiltered, value);
+  }
 
   let commitmentsToUse = [];
   let change = Infinity;
+
   // We will fix a left pointer that will keep moving through the array
   // and then perform a search of two elements with the remaining elements of the array
-  for (let i = 0; i < commitmentsFiltered.length - 2; ++i) {
+  for (let i = 0; i <= commitmentsFiltered.length - N; ++i) {
     // Calculate the target value for the two subset search by removing the value of
     // the commitment that is fixed
     const valueLeft = generalise(value.bigInt - commitmentsFiltered[i].preimage.value.bigInt);
 
     // Try to find a subset of two that matches using valueLeft as the target value
-    const twoCommitmentsSum = findSubsetTwoCommitments(commitmentsFiltered.slice(i + 1), valueLeft);
-
-    // It is possible that there are no possible solutions. Therefore, check first if it has find
-    // a solution by checking that it is a non void array
-    if (twoCommitmentsSum.length !== 0) {
-      const sumThreeCommitments =
-        commitmentsFiltered[i].preimage.value.bigInt +
-        twoCommitmentsSum[0].preimage.value.bigInt +
-        twoCommitmentsSum[1].preimage.value.bigInt;
-
-      // If an exact solution is found, return
-      if (sumThreeCommitments === value.bigInt)
-        return [commitmentsFiltered[i], ...twoCommitmentsSum];
-
-      // Work out what the change to the value smallest commit we used is.
-      const tempChange = sumThreeCommitments - value.bigInt;
-
-      if (tempChange < change) {
-        // We have a set of commitments that has a lower negative change in our outputs.
-        change = tempChange;
-        commitmentsToUse = [commitmentsFiltered[i], ...twoCommitmentsSum];
-      }
-    }
-  }
-
-  return commitmentsToUse;
-}
-
-/**
- * This function finds if there is any 4 commitments
- * whose sum value is equal or higher
- */
-function findSubsetFourCommitments(commitments, value) {
-  // Since all commitments has a positive value, if target value is smaller than zero return
-  if (value.bigInt <= 0n) return [];
-
-  // We are only interested in subsets of 4 in which all the commitments are
-  // smaller than the target value
-  const commitmentsFiltered = commitments.filter(s => s.preimage.value.bigInt < value.bigInt);
-
-  // If there isn't any valid subset of 3 in which all values are smaller, return
-  if (commitmentsFiltered.length < 4) return [];
-
-  let commitmentsToUse = [];
-  let change = Infinity;
-  for (let i = 0; i < commitmentsFiltered.length - 3; ++i) {
-    // Calculate the target value for the three subset search by removing the value of
-    // the commitment that is fixed
-    const valueLeft = generalise(value.bigInt - commitmentsFiltered[i].preimage.value.bigInt);
-
-    // Try to find a subset of three that matches using valueLeft as the target value
-    const threeCommitmentSum = findSubsetThreeCommitments(
+    const commitmentsSubset = findSubsetNCommitments(
+      N - 1,
       commitmentsFiltered.slice(i + 1),
       valueLeft,
     );
 
     // It is possible that there are no possible solutions. Therefore, check first if it has find
     // a solution by checking that it is a non void array
-    if (threeCommitmentSum.length !== 0) {
-      const sumFourCommitments =
-        commitmentsFiltered[i].preimage.value.bigInt +
-        threeCommitmentSum[0].preimage.value.bigInt +
-        threeCommitmentSum[1].preimage.value.bigInt +
-        threeCommitmentSum[2].preimage.value.bigInt;
+    if (commitmentsSubset.length === N - 1) {
+      const sumSubsetCommitment = commitmentsSubset.reduce(
+        (acc, com) => acc + com.preimage.value.bigInt,
+        commitmentsFiltered[i].preimage.value.bigInt,
+      );
 
       // If an exact solution is found, return
-      if (sumFourCommitments === value.bigInt)
-        return [commitmentsFiltered[i], ...threeCommitmentSum];
+      if (sumSubsetCommitment === value.bigInt)
+        return [commitmentsFiltered[i], ...commitmentsSubset];
 
       // Work out what the change to the value smallest commit we used is.
-      const tempChange = sumFourCommitments - value.bigInt;
+      const tempChange = sumSubsetCommitment - value.bigInt;
 
       if (tempChange < change) {
         // We have a set of commitments that has a lower negative change in our outputs.
         change = tempChange;
-        commitmentsToUse = [commitmentsFiltered[i], ...threeCommitmentSum];
+        commitmentsToUse = [commitmentsFiltered[i], ...commitmentsSubset];
       }
     }
   }
@@ -880,58 +768,16 @@ function findSubsetFourCommitments(commitments, value) {
   return commitmentsToUse;
 }
 
-/**
- * Given an array of commitments, tries to find a subset of N elements
- * whose sum is equal or higher than the target value
- */
-function getSubset(commitments, value, N) {
-  let subset = [];
-  if (N === 1) {
-    subset = findSubsetOneCommitment(commitments, value);
-  } else if (N === 2) {
-    subset = findSubsetTwoCommitments(commitments, value);
-  } else if (N === 3) {
-    subset = findSubsetThreeCommitments(commitments, value);
-  } else if (N === 4) {
-    subset = findSubsetFourCommitments(commitments, value);
-  }
-
-  return subset;
-}
-
-async function findUsableCommitments(
-  compressedZkpPublicKey,
-  ercAddress,
-  tokenId,
-  ercAddressFee,
-  _value,
-  _fee,
-) {
-  const value = generalise(_value); // sometimes this is sent as a BigInt.
-  const fee = generalise(_fee); // sometimes this is sent as a BigInt.
-
-  const commitmentsVerification = await verifyEnoughCommitments(
-    compressedZkpPublicKey,
-    ercAddress,
-    tokenId,
-    value,
-    ercAddressFee,
-    fee,
-  );
-
-  if (!commitmentsVerification) return null;
-
-  const { commitments, minC, minFc, commitmentsFee } = commitmentsVerification;
-
+function selectCommitments(commitments, value, minC, maxC) {
   const possibleSubsetsCommitments = [];
 
   // Get the "best" subset of each possible size to then decide which one is better overall
   // From the calculations performed in "verifyEnoughCommitments" we know that at least
-  // minC commitments are required. On the other hand, we can use a maximum of 4 commitments
+  // minC commitments are required. On the other hand, we can use a maximum of maxC commitments
   // but we have to take into account that some spots needs to be used for the fee and that
   // maybe the user does not have as much commitments
-  for (let i = minC; i <= Math.min(commitments.length, 4 - minFc); ++i) {
-    const subset = getSubset(commitments, value, i);
+  for (let i = minC; i <= Math.min(commitments.length, maxC); ++i) {
+    const subset = findSubsetNCommitments(i, commitments, value);
     possibleSubsetsCommitments.unshift(subset);
   }
 
@@ -947,44 +793,46 @@ async function findUsableCommitments(
         return b.length - a.length;
       }
 
-      return Number(changeA - changeB);
-    });
-
-  // Select the first ranked subset as the commitments the user will spend
-  const oldCommitments = rankedSubsetCommitmentsArray[0];
-
-  const possibleSubsetsCommitmentsFee = [];
-
-  if (fee.bigInt > 0n) {
-    // Get the "best" subset of each possible size for the fee to then decide which one
-    // is better overall. We know that at least we require minFc commitments.
-    // On the other hand, we can use a maximum of 4 commitments minus the spots already used
-    // for the regular transfer. We also take into account that the user may not have as much commits
-    for (let i = minFc; i <= Math.min(commitmentsFee.length, 4 - oldCommitments.length); ++i) {
-      const subset = getSubset(commitmentsFee, fee, i);
-      possibleSubsetsCommitmentsFee.unshift(subset);
-    }
-  }
-
-  // Rank the possible commitments subsets.
-  // We prioritize the subset that minimizes the change.
-  // If two subsets have the same change, we priority the subset that uses more commitments
-  const rankedSubsetCommitmentsFeeArray = possibleSubsetsCommitmentsFee
-    .filter(subset => subset.length > 0)
-    .sort((a, b) => {
-      const changeA = a.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
-      const changeB = b.reduce((acc, com) => acc + com.preimage.value.bigInt, 0n) - value.bigInt;
-      if (changeA - changeB === 0n) {
-        return b.length - a.length;
-      }
-
       return changeA > changeB ? 0 : -1;
     });
 
-  // If fee was zero, ranked subset will be an empty array and therefore no commitments will be assigned
-  // Otherwise, set the best ranked as the commitments to spend
+  // Select the first ranked subset as the commitments the user will spend
+  return rankedSubsetCommitmentsArray.length > 0 ? rankedSubsetCommitmentsArray[0] : [];
+}
+
+async function findUsableCommitments(
+  compressedZkpPublicKey,
+  ercAddress,
+  tokenId,
+  ercAddressFee,
+  _value,
+  _fee,
+  maxNullifiers,
+  maxNonFeeNullifiers,
+) {
+  const value = generalise(_value); // sometimes this is sent as a BigInt.
+  const fee = generalise(_fee); // sometimes this is sent as a BigInt.
+
+  const commitmentsVerification = await verifyEnoughCommitments(
+    compressedZkpPublicKey,
+    ercAddress,
+    tokenId,
+    value,
+    ercAddressFee,
+    fee,
+    maxNullifiers,
+    maxNonFeeNullifiers,
+  );
+
+  const { commitments, minC, minFc, commitmentsFee } = commitmentsVerification;
+
+  const maxC = maxNullifiers - minFc;
+  const oldCommitments =
+    maxNonFeeNullifiers !== 0 ? selectCommitments(commitments, value, minC, maxC) : [];
+
+  const maxFc = maxNullifiers - oldCommitments.length;
   const oldCommitmentsFee =
-    rankedSubsetCommitmentsFeeArray.length > 0 ? rankedSubsetCommitmentsFeeArray[0] : [];
+    fee.bigInt > 0n ? selectCommitments(commitmentsFee, fee, minFc, maxFc) : [];
 
   // Mark all the commitments used as pending so that they can not be used twice
   await Promise.all(
@@ -1002,10 +850,35 @@ export async function findUsableCommitmentsMutex(
   ercAddressFee,
   _value,
   _fee,
+  maxNullifiers,
+  maxNonFeeNullifiers,
 ) {
   return mutex.runExclusive(async () =>
-    findUsableCommitments(compressedZkpPublicKey, ercAddress, tokenId, ercAddressFee, _value, _fee),
+    findUsableCommitments(
+      compressedZkpPublicKey,
+      ercAddress,
+      tokenId,
+      ercAddressFee,
+      _value,
+      _fee,
+      maxNullifiers,
+      maxNonFeeNullifiers,
+    ),
   );
+}
+
+export async function getCommitmentsByHash(hashes, compressedZkpPublicKey) {
+  const db = await connectDB();
+  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const commitment = vals.filter(
+    v =>
+      hashes.includes(v._id) &&
+      v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
+      v.isNullifiedOnChain === -1 &&
+      !v.isPendingNullification,
+  );
+
+  return commitment;
 }
 
 export async function getAllCommitments() {

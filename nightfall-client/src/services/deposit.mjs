@@ -7,35 +7,35 @@
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import config from 'config';
-import axios from 'axios';
 import gen from 'general-number';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
+import {
+  getCircuitHash,
+  generateProof,
+} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
-import { storeCommitment } from './commitment-storage.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
+import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
+import { submitTransaction } from '../utils/submitTransaction.mjs';
 
-const { ZOKRATES_WORKER_HOST, PROVING_SCHEME, BACKEND, PROTOCOL, USE_STUBS } = config;
-const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = constants;
+const { VK_IDS } = config;
+const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, DEPOSIT, DEPOSIT_FEE } = constants;
 const { generalise } = gen;
 
-async function deposit(items) {
+async function deposit(depositParams) {
   logger.info('Creating a deposit transaction');
-
-  // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
-  const { tokenId, value, compressedZkpPublicKey, nullifierKey, fee } = generalise(items);
+  const { tokenType, providedCommitmentsFee, ...items } = depositParams;
   const ercAddress = generalise(items.ercAddress.toLowerCase());
+  // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
+  const { tokenId, value, fee, rootKey } = generalise(items);
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const salt = await randValueLT(BN128_GROUP_ORDER);
-  const commitment = new Commitment({ ercAddress, tokenId, value, zkpPublicKey, salt });
-
-  logger.debug({
-    msg: 'Hash of new commitment',
-    hash: commitment.hash.hex(),
-  });
 
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
@@ -44,36 +44,110 @@ async function deposit(items) {
     (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
   );
 
+  let valueNewCommitment = value;
+
+  let commitmentsInfo = {
+    oldCommitments: [],
+    nullifiers: [],
+    newCommitments: [],
+    localSiblingPaths: [],
+    leafIndices: [],
+    blockNumberL2s: [],
+    roots: [],
+    salts: [],
+  };
+
+  let circuitName = DEPOSIT_FEE;
+
+  if (fee.bigInt > 0) {
+    if (maticAddress.hex(32) === ercAddress.hex(32)) {
+      if (value.bigInt < fee.bigInt) {
+        throw new Error('Value deposited needs to be bigger than the fee');
+      }
+      valueNewCommitment = generalise(value.bigInt - fee.bigInt);
+      circuitName = DEPOSIT;
+    } else {
+      commitmentsInfo = await getCommitmentInfo({
+        totalValueToSend: 0n,
+        fee,
+        ercAddress,
+        maticAddress,
+        rootKey,
+        maxNullifiers: VK_IDS[circuitName].numberNullifiers,
+        maxNonFeeNullifiers: 0,
+        providedCommitmentsFee,
+      });
+    }
+  } else {
+    circuitName = DEPOSIT;
+  }
+
+  const commitment = new Commitment({
+    ercAddress,
+    tokenId,
+    value: valueNewCommitment,
+    zkpPublicKey,
+    salt,
+  });
+
+  // Mark the commitment as deposited
+  commitment.isDeposited = true;
+
+  // Prepend the new tokenised commitment
+  commitmentsInfo.newCommitments = [commitment, ...commitmentsInfo.newCommitments];
+
+  logger.debug({
+    msg: 'Hash of new commitment',
+    hash: commitment.hash.hex(),
+  });
+
+  const circuitHash = await getCircuitHash(circuitName);
+
   const publicData = new Transaction({
     fee,
-    transactionType: 0,
-    tokenType: items.tokenType,
+    historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
+    circuitHash,
+    tokenType,
     tokenId,
     value,
     ercAddress,
-    commitments: [commitment],
+    commitments: commitmentsInfo.newCommitments,
+    nullifiers: commitmentsInfo.nullifiers,
+    numberNullifiers: VK_IDS[circuitName].numberNullifiers,
+    numberCommitments: VK_IDS[circuitName].numberCommitments,
+    isOnlyL2: false,
   });
 
-  const privateData = { salt, recipientPublicKeys: [zkpPublicKey] };
+  const privateData = {
+    rootKey,
+    oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    paths: commitmentsInfo.localSiblingPaths.map(siblingPath => siblingPath.slice(1)),
+    orders: commitmentsInfo.leafIndices,
+    newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
+      return { value: o.preimage.value, salt: o.preimage.salt };
+    }),
+    recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
+  };
 
-  const witness = computeCircuitInputs(publicData, privateData, [0, 0, 0, 0], maticAddress);
+  const witness = computeCircuitInputs(
+    publicData,
+    privateData,
+    commitmentsInfo.roots,
+    maticAddress,
+    VK_IDS[circuitName].numberNullifiers,
+    VK_IDS[circuitName].numberCommitments,
+  );
   logger.debug({
     msg: 'witness input is',
-    witness: witness.join(' '),
+    witness,
   });
-
-  // call a zokrates worker to generate the proof
-  let folderpath = 'deposit';
-  if (USE_STUBS) folderpath = `${folderpath}_stub`;
-  const res = await axios.post(`${PROTOCOL}${ZOKRATES_WORKER_HOST}/generate-proof`, {
-    folderpath,
-    inputs: witness,
-    provingScheme: PROVING_SCHEME,
-    backend: BACKEND,
-  });
+  // call a worker to generate the proof
+  const res = await generateProof({ folderpath: circuitName, witness });
 
   logger.trace({
-    msg: 'Received response from generete-proof',
+    msg: 'Received response from generate-proof',
     response: res.data,
   });
 
@@ -82,30 +156,28 @@ async function deposit(items) {
   // first, get the contract instance
 
   // next we need to compute the optimistic Transaction object
-  const optimisticDepositTransaction = new Transaction({
-    fee,
-    transactionType: 0,
-    tokenType: items.tokenType,
-    tokenId,
-    value,
-    ercAddress,
-    commitments: [commitment],
-    proof,
-  });
+  const transaction = { ...publicData, proof: compressProof(proof) };
+  transaction.transactionHash = Transaction.calcHash(transaction);
 
-  logger.trace({
-    optimisticDepositTransaction,
+  logger.debug({
+    msg: `Client made ${circuitName}`,
+    transaction,
   });
 
   // and then we can create an unsigned blockchain transaction
   try {
-    const rawTransaction = await shieldContractInstance.methods
-      .submitTransaction(Transaction.buildSolidityStruct(optimisticDepositTransaction))
-      .encodeABI();
     // store the commitment on successful computation of the transaction
-    commitment.isDeposited = true;
-    storeCommitment(commitment, nullifierKey);
-    return { rawTransaction, transaction: optimisticDepositTransaction };
+    const rawTransaction = await shieldContractInstance.methods
+      .submitTransaction(Transaction.buildSolidityStruct(transaction))
+      .encodeABI();
+    await submitTransaction(
+      transaction,
+      commitmentsInfo,
+      compressedZkpPublicKey,
+      nullifierKey,
+      false,
+    );
+    return { rawTransaction, transaction };
   } catch (err) {
     logger.error(err);
     throw err; // let the caller handle the error

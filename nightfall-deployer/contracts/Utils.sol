@@ -5,8 +5,10 @@ pragma solidity ^0.8.0;
 import './Structures.sol';
 
 library Utils {
+    uint256 constant BN128_PRIME_FIELD =
+        21888242871839275222246405745257275088696311157297823662689037894645226208583;
+
     bytes32 public constant ZERO = bytes32(0);
-    uint256 constant TRANSACTIONS_BATCH_SIZE = 6; // TODO Change this from 2 to an appropriate value to control stack too deep error
 
     function hashTransaction(Structures.Transaction calldata t) internal pure returns (bytes32) {
         return keccak256(abi.encode(t));
@@ -18,6 +20,48 @@ library Utils {
 
     function hashFrontier(bytes32[33] memory frontier) internal pure returns (bytes32) {
         return keccak256(abi.encode(frontier));
+    }
+
+    function getValue(uint256 packedTransactionInfo) internal pure returns (uint112) {
+        return uint112(packedTransactionInfo >> 8);
+    }
+
+    function getCircuitHash(uint256 packedTransactionInfo) internal pure returns (uint40) {
+        return uint40(packedTransactionInfo >> 216);
+    }
+
+    function getFee(uint256 packedTransactionInfo) internal pure returns (uint96) {
+        return uint96(packedTransactionInfo >> 120);
+    }
+
+    function getTokenType(uint256 packedTransactionInfo)
+        internal
+        pure
+        returns (Structures.TokenType)
+    {
+        return Structures.TokenType(uint8(packedTransactionInfo));
+    }
+
+    function getProposer(uint256 packedBlockInfo) internal pure returns (address) {
+        return address(uint160(packedBlockInfo));
+    }
+
+    function getLeafCount(uint256 packedBlockInfo) internal pure returns (uint32) {
+        return uint32(packedBlockInfo >> 224);
+    }
+
+    function getBlockNumberL2(uint256 packedBlockInfo) internal pure returns (uint64) {
+        return uint64(packedBlockInfo >> 160);
+    }
+
+    function getHistoricRoot(uint256[] calldata historicRootBlockNumberL2, uint256 position)
+        internal
+        pure
+        returns (uint64)
+    {
+        uint256 slot = position / 4;
+        uint256 pos = 64 * (3 - (position % 4));
+        return uint64(historicRootBlockNumberL2[slot] >> pos);
     }
 
     function hashTransactionHashes(Structures.Transaction[] calldata ts)
@@ -61,10 +105,11 @@ library Utils {
     }
 
     // counts the number of non-zero values (useful for counting real commitments and nullifiers)
-    function countNonZeroValues(bytes32[3] calldata vals) internal pure returns (uint256) {
+    function countNonZeroValues(bytes32[] calldata vals) internal pure returns (uint256) {
         uint256 count;
-        if (vals[0] != ZERO) count++;
-        if (vals[1] != ZERO) count++;
+        for (uint256 i = 0; i < vals.length; ++i) {
+            if (vals[i] != ZERO) ++count;
+        }
         return count;
     }
 
@@ -90,9 +135,9 @@ library Utils {
         bytes32[] memory filtered = new bytes32[](countCommitments(ts));
         uint256 count;
         for (uint256 i = 0; i < ts.length; i++) {
-            if (ts[i].commitments[0] != ZERO) filtered[count++] = ts[i].commitments[0];
-            if (ts[i].commitments[1] != ZERO) filtered[count++] = ts[i].commitments[1];
-            if (ts[i].commitments[2] != ZERO) filtered[count++] = ts[i].commitments[2];
+            for (uint256 j = 0; j < ts[i].commitments.length; j++) {
+                if (ts[i].commitments[j] != ZERO) filtered[count++] = ts[i].commitments[j];
+            }
         }
         return filtered;
     }
@@ -101,49 +146,45 @@ library Utils {
     // required now we have removed the publicInputHash
     function getPublicInputs(
         Structures.Transaction calldata ts,
-        uint256[4] memory roots,
+        uint256[] memory roots,
         address maticAddress
     ) internal pure returns (uint256[] memory) {
-        uint256[] memory inputs = new uint256[](39);
-        inputs[0] = uint256(ts.value);
-        inputs[1] = uint256(ts.fee);
-        inputs[2] = uint256(ts.transactionType);
-        inputs[3] = uint256(ts.tokenType);
-        inputs[4] = uint256(ts.historicRootBlockNumberL2[0]);
-        inputs[5] = uint256(ts.historicRootBlockNumberL2[1]);
-        inputs[6] = uint256(ts.historicRootBlockNumberL2[2]);
-        inputs[7] = uint256(ts.historicRootBlockNumberL2[3]);
-        inputs[8] = uint32(uint256(ts.tokenId) >> 224);
-        inputs[9] = uint32(uint256(ts.tokenId) >> 192);
-        inputs[10] = uint32(uint256(ts.tokenId) >> 160);
-        inputs[11] = uint32(uint256(ts.tokenId) >> 128);
-        inputs[12] = uint32(uint256(ts.tokenId) >> 96);
-        inputs[13] = uint32(uint256(ts.tokenId) >> 64);
-        inputs[14] = uint32(uint256(ts.tokenId) >> 32);
-        inputs[15] = uint32(uint256(ts.tokenId));
-        inputs[16] = uint256(ts.ercAddress);
-        inputs[17] = uint32(uint256(ts.recipientAddress) >> 224);
-        inputs[18] = uint32(uint256(ts.recipientAddress) >> 192);
-        inputs[19] = uint32(uint256(ts.recipientAddress) >> 160);
-        inputs[20] = uint32(uint256(ts.recipientAddress) >> 128);
-        inputs[21] = uint32(uint256(ts.recipientAddress) >> 96);
-        inputs[22] = uint32(uint256(ts.recipientAddress) >> 64);
-        inputs[23] = uint32(uint256(ts.recipientAddress) >> 32);
-        inputs[24] = uint32(uint256(ts.recipientAddress));
-        inputs[25] = uint256(ts.commitments[0]);
-        inputs[26] = uint256(ts.commitments[1]);
-        inputs[27] = uint256(ts.commitments[2]);
-        inputs[28] = uint256(ts.nullifiers[0]);
-        inputs[29] = uint256(ts.nullifiers[1]);
-        inputs[30] = uint256(ts.nullifiers[2]);
-        inputs[31] = uint256(ts.nullifiers[3]);
-        inputs[32] = uint256(ts.compressedSecrets[0]);
-        inputs[33] = uint256(ts.compressedSecrets[1]);
-        inputs[34] = uint256(roots[0]);
-        inputs[35] = uint256(roots[1]);
-        inputs[36] = uint256(roots[2]);
-        inputs[37] = uint256(roots[3]);
-        inputs[38] = uint256(uint160(maticAddress));
+        uint256 transactionSlots = 17 +
+            2 *
+            ts.nullifiers.length +
+            roots.length +
+            ts.commitments.length;
+        uint256[] memory inputs = new uint256[](transactionSlots);
+        uint256 count = 0;
+        inputs[count++] = uint256(getValue(ts.packedInfo));
+        inputs[count++] = uint256(getFee(ts.packedInfo));
+        inputs[count++] = uint256(getCircuitHash(ts.packedInfo));
+        inputs[count++] = uint256(getTokenType(ts.packedInfo));
+        for (uint256 i = 0; i < ts.nullifiers.length; ++i) {
+            inputs[count++] = uint256(getHistoricRoot(ts.historicRootBlockNumberL2, i));
+        }
+        inputs[count++] = uint256(ts.ercAddress);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 224);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 192);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 160);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 128);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 96);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 64);
+        inputs[count++] = uint32(uint256(ts.tokenId) >> 32);
+        inputs[count++] = uint32(uint256(ts.tokenId));
+        inputs[count++] = uint256(ts.recipientAddress);
+        for (uint256 i = 0; i < ts.commitments.length; ++i) {
+            inputs[count++] = uint256(ts.commitments[i]);
+        }
+        for (uint256 i = 0; i < ts.nullifiers.length; ++i) {
+            inputs[count++] = uint256(ts.nullifiers[i]);
+        }
+        inputs[count++] = uint256(ts.compressedSecrets[0]);
+        inputs[count++] = uint256(ts.compressedSecrets[1]);
+        for (uint256 i = 0; i < roots.length; ++i) {
+            inputs[count++] = uint256(roots[i]);
+        }
+        inputs[count++] = uint256(uint160(maticAddress));
         return inputs;
     }
 
@@ -205,5 +246,88 @@ library Utils {
             leafIndex = leafIndex >> 1;
         }
         return (siblingPath[0] == node);
+    }
+
+    function modExp(
+        uint256 _b,
+        uint256 _e,
+        uint256 _m
+    ) internal returns (uint256 result) {
+        assembly {
+            // Free memory pointer
+            let pointer := mload(0x40)
+            // Define length of base, exponent and modulus. 0x20 == 32 bytes
+            mstore(pointer, 0x20)
+            mstore(add(pointer, 0x20), 0x20)
+            mstore(add(pointer, 0x40), 0x20)
+            // Define variables base, exponent and modulus
+            mstore(add(pointer, 0x60), _b)
+            mstore(add(pointer, 0x80), _e)
+            mstore(add(pointer, 0xa0), _m)
+            // Store the result
+            let value := mload(0xc0)
+            // Call the precompiled contract 0x05 = bigModExp
+            if iszero(call(not(0), 0x05, 0, pointer, 0xc0, value, 0x20)) {
+                revert(0, 0)
+            }
+            result := mload(value)
+        }
+    }
+
+    function fq2Mul(uint256[2] memory x, uint256[2] memory b)
+        public
+        pure
+        returns (uint256[2] memory)
+    {
+        return [
+            addmod(
+                mulmod(x[0], b[0], BN128_PRIME_FIELD),
+                BN128_PRIME_FIELD - mulmod(x[1], b[1], BN128_PRIME_FIELD),
+                BN128_PRIME_FIELD
+            ),
+            addmod(
+                mulmod(x[1], b[0], BN128_PRIME_FIELD),
+                mulmod(x[0], b[1], BN128_PRIME_FIELD),
+                BN128_PRIME_FIELD
+            )
+        ];
+    }
+
+    function fq2Pow(uint256[2] memory x, uint256 exp) internal pure returns (uint256[2] memory) {
+        uint256[2] memory result = [uint256(1), uint256(0)];
+        uint256[2] memory b = x;
+        uint256 e = exp;
+        while (e > uint256(0)) {
+            if (e % uint256(2) == uint256(1)) result = fq2Mul(result, b);
+            e >>= uint256(1);
+            b = fq2Mul(b, b);
+        }
+        return result;
+    }
+
+    function fq2Add(uint256[2] memory x, uint256[2] memory b)
+        internal
+        pure
+        returns (uint256[2] memory)
+    {
+        return [addmod(x[0], b[0], BN128_PRIME_FIELD), addmod(x[1], b[1], BN128_PRIME_FIELD)];
+    }
+
+    function fq2Sqrt(uint256[2] memory x) public pure returns (bool, uint256[2] memory) {
+        uint256[2] memory a1 = fq2Pow(
+            x,
+            5472060717959818805561601436314318772174077789324455915672259473661306552145
+        );
+        uint256[2] memory x0 = fq2Mul(a1, x);
+        uint256[2] memory alpha = fq2Mul(x0, a1);
+        uint256[2] memory a0 = fq2Mul(fq2Pow(alpha, BN128_PRIME_FIELD), alpha);
+        if (a0[0] == BN128_PRIME_FIELD - 1 && a0[1] == 0) return (false, [uint256(0), uint256(0)]);
+        if (alpha[0] == (BN128_PRIME_FIELD - uint256(1)) && alpha[1] == uint256(0))
+            return (true, fq2Mul([uint256(0), uint256(1)], x0));
+        uint256[2] memory b = fq2Pow(
+            fq2Add([uint256(1), uint256(0)], alpha),
+            uint256(10944121435919637611123202872628637544348155578648911831344518947322613104291)
+        );
+        return (true, fq2Mul(b, x0));
     }
 }

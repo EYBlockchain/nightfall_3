@@ -11,6 +11,7 @@ router.post('/', async (req, res, next) => {
     const { rawTransaction: txDataToSign, transaction } = await withdraw(req.body);
     res.json({ txDataToSign, transaction });
   } catch (err) {
+    res.json({ error: err.message });
     next(err);
   }
 });

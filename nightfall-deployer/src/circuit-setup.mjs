@@ -1,8 +1,8 @@
 /* eslint-disable no-await-in-loop */
 
 /**
-Module to set up all of the circuits contained in circuits/ to a zokrates
-instance. Note, we don't need to deploy the circuits through a zokrates microservice http interface because we're going to create the volume that the zokrates microservice mounts to hold its circuits, so we'll just pop them straight in there. No one will mind.
+Module to set up all of the circuits contained in circuits/ to a worker
+instance. Note, we don't need to deploy the circuits through a worker microservice http interface because we're going to create the volume that the worker microservice mounts to hold its circuits, so we'll just pop them straight in there. No one will mind.
 */
 import axios from 'axios';
 import config from 'config';
@@ -10,28 +10,25 @@ import fs from 'fs';
 import path from 'path';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
+import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import crypto from 'crypto';
 
-const web3 = Web3.connection();
-
 const fsPromises = fs.promises;
 
-const { USE_STUBS } = config;
 /**
- * This function will ping the Zokrates service until it is up before attempting
- * to use it. This is because the deployer must start before Zokrates as it needs
- * to populate Zokrates' volumes.  Thus it can't be sure that Zokrates is up yet
+ * This function will ping the Worker service until it is up before attempting
+ * to use it. This is because the deployer must start before Worker as it needs
+ * to populate Worker' volumes.  Thus it can't be sure that Worker is up yet
  */
-async function waitForZokrates() {
-  logger.info('checking for zokrates_worker');
+async function waitForWorker() {
+  logger.info('checking for worker');
   try {
     while (
-      (await axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/healthcheck`)).status !==
-      200
+      (await axios.get(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/healthcheck`)).status !== 200
     ) {
       logger.warn(
-        `No response from zokrates_worker yet.  That's ok. We'll wait three seconds and try again...`,
+        `No response from worker yet.  That's ok. We'll wait three seconds and try again...`,
       );
 
       await new Promise(resolve => setTimeout(resolve, 3000));
@@ -40,7 +37,7 @@ async function waitForZokrates() {
     logger.error(err);
     process.exit(1);
   }
-  logger.info('zokrates_worker reports that it is healthy');
+  logger.info('worker reports that it is healthy');
 }
 
 /**
@@ -61,58 +58,60 @@ async function walk(dir) {
   return files
     .reduce((all, folderContents) => all.concat(folderContents), [])
     .map(file => file.replace(config.CIRCUITS_HOME, ''))
-    .filter(file => file.endsWith('.zok'));
+    .filter(file => file.endsWith('.circom'));
 }
 
 /**
- * This calls the /generateKeys endpoint on a zokrates microservice container to do the setup.
+ * This calls the /generateKeys endpoint on a worker microservice container to do the setup.
  */
 async function setupCircuits() {
   // do all the trusted setups needed first, we need to find the circuits we're going to do the setup on
-  const circuitsToSetup = await (
-    await walk(config.CIRCUITS_HOME)
-  ).filter(c => (USE_STUBS ? c.includes('_stub') : !c.includes('_stub')));
+  const circuitsToSetup = await await walk(config.CIRCUITS_HOME);
   // then we'll get all of the vks (some may not exist but we'll handle that in
   // a moments). We'll grab promises and then resolve them after the loop.
-  const resp = [];
+  const vks = [];
 
   for (const circuit of circuitsToSetup) {
     logger.debug(`checking for existing setup for ${circuit}`);
 
-    const folderpath = circuit.slice(0, -4); // remove the .zok extension
-    resp.push(
-      axios.get(`${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/vk`, {
-        params: { folderpath },
-      }),
-    );
+    const folderpath = circuit.slice(0, -7); // remove the .circom extension
+    const r = await axios.get(`${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/vk`, {
+      params: { folderpath },
+    });
+    vks.push(r.data.vk);
   }
 
-  const vks = (await Promise.all(resp)).map(r => r.data.vk);
+  const circuitHashes = [];
+  const oldCircuitHashes = [];
 
   // some or all of the vks will be undefined, so we need to run a trusted setup on these
   for (let i = 0; i < vks.length; i++) {
     const circuit = circuitsToSetup[i];
 
     const fileBuffer = fs.readFileSync(`./circuits/${circuit}`);
-    const hcircuit = crypto.createHash('md5').update(fileBuffer).digest('hex');
+    const hcircuit = `0x${crypto.createHash('md5').update(fileBuffer).digest('hex')}`;
+    circuitHashes[i] = hcircuit.slice(0, 12);
 
     const checkHash = await axios.post(
-      `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/check-circuit-hash`,
+      `${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/check-circuit-hash`,
       {
         filepath: circuit,
         hash: hcircuit,
       },
     );
 
-    if (checkHash.data || !vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
+    if (checkHash.data.differentHash || !vks[i] || config.ALWAYS_DO_TRUSTED_SETUP) {
       try {
+        if (checkHash.data.differentHash && checkHash.data.previousHash) {
+          oldCircuitHashes.push(utils.ensure0x(checkHash.data.previousHash).slice(0, 12));
+        }
         logger.info({
           msg: 'No existing verification key. Fear not, I will make a new one: calling generate keys',
           circuit,
         });
 
         const res2 = await axios.post(
-          `${config.PROTOCOL}${config.ZOKRATES_WORKER_HOST}/generate-keys`,
+          `${config.PROTOCOL}${config.CIRCOM_WORKER_HOST}/generate-keys`,
           {
             filepath: circuit,
             curve: config.CURVE,
@@ -132,7 +131,7 @@ async function setupCircuits() {
     }
   }
 
-  const keyRegistry = await waitForContract('Challenges');
+  const keyRegistry = await waitForContract('State');
 
   // we should register the vk now
   for (let i = 0; i < vks.length; i++) {
@@ -140,32 +139,54 @@ async function setupCircuits() {
     const vk = vks[i];
     logger.info(`Registering verification key for ${circuit}`);
     try {
-      delete vk.raw; // long and not needed
+      delete vk.protocol;
       delete vk.curve;
-      delete vk.scheme;
+      delete vk.nPublic;
+
       logger.trace('vk:', vk);
       const vkArray = Object.values(vk).flat(Infinity); // flatten the Vk array of arrays because that's how Key_registry.sol likes it.
-      const folderpath = circuit.slice(0, -4); // remove the .zok extension
+      const circuitName = circuit.slice(0, -7); // remove the .circom extension
+
+      // The selector will be the first 40 bits of the hash
+      const circuitHash = circuitHashes[i];
+
+      logger.info({
+        msg: `The circuit ${circuitName} has the following hash: ${circuitHash}`,
+      });
 
       const call = keyRegistry.methods.registerVerificationKey(
+        BigInt(circuitHash),
         vkArray,
-        config.VK_IDS[USE_STUBS ? folderpath.slice(0, -5) : folderpath],
+        config.VK_IDS[circuitName].isEscrowRequired,
+        config.VK_IDS[circuitName].isWithdrawing,
       );
 
       // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
       // on networks like Edge, there's no account management so we need to encodeABI()
       // since methods like send() don't work
       if (config.ETH_PRIVATE_KEY) {
-        const tx = {
-          from: process.env.FROM_ADDRESS,
-          to: keyRegistry.options.address,
-          data: call.encodeABI(),
-          gas: config.WEB3_OPTIONS.gas,
-          gasPrice: config.WEB3_OPTIONS.gasPrice,
-        };
+        await Web3.submitRawTransaction(call.encodeABI(), keyRegistry.options.address);
+      } else {
+        call.send();
+      }
+    } catch (err) {
+      logger.error(err);
+      throw err;
+    }
+  }
 
-        const signed = await web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
-        await web3.eth.sendSignedTransaction(signed.rawTransaction);
+  // Delete deprecated verification keys
+  for (let i = 0; i < oldCircuitHashes.length; ++i) {
+    const oldCircuitHash = oldCircuitHashes[i];
+    logger.info(`Removing deprecated verification key for ${oldCircuitHash}`);
+    try {
+      const call = keyRegistry.methods.deleteVerificationKey(BigInt(oldCircuitHash));
+
+      // when using a private key, we shouldn't assume an unlocked account and we sign the transaction directly
+      // on networks like Edge, there's no account management so we need to encodeABI()
+      // since methods like send() don't work
+      if (config.ETH_PRIVATE_KEY) {
+        await Web3.submitRawTransaction(call.encodeABI(), keyRegistry.options.address);
       } else {
         call.send();
       }
@@ -176,4 +197,4 @@ async function setupCircuits() {
   }
 }
 
-export default { setupCircuits, waitForZokrates };
+export default { setupCircuits, waitForWorker };

@@ -8,7 +8,6 @@ usage()
   echo "Usage:"
   echo "  -g or --ganache; for a ganache simulator"
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
-  echo "  -s or --stubs; runs with circuits stubbed out (faster but no checking of ZKP code) - use with either -g or -l"
   echo "  -h or --help; to print this message"
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
 }
@@ -31,8 +30,6 @@ while [ -n "$1" ]; do
                                     ;;
       -h  | --help )                usage
                                     ;;
-      -s  | --stubs )               STUBS="-f docker/docker-compose.stubs.yml"
-                                    ;;
       -d  | --dev )                 DEV="-f docker/docker-compose.dev.yml"
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
@@ -51,9 +48,9 @@ if [ -z "$FILE" ]; then
   exit 1
 fi
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+trap "docker-compose $FILE $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
-docker-compose -f docker/docker-compose.yml $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans
+docker-compose -f docker/docker-compose.yml $FILE $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans
 
 # if-else block checks - volume exist and then removes it.
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
@@ -64,6 +61,11 @@ fi
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb2) ]]; then
   echo -n 'Removing '
   docker volume rm nightfall_3_mongodb2
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb-adversary-db) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_mongodb-adversary-db
 fi
 
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
@@ -90,5 +92,5 @@ if [ ! -z "$DEV" ]; then
   cd common-files && npm ci && cd ..
 fi
 
-docker-compose $FILE $STUBS $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }
-docker-compose -p 'nightfall_3' $FILE $STUBS $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_START//,/ }
+docker-compose $FILE  $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }
+docker-compose -p 'nightfall_3' $FILE $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_START//,/ }

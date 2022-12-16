@@ -1,3 +1,4 @@
+/* ignore unused exports */
 /* eslint no-use-before-define: "off" */
 /* eslint no-else-return: "off" */
 /* eslint no-cond-assign: "off" */
@@ -151,4 +152,8 @@ const obfuscateValue = (value, obfuscationSettings, obfuscationKey) => {
   }
 
   return obfuscateString(value, obfuscationToApply);
+};
+
+export const waitForTimeout = async timeoutInMs => {
+  await new Promise(resolve => setTimeout(resolve, timeoutInMs));
 };

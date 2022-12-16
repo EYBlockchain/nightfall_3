@@ -89,9 +89,8 @@ export async function emptyStoreTimber() {
  */
 export async function checkIndexDBForCircuit(circuit) {
   const record = await Promise.all([
-    getStoreCircuit(`${circuit}-abi`),
-    getStoreCircuit(`${circuit}-program`),
-    getStoreCircuit(`${circuit}-pk`),
+    getStoreCircuit(`${circuit}-wasm`),
+    getStoreCircuit(`${circuit}-zkey`),
   ]);
   return record.every(r => typeof r !== 'undefined');
 }
@@ -103,17 +102,11 @@ export async function checkIndexDBForCircuit(circuit) {
 export async function checkIndexDBForCircuitHash(circuitInfo) {
   const circuitName = circuitInfo.name;
   const record = await Promise.all([
-    getStoreCircuitHash(`${circuitName}-abi`),
-    getStoreCircuitHash(`${circuitName}-program`),
-    getStoreCircuitHash(`${circuitName}-pk`),
+    getStoreCircuitHash(`${circuitName}-wasm`),
+    getStoreCircuitHash(`${circuitName}-zkey`),
   ]);
   if (record.every(r => typeof r !== 'undefined')) {
-    return record.every(
-      r =>
-        r.dataHash === circuitInfo.abih ||
-        r.dataHash === circuitInfo.programh ||
-        r.dataHash === circuitInfo.pkh,
-    );
+    return record.every(r => r.dataHash === circuitInfo.wasmh || r.dataHash === circuitInfo.zkeyh);
   }
   return false;
 }
@@ -190,22 +183,15 @@ find which block a transaction went into. Note, we'll save all blocks, that get
 posted to the blockchain, not just ours.
 */
 export async function saveBlock(_block) {
-  const block = { ..._block, _id: _block.blockNumberL2 };
+  const block = { _id: _block.blockNumberL2, ..._block };
   if (!block.transactionHashL1)
     throw new Error('Layer 2 blocks must be saved with a valid Layer 1 transactionHash');
   if (!block.blockNumber)
     throw new Error('Layer 2 blocks must be saved with a valid Layer 1 block number');
   const db = await connectDB();
-  const existing = await db.get(SUBMITTED_BLOCKS_COLLECTION, block._id);
-  // there are three possibilities here:
-  // 1) We're just saving a block for the first time.  This is fine
-  // 2) We're trying to save a replayed block.  This will correctly fail because the _id will be duplicated
-  // 3) We're trying to save a block that we've seen before but it was re-mined due to a chain reorg. In
-  //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
-  if (!existing || !existing.blockNumber) {
-    return db.put(SUBMITTED_BLOCKS_COLLECTION, block, block._id);
-  }
-  throw new Error('Attempted to replay existing layer 2 block');
+  const query = { _id: block._id };
+  const update = { $set: block };
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
 }
 
 /**
@@ -280,20 +266,10 @@ export async function saveTransaction(_transaction) {
     _id: _transaction.transactionHash,
     ..._transaction,
   };
-  // there are three possibilities here:
-  // 1) We're just saving a transaction for the first time.  This is fine
-  // 2) We're trying to save a replayed transaction.  This will correctly fail because the _id will be duplicated
-  // 3) We're trying to save a transaction that we've seen before but it was re-mined due to a chain reorg. In
-  //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
   const db = await connectDB();
-  const query = await db.getAll(TRANSACTIONS_COLLECTION);
-  const existing = query.filter(q => q.transactionHash === transaction.transactionHash);
-  transaction.createdTime = _transaction?.createdTime ?? Math.floor(Date.now() / 1000);
-  if (!existing) return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
-  if (!existing.blockNumber) {
-    return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
-  }
-  throw new Error('Attempted to replay existing transaction');
+  const query = { transactionHash: transaction.transactionHash };
+  const update = { $set: transaction };
+  return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
 }
 
 /*

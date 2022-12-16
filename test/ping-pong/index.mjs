@@ -4,125 +4,311 @@ Module that runs up as a user
 
 /* eslint-disable no-await-in-loop */
 
-import config from 'config';
+import axios from 'axios';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import Nf3 from '../../cli/lib/nf3.mjs';
-import { waitForSufficientBalance, retrieveL2Balance } from '../utils.mjs';
+import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const { TX_WAIT = 1000 } = process.env;
 
-const { mnemonics, signingKeys, zkpPublicKeys } = config.TEST_OPTIONS;
+let stateContract;
+const tokenType = 'ERC20';
+const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
 
-const txPerBlock =
-  process.env.DEPLOYER_ETH_NETWORK === 'mainnet'
-    ? process.env.TEST_LENGTH
-    : config.TEST_OPTIONS.txPerBlock;
+export const getCurrentProposer = async () => {
+  const currentProposer = await stateContract.methods.getCurrentProposer().call();
+  return currentProposer;
+};
 
-const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
+const getCurrentSprint = async () => {
+  const currentSprint = await stateContract.methods.currentSprint().call();
+  return currentSprint;
+};
 
-const TEST_LENGTH = 4;
+export const getStakeAccount = async proposer => {
+  const stakeAccount = await stateContract.methods.getStakeAccount(proposer).call();
+  return stakeAccount;
+};
+
+const makeBlock = async (optimistUrls, currentProposer) => {
+  const url = optimistUrls.find(
+    // eslint-disable-next-line no-loop-func
+    o => o.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
+  )?.optimistUrl;
+
+  if (url) {
+    const res = await axios.get(`${url}/proposer/mempool`);
+    if (res.data.result.length > 0) {
+      console.log(
+        ` *** ${
+          res.data.result.length
+        } transactions in the mempool (${currentProposer.thisAddress.toUpperCase()} - ${url})`,
+      );
+      if (res.data.result.length > 0) {
+        console.log('     Make block...');
+        await axios.get(`${url}/block/make-now`);
+      }
+    }
+  } else {
+    console.log('This current proposer does not have optimist url defined in the compose yml file');
+  }
+};
+
 /**
-Does the preliminary setup and starts listening on the websocket
+  Does deposits and transfer opertations
 */
-export default async function localTest(IS_TEST_RUNNER) {
-  logger.info('Starting local test...');
-  const tokenType = 'ERC20';
-  const value = 1;
-  const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
-  const nf3 = new Nf3(IS_TEST_RUNNER ? signingKeys.user1 : signingKeys.user2, environment);
-
-  await nf3.init(IS_TEST_RUNNER ? mnemonics.user1 : mnemonics.user2);
+export async function simpleUserTest(
+  TEST_LENGTH,
+  value,
+  fee,
+  ercAddress,
+  nf3,
+  listUserAddresses,
+  listTransactionsSent,
+) {
   if (await nf3.healthcheck('client')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
 
-  const ercAddress = TEST_ERC20_ADDRESS || (await nf3.getContractAddress('ERC20Mock'));
-
   const startBalance = await retrieveL2Balance(nf3, ercAddress);
-  console.log('start balance', startBalance);
+  console.log(`start balance ${nf3.zkpKeys.compressedZkpPublicKey}`, startBalance);
+  let offchainTx = true;
 
-  let offchainTx = !!IS_TEST_RUNNER;
-  // Create a block of deposits
-  for (let i = 0; i < txPerBlock; i++) {
+  const { txTypes } = nf3;
+
+  // Create a block of deposits to have enough funds
+  for (let i = 0; i < TEST_LENGTH * 2; i++) {
     try {
-      await nf3.deposit(ercAddress, tokenType, value, tokenId, 0);
+      const res = await nf3.deposit('ValidTransaction', ercAddress, tokenType, value, tokenId, fee);
+
+      listTransactionsSent.push({
+        to: nf3.zkpKeys.compressedZkpPublicKey,
+        value,
+        fee,
+        transactionHash: res.transactionHash,
+        blockHash: res.blockHash,
+        onchain: true,
+        type: 'deposit',
+        typeSequence: 'ValidTransaction',
+      });
       await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     } catch (err) {
-      logger.warn(`Error in deposit ${err}`);
+      logger.warn(`Error in deposit ${nf3.zkpKeys.compressedZkpPublicKey} ${err}`);
     }
   }
+  // we should have the deposits in a block before doing transfers
+  await waitForSufficientBalance({
+    nf3User: nf3,
+    value: startBalance + TEST_LENGTH * 2 * (value - fee),
+    ercAddress,
+  });
 
-  // Create a block of transfer and deposit transactions
+  // Create transfer, deposit and withdraw transactions
   for (let i = 0; i < TEST_LENGTH; i++) {
-    await waitForSufficientBalance(nf3, value, ercAddress);
-    for (let j = 0; j < txPerBlock - 1; j++) {
-      try {
-        await nf3.transfer(
+    const userAdressTo = listUserAddresses[Math.floor(Math.random() * listUserAddresses.length)];
+    const valueToTransfer = Math.floor(Math.random() * (value - fee)) + 2; // Returns a random integer from 2 to value - fee
+
+    try {
+      const res = await nf3.transfer(
+        txTypes[i * 3],
+        offchainTx,
+        ercAddress,
+        tokenType,
+        valueToTransfer,
+        tokenId,
+        userAdressTo,
+        fee,
+      );
+
+      listTransactionsSent.push({
+        from: nf3.zkpKeys.compressedZkpPublicKey,
+        to: userAdressTo,
+        value: valueToTransfer,
+        fee,
+        transactionHashL1: res.transactionHash,
+        blockHash: res.blockHash,
+        onchain: !offchainTx,
+        type: 'transfer',
+        typeSequence: txTypes[i * 3],
+      });
+    } catch (err) {
+      if (err.message.includes('No suitable commitments')) {
+        // if we get here, it's possible that a block we are waiting for has not been proposed yet
+        // let's wait 10x normal and then try again
+        logger.warn(
+          `No suitable commitments were found for transfer. I will wait ${
+            0.01 * TX_WAIT
+          } seconds and try one last time`,
+        );
+        await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
+        const res = await nf3.transfer(
+          txTypes[i * 3],
           offchainTx,
           ercAddress,
           tokenType,
           value,
           tokenId,
-          IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
-          0,
+          userAdressTo,
+          fee,
         );
-      } catch (err) {
-        if (err.message.includes('No suitable commitments')) {
-          // if we get here, it's possible that a block we are waiting for has not been proposed yet
-          // let's wait 10x normal and then try again
-          logger.warn(
-            `No suitable commitments were found for transfer. I will wait ${
-              0.01 * TX_WAIT
-            } seconds and try one last time`,
-          );
-          await new Promise(resolve => setTimeout(resolve, 10 * TX_WAIT));
-          await nf3.transfer(
-            offchainTx,
-            ercAddress,
-            tokenType,
-            value,
-            tokenId,
-            IS_TEST_RUNNER ? zkpPublicKeys.user2 : zkpPublicKeys.user1,
-            0,
-          );
-        }
+        listTransactionsSent.push({
+          from: nf3.zkpKeys.compressedZkpPublicKey,
+          to: userAdressTo,
+          value: valueToTransfer,
+          fee,
+          transactionHashL1: res.transactionHash,
+          blockHash: res.blockHash,
+          onchain: !offchainTx,
+          type: 'transfer',
+          typeSequence: txTypes[i * 3],
+        });
+      } else {
+        console.warn('Error transfer', err);
       }
-      offchainTx = !offchainTx;
     }
+    offchainTx = !offchainTx;
+
     try {
-      await nf3.deposit(ercAddress, tokenType, value, tokenId);
-      await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
-      console.log(`Completed ${i + 1} pings`);
+      const res = await nf3.deposit(
+        txTypes[i * 3 + 1],
+        ercAddress,
+        tokenType,
+        valueToTransfer,
+        tokenId,
+        fee,
+      );
+      listTransactionsSent.push({
+        to: nf3.zkpKeys.compressedZkpPublicKey,
+        value: valueToTransfer,
+        fee,
+        transactionHashL1: res.transactionHash,
+        blockHash: res.blockHash,
+        onchain: true,
+        type: 'deposit',
+        typeSequence: txTypes[i * 3 + 1],
+      });
     } catch (err) {
       console.warn('Error deposit', err);
     }
-  }
 
-  // Wait for sometime at the end to retrieve balance to include any transactions sent by the other use
-  // This needs to be much longer than we may have waited for a transfer
-  let loop = 0;
-  let loopMax = 10000;
-  if (IS_TEST_RUNNER) loopMax = 100; // the TEST_RUNNER must finish first so that its exit status is returned to the tester
-  do {
-    const endBalance = await retrieveL2Balance(nf3, ercAddress);
-    if (endBalance - startBalance === txPerBlock * value + value * TEST_LENGTH && IS_TEST_RUNNER) {
-      logger.info('Test passed');
-      logger.info(
-        `Balance of User (txPerBlock*value (txPerBlock*1) + value received) :
-        ${endBalance - startBalance}`,
+    try {
+      const res = await nf3.withdraw(
+        txTypes[i * 3 + 2],
+        offchainTx,
+        ercAddress,
+        tokenType,
+        valueToTransfer,
+        tokenId,
+        nf3.ethereumAddress,
+        fee,
       );
-      logger.info(`Amount sent to other User: ${value * TEST_LENGTH}`);
-      nf3.close();
-      process.exit(0);
-    } else {
-      logger.info(
-        `The test has not yet passed because the L2 balance has not increased, or I am not the test runner - waiting:
-        Current Transacted Balance is: ${endBalance - startBalance} - Expecting: ${
-          txPerBlock * value + value * TEST_LENGTH
-        }`,
-      );
-      await new Promise(resolving => setTimeout(resolving, 20 * TX_WAIT)); // TODO get balance waiting working well
-      loop++;
+      listTransactionsSent.push({
+        from: nf3.zkpKeys.compressedZkpPublicKey,
+        value: valueToTransfer,
+        fee,
+        transactionHashL1: res.transactionHash,
+        blockHash: res.blockHash,
+        onchain: !offchainTx,
+        type: 'withdraw',
+        typeSequence: txTypes[i * 3 + 2],
+      });
+    } catch (err) {
+      console.warn('Error withdraw', err);
     }
-  } while (loop < loopMax);
-  process.exit(1);
+
+    // await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
+    console.log(`Completed ${i + 1} pings`);
+  }
+}
+
+/**
+Set parameters config for the test
+*/
+export async function setParametersConfig(nf3User) {
+  console.log('Getting State contract instance...');
+  stateContract = await nf3User.getContractInstance('State');
+}
+
+/**
+  Proposer test for rotation of the proposers and making blocks
+*/
+export async function proposerStats(optimistUrls, proposersStats, nf3Proposer) {
+  console.log('OPTIMISTURLS', optimistUrls);
+
+  try {
+    const stateAddress = stateContract.options.address;
+    const proposersBlocks = [];
+
+    let currentProposer = await getCurrentProposer();
+    let currentSprint;
+    let stakeAccount;
+    // eslint-disable-next-line no-param-reassign
+    proposersStats.proposersBlocks = proposersBlocks;
+    // eslint-disable-next-line no-param-reassign
+    proposersStats.sprints = 0;
+    nf3Proposer.web3.eth.subscribe('logs', { address: stateAddress }).on('data', async log => {
+      let proposerBlock = proposersBlocks.find(
+        // eslint-disable-next-line no-loop-func
+        p => p.proposer.toUpperCase() === currentProposer.thisAddress.toUpperCase(),
+      );
+
+      if (!proposerBlock) {
+        proposerBlock = {
+          proposer: currentProposer.thisAddress.toUpperCase(),
+          blocks: 0,
+        };
+        proposersBlocks.push(proposerBlock);
+      }
+
+      for (const topic of log.topics) {
+        switch (topic) {
+          case topicEventMapping.BlockProposed:
+            proposerBlock.blocks++;
+            break;
+          case topicEventMapping.TransactionSubmitted:
+            break;
+          case topicEventMapping.NewCurrentProposer:
+            currentSprint = await getCurrentSprint();
+            // eslint-disable-next-line no-param-reassign
+            proposersStats.sprints++;
+            currentProposer = await getCurrentProposer();
+            stakeAccount = await getStakeAccount(currentProposer.thisAddress);
+            console.log(
+              `     [ Current sprint: ${currentSprint}, Current proposer: ${currentProposer.thisAddress}, Stake account:  ]`,
+              stakeAccount,
+            );
+            break;
+          case topicEventMapping.Rollback:
+            console.log('ROLLBACK!!!!!!!!!!!!!!!!!!!!!!!');
+            break;
+          default:
+            break;
+        }
+      }
+      console.log('BLOCKS:');
+      for (const pb of proposersBlocks) {
+        console.log(`  ${pb.proposer} : ${pb.blocks}`);
+      }
+    });
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        if (nf3Proposer.web3WsUrl.includes('localhost')) {
+          await makeBlock(optimistUrls, currentProposer);
+        }
+      } catch (err) {
+        // containers stopped
+        if (err.message.includes('connection not open')) {
+          console.log('Containers stopped!');
+          return;
+        }
+
+        console.log(err);
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      }
+      console.log('     Waiting some time');
+      await new Promise(resolve => setTimeout(resolve, 30000));
+    }
+  } catch (e) {
+    console.log('ERROR!!!!', e);
+  }
 }

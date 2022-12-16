@@ -4,7 +4,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { Web3Client, expectTransaction, pendingCommitmentCount } from '../../utils.mjs';
+import { Web3Client, expectTransaction, emptyL2 } from '../../utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -16,10 +16,8 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const {
   mnemonics,
   signingKeys,
-  ROTATE_PROPOSER_BLOCKS,
   fee,
   transferValue,
-  txPerBlock,
   tokenConfigs: { tokenType, tokenId },
 } = config.TEST_OPTIONS;
 
@@ -44,6 +42,9 @@ let stateAddress;
 const eventLogs = [];
 let erc20Address;
 let minimumStake;
+let rotateProposerBlocks;
+
+const CHANGE_PROPOSER_NO_TIMES = 8;
 
 const getStakeAccount = async ethAccount => {
   const stateContractInstance = new web3.eth.Contract(stateABI, stateAddress);
@@ -69,21 +70,6 @@ const getCurrentSprint = async () => {
   return currentSprint;
 };
 
-const emptyL2 = async () => {
-  await new Promise(resolve => setTimeout(resolve, 6000));
-  let count = await pendingCommitmentCount(nf3User);
-  while (count !== 0) {
-    await nf3User.makeBlockNow();
-    try {
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-      count = await pendingCommitmentCount(nf3User);
-    } catch (err) {
-      break;
-    }
-  }
-  await new Promise(resolve => setTimeout(resolve, 6000));
-};
-
 describe('Basic Proposer tests', () => {
   before(async () => {
     web3 = web3Client.getWeb3();
@@ -94,6 +80,7 @@ describe('Basic Proposer tests', () => {
     await thirdProposer.init(mnemonics.proposer);
 
     minimumStake = await bootProposer.getMinimumStake();
+    rotateProposerBlocks = await bootProposer.getRotateProposerBlocks();
     stateAddress = await bootProposer.getContractAddress('State');
     stateABI = await nf3User.getContractAbi('State');
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
@@ -216,26 +203,22 @@ describe('Basic Proposer tests', () => {
     await bootProposer.startProposer(); // start proposer to listen making blocks
 
     await nf3User.deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
-    await emptyL2();
-
+    await emptyL2({ nf3User, web3: web3Client, logs: eventLogs });
     const currentZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
 
-    for (let i = 0; i < txPerBlock; i++) {
-      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-    }
+    await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
-    await emptyL2();
+    await emptyL2({ nf3User, web3: web3Client, logs: eventLogs });
 
     const afterZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
-    expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(
-      transferValue * txPerBlock,
-    );
+    expect(afterZkpPublicKeyBalance - currentZkpPublicKeyBalance).to.be.equal(transferValue - fee);
   });
 
   it('Should create a valid changeCurrentProposer (because blocks has passed)', async function () {
-    for (let i = 0; i < 8; i++) {
+    let numChanges = 0;
+    for (let i = 0; i < CHANGE_PROPOSER_NO_TIMES; i++) {
       try {
         // eslint-disable-next-line no-await-in-loop
         const currentSprint = await getCurrentSprint();
@@ -249,17 +232,19 @@ describe('Basic Proposer tests', () => {
         const initBlock = await web3.eth.getBlockNumber();
         let currentBlock = initBlock;
 
-        while (currentBlock - initBlock < ROTATE_PROPOSER_BLOCKS) {
+        while (currentBlock - initBlock < rotateProposerBlocks) {
           await new Promise(resolve => setTimeout(resolve, 10000));
           currentBlock = await web3.eth.getBlockNumber();
         }
 
         const res = await secondProposer.changeCurrentProposer();
         expectTransaction(res);
+        numChanges++;
       } catch (err) {
         console.log(err);
       }
     }
+    expect(numChanges).to.be.equal(CHANGE_PROPOSER_NO_TIMES);
   });
 
   it('should unregister the third proposer', async () => {
