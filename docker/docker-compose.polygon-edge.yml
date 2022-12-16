@@ -2,8 +2,8 @@ version: '3.5'
 services:
   client:
     environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      BLOCKCHAIN_PORT: 10002
+      BLOCKCHAIN_WS_HOST: 54.154.199.194
+      BLOCKCHAIN_PORT: 40002
       BLOCKCHAIN_PATH: /ws
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
@@ -12,8 +12,8 @@ services:
 
   deployer:
     environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      BLOCKCHAIN_PORT: 10002
+      BLOCKCHAIN_WS_HOST: 54.154.199.194
+      BLOCKCHAIN_PORT: 40002
       BLOCKCHAIN_PATH: /ws
       USE_EXTERNAL_NODE: 'true'
       FROM_ADDRESS: "0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0"
@@ -22,8 +22,8 @@ services:
 
   optimist:
     environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      BLOCKCHAIN_PORT: 10002
+      BLOCKCHAIN_WS_HOST: 54.154.199.194
+      BLOCKCHAIN_PORT: 40002
       BLOCKCHAIN_PATH: /ws
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
@@ -32,7 +32,7 @@ services:
 
   administrator:
     environment:
-      BLOCKCHAIN_WS_HOST: host.docker.internal
-      BLOCKCHAIN_PORT: 10002
+      BLOCKCHAIN_WS_HOST:  54.154.199.194
+      BLOCKCHAIN_PORT: 40002
       LOG_LEVEL: error
       ETH_NETWORK: staging_edge
