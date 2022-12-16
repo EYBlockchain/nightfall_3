@@ -6,7 +6,6 @@
  * same blocks from our local database record and to reset cached Frontier and
  * leafCount values in the Block class
  */
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
@@ -23,7 +22,7 @@ import {
   getTransactionsByTransactionHashesByL2Block,
 } from '../services/database.mjs';
 
-const { ZERO, STATE_CONTRACT_NAME } = constants;
+const { ZERO } = constants;
 
 function checkValidHistoricRootsBlockNumber(transaction, latestBlockNumberL2) {
   for (let i = 0; i < transaction.historicRootBlockNumberL2.length; ++i) {
@@ -49,12 +48,6 @@ async function rollbackEventHandler(data) {
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(Number(blockNumberL2));
 
   logger.info({ msg: 'Rollback - rollback layer 2 blocks', blocksToBeDeleted });
-
-  // Get the latest valid block number from the blockchain
-  const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
-  const latestBlockNumberL2 = Number(
-    (await stateInstance.methods.getNumberOfL2Blocks().call()) - 1,
-  );
 
   const validTransactions = [];
   const validCommitments = [];
@@ -87,13 +80,20 @@ async function rollbackEventHandler(data) {
       const commitments = transaction.commitments.filter(c => c !== ZERO);
       const nullifiers = transaction.nullifiers.filter(n => n !== ZERO);
 
+      // If the transaction is decrypted it means that was a transfer that was sent to us.
+      // Since we cannot ensure the validity of the transaction, we remove it from the database.
+      // If the transaction was valid, eventually it will be proposed again and we will be
+      // able to safely store it
       if (transaction.isDecrypted) {
         invalidTransactions.push(transaction.transactionHash);
         invalidCommitments.push(commitments[0]);
         continue;
       }
 
-      if (!checkValidHistoricRootsBlockNumber(transaction, latestBlockNumberL2)) {
+      // If a transaction is using a nullifier from a blockL2 that was rollbacked, it is considered
+      // invalid and hence removed from the database. The commitments are deleted and nullifiers are
+      // unnullified
+      if (!checkValidHistoricRootsBlockNumber(transaction, blockNumberL2 - 1)) {
         invalidTransactions.push(transaction.transactionHash);
         invalidCommitments.push(...commitments);
         invalidNullifiers.push(...nullifiers);
@@ -123,8 +123,8 @@ async function rollbackEventHandler(data) {
     deleteBlocksByBlockNumberL2(Number(blockNumberL2)),
     clearNullifiedOnChain(Number(blockNumberL2)),
     clearNullifiers(invalidNullifiers),
-    clearOnChain(validCommitments),
     deleteCommitments(invalidCommitments),
+    clearOnChain(validCommitments),
     deleteTransactionsByTransactionHashes(invalidTransactions),
   ]);
 }

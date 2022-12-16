@@ -148,11 +148,15 @@ async function checkDuplicateNullifier({
   }
 }
 
-async function checkHistoricRootBlockNumber(transaction) {
-  const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
-  const latestBlockNumberL2 = Number(
-    (await stateInstance.methods.getNumberOfL2Blocks().call()) - 1,
-  );
+async function checkHistoricRootBlockNumber(transaction, lastValidBlockNumberL2) {
+  let latestBlockNumberL2;
+  if (lastValidBlockNumberL2) {
+    latestBlockNumberL2 = lastValidBlockNumberL2;
+  } else {
+    const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
+    latestBlockNumberL2 = Number((await stateInstance.methods.getNumberOfL2Blocks().call()) - 1);
+  }
+
   transaction.historicRootBlockNumberL2.forEach((blockNumberL2, i) => {
     if (transaction.nullifiers[i] === ZERO) {
       if (Number(blockNumberL2) !== 0) {
@@ -160,7 +164,7 @@ async function checkHistoricRootBlockNumber(transaction) {
           transactionHash: transaction.transactionHash,
         });
       }
-    } else if (Number(blockNumberL2) > latestBlockNumberL2) {
+    } else if (Number(blockNumberL2) >= latestBlockNumberL2) {
       throw new TransactionError('Historic root has block number L2 greater than on chain', 3, {
         transactionHash: transaction.transactionHash,
       });
@@ -238,6 +242,7 @@ export async function checkTransaction({
   checkDuplicatesInL2 = false,
   checkDuplicatesInMempool = false,
   transactionBlockNumberL2,
+  lastValidBlockNumberL2,
 }) {
   return Promise.all([
     checkDuplicateCommitment({
@@ -252,7 +257,7 @@ export async function checkTransaction({
       checkDuplicatesInMempool,
       transactionBlockNumberL2,
     }),
-    checkHistoricRootBlockNumber(transaction),
+    checkHistoricRootBlockNumber(transaction, lastValidBlockNumberL2),
     verifyProof(transaction),
   ]);
 }

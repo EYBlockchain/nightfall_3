@@ -21,9 +21,8 @@ import {
   deleteTransactionsByTransactionHashes,
   getTransactionsByTransactionHashesByL2Block,
 } from '../services/database';
-import { waitForContract } from './subscribe';
 
-const { ZERO, STATE_CONTRACT_NAME } = global.nightfallConstants;
+const { ZERO } = global.nightfallConstants;
 
 function checkValidHistoricRootsBlockNumber(transaction, latestBlockNumberL2) {
   for (let i = 0; i < transaction.historicRootBlockNumberL2.length; ++i) {
@@ -49,12 +48,6 @@ async function rollbackEventHandler(data) {
   const blocksToBeDeleted = await findBlocksFromBlockNumberL2(Number(blockNumberL2));
 
   logger.info({ msg: 'Rollback - rollback layer 2 blocks', blocksToBeDeleted });
-
-  // Get the latest valid block number from the blockchain
-  const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
-  const latestBlockNumberL2 = Number(
-    (await stateInstance.methods.getNumberOfL2Blocks().call()) - 1,
-  );
 
   const validTransactions = [];
   const validCommitments = [];
@@ -93,7 +86,7 @@ async function rollbackEventHandler(data) {
         continue;
       }
 
-      if (!checkValidHistoricRootsBlockNumber(transaction, latestBlockNumberL2)) {
+      if (!checkValidHistoricRootsBlockNumber(transaction, blockNumberL2 - 1)) {
         invalidTransactions.push(transaction.transactionHash);
         invalidCommitments.push(...commitments);
         invalidNullifiers.push(...nullifiers);

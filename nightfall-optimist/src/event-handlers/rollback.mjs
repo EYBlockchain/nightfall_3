@@ -81,6 +81,7 @@ async function rollbackEventHandler(data) {
           transaction,
           checkDuplicatesInL2: true,
           transactionBlockNumberL2: blockNumber,
+          lastValidBlockNumberL2: blockNumberL2 - 1,
         });
 
         for (let k = 0; k < transaction.commitments.length; k++) {
