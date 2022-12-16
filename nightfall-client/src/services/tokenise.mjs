@@ -22,6 +22,7 @@ const { generalise } = gen;
 
 async function tokenise(items) {
   logger.info('Creating a tokenise transaction');
+  const { providedCommitmentsFee } = items;
   const {
     salt = (await randValueLT(BN128_GROUP_ORDER)).hex(),
     value = 0,
@@ -57,6 +58,7 @@ async function tokenise(items) {
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     maxNonFeeNullifiers: 0,
+    providedCommitmentsFee,
   });
 
   const circuitHash = await getCircuitHash(circuitName);

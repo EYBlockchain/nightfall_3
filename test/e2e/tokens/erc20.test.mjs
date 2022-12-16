@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import chai from 'chai';
+import gen from 'general-number';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
@@ -443,7 +444,6 @@ describe('ERC20 tests', () => {
           tokenId,
           0,
         );
-
         await waitForSufficientTransactionsMempool({ nf3User, nTransactions: 6 });
 
         await nf3Proposer.makeBlockNow();

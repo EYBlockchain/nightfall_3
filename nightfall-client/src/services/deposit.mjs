@@ -27,12 +27,12 @@ const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, DEPOSIT, DEPOSIT_FEE } = constants;
 const { generalise } = gen;
 
-async function deposit(items) {
+async function deposit(depositParams) {
   logger.info('Creating a deposit transaction');
-
+  const { tokenType, providedCommitmentsFee, ...items } = depositParams;
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
   const { tokenId, value, fee, rootKey } = generalise(items);
-  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const salt = await randValueLT(BN128_GROUP_ORDER);
@@ -75,6 +75,7 @@ async function deposit(items) {
         rootKey,
         maxNullifiers: VK_IDS[circuitName].numberNullifiers,
         maxNonFeeNullifiers: 0,
+        providedCommitmentsFee,
       });
     }
   } else {
@@ -106,7 +107,7 @@ async function deposit(items) {
     fee,
     historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
     circuitHash,
-    tokenType: items.tokenType,
+    tokenType,
     tokenId,
     value,
     ercAddress,

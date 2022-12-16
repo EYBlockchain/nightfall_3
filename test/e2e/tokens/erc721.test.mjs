@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 
 import chai from 'chai';
+import gen from 'general-number';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
@@ -360,6 +361,17 @@ describe('ERC721 tests', () => {
       } catch (err) {
         expect(err.message).to.include('Some of the commitments provided for the fee were invalid');
       }
+
+      const userL1BalanceBefore = await web3Client.getBalance(nf3User.ethereumAddress);
+
+      await web3Client.timeJump(3600 * 24 * 10);
+      const res = await nf3User.finaliseWithdrawal(withdrawalTxHash);
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+
+      const userL1BalanceAfter = await web3Client.getBalance(nf3User.ethereumAddress);
+      // Final L1 balance to be lesser than initial balance because of fees
+      expect(parseInt(userL1BalanceAfter, 10)).to.be.lessThan(parseInt(userL1BalanceBefore, 10));
     });
   });
 

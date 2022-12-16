@@ -22,7 +22,7 @@ const { generalise } = gen;
 async function burn(burnParams) {
   logger.info('Creating a burn transaction');
   // let's extract the input items
-  const { providedCommitments, ...items } = burnParams;
+  const { providedCommitments, providedCommitmentsFee, ...items } = burnParams;
   const { rootKey, value, fee, tokenId } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
@@ -46,6 +46,7 @@ async function burn(burnParams) {
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     maxNonFeeNullifiers: 1,
     providedCommitments,
+    providedCommitmentsFee,
   });
 
   const circuitHash = await getCircuitHash(circuitName);
