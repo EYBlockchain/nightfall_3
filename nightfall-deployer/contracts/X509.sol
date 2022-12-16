@@ -419,7 +419,6 @@ contract X509 is DERParser, Whitelist, X509Interface {
         // we only check extended key usage for end-user certs; it's not really relevant for CA certs
         checkExtendedKeyUsage(tlvs, oidGroup);
         checkCertificatePolicies(tlvs, oidGroup);
-        trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
         checkSignature(
             addressSignature,
             abi.encodePacked(uint160(msg.sender)),
