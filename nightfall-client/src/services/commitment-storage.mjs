@@ -1066,3 +1066,23 @@ export async function getCommitments() {
   const allCommitments = await db.collection(COMMITMENTS_COLLECTION).find().toArray();
   return allCommitments;
 }
+
+export async function getCommitmentsDepositedRollbacked(compressedZkpPublicKey) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  const query = {
+    compressedZkpPublicKey,
+    commitmentTransactionHash: null,
+    isOnChain: -1,
+    isDeposited: true,
+  };
+  console.log('DEBUG 0 ', await db.collection(COMMITMENTS_COLLECTION).find(query).toArray());
+  console.log(
+    'DEBUG 1',
+    await db
+      .collection(COMMITMENTS_COLLECTION)
+      .find({ compressedZkpPublicKey, isOnChain: -1, isDeposited: true })
+      .toArray(),
+  );
+  return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
+}

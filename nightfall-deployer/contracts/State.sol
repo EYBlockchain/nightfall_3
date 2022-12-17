@@ -14,7 +14,6 @@ import './Utils.sol';
 import './Config.sol';
 import './Pausable.sol';
 import './Key_Registry.sol';
-import 'hardhat/console.sol';
 
 contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -202,15 +201,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 let isEscrowRequired := shr(8, sload(keccak256(x, mul(0x20, 2))))
 
                 if isEscrowRequired {
-                    let commitment := calldataload(
+                    let commitment := mload(
                         add(
-                            add(t.offset, add(mul(0x20, t.length), 0x20)),
-                            calldataload(
-                                add(
-                                    t.offset,
-                                    add(calldataload(add(t.offset, mul(0x20, i))), mul(0x20, 5))
-                                )
-                            )
+                            0x20,
+                            add(transactionPos, add(mload(add(transactionPos, mul(0x20, 6))), 0x20))
                         )
                     )
 

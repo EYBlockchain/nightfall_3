@@ -102,7 +102,7 @@ describe('ERC1155 tests', () => {
   });
 
   describe('Deposits', () => {
-    it.skip('Should increment user L2 balance after depositing some ERC1155', async function () {
+    it('Should increment user L2 balance after depositing some ERC1155', async function () {
       const userL2Erc1155BeforeBalance = await getLayer2Erc1155Balance(nf3User);
       const userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);
       const res = await nf3User.deposit(

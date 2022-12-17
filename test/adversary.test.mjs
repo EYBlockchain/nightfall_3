@@ -10,6 +10,7 @@ import chai, { expect } from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
+import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 // instead of our usual cli we need to import
@@ -24,7 +25,6 @@ import {
   registerProposerOnNoProposer,
   restartOptimist,
   waitForSufficientTransactionsMempool,
-  waitForTimeout,
   Web3Client,
 } from './utils.mjs';
 import { getERCInfo } from '../cli/lib/tokens.mjs';
@@ -32,6 +32,7 @@ import { getERCInfo } from '../cli/lib/tokens.mjs';
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
+const { generalise } = gen;
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
@@ -102,6 +103,14 @@ async function getLayer2BalancesBadClient(ercAddress) {
 
 async function enableChallenger(enable) {
   await axios.post(`${optimistApiUrl}/challenger/enable`, { enable });
+}
+
+async function getLayer2Erc1155Balance(_nf3User, erc1155Address, _tokenId) {
+  return (
+    (await _nf3User.getLayer2Balances())[erc1155Address]?.find(
+      e => e.tokenId === generalise(_tokenId).hex(32),
+    )?.balance || 0
+  );
 }
 
 describe('Testing with an adversary', () => {
@@ -215,7 +224,7 @@ describe('Testing with an adversary', () => {
     currentRollbacks = rollbackCount;
   });
 
-  describe.skip('Testing block zero challenges', async () => {
+  describe('Testing block zero challenges', async () => {
     before(async () => {
       await nf3User.deposit('ValidTransaction', erc20Address, tokenType, transferValue, tokenId, 0);
     });
@@ -246,10 +255,16 @@ describe('Testing with an adversary', () => {
   describe('Testing optimist deep rollbacks', () => {
     let userL2BalanceBefore;
     let user2L2BalanceBefore;
+    let user2L2Erc1155BalanceBefore;
 
     before(async () => {
       userL2BalanceBefore = await getLayer2BalancesBadClient(erc20Address);
       user2L2BalanceBefore = await getLayer2Balances(nf3User2, erc20Address);
+      user2L2Erc1155BalanceBefore = await getLayer2Erc1155Balance(
+        nf3User2,
+        erc1155Address,
+        availableTokenIds[1],
+      );
       await nf3User.deposit('ValidTransaction', erc20Address, tokenType, transferValue, tokenId, 0);
       await makeBlock();
     });
@@ -300,7 +315,24 @@ describe('Testing with an adversary', () => {
       const numberTxs = mempool.filter(e => e.mempool).length;
       expect(numberTxs).to.be.equal(2);
 
-      await nf3User.deposit('ValidTransaction', erc20Address, tokenType, transferValue, tokenId, 0);
+      const res = (
+        await axios.get(`${environment.clientApiUrl}/commitment/commitmentsRollbacked`, {
+          params: {
+            compressedZkpPublicKey: nf3User2.zkpKeys.compressedZkpPublicKey,
+          },
+        })
+      ).data;
+
+      await nf3User2.deposit(
+        'ValidTransaction',
+        erc1155Address,
+        tokenTypeERC1155,
+        transferValue,
+        availableTokenIds[1],
+        0,
+        [],
+        res.commitmentsRollbacked[0].preimage.salt,
+      );
 
       await waitForSufficientTransactionsMempool({
         optimistBaseUrl: environment.adversarialOptimistApiUrl,
@@ -311,15 +343,17 @@ describe('Testing with an adversary', () => {
 
       const userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
       const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
-
-      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(
-        transferValue + transferValue / 2,
+      const user2L2Erc1155BalanceAfter = await getLayer2Erc1155Balance(
+        nf3User2,
+        erc1155Address,
+        availableTokenIds[1],
       );
+
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue / 2);
       expect(user2L2BalanceAfter - user2L2BalanceBefore).to.be.equal(
         transferValue + transferValue / 2,
       );
-
-      await waitForTimeout(50000);
+      expect(user2L2Erc1155BalanceAfter - user2L2Erc1155BalanceBefore).to.be.equal(transferValue);
     });
 
     after(async () => {
