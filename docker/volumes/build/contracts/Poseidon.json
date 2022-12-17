@@ -24741,12 +24741,12 @@
     "80001": {
       "events": {},
       "links": {},
-      "address": "0xc65404e1eFF42640c6805F152C9F26666B0Ba470",
-      "transactionHash": "0xaf361c3430509622158175378129134e93668586d9c9e5c226d6cb2a2fa9c920"
+      "address": "0x6f5DF00f6e27Ec8d84268df23f5dc6A50628a6E4",
+      "transactionHash": "0x885ce93bdda9282b696e4364f365496d5254df26dd262f1e2eaf29893ff94e59"
     }
   },
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-16T22:06:08.778Z",
+  "updatedAt": "2022-12-17T07:56:01.661Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

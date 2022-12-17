@@ -2276,7 +2276,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-16T22:02:02.323Z",
+  "updatedAt": "2022-12-17T07:51:37.727Z",
   "devdoc": {
     "details": "This contract has the owner address providing basic authorization control",
     "events": {

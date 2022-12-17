@@ -7618,14 +7618,14 @@
     "80001": {
       "events": {},
       "links": {
-        "Poseidon": "0xc65404e1eFF42640c6805F152C9F26666B0Ba470"
+        "Poseidon": "0x6f5DF00f6e27Ec8d84268df23f5dc6A50628a6E4"
       },
-      "address": "0xED2610db01d5d0c32eD548D1ddf12fe132974228",
-      "transactionHash": "0x452fba2f7ecf49575c9c12716cc2100cc879855c09fd9259a35da5695895ca06"
+      "address": "0x8f08E5ad2Be85FFE541196e4Fb9365b80E7bdfe6",
+      "transactionHash": "0x2c7a6dbd7857140cc53fb5f415e33da2067220c7b41e426e2afd931cd248a0b3"
     }
   },
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-16T22:06:08.764Z",
+  "updatedAt": "2022-12-17T07:56:01.647Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

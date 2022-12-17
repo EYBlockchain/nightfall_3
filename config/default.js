@@ -41,7 +41,9 @@ module.exports = {
   WEBSOCKET_PING_TIME: 15000,
   CIRCOM_WORKER_HOST: process.env.CIRCOM_WORKER_HOST || 'worker',
   SANCTIONS_CONTRACT:
-    process.env.TEST_SANCTIONS_CONTRACT || '0x40C57923924B5c5c5455c48D93317139ADDaC8fb',
+    process.env.SANCTIONS_CONTRACT ||
+    process.env.TEST_SANCTIONS_CONTRACT ||
+    '0x40C57923924B5c5c5455c48D93317139ADDaC8fb',
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
     APPROVERS: process.env.MULTISIG_APPROVERS

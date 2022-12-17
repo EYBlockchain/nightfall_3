@@ -29,7 +29,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.17+commit.8df45f5f\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_sanctionedUser\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"isSanctioned\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/mocks/SanctionsListMock.sol\":\"SanctionsListMock\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":1},\"remappings\":[]},\"sources\":{\"project:/contracts/SanctionsListInterface.sol\":{\"keccak256\":\"0x76808795d7236d734f449b568a498bb0a13479285f1b59c4e12e2bcfb8020117\",\"license\":\"CC0-1.0\",\"urls\":[\"bzz-raw://7fd01a72376e09200a1a7358ad25660a58b6a8a283b55c699124880f96b4f50f\",\"dweb:/ipfs/Qma6jouS3L9xNXiJtCMc3B8YHwk3v4312abHwWMoLPmidU\"]},\"project:/contracts/mocks/SanctionsListMock.sol\":{\"keccak256\":\"0xc87e06cdf62b7116f8611caf2a048eb8d4c4e6c33f20cd6af34f04da27f1809c\",\"license\":\"CC0-1.0\",\"urls\":[\"bzz-raw://9f2f29790a01ff754211b01bb34497b25b15661741536835757c3be843f036c5\",\"dweb:/ipfs/QmXv1Khg7X4Q1EdNo6rH6ptXdJbAJ7sZ2it6WHokDvLgLd\"]}},\"version\":1}",
@@ -1151,9 +1152,16 @@
     "name": "solc",
     "version": "0.8.17+commit.8df45f5f.Emscripten.clang"
   },
-  "networks": {},
+  "networks": {
+    "80001": {
+      "events": {},
+      "links": {},
+      "address": "0xA1C99Ca53033cc287ab77A2C5AFb66B853b1ef3d",
+      "transactionHash": "0x5b237197c116db41d96f79806f16077c55d62b02f4890577cdec0b9bf1b72d9e"
+    }
+  },
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-16T22:06:08.880Z",
+  "updatedAt": "2022-12-17T07:56:01.760Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
