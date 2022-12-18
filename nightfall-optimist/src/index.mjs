@@ -17,12 +17,13 @@ import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 import { setProposer } from './routes/proposer.mjs';
+import autoChangeCurrentProposer from './services/auto-change-current-proposer.mjs';
 
 const main = async () => {
   try {
     const proposer = new Proposer();
     setProposer(proposer); // passes the proposer instance int the proposer routes
-
+    autoChangeCurrentProposer(proposer); // starts the auto change current proposer service
     // subscribe to WebSocket events first
     await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
     await subscribeToInstantWithDrawalWebSocketConnection(setInstantWithdrawalWebSocketConnection);
