@@ -24,7 +24,7 @@ export const getCommitmentInfo = async txInfo => {
     fee = generalise(0),
     recipientZkpPublicKeysArray = [],
     ercAddress,
-    maticAddress,
+    feeL2TokenAddress,
     tokenId = generalise(0),
     rootKey,
     providedCommitments = [],
@@ -42,7 +42,7 @@ export const getCommitmentInfo = async txInfo => {
   const tokenIdArray = recipientZkpPublicKeysArray.map(() => tokenId);
 
   // If ercAddress is the same as the feeAddress, we will set the fee as zero and only look for value
-  const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
+  const addedFee = feeL2TokenAddress.hex(32) === ercAddress.hex(32) ? fee.bigInt : 0n;
 
   logger.debug(`Fee will be added as part of the transaction commitments: ${addedFee > 0n}`);
 
@@ -147,7 +147,7 @@ export const getCommitmentInfo = async txInfo => {
 
       // Filter which of those commitments belong to the ercAddress
       const ercAddressCommitmentsFee = rawCommitmentsFee.filter(
-        c => c.preimage.ercAddress === generalise(maticAddress).hex(32),
+        c => c.preimage.ercAddress === generalise(feeL2TokenAddress).hex(32),
       );
 
       logger.debug({ ercAddressCommitmentsFee });
@@ -200,7 +200,7 @@ export const getCommitmentInfo = async txInfo => {
     // If the user is transferring the same token as the fee, the case in which the user provided
     // enough commitments to cover the value but not the fee is valid.
     // If that is the case, we modify the parameters accordingly.
-    if (maticAddress.hex(32) === ercAddress.hex(32)) {
+    if (feeL2TokenAddress.hex(32) === ercAddress.hex(32)) {
       const totalProvidedValue = providedValue + providedValueFee;
       if (totalProvidedValue < value) {
         maxNonFeeNullifiers =
@@ -227,7 +227,7 @@ export const getCommitmentInfo = async txInfo => {
       compressedZkpPublicKey,
       ercAddress,
       tokenId,
-      maticAddress,
+      feeL2TokenAddress,
       value,
       feeValue,
       maxNullifiers,
@@ -292,7 +292,7 @@ export const getCommitmentInfo = async txInfo => {
     if (changeFee !== 0n) {
       valuesArray.push(new GN(changeFee));
       recipientZkpPublicKeysArray.push(zkpPublicKey);
-      ercAddressArray.push(maticAddress);
+      ercAddressArray.push(feeL2TokenAddress);
       tokenIdArray.push(generalise(0));
     }
 

@@ -40,8 +40,8 @@ async function deposit(depositParams) {
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
 
   let valueNewCommitment = value;
@@ -60,7 +60,7 @@ async function deposit(depositParams) {
   let circuitName = DEPOSIT_FEE;
 
   if (fee.bigInt > 0) {
-    if (maticAddress.hex(32) === ercAddress.hex(32)) {
+    if (feeL2TokenAddress.hex(32) === ercAddress.hex(32)) {
       if (value.bigInt < fee.bigInt) {
         throw new Error('Value deposited needs to be bigger than the fee');
       }
@@ -71,7 +71,7 @@ async function deposit(depositParams) {
         totalValueToSend: 0n,
         fee,
         ercAddress,
-        maticAddress,
+        feeL2TokenAddress,
         rootKey,
         maxNullifiers: VK_IDS[circuitName].numberNullifiers,
         maxNonFeeNullifiers: 0,
@@ -135,7 +135,7 @@ async function deposit(depositParams) {
     publicData,
     privateData,
     commitmentsInfo.roots,
-    maticAddress,
+    feeL2TokenAddress,
     VK_IDS[circuitName].numberNullifiers,
     VK_IDS[circuitName].numberCommitments,
   );

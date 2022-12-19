@@ -15,7 +15,7 @@ import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 
 import {
-  DEFAULT_FEE_MATIC,
+  DEFAULT_FEE_TOKEN_VALUE,
   WEBSOCKET_PING_TIME,
   GAS_MULTIPLIER,
   GAS,
@@ -73,7 +73,7 @@ class Nf3 {
 
   zkpKeys;
 
-  defaultFeeMatic = DEFAULT_FEE_MATIC;
+  defaultFeeTokenValue = DEFAULT_FEE_TOKEN_VALUE;
 
   latestWithdrawHash;
 
@@ -461,7 +461,7 @@ class Nf3 {
     value = 0,
     tokenId = 0,
     salt = undefined,
-    fee = this.defaultFeeMatic,
+    fee = this.defaultFeeTokenValue,
     providedCommitmentsFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/tokenise`, {
@@ -494,7 +494,7 @@ class Nf3 {
     ercAddress,
     value,
     tokenId,
-    fee = this.defaultFeeMatic,
+    fee = this.defaultFeeTokenValue,
     providedCommitments,
     providedCommitmentsFee,
   ) {
@@ -536,7 +536,7 @@ class Nf3 {
 
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
-  async transform(inputTokens, outputTokens, fee = this.defaultFeeMatic) {
+  async transform(inputTokens, outputTokens, fee = this.defaultFeeTokenValue) {
     const res = await axios.post(`${this.clientBaseUrl}/transform`, {
       rootKey: this.zkpKeys.rootKey,
       inputTokens,
@@ -573,7 +573,7 @@ class Nf3 {
     tokenType,
     value,
     tokenId,
-    fee = this.defaultFeeMatic,
+    fee = this.defaultFeeTokenValue,
     providedCommitmentsFee,
   ) {
     let txDataToSign;
@@ -652,7 +652,7 @@ class Nf3 {
     value,
     tokenId,
     compressedZkpPublicKey,
-    fee = this.defaultFeeMatic,
+    fee = this.defaultFeeTokenValue,
     providedCommitments,
     providedCommitmentsFee,
   ) {
@@ -719,7 +719,7 @@ class Nf3 {
     value,
     tokenId,
     recipientAddress,
-    fee = this.defaultFeeMatic,
+    fee = this.defaultFeeTokenValue,
     providedCommitments,
     providedCommitmentsFee,
   ) {
