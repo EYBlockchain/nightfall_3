@@ -160,7 +160,7 @@ To perform a deployment follow the instructions bellow:
     ```
 
     During the deployment an instance of the `worker` application is required to be up, so that the Circuits can be generated accordingly. This instance is started up 
-    automatically, but it is possible configure the worker server if one is already available, for this set `CIRCOM_WORKER_HOST` in the .env file.
+    automatically, but it is possible to configure the worker server if one is already available, for this set `CIRCOM_WORKER_HOST` in the .env file.
 
     There is a variable in the .env file called `DEPLOYMENT_SERVICES`. It allows one to set the services to start up. This variable can be passed over with the command
     as well.
