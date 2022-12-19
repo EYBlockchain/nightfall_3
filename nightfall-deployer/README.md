@@ -1,7 +1,7 @@
 # Deployment Procedure
 The deployment procedure is the process of compiling the Smart Contracts, deploying them to the desired Network and performing the circuits' setup.
 
-To perfom a deployment follow the instructions bellow:
+To perform a deployment follow the instructions bellow:
 1. Create a .env file from the template file `.env.deployment.template` and change the name to match your network. e.g. `.env.deployment.my_network`. This 
   file has settings that will be used for performing the deployment. One should change them accordingly with the desired values. The following variables are 
   important to be set:
