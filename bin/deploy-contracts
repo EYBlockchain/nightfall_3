@@ -11,10 +11,10 @@ DEPLOYMENT_ENV_FILE=$1
 
 if [ -z "${DEPLOYMENT_SERVICES}" ]; then
   DEPLOYMENT_SERVICES=$(cat ${DEPLOYMENT_ENV_FILE} | sed  -n -e 's/^export DEPLOYMENT_SERVICES=//p')
-fi
 
-if [ -z "${DEPLOYMENT_SERVICES}" ]; then
-  DEPLOYMENT_SERVICES="deployer,worker"
+  if [ -z "${DEPLOYMENT_SERVICES}" ]; then
+    DEPLOYMENT_SERVICES="deployer,worker"
+  fi
 fi
 
 if [ -z "${NO_SERVICES_SETUP}" ]; then
