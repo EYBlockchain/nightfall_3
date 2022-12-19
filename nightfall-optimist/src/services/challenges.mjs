@@ -47,8 +47,9 @@ export async function signalRollbackCompleted(data) {
 }
 
 export function startMakingChallenges() {
-  if (process.env.IS_CHALLENGER !== 'true')
-    throw Error('Connot start challenger as this optimist never intend to be a challenger');
+  if (process.env.IS_CHALLENGER !== 'true') {
+    throw new Error('Cannot start challenger as this optimist never intend to be a challenger');
+  }
   logger.info(`Challenges ON`);
   makeChallenges = true;
 }
