@@ -20,7 +20,7 @@ contract Config is Ownable, Structures {
 
     address bootProposer;
     address bootChallenger;
-    address maticAddress;
+    address feeL2TokenAddress;
     mapping(address => uint256[2]) erc20limit;
 
     function initialize() public virtual override onlyInitializing {
@@ -66,15 +66,15 @@ contract Config is Ownable, Structures {
     /**
      * @dev Set Matic address (fee token for proposers payment)
      */
-    function setMaticAddress(address _maticAddress) external onlyOwner {
-        maticAddress = _maticAddress;
+    function setFeeL2TokenAddress(address _feeL2TokenAddress) external onlyOwner {
+        feeL2TokenAddress = _feeL2TokenAddress;
     }
 
     /**
      * @dev Get Matic address (fee token for proposers payment)
      */
-    function getMaticAddress() public view returns (address) {
-        return maticAddress;
+    function getFeeL2TokenAddress() public view returns (address) {
+        return feeL2TokenAddress;
     }
 
     // restricting tokens for deposit

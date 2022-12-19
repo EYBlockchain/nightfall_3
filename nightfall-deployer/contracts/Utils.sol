@@ -147,7 +147,7 @@ library Utils {
     function getPublicInputs(
         Structures.Transaction calldata ts,
         uint256[] memory roots,
-        address maticAddress
+        address feeL2TokenAddress
     ) internal pure returns (uint256[] memory) {
         uint256 transactionSlots = 17 +
             2 *
@@ -184,7 +184,7 @@ library Utils {
         for (uint256 i = 0; i < roots.length; ++i) {
             inputs[count++] = uint256(roots[i]);
         }
-        inputs[count++] = uint256(uint160(maticAddress));
+        inputs[count++] = uint256(uint160(feeL2TokenAddress));
         return inputs;
     }
 

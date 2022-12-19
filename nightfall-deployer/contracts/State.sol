@@ -122,7 +122,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         stakeAccounts[msg.sender].challengeLocked += blockStake;
         stakeAccounts[msg.sender].time = 0;
 
-        uint248 feesMatic = 0;
+        uint248 feesL2 = 0;
 
         bytes32 blockHash;
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
@@ -220,7 +220,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                     160,
                     shl(40, calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i))))))
                 )
-                feesMatic := add(feesMatic, fee)
+                feesL2 := add(feesL2, fee)
             }
 
             //Calculate the root of the transactions merkle tree
@@ -267,7 +267,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         // All check pass so add the block to the list of blocks waiting to be permanently added to the state - we only save the hash of the block data plus the absolute minimum of metadata - it's up to the challenger, or person requesting inclusion of the block to the permanent contract state, to provide the block data.
 
         // Store block fees
-        blockInfo[blockHash].feesMatic = feesMatic;
+        blockInfo[blockHash].feesL2 = feesL2;
 
         // blockHash is hash of all block data and hash of all the transactions data.
         blockHashes.push(
@@ -305,7 +305,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     }
 
     function resetFeeBookBlocksInfo(bytes32 blockHash) public onlyShield {
-        blockInfo[blockHash].feesMatic = 0;
+        blockInfo[blockHash].feesL2 = 0;
     }
 
     function popBlockData() public onlyChallenger returns (BlockData memory) {
@@ -326,32 +326,32 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
 
     function addPendingWithdrawal(
         address addr,
-        uint256 feesEth,
-        uint256 feesMatic
+        uint256 feesL1,
+        uint256 feesL2
     ) public {
         require(
             msg.sender == proposersAddress || msg.sender == shieldAddress,
             'State: Not authorised to call this function'
         );
 
-        pendingWithdrawalsFees[addr] = FeeTokens(feesEth, feesMatic);
+        pendingWithdrawalsFees[addr] = FeeTokens(feesL1, feesL2);
     }
 
     function withdraw() external nonReentrant whenNotPaused {
-        uint256 amountEth = pendingWithdrawalsFees[msg.sender].feesEth;
-        uint256 amountMatic = pendingWithdrawalsFees[msg.sender].feesMatic;
+        uint256 amountL1Token = pendingWithdrawalsFees[msg.sender].feesL1;
+        uint256 amountL2Token = pendingWithdrawalsFees[msg.sender].feesL2;
 
-        if (amountEth > 0) {
-            pendingWithdrawalsFees[msg.sender].feesEth = 0;
-            (bool success, ) = payable(msg.sender).call{value: amountEth}('');
+        if (amountL1Token > 0) {
+            pendingWithdrawalsFees[msg.sender].feesL1 = 0;
+            (bool success, ) = payable(msg.sender).call{value: amountL1Token}('');
             require(success, 'Transfer failed.');
         }
-        if (amountMatic > 0) {
-            pendingWithdrawalsFees[msg.sender].feesMatic = 0;
-            IERC20Upgradeable(super.getMaticAddress()).safeTransferFrom(
+        if (amountL2Token > 0) {
+            pendingWithdrawalsFees[msg.sender].feesL2 = 0;
+            IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransferFrom(
                 address(this),
                 msg.sender,
-                amountMatic
+                amountL2Token
             );
         }
     }
@@ -496,7 +496,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
             rewardedStake += badBlocks[i].blockStake;
         }
 
-        pendingWithdrawalsFees[challengerAddr].feesEth += rewardedStake;
+        pendingWithdrawalsFees[challengerAddr].feesL1 += rewardedStake;
     }
 
     function updateStakeAccountTime(address addr, uint256 time) public onlyProposer {

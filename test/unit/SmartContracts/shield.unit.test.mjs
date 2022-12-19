@@ -166,7 +166,7 @@ describe('Testing Shield Contract', function () {
     blockHash = calculateBlockHash(block);
     blockStake = await StateInstance.getBlockStake();
 
-    ShieldInstance.setMaticAddress(erc20MockAddress);
+    ShieldInstance.setFeeL2TokenAddress(erc20MockAddress);
 
     await StateInstance.registerVerificationKey(0, [], true, false);
     await StateInstance.registerVerificationKey(1, [], false, false);
@@ -637,9 +637,9 @@ describe('Testing Shield Contract', function () {
         ethers.utils.solidityPack(['address', 'uint256'], [proposer, blockNumberL2]),
       );
 
-      expect((await StateInstance.blockInfo(proposerBlockHash)).feesMatic).to.equal(0);
+      expect((await StateInstance.blockInfo(proposerBlockHash)).feesL2).to.equal(0);
 
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(20);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesL2).to.equal(20);
 
       const stake = await StateInstance.stakeAccounts(owner[0].address);
       expect(stake.challengeLocked).to.equal(Number(challengeLocked) - Number(blockStake));
@@ -830,8 +830,8 @@ describe('Testing Shield Contract', function () {
         (await ShieldInstance.advancedWithdrawals(withdrawTransactionHash)).isWithdrawn,
       ).to.equal(true);
       expect(advancedWithdrawal.advanceFee).to.equal(0n);
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesL1).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesL2).to.equal(0);
     });
 
     it('succeeds to finalise withdrawal for an ERC20 token if valid and has been advanced and fee pending', async function () {
@@ -860,8 +860,8 @@ describe('Testing Shield Contract', function () {
       expect(await ethers.provider.getBalance(stateAddress)).to.equal(15);
       await ShieldInstance.advancedWithdrawals(withdrawTransactionHash);
 
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(15);
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesL1).to.equal(15);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesL2).to.equal(0);
     });
 
     it('succeeds to finalise withdrawal for an ERC721 token', async function () {
@@ -950,8 +950,8 @@ describe('Testing Shield Contract', function () {
         (await ShieldInstance.advancedWithdrawals(calculateTransactionHash(withdrawERC721)))
           .isWithdrawn,
       ).to.equal(true);
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesL1).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesL2).to.equal(0);
     });
 
     it('succeeds to finalise withdrawal for an ERC1155 token', async function () {
@@ -1037,8 +1037,8 @@ describe('Testing Shield Contract', function () {
         (await ShieldInstance.advancedWithdrawals(calculateTransactionHash(withdrawERC1155)))
           .isWithdrawn,
       ).to.equal(true);
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesEth).to.equal(0);
-      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesMatic).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesL1).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[0].address)).feesL2).to.equal(0);
     });
 
     it('fails if block or transaction is not real', async function () {
@@ -1530,8 +1530,8 @@ describe('Testing Shield Contract', function () {
       expect(await ethers.provider.getBalance(stateAddress)).to.equal(15);
       expect(advancedWithdrawal.currentOwner).to.equal(await owner[1].address);
       expect(advancedWithdrawal.advanceFee).to.equal(0n);
-      expect((await StateInstance.pendingWithdrawalsFees(owner[1].address)).feesEth).to.equal(15);
-      expect((await StateInstance.pendingWithdrawalsFees(owner[1].address)).feesMatic).to.equal(0);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[1].address)).feesL1).to.equal(15);
+      expect((await StateInstance.pendingWithdrawalsFees(owner[1].address)).feesL2).to.equal(0);
     });
 
     it('fails if block or transaction is not real', async function () {

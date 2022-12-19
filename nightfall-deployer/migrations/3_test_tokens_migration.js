@@ -50,8 +50,8 @@ module.exports = function (deployer, _, accounts) {
     }
 
     if (!config.ETH_ADDRESS) {
-      //modify the matic address to be ERCMock for tests
-      await shield.setMaticAddress(ERC20deployed.address.toLowerCase());
+      //modify the fee token address to be ERCMock for tests
+      await shield.setFeeL2TokenAddress(ERC20deployed.address.toLowerCase());
 
       // indicates we're running a wallet test that uses hardcoded addresses
       // For e2e tests

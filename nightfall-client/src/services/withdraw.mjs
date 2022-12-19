@@ -42,14 +42,14 @@ async function withdraw(withdrawParams) {
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
 
   logger.debug({
     msg: 'Withdraw ERC Token and Fee addresses',
     ercAddress: ercAddress.hex(32),
-    maticAddress: maticAddress.hex(32),
+    feeL2TokenAddress: feeL2TokenAddress.hex(32),
   });
 
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
@@ -60,7 +60,7 @@ async function withdraw(withdrawParams) {
     totalValueToSend: withdrawValue,
     fee,
     ercAddress,
-    maticAddress,
+    feeL2TokenAddress,
     tokenId,
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
@@ -105,7 +105,7 @@ async function withdraw(withdrawParams) {
       publicData,
       privateData,
       commitmentsInfo.roots,
-      maticAddress,
+      feeL2TokenAddress,
       VK_IDS[circuitName].numberNullifiers,
       VK_IDS[circuitName].numberCommitments,
     );

@@ -90,7 +90,7 @@ contract Structures {
 
     struct PublicInputs {
         uint256[] roots;
-        address maticAddress;
+        address feeL2TokenAddress;
     }
 
     struct TransactionInfoBlock {
@@ -122,13 +122,13 @@ contract Structures {
     }
 
     struct BlockInfo {
-        uint248 feesMatic;
+        uint248 feesL2;
         bool stakeClaimed;
     }
 
     struct FeeTokens {
-        uint256 feesEth;
-        uint256 feesMatic;
+        uint256 feesL1;
+        uint256 feesL2;
     }
 
     struct CircuitInfo {
