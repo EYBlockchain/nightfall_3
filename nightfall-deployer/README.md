@@ -27,7 +27,7 @@ To perform a deployment follow the instructions bellow:
       },
   ```
   Replace the identified placeholder with proper values:
-    - `NETWORK_NAME`: with your network id. This can be any valid string, without spaces, since it doesn't conflict with the existing ones; 
+    - `NETWORK_NAME`: with your network name. This can be any valid string, without spaces, while it doesn't conflict with the existing ones; 
     - `NETWORK_ID`: An integer number representing the ID of your network;
     - The other values are not that relevant, but the network in question might require some specifics values for them, then one should 
     verify if these values need to be changed.
@@ -70,7 +70,7 @@ To perform a deployment follow the instructions bellow:
           CHALLENGER_KEY: process.env.CHALLENGER_KEY,
         },
     ```
-    Sample of the settings after the placeholders being replaced with proper values: 
+    Sample of the settings after replacing placeholders with proper values: 
     ```
         mumbai: {
           name: 'mumbai',
@@ -159,7 +159,6 @@ To perform a deployment follow the instructions bellow:
       },
     ```
 
-
   - For the section `RESTRICTIONS`, the tokens' information should be added for the network that is going to be used in the deployment. For each token 
     that is going the be handled by the network, one entry should be added. The `address` should point to the respective address of the cryptocurrency and
     `amount` is the determined max allowed value for deposits and withdrawals. One entry for `MATIC` is required. The placeholder `NETWORK_NAME` should be 
@@ -235,4 +234,4 @@ After the deployment finishes successfully, one can find the files that were gen
 These files are going to be used by the applications `nightfall-client` & `nightfall-optimist`.
 
 ## Testing
-For testing purposes, some addresses under `TEST_OPTIONS.addresses` in `config/defaults.js` are funded with `MATIC`. Set the variable `DEPLOY_MOCK_TOKENS` in the .env file to `false` to prevent this behavior (This will also prevent the deployment of the `ERC20Mock` Smart Contract).
+For testing purposes, some Ethereum addresses are funded with `MATIC` - see `TEST_OPTIONS.addresses` in `config/defaults.js` . Set the variable `DEPLOY_MOCK_TOKENS` in the .env file to `false` to prevent this behaviour. This will also prevent the deployment of the `ERC20Mock` Smart Contract.
