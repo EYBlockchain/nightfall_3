@@ -46,10 +46,7 @@ To perform a deployment follow the instructions bellow:
         gas: config.WEB3_OPTIONS.gas,
       },
   ```
-3. In the `config/defaults.js` file it is required to set some configurations related to the deployment one desires to perform:
-  - Find the `ENVIRONMENTS` object and add a new entry for the network ones disire to deploy to. Like in the `Step 2.`, the placeholders should be
-    replaced by proper values. To be consistent, the same values used in the previous step can be used again here. The `WEB3_WS_URL` is the Websocket
-    endpoint used to communicate with the blockchain. e.g.
+3. Like in Step 2., add a new entry for the network one desires to deploy to under ENVIRONMENTS in the config/defaults.js file. Placeholders should be replaced by proper values. To be consistent, the same values used in the previous step can be used again here. The WEB3_WS_URL is the Websocket endpoint used to communicate with the blockchain. e.g.
     ```
         [NETWORK_NAME]: {
           name: [NETWORK_NAME],
@@ -229,7 +226,7 @@ To perform a deployment follow the instructions bellow:
     DEPLOYMENT_SERVICES=client,optimist,worker ./bin/deploy-contracts .env.deployment.my_network
     ```
 
-One should remember to have enough funds when performing the deployment so that it can finish properly.
+**One should remember to have enough funds when performing the deployment so that it can finish properly.**
 
 After the deployment finishes successfully, one can find the files that were generated during the deployment under the folder `docker/volumes`:
 - `build/contracts`: contain the ABI files.
