@@ -7,8 +7,6 @@ import config from 'config';
 import compose from 'docker-compose';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
-// import { buildBlockSolidityStruct } from '../common-files/utils/block-utils.mjs';
-// import Transaction from '../common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { Web3Client, waitForTimeout } from './utils.mjs';
 
@@ -24,7 +22,6 @@ const {
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
-// const { PROPOSE_BLOCK } = config.SIGNATURES;
 const {
   MONGO_URL,
   OPTIMIST_DB,
@@ -34,7 +31,6 @@ const {
 } = config;
 
 const web3Client = new Web3Client();
-// const web3 = web3Client.getWeb3();
 const eventLogs = [];
 
 const nf3User = new Nf3(signingKeys.user1, environment);
@@ -59,7 +55,6 @@ async function healthy() {
   while (!(await nf3Proposer.healthcheck('optimist'))) {
     await waitForTimeout(1000);
   }
-
   logger.debug('optimist is healthy');
 }
 
@@ -75,7 +70,6 @@ async function dropDbOptimistData() {
     logger.debug(`Retrying dropping MongoDB`);
     await waitForTimeout(2000);
   }
-
   logger.debug(`Optimist's Mongo database dropped successfully!`);
 }
 
@@ -90,7 +84,6 @@ async function dropCollectionsBlocksTimber() {
     logger.debug(`Retrying dropping MongoDB timber collection`);
     await waitForTimeout(2000);
   }
-
   logger.debug(`Optimist's Mongo blocks and timber dropped successfully!`);
 }
 
@@ -98,7 +91,7 @@ async function restartOptimist(dropDb = true) {
   await compose.stopOne('optimist', dockerComposeOptions);
   await compose.rm(dockerComposeOptions, 'optimist');
 
-  // dropDb vs dropCollection.
+  // dropDb vs dropCollection
   if (dropDb) {
     await dropDbOptimistData();
   } else {
@@ -222,6 +215,117 @@ describe('Optimist synchronisation tests', function () {
 
     it('Should include `blocks` collection after restarting and making another block', function () {
       expect(dbCollectionsFinal).to.be.an('array').that.does.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should have 1 more block in `blocks` collection after restarting and making another block', function () {
+      dbBlocksFinal.forEach(b => console.log(`===> bs final: ${JSON.stringify(b)}`));
+      console.log(`===> try this...: ${JSON.stringify(dbBlocksFinal)}`);
+      expect(dbBlocksFinal.length - dbBlocksBefore.length).to.equal(1);
+    });
+
+    it('Should have added new block sequentially after restarting and making another block', function () {
+      const firstBlock = dbBlocksBefore[dbBlocksBefore.length - 1];
+      console.log(`***********************************firstBlock: ${JSON.stringify(firstBlock)}`);
+      const secondBlock = dbBlocksFinal[dbBlocksFinal.length - 1];
+      console.log(`***********************************secondBlock: ${JSON.stringify(secondBlock)}`);
+      expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
+    });
+
+    it('Should have same `proposers` collection', function () {
+      dbProposersFinal.forEach(p => console.log(`**** ps final: ${JSON.stringify(p)}`));
+      expect(dbProposersFinal).to.be.deep.equal(dbProposersBefore);
+    });
+
+    it('Should have same `proposers` in Proposers smart contract', function () {
+      blockchainProposersFinal.forEach(p => console.log(`++++ bps before: ${JSON.stringify(p)}`));
+      expect(blockchainProposersFinal).to.be.deep.equal(blockchainProposersBefore);
+    });
+  });
+
+  describe('Resync optimist after making a good block dropping dB', async function () {
+    let dbCollectionsBefore;
+    let dbBlocksBefore;
+    let dbProposersBefore;
+    let blockchainProposersBefore;
+
+    let dbCollectionsAfter;
+
+    let dbCollectionsFinal;
+    let dbBlocksFinal;
+    let dbProposersFinal;
+    let blockchainProposersFinal;
+
+    before(async function () {
+      logger.debug('Sending a deposit...');
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      logger.debug('Make block...');
+      await makeBlock();
+
+      dbCollectionsBefore = await getOptimistDataCollections();
+      dbBlocksBefore = await getBlocksCollOldestFirst();
+      dbProposersBefore = await getProposersColl();
+      blockchainProposersBefore = (await nf3Proposer.getProposers()).proposers;
+
+      // Restart optimist dropping optimist db
+      await restartOptimist();
+      dbCollectionsAfter = await getOptimistDataCollections();
+
+      // We need to register proposer again locally
+      await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
+
+      // Now we'll add another block and check later that its blocknumber is correct
+      logger.debug('Sending a deposit...');
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      logger.debug('Make block...');
+      await makeBlock();
+
+      dbCollectionsFinal = await getOptimistDataCollections();
+      dbBlocksFinal = await getBlocksCollOldestFirst();
+      dbProposersFinal = await getProposersColl();
+      blockchainProposersFinal = (await nf3Proposer.getProposers()).proposers;
+    });
+
+    it('Should include `blocks` collection before restart', function () {
+      expect(dbCollectionsBefore).to.be.an('array').that.does.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should include `proposers` collection before restart', function () {
+      expect(dbCollectionsBefore).to.be.an('array').that.does.include(PROPOSER_COLLECTION);
+    });
+
+    it('Should have at least 1 block in `blocks` collection before restart', function () {
+      dbBlocksBefore.forEach(b => console.log(`===> bs before: ${JSON.stringify(b)}`));
+      expect(dbBlocksBefore).to.be.an('array').that.is.not.empty;
+    });
+
+    it('Should include nf3Proposer in `proposers` collection before restart', function () {
+      dbProposersBefore.forEach(p => console.log(`**** ps before: ${JSON.stringify(p)}`));
+      const proposerIds = dbProposersBefore.map(p => p._id);
+      expect(proposerIds.includes(nf3Proposer.ethereumAddress)).to.be.true;
+    });
+
+    it('Should include nf3Proposer in Proposers smart contract before restart', function () {
+      blockchainProposersBefore.forEach(p => console.log(`++++ bps before: ${JSON.stringify(p)}`));
+      const proposerAddresses = blockchainProposersBefore.map(p => p.thisAddress);
+      expect(proposerAddresses.includes(nf3Proposer.ethereumAddress)).to.be.true;
+    });
+
+    it('Should not include `blocks` collection after restart', function () {
+      expect(dbCollectionsAfter)
+        .to.be.an('array')
+        .that.does.not.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should not include `proposers` collection after restart', function () {
+      expect(dbCollectionsAfter).to.be.an('array').that.does.not.include(PROPOSER_COLLECTION);
+    });
+
+    it('Should include `blocks` collection after restarting and making another block', function () {
+      expect(dbCollectionsFinal).to.be.an('array').that.does.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should include `proposers` collection after restarting and making another block', function () {
+      expect(dbCollectionsFinal).to.be.an('array').that.does.include(PROPOSER_COLLECTION);
     });
 
     it('Should have 1 more block in `blocks` collection after restarting and making another block', function () {
