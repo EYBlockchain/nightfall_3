@@ -28,12 +28,13 @@ const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER } = global.nightfallConstants;
 const { generalise } = gen;
 let circuitName = 'depositfee';
 
-async function deposit(items, shieldContractAddress) {
+async function deposit(depositParams, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
+  const { tokenType, providedCommitmentsFee, ...items } = depositParams;
+  const ercAddress = generalise(depositParams.ercAddress.toLowerCase());
   const { tokenId, value, fee, rootKey } = generalise(items);
-  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
@@ -75,6 +76,7 @@ async function deposit(items, shieldContractAddress) {
         rootKey,
         maxNullifiers: VK_IDS[circuitName].numberNullifiers,
         maxNonFeeNullifiers: 0,
+        providedCommitmentsFee,
       });
     }
   } else {
@@ -110,7 +112,7 @@ async function deposit(items, shieldContractAddress) {
     fee,
     historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
     circuitHash,
-    tokenType: items.tokenType,
+    tokenType,
     tokenId,
     value,
     ercAddress,

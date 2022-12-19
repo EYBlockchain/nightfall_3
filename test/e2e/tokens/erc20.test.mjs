@@ -3,11 +3,13 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
+import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import {
   depositNTransactions,
   getLayer2Balances,
+  getUserCommitments,
   expectTransaction,
   waitForSufficientBalance,
   waitForSufficientTransactionsMempool,
@@ -33,6 +35,8 @@ const {
     tokens: { blockchain: maxWithdrawValue },
   },
 } = config;
+
+const { generalise } = gen;
 
 const web3Client = new Web3Client();
 const web3 = web3Client.getWeb3();
@@ -139,6 +143,123 @@ describe('ERC20 tests', () => {
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
+    });
+
+    it('Should perform a transfer by specifying the commitment that provides enough value to cover value + fee', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
+
+      const erc20Commitments = userCommitments
+        .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
+        .sort((a, b) => Number(generalise(a.value).bigInt - generalise(b.value).bigInt));
+
+      const usedCommitments = [];
+      let totalValue = 0;
+      let i = 0;
+
+      while (totalValue < transferValue + fee && i < erc20Commitments.length) {
+        usedCommitments.push(erc20Commitments[i].commitmentHash);
+        totalValue += Number(generalise(erc20Commitments[i].value).bigInt);
+        ++i;
+      }
+
+      const res = await nf3User.transfer(
+        false,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+        fee,
+        usedCommitments,
+      );
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      await makeBlock();
+
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
+    });
+
+    it('Should perform a transfer by specifying the commitment that provides enough value to cover value', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
+
+      const erc20Commitments = userCommitments
+        .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
+        .sort((a, b) => Number(generalise(a.value).bigInt - generalise(b.value).bigInt));
+
+      const usedCommitments = [];
+      let totalValue = 0;
+      let i = 0;
+
+      while (totalValue < transferValue && i < erc20Commitments.length) {
+        usedCommitments.push(erc20Commitments[i].commitmentHash);
+        totalValue += Number(generalise(erc20Commitments[i].value).bigInt);
+        ++i;
+      }
+
+      const res = await nf3User.transfer(
+        false,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+        fee,
+        usedCommitments,
+      );
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      await makeBlock();
+
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
+    });
+
+    it('Should fail to transfer if user specifies commitments for the value but it does not cover the whole value', async function () {
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
+
+      const erc20Commitments = userCommitments
+        .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
+        .sort((a, b) => Number(generalise(a.value).bigInt - generalise(b.value).bigInt));
+
+      const usedCommitments = [];
+      let totalValue = 0;
+      let i = 0;
+
+      while (totalValue < transferValue && i < erc20Commitments.length) {
+        usedCommitments.push(erc20Commitments[i].commitmentHash);
+        totalValue += Number(generalise(erc20Commitments[i].value).bigInt);
+        ++i;
+      }
+
+      try {
+        await nf3User.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          totalValue + 1,
+          tokenId,
+          nf3User.zkpKeys.compressedZkpPublicKey,
+          fee,
+          usedCommitments,
+        );
+        expect.fail('Throw error, transfer did not fail');
+      } catch (err) {
+        expect(err.message).to.be.equal('provided commitments do not cover the value');
+      }
     });
   });
 
@@ -268,9 +389,8 @@ describe('ERC20 tests', () => {
   describe('Deposit and withdrawal restrictions', () => {
     const maxERC20WithdrawValue =
       maxWithdrawValue.find(e => e.address.toLowerCase() === erc20Address)?.amount || erc20default;
-    console.log('************************maxERC20WithdrawValue', maxERC20WithdrawValue);
+
     const maxERC20DepositValue = Math.floor(maxERC20WithdrawValue / 4);
-    console.log('************************maxERC20DepositValue', maxERC20DepositValue);
 
     it('Should restrict deposits', async () => {
       // Anything equal or above the restricted amount should fail
@@ -321,9 +441,8 @@ describe('ERC20 tests', () => {
           tokenType,
           maxERC20DepositValue,
           tokenId,
-          fee,
+          0,
         );
-
         await waitForSufficientTransactionsMempool({ nf3User, nTransactions: 6 });
 
         await nf3Proposer.makeBlockNow();
@@ -342,16 +461,14 @@ describe('ERC20 tests', () => {
           nf3User.zkpKeys.compressedZkpPublicKey,
           0,
         );
-
         await nf3Proposer.makeBlockNow();
-
         await waitForSufficientBalance({
           nf3User,
           value: 6 * maxERC20DepositValue,
           ercAddress: erc20Address,
         });
 
-        const rec = await nf3User.withdraw(
+        await nf3User.withdraw(
           false,
           erc20Address,
           tokenType,
@@ -360,19 +477,14 @@ describe('ERC20 tests', () => {
           nf3User.ethereumAddress,
           0,
         );
-
         await nf3Proposer.makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-        await new Promise(resolve => setTimeout(resolve, 30000));
-
-        expectTransaction(rec);
-
         const withdrawalTxHash = nf3User.getLatestWithdrawHash();
         await web3Client.timeJump(3600 * 24 * 10);
-        // anything equal or above the restricted amount should fail
-        await nf3User.finaliseWithdrawal(withdrawalTxHash);
 
+        // Anything equal or above the restricted amount should fail
+        await nf3User.finaliseWithdrawal(withdrawalTxHash);
         expect.fail('Throw error, withdrawal not restricted');
       } catch (err) {
         expect(err.message).to.include('Transaction has been reverted by the EVM');

@@ -34,7 +34,7 @@ include "../node_modules/circomlib/circuits/bitify.circom";
  * @input commitmentsSalts[C] - {Array[Field]}
  * @input recipientPublicKey[C][2] - {Array[Array[Field]]}
  * @input packedErcAddressPrivate - {Field}
- * @input idRemainder - {Uint256}
+ * @input idRemainderPrivate - {Uint256}
  * @input valuePrivate - {Field}
  */
 template Tokenise(N,C) {

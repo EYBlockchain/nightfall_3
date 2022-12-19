@@ -98,19 +98,9 @@ export async function saveBlock(_block) {
     throw new Error('Layer 2 blocks must be saved with a valid Layer 1 block number');
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  // there are three possibilities here:
-  // 1) We're just saving a block for the first time.  This is fine
-  // 2) We're trying to save a replayed block.  This will correctly fail because the _id will be duplicated
-  // 3) We're trying to save a block that we've seen before but it was re-mined due to a chain reorg. In
-  //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
   const query = { _id: block._id };
   const update = { $set: block };
-  const existing = await db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
-  if (!existing || !existing.blockNumber) {
-    return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
-  }
-  logger.warn('Attempted to replay existing layer 2 block.  This is expected if we are syncing');
-  return true;
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
 }
 
 /**
@@ -191,22 +181,11 @@ export async function saveTransaction(_transaction) {
     _id: _transaction.transactionHash,
     ..._transaction,
   };
-  // there are three possibilities here:
-  // 1) We're just saving a transaction for the first time.  This is fine
-  // 2) We're trying to save a replayed transaction.  This will correctly fail because the _id will be duplicated
-  // 3) We're trying to save a transaction that we've seen before but it was re-mined due to a chain reorg. In
-  //    this case, it's fine, we just update the layer 1 blocknumber and transactionHash to the new values
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = { transactionHash: transaction.transactionHash };
   const update = { $set: transaction };
-  const existing = await db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-  if (!existing)
-    return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
-  if (!existing.blockNumber) {
-    return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
-  }
-  throw new Error('Attempted to replay existing transaction');
+  return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
 }
 
 /*

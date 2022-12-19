@@ -32,18 +32,24 @@ contract Challenges is Stateful, Config {
         bytes32 salt
     ) external {
         checkCommit(msg.data);
-        // check if the block hash is correct and the block hash exists for the block and prior block. Also if the transactions are part of these block
-        state.isBlockReal(priorBlockL2);
-        state.areBlockAndTransactionsReal(blockL2, transactions);
 
-        require(
-            Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 ==
-                Utils.getBlockNumberL2(blockL2.packedInfo),
-            'Blocks needs to be subsequent'
-        );
+        state.areBlockAndTransactionsReal(blockL2, transactions);
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(blockL2.packedInfo);
+        uint64 blockLeafCount = Utils.getLeafCount(blockL2.packedInfo);
+
+        uint32 priorBlockLeafCount = 0;
+        if (blockNumberL2 != 0) {
+            state.isBlockReal(priorBlockL2);
+            require(
+                Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 == blockNumberL2,
+                'Blocks needs to be subsequent'
+            );
+            priorBlockLeafCount = Utils.getLeafCount(priorBlockL2.packedInfo);
+        }
+
         ChallengesUtil.libChallengeLeafCountCorrect(
-            Utils.getLeafCount(priorBlockL2.packedInfo),
-            Utils.getLeafCount(blockL2.packedInfo),
+            priorBlockLeafCount,
+            blockLeafCount,
             transactions
         );
         challengeAccepted(blockL2);
@@ -57,20 +63,29 @@ contract Challenges is Stateful, Config {
         bytes32 salt
     ) external {
         checkCommit(msg.data);
-        // check if the block hash is correct and the block hash exists for the block and prior block
-        state.isBlockReal(priorBlockL2);
+
         state.areBlockAndTransactionsReal(blockL2, transactions);
+        uint64 blockNumberL2 = Utils.getBlockNumberL2(blockL2.packedInfo);
 
-        require(
-            Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 ==
-                Utils.getBlockNumberL2(blockL2.packedInfo),
-            'Blocks needs to be subsequent'
-        );
+        if (blockNumberL2 == 0) {
+            for (uint256 i = 0; i < frontierBeforeBlock.length; ++i) {
+                require(frontierBeforeBlock[i] == Utils.ZERO, 'Frontier needs to be uninitialized');
+            }
+        } else {
+            state.isBlockReal(priorBlockL2);
 
-        bytes32 frontierBeforeHash = keccak256(abi.encodePacked(frontierBeforeBlock));
-        require(frontierBeforeHash == priorBlockL2.frontierHash, 'Invalid prior block frontier');
+            require(
+                Utils.getBlockNumberL2(priorBlockL2.packedInfo) + 1 == blockNumberL2,
+                'Blocks needs to be subsequent'
+            );
 
-        // see if the challenge is valid
+            bytes32 frontierBeforeHash = keccak256(abi.encodePacked(frontierBeforeBlock));
+            require(
+                frontierBeforeHash == priorBlockL2.frontierHash,
+                'Invalid prior block frontier'
+            );
+        }
+
         ChallengesUtil.libChallengeNewFrontierCorrect(frontierBeforeBlock, blockL2, transactions);
         challengeAccepted(blockL2);
     }

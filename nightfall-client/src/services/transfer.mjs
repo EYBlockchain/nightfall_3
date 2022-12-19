@@ -33,7 +33,12 @@ const { generalise } = gen;
 async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { offchain = false, providedCommitments, ...items } = transferParams;
+  const {
+    offchain = false,
+    providedCommitments,
+    providedCommitmentsFee,
+    ...items
+  } = transferParams;
   const { tokenId, recipientData, rootKey, fee } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
@@ -69,6 +74,7 @@ async function transfer(transferParams) {
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
+    providedCommitmentsFee,
   });
 
   try {
