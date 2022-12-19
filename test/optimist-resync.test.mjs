@@ -1,3 +1,4 @@
+/* eslint-disable @babel/no-unused-expressions */
 /* eslint-disable no-await-in-loop */
 import chai from 'chai';
 import chaiHttp from 'chai-http';
@@ -6,8 +7,6 @@ import config from 'config';
 import compose from 'docker-compose';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
-// import { buildBlockSolidityStruct } from '../common-files/utils/block-utils.mjs';
-// import Transaction from '../common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { Web3Client, waitForTimeout } from './utils.mjs';
 
@@ -23,11 +22,15 @@ const {
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
-// const { PROPOSE_BLOCK } = config.SIGNATURES;
-const { MONGO_URL, OPTIMIST_DB } = config;
+const {
+  MONGO_URL,
+  OPTIMIST_DB,
+  PROPOSER_COLLECTION,
+  SUBMITTED_BLOCKS_COLLECTION,
+  TIMBER_COLLECTION,
+} = config;
 
 const web3Client = new Web3Client();
-// const web3 = web3Client.getWeb3();
 const eventLogs = [];
 
 const nf3User = new Nf3(signingKeys.user1, environment);
@@ -38,38 +41,87 @@ const nf3Challenger = new Nf3(signingKeys.challenger, environment);
 const connection = await mongo.connection(MONGO_URL);
 const db = connection.db(OPTIMIST_DB);
 
+const dockerComposeOptions = {
+  config: [
+    'docker/docker-compose.yml',
+    'docker/docker-compose.dev.yml',
+    'docker/docker-compose.ganache.yml',
+  ],
+  log: process.env.LOG_LEVEL || 'silent',
+  composeOptions: [['-p', 'nightfall_3']],
+};
+
+async function healthy() {
+  while (!(await nf3Proposer.healthcheck('optimist'))) {
+    await waitForTimeout(1000);
+  }
+  logger.debug('optimist is healthy');
+}
+
 async function makeBlock() {
   await nf3Proposer.makeBlockNow();
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 }
 
-async function getLatestBlock() {
-  const latestBlock = await db
-    .collection('blocks')
-    .find()
-    .sort({ blockNumberL2: -1 })
-    .limit(1)
-    .toArray();
-  return latestBlock[0];
+async function dropDbOptimistData() {
+  logger.debug(`Dropping Optimist's Mongo database`);
+
+  while (!(await db.dropDatabase())) {
+    logger.debug(`Retrying dropping MongoDB`);
+    await waitForTimeout(2000);
+  }
+  logger.debug(`Optimist's Mongo database dropped successfully!`);
 }
 
-describe('Optimist synchronisation tests', () => {
+async function dropCollectionsBlocksTimber() {
+  logger.debug(`Dropping Optimist's Mongo collection`);
+
+  while (!(await db.collection(SUBMITTED_BLOCKS_COLLECTION).drop())) {
+    logger.debug(`Retrying dropping MongoDB blocks collection`);
+    await waitForTimeout(2000);
+  }
+  while (!(await db.collection(TIMBER_COLLECTION).drop())) {
+    logger.debug(`Retrying dropping MongoDB timber collection`);
+    await waitForTimeout(2000);
+  }
+  logger.debug(`Optimist's Mongo blocks and timber dropped successfully!`);
+}
+
+async function restartOptimist(dropDb = true) {
+  await compose.stopOne('optimist', dockerComposeOptions);
+  await compose.rm(dockerComposeOptions, 'optimist');
+
+  // dropDb vs dropCollection
+  if (dropDb) {
+    await dropDbOptimistData();
+  } else {
+    await dropCollectionsBlocksTimber();
+  }
+
+  await compose.upOne('optimist', dockerComposeOptions);
+
+  await healthy();
+}
+
+async function getOptimistDataCollections() {
+  const collections = await db.listCollections({}, { nameOnly: true }).toArray();
+  return collections.map(c => c.name);
+}
+
+async function getBlocksCollOldestFirst() {
+  return db.collection(SUBMITTED_BLOCKS_COLLECTION).find().sort({ blockNumberL2: 1 }).toArray();
+}
+
+async function getProposersColl() {
+  return db.collection(PROPOSER_COLLECTION).find().toArray();
+}
+
+describe('Optimist synchronisation tests', function () {
   let erc20Address;
   let stateAddress;
-  // let eventsSeen;
-
   let challengeEmitter;
-  const options = {
-    config: [
-      'docker/docker-compose.yml',
-      'docker/docker-compose.dev.yml',
-      'docker/docker-compose.ganache.yml',
-    ],
-    log: process.env.LOG_LEVEL || 'silent',
-    composeOptions: [['-p', 'nightfall_3']],
-  };
 
-  before(async () => {
+  before(async function () {
     await nf3User.init(mnemonics.user1);
 
     await nf3Proposer.init(mnemonics.proposer);
@@ -90,172 +142,196 @@ describe('Optimist synchronisation tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
-  describe('With and without a bad block', () => {
-    // setup a listener for rollbacks
-    // const rollbackPromise = () =>
-    //   new Promise(resolve =>
-    //     challengeEmitter.on('rollback', () => {
-    //       resolve();
-    //     }),
-    //   );
+  describe('Resync optimist after making a good block without dropping dB', async function () {
+    let dbCollectionsBefore;
+    let dbBlocksBefore;
+    let dbProposersBefore;
+    let blockchainProposersBefore;
 
-    // setup a healthcheck wait
-    const healthy = async () => {
-      while (!(await nf3Proposer.healthcheck('optimist'))) {
-        await waitForTimeout(1000);
-      }
+    let dbCollectionsAfter;
 
-      logger.debug('optimist is healthy');
-    };
+    let dbCollectionsFinal;
+    let dbBlocksFinal;
+    let dbProposersFinal;
+    let blockchainProposersFinal;
 
-    const dropOptimistMongoDatabase = async () => {
-      logger.debug(`Dropping Optimist's Mongo database`);
-
-      while (!(await db.dropDatabase())) {
-        logger.debug(`Retrying dropping MongoDB`);
-        await waitForTimeout(2000);
-      }
-
-      logger.debug(`Optimist's Mongo database dropped successfully!`);
-    };
-
-    const dropOptimistMongoBlocksCollection = async () => {
-      logger.debug(`Dropping Optimist's Mongo collection`);
-
-      while (!(await db.collection('blocks').drop())) {
-        logger.debug(`Retrying dropping MongoDB blocks collection`);
-        await waitForTimeout(2000);
-      }
-      while (!(await db.collection('timber').drop())) {
-        logger.debug(`Retrying dropping MongoDB timber collection`);
-        await waitForTimeout(2000);
-      }
-
-      logger.debug(`Optimist's Mongo blocks and timber dropped successfully!`);
-    };
-
-    async function restartOptimist(dropDb = true) {
-      await compose.stopOne('optimist', options);
-      await compose.rm(options, 'optimist');
-
-      // dropDb vs dropCollection.
-      if (dropDb) {
-        await dropOptimistMongoDatabase();
-      } else {
-        await dropOptimistMongoBlocksCollection();
-      }
-
-      await compose.upOne('optimist', options);
-
-      await healthy();
-    }
-
-    it('Resync optimist after making a good block without dropping dB', async function () {
+    before(async function () {
       logger.debug('Sending a deposit...');
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       logger.debug('Make block...');
       await makeBlock();
 
-      const firstBlock = await getLatestBlock();
+      dbCollectionsBefore = await getOptimistDataCollections();
+      dbBlocksBefore = await getBlocksCollOldestFirst();
+      dbProposersBefore = await getProposersColl();
+      blockchainProposersBefore = (await nf3Proposer.getProposers()).proposers;
 
-      // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
+      // Restart optimist only dropping some collections
       await restartOptimist(false);
+      dbCollectionsAfter = await getOptimistDataCollections();
 
-      // Now we'll add another block and check that it's blocknumber is correct, indicating
-      // that a resync correctly occurred
+      // Now we'll add another block and check later that its blocknumber is correct
       logger.debug('Sending a deposit...');
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       logger.debug('Make block...');
       await makeBlock();
 
-      const secondBlock = await getLatestBlock();
+      dbCollectionsFinal = await getOptimistDataCollections();
+      dbBlocksFinal = await getBlocksCollOldestFirst();
+      dbProposersFinal = await getProposersColl();
+      blockchainProposersFinal = (await nf3Proposer.getProposers()).proposers;
+    });
+
+    it('Should include `blocks` collection before restart', function () {
+      expect(dbCollectionsBefore).to.be.an('array').that.does.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should include `timber` collection before restart', function () {
+      expect(dbCollectionsBefore).to.be.an('array').that.does.include(TIMBER_COLLECTION);
+    });
+
+    it('Should have at least 1 block in `blocks` collection before restart', function () {
+      expect(dbBlocksBefore).to.be.an('array').that.is.not.empty;
+    });
+
+    it('Should include nf3Proposer in `proposers` collection before restart', function () {
+      const proposerIds = dbProposersBefore.map(p => p._id);
+      expect(proposerIds.includes(nf3Proposer.ethereumAddress)).to.be.true;
+    });
+
+    it('Should include nf3Proposer in Proposers smart contract before restart', function () {
+      const proposerAddresses = blockchainProposersBefore.map(p => p.thisAddress);
+      expect(proposerAddresses.includes(nf3Proposer.ethereumAddress)).to.be.true;
+    });
+
+    it('Should not include `blocks` collection after restart', function () {
+      expect(dbCollectionsAfter)
+        .to.be.an('array')
+        .that.does.not.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should include `blocks` collection after restarting and making another block', function () {
+      expect(dbCollectionsFinal).to.be.an('array').that.does.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should have 1 more block in `blocks` collection after restarting and making another block', function () {
+      expect(dbBlocksFinal.length - dbBlocksBefore.length).to.equal(1);
+    });
+
+    it('Should have added new block sequentially after restarting and making another block', function () {
+      const firstBlock = dbBlocksBefore[dbBlocksBefore.length - 1];
+      const secondBlock = dbBlocksFinal[dbBlocksFinal.length - 1];
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
-    it('Resync optimist after making a good block dropping Db', async function () {
+    it('Should have same `proposers` collection', function () {
+      expect(dbProposersFinal).to.be.deep.equal(dbProposersBefore);
+    });
+
+    it('Should have same `proposers` in Proposers smart contract', function () {
+      expect(blockchainProposersFinal).to.be.deep.equal(blockchainProposersBefore);
+    });
+  });
+
+  describe('Resync optimist after making a good block dropping dB', async function () {
+    let dbCollectionsBefore;
+    let dbBlocksBefore;
+    let dbProposersBefore;
+    let blockchainProposersBefore;
+
+    let dbCollectionsAfter;
+
+    let dbCollectionsFinal;
+    let dbBlocksFinal;
+    let dbProposersFinal;
+    let blockchainProposersFinal;
+
+    before(async function () {
       logger.debug('Sending a deposit...');
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       logger.debug('Make block...');
       await makeBlock();
 
-      const firstBlock = await getLatestBlock();
+      dbCollectionsBefore = await getOptimistDataCollections();
+      dbBlocksBefore = await getBlocksCollOldestFirst();
+      dbProposersBefore = await getProposersColl();
+      blockchainProposersBefore = (await nf3Proposer.getProposers()).proposers;
 
-      // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
+      // Restart optimist dropping optimist db
       await restartOptimist();
+      dbCollectionsAfter = await getOptimistDataCollections();
 
-      // Now we'll add another block and check that it's blocknumber is correct, indicating
-      // that a resync correctly occurred
+      // We need to register proposer again locally
+      await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
+
+      // Now we'll add another block and check later that its blocknumber is correct
       logger.debug('Sending a deposit...');
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       logger.debug('Make block...');
       await makeBlock();
 
-      const secondBlock = await getLatestBlock();
+      dbCollectionsFinal = await getOptimistDataCollections();
+      dbBlocksFinal = await getBlocksCollOldestFirst();
+      dbProposersFinal = await getProposersColl();
+      blockchainProposersFinal = (await nf3Proposer.getProposers()).proposers;
+    });
+
+    it('Should include `blocks` collection before restart', function () {
+      expect(dbCollectionsBefore).to.be.an('array').that.does.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should include `proposers` collection before restart', function () {
+      expect(dbCollectionsBefore).to.be.an('array').that.does.include(PROPOSER_COLLECTION);
+    });
+
+    it('Should have at least 1 block in `blocks` collection before restart', function () {
+      expect(dbBlocksBefore).to.be.an('array').that.is.not.empty;
+    });
+
+    it('Should include nf3Proposer in `proposers` collection before restart', function () {
+      const proposerIds = dbProposersBefore.map(p => p._id);
+      expect(proposerIds.includes(nf3Proposer.ethereumAddress)).to.be.true;
+    });
+
+    it('Should include nf3Proposer in Proposers smart contract before restart', function () {
+      const proposerAddresses = blockchainProposersBefore.map(p => p.thisAddress);
+      expect(proposerAddresses.includes(nf3Proposer.ethereumAddress)).to.be.true;
+    });
+
+    it('Should not include `blocks` collection after restart', function () {
+      expect(dbCollectionsAfter)
+        .to.be.an('array')
+        .that.does.not.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should not include `proposers` collection after restart', function () {
+      expect(dbCollectionsAfter).to.be.an('array').that.does.not.include(PROPOSER_COLLECTION);
+    });
+
+    it('Should include `blocks` collection after restarting and making another block', function () {
+      expect(dbCollectionsFinal).to.be.an('array').that.does.include(SUBMITTED_BLOCKS_COLLECTION);
+    });
+
+    it('Should include `proposers` collection after restarting and making another block', function () {
+      expect(dbCollectionsFinal).to.be.an('array').that.does.include(PROPOSER_COLLECTION);
+    });
+
+    it('Should have 1 more block in `blocks` collection after restarting and making another block', function () {
+      expect(dbBlocksFinal.length - dbBlocksBefore.length).to.equal(1);
+    });
+
+    it('Should have added new block sequentially after restarting and making another block', function () {
+      const firstBlock = dbBlocksBefore[dbBlocksBefore.length - 1];
+      const secondBlock = dbBlocksFinal[dbBlocksFinal.length - 1];
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
-    it.skip('Resync optimist after making an un-resolved bad block', async function () {
-      // // We create enough good transactions to fill a block full of deposits.
-      // logger.debug(`      Sending a deposit...`);
-      // let p = proposePromise();
-      // await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      // await nf3User.makeBlockNow();
-      // ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-      // // we can use the emitter that nf3 provides to get the block and transactions we've just made.
-      // // The promise resolves once the block is on-chain.
-      // const { block, transactions } = await p;
-      // const firstBlock = { ...block };
-      // // turn off challenging.  We're going to make a bad block and we don't want it challenged
-      // await nf3Challenger.challengeEnable(false);
-      // // update the block so we can submit it again
-      // // we'll do the easiest thing and submit it again with no change other than to increment
-      // // the L2 block number and block hash so that it doesn't get reverted straight away.
-      // // It will be a bad block because we'll have submitted the same transactions and leafcount
-      // // before.
-      // // To achieve that, we'll manually assemble and submit a new proposeBlock call
-      // // in the following lines...
-      // // retrieve the code for the 'proposeBlock' function. We'll check it every time rather than
-      // // hard code it, in case someone changes the function.
-      // const functionCode = (
-      //   await web3.eth.getTransaction(eventsSeen[0].log.transactionHash)
-      // ).input.slice(0, 10);
-      // // fix up the blockHash and blockNumberL2 to prevent an immediate revert
-      // block.previousBlockHash = block.blockHash;
-      // block.blockNumberL2++;
-      // // now assemble our bad-block transaction; first the parameters
-      // const blockData = Object.values(buildBlockSolidityStruct(block));
-      // const transactionsData = Object.values(
-      //   transactions.map(t => Object.values(Transaction.buildSolidityStruct(t))),
-      // );
-      // const encodedParams = web3Client
-      //   .getWeb3()
-      //   .eth.abi.encodeParameters(PROPOSE_BLOCK, [blockData, transactionsData]);
-      // // then the function identifier is added
-      // const newTx = `${functionCode}${encodedParams.slice(2)}`;
-      // // then send it!
-      // logger.debug('Resubmitting the same transactions in the next block');
-      // await web3Client.submitTransaction(newTx, signingKeys.proposer1, stateAddress, 8000000, 1);
-      // logger.debug('bad block submitted');
-      // const r = rollbackPromise();
-      // // Now we have a bad block, let's force Optimist to re-sync by turning it off and on again!
-      // await restartOptimist();
-      // logger.debug('waiting for rollback to complete');
-      // await r;
-      // logger.debug('rollback complete event received');
-      // // the rollback will have removed us as proposer. We need to re-register because we
-      // // were the only proposer in town!
-      // await nf3Proposer.registerProposer('http://optimist', minimumStake);
-      // // Now we'll add another block and check that it's blocknumber is correct, indicating
-      // // that a rollback correctly occurred
-      // logger.debug(`      Sending a deposit...`);
-      // p = proposePromise();
-      // await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      // await nf3User.makeBlockNow();
-      // // we can use the emitter that nf3 provides to get the block and transactions we've just made.
-      // // The promise resolves once the block is on-chain.
-      // const { block: secondBlock } = await p;
-      // ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
-      // expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
+    it('Should have same `proposers` collection', function () {
+      expect(dbProposersFinal).to.be.deep.equal(dbProposersBefore);
+    });
+
+    it('Should have same `proposers` in Proposers smart contract', function () {
+      expect(blockchainProposersFinal).to.be.deep.equal(blockchainProposersBefore);
     });
   });
 

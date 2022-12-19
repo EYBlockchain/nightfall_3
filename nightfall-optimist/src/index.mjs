@@ -9,7 +9,6 @@ import {
   startEventQueue,
   subscribeToChallengeWebSocketConnection,
   subscribeToInstantWithDrawalWebSocketConnection,
-  subscribeToProposedBlockWebSocketConnection,
   eventHandlers,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
@@ -18,7 +17,6 @@ import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 import { setProposer } from './routes/proposer.mjs';
-import { setBlockProposedWebSocketConnection } from './event-handlers/block-proposed.mjs';
 
 const main = async () => {
   try {
@@ -28,7 +26,6 @@ const main = async () => {
     // subscribe to WebSocket events first
     await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
     await subscribeToInstantWithDrawalWebSocketConnection(setInstantWithdrawalWebSocketConnection);
-    await subscribeToProposedBlockWebSocketConnection(setBlockProposedWebSocketConnection);
     await startEventQueue(queueManager, eventHandlers, proposer);
 
     // enqueue the block-assembler every time the queue becomes empty
@@ -47,7 +44,7 @@ const main = async () => {
     });
 
     /*
-     We enqueue a message so that we can actually trigger the queue.end call even if we havent received anything.
+     We enqueue a message so that we can actually trigger the queue.end call even if we haven't received anything.
      This helps in the case that we restart client and we are the current proposer.
     */
     await enqueueEvent(() => logger.info('Start Queue'), 0);

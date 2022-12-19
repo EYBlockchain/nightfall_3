@@ -12,7 +12,7 @@ import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
   setRegisteredProposerAddress,
-  isRegisteredProposerAddressMine,
+  findRegisteredProposerAddress,
   deleteRegisteredProposerAddress,
   getMempoolTransactions,
   getLatestTree,
@@ -98,6 +98,10 @@ router.post('/register', auth, async (req, res, next) => {
     const proposerAddresses = (await getProposers()).map(p => p.thisAddress);
     const isRegistered = proposerAddresses.includes(ethAddress);
 
+    // Check if proposer is registered with this Optimist instance (aka 'locally')
+    const registeredProposerInDb = await findRegisteredProposerAddress(ethAddress);
+
+    // Ops in Proposers smart contract
     let txDataToSign = '';
     let signedTx = {};
     if (!isRegistered) {
@@ -114,8 +118,7 @@ router.post('/register', auth, async (req, res, next) => {
         _stake,
       );
 
-      // Submit tx and update db if tx is successful
-      // CHECK - I think the code beyond L132 can be removed (?) then db op could be moved here
+      // Submit tx
       txsQueue.push(async () => {
         try {
           const receipt = await sendSignedTransaction(signedTx);
@@ -131,33 +134,28 @@ router.post('/register', auth, async (req, res, next) => {
       logger.warn('Proposer was already registered, registration attempt ignored!');
     }
 
-    /*
-      when we get to here, either the proposer was already registered (txDataToSign === '')
-      or we're just about to register them. We may or may not be registered locally
-      with optimist though. Let's check and fix that if needed.
-     */
+    // Ops in Optimist db
     const currentProposer = await stateContractInstance.methods.getCurrentProposer().call();
-    if (!(await isRegisteredProposerAddressMine(ethAddress))) {
-      logger.debug('Registering proposer locally');
+    if (!registeredProposerInDb) {
+      logger.debug('Registering proposer with this Optimist instance...');
       await setRegisteredProposerAddress(ethAddress, url); // save the registration address
 
-      /*
-        We've just registered with optimist but if we were already registered on the blockchain,
-        we should check if we're the current proposer and, if so, set things up so we start
-        making blocks immediately
-       */
+      // I we were already registered on the blockchain, check if we're the current proposer
       if (txDataToSign === '') {
         logger.warn(
-          'Proposer was already registered on the blockchain but not with this Optimist instance - registering locally',
+          'Proposer was already registered on the blockchain, now is also registered with this Optimist instance',
         );
         if (ethAddress === currentProposer.thisAddress) {
+          logger.warn(
+            'Proposer is also current proposer, kickstart the queue for making blocks...',
+          );
           proposer.isMe = true;
-          await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
+          await enqueueEvent(() => logger.info('Start Queue'), 0);
         }
       }
     } else if (ethAddress === currentProposer.thisAddress && !proposer.isMe) {
       logger.warn(
-        'Proposer was already registered on the blockchain and with this Optimist instance, but proposer flag wasnt set - setting isMe flag',
+        'Proposer was already registered on the blockchain and with this Optimist instance, but proposer flag was not set - setting isMe flag',
       );
       proposer.isMe = true;
       proposer.address = ethAddress;
@@ -170,10 +168,6 @@ router.post('/register', auth, async (req, res, next) => {
     next(err);
   }
 });
-
-/**
- * @TODO update endpoint could just update params according to the given info (should PATCH instead of update all)
- */
 
 /**
  * @openapi
@@ -242,7 +236,7 @@ router.post('/update', auth, async (req, res, next) => {
         logger.debug({ msg: 'Proposer updated', receipt });
 
         await setRegisteredProposerAddress(ethAddress, url);
-        logger.debug('Proposer data updated in db');
+        logger.debug('Proposer updated in db');
       } catch (err) {
         logger.error({
           msg: 'Something went wrong',
@@ -360,12 +354,10 @@ router.post('/de-register', auth, async (req, res, next) => {
     );
 
     // Submit tx and update db if tx is successful
-    // CHECK - does this go inside a Promise? see `nf3` eg `deregisterProposer`
-    // CHECK - is await for db correct?
     txsQueue.push(async () => {
       try {
         const receipt = await sendSignedTransaction(signedTx);
-        logger.debug({ msg: 'Proposer removed from contract', receipt });
+        logger.debug({ msg: 'Proposer removed', receipt });
 
         await deleteRegisteredProposerAddress(ethAddress);
         logger.debug('Proposer removed from db');

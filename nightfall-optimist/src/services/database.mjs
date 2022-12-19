@@ -235,12 +235,12 @@ export async function setRegisteredProposerAddress(address, url) {
  * Function to check if the current proposer (as signalled by the NewCurrentProposer blockchain event) is registered through this application, and
  * thus it should start assembling blocks of transactions.
  */
-export async function isRegisteredProposerAddressMine(address) {
+export async function findRegisteredProposerAddress(address) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const proposer = await db.collection(PROPOSER_COLLECTION).findOne({ _id: address });
 
-  logger.debug({ msg: 'Found registered proposer', proposer });
+  logger.debug({ msg: 'Find registered proposer by address in optimist db...', proposer });
 
   return proposer;
 }

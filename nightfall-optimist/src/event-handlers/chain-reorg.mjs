@@ -62,7 +62,7 @@ import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.
 import {
   clearBlockNumberL1ForBlock,
   clearBlockNumberL1ForTransaction,
-  isRegisteredProposerAddressMine,
+  findRegisteredProposerAddress,
   getBlockByTransactionHashL1,
   deleteTreeByBlockNumberL2,
 } from '../services/database.mjs';
@@ -106,7 +106,7 @@ export async function removeNewCurrentProposerEventHandler(data, args) {
      */
     const stateContractInstance = waitForContract(STATE_CONTRACT_NAME);
     proposer.address = (await stateContractInstance.methods.currentProposer.call()).thisAddress;
-    proposer.isMe = !!(await isRegisteredProposerAddressMine(proposer.address));
+    proposer.isMe = !!(await findRegisteredProposerAddress(proposer.address));
   } catch (err) {
     // handle errors
     logger.error(err);
