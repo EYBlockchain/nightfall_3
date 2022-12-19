@@ -73,7 +73,7 @@ To perform a deployment follow the instructions bellow:
           CHALLENGER_KEY: process.env.CHALLENGER_KEY,
         },
     ```
-    Sample of the settings after the placeholders being replaced with proper values: 
+    Sample of the settings after replacing placeholders with proper values: 
     ```
         mumbai: {
           name: 'mumbai',
