@@ -17,7 +17,7 @@ router.post('/enable', async (req, res, next) => {
       logger.info('After enabling challenges back, no challenges remain unresolved');
     } else {
       logger.info(
-        `After enabling challenges backn, there were ${queues[2].length} unresolved challenges.  Running them now.`,
+        `After enabling challenges back, there were ${queues[2].length} unresolved challenges.  Running them now.`,
       );
 
       // start queue[2] and await all the unresolved challenges being run

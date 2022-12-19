@@ -344,6 +344,15 @@ describe('ERC20 tests', () => {
       const userL1BalanceBefore = await web3Client.getBalance(nf3User.ethereumAddress);
 
       await web3Client.timeJump(3600 * 24 * 10);
+      const commitments = await nf3User.getPendingWithdraws();
+      expect(
+        commitments[nf3User.zkpKeys.compressedZkpPublicKey][erc20Address].length,
+      ).to.be.greaterThan(0);
+      expect(
+        commitments[nf3User.zkpKeys.compressedZkpPublicKey][erc20Address].filter(
+          c => c.valid === true,
+        ).length,
+      ).to.be.greaterThan(0);
       const res = await nf3User.finaliseWithdrawal(withdrawalTxHash);
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
