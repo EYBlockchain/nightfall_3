@@ -8,6 +8,7 @@ import config from 'config';
 
 const { TIMER_CHANGE_PROPOSER_SECOND, MAX_ROTATE_TIMES } = config;
 
+const CHECK_REGISTER_PROPOSER_SECOND = 10;
 /**
  * check that it is possible to make the proposer change by checking the following conditions:
  * the number of registered proposers is greater than 1
@@ -57,6 +58,32 @@ async function checkAndChangeProposer(nf3) {
 }
 
 /**
+ * check that proposer is registered and register if its not
+ */
+async function checkAndRegisterProposer(nf3, proposerBaseUrl) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { proposers } = await nf3.getProposers();
+    const thisProposer = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
+    if (!thisProposer.length) {
+      logger.info('Attempting to register proposer');
+      const blockStake = await nf3.getBlockStake();
+      const minimumStake = await nf3.getMinimumStake();
+
+      logger.info(`blockStake: ${blockStake}, minimumStake: ${minimumStake}`);
+
+      try {
+        await nf3.registerProposer(proposerBaseUrl, minimumStake);
+      } catch (err) {
+        logger.info(err);
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, CHECK_REGISTER_PROPOSER_SECOND * 1000));
+  }
+}
+
+/**
 Does the preliminary setup and starts listening on the websocket
 */
 export default async function startProposer(nf3, proposerBaseUrl) {
@@ -67,18 +94,8 @@ export default async function startProposer(nf3, proposerBaseUrl) {
   await nf3.init(undefined, 'optimist');
   if (await nf3.healthcheck('optimist')) logger.info('Healthcheck passed');
   else throw new Error('Healthcheck failed');
-  logger.info('Attempting to register proposer');
+  checkAndRegisterProposer(nf3, proposerBaseUrl);
 
-  const blockStake = await nf3.getBlockStake();
-  const minimumStake = await nf3.getMinimumStake();
-
-  console.log(`blockStake: ${blockStake}, minimumStake: ${minimumStake}`);
-
-  try {
-    await nf3.registerProposer(proposerBaseUrl, minimumStake);
-  } catch (err) {
-    logger.info(err);
-  }
   logger.debug('Proposer healthcheck up');
 
   // If the emitter is not defined it causes the process to exit
@@ -98,6 +115,8 @@ export default async function startProposer(nf3, proposerBaseUrl) {
       if (error.message.includes('Transaction has been reverted by the EVM')) {
         const stakeAccount = await nf3.getProposerStake();
         console.log('CURRENT STAKE: ', stakeAccount);
+        const blockStake = await nf3.getBlockStake();
+        const minimumStake = await nf3.getMinimumStake();
         if (stakeAccount.amount <= blockStake) {
           logger.info('Updating the stake...');
           await nf3.updateProposer(proposerBaseUrl, minimumStake, 0);

@@ -1298,7 +1298,19 @@ class Nf3 {
             );
             challengeEmitter.emit('receipt', receipt, type, txSelector);
           } catch (err) {
-            challengeEmitter.emit('error', err, type, txSelector);
+            logger.error({
+              msg: 'Error while trying to challenge a block',
+              type,
+              err,
+            });
+            try {
+              challengeEmitter.emit('error', err, type, txSelector);
+            } catch(err2){
+              logger.error({
+                msg: 'Error while trying to emit challenge error',
+                err2,
+              });
+            }
           }
         });
         logger.debug(`queued ${type} ${txDataToSign}`);
