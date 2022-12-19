@@ -27,7 +27,7 @@ To perform a deployment follow the instructions bellow:
       },
   ```
   Replace the identified placeholder with proper values:
-    - `NETWORK_NAME`: with your network id. This can be any valid string, without spaces, since it doesn't conflict with the existing ones; 
+    - `NETWORK_NAME`: with your network name. This can be any valid string, without spaces, while it doesn't conflict with the existing ones; 
     - `NETWORK_ID`: An integer number representing the ID of your network;
     - The other values are not that relevant, but the network in question might require some specifics values for them, then one should 
     verify if these values need to be changed.
