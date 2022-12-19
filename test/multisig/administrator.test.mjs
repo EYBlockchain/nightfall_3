@@ -393,15 +393,15 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(0);
     });
 
-    it('Set MATIC address with the multisig', async () => {
-      const transactions = await nfMultiSig.setMaticAddress(
+    it('Set Fee Token address with the multisig', async () => {
+      const transactions = await nfMultiSig.setFeeL2TokenAddress(
         addresses.user1,
         signingKeys.user1,
         addresses.user1,
         await multisigContract.methods.nonce().call(),
         [],
       );
-      const approved = await nfMultiSig.setMaticAddress(
+      const approved = await nfMultiSig.setFeeL2TokenAddress(
         addresses.user1,
         signingKeys.user2,
         addresses.user1,
@@ -410,9 +410,9 @@ describe(`Testing Administrator`, () => {
       );
 
       await nfMultiSig.multiSig.executeMultiSigTransactions(approved, signingKeys.user1);
-      const maticAddress = await shieldContract.methods.getMaticAddress().call();
+      const feeL2TokenAddress = await shieldContract.methods.getFeeL2TokenAddress().call();
 
-      expect(maticAddress.toUpperCase()).to.be.equal(addresses.user1.toUpperCase());
+      expect(feeL2TokenAddress.toUpperCase()).to.be.equal(addresses.user1.toUpperCase());
     });
 
     it('Pause contracts with the multisig', async () => {
@@ -578,13 +578,13 @@ describe(`Testing Administrator`, () => {
       expect(Number(restrictionWithdraw)).to.be.equal(0);
     });
 
-    it('Set MATIC address without multisig', async () => {
+    it('Set Fee Token address without multisig', async () => {
       await shieldContract.methods
-        .setMaticAddress(nf3User.ethereumAddress)
+        .setFeeL2TokenAddress(nf3User.ethereumAddress)
         .send({ from: nf3User.ethereumAddress });
-      const maticAddress = await shieldContract.methods.getMaticAddress().call();
+      const feeL2TokenAddress = await shieldContract.methods.getFeeL2TokenAddress().call();
 
-      expect(maticAddress.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
+      expect(feeL2TokenAddress.toUpperCase()).to.be.equal(nf3User.ethereumAddress.toUpperCase());
     });
 
     it('Pause State contract without multisig', async () => {

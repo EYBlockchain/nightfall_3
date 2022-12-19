@@ -27,7 +27,8 @@ const {
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
-const { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS } = x509Params[process.env.ETH_NETWORK];
+const { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS } =
+  x509Params[process.env.ETH_NETWORK];
 
 // function to sort addresses into ascending order (required for SimpleMultiSig)
 function sortAscending(hexArray) {
@@ -97,11 +98,11 @@ module.exports = async function (deployer) {
       token.amount,
     );
   }
-  // set Matic Address
-  const maticAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
+  // set Fee Token Address
+  const feeL2TokenAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
     token => token.name === 'MATIC',
   ).address;
-  await shield.setMaticAddress(maticAddress.toLowerCase());
+  await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'enable') await x509.enableWhitelisting(true);
   // set a trusted RSA root public key for X509 certificate checks

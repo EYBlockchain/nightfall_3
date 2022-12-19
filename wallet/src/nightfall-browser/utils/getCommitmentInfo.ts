@@ -34,7 +34,7 @@ type TxInfo = {
   fee: bigint;
   recipientZkpPublicKeysArray: any[];
   ercAddress: GeneralNumber;
-  maticAddress: GeneralNumber;
+  feeL2TokenAddress: GeneralNumber;
   tokenId: GeneralNumber;
   rootKey: any;
   maxNullifiers: number;
@@ -49,7 +49,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
     fee = 0n,
     recipientZkpPublicKeysArray = [],
     ercAddress,
-    maticAddress,
+    feeL2TokenAddress,
     tokenId = generalise(0),
     rootKey,
     providedCommitments = [],
@@ -66,7 +66,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
 
   const tokenIdArray = recipientZkpPublicKeysArray.map(() => tokenId);
   // If ercAddress is the same as the feeAddress, we will set the fee as zero and only look for value
-  const addedFee = maticAddress.hex(32) === ercAddress.hex(32) ? fee : 0n;
+  const addedFee = feeL2TokenAddress.hex(32) === ercAddress.hex(32) ? fee : 0n;
 
   let value = totalValueToSend;
   let feeValue = fee;
@@ -152,7 +152,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
 
       // Filter which of those commitments belong to the ercAddress
       const ercAddressCommitmentsFee = rawCommitmentsFee.filter(
-        (c: any) => c.preimage.ercAddress === generalise(maticAddress).hex(32),
+        (c: any) => c.preimage.ercAddress === generalise(feeL2TokenAddress).hex(32),
       );
 
       if (ercAddressCommitmentsFee.length < providedCommitmentsFee.length) {
@@ -192,7 +192,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
     // If the user is transferring the same token as the fee, the case in which the user provided
     // enough commitments to cover the value but not the fee is valid.
     // If that is the case, we modify the parameters accordingly.
-    if (maticAddress.hex(32) === ercAddress.hex(32)) {
+    if (feeL2TokenAddress.hex(32) === ercAddress.hex(32)) {
       const totalProvidedValue = providedValue + providedValueFee;
       if (totalProvidedValue < value) {
         maxNonFeeNullifiers =
@@ -217,7 +217,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
       compressedZkpPublicKey,
       ercAddress,
       tokenId,
-      maticAddress,
+      feeL2TokenAddress,
       value,
       feeValue,
       maxNullifiers,
@@ -268,7 +268,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
     if (generalise(changeFee).bigInt !== 0n) {
       valuesArray.push(generalise(changeFee).bigInt);
       recipientZkpPublicKeysArray.push(zkpPublicKey);
-      ercAddressArray.push(maticAddress);
+      ercAddressArray.push(feeL2TokenAddress);
       tokenIdArray.push(generalise(0));
     }
 

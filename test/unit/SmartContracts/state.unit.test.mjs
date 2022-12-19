@@ -196,11 +196,11 @@ describe('State contract State functions', function () {
   });
 
   it('should add pending withdrawal', async function () {
-    const amountEth = 100;
-    const amountMatic = 0;
-    await state.addPendingWithdrawal(addr1.address, amountEth, amountMatic);
-    expect((await state.pendingWithdrawalsFees(addr1.address)).feesEth).to.equal(amountEth);
-    expect((await state.pendingWithdrawalsFees(addr1.address)).feesMatic).to.equal(amountMatic);
+    const amountL1Token = 100;
+    const amountL2Token = 0;
+    await state.addPendingWithdrawal(addr1.address, amountL1Token, amountL2Token);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesL1).to.equal(amountL1Token);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesL2).to.equal(amountL2Token);
   });
 
   it('should withdraw', async function () {
@@ -209,22 +209,22 @@ describe('State contract State functions', function () {
       value: ethers.utils.parseEther('1.0'),
     });
 
-    const amountEth = 100;
-    const amountMatic = 0;
+    const amountL1Token = 100;
+    const amountL2Token = 0;
 
-    await state.addPendingWithdrawal(addr1.address, amountEth, amountMatic);
-    expect((await state.pendingWithdrawalsFees(addr1.address)).feesEth).to.equal(amountEth);
-    expect((await state.pendingWithdrawalsFees(addr1.address)).feesMatic).to.equal(amountMatic);
+    await state.addPendingWithdrawal(addr1.address, amountL1Token, amountL2Token);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesL1).to.equal(amountL1Token);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesL2).to.equal(amountL2Token);
 
     const balanceContract = await ethers.provider.getBalance(state.address);
 
     await state.withdraw();
 
-    expect((await state.pendingWithdrawalsFees(addr1.address)).feesEth).to.equal(0);
-    expect((await state.pendingWithdrawalsFees(addr1.address)).feesMatic).to.equal(0);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesL1).to.equal(0);
+    expect((await state.pendingWithdrawalsFees(addr1.address)).feesL2).to.equal(0);
 
     expect(await ethers.provider.getBalance(state.address)).to.equal(
-      balanceContract.sub(amountEth),
+      balanceContract.sub(amountL1Token),
     );
   });
 
@@ -678,7 +678,7 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    expect((await state.blockInfo(blockHash)).feesMatic).to.equal(1);
+    expect((await state.blockInfo(blockHash)).feesL2).to.equal(1);
 
     const siblingPath = [
       transactionsCreated.block.transactionHashesRoot,
@@ -856,7 +856,7 @@ describe('State contract State functions', function () {
       { value: 10 },
     );
 
-    expect((await state.blockInfo(blockHash)).feesMatic).to.equal(1);
+    expect((await state.blockInfo(blockHash)).feesL2).to.equal(1);
 
     const packedInfoBlock = packBlockInfo(1, addr1.address, 1);
 
@@ -1162,10 +1162,10 @@ describe('State contract State functions', function () {
     expect(stakeAccount.amount).to.equal(amount);
     expect(stakeAccount.time).to.equal(0);
     expect(stakeAccount.challengeLocked).to.equal(challengeLocked - amount);
-    expect((await state.pendingWithdrawalsFees(addressC.address)).feesEth).to.equal(
+    expect((await state.pendingWithdrawalsFees(addressC.address)).feesL1).to.equal(
       badBlock.blockStake,
     );
-    expect((await state.pendingWithdrawalsFees(addressC.address)).feesMatic).to.equal(0);
+    expect((await state.pendingWithdrawalsFees(addressC.address)).feesL2).to.equal(0);
   });
 
   it('Should build spanProposersList and change current proposer', async function () {

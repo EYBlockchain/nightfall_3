@@ -85,9 +85,9 @@ module.exports = async function (deployer) {
     );
   }
 
-  //set Matic Address
-  const maticAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
+  //set Fee Token Address
+  const feeL2TokenAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
     token => token.name === 'MATIC',
   ).address;
-  await shield.setMaticAddress(maticAddress.toLowerCase());
+  await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
 };
