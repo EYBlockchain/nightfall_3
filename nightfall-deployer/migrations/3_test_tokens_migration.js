@@ -28,7 +28,7 @@ module.exports = function (deployer, _, accounts) {
     await ERC20deployed.transfer(addresses.user1, 1000000000000);
     await ERC20deployed.transfer(addresses.user2, 1000000000000);
 
-    // give proposer also balance, because in adversary, proposer need balance to submit bad transaction
+    // Fund proposer, because in adversary these need balance to submit bad transactions
     await ERC20deployed.transfer(addresses.proposer1, 1000000000000);
     // for testing Shield balance withdraw
     await ERC20deployed.transfer(shield.address, 1000000000000);
