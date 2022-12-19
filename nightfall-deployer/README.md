@@ -170,7 +170,7 @@ To perfom a deployment follow the instructions bellow:
 
 One should remember to have enough funds when performing the deployment so that it can finish properly.
 
-After the deployment finishs successfully, one can find the files that were generated during the deployment under the folder `docker/volumes`:
+After the deployment finishes successfully, one can find the files that were generated during the deployment under the folder `docker/volumes`:
 - `build/contracts`: contain the ABI files.
 - `proving_files`: contain circuits' files.
 
