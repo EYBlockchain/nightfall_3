@@ -1,4 +1,4 @@
-/*eslint class-methods-use-this: "off" */
+/* eslint class-methods-use-this: "off" */
 
 import axios from 'axios';
 import Queue from 'queue';
@@ -1305,7 +1305,7 @@ class Nf3 {
             });
             try {
               challengeEmitter.emit('error', err, type, txSelector);
-            } catch (err2){
+            } catch (err2) {
               logger.error({
                 msg: 'Error while trying to emit challenge error',
                 err2,
