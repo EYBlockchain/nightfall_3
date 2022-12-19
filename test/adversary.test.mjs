@@ -23,7 +23,6 @@ import {
   clearMempool,
   getLayer2Balances,
   registerProposerOnNoProposer,
-  restartOptimist,
   waitForSufficientTransactionsMempool,
   Web3Client,
 } from './utils.mjs';
@@ -258,6 +257,7 @@ describe('Testing with an adversary', () => {
     let user2L2Erc1155BalanceBefore;
 
     before(async () => {
+      await enableChallenger(false);
       userL2BalanceBefore = await getLayer2BalancesBadClient(erc20Address);
       user2L2BalanceBefore = await getLayer2Balances(nf3User2, erc20Address);
       user2L2Erc1155BalanceBefore = await getLayer2Erc1155Balance(
@@ -271,7 +271,6 @@ describe('Testing with an adversary', () => {
     it('Deep rollback', async () => {
       console.log('Testing deep rollback at distance 2...');
 
-      await enableChallenger(false);
       await nf3User2.deposit(
         'ValidTransaction',
         erc20Address,
@@ -306,7 +305,7 @@ describe('Testing with an adversary', () => {
         fee,
       );
       await makeBlock();
-      await restartOptimist(nf3Challenger);
+      await enableChallenger(true);
       await waitForRollback();
 
       const { result: mempool } = (
