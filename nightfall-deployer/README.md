@@ -1,7 +1,7 @@
 # Deployment Procedure
 The deployment procedure is the process of compiling the Smart Contracts, deploying them to the desired Network and performing the circuits' setup.
 
-To perfom a deployment follow the instructions bellow:
+To perform a deployment follow the instructions bellow:
 1. Create a .env file from the template file `.env.deployment.template` and change the name to match your network. e.g. `.env.deployment.my_network`. This 
   file has settings that will be used for performing the deployment. One should change them accordingly with the desired values. The following variables are 
   important to be set:
@@ -221,7 +221,7 @@ To perfom a deployment follow the instructions bellow:
     ```
 
     During the deployment an instance of the `worker` application is required to be up, so that the Circuits can be generated accordingly. This instance is started up 
-    automatically, but it is possible configure the worker server if one is already available, for this set `CIRCOM_WORKER_HOST` in the .env file.
+    automatically, but it is possible to configure the worker server if one is already available, for this set `CIRCOM_WORKER_HOST` in the .env file.
 
     There is a variable in the .env file called `DEPLOYMENT_SERVICES`. It allows one to set the services to start up. This variable can be passed over with the command
     as well.
@@ -231,7 +231,7 @@ To perfom a deployment follow the instructions bellow:
 
 One should remember to have enough funds when performing the deployment so that it can finish properly.
 
-After the deployment finishs successfully, one can find the files that were generated during the deployment under the folder `docker/volumes`:
+After the deployment finishes successfully, one can find the files that were generated during the deployment under the folder `docker/volumes`:
 - `build/contracts`: contain the ABI files.
 - `proving_files`: contain circuits' files.
 
