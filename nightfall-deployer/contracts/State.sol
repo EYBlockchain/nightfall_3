@@ -107,10 +107,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 'State: Block flawed or out of order'
             ); // this will fail if a tx is re-mined out of order due to a chain reorg.
         }
-        // require(
-        //     Utils.getProposer(b.packedInfo) == msg.sender,
-        //     'State: The sender is not the proposer'
-        // );
+        require(
+            Utils.getProposer(b.packedInfo) == msg.sender,
+            'State: The sender is not the proposer'
+        );
         require(
             stakeAccounts[msg.sender].amount + msg.value >= blockStake,
             'State: Proposer does not have enough funds staked'
@@ -183,19 +183,18 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                     mul(0x20, transactionSlots)
                 )
 
-                // Calculate the hash of the transaction and store it in transactionHashesPos
+                // We need to add 0x20 at the beginning of the transactionSlots to match with abi.encode(calldata);
                 mstore(transactionPos, 0x20)
 
+                // Calculate the hash of the transaction and store it in transactionHashesPos
                 mstore(
                     add(transactionHashesPos, mul(0x20, i)),
                     keccak256(transactionPos, mul(0x20, add(transactionSlots, 1)))
                 )
 
                 // We need to check if circuit requires to escrow funds
-                mstore(
-                    x,
-                    shr(216, calldataload(add(t.offset, calldataload(add(t.offset, mul(0x20, i))))))
-                )
+                // Need to remember that the first slot in transactionPos is 0x20
+                mstore(x, shr(216, mload(add(transactionPos, 0x20))))
                 mstore(add(x, 0x20), circuitInfo.slot)
 
                 let isEscrowRequired := shr(8, sload(keccak256(x, mul(0x20, 2))))
@@ -203,7 +202,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
                 if isEscrowRequired {
                     let commitment := mload(
                         add(
-                            0x20,
+                            0x20, // Need to remember that the first slot in transactionPos is 0x20
                             add(transactionPos, add(mload(add(transactionPos, mul(0x20, 6))), 0x20))
                         )
                     )

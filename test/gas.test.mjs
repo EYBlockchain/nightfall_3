@@ -9,7 +9,6 @@ import {
   transferNTransactions,
   withdrawNTransactions,
   Web3Client,
-  expectTransaction,
   waitForTimeout,
 } from './utils.mjs';
 
@@ -195,35 +194,6 @@ describe('Gas test', () => {
 
       await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-    });
-  });
-
-  describe('Finalise withdraws', () => {
-    it('should withdraw from L2, checking for L1 balance (only with time-jump client)', async function () {
-      const nodeInfo = await web3Client.getInfo();
-      if (nodeInfo.includes('TestRPC')) {
-        waitForTimeout(10000);
-        const startBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
-        const withdrawal = await nf3Users[0].getLatestWithdrawHash();
-        await web3Client.timeJump(3600 * 24 * 10); // jump in time by 10 days
-        const commitments = await nf3Users[0].getPendingWithdraws();
-        expect(
-          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].length,
-        ).to.be.greaterThan(0);
-        expect(
-          commitments[nf3Users[0].zkpKeys.compressedZkpPublicKey][erc20Address].filter(
-            c => c.valid === true,
-          ).length,
-        ).to.be.greaterThan(0);
-        const res = await nf3Users[0].finaliseWithdrawal(withdrawal);
-        expectTransaction(res);
-        const endBalance = await web3Client.getBalance(nf3Users[0].ethereumAddress);
-        expect(parseInt(endBalance, 10)).to.be.lessThan(parseInt(startBalance, 10));
-        console.log('The gas used for finalise withdraw, back to L1, was', res.gasUsed);
-      } else {
-        console.log('Not using a time-jump capable test client so this test is skipped');
-        this.skip();
-      }
     });
   });
 
