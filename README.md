@@ -15,6 +15,7 @@ Nightfall application. As a Layer 2 solution with on-chain data availability, Ni
 perform a private transfer for less than half the cost of a public ERCx transfer whilst maintaining
 the security and consensus assumptions from the Ethereum Mainnet.
 
+
 ## Setup
 
 ### Prerequisites
