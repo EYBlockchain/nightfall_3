@@ -177,4 +177,4 @@ After the deployment finishes successfully, one can find the files that were gen
 These files are going to be used by the applications `nightfall-client` & `nightfall-optimist`.
 
 ## Testing
-For testing purposes, some addresses under `TEST_OPTIONS.addresses` in `config/defaults.js` are funded with `MATIC`. Set the variable `DEPLOY_MOCK_TOKENS` in the .env file to `false` to prevent this behavior (This will also prevent the deployment of the `ERC20Mock` Smart Contract).
+For testing purposes, some Ethereum addresses are funded with `MATIC` - see `TEST_OPTIONS.addresses` in `config/defaults.js` . Set the variable `DEPLOY_MOCK_TOKENS` in the .env file to `false` to prevent this behaviour. This will also prevent the deployment of the `ERC20Mock` Smart Contract.
