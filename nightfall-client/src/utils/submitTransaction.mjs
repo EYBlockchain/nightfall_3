@@ -20,7 +20,7 @@ export const submitTransaction = async (
   logger.debug({ msg: 'storing commitments', commitments: commitmentsInfo.newCommitments });
   const storeNewCommitments = commitmentsInfo.newCommitments
     .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
-    .map(c => storeCommitment(c, nullifierKey, transaction.transactionHash));
+    .map(c => storeCommitment(c, nullifierKey));
 
   logger.debug({ msg: 'nullifying commitments', commitments: commitmentsInfo.oldCommitments });
   const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>

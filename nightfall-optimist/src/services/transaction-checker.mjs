@@ -46,12 +46,11 @@ async function checkDuplicateCommitment({
           transaction.fee,
         );
 
-        logger.debug({
-          msg: 'Duplicate mempool commitment with higher fee: ',
-          transactionMempoolHigherFee,
-        });
-
         if (transactionMempoolHigherFee !== null) {
+          logger.debug({
+            msg: 'Duplicate mempool commitment with higher fee: ',
+            transactionMempoolHigherFee,
+          });
           throw new TransactionError(
             `The transaction has a duplicate commitment ${commitment} in the mempool with a higher fee`,
             0,
@@ -110,12 +109,11 @@ async function checkDuplicateNullifier({
           transaction.fee,
         );
 
-        logger.debug({
-          msg: 'Duplicate mempool nullifier with higher fee: ',
-          transactionMempoolHigherFee,
-        });
-
         if (transactionMempoolHigherFee !== null) {
+          logger.debug({
+            msg: 'Duplicate mempool nullifier with higher fee: ',
+            transactionMempoolHigherFee,
+          });
           throw new TransactionError(
             `The transaction has a duplicate commitment ${nullifier} in the mempool with a higher fee`,
             1,

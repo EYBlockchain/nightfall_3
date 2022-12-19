@@ -50,9 +50,7 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
           commitment,
           transactionHash: transaction.transactionHash,
         });
-        storeCommitments.push(
-          storeCommitment(commitment, nullifierKey[j], transaction.transactionHash),
-        );
+        storeCommitments.push(storeCommitment(commitment, nullifierKey[j]));
       }
     } catch (err) {
       // This error will be caught regularly if the commitment isn't for us

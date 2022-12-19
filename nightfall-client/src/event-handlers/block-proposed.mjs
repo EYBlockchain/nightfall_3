@@ -106,17 +106,10 @@ async function blockProposedEventHandler(data, syncing) {
 
     return Promise.all([
       saveTxToDb,
-      markOnChain(
-        nonZeroCommitments,
-        block.blockNumberL2,
-        transaction.transactionHash,
-        data.blockNumber,
-        data.transactionHash,
-      ),
+      markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
       markNullifiedOnChain(
         nonZeroNullifiers,
         block.blockNumberL2,
-        transaction.transactionHash,
         data.blockNumber,
         data.transactionHash,
       ),

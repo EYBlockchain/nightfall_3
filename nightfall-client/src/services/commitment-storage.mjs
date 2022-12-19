@@ -23,7 +23,7 @@ const { generalise } = gen;
 const mutex = new Mutex();
 
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment(_commitment, nullifierKey, commitmentTransactionHash) {
+export async function storeCommitment(_commitment, nullifierKey) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   // we'll also compute and store the nullifier hash.  This will be useful for
@@ -43,7 +43,7 @@ export async function storeCommitment(_commitment, nullifierKey, commitmentTrans
     isNullifiedOnChain: Number(_commitment.isNullifiedOnChain) || -1,
     nullifier: nullifierHash,
     blockNumber: -1,
-    commitmentTransactionHash,
+    isCommitmentInTransaction: _commitment.isCommitmentInTransaction || true,
   };
   logger.debug(`Storing commitment ${commitment._id}`);
   const query = { _id: commitment._id };
@@ -79,7 +79,7 @@ export async function countNullifiers(nullifiers) {
 export async function countCircuitTransactions(transactionHashes, circuitHash) {
   const connection = await mongo.connection(MONGO_URL);
   const query = {
-    nullifierTransactionHash: { $in: transactionHashes },
+    transactionHash: { $in: transactionHashes },
     nullifierCircuitHash: circuitHash,
   };
   const db = connection.db(COMMITMENTS_DB);
@@ -89,7 +89,7 @@ export async function countCircuitTransactions(transactionHashes, circuitHash) {
 // function to get if the transaction hash belongs to a withdraw transaction
 export async function isTransactionHashBelongCircuit(transactionHash, circuitHash) {
   const connection = await mongo.connection(MONGO_URL);
-  const query = { nullifierTransactionHash: transactionHash, nullifierCircuitHash: circuitHash };
+  const query = { transactionHash, nullifierCircuitHash: circuitHash };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).countDocuments(query);
 }
@@ -98,19 +98,13 @@ export async function isTransactionHashBelongCircuit(transactionHash, circuitHas
 export async function markOnChain(
   commitments,
   blockNumberL2,
-  commitmentTransactionHash,
   blockNumber,
   transactionHashCommittedL1,
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: { $in: commitments }, isOnChain: { $eq: -1 } };
   const update = {
-    $set: {
-      isOnChain: Number(blockNumberL2),
-      blockNumber,
-      transactionHashCommittedL1,
-      commitmentTransactionHash,
-    },
+    $set: { isOnChain: Number(blockNumberL2), blockNumber, transactionHashCommittedL1 },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -143,7 +137,7 @@ export async function markNullified(commitment, transaction) {
       isPendingNullification: false,
       isNullified: true,
       nullifierCircuitHash: transaction.circuitHash,
-      nullifierTransactionHash: transaction.transactionHash,
+      transactionHash: transaction.transactionHash,
     },
   };
   const db = connection.db(COMMITMENTS_DB);
@@ -249,19 +243,13 @@ export async function clearPending(commitment) {
 export async function markNullifiedOnChain(
   nullifiers,
   blockNumberL2,
-  nullifierTransactionHash,
   blockNumber,
   transactionHashNullifiedL1, // the tx in which the nullification happened
 ) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { nullifier: { $in: nullifiers }, isNullifiedOnChain: { $eq: -1 } };
   const update = {
-    $set: {
-      isNullifiedOnChain: Number(blockNumberL2),
-      blockNumber,
-      transactionHashNullifiedL1,
-      nullifierTransactionHash,
-    },
+    $set: { isNullifiedOnChain: Number(blockNumberL2), blockNumber, transactionHashNullifiedL1 },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
@@ -613,7 +601,7 @@ export async function deleteCommitments(commitments) {
   await db.collection(COMMITMENTS_COLLECTION).deleteMany(queryNonDepositCommitments);
 
   const queryDepositCommitments = { _id: { $in: commitments }, isDeposited: true };
-  const update = { $set: { commitmentTransactionHash: null } };
+  const update = { $set: { isCommitmentInTransaction: false } };
   await db.collection(COMMITMENTS_COLLECTION).updateMany(queryDepositCommitments, update);
 }
 
@@ -1072,7 +1060,7 @@ export async function getCommitmentsDepositedRollbacked(compressedZkpPublicKey) 
   const db = connection.db(COMMITMENTS_DB);
   const query = {
     compressedZkpPublicKey,
-    commitmentTransactionHash: null,
+    isCommitmentInTransaction: false,
     isOnChain: -1,
     isDeposited: true,
   };

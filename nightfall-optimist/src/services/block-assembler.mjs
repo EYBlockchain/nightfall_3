@@ -175,11 +175,6 @@ export async function conditionalMakeBlock(proposer) {
           blockSize,
         });
 
-        logger.info({
-          transaction: transactions.map(t => Transaction.buildSolidityStruct(t)),
-          block: Block.buildSolidityStruct(block),
-        });
-
         // propose this block to the Shield contract here
         const unsignedProposeBlockTransaction = await (
           await waitForContract(STATE_CONTRACT_NAME)
