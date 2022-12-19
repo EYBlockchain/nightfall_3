@@ -1076,13 +1076,6 @@ export async function getCommitmentsDepositedRollbacked(compressedZkpPublicKey) 
     isOnChain: -1,
     isDeposited: true,
   };
-  console.log('DEBUG 0 ', await db.collection(COMMITMENTS_COLLECTION).find(query).toArray());
-  console.log(
-    'DEBUG 1',
-    await db
-      .collection(COMMITMENTS_COLLECTION)
-      .find({ compressedZkpPublicKey, isOnChain: -1, isDeposited: true })
-      .toArray(),
-  );
+
   return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }

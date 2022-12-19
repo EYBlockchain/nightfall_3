@@ -109,10 +109,7 @@ async function deposit(depositParams) {
 
   const commitmentDB = await getCommitmentByHash(commitment);
 
-  console.log('COMMITMENT DB', commitmentDB);
-
   if (commitmentDB) {
-    logger.info({ msg: 'ON CHAIN', onChain: commitmentDB.isOnChain });
     if (commitmentDB.isOnChain !== -1) {
       throw new Error('You can not re-send a commitment that is already on-chain');
     } else {
