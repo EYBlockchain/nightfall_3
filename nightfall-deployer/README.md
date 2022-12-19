@@ -98,7 +98,7 @@ To perform a deployment follow the instructions bellow:
         },
     ```
 
-  - If whitelist functionality is required to perform transactions on the contracts, one is going to need to setup the `RSA_TRUST_ROOTS`. Under this 
+  - If whitelist functionality is required to verify users performing transactions, one is going to need to setup the `RSA_TRUST_ROOTS`. Under this 
     setting are the Root Certificate Authorities that the contracts will trust for intermediate/end-user certificates. The `WHITELISTING` should
     have the value `enable` to enable the whitelisting functionality. This setting can be found in the file created in the `Step 1.`.
 
