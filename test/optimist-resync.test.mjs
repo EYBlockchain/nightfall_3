@@ -191,18 +191,15 @@ describe('Optimist synchronisation tests', function () {
     });
 
     it('Should have at least 1 block in `blocks` collection before restart', function () {
-      dbBlocksBefore.forEach(b => console.log(`===> bs before: ${JSON.stringify(b)}`));
       expect(dbBlocksBefore).to.be.an('array').that.is.not.empty;
     });
 
     it('Should include nf3Proposer in `proposers` collection before restart', function () {
-      dbProposersBefore.forEach(p => console.log(`**** ps before: ${JSON.stringify(p)}`));
       const proposerIds = dbProposersBefore.map(p => p._id);
       expect(proposerIds.includes(nf3Proposer.ethereumAddress)).to.be.true;
     });
 
     it('Should include nf3Proposer in Proposers smart contract before restart', function () {
-      blockchainProposersBefore.forEach(p => console.log(`++++ bps before: ${JSON.stringify(p)}`));
       const proposerAddresses = blockchainProposersBefore.map(p => p.thisAddress);
       expect(proposerAddresses.includes(nf3Proposer.ethereumAddress)).to.be.true;
     });
@@ -218,26 +215,20 @@ describe('Optimist synchronisation tests', function () {
     });
 
     it('Should have 1 more block in `blocks` collection after restarting and making another block', function () {
-      dbBlocksFinal.forEach(b => console.log(`===> bs final: ${JSON.stringify(b)}`));
-      console.log(`===> try this...: ${JSON.stringify(dbBlocksFinal)}`);
       expect(dbBlocksFinal.length - dbBlocksBefore.length).to.equal(1);
     });
 
     it('Should have added new block sequentially after restarting and making another block', function () {
       const firstBlock = dbBlocksBefore[dbBlocksBefore.length - 1];
-      console.log(`***********************************firstBlock: ${JSON.stringify(firstBlock)}`);
       const secondBlock = dbBlocksFinal[dbBlocksFinal.length - 1];
-      console.log(`***********************************secondBlock: ${JSON.stringify(secondBlock)}`);
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
     it('Should have same `proposers` collection', function () {
-      dbProposersFinal.forEach(p => console.log(`**** ps final: ${JSON.stringify(p)}`));
       expect(dbProposersFinal).to.be.deep.equal(dbProposersBefore);
     });
 
     it('Should have same `proposers` in Proposers smart contract', function () {
-      blockchainProposersFinal.forEach(p => console.log(`++++ bps before: ${JSON.stringify(p)}`));
       expect(blockchainProposersFinal).to.be.deep.equal(blockchainProposersBefore);
     });
   });
@@ -294,18 +285,15 @@ describe('Optimist synchronisation tests', function () {
     });
 
     it('Should have at least 1 block in `blocks` collection before restart', function () {
-      dbBlocksBefore.forEach(b => console.log(`===> bs before: ${JSON.stringify(b)}`));
       expect(dbBlocksBefore).to.be.an('array').that.is.not.empty;
     });
 
     it('Should include nf3Proposer in `proposers` collection before restart', function () {
-      dbProposersBefore.forEach(p => console.log(`**** ps before: ${JSON.stringify(p)}`));
       const proposerIds = dbProposersBefore.map(p => p._id);
       expect(proposerIds.includes(nf3Proposer.ethereumAddress)).to.be.true;
     });
 
     it('Should include nf3Proposer in Proposers smart contract before restart', function () {
-      blockchainProposersBefore.forEach(p => console.log(`++++ bps before: ${JSON.stringify(p)}`));
       const proposerAddresses = blockchainProposersBefore.map(p => p.thisAddress);
       expect(proposerAddresses.includes(nf3Proposer.ethereumAddress)).to.be.true;
     });
@@ -329,26 +317,20 @@ describe('Optimist synchronisation tests', function () {
     });
 
     it('Should have 1 more block in `blocks` collection after restarting and making another block', function () {
-      dbBlocksFinal.forEach(b => console.log(`===> bs final: ${JSON.stringify(b)}`));
-      console.log(`===> try this...: ${JSON.stringify(dbBlocksFinal)}`);
       expect(dbBlocksFinal.length - dbBlocksBefore.length).to.equal(1);
     });
 
     it('Should have added new block sequentially after restarting and making another block', function () {
       const firstBlock = dbBlocksBefore[dbBlocksBefore.length - 1];
-      console.log(`***********************************firstBlock: ${JSON.stringify(firstBlock)}`);
       const secondBlock = dbBlocksFinal[dbBlocksFinal.length - 1];
-      console.log(`***********************************secondBlock: ${JSON.stringify(secondBlock)}`);
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
     });
 
     it('Should have same `proposers` collection', function () {
-      dbProposersFinal.forEach(p => console.log(`**** ps final: ${JSON.stringify(p)}`));
       expect(dbProposersFinal).to.be.deep.equal(dbProposersBefore);
     });
 
     it('Should have same `proposers` in Proposers smart contract', function () {
-      blockchainProposersFinal.forEach(p => console.log(`++++ bps before: ${JSON.stringify(p)}`));
       expect(blockchainProposersFinal).to.be.deep.equal(blockchainProposersBefore);
     });
   });
