@@ -21,14 +21,14 @@ const { TIMBER_HEIGHT } = config;
 const { CHALLENGES_CONTRACT_NAME, ZERO } = constants;
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const challengerKey = environment.CHALLENGER_KEY;
-const { challengerEthAddress } = web3.eth.accounts.privateKeyToAccount(challengerKey);
+const challengerEthAddress = web3.eth.accounts.privateKeyToAccount(challengerKey).address;
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
 let ws;
 
 export function isMakeChallengesEnable() {
   return makeChallenges;
 }
-//delete this because it is setting a ws connection
+// delete this because it is setting a ws connection
 export function setChallengeWebSocketConnection(_ws) {
   ws = _ws;
 }
@@ -71,7 +71,7 @@ export async function createChallenge(block, transactions, err) {
       break;
     }
     // Challenge wrong root
-    //sign and send tx
+    // sign and send tx
     case 1: {
       logger.debug(`Challenging incorrect root`);
 
@@ -377,7 +377,7 @@ export async function commitToChallenge(txDataToSign) {
 }
 
 export async function revealChallenge(txDataToSign, sender) {
-  logger.debug('Revealing challenge');
+  logger.debug('Revealing challenge', txDataToSign, sender);
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending commit. If not wait until the challenger reconnects
   // let tryCount = 0;
@@ -396,6 +396,31 @@ export async function revealChallenge(txDataToSign, sender) {
   // if the challange is sent from a different address
 
   // ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
+  const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const challengeContractAddress = challengeContractInstance.options.address;
+
+  const signedTx = await createSignedTransaction(
+    challengerKey,
+    sender,
+    challengeContractAddress,
+    txDataToSign,
+  );
+
+  // Submit tx and update db if tx is successful
+  // CHECK - I think the code beyond L132 can be removed (?) then db op could be moved here
+  txsQueueChallenger.push(async () => {
+    try {
+      receipt = await sendSignedTransaction(signedTx);
+      logger.debug({ msg: 'Commit to challenge', receipt });
+
+      await saveCommit(commitHash, txDataToSign);
+    } catch (err) {
+      logger.error({
+        msg: 'Something went wrong',
+        err,
+      });
+    }
+  });
 }
 /**
 Function to indicate to a listening challenger that a rollback has been completed.
@@ -403,7 +428,7 @@ Function to indicate to a listening challenger that a rollback has been complete
 export async function signalRollbackCompleted(data) {
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending. If not wait until the challenger reconnects
-  //challenger rollback
+  // challenger rollback
   // let tryCount = 0;
   // while (!ws || ws.readyState !== WebSocket.OPEN) {
   //   await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
@@ -412,6 +437,6 @@ export async function signalRollbackCompleted(data) {
   //   );
   //   if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
   // }
-  // logger.debug('Rollback completed');
+  logger.debug('Rollback completed', data);
   // ws.send(JSON.stringify({ type: 'rollback', data }));
 }

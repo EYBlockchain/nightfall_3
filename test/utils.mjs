@@ -77,6 +77,9 @@ export class Web3Client {
             case topicEventMapping.NewCurrentProposer:
               queue.push({ eventName: 'NewCurrentProposer', log });
               break;
+            case topicEventMapping.Rollback:
+              queue.push({ eventName: 'Rollback', log });
+              break;
             default:
               queue.push({ eventName: 'Challenge', log });
               break;

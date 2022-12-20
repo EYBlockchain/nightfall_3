@@ -34,7 +34,7 @@ const { fee } = config.TEST_OPTIONS;
 const web3Client = new Web3Client();
 const web3 = web3Client.getWeb3();
 
-let stateAddress;
+let stateAddress, challangesAddress;
 const eventLogs = [];
 
 const challengeSelectors = {
@@ -98,16 +98,20 @@ describe('Testing with an adversary', () => {
 
   const waitForRollback = async () => {
     console.log('Waiting for rollback...');
-    while (rollbackCount !== currentRollbacks + 1) {
-      console.log(
-        'Rollback count: ',
-        rollbackCount,
-        ' - ',
-        'Expected number of rollbacks: ',
-        currentRollbacks + 1,
-      );
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    }
+
+    const roll = await web3Client.waitForEvent(eventLogs, ['Rollback']);
+    console.log(roll);
+
+    // while (rollbackCount !== currentRollbacks + 1) {
+    //   console.log(
+    //     'Rollback count: ',
+    //     rollbackCount,
+    //     ' - ',
+    //     'Expected number of rollbacks: ',
+    //     currentRollbacks + 1,
+    //   );
+    //   await new Promise(resolve => setTimeout(resolve, 3000));
+    // }
     console.log('Rollback completed');
   };
 
@@ -183,10 +187,8 @@ describe('Testing with an adversary', () => {
       registerProposerOnNoProposer(nf3AdversarialProposer);
     }, 5000);
 
-    console.log('test');
     // Chalenger listening for incoming events
     challengeEmitter = await nf3Challenger.startChallenger();
-    // console.lo;
     challengeEmitter
       .on('receipt', (receipt, type, txSelector) => {
         logger.debug(
@@ -209,6 +211,9 @@ describe('Testing with an adversary', () => {
 
     stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+
+    challangesAddress = await nf3User.challengesContractAddress;
+    web3Client.subscribeTo('logs', eventLogs, { address: challangesAddress });
   });
 
   beforeEach(async () => {

@@ -57,7 +57,11 @@ It can cope with the proof as an object or as a flattened array.
 */
 export function compressProof(_proof) {
   let proof;
+  console.log('myproof', _proof);
+
   if (Array.isArray(_proof)) {
+    console.log('myproof', _proof);
+
     if (_proof.length !== 8) throw new Error('Flat proof array should have length 8');
     proof = _proof;
   } else {
