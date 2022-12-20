@@ -20,6 +20,7 @@ const {
   MULTISIG,
   X509: x509Params,
   SANCTIONS_CONTRACT,
+  DEPLOY_MOCKED_SANCTIONS_CONTRACT,
   TEST_OPTIONS: {
     addresses: { sanctionedUser },
   },
@@ -57,15 +58,15 @@ module.exports = async function (deployer) {
 
   await deployer.deploy(SimpleMultiSig, SIGNATURE_THRESHOLD, sortedOwners, network_id);
 
+  let sanctionsContractAddress = SANCTIONS_CONTRACT;
   // if we're just testing, we want to deploy a mock sanctions list. We do it here because
   // we need to know the address to give to the Shield contract
-  let sanctionsContractAddress = SANCTIONS_CONTRACT;
-  if (!web3.utils.isAddress(SANCTIONS_CONTRACT)) {
+  if (DEPLOY_MOCKED_SANCTIONS_CONTRACT === true) {
     await deployer.deploy(SanctionsListMock, sanctionedUser);
 
     sanctionsContractAddress = SanctionsListMock.address;
 
-    console.log('SANTIONED', sanctionsContractAddress, sanctionedUser);
+    console.log('SANTIONED USER', sanctionsContractAddress, sanctionedUser);
   }
 
   await deployProxy(X509, [], { deployer });
