@@ -22,12 +22,17 @@ interface TxModalProps {
 }
 
 export default function TxInfoModal(props: TxModalProps): JSX.Element {
-  function getWithdrawHash(): string {
-    //const hashCircuit = await getStoreCircuit('withdraw-hash');
-    //const result = generalise(hashCircuit).hex(32).datatoString();
-    const result = generalise('0xc2d92e17cb').hex(32).toString();
-    return result;
-  }
+  const [withdrawCircuitHash, setWithdrawCircuitHash] = React.useState('');
+
+  React.useEffect(() => {
+    const getWithdrawHash = async () => {
+      const withdrawHash = generalise((await getStoreCircuit('withdraw-hash')).data)
+        .hex(32)
+        .toString();
+      setWithdrawCircuitHash(withdrawHash);
+    };
+    getWithdrawHash();
+  }, []);
 
   const confirmWithdraw = async () => {
     const shieldContractAddress = shieldAddressGet();
@@ -84,7 +89,7 @@ export default function TxInfoModal(props: TxModalProps): JSX.Element {
         </div>
       </Modal.Body>
       <Modal.Footer>
-        {props.txtype === getWithdrawHash() ? (
+        {props.txtype === withdrawCircuitHash ? (
           <Button
             style={{
               background: '#7B3FE4',

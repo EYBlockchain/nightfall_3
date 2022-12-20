@@ -174,9 +174,9 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
   // 2. Save transactions hash of the transactions in this L2 block that contains withdraw transactions for this client
   // transactions hash is a linear hash of the transactions in an L2 block which is calculated during proposeBlock in
   // the contract
-  console.log("SAVE BLOCK", await countCircuitTransactions(block.transactionHashes, circuitHash));
+  console.log('SAVE BLOCK', await countCircuitTransactions(block.transactionHashes, circuitHash));
   if ((await countCircuitTransactions(block.transactionHashes, circuitHash)) > 0) {
-    console.log("CONTAINS WITHD")
+    console.log('CONTAINS WITHD');
     const transactionHashesTimber = new Timber(...[, , , ,], TXHASH_TREE_HASH_TYPE, height);
 
     const updatedTransactionHashesTimber = Timber.statelessUpdate(

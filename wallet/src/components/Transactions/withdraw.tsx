@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from 'react-bootstrap';
-//import InstantWithdraw from '../Modals/instantWithdrawal';
+// import InstantWithdraw from '../Modals/instantWithdrawal';
 import './withdraw.scss';
 
 interface WithdrawProps {
