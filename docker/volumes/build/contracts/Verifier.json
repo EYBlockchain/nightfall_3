@@ -9541,12 +9541,12 @@
     "80001": {
       "events": {},
       "links": {},
-      "address": "0x2B88D344705d0b828CE13108a42e51bD54301f57",
-      "transactionHash": "0x962fc97bc716c3bf3359ae0dbb763e09284aebbc92d85c53d1505a0a8f91f627"
+      "address": "0x29D24f276fc2A2cCDC9556a89dC683f74C7DcEB5",
+      "transactionHash": "0x037f641e311dd3eccf9137f9418bf97aeb92d5d50fe87035e360a1282698ddc2"
     }
   },
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-20T19:39:31.683Z",
+  "updatedAt": "2022-12-20T19:50:50.341Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

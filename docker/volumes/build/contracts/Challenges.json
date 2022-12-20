@@ -47074,16 +47074,16 @@
         }
       },
       "links": {
-        "Verifier": "0x2B88D344705d0b828CE13108a42e51bD54301f57",
-        "Utils": "0x1E54d9172a7bd51B7B6Ca924Bef074a2C0eB8591",
-        "ChallengesUtil": "0xD4Ae31d23F62Adde623C6bF770AA04F65669d977"
+        "Verifier": "0x29D24f276fc2A2cCDC9556a89dC683f74C7DcEB5",
+        "Utils": "0xbfF6cBEA7adFab9f5a4b244e68a71584f9b656A2",
+        "ChallengesUtil": "0xa43FC853293c5A953710432Bd67c1f1a86e229DB"
       },
-      "address": "0x28F1e113e7040E7DC071f5c74a45ea1aEB8D1a58",
-      "transactionHash": "0xa47d24b23eb2d58541f9fe9d8f94c579b92631dce56ae97f2c2f102247e652d7"
+      "address": "0x69160aC18F7e76f9A93F1BB4692aBbD33b59adbe",
+      "transactionHash": "0x50191363a389a4c8164942394fc00d9642d7a75387408813014e3c8323dd1901"
     }
   },
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-20T19:39:31.768Z",
+  "updatedAt": "2022-12-20T19:50:50.415Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
