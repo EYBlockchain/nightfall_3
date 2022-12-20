@@ -1,8 +1,10 @@
 import React from 'react';
+import { generalise } from 'general-number';
 import { Button, Modal } from 'react-bootstrap';
 import { markWithdrawState } from '@Nightfall/services/database';
 import { finaliseWithdrawal } from '@Nightfall/services/finalise-withdrawal';
 import { isValidWithdrawal } from '@Nightfall/services/valid-withdrawal';
+import { getStoreCircuit } from '@Nightfall/services/database.js';
 import { submitTransaction } from '../../common-files/utils/contract';
 import stylesModal from '../../styles/modal.module.scss';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
@@ -20,6 +22,13 @@ interface TxModalProps {
 }
 
 export default function TxInfoModal(props: TxModalProps): JSX.Element {
+  function getWithdrawHash(): string {
+    //const hashCircuit = await getStoreCircuit('withdraw-hash');
+    //const result = generalise(hashCircuit).hex(32).datatoString();
+    const result = generalise('0xc2d92e17cb').hex(32).toString();
+    return result;
+  }
+
   const confirmWithdraw = async () => {
     const shieldContractAddress = shieldAddressGet();
     const isValid = await isValidWithdrawal(props.transactionhash, shieldContractAddress);
@@ -75,7 +84,7 @@ export default function TxInfoModal(props: TxModalProps): JSX.Element {
         </div>
       </Modal.Body>
       <Modal.Footer>
-        {props.withdrawready && props.txtype === '2' ? (
+        {props.txtype === getWithdrawHash() ? (
           <Button
             style={{
               background: '#7B3FE4',

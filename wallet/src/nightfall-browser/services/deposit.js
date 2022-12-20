@@ -89,7 +89,7 @@ async function deposit(depositParams, shieldContractAddress) {
   await confirmBlock(lastBlockNumber, lastTree);
 
   const circuitHashData = await getStoreCircuit(`${circuitName}-hash`);
-  const circuitHash = circuitHashData.data;
+  const circuitHash = generalise(circuitHashData.data).hex(32);
 
   const salt = await randValueLT(BN128_GROUP_ORDER);
   const commitment = new Commitment({

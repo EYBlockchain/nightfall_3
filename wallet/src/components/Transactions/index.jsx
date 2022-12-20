@@ -1,4 +1,5 @@
 import React from 'react';
+import { generalise } from 'general-number';
 import { Row, Spinner, Image } from 'react-bootstrap';
 import importTokens from '@TokenList/index';
 import {
@@ -94,7 +95,9 @@ const Transactions = () => {
       // The value of transfers need to be derived from the components making up the transfer
       // Add sum nullifiers in transactions
       // Subtract sum of commitments we have.
-      if (safeTransactionType === '1')
+      const transferCircuitHashData = await getStoreCircuit(`transfer-hash`);
+      const transferHash = BigInt(transferCircuitHashData.data).toString();
+      if (safeTransactionType === transferHash)
         commitmentsDB.forEach(c => {
           if (tx.nullifiers.includes(c.nullifier)) value -= BigInt(c.preimage.value);
           else if (tx.commitments.includes(c._id)) value += BigInt(c.preimage.value);
@@ -121,8 +124,8 @@ const Transactions = () => {
 
       let withdrawReady = false;
 
-      const circuitHashData = await getStoreCircuit(`transfer-hash`);
-      const withdrawHash = circuitHashData.data;
+      const circuitHashData = await getStoreCircuit(`withdraw-hash`);
+      const withdrawHash = BigInt(circuitHashData.data).toString();
 
       if (
         safeTransactionType === withdrawHash &&
@@ -255,7 +258,7 @@ const Transactions = () => {
                     _id: tx._id,
                     recipientaddress: tx.recipientAddress,
                     withdrawready: tx.withdrawReady ? 1 : 0,
-                    txtype: tx.txType,
+                    txtype: generalise(tx.circuitHash).hex(32).toString(),
                   })
                 }
               >
