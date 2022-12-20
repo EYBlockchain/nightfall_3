@@ -7,7 +7,7 @@ import { submitTransaction } from '../../common-files/utils/contract';
 import stylesModal from '../../styles/modal.module.scss';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
 import successHand from '../../assets/img/success-hand.png';
-import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
+import nightfall from '../../assets/svg/nightfall.svg';
 
 interface TxModalProps {
   transactionhash: string;
@@ -65,7 +65,7 @@ export default function TxInfoModal(props: TxModalProps): JSX.Element {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {/* <Col xs={3}>Nightfall Hash</Col> */}
-            <img src={polygonNightfall} style={{ height: '32px', width: '32px' }}></img>
+            <img src={nightfall} style={{ height: '32px', width: '32px' }}></img>
             <p style={{ margin: '0' }}>
               {props?.transactionhash
                 ? `${props?.transactionhash.slice(0, 10)}...${props?.transactionhash.slice(-10)}`

@@ -4,7 +4,7 @@ import '../../styles/tokens.scss';
 import { IoIosArrowDown } from 'react-icons/io';
 import TokenItem from '../TokenItem/index.jsx';
 import { UserContext } from '../../hooks/User/index.jsx';
-import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
+import nightfall from '../../assets/svg/nightfall.svg';
 
 export default function Tokens(token) {
   const [state] = useContext(UserContext);
@@ -13,9 +13,9 @@ export default function Tokens(token) {
     <div className="maticTokensList">
       <div className="formHeader">
         <div className="leftSection">
-          <div className="headerH5">Balances on Polygon Nightfall</div>
+          <div className="headerH5">Balances on Nightfall</div>
           <div className="accountBox">
-            <img src={polygonNightfall} />
+            <img src={nightfall} />
             {state.compressedZkpPublicKey && (
               <div className="accountAddress">
                 {`${state.compressedZkpPublicKey.slice(

@@ -106,7 +106,7 @@ export async function checkIndexDBForCircuitHash(circuitInfo) {
     getStoreCircuitHash(`${circuitName}-zkey`),
   ]);
   if (record.every(r => typeof r !== 'undefined')) {
-    return record.every(r => r.dataHash === circuitInfo.wasmh || r.dataHash === circuitInfo.zkeyh);
+    return record.every(r => r.dataHash === circuitInfo.wasmh || r.dataHash === circuitInfo.zkh);
   }
   return false;
 }

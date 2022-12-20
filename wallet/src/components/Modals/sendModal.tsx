@@ -603,9 +603,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                     id="TokenItem_modalSend_compressedZkpPublicKey"
                   />
                   {!isValidAddress && (
-                    <p style={{ color: 'red' }}>
-                      Enter a valid address existing on the Polygon Nightfall L2
-                    </p>
+                    <p style={{ color: 'red' }}>Enter a valid address existing on Nightfall L2</p>
                   )}
                 </div>
                 <SendModalBalance>
