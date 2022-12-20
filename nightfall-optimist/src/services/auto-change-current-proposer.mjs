@@ -45,7 +45,9 @@ async function autoChangeCurrentProposer(proposerEthAddress) {
           logger.info(`${proposerEthAddress} is Calling changeCurrentProposer`);
           await stateContractInstance.methods.changeCurrentProposer().send();
         } else if (currentBlock - proposerStartBlock >= rotateProposerBlocks * MAX_ROTATE_TIMES) {
-          logger.info(`${proposerEthAddress} is not the next proposer and is Calling changeCurrentProposer`);
+          logger.info(
+            `${proposerEthAddress} is not the next proposer and is Calling changeCurrentProposer`,
+          );
           await stateContractInstance.methods.changeCurrentProposer().send();
         }
       } catch (err) {
