@@ -53,7 +53,7 @@ services:
       WHITELISTING: ${WHITELISTING}
       UPGRADE: ${UPGRADE_CONTRACTS}
       ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
-      TEST_SANCTIONS_CONTRACT: 'mock'
+      DEPLOY_MOCKED_SANCTIONS_CONTRACT: 'true'
 
   hosted-utils-api-server:
     build:
