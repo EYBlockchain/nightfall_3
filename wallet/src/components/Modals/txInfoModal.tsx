@@ -89,7 +89,7 @@ export default function TxInfoModal(props: TxModalProps): JSX.Element {
         </div>
       </Modal.Body>
       <Modal.Footer>
-        {props.txtype === withdrawCircuitHash ? (
+        {props.withdrawready && props.txtype === withdrawCircuitHash ? (
           <Button
             style={{
               background: '#7B3FE4',
