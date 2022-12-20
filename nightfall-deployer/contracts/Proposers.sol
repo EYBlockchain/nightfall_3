@@ -43,7 +43,6 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
             currentProposer = LinkedAddress(msg.sender, msg.sender, msg.sender, url, fee, false, 0);
             state.setProposer(msg.sender, currentProposer);
             state.setProposerStartBlock(block.number);
-            state.setNumProposers(1);
             emit NewCurrentProposer(currentProposer.thisAddress);
         } else {
             // only if it's not a proposer yet
@@ -78,10 +77,10 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
                 }
                 state.setProposer(proposersCurrent.thisAddress, proposersCurrent);
                 state.setProposer(msg.sender, proposer);
-                state.setNumProposers(state.numProposers() + 1);
             }
         }
         state.setCurrentProposer(currentProposer.thisAddress);
+        state.setNumProposers(state.numProposers() + 1);
     }
 
     // Proposers are allowed to deregister themselves at any point (even if they are the current proposer)
