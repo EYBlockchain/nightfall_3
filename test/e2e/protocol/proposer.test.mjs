@@ -45,9 +45,9 @@ const getCurrentProposer = async () => {
   return stateContractInstance.methods.getCurrentProposer().call();
 };
 
-const filterByThisProposer = async nf3proposer => {
-  const { proposers } = await nf3proposer.getProposers();
-  return proposers.filter(p => p.thisAddress === nf3proposer.ethereumAddress);
+const filterByThisProposer = async _nf3Proposer => {
+  const { proposers } = await _nf3Proposer.getProposers();
+  return proposers.filter(p => p.thisAddress === _nf3Proposer.ethereumAddress);
 };
 
 describe('Basic Proposer tests', () => {

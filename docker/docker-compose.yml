@@ -13,7 +13,7 @@ services:
         source: build
         target: /app/build/
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-local}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       LOG_LEVEL: ${LOG_LEVEL:-error}
@@ -38,7 +38,7 @@ services:
       - rabbitmq
       - mongodb
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-local}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
@@ -63,7 +63,7 @@ services:
     networks:
       - nightfall_network
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-local}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
@@ -153,7 +153,7 @@ services:
     networks:
       - nightfall_network
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-local}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}

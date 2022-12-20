@@ -37,6 +37,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     rootKey,
     fee = generalise(0),
     providedCommitments,
+    providedCommitmentsFee,
   } = generalise(withdrawParams);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(withdrawParams.ercAddress.toLowerCase());
@@ -51,8 +52,8 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     shieldContractAddress,
   );
 
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
 
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
@@ -61,11 +62,12 @@ async function withdraw(withdrawParams, shieldContractAddress) {
     totalValueToSend: withdrawValue,
     fee: fee.bigInt,
     ercAddress,
-    maticAddress,
+    feeL2TokenAddress,
     tokenId,
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
+    providedCommitmentsFee,
   });
 
   const circuitHashData = await getStoreCircuit(`${circuitName}-hash`);
@@ -107,7 +109,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
       publicData,
       privateData,
       commitmentsInfo.roots,
-      maticAddress,
+      feeL2TokenAddress,
       VK_IDS[circuitName].numberNullifiers,
       VK_IDS[circuitName].numberCommitments,
     );

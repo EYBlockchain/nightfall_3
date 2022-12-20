@@ -14,7 +14,7 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
 
   // unique hash to name witness and proof.json files
   // to avoid overwrite on concurrent call.
-  const fileNamePrefix = (await crypto.randomBytes(32)).toString('hex');
+  const fileNamePrefix = crypto.randomBytes(32).toString('hex');
 
   const circuitName = path.basename(folderpath);
   const witnessFile = `${circuitName}_${fileNamePrefix}_witness`;
@@ -29,6 +29,7 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
   }
   try {
     logger.debug('Compute witness...');
+
     await snarkjs.wtns.calculate(
       inputs,
       `${outputPath}/${folderpath}/${circuitName}_js/${circuitName}.wasm`,

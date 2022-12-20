@@ -1,4 +1,3 @@
-import WebSocket from 'ws';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
@@ -23,33 +22,12 @@ import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
 const { ZERO } = constants;
 
-let ws;
-
-export function setBlockProposedWebSocketConnection(_ws) {
-  ws = _ws;
-}
-
 /**
 This handler runs whenever a BlockProposed event is emitted by the blockchain
 */
 async function blockProposedEventHandler(data) {
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { block, transactions } = await getProposeBlockCalldata(data);
-
-  // If a service is subscribed to this websocket and listening for events.
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    await ws.send(
-      JSON.stringify({
-        type: 'blockProposed',
-        data: {
-          blockNumber: currentBlockCount,
-          transactionHash: transactionHashL1,
-          block,
-          transactions,
-        },
-      }),
-    );
-  }
 
   logger.debug({
     msg: 'Received BlockProposed event',

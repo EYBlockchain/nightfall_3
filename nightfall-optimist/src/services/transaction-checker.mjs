@@ -178,8 +178,8 @@ async function verifyProof(transaction) {
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = (
-    await shieldContractInstance.methods.getMaticAddress().call()
+  const feeL2TokenAddress = (
+    await shieldContractInstance.methods.getFeeL2TokenAddress().call()
   ).toLowerCase();
 
   const inputs = generalise(
@@ -196,7 +196,7 @@ async function verifyProof(transaction) {
       transaction.nullifiers,
       transaction.compressedSecrets,
       historicRoots.map(h => h.root),
-      maticAddress,
+      feeL2TokenAddress,
     ].flat(Infinity),
   ).all.bigInt.map(inp => inp.toString());
 

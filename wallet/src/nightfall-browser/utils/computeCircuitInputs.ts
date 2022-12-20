@@ -43,7 +43,7 @@ type Commitment = {
 const computePublicInputs = (
   tx: PublicInputs,
   rootsOldCommitments: string[],
-  maticAddress: string,
+  feeL2TokenAddress: string,
   numberNullifiers: number,
 ) => {
   const transaction = generalise(tx);
@@ -63,7 +63,7 @@ const computePublicInputs = (
     nullifiers: transaction.nullifiers.map((n: any) => n.field(BN128_GROUP_ORDER)),
     compressedSecrets: transaction.compressedSecrets.map((cs: any) => cs.field(BN128_GROUP_ORDER)),
     roots: roots.map((r: any) => r.field(BN128_GROUP_ORDER)),
-    feeAddress: generalise(maticAddress).field(BN128_GROUP_ORDER),
+    feeAddress: generalise(feeL2TokenAddress).field(BN128_GROUP_ORDER),
   };
 
   return publicTx;
@@ -126,11 +126,11 @@ const computeCircuitInputs = (
   txObject: PublicInputs,
   privateData: Record<string, any>,
   roots: string[],
-  maticAddress: string,
+  feeL2TokenAddress: string,
   numberNullifiers: number,
   numberCommitments: number,
 ): any => {
-  let witness: any = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
+  let witness: any = computePublicInputs(txObject, roots, feeL2TokenAddress, numberNullifiers);
   const {
     oldCommitmentPreimage,
     paths,

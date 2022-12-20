@@ -31,20 +31,25 @@ const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
 async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
   // let's extract the input items
-  const { offchain = false, providedCommitments, ...items } = withdrawParams;
+  const {
+    offchain = false,
+    providedCommitments,
+    providedCommitmentsFee,
+    ...items
+  } = withdrawParams;
   const { tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
 
   logger.debug({
     msg: 'Withdraw ERC Token and Fee addresses',
     ercAddress: ercAddress.hex(32),
-    maticAddress: maticAddress.hex(32),
+    feeL2TokenAddress: feeL2TokenAddress.hex(32),
   });
 
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
@@ -55,11 +60,12 @@ async function withdraw(withdrawParams) {
     totalValueToSend: withdrawValue,
     fee,
     ercAddress,
-    maticAddress,
+    feeL2TokenAddress,
     tokenId,
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
+    providedCommitmentsFee,
   });
 
   try {
@@ -99,7 +105,7 @@ async function withdraw(withdrawParams) {
       publicData,
       privateData,
       commitmentsInfo.roots,
-      maticAddress,
+      feeL2TokenAddress,
       VK_IDS[circuitName].numberNullifiers,
       VK_IDS[circuitName].numberCommitments,
     );

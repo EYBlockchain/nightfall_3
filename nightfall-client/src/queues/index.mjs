@@ -3,6 +3,7 @@ import transfer from './transfer.mjs';
 import withdraw from './withdraw.mjs';
 import tokenise from './tokenise.mjs';
 import burn from './burn.mjs';
+import transform from './transform.mjs';
 
 export default function receiveMessage() {
   deposit();
@@ -10,4 +11,5 @@ export default function receiveMessage() {
   withdraw();
   tokenise();
   burn();
+  transform();
 }

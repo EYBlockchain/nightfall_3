@@ -566,3 +566,20 @@ export async function waitTransactionToBeMined(txHash, web3, counter = 50) {
 export async function getLayer2Balances(_nf3User, tokenAddress) {
   return (await _nf3User.getLayer2Balances())[tokenAddress]?.[0].balance || 0;
 }
+
+export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {
+  const userCommitments = (
+    await axios.post(`${clientApiUrl}/commitment/compressedZkpPublicKeys`, [compressedZkpPublicKey])
+  ).data.commitmentsByListOfCompressedZkpPublicKey;
+
+  return userCommitments
+    .filter(c => c.isNullifiedOnChain === -1)
+    .map(c => {
+      return {
+        commitmentHash: c._id,
+        ercAddress: c.preimage.ercAddress,
+        tokenId: c.preimage.tokenId,
+        value: c.preimage.value,
+      };
+    });
+}
