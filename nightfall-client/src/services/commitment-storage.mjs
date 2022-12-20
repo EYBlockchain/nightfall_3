@@ -360,7 +360,12 @@ export async function getWalletPendingDepositBalance(compressedZkpPublicKey, erc
   ercAddressList = ercAddressList.map(e => e.toUpperCase());
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const query = { isDeposited: true, isNullified: false, isOnChain: { $eq: -1 } };
+  const query = {
+    isDeposited: true,
+    isNullified: false,
+    isOnChain: { $eq: -1 },
+    isCommitmentInTransaction: true,
+  };
   const options = {
     compressedZkpPublicKey: 1,
     'preimage.ercAddress': 1,

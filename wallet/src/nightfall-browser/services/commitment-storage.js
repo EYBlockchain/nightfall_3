@@ -398,7 +398,9 @@ export async function getWalletPendingDepositBalance() {
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const wallet =
     Object.keys(vals).length > 0
-      ? vals.filter(v => v.isDeposited && !v.isNullified && v.isOnChain === -1)
+      ? vals.filter(
+          v => v.isDeposited && !v.isNullified && v.isOnChain === -1 && v.isCommitmentInTransaction,
+        )
       : [];
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
