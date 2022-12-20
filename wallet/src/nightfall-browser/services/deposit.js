@@ -19,7 +19,7 @@ import { getContractInstance } from '../../common-files/utils/contract';
 import { compressProof } from '../../common-files/utils/curve-maths/curves';
 import logger from '../../common-files/utils/logger';
 import { Commitment, Transaction } from '../classes/index';
-import { storeCommitment } from './commitment-storage';
+import { getCommitmentByHash, storeCommitment } from './commitment-storage';
 import { ZkpKeys } from './keys';
 import { checkIndexDBForCircuit, getLatestTree, getMaxBlock, getStoreCircuit } from './database';
 
@@ -32,9 +32,16 @@ async function deposit(depositParams, shieldContractAddress) {
   logger.info('Creating a deposit transaction');
   // before we do anything else, long hex strings should be generalised to make
   // subsequent manipulations easier
+
   const { tokenType, providedCommitmentsFee, ...items } = depositParams;
   const ercAddress = generalise(depositParams.ercAddress.toLowerCase());
-  const { tokenId, value, fee, rootKey } = generalise(items);
+  const {
+    salt = (await randValueLT(BN128_GROUP_ORDER)).hex(),
+    tokenId,
+    value,
+    fee,
+    rootKey,
+  } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
 
@@ -91,8 +98,7 @@ async function deposit(depositParams, shieldContractAddress) {
   const circuitHashData = await getStoreCircuit(`${circuitName}-hash`);
   const circuitHash = circuitHashData.data;
 
-  const salt = await randValueLT(BN128_GROUP_ORDER);
-  const commitment = new Commitment({
+  let commitment = new Commitment({
     ercAddress,
     tokenId,
     value: valueNewCommitment,
@@ -100,6 +106,16 @@ async function deposit(depositParams, shieldContractAddress) {
     salt,
   });
   logger.debug(`Hash of new commitment is ${commitment.hash.hex()}`);
+
+  const commitmentDB = await getCommitmentByHash(commitment);
+
+  if (commitmentDB) {
+    if (commitmentDB.isOnChain !== -1) {
+      throw new Error('You can not re-send a commitment that is already on-chain');
+    } else {
+      commitment = commitmentDB;
+    }
+  }
 
   // Mark the commitment as deposited
   commitment.isDeposited = true;
