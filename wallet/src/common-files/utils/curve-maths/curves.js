@@ -52,7 +52,6 @@ export function compressG2(point) {
 export function compressProof(_proof) {
   let proof;
   if (Array.isArray(_proof)) {
-    console.log("PROOF LENTH", _proof.length)
     if (_proof.length !== 8) throw new Error('Flat proof array should have length 8');
     proof = _proof;
   } else {
