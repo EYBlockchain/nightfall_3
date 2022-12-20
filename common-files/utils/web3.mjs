@@ -43,6 +43,16 @@ export default {
     }
     return false;
   },
+
+  /**
+   * Returns the current block number
+   *
+   * @return {Number} -
+   */
+  getBlockNumber() {
+    return this.web3.eth.getBlockNumber();
+  },
+
   disconnect() {
     this.web3.currentProvider.connection.close();
   },

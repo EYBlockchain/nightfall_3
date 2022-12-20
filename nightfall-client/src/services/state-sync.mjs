@@ -12,6 +12,7 @@ import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
 import downloadFile from '@polygon-nightfall/common-files/utils/httputils.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { unpauseQueue } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
+import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
@@ -24,6 +25,7 @@ const {
   CONTRACT_ARTIFACTS,
   STATE_GENESIS_BLOCK,
   DEPLOYMENT_FILES_URL: { DEFAULT_CONTRACT_FILES_URL },
+  EDGE_MAX_BLOCK_RANGE,
 } = config;
 
 const { ETH_NETWORK, CONTRACT_FILES_URL } = process.env;
@@ -38,15 +40,40 @@ export const syncState = async (
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // BlockProposed
   const challengesContractInstance = await waitForContract(CHALLENGES_CONTRACT_NAME); // Rollback
 
-  const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
+  const web3 = Web3.connection();
+  const currentBlockNumber = await web3.getBlockNumber();
+  const batchCount = Math.ceil(currentBlockNumber / EDGE_MAX_BLOCK_RANGE);
+  const isEdge = ETH_NETWORK === 'staging_edge';
 
-  const pastChallengeEvents = await challengesContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
+  logger.info({ msg: 'Network info', isEdge, currentBlockNumber });
+
+  const pastStateEvents = isEdge
+    ? await Promise.all(
+        Array.from({ length: batchCount }, (_, index) =>
+          stateContractInstance.getPastEvents(eventFilter, {
+            fromBlock: index * EDGE_MAX_BLOCK_RANGE,
+            toBlock: (index + 1) * EDGE_MAX_BLOCK_RANGE - 1,
+          }),
+        ),
+      ).then(events => events.filter(({ length }) => length).flat())
+    : await stateContractInstance.getPastEvents(eventFilter, {
+        fromBlock,
+        toBlock,
+      });
+
+  const pastChallengeEvents = isEdge
+    ? await Promise.all(
+        Array.from({ length: batchCount }, (_, index) =>
+          challengesContractInstance.getPastEvents(eventFilter, {
+            fromBlock: index * EDGE_MAX_BLOCK_RANGE,
+            toBlock: (index + 1) * EDGE_MAX_BLOCK_RANGE - 1,
+          }),
+        ),
+      ).then(events => events.filter(({ length }) => length).flat())
+    : await challengesContractInstance.getPastEvents(eventFilter, {
+        fromBlock,
+        toBlock,
+      });
 
   // Put all events together and sort chronologically as they appear on Ethereum
   const splicedList = pastStateEvents
