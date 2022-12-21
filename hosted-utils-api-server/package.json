@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/index.mjs",
+    "dev": "nodemon src/index.mjs",
     "start:debug": "node --inspect=0.0.0.0:9229 src/index.mjs"
   },
   "author": "“Liju <“liju.jose@gds.ey.com”>",

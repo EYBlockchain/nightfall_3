@@ -84,6 +84,7 @@ services:
       ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
       ETH_ADDRESS: ${ETH_ADDRESS}
       DEPLOY_MOCKED_SANCTIONS_CONTRACT: ${DEPLOY_MOCKED_SANCTIONS_CONTRACT:-true}
+      FEE_L2_TOKEN_ID: 'MATIC'
 
   hosted-utils-api-server:
     build:

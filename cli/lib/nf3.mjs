@@ -1277,9 +1277,16 @@ class Nf3 {
     @async
     */
   async startChallenger() {
-    const challengeEmitter = new EventEmitter();
+    const challengeEmitter = this.createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
+
     this.websockets.push(connection); // save so we can close it properly later
+
+    /*
+      we can't setup up a ping until the connection is made because the ping function
+      only exists in the underlying 'ws' object (_ws) and that is undefined until the
+      websocket is opened, it seems. Hence, we put all this code inside the onopen.
+     */
     connection.onopen = () => {
       // setup a ping every 15s
       this.intervalIDs.push(
@@ -1289,12 +1296,16 @@ class Nf3 {
       );
       // and a listener for the pong
       logger.debug('Challenge websocket connection opened');
+
       connection.send('challenge');
     };
+
     connection.onmessage = async message => {
       const msg = JSON.parse(message.data);
       const { type, txDataToSign, sender } = msg;
+
       logger.debug(`Challenger received websocket message of type ${type}`);
+
       // if we're about to challenge, check it's actually our challenge, so as not to waste gas
       if (type === 'challenge' && sender !== this.ethereumAddress) return null;
       if (type === 'commit' || type === 'challenge') {
@@ -1311,6 +1322,11 @@ class Nf3 {
             );
             challengeEmitter.emit('receipt', receipt, type, txSelector);
           } catch (err) {
+            logger.error({
+              msg: 'Error while trying to challenge a block',
+              type,
+              err,
+            });
             challengeEmitter.emit('error', err, type, txSelector);
           }
         });
