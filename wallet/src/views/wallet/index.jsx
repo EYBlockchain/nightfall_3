@@ -211,8 +211,8 @@ function WalletModal(props) {
     <Modal {...props} size="lg" aria-labelledby="contained-modal-title-vcenter" centered>
       <Modal.Header closeButton>
         <Modal.Title id="contained-modal-title-vcenter">
-          {isNewWallet && <h3>Create a new Polygon Nightfall Wallet</h3>}
-          {!isNewWallet && <h3>Recover your Polygon Nightfall Wallet</h3>}
+          {isNewWallet && <h3>Create a new Nightfall Wallet</h3>}
+          {!isNewWallet && <h3>Recover your Nightfall Wallet</h3>}
           <div style={{ marginTop: '20px', marginBottom: '10px' }}>
             <Button
               style={{ backgroundColor: isNewWallet ? '#7b3fe4' : '#997bcf', border: '0px' }}
@@ -241,7 +241,7 @@ function WalletModal(props) {
       <Modal.Body>
         {isNewWallet && (
           <p>
-            Polygon Nightfall accounts are protected by a 12 word mnemonic. It is important that you
+            Nightfall accounts are protected by a 12 word mnemonic. It is important that you
             securely store these words. Losing access to these words will result in a loss of access
             to your funds. Do not reveal them to anyone.
           </p>
@@ -252,7 +252,7 @@ function WalletModal(props) {
               padding: '0px 8px',
             }}
           >
-            Polygon Nightfall accounts are protected by a 12 word mnemonic.{' '}
+            Nightfall accounts are protected by a 12 word mnemonic.{' '}
             <b>Insert the words that you have securely storeds and select your backup file.</b>
           </p>
         )}

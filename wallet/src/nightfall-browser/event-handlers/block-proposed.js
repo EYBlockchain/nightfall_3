@@ -167,7 +167,7 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
   }
 
   const circuitHashData = await getStoreCircuit(`withdraw-hash`);
-  const circuitHash = circuitHashData.data;
+  const circuitHash = generalise(circuitHashData.data).hex(32);
 
   // If this L2 block contains withdraw transactions known to this client,
   // the following needs to be saved for later to be used during finalise/instant withdraw

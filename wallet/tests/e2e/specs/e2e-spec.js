@@ -48,7 +48,7 @@ describe('End to End tests', () => {
     });
 
     it('generate Mnemonic and set state', () => {
-      cy.contains('Polygon Nightfall Wallet').click();
+      cy.contains('Nightfall Wallet').click();
       cy.get('button').contains('Generate Mnemonic', { timeout: 10000 }).click();
       cy.get('button').contains('Create Wallet', { timeout: 10000 }).click();
       cy.confirmMetamaskSignatureRequest().then(confirmed => expect(confirmed).to.be.true);

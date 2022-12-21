@@ -106,7 +106,7 @@ export async function checkIndexDBForCircuitHash(circuitInfo) {
     getStoreCircuitHash(`${circuitName}-zkey`),
   ]);
   if (record.every(r => typeof r !== 'undefined')) {
-    return record.every(r => r.dataHash === circuitInfo.wasmh || r.dataHash === circuitInfo.zkeyh);
+    return record.every(r => r.dataHash === circuitInfo.wasmh || r.dataHash === circuitInfo.zkh);
   }
   return false;
 }
@@ -189,9 +189,9 @@ export async function saveBlock(_block) {
   if (!block.blockNumber)
     throw new Error('Layer 2 blocks must be saved with a valid Layer 1 block number');
   const db = await connectDB();
-  const query = { _id: block._id };
-  const update = { $set: block };
-  return db.collection(SUBMITTED_BLOCKS_COLLECTION).updateOne(query, update, { upsert: true });
+
+  // update value or create a new one
+  return db.put(SUBMITTED_BLOCKS_COLLECTION, block, block._id);
 }
 
 /**
@@ -267,9 +267,10 @@ export async function saveTransaction(_transaction) {
     ..._transaction,
   };
   const db = await connectDB();
-  const query = { transactionHash: transaction.transactionHash };
-  const update = { $set: transaction };
-  return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  transaction.createdTime = _transaction?.createdTime ?? Math.floor(Date.now() / 1000);
+
+  // update or create new transaction record
+  return db.put(TRANSACTIONS_COLLECTION, transaction, transaction._id);
 }
 
 /*

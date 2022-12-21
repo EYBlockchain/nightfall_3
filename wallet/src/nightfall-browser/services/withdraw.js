@@ -72,7 +72,7 @@ async function withdraw(withdrawParams, shieldContractAddress) {
 
   const circuitHashData = await getStoreCircuit(`${circuitName}-hash`);
 
-  const circuitHash = circuitHashData.data;
+  const circuitHash = generalise(circuitHashData.data).hex(32);
 
   try {
     // now we have everything  we need to create a Witness and compute a proof

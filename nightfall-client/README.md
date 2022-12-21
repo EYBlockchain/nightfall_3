@@ -16,7 +16,7 @@ v3.5.
 You will need a local copy of `node` and `npm` to run the tests and `git` to clone the repository.
 We have tested with versions 16.17.0 and 8.15.0 of `node` and `npm`, respectively.
 
-This code generates a containerised client application that can be used to interact with Polygon
+This code generates a containerised client application that can be used to interact with
 Nightfall via http endpoints.
 
 It has a docker-compose.yml file that will run nightfall-client up with local file system bindings
@@ -30,7 +30,7 @@ following instructions explain how set up testnet and mainnet deployment for thi
 
 ### Testnet and mainnet deployment
 
-To test Polygon Nightfall with this client in the current testnet or mainnet deployment you need to
+To test Nightfall with this client in the current testnet or mainnet deployment you need to
 configure a `client.env` file in the root folder of `nightfall-client` with the needed variables to
 run the client.
 
@@ -47,7 +47,7 @@ BLOCKCHAIN_WS_HOST=eth-goerli.alchemyapi.io/v2/xxxxxxxxxxxxxxxxxxxxxxxxxxxxs
 ```
 
 To run the script with existing images of the different services based on the
-`docker-compose.client.yml` of the Polygon Nightfall root folder:
+`docker-compose.client.yml` of the Nightfall root folder:
 
 ```
 ./start-client
@@ -68,6 +68,6 @@ This will run a docker-compose with the needed components:
 
 ### Localhost deployment
 
-If you just want to run Polygon Nightfall in localhost then use `./bin/start-nightfall` script with all
+If you just want to run Nightfall in localhost then use `./bin/start-nightfall` script with all
 necessary services conteainerised in localhost. See the README in the
-[Polygon Nightfall](https://github.com/EYBlockchain/nightfall_3) repository
+[Nightfall](https://github.com/EYBlockchain/nightfall_3) repository

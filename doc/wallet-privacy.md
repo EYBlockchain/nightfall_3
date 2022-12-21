@@ -1,10 +1,10 @@
-# Maintaining Privacy with the Polygon-Nightfall Wallet
+# Maintaining Privacy with the Nightfall Wallet
 
-When used correctly, the Polygon-Nightfall wallet can provide fully private transfers
+When used correctly, the Nightfall wallet can provide fully private transfers
 of ERC20 tokens. However, correct use is important. This document describes how to
 achieve that.
 
-Polygon-Nightfall is tested on a Chrome browser. During Beta, mileage may vary on
+Nightfall is tested on a Chrome browser. During Beta, mileage may vary on
 other browsers.
 
 ## Privacy of commitments
@@ -22,9 +22,9 @@ convenience debate.
 
 ## On-Chain privacy
 
-Recall that Polygon-Nightfall has three parts to its token lifecycle:
+Recall that Nightfall has three parts to its token lifecycle:
 
-1. Deposit of conventional ERC20 tokens from Ethereum (Layer 1) into the Polygon-Nightfall
+1. Deposit of conventional ERC20 tokens from Ethereum (Layer 1) into the Nightfall
 Layer 2.
 2. UTXO-like transfer within Layer 2, including possible receipt of change if the
 transferred amount is less than the input amount.
@@ -37,8 +37,7 @@ to Layer 1 by destroying a Layer 2 commitment, everyone knows who received it an
 
 Privacy comes entirely from transfers within Layer 2. From the point of view of the
 Ethereum blockchain, these are fully private. The only data leaked is your IP address when
-you send a transfer transaction to a Block Proposer. For early Beta, Polygon runs the
-only Proposers.
+you send a transfer transaction to a Block Proposer. 
 
 Remember too that ZKP privacy solutions are, essentially, decentralised coin tumblers, and so privacy
 comes from hiding in a crowd.
