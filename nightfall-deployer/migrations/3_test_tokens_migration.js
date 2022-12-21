@@ -11,6 +11,7 @@ const Shield = artifacts.require('Shield.sol');
 const ERC20Mock = artifacts.require('ERC20Mock.sol');
 const ERC721Mock = artifacts.require('ERC721Mock.sol');
 const ERC1155Mock = artifacts.require('ERC1155Mock.sol');
+const RLN = artifacts.require('RLN.sol');
 
 const liquidityProviderAddress = '0x4789FD18D5d71982045d85d5218493fD69F55AC4';
 const nERC721 = 35;
@@ -57,8 +58,10 @@ module.exports = function (deployer, _, accounts) {
       // For e2e tests
       await deployer.deploy(ERC721Mock);
       await deployer.deploy(ERC1155Mock);
+      await deployer.deploy(RLN, 'https://example.com/api/item/{id}.json');
       const ERC721deployed = await ERC721Mock.deployed();
       const ERC1155deployed = await ERC1155Mock.deployed();
+      const RLNdeployed = await RLN.deployed();
       // For e2e tests
       for (let i = 0; i < nERC721; i++) {
         await ERC721deployed.awardItem(addresses.user1, `https://erc721mock/item-id-${i}.json`);
@@ -73,6 +76,15 @@ module.exports = function (deployer, _, accounts) {
         [100000, 200000, 10, 50, 80000],
         [],
       );
+
+      console.log('Adding Bank 1 as entity...');
+      await RLNdeployed.addEntity('Bank 1', accounts[0]);
+      console.log(`Accepting customer ${addresses.user1}...`);
+      await RLNdeployed.acceptCustomer(addresses.user1);
+      console.log(`Minting 10000 tokens of entity Bank 1 (tokenId: 1)...`);
+      await RLNdeployed.mint(1, 10000);
+      console.log(`Transferring 5000 tokens of entity Bank 1 to customer ${addresses.user1}...`);
+      await RLNdeployed.safeTransferFrom(addresses.user1, 1, 5000, []);
     }
   });
 };

@@ -17,6 +17,7 @@
     "test-erc20-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/erc20.test.mjs",
     "test-erc721-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/erc721.test.mjs",
     "test-erc1155-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/erc1155.test.mjs",
+    "test-rln-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/rln.test.mjs",
     "test-l2tokenisation": "npx hardhat test --bail --no-compile test/e2e/tokens/l2tokenisation.test.mjs",
     "ping-pong": ". ./bin/export-multiproposer-test-env && npx hardhat test --bail --no-compile test/ping-pong/ping-pong.test.mjs",
     "test-administrator": "npx hardhat test --bail --no-compile test/multisig/administrator.test.mjs ",
