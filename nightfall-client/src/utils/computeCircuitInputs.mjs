@@ -10,7 +10,7 @@ const NULL_COMMITMENT = {
   salt: 0,
 };
 
-const computePublicInputs = (tx, rootsOldCommitments, maticAddress, numberNullifiers) => {
+const computePublicInputs = (tx, rootsOldCommitments, feeL2TokenAddress, numberNullifiers) => {
   const roots = utils.padArray(generalise(rootsOldCommitments), 0, numberNullifiers);
 
   const transaction = generalise(tx);
@@ -29,7 +29,7 @@ const computePublicInputs = (tx, rootsOldCommitments, maticAddress, numberNullif
     nullifiers: transaction.nullifiers.map(n => n.field(BN128_GROUP_ORDER)),
     compressedSecrets: transaction.compressedSecrets.map(cs => cs.field(BN128_GROUP_ORDER)),
     roots: roots.map(r => r.field(BN128_GROUP_ORDER)),
-    feeAddress: generalise(maticAddress).field(BN128_GROUP_ORDER),
+    feeAddress: generalise(feeL2TokenAddress).field(BN128_GROUP_ORDER),
   };
 };
 
@@ -97,11 +97,11 @@ export const computeCircuitInputs = (
   txObject,
   privateData,
   roots = [],
-  maticAddress,
+  feeL2TokenAddress,
   numberNullifiers,
   numberCommitments,
 ) => {
-  let witness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
+  let witness = computePublicInputs(txObject, roots, feeL2TokenAddress, numberNullifiers);
   const {
     oldCommitmentPreimage,
     paths,

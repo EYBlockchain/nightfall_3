@@ -291,7 +291,7 @@ contract Challenges is Stateful, Config {
 
         PublicInputs memory extraPublicInputs = PublicInputs(
             new uint256[](transaction.transaction.nullifiers.length),
-            super.getMaticAddress()
+            super.getFeeL2TokenAddress()
         );
 
         for (uint256 i = 0; i < transaction.transaction.nullifiers.length; ++i) {

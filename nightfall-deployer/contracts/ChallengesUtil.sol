@@ -59,7 +59,7 @@ library ChallengesUtil {
         uint256[] memory publicInputs = Utils.getPublicInputs(
             transaction,
             extraPublicInputs.roots,
-            extraPublicInputs.maticAddress
+            extraPublicInputs.feeL2TokenAddress
         );
         require(!Verifier.verify(proof1, publicInputs, vk), 'This proof appears to be valid');
     }

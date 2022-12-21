@@ -43,8 +43,8 @@ async function deposit(depositParams, shieldContractAddress) {
     shieldContractAddress,
   );
 
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
 
   let valueNewCommitment = value;
@@ -61,7 +61,7 @@ async function deposit(depositParams, shieldContractAddress) {
   };
 
   if (fee.bigInt > 0) {
-    if (maticAddress.hex(32) === ercAddress.hex(32)) {
+    if (feeL2TokenAddress.hex(32) === ercAddress.hex(32)) {
       if (value.bigInt < fee.bigInt) {
         throw new Error('Value deposited needs to be bigger than the fee');
       }
@@ -72,7 +72,7 @@ async function deposit(depositParams, shieldContractAddress) {
         totalValueToSend: 0n,
         fee,
         ercAddress,
-        maticAddress,
+        feeL2TokenAddress,
         rootKey,
         maxNullifiers: VK_IDS[circuitName].numberNullifiers,
         maxNonFeeNullifiers: 0,
@@ -140,7 +140,7 @@ async function deposit(depositParams, shieldContractAddress) {
     publicData,
     privateData,
     commitmentsInfo.roots,
-    maticAddress,
+    feeL2TokenAddress,
     VK_IDS[circuitName].numberNullifiers,
     VK_IDS[circuitName].numberCommitments,
   );

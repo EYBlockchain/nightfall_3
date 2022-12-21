@@ -51,14 +51,14 @@ async function transfer(transferParams) {
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
 
   logger.debug({
     msg: 'Transfer ERC Token & Fee addresses',
     ercAddress: ercAddress.hex(32),
-    maticAddress: maticAddress.hex(32),
+    feeL2TokenAddress: feeL2TokenAddress.hex(32),
   });
 
   const circuitName = TRANSFER;
@@ -69,7 +69,7 @@ async function transfer(transferParams) {
     fee,
     recipientZkpPublicKeysArray: recipientZkpPublicKeys,
     ercAddress,
-    maticAddress,
+    feeL2TokenAddress,
     tokenId,
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
@@ -129,7 +129,7 @@ async function transfer(transferParams) {
       publicData,
       privateData,
       commitmentsInfo.roots,
-      maticAddress,
+      feeL2TokenAddress,
       VK_IDS[circuitName].numberNullifiers,
       VK_IDS[circuitName].numberCommitments,
     );

@@ -30,8 +30,8 @@ async function transform(transformParams) {
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
 
   const circuitHash = await getCircuitHash('transform');
@@ -43,7 +43,7 @@ async function transform(transformParams) {
       totalValueToSend: generalise(token.value).bigInt,
       ercAddress: generalise(token.address.toLowerCase()),
       tokenId: generalise(token.id),
-      maticAddress,
+      feeL2TokenAddress,
       rootKey,
       providedCommitments: [token.commitmentHash],
     });
@@ -58,7 +58,7 @@ async function transform(transformParams) {
     totalValueToSend: 0n,
     fee,
     ercAddress: generalise(0),
-    maticAddress,
+    feeL2TokenAddress,
     rootKey,
     maxNullifiers: VK_IDS.transform.numberNullifiers - inputTokens.length,
     maxNonFeeNullifiers: 0,
@@ -67,7 +67,7 @@ async function transform(transformParams) {
   commitmentInfoArray.push(feeCi);
   const paddedInputTokens = [
     ...inputTokens,
-    ...Array(feeCi.nullifiers.length).fill({ address: maticAddress, id: 0 }),
+    ...Array(feeCi.nullifiers.length).fill({ address: feeL2TokenAddress, id: 0 }),
   ];
 
   const commitmentInfo = {
@@ -103,7 +103,7 @@ async function transform(transformParams) {
     outputCommitments.push(commitment);
   }
   commitmentInfo.newCommitments = [...outputCommitments, ...commitmentInfo.newCommitments];
-  const paddedOutputTokens = [...outputTokens, { address: maticAddress, id: 0 }];
+  const paddedOutputTokens = [...outputTokens, { address: feeL2TokenAddress, id: 0 }];
 
   try {
     logger.debug('creating transaction...');
@@ -144,7 +144,7 @@ async function transform(transformParams) {
       publicData,
       privateData,
       commitmentInfo.roots,
-      maticAddress,
+      feeL2TokenAddress,
       VK_IDS.transform.numberNullifiers,
       VK_IDS.transform.numberCommitments,
     );

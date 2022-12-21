@@ -43,8 +43,8 @@ async function tokenise(items) {
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
 
   const circuitName = TOKENISE;
@@ -54,7 +54,7 @@ async function tokenise(items) {
     totalValueToSend: 0n,
     fee,
     ercAddress,
-    maticAddress,
+    feeL2TokenAddress,
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     maxNonFeeNullifiers: 0,
@@ -99,7 +99,7 @@ async function tokenise(items) {
       publicData,
       privateData,
       commitmentsInfo.roots,
-      maticAddress,
+      feeL2TokenAddress,
       VK_IDS[circuitName].numberNullifiers,
       VK_IDS[circuitName].numberCommitments,
     );
