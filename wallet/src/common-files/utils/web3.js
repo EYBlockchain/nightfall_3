@@ -7,11 +7,11 @@ const { ethereum } = global;
 export const ChainIdMapping = {
   preprod: { chainId: '0x5', chainName: 'Goerli' },
   testnet: { chainId: '0x5', chainName: 'Goerli' },
-  mainnet: { chainId: '0x1', chainName: 'Ethereum Mainnet' },
+  mainnet: { chainId: '0x1', chainName: 'Mainnet' },
   staging: { chainId: '0x5', chainName: 'Goerli' },
   internal: { chainId: '0x5', chainName: 'Goerli' },
   local: { chainId: '0x539', chainName: 'Ganache' }, // 1337
-  production: { chainId: '0x1', chainName: 'Ethereum Mainnet' },
+  production: { chainId: '0x1', chainName: 'Mainnet' },
 };
 
 export default {
