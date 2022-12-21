@@ -61,7 +61,7 @@ module.exports = async function (deployer) {
   let sanctionsContractAddress = SANCTIONS_CONTRACT;
   // if we're just testing, we want to deploy a mock sanctions list. We do it here because
   // we need to know the address to give to the Shield contract
-  if (DEPLOY_MOCKED_SANCTIONS_CONTRACT === true) {
+  if (DEPLOY_MOCKED_SANCTIONS_CONTRACT === 'true') {
     await deployer.deploy(SanctionsListMock, sanctionedUser);
 
     sanctionsContractAddress = SanctionsListMock.address;
