@@ -644,6 +644,7 @@ async function verifyEnoughCommitments(
       .sort((a, b) => Number(a.preimage.value.bigInt - b.preimage.value.bigInt));
 
     const c = commitments.length; // Store the number of commitments
+    logger.debug({ msg: 'filered commitments', commitments });
 
     // At most, we can use (maxNullifiers - number of fee commitments needed) commitments to pay for the
     // transfer or withdraw. However, it is possible that the user doesn't have enough commitments.
@@ -652,6 +653,8 @@ async function verifyEnoughCommitments(
 
     const minimumFeeCommits = fee.bigInt > 0n ? 1 : 0;
     const maxPossibleCommitments = Math.min(c, maxNullifiers - minimumFeeCommits);
+
+    logger.trace({ maxPossibleCommitments });
 
     let j = 1;
     let sumHighestCommitments = 0n;
@@ -686,7 +689,7 @@ async function verifyEnoughCommitments(
     );
 
     // If not commitments are found, the fee cannot be paid, so throw an error
-    if (commitmentArrayFee.length === 0) throw new Error('no commitments found');
+    if (commitmentArrayFee.length === 0) throw new Error('no commitments found to cover the fee');
 
     // Turn the fee commitments into real commitment object and sort it
     commitmentsFee = commitmentArrayFee
@@ -869,16 +872,27 @@ function selectCommitments(commitments, value, minC, maxC) {
 async function findUsableCommitments(
   compressedZkpPublicKey,
   ercAddress,
-  tokenId,
+  _tokenId,
   ercAddressFee,
   _value,
   _fee,
   maxNullifiers,
   maxNonFeeNullifiers,
 ) {
-  const value = generalise(_value); // sometimes this is sent as a BigInt.
-  const fee = generalise(_fee); // sometimes this is sent as a BigInt.
+  // sometimes these are sent as a BigInt.
+  const value = generalise(_value);
+  const fee = generalise(_fee);
+  const tokenId = generalise(_tokenId);
 
+  logger.debug({
+    msg: 'verifying commitments',
+    compressedZkpPublicKey,
+    ercAddress,
+    tokenId,
+    value,
+    ercAddressFee,
+    fee,
+  });
   const commitmentsVerification = await verifyEnoughCommitments(
     compressedZkpPublicKey,
     ercAddress,
@@ -1004,29 +1018,16 @@ export async function getCommitmentsByCompressedZkpPublicKeyList(listOfCompresse
   return commitmentsByListOfCompressedZkpPublicKey;
 }
 
-export async function getCommitmentsByHash(hashes, compressedZkpPublicKey, ercAddress, tokenId) {
+export async function getCommitmentsByHash(hashes, compressedZkpPublicKey) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  logger.debug({
-    msg: 'DB lookup',
+  const query = {
+    _id: { $in: hashes },
     compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-    'preimage.ercAddress': generalise(ercAddress).hex(32),
-    'preimage.tokenId': generalise(tokenId).hex(32),
-    isNullified: false,
     isPendingNullification: false,
-  });
-  const commitment = await db
-    .collection(COMMITMENTS_COLLECTION)
-    .find({
-      _id: { $in: hashes },
-      compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
-      'preimage.ercAddress': generalise(ercAddress).hex(32),
-      'preimage.tokenId': generalise(tokenId).hex(32),
-      isNullified: false,
-      isPendingNullification: false,
-    })
-    .toArray();
-  return commitment;
+    isNullifiedOnChain: -1,
+  };
+  return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
 
 /**

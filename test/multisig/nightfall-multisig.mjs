@@ -227,16 +227,24 @@ export class NightfallMultiSig {
   }
 
   /**
-  This function sets the Matic address
+  This function sets the fee token address
   */
-  async setMaticAddress(newMaticAddress, signingKey, executorAddress, _nonce, transactions) {
+  async setFeeL2TokenAddress(
+    newFeeL2TokenAddress,
+    signingKey,
+    executorAddress,
+    _nonce,
+    transactions,
+  ) {
     let nonce = _nonce;
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
     return Promise.all(
       this.contractInstancesConfigurables().map(async (configurable, i) => {
         const contractInstance = configurable;
-        const data = contractInstance.methods.setMaticAddress(newMaticAddress).encodeABI();
+        const data = contractInstance.methods
+          .setFeeL2TokenAddress(newFeeL2TokenAddress)
+          .encodeABI();
         return this.multiSig.addMultiSigSignature(
           data,
           signingKey,

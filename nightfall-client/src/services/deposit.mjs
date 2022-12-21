@@ -27,12 +27,12 @@ const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, DEPOSIT, DEPOSIT_FEE } = constants;
 const { generalise } = gen;
 
-async function deposit(items) {
+async function deposit(depositParams) {
   logger.info('Creating a deposit transaction');
-
+  const { tokenType, providedCommitmentsFee, ...items } = depositParams;
+  const ercAddress = generalise(items.ercAddress.toLowerCase());
   // before we do anything else, long hex strings should be generalised to make subsequent manipulations easier
   const { tokenId, value, fee, rootKey } = generalise(items);
-  const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const zkpPublicKey = ZkpKeys.decompressZkpPublicKey(compressedZkpPublicKey);
   const salt = await randValueLT(BN128_GROUP_ORDER);
@@ -40,8 +40,8 @@ async function deposit(items) {
   // now we can compute a Witness so that we can generate the proof
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
 
-  const maticAddress = generalise(
-    (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
 
   let valueNewCommitment = value;
@@ -60,7 +60,7 @@ async function deposit(items) {
   let circuitName = DEPOSIT_FEE;
 
   if (fee.bigInt > 0) {
-    if (maticAddress.hex(32) === ercAddress.hex(32)) {
+    if (feeL2TokenAddress.hex(32) === ercAddress.hex(32)) {
       if (value.bigInt < fee.bigInt) {
         throw new Error('Value deposited needs to be bigger than the fee');
       }
@@ -71,10 +71,11 @@ async function deposit(items) {
         totalValueToSend: 0n,
         fee,
         ercAddress,
-        maticAddress,
+        feeL2TokenAddress,
         rootKey,
         maxNullifiers: VK_IDS[circuitName].numberNullifiers,
         maxNonFeeNullifiers: 0,
+        providedCommitmentsFee,
       });
     }
   } else {
@@ -106,7 +107,7 @@ async function deposit(items) {
     fee,
     historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
     circuitHash,
-    tokenType: items.tokenType,
+    tokenType,
     tokenId,
     value,
     ercAddress,
@@ -134,7 +135,7 @@ async function deposit(items) {
     publicData,
     privateData,
     commitmentsInfo.roots,
-    maticAddress,
+    feeL2TokenAddress,
     VK_IDS[circuitName].numberNullifiers,
     VK_IDS[circuitName].numberCommitments,
   );

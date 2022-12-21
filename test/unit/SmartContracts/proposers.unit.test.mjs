@@ -369,10 +369,10 @@ describe('Proposers contract Proposers functions', function () {
 
       expect((await state.stakeAccounts(addr1.address)).amount).to.equal(0);
 
-      expect((await state.pendingWithdrawalsFees(addr1.address)).feesEth).to.equal(
+      expect((await state.pendingWithdrawalsFees(addr1.address)).feesL1).to.equal(
         TimeLockedStakeBefore.amount.add(TimeLockedStakeBefore.challengeLocked),
       );
-      expect((await state.pendingWithdrawalsFees(addr1.address)).feesMatic).to.equal(0);
+      expect((await state.pendingWithdrawalsFees(addr1.address)).feesL2).to.equal(0);
     } else {
       console.log('Test skipped');
     }

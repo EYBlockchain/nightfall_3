@@ -17,6 +17,7 @@ import {
   x509,
   tokenise,
   burn,
+  transform,
 } from './routes/index.mjs';
 
 const app = express();
@@ -39,6 +40,7 @@ setupHttpDefaults(
     app.use('/withdraw', withdraw);
     app.use('/tokenise', tokenise);
     app.use('/burn', burn);
+    app.use('/transform', transform);
     app.use('/finalise-withdrawal', finaliseWithdrawal);
     app.use('/valid-withdrawal', isValidWithdrawal);
     app.use('/commitment', commitment);

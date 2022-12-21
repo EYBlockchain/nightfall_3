@@ -459,12 +459,12 @@ export const registerProposerOnNoProposer = async proposer => {
   function to wait for sufficient balance by waiting for pending transaction
   to be proposed
 */
-export const waitForSufficientBalance = ({ nf3User, value, ercAddress }) => {
+export const waitForSufficientBalance = ({ nf3User, value, ercAddress, message }) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
       const balance = await retrieveL2Balance(nf3User, ercAddress);
       logger.debug(
-        ` Balance needed for ${nf3User.ethereumAddress} is ${value}. Current balance ${balance}.`,
+        `${message} Balance needed for ${nf3User.ethereumAddress} is ${value}. Current balance ${balance}.`,
       );
       if (balance < value) {
         await waitForTimeout(10000);
@@ -535,3 +535,24 @@ export const emptyL2 = async ({ nf3User, web3, logs }) => {
   }
   await new Promise(resolve => setTimeout(resolve, 6000));
 };
+
+export async function getLayer2Balances(_nf3User, tokenAddress) {
+  return (await _nf3User.getLayer2Balances())[tokenAddress]?.[0].balance || 0;
+}
+
+export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {
+  const userCommitments = (
+    await axios.post(`${clientApiUrl}/commitment/compressedZkpPublicKeys`, [compressedZkpPublicKey])
+  ).data.commitmentsByListOfCompressedZkpPublicKey;
+
+  return userCommitments
+    .filter(c => c.isNullifiedOnChain === -1)
+    .map(c => {
+      return {
+        commitmentHash: c._id,
+        ercAddress: c.preimage.ercAddress,
+        tokenId: c.preimage.tokenId,
+        value: c.preimage.value,
+      };
+    });
+}
