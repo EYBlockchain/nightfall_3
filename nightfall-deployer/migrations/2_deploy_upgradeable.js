@@ -41,18 +41,6 @@ function sortAscending(hexArray) {
 const sortedOwners = sortAscending(APPROVERS);
 
 module.exports = async function (deployer) {
-
-  let sanctionsContractAddress = SANCTIONS_CONTRACT;
-  // if we're just testing, we want to deploy a mock sanctions list. We do it here because
-  // we need to know the address to give to the Shield contract
-  if (DEPLOY_MOCKED_SANCTIONS_CONTRACT === 'true') {
-    await deployer.deploy(SanctionsListMock, sanctionedUser);
-
-    sanctionsContractAddress = SanctionsListMock.address;
-
-    console.log('SANTIONED USER', sanctionsContractAddress, sanctionedUser);
-  }
-
   await deployer.deploy(Verifier);
   await deployer.link(Verifier, [Challenges, ChallengesUtil]);
 
@@ -69,6 +57,17 @@ module.exports = async function (deployer) {
   await deployer.link(ChallengesUtil, Challenges);
 
   await deployer.deploy(SimpleMultiSig, SIGNATURE_THRESHOLD, sortedOwners, network_id);
+
+  let sanctionsContractAddress = SANCTIONS_CONTRACT;
+  // if we're just testing, we want to deploy a mock sanctions list. We do it here because
+  // we need to know the address to give to the Shield contract
+  if (DEPLOY_MOCKED_SANCTIONS_CONTRACT === 'true') {
+    await deployer.deploy(SanctionsListMock, sanctionedUser);
+
+    sanctionsContractAddress = SanctionsListMock.address;
+
+    console.log('SANTIONED USER', sanctionsContractAddress, sanctionedUser);
+  }
 
   await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
