@@ -4,6 +4,7 @@
 Module that runs up as a proposer
 */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import config from 'config';
 
 const { TIMER_CHANGE_PROPOSER_SECOND, MAX_ROTATE_TIMES } = config;
@@ -50,10 +51,10 @@ async function checkAndChangeProposer(nf3) {
           await nf3.changeCurrentProposer();
         }
       } catch (err) {
-        logger.info(err);
+        logger.error(err);
       }
     }
-    await new Promise(resolve => setTimeout(resolve, TIMER_CHANGE_PROPOSER_SECOND * 1000));
+    await waitForTimeout(TIMER_CHANGE_PROPOSER_SECOND * 1000);
   }
 }
 
@@ -79,7 +80,7 @@ async function checkAndRegisterProposer(nf3, proposerBaseUrl) {
       }
     }
 
-    await new Promise(resolve => setTimeout(resolve, CHECK_REGISTER_PROPOSER_SECOND * 1000));
+    await waitForTimeout(CHECK_REGISTER_PROPOSER_SECOND * 1000);
   }
 }
 
