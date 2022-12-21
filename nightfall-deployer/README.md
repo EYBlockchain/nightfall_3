@@ -161,8 +161,9 @@ To perform a deployment follow the instructions bellow:
 
   - For the section `RESTRICTIONS`, the tokens' information should be added for the network that is going to be used in the deployment. For each token 
     that is going the be handled by the network, one entry should be added. The `address` should point to the respective address of the cryptocurrency and
-    `amount` is the determined max allowed value for deposits and withdrawals. One entry for `MATIC` is required. The placeholder `NETWORK_NAME` should be 
-    replaced with the network name:
+    `amount` is the determined max allowed value for deposits and withdrawals. 
+    In this token list should exist one entry related to the L2 Token that is going to be used to pay fees. After defining it, its ID should be set in the variable `FEE_L2_TOKEN_ID` (e.g. using the sample bellow, if one is going to use `WETH` as the L2 Token for paying fees, then set `FEE_L2_TOKEN_ID=WETH`).
+    The placeholder `NETWORK_NAME` should be replaced with the network name:
       ```
         tokens: {
             [NETWORK_NAME]: [

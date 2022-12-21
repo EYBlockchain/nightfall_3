@@ -24,6 +24,7 @@ const {
   TEST_OPTIONS: {
     addresses: { sanctionedUser },
   },
+  FEE_L2_TOKEN_ID
 } = config;
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
@@ -118,7 +119,7 @@ module.exports = async function (deployer) {
 
   // set Fee Token Address
   const feeL2TokenAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
-    token => token.name === 'MATIC',
+    token => token.name === FEE_L2_TOKEN_ID,
   ).address;
   await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
 
