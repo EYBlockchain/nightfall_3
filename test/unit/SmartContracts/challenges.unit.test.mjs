@@ -6,7 +6,7 @@ import {
   calculateBlockHash,
   createBlockAndTransactions,
 } from '../utils/utils.mjs';
-import { setTransactionInfo } from '../utils/stateStorage.mjs';
+import { setCommitmentHashEscrowed } from '../utils/stateStorage.mjs';
 import { unpackBlockInfo } from '../../../common-files/utils/block-utils.mjs';
 
 const { ethers, upgrades } = hardhat;
@@ -136,17 +136,9 @@ describe('Challenges contract Challenges functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -199,16 +191,9 @@ describe('Challenges contract Challenges functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -266,16 +251,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -334,17 +312,9 @@ describe('Challenges contract Challenges functions', function () {
       await state.setNumProposers(1);
       await state.setCurrentProposer(addr1.address);
       await state.setStakeAccount(addr1.address, amount, challengeLocked);
-      await setTransactionInfo(
-        shield.address,
-        calculateTransactionHash(transactionsCreated.withdrawTransaction),
-        true,
-        0,
-      );
-      await setTransactionInfo(
-        shield.address,
-        calculateTransactionHash(transactionsCreated.depositTransaction),
-        true,
-        0,
+      await setCommitmentHashEscrowed(
+        state.address,
+        transactionsCreated.depositTransaction.commitments,
       );
       await state.proposeBlock(
         transactionsCreated.block,
@@ -407,17 +377,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -475,17 +437,9 @@ describe('Challenges contract Challenges functions', function () {
     ]);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -532,17 +486,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -614,17 +560,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -689,17 +627,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -779,17 +709,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -881,17 +803,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -983,17 +897,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1073,17 +979,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1151,17 +1049,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1253,17 +1143,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1331,17 +1213,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1412,17 +1286,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1489,17 +1355,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1569,17 +1427,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1644,17 +1494,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,
@@ -1715,17 +1557,9 @@ describe('Challenges contract Challenges functions', function () {
     await state.setNumProposers(1);
     await state.setCurrentProposer(addr1.address);
     await state.setStakeAccount(addr1.address, amount, challengeLocked);
-    await setTransactionInfo(
+    await setCommitmentHashEscrowed(
       state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
-    );
-    await setTransactionInfo(
-      state.address,
-      calculateTransactionHash(transactionsCreated.depositTransaction),
-      true,
-      0,
+      transactionsCreated.depositTransaction.commitments,
     );
     await state.proposeBlock(
       transactionsCreated.block,

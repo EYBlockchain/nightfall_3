@@ -45,7 +45,11 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
         salt: plainTexts[3].bigInt,
       });
       if (commitment.hash.hex(32) === nonZeroCommitments[0]) {
-        logger.info('Successfully decrypted commitment for this recipient');
+        logger.info({
+          msg: 'Commitment successfully decrypted for this recipient',
+          commitment,
+          transactionHash: transaction.transactionHash,
+        });
         storeCommitments.push(storeCommitment(commitment, nullifierKey[j]));
       }
     } catch (err) {

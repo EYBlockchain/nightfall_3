@@ -11,6 +11,7 @@ import {
   Web3Client,
   expectTransaction,
   waitForTimeout,
+  clearMempool,
 } from './utils.mjs';
 
 // so we can use require with mjs file
@@ -31,7 +32,7 @@ const {
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, VK_IDS } = config;
 
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
-const nf3Proposer1 = new Nf3(signingKeys.proposer1, environment);
+const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 const web3Client = new Web3Client();
 
@@ -46,11 +47,11 @@ describe('Gas test', () => {
   let gasCost;
   let txPerBlock;
   before(async () => {
-    await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer('http://optimist', await nf3Proposer1.getMinimumStake());
+    await nf3Proposer.init(mnemonics.proposer);
+    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
     // Proposer listening for incoming events
-    const newGasBlockEmitter = await nf3Proposer1.startProposer();
+    const newGasBlockEmitter = await nf3Proposer.startProposer();
     newGasBlockEmitter.on('receipt', async receipt => {
       const { gasUsed } = receipt;
       console.log(
@@ -79,24 +80,12 @@ describe('Gas test', () => {
       txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
-    // we need more deposits because we won't have enough input transactions until
-    // after this block is made, by which time it's too late.
-    // also,the first  block costs more due to one-off setup costs.
-    it('First Block', async function () {
-      // We create enough transactions to fill blocks full of deposits.
-      await depositNTransactions(
-        nf3Users[0],
-        1,
-        erc20Address,
-        tokenType,
-        transferValue,
-        tokenId,
-        0,
-      );
-
-      await waitForTimeout(10000);
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+    after(async () => {
+      await clearMempool({
+        optimistUrl: environment.optimistApiUrl,
+        web3: web3Client,
+        logs: eventLogs,
+      });
     });
 
     it('should be a reasonable gas cost', async function () {
@@ -118,9 +107,6 @@ describe('Gas test', () => {
       const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Deposit L1 average gas used was', averageL1GasCost(receipts));
-
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
   });
 
@@ -133,6 +119,14 @@ describe('Gas test', () => {
           VK_IDS.transfer.numberCommitments) *
         32;
       txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
+    });
+
+    after(async () => {
+      await clearMempool({
+        optimistUrl: environment.optimistApiUrl,
+        web3: web3Client,
+        logs: eventLogs,
+      });
     });
 
     it('should be a reasonable gas cost', async function () {
@@ -155,9 +149,6 @@ describe('Gas test', () => {
       const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Transfer L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
-
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
   });
 
@@ -170,6 +161,14 @@ describe('Gas test', () => {
           VK_IDS.withdraw.numberCommitments) *
         32;
       txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
+    });
+
+    afterEach(async () => {
+      await clearMempool({
+        optimistUrl: environment.optimistApiUrl,
+        web3: web3Client,
+        logs: eventLogs,
+      });
     });
 
     it('should be a reasonable gas cost', async function () {
@@ -192,9 +191,6 @@ describe('Gas test', () => {
       const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Withdraw L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
-
-      await nf3Users[0].makeBlockNow();
-      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
     });
   });
 
@@ -228,8 +224,8 @@ describe('Gas test', () => {
   });
 
   after(async () => {
-    await nf3Proposer1.deregisterProposer();
-    await nf3Proposer1.close();
+    await nf3Proposer.deregisterProposer();
+    await nf3Proposer.close();
     await nf3Users[0].close();
     await web3Client.closeWeb3();
   });

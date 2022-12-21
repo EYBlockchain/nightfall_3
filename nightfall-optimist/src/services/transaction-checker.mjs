@@ -47,6 +47,10 @@ async function checkDuplicateCommitment({
         );
 
         if (transactionMempoolHigherFee !== null) {
+          logger.debug({
+            msg: 'Duplicate mempool commitment with higher fee: ',
+            transactionMempoolHigherFee,
+          });
           throw new TransactionError(
             `The transaction has a duplicate commitment ${commitment} in the mempool with a higher fee`,
             0,
@@ -106,6 +110,10 @@ async function checkDuplicateNullifier({
         );
 
         if (transactionMempoolHigherFee !== null) {
+          logger.debug({
+            msg: 'Duplicate mempool nullifier with higher fee: ',
+            transactionMempoolHigherFee,
+          });
           throw new TransactionError(
             `The transaction has a duplicate commitment ${nullifier} in the mempool with a higher fee`,
             1,
@@ -196,9 +204,11 @@ async function verifyProof(transaction) {
     }),
   );
 
-  logger.debug({
-    msg: 'The historic roots are the following',
-    historicRoots: historicRoots.map(h => h.root),
+  logger.info({
+    msg: 'Constructing proof with blockNumberL2s and roots',
+    transaction: transaction.transactionHash,
+    blockNumberL2s: transaction.historicRootBlockNumberL2.map(r => Number(r)),
+    roots: historicRoots.map(h => h.root),
   });
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
