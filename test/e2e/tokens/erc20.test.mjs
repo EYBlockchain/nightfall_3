@@ -468,7 +468,10 @@ describe('ERC20 tests', () => {
           0,
         );
 
-        await waitForSufficientTransactionsMempool({ nf3User, nTransactions: 6 });
+        await waitForSufficientTransactionsMempool({
+          optimistBaseUrl: environment.optimistApiUrl,
+          nTransactions: 6,
+        });
 
         await nf3Proposer.makeBlockNow();
         await waitForSufficientBalance({

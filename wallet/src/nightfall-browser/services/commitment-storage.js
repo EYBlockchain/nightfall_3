@@ -226,7 +226,7 @@ Without that number, we can't tell which spends to roll back.
 Once these properties are cleared, the commitment will automatically become
 available for spending again.
 */
-export async function clearNullified(blockNumberL2) {
+export async function clearNullifiedOnChain(blockNumberL2) {
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = res.filter(r => r.isNullifiedOnChain >= Number(blockNumberL2));
@@ -239,6 +239,29 @@ export async function clearNullified(blockNumberL2) {
           {
             isNullifiedOnChain: -1,
             blockNumber: -1,
+            transactionHashNullifiedL1: null,
+            ...rest,
+          },
+          f._id,
+        );
+      }),
+    );
+  }
+  return null;
+}
+
+export async function clearNullifiers(nullifiers) {
+  const db = await connectDB();
+  const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const filtered = res.filter(r => nullifiers.includes(r.nullifier));
+  if (filtered.length > 0) {
+    return Promise.all(
+      filtered.map(f => {
+        const { isNullified: a, ...rest } = f;
+        return db.put(
+          COMMITMENTS_COLLECTION,
+          {
+            isNullified: false,
             ...rest,
           },
           f._id,
@@ -250,19 +273,20 @@ export async function clearNullified(blockNumberL2) {
 }
 
 // as above, but removes isOnChain for deposit commitments
-export async function clearOnChain(blockNumberL2) {
+export async function clearOnChain(commitments) {
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
-  const filtered = res.filter(r => r.isNullifiedOnChain >= Number(blockNumberL2));
+  const filtered = res.filter(r => commitments.includes(r._id));
   if (filtered.length > 0) {
     return Promise.all(
       filtered.map(f => {
-        const { isNullifiedOnChain: a, blockNumber: b, ...rest } = f;
+        const { isOnChain: a, blockNumber: b, ...rest } = f;
         return db.put(
           COMMITMENTS_COLLECTION,
           {
             isOnChain: -1,
             blockNumber: -1,
+            transactionHashCommittedL1: null,
             ...rest,
           },
           f._id,
@@ -525,7 +549,7 @@ export async function getWalletCommitments() {
 export async function deleteCommitments(commitments) {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
-  const f = vals.filter(v => commitments.includes(v._id) && v.isOnChain === -1);
+  const f = vals.filter(v => commitments.includes(v._id));
   return Promise.all(f.map(deleteC => db.delete(COMMITMENTS_COLLECTION, deleteC._id)));
 }
 
