@@ -21,13 +21,14 @@ async function autoChangeCurrentProposer(proposerEthAddress) {
       .getRotateProposerBlocks()
       .call();
     const numproposers = await stateContractInstance.methods.getNumProposers().call();
-    const currentSprint = await stateContractInstance.methods.currentSprint().call();
     const currentBlock = await web3.eth.getBlockNumber();
-    const sprintInSpan = await stateContractInstance.methods.getSprintsInSpan().call();
 
     logger.info(`proposerEthAddress: ${proposerEthAddress}`);
 
     if (currentBlock - proposerStartBlock >= rotateProposerBlocks && numproposers > 1) {
+      const currentSprint = await stateContractInstance.methods.currentSprint().call();
+      const sprintInSpan = await stateContractInstance.methods.getSprintsInSpan().call();
+
       if (currentSprint === '0') {
         let spanProposersList = [];
         for (let i = 0; i < sprintInSpan; i++) {
@@ -51,7 +52,7 @@ async function autoChangeCurrentProposer(proposerEthAddress) {
           await stateContractInstance.methods.changeCurrentProposer().send();
         }
       } catch (err) {
-        logger.info(err);
+        logger.error(err);
       }
     }
     await new Promise(resolve => setTimeout(resolve, TIMER_CHANGE_PROPOSER_SECOND * 1000));
