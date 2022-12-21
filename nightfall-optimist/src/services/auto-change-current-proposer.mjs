@@ -3,6 +3,7 @@ import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 
 const { STATE_CONTRACT_NAME } = constants;
 
@@ -55,7 +56,7 @@ async function autoChangeCurrentProposer(proposerEthAddress) {
         logger.error(err);
       }
     }
-    await new Promise(resolve => setTimeout(resolve, TIMER_CHANGE_PROPOSER_SECOND * 1000));
+    await waitForTimeout(TIMER_CHANGE_PROPOSER_SECOND * 1000);
   }
 }
 
