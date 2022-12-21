@@ -81,7 +81,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
             'Shield: Too soon to get paid for this block'
         );
 
-        (uint248 feesMatic, bool stakeClaimed) = state.blockInfo(blockData.blockHash);
+        (uint248 feesL2, bool stakeClaimed) = state.blockInfo(blockData.blockHash);
         require(proposer == msg.sender, 'Shield: Not the proposer of this block');
         require(!stakeClaimed, 'Shield: Block stake for this block already claimed');
         state.setBlockStakeWithdrawn(blockHash);
@@ -89,8 +89,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         //Request fees
         state.resetFeeBookBlocksInfo(blockHash);
 
-        if (feesMatic > 0) {
-            IERC20Upgradeable(super.getMaticAddress()).safeTransfer(address(state), feesMatic);
+        if (feesL2 > 0) {
+            IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransfer(address(state), feesL2);
         }
 
         // recover the stake for that block
@@ -99,7 +99,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         stake.challengeLocked -= blockData.blockStake;
         state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
 
-        state.addPendingWithdrawal(msg.sender, 0, feesMatic);
+        state.addPendingWithdrawal(msg.sender, 0, feesL2);
     }
 
     /**

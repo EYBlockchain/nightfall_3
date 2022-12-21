@@ -210,7 +210,21 @@ for each container. You can add more proposers if needed configuring the paramet
 same way you can configure different clients with `client_x` sharing the same database
 `optimist_mongodb_x` because they have access to different mongo collections.
 
-To test in local you can run in a terminal
+To test in local you should run in a terminal
+
+```sh
+npm run build-adversary
+```
+
+this is because we are using a bad client and a lazy optimist in the tests and we should generate
+the transpilation of the code to use them. In the default test we are using:
+
+- 1 normal client
+- 1 bad client
+- 1 normal optimist
+- 1 lazy optimist
+
+Once we have the code built from the adversary we could start the test environment with
 
 ```sh
 ./bin/start-multiproposer-test-env -g

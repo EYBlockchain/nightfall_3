@@ -11,11 +11,7 @@ router.post('/', async (req, res, next) => {
     const { rawTransaction: txDataToSign, transaction } = await transfer(req.body);
     res.json({ txDataToSign, transaction });
   } catch (err) {
-    if (err.message.includes('no commitment')) {
-      res.json({ error: 'No suitable commitments' });
-    } else if (err.message.includes('invalid commitment hashes')) {
-      res.json({ error: err.message });
-    }
+    res.json({ error: err.message });
     next(err);
   }
 });

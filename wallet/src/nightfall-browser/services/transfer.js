@@ -38,7 +38,7 @@ const circuitName = 'transfer';
 async function transfer(transferParams, shieldContractAddress) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
-  const { providedCommitments, ...items } = transferParams;
+  const { providedCommitments, providedCommitmentsFee, ...items } = transferParams;
   const { tokenId, recipientData, rootKey, fee = generalise(0) } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
@@ -67,8 +67,8 @@ async function transfer(transferParams, shieldContractAddress) {
       shieldContractAddress,
     );
 
-    const maticAddress = generalise(
-      (await shieldContractInstance.methods.getMaticAddress().call()).toLowerCase(),
+    const feeL2TokenAddress = generalise(
+      (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
     );
 
     const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
@@ -77,11 +77,12 @@ async function transfer(transferParams, shieldContractAddress) {
       fee: fee.bigInt,
       recipientZkpPublicKeysArray: recipientZkpPublicKeys,
       ercAddress,
-      maticAddress,
+      feeL2TokenAddress,
       tokenId,
       rootKey,
       maxNullifiers: VK_IDS[circuitName].numberNullifiers,
       providedCommitments,
+      providedCommitmentsFee,
     });
 
     try {
@@ -142,7 +143,7 @@ async function transfer(transferParams, shieldContractAddress) {
         publicData,
         privateData,
         commitmentsInfo.roots,
-        maticAddress,
+        feeL2TokenAddress,
         VK_IDS[circuitName].numberNullifiers,
         VK_IDS[circuitName].numberCommitments,
       );

@@ -10,11 +10,10 @@ const NULL_COMMITMENT = {
   salt: 0,
 };
 
-const computePublicInputs = (tx, rootsOldCommitments, maticAddress, numberNullifiers) => {
+const computePublicInputs = (tx, rootsOldCommitments, feeL2TokenAddress, numberNullifiers) => {
   const roots = utils.padArray(generalise(rootsOldCommitments), 0, numberNullifiers);
 
   const transaction = generalise(tx);
-
   return {
     value: transaction.value.field(BN128_GROUP_ORDER),
     fee: transaction.fee.field(BN128_GROUP_ORDER),
@@ -30,7 +29,7 @@ const computePublicInputs = (tx, rootsOldCommitments, maticAddress, numberNullif
     nullifiers: transaction.nullifiers.map(n => n.field(BN128_GROUP_ORDER)),
     compressedSecrets: transaction.compressedSecrets.map(cs => cs.field(BN128_GROUP_ORDER)),
     roots: roots.map(r => r.field(BN128_GROUP_ORDER)),
-    feeAddress: generalise(maticAddress).field(BN128_GROUP_ORDER),
+    feeAddress: generalise(feeL2TokenAddress).field(BN128_GROUP_ORDER),
   };
 };
 
@@ -87,16 +86,22 @@ const computePrivateInputsCommitments = (
   };
 };
 
+const packErcAddress = (ercAddress, tokenId) => {
+  const [top4Bytes, remainder] = tokenId.limbs(224, 2).map(l => BigInt(l));
+  const packedErcAddress = ercAddress.bigInt + top4Bytes * SHIFT;
+  return [packedErcAddress, remainder].map(e => generalise(e).field(BN128_GROUP_ORDER));
+};
+
 // eslint-disable-next-line import/prefer-default-export
 export const computeCircuitInputs = (
   txObject,
   privateData,
   roots = [],
-  maticAddress,
+  feeL2TokenAddress,
   numberNullifiers,
   numberCommitments,
 ) => {
-  let witness = computePublicInputs(txObject, roots, maticAddress, numberNullifiers);
+  let witness = computePublicInputs(txObject, roots, feeL2TokenAddress, numberNullifiers);
   const {
     oldCommitmentPreimage,
     paths,
@@ -108,6 +113,8 @@ export const computeCircuitInputs = (
     ercAddress,
     tokenId,
     value,
+    inputTokens,
+    outputTokens,
   } = generalise(privateData);
   if (numberNullifiers > 0) {
     witness = {
@@ -134,10 +141,9 @@ export const computeCircuitInputs = (
   }
 
   if (ercAddress) {
-    const [top4Bytes, remainder] = tokenId.limbs(224, 2).map(l => BigInt(l));
-    const packedErcAddress = ercAddress.bigInt + top4Bytes * SHIFT;
-    witness.packedErcAddressPrivate = generalise(packedErcAddress).field(BN128_GROUP_ORDER);
-    witness.idRemainderPrivate = generalise(remainder).field(BN128_GROUP_ORDER);
+    const [packedErcAddress, remainder] = packErcAddress(ercAddress, tokenId);
+    witness.packedErcAddressPrivate = packedErcAddress;
+    witness.idRemainderPrivate = remainder;
   }
 
   if (ephemeralKey) {
@@ -146,6 +152,35 @@ export const computeCircuitInputs = (
 
   if (value) {
     witness.valuePrivate = value.field(BN128_GROUP_ORDER);
+  }
+
+  if (inputTokens && outputTokens) {
+    witness.inputPackedAddressesPrivate = [];
+    witness.inputIdRemaindersPrivate = [];
+    witness.outputPackedAddressesPrivate = [];
+    witness.outputIdRemaindersPrivate = [];
+
+    const emptyToken = generalise({ address: 0, id: 0 });
+    const inputTokensPadded = utils.padArray(inputTokens, emptyToken, numberNullifiers);
+    const outputTokensPadded = utils.padArray(outputTokens, emptyToken, numberCommitments);
+
+    for (let i = 0; i < numberNullifiers; i++) {
+      const current = inputTokensPadded.shift();
+      const inputErcAddress = current.address;
+      const inputTokenId = current.id;
+      const [packedErcAddress, remainder] = packErcAddress(inputErcAddress, inputTokenId);
+      witness.inputPackedAddressesPrivate.push(packedErcAddress);
+      witness.inputIdRemaindersPrivate.push(remainder);
+    }
+
+    for (let i = 0; i < numberCommitments; i++) {
+      const current = outputTokensPadded.shift();
+      const outputErcAddress = current.address;
+      const outputTokenId = current.id;
+      const [packedErcAddress, remainder] = packErcAddress(outputErcAddress, outputTokenId);
+      witness.outputPackedAddressesPrivate.push(packedErcAddress);
+      witness.outputIdRemaindersPrivate.push(remainder);
+    }
   }
   return witness;
 };

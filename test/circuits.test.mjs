@@ -51,39 +51,6 @@ describe('General Circuit Test', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
-  it.skip('Test that matic transfers pays the fee from the same transfer commitment', async () => {
-    async function getBalance() {
-      return Promise.all([
-        (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0,
-        (await nf3Users[1].getLayer2Balances())[erc20Address]?.[0].balance || 0,
-      ]);
-    }
-    logger.debug(`Sending 1 deposit of 10...`);
-    await nf3Users[0].deposit(erc20Address, tokenType, 10, tokenId, 0);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    const beforeBalances = await getBalance();
-
-    const singleTransfer = await nf3Users[0].transfer(
-      false,
-      erc20Address,
-      tokenType,
-      7,
-      tokenId,
-      nf3Users[1].zkpKeys.compressedZkpPublicKey,
-      1,
-    );
-    expectTransaction(singleTransfer);
-
-    await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
-
-    const afterBalances = await getBalance();
-
-    expect(afterBalances[0] - beforeBalances[0]).to.be.equal(-8);
-    expect(afterBalances[1] - beforeBalances[1]).to.be.equal(7);
-  });
-
   it('Test that all circuits are working without fees', async () => {
     async function getBalance() {
       return (await nf3Users[0].getLayer2Balances())[erc20Address]?.[0].balance || 0;

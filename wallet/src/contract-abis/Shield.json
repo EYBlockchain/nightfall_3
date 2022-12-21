@@ -547,7 +547,7 @@
   },
   {
     "inputs": [],
-    "name": "getMaticAddress",
+    "name": "getFeeL2TokenAddress",
     "outputs": [
       {
         "internalType": "address",
@@ -1117,11 +1117,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_maticAddress",
+        "name": "_feeL2TokenAddress",
         "type": "address"
       }
     ],
-    "name": "setMaticAddress",
+    "name": "setFeeL2TokenAddress",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

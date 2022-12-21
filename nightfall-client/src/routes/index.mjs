@@ -5,6 +5,7 @@ import transfer from './transfer.mjs';
 import withdraw from './withdraw.mjs';
 import tokenise from './tokenise.mjs';
 import burn from './burn.mjs';
+import transform from './transform.mjs';
 import finaliseWithdrawal from './finalise-withdrawal.mjs';
 import isValidWithdrawal from './valid-withdrawal.mjs';
 import commitment from './commitment.mjs';
@@ -19,6 +20,7 @@ export {
   withdraw,
   tokenise,
   burn,
+  transform,
   getContractAddress,
   getContractAbi,
   finaliseWithdrawal,

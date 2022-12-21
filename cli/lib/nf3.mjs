@@ -15,7 +15,7 @@ import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
 
 import {
-  DEFAULT_FEE_MATIC,
+  DEFAULT_FEE_TOKEN_VALUE,
   WEBSOCKET_PING_TIME,
   GAS_MULTIPLIER,
   GAS,
@@ -73,7 +73,7 @@ class Nf3 {
 
   zkpKeys;
 
-  defaultFeeMatic = DEFAULT_FEE_MATIC;
+  defaultFeeTokenValue = DEFAULT_FEE_TOKEN_VALUE;
 
   latestWithdrawHash;
 
@@ -459,7 +459,14 @@ class Nf3 {
     @param {string} salt - The salt used to mint the new token. It is optional
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
-  async tokenise(ercAddress, value = 0, tokenId = 0, salt = undefined, fee = this.defaultFeeMatic) {
+  async tokenise(
+    ercAddress,
+    value = 0,
+    tokenId = 0,
+    salt = undefined,
+    fee = this.defaultFeeTokenValue,
+    providedCommitmentsFee,
+  ) {
     const res = await axios.post(`${this.clientBaseUrl}/tokenise`, {
       ercAddress,
       tokenId,
@@ -467,10 +474,11 @@ class Nf3 {
       value,
       rootKey: this.zkpKeys.rootKey,
       fee,
+      providedCommitmentsFee,
     });
 
-    if (res.data.error && res.data.error === 'No suitable commitments') {
-      throw new Error('No suitable commitments');
+    if (res.data.error) {
+      throw new Error(res.data.error);
     }
     return res.status;
   }
@@ -485,13 +493,57 @@ class Nf3 {
     air, it can be any value
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
-  async burn(ercAddress, value, tokenId, providedCommitments, fee = this.defaultFeeMatic) {
+  async burn(
+    ercAddress,
+    value,
+    tokenId,
+    fee = this.defaultFeeTokenValue,
+    providedCommitments,
+    providedCommitmentsFee,
+  ) {
     const res = await axios.post(`${this.clientBaseUrl}/burn`, {
       ercAddress,
       tokenId,
       value,
       providedCommitments,
+      providedCommitmentsFee,
       rootKey: this.zkpKeys.rootKey,
+      fee,
+    });
+
+    if (res.data.error) {
+      throw new Error(res.data.error);
+    }
+    return res.status;
+  }
+
+  /**
+    Transform a set of input L2 tokens into a set of output L2 tokens 
+    @method
+    @async
+
+    @param {Object[]} inputTokens
+    @param {number} inputTokens[].id - the token id
+    @param {string} inputTokens[].address - the L2 address
+    @param {number} inputTokens[].value - this needs to be less than the total total value of the commitment but is ignored otherwise
+    @param {number} inputTokens[].salt
+    @param {string} inputTokens[].commitmentHash - the hash of the input commitment
+
+    @param {Object[]} outputTokens
+    @param {number} outputTokens[].id - the token id
+    @param {string} outputTokens[].address - the L2 address
+    @param {number} outputTokens[].value - this needs to be less than the total total value of the commitment but is ignored otherwise
+    @param {number} outputTokens[].salt
+
+    @param {number} fee - The amount (Wei) to pay a proposer for the transaction
+
+    @returns {Promise} Resolves into the Ethereum transaction receipt.
+    */
+  async transform(inputTokens, outputTokens, fee = this.defaultFeeTokenValue) {
+    const res = await axios.post(`${this.clientBaseUrl}/transform`, {
+      rootKey: this.zkpKeys.rootKey,
+      inputTokens,
+      outputTokens,
       fee,
     });
 
@@ -519,7 +571,14 @@ class Nf3 {
     @param {object} keys - The ZKP private key set.
     @returns {Promise} Resolves into the Ethereum transaction receipt.
     */
-  async deposit(ercAddress, tokenType, value, tokenId, fee = this.defaultFeeMatic) {
+  async deposit(
+    ercAddress,
+    tokenType,
+    value,
+    tokenId,
+    fee = this.defaultFeeTokenValue,
+    providedCommitmentsFee,
+  ) {
     let txDataToSign;
     try {
       logger.info(`Aproving trx...${this.ethereumAddress}`);
@@ -557,9 +616,13 @@ class Nf3 {
       value,
       rootKey: this.zkpKeys.rootKey,
       fee,
+      providedCommitmentsFee,
     });
 
     logger.info(`response deposit ok - ${this.ethereumAddress}`);
+    if (res.data.error) {
+      throw new Error(res.data.error);
+    }
 
     return new Promise((resolve, reject) => {
       userQueue.push(async () => {
@@ -602,8 +665,9 @@ class Nf3 {
     value,
     tokenId,
     compressedZkpPublicKey,
-    fee = this.defaultFeeMatic,
-    providedCommitments = undefined,
+    fee = this.defaultFeeTokenValue,
+    providedCommitments,
+    providedCommitmentsFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/transfer`, {
       offchain,
@@ -616,10 +680,11 @@ class Nf3 {
       rootKey: this.zkpKeys.rootKey,
       fee,
       providedCommitments,
+      providedCommitmentsFee,
     });
 
-    if (res.data.error && res.data.error === 'No suitable commitments') {
-      throw new Error('No suitable commitments');
+    if (res.data.error) {
+      throw new Error(res.data.error);
     }
     if (!offchain) {
       return new Promise((resolve, reject) => {
@@ -667,7 +732,9 @@ class Nf3 {
     value,
     tokenId,
     recipientAddress,
-    fee = this.defaultFeeMatic,
+    fee = this.defaultFeeTokenValue,
+    providedCommitments,
+    providedCommitmentsFee,
   ) {
     const res = await axios.post(`${this.clientBaseUrl}/withdraw`, {
       offchain,
@@ -678,7 +745,12 @@ class Nf3 {
       recipientAddress,
       rootKey: this.zkpKeys.rootKey,
       fee,
+      providedCommitments,
+      providedCommitmentsFee,
     });
+    if (res.data.error) {
+      throw new Error(res.data.error);
+    }
     this.latestWithdrawHash = res.data.transaction.transactionHash;
     if (!offchain) {
       return new Promise((resolve, reject) => {

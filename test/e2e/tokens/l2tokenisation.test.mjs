@@ -149,7 +149,7 @@ describe('L2 Tokenisation tests', () => {
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [commitmentHash], 1);
+      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, 1, [commitmentHash]);
 
       await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
@@ -192,7 +192,7 @@ describe('L2 Tokenisation tests', () => {
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].burn(l2Address, value, privateTokenId, [commitmentHash], 1);
+      await nf3Users[0].burn(l2Address, value, privateTokenId, 1, [commitmentHash]);
 
       await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
@@ -222,7 +222,7 @@ describe('L2 Tokenisation tests', () => {
         beforeBalance[l2Address]?.find(e => e.tokenId === generalise(privateTokenId).hex(32))
           ?.balance || 0;
 
-      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, [], 1);
+      await nf3Users[0].burn(l2Address, valueBurnt, privateTokenId, 1, []);
 
       await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
 
@@ -375,6 +375,89 @@ describe('L2 Tokenisation tests', () => {
 
       expect(beforeCount - afterCount).to.equal(1);
       expect(afterChangeCount - beforeChangeCount).to.equal(1);
+    });
+  });
+
+  describe('Transform tests', () => {
+    it('should burn the input commitment and create commitments for output tokens', async function () {
+      const fee = 1;
+      const value = 5;
+      const salt = (await randValueLT(BN128_GROUP_ORDER)).hex();
+
+      const inputTokens = [
+        {
+          id: 1,
+          address: l2Address,
+          value,
+          salt,
+        },
+      ];
+
+      const outputTokens = [
+        {
+          id: 3,
+          address: l2Address,
+          value,
+          salt,
+        },
+        {
+          id: 4,
+          address: l2Address,
+          value,
+          salt,
+        },
+      ];
+
+      for (const token of inputTokens) {
+        const [top4Bytes, remainder] = generalise(token.id)
+          .limbs(224, 2)
+          .map(l => BigInt(l));
+        const packedErcAddress = generalise(l2Address).bigInt + top4Bytes * SHIFT;
+        const commitmentHash = poseidonHash(
+          generalise([
+            packedErcAddress,
+            remainder,
+            generalise(token.value).field(BN128_GROUP_ORDER),
+            ...generalise(nf3Users[0].zkpKeys.zkpPublicKey).all.field(BN128_GROUP_ORDER),
+            generalise(token.salt).field(BN128_GROUP_ORDER),
+          ]),
+        ).hex(32);
+        token.commitmentHash = commitmentHash;
+        await nf3Users[0].tokenise(token.address, token.value, token.id, token.salt, fee);
+        await nf3Users[0].makeBlockNow();
+        await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      }
+
+      const beforeBalance = await nf3Users[0].getLayer2Balances();
+
+      await nf3Users[0].transform(inputTokens, outputTokens, fee);
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      const afterBalance = await nf3Users[0].getLayer2Balances();
+      logger.debug({ beforeBalance, afterBalance });
+
+      for (const token of inputTokens) {
+        const tokenBalanceAfter = (
+          afterBalance[l2Address]?.find(e => e.tokenId === generalise(token.id).hex(32)) || {
+            balance: 0,
+          }
+        ).balance;
+        expect(tokenBalanceAfter).to.equal(0);
+      }
+
+      for (const token of outputTokens) {
+        const tokenBalanceAfter = (
+          afterBalance[l2Address]?.find(e => e.tokenId === generalise(token.id).hex(32)) || {
+            balance: 0,
+          }
+        ).balance;
+        expect(tokenBalanceAfter).to.equal(value);
+      }
+
+      const erc20AddressBalanceBefore = beforeBalance[erc20Address]?.[0].balance || 0;
+      const erc20AddressBalanceAfter = afterBalance[erc20Address]?.[0].balance || 0;
+      expect(erc20AddressBalanceAfter - erc20AddressBalanceBefore).to.be.equal(-1);
     });
   });
 
