@@ -17,12 +17,14 @@ import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 import { setProposer } from './routes/proposer.mjs';
+import autoChangeCurrentProposer from './services/auto-change-current-proposer.mjs';
 
 const main = async () => {
   try {
     const proposer = new Proposer();
     setProposer(proposer); // passes the proposer instance int the proposer routes
-
+    const proposerEthAddress = app.get('proposerEthAddress');
+    autoChangeCurrentProposer(proposerEthAddress); // starts the auto change current proposer service
     // subscribe to WebSocket events first
     await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
     await subscribeToInstantWithDrawalWebSocketConnection(setInstantWithdrawalWebSocketConnection);
@@ -34,7 +36,6 @@ const main = async () => {
       // We check if the queue[2] is empty, this is safe it is manually enqueued/dequeued.
       if (proposer.isMe && queues[2].length === 0) {
         // logger.debug('Queue has emptied. Queueing block assembler.');
-        const proposerEthAddress = app.get('proposerEthAddress');
         const proposerEthPrivateKey = app.get('proposerEthPrivateKey');
         const args = { proposer, proposerEthAddress, proposerEthPrivateKey };
         return enqueueEvent(conditionalMakeBlock, 0, args);
