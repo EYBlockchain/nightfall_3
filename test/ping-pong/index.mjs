@@ -87,6 +87,13 @@ export async function simpleUserTest(
     const valueToTransfer = Math.floor(Math.random() * (value - fee)) + 2; // Returns a random integer from 2 to value - fee
 
     try {
+      await waitForSufficientBalance({
+        nf3User: nf3,
+        value: valueToTransfer + fee,
+        ercAddress,
+        message: `Waiting balance for transfer ${nf3.zkpKeys.compressedZkpPublicKey}.`,
+      });
+
       const res = await nf3.transfer(
         txTypes[i * 3],
         offchainTx,
@@ -168,6 +175,13 @@ export async function simpleUserTest(
     } catch (err) {
       console.warn('Error deposit', err);
     }
+
+    await waitForSufficientBalance({
+      nf3User: nf3,
+      value: valueToTransfer + fee,
+      ercAddress,
+      message: `Waiting balance for withdraw ${nf3.zkpKeys.compressedZkpPublicKey}.`,
+    });
 
     try {
       const res = await nf3.withdraw(

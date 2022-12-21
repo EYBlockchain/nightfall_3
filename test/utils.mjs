@@ -469,12 +469,12 @@ export const registerProposerOnNoProposer = async proposer => {
   function to wait for sufficient balance by waiting for pending transaction
   to be proposed
 */
-export const waitForSufficientBalance = ({ nf3User, value, ercAddress }) => {
+export const waitForSufficientBalance = ({ nf3User, value, ercAddress, message }) => {
   return new Promise(resolve => {
     async function isSufficientBalance() {
       const balance = await retrieveL2Balance(nf3User, ercAddress);
       logger.debug(
-        ` Balance needed for ${nf3User.ethereumAddress} is ${value}. Current balance ${balance}.`,
+        `${message} Balance needed for ${nf3User.ethereumAddress} is ${value}. Current balance ${balance}.`,
       );
       if (balance < value) {
         await waitForTimeout(10000);
