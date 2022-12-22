@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 
 contract Structures {
     error InvalidTransactionHash();
-    error DepositNotEscrowed(bytes32 depositHash);
+    error CommitmentNotEscrowed(bytes32 commitmentHash);
     error InvalidBlockSize();
     error InvalidTransactionSize();
 
@@ -114,11 +114,6 @@ contract Structures {
         address currentOwner;
         uint88 advanceFee;
         bool isWithdrawn;
-    }
-
-    struct TransactionInfo {
-        uint248 ethFee;
-        bool isEscrowed;
     }
 
     struct BlockInfo {

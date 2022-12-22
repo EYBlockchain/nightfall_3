@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 
 // ignore unused exports startEventQueue
+// ignore unused exports waitForContract
 
 /**
  * Module to subscribe to blockchain events
@@ -22,7 +23,7 @@ const { RETRIES } = global.config;
  * This is useful in case nightfall-client comes up before the contract
  * is fully deployed.
  */
-async function waitForContract(contractName) {
+export async function waitForContract(contractName) {
   let errorCount = 0;
   let error;
   let instance;

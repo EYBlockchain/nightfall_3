@@ -19,6 +19,8 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
+const { generalise } = gen;
+
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const {
   fee,
@@ -27,8 +29,6 @@ const {
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
-
-const { generalise } = gen;
 
 const web3Client = new Web3Client();
 const web3 = web3Client.getWeb3();

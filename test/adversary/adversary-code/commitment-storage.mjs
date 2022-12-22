@@ -3,7 +3,7 @@
 /* eslint-disable no-undef */
 
 // ignore unused exports
-export async function getCommitmentsByHashFaulty(hashes, compressedZkpPublicKey) {
+export async function getCommitmentsAvailableByHashFaulty(hashes, compressedZkpPublicKey) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = {

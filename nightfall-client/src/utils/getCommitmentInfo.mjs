@@ -8,7 +8,7 @@ import {
   markPending,
   findUsableCommitmentsMutex,
   getSiblingInfo,
-  getCommitmentsByHash,
+  getCommitmentsAvailableByHash,
 } from '../services/commitment-storage.mjs';
 import Commitment from '../classes/commitment.mjs';
 import { ZkpKeys } from '../services/keys.mjs';
@@ -86,7 +86,10 @@ export const getCommitmentInfo = async txInfo => {
 
       // Search for the commitment hashes in the DB. The commitment will be considered valid
       // as long as it is not already nullified
-      const rawCommitments = await getCommitmentsByHash(commitmentHashes, compressedZkpPublicKey);
+      const rawCommitments = await getCommitmentsAvailableByHash(
+        commitmentHashes,
+        compressedZkpPublicKey,
+      );
 
       // Filter which of those commitments belong to the ercAddress
       const ercAddressCommitments = rawCommitments.filter(
@@ -140,7 +143,7 @@ export const getCommitmentInfo = async txInfo => {
 
       // Search for the commitment hashes in the DB. The commitment will be considered valid
       // as long as it is not already nullified
-      const rawCommitmentsFee = await getCommitmentsByHash(
+      const rawCommitmentsFee = await getCommitmentsAvailableByHash(
         commitmentHashesFee,
         compressedZkpPublicKey,
       );

@@ -16,6 +16,8 @@ import constants from '../../../common-files/constants/index.mjs';
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
+const { generalise } = gen;
+
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const {
   transferValue,
@@ -24,8 +26,6 @@ const {
   signingKeys,
 } = config.TEST_OPTIONS;
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
-
-const { generalise } = gen;
 
 const { BN128_GROUP_ORDER, SHIFT } = constants;
 

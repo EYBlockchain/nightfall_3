@@ -488,10 +488,12 @@ export const waitForSufficientBalance = ({ nf3User, value, ercAddress, message }
 /**
   function to wait for a number of transactions in the mempool before creating block
 */
-export const waitForSufficientTransactionsMempool = ({ nf3User, nTransactions }) => {
+export const waitForSufficientTransactionsMempool = ({ optimistBaseUrl, nTransactions }) => {
   return new Promise(resolve => {
     async function isSufficientTransactions() {
-      const numberTxs = await nf3User.unprocessedTransactionCount();
+      const { result: mempool } = (await axios.get(`${optimistBaseUrl}/proposer/mempool`)).data;
+      const numberTxs = mempool.filter(e => e.mempool).length;
+
       logger.debug(
         ` Waiting for ${nTransactions} to create a block. Current transactions: ${numberTxs}`,
       );

@@ -45,7 +45,7 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
 
   const dbUpdates = transactions.map(async transaction => {
     // filter out non zero commitments and nullifiers
-    const nonZeroCommitments = transaction.commitments.filter(n => n !== ZERO);
+    const nonZeroCommitments = transaction.commitments.filter(c => c !== ZERO);
     const nonZeroNullifiers = transaction.nullifiers.filter(n => n !== ZERO);
 
     const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
@@ -53,9 +53,9 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
     const storeCommitments = [];
     const tempTransactionStore = [];
     // In order to check if the transaction is a transfer, we check if the compressed secrets
-    // are different than zero. All other transaction types have compressedSecrets = [0,0]
+    // are different than zero. All other transaction types have compressedSecrets = [ZERO,ZERO]
     if (
-      (transaction.compressedSecrets[0] !== 0 || transaction.compressedSecrets[1] !== 0) &&
+      (transaction.compressedSecrets[0] !== ZERO || transaction.compressedSecrets[1] !== ZERO) &&
       !countOfNonZeroCommitments
     ) {
       zkpPrivateKeys.forEach((key, i) => {
@@ -94,6 +94,7 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
               saveTransaction({
                 transactionHashL1,
                 ...transaction,
+                isDecrypted: true,
               }),
             );
           }
@@ -166,7 +167,7 @@ async function blockProposedEventHandler(data, zkpPrivateKeys, nullifierKeys) {
   }
 
   const circuitHashData = await getStoreCircuit(`withdraw-hash`);
-  const circuitHash = circuitHashData.data;
+  const circuitHash = generalise(circuitHashData.data).hex(32);
 
   // If this L2 block contains withdraw transactions known to this client,
   // the following needs to be saved for later to be used during finalise/instant withdraw
