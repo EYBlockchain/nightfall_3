@@ -103,8 +103,8 @@ module.exports = async function (deployer) {
     token => token.name === 'MATIC',
   ).address;
   await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
-  console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
-  if (process.env.WHITELISTING === 'enable') await x509.enableWhitelisting(true);
+  console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
+  if (process.env.WHITELISTING === 'disable') await x509.enableWhitelisting(false);
   // set a trusted RSA root public key for X509 certificate checks
   console.log('setting trusted public key and extended key usage OIDs');
   for (publicKey of RSA_TRUST_ROOTS) {

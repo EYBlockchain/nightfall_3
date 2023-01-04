@@ -69,6 +69,7 @@ services:
         target: /app/entrypoint.sh
     environment:
       TEST_SANCTIONS_CONTRACT: 'mock'
+      WHITELISTING: ${WHITELISTING}
 
   optimist:
     build:
