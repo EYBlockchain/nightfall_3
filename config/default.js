@@ -276,6 +276,27 @@ module.exports = {
       PROPOSER_KEY: process.env.PROPOSER_KEY,
       CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
+    mumbai: {
+      name: 'mumbai',
+      chainId: 80001,
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
+      web3WsUrl: `wss://ws-matic-mumbai.chainstacklabs.com`,
+      adversarialOptimistApiUrl: `https://${process.env.OPTIMIST_HTTP_HOST}`,
+      adversarialOptimistWsUrl: `wss://${process.env.OPTIMIST_HOST}`,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+    },
   },
   TEST_OPTIONS: {
     tokenConfigs: {
@@ -547,6 +568,28 @@ module.exports = {
           amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
         },
       ],
+      mumbai: [
+        {
+          name: 'WETH',
+          address: '0xa6fa4fb5f76172d178d61b04b0ecd319c5d1c0aa',
+          amount: process.env.WETH_TESTNET_RESTRICT || '1000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x0000000000000000000000000000000000001010',
+          amount: process.env.MATIC_TESTNET_RESTRICT || '1000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747',
+          amount: process.env.USDC_TESTNET_RESTRICT || '1000000000',
+        },
+        {
+          name: 'stMATIC',
+          address: '0xa337f0B897a874DE1E9F75944629a03F911cFbE8',
+          amount: process.env.STMATIC_TESTNET_RESTRICT || '1000000000',
+        },
+      ],
     },
   },
   X509: {
@@ -555,6 +598,12 @@ module.exports = {
     staging_edge: getDefaultX509Params(),
     goerli: getDefaultX509Params(),
     mainnet: getDefaultX509Params(),
+    mumbai: {
+      RSA_TRUST_ROOTS: [],
+      // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
+      certificatePoliciesOIDs: [],
+      extendedKeyUsageOIDs: [],
+    },
   },
 
   // for Browser use
