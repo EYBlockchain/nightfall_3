@@ -17,6 +17,7 @@ import {
   getCommitmentsByCompressedZkpPublicKeyList,
   insertCommitmentsAndResync,
   getCommitmentsByCircuitHash,
+  getCommitmentsDepositedRollbacked,
 } from '../services/commitment-storage.mjs';
 
 const router = express.Router();
@@ -131,6 +132,16 @@ router.get('/withdraws', async (req, res, next) => {
 
     const commitments = await getCommitmentsByCircuitHash(withdrawCircuitHash);
     res.json({ commitments });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/commitmentsRollbacked', async (req, res, next) => {
+  try {
+    const { compressedZkpPublicKey } = req.query;
+    const commitmentsRollbacked = await getCommitmentsDepositedRollbacked(compressedZkpPublicKey);
+    res.json({ commitmentsRollbacked });
   } catch (err) {
     next(err);
   }

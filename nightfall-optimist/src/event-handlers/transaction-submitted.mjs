@@ -3,6 +3,7 @@
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   deleteDuplicateCommitmentsFromMemPool,
   deleteDuplicateNullifiersFromMemPool,
@@ -12,7 +13,7 @@ import { checkTransaction } from '../services/transaction-checker.mjs';
 import TransactionError from '../classes/transaction-error.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
 
-const { ZERO } = constants;
+const { ZERO, STATE_CONTRACT_NAME } = constants;
 
 /**
  * This handler runs whenever a new transaction is submitted to the blockchain
@@ -36,6 +37,19 @@ async function transactionSubmittedEventHandler(eventParams) {
   });
 
   try {
+    const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
+    const circuitInfo = await stateInstance.methods.getCircuitInfo(transaction.circuitHash).call();
+    if (circuitInfo.isEscrowRequired) {
+      const isCommitmentEscrowed = await stateInstance.methods
+        .getCommitmentEscrowed(transaction.commitments[0])
+        .call();
+      if (!isCommitmentEscrowed) {
+        throw new TransactionError(
+          `The commitment ${transaction.commitments[0]} has not been escrowed`,
+        );
+      }
+      logger.info({ msg: `Commmitment ${transaction.commitments[0]} is escrowed` });
+    }
     logger.info({ msg: 'Checking transaction validity...' });
     await checkTransaction({
       transaction,

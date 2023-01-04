@@ -1,13 +1,15 @@
 import React from 'react';
+import { generalise } from 'general-number';
 import { Button, Modal } from 'react-bootstrap';
 import { markWithdrawState } from '@Nightfall/services/database';
 import { finaliseWithdrawal } from '@Nightfall/services/finalise-withdrawal';
 import { isValidWithdrawal } from '@Nightfall/services/valid-withdrawal';
+import { getStoreCircuit } from '@Nightfall/services/database.js';
 import { submitTransaction } from '../../common-files/utils/contract';
 import stylesModal from '../../styles/modal.module.scss';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
 import successHand from '../../assets/img/success-hand.png';
-import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
+import nightfall from '../../assets/svg/nightfall.svg';
 
 interface TxModalProps {
   transactionhash: string;
@@ -20,6 +22,18 @@ interface TxModalProps {
 }
 
 export default function TxInfoModal(props: TxModalProps): JSX.Element {
+  const [withdrawCircuitHash, setWithdrawCircuitHash] = React.useState('');
+
+  React.useEffect(() => {
+    const getWithdrawHash = async () => {
+      const withdrawHash = generalise((await getStoreCircuit('withdraw-hash')).data)
+        .hex(32)
+        .toString();
+      setWithdrawCircuitHash(withdrawHash);
+    };
+    getWithdrawHash();
+  }, []);
+
   const confirmWithdraw = async () => {
     const shieldContractAddress = shieldAddressGet();
     const isValid = await isValidWithdrawal(props.transactionhash, shieldContractAddress);
@@ -65,7 +79,7 @@ export default function TxInfoModal(props: TxModalProps): JSX.Element {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             {/* <Col xs={3}>Nightfall Hash</Col> */}
-            <img src={polygonNightfall} style={{ height: '32px', width: '32px' }}></img>
+            <img src={nightfall} style={{ height: '32px', width: '32px' }}></img>
             <p style={{ margin: '0' }}>
               {props?.transactionhash
                 ? `${props?.transactionhash.slice(0, 10)}...${props?.transactionhash.slice(-10)}`
@@ -75,7 +89,7 @@ export default function TxInfoModal(props: TxModalProps): JSX.Element {
         </div>
       </Modal.Body>
       <Modal.Footer>
-        {props.withdrawready && props.txtype === '2' ? (
+        {props.withdrawready && props.txtype === withdrawCircuitHash ? (
           <Button
             style={{
               background: '#7B3FE4',

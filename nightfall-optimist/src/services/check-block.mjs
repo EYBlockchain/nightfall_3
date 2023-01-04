@@ -258,7 +258,7 @@ export async function checkBlock(block, transactions) {
       await checkTransaction({
         transaction,
         checkDuplicatesInL2: true,
-        blockNumberL2: block.blockNumberL2,
+        transactionBlockNumberL2: block.blockNumberL2,
       }); // eslint-disable-line no-await-in-loop
     }
   } catch (err) {
