@@ -35,15 +35,15 @@
     "absolutePath": "project:/contracts/SanctionsListInterface.sol",
     "exportedSymbols": {
       "SanctionsListInterface": [
-        17785
+        17833
       ]
     },
-    "id": 17786,
+    "id": 17834,
     "license": "CC0-1.0",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 17777,
+        "id": 17825,
         "literals": [
           "solidity",
           "^",
@@ -60,9 +60,9 @@
         "contractDependencies": [],
         "contractKind": "interface",
         "fullyImplemented": false,
-        "id": 17785,
+        "id": 17833,
         "linearizedBaseContracts": [
-          17785
+          17833
         ],
         "name": "SanctionsListInterface",
         "nameLocation": "72:22:39",
@@ -70,7 +70,7 @@
         "nodes": [
           {
             "functionSelector": "df592f7d",
-            "id": 17784,
+            "id": 17832,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -78,17 +78,17 @@
             "nameLocation": "110:12:39",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 17780,
+              "id": 17828,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17779,
+                  "id": 17827,
                   "mutability": "mutable",
                   "name": "addr",
                   "nameLocation": "131:4:39",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17784,
+                  "scope": 17832,
                   "src": "123:12:39",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -97,7 +97,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 17778,
+                    "id": 17826,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "123:7:39",
@@ -113,17 +113,17 @@
               "src": "122:14:39"
             },
             "returnParameters": {
-              "id": 17783,
+              "id": 17831,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 17782,
+                  "id": 17830,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 17784,
+                  "scope": 17832,
                   "src": "160:4:39",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -132,7 +132,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 17781,
+                    "id": 17829,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "160:4:39",
@@ -146,14 +146,14 @@
               ],
               "src": "159:6:39"
             },
-            "scope": 17785,
+            "scope": 17833,
             "src": "101:65:39",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 17786,
+        "scope": 17834,
         "src": "62:106:39",
         "usedErrors": []
       }
@@ -166,7 +166,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-20T19:46:31.410Z",
+  "updatedAt": "2023-01-04T16:02:55.695Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},

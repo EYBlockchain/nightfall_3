@@ -17501,7 +17501,7 @@
         2239
       ],
       "ERC1155Mock": [
-        25341
+        25393
       ],
       "ERC165": [
         4900
@@ -17519,12 +17519,12 @@
         4912
       ]
     },
-    "id": 25342,
+    "id": 25394,
     "license": "MIT",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 25275,
+        "id": 25327,
         "literals": [
           "solidity",
           "^",
@@ -17537,10 +17537,10 @@
       {
         "absolutePath": "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
         "file": "@openzeppelin/contracts/token/ERC1155/ERC1155.sol",
-        "id": 25276,
+        "id": 25328,
         "nameLocation": "-1:-1:-1",
         "nodeType": "ImportDirective",
-        "scope": 25342,
+        "scope": 25394,
         "sourceUnit": 2240,
         "src": "57:59:50",
         "symbolAliases": [],
@@ -17551,7 +17551,7 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 25277,
+              "id": 25329,
               "name": "ERC1155",
               "nameLocations": [
                 "142:7:50"
@@ -17560,7 +17560,7 @@
               "referencedDeclaration": 2239,
               "src": "142:7:50"
             },
-            "id": 25278,
+            "id": 25330,
             "nodeType": "InheritanceSpecifier",
             "src": "142:7:50"
           }
@@ -17569,9 +17569,9 @@
         "contractDependencies": [],
         "contractKind": "contract",
         "fullyImplemented": true,
-        "id": 25341,
+        "id": 25393,
         "linearizedBaseContracts": [
-          25341,
+          25393,
           2239,
           2417,
           2361,
@@ -17586,12 +17586,12 @@
           {
             "constant": true,
             "functionSelector": "3e4bee38",
-            "id": 25281,
+            "id": 25333,
             "mutability": "constant",
             "name": "GOLD",
             "nameLocation": "180:4:50",
             "nodeType": "VariableDeclaration",
-            "scope": 25341,
+            "scope": 25393,
             "src": "156:32:50",
             "stateVariable": true,
             "storageLocation": "default",
@@ -17600,7 +17600,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 25279,
+              "id": 25331,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "156:7:50",
@@ -17611,7 +17611,7 @@
             },
             "value": {
               "hexValue": "30",
-              "id": 25280,
+              "id": 25332,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -17630,12 +17630,12 @@
           {
             "constant": true,
             "functionSelector": "e3e55f08",
-            "id": 25284,
+            "id": 25336,
             "mutability": "constant",
             "name": "SILVER",
             "nameLocation": "218:6:50",
             "nodeType": "VariableDeclaration",
-            "scope": 25341,
+            "scope": 25393,
             "src": "194:34:50",
             "stateVariable": true,
             "storageLocation": "default",
@@ -17644,7 +17644,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 25282,
+              "id": 25334,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "194:7:50",
@@ -17655,7 +17655,7 @@
             },
             "value": {
               "hexValue": "31",
-              "id": 25283,
+              "id": 25335,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -17674,12 +17674,12 @@
           {
             "constant": true,
             "functionSelector": "d562e204",
-            "id": 25287,
+            "id": 25339,
             "mutability": "constant",
             "name": "THORS_HAMMER",
             "nameLocation": "258:12:50",
             "nodeType": "VariableDeclaration",
-            "scope": 25341,
+            "scope": 25393,
             "src": "234:40:50",
             "stateVariable": true,
             "storageLocation": "default",
@@ -17688,7 +17688,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 25285,
+              "id": 25337,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "234:7:50",
@@ -17699,7 +17699,7 @@
             },
             "value": {
               "hexValue": "32",
-              "id": 25286,
+              "id": 25338,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -17718,12 +17718,12 @@
           {
             "constant": true,
             "functionSelector": "13dc989f",
-            "id": 25290,
+            "id": 25342,
             "mutability": "constant",
             "name": "SWORD",
             "nameLocation": "304:5:50",
             "nodeType": "VariableDeclaration",
-            "scope": 25341,
+            "scope": 25393,
             "src": "280:33:50",
             "stateVariable": true,
             "storageLocation": "default",
@@ -17732,7 +17732,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 25288,
+              "id": 25340,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "280:7:50",
@@ -17743,7 +17743,7 @@
             },
             "value": {
               "hexValue": "33",
-              "id": 25289,
+              "id": 25341,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -17762,12 +17762,12 @@
           {
             "constant": true,
             "functionSelector": "5b2725ed",
-            "id": 25293,
+            "id": 25345,
             "mutability": "constant",
             "name": "SHIELD",
             "nameLocation": "343:6:50",
             "nodeType": "VariableDeclaration",
-            "scope": 25341,
+            "scope": 25393,
             "src": "319:34:50",
             "stateVariable": true,
             "storageLocation": "default",
@@ -17776,7 +17776,7 @@
               "typeString": "uint256"
             },
             "typeName": {
-              "id": 25291,
+              "id": 25343,
               "name": "uint256",
               "nodeType": "ElementaryTypeName",
               "src": "319:7:50",
@@ -17787,7 +17787,7 @@
             },
             "value": {
               "hexValue": "34",
-              "id": 25292,
+              "id": 25344,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -17805,7 +17805,7 @@
           },
           {
             "body": {
-              "id": 25339,
+              "id": 25391,
               "nodeType": "Block",
               "src": "425:241:50",
               "statements": [
@@ -17814,7 +17814,7 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 25300,
+                          "id": 25352,
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
@@ -17825,7 +17825,7 @@
                             "typeString": "msg"
                           }
                         },
-                        "id": 25301,
+                        "id": 25353,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -17840,11 +17840,11 @@
                         }
                       },
                       {
-                        "id": 25302,
+                        "id": 25354,
                         "name": "GOLD",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 25281,
+                        "referencedDeclaration": 25333,
                         "src": "453:4:50",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -17853,7 +17853,7 @@
                       },
                       {
                         "hexValue": "31313030303030",
-                        "id": 25303,
+                        "id": 25355,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -17869,7 +17869,7 @@
                       },
                       {
                         "hexValue": "",
-                        "id": 25304,
+                        "id": 25356,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -17903,7 +17903,7 @@
                           "typeString": "literal_string \"\""
                         }
                       ],
-                      "id": 25299,
+                      "id": 25351,
                       "name": "_mint",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -17914,7 +17914,7 @@
                         "typeString": "function (address,uint256,uint256,bytes memory)"
                       }
                     },
-                    "id": 25305,
+                    "id": 25357,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -17930,7 +17930,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 25306,
+                  "id": 25358,
                   "nodeType": "ExpressionStatement",
                   "src": "435:36:50"
                 },
@@ -17939,7 +17939,7 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 25308,
+                          "id": 25360,
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
@@ -17950,7 +17950,7 @@
                             "typeString": "msg"
                           }
                         },
-                        "id": 25309,
+                        "id": 25361,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -17965,11 +17965,11 @@
                         }
                       },
                       {
-                        "id": 25310,
+                        "id": 25362,
                         "name": "SILVER",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 25284,
+                        "referencedDeclaration": 25336,
                         "src": "499:6:50",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -17978,7 +17978,7 @@
                       },
                       {
                         "hexValue": "31323030303030",
-                        "id": 25311,
+                        "id": 25363,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -17994,7 +17994,7 @@
                       },
                       {
                         "hexValue": "",
-                        "id": 25312,
+                        "id": 25364,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -18028,7 +18028,7 @@
                           "typeString": "literal_string \"\""
                         }
                       ],
-                      "id": 25307,
+                      "id": 25359,
                       "name": "_mint",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -18039,7 +18039,7 @@
                         "typeString": "function (address,uint256,uint256,bytes memory)"
                       }
                     },
-                    "id": 25313,
+                    "id": 25365,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -18055,7 +18055,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 25314,
+                  "id": 25366,
                   "nodeType": "ExpressionStatement",
                   "src": "481:38:50"
                 },
@@ -18064,7 +18064,7 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 25316,
+                          "id": 25368,
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
@@ -18075,7 +18075,7 @@
                             "typeString": "msg"
                           }
                         },
-                        "id": 25317,
+                        "id": 25369,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -18090,11 +18090,11 @@
                         }
                       },
                       {
-                        "id": 25318,
+                        "id": 25370,
                         "name": "THORS_HAMMER",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 25287,
+                        "referencedDeclaration": 25339,
                         "src": "547:12:50",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -18103,7 +18103,7 @@
                       },
                       {
                         "hexValue": "3130",
-                        "id": 25319,
+                        "id": 25371,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -18119,7 +18119,7 @@
                       },
                       {
                         "hexValue": "",
-                        "id": 25320,
+                        "id": 25372,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -18153,7 +18153,7 @@
                           "typeString": "literal_string \"\""
                         }
                       ],
-                      "id": 25315,
+                      "id": 25367,
                       "name": "_mint",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -18164,7 +18164,7 @@
                         "typeString": "function (address,uint256,uint256,bytes memory)"
                       }
                     },
-                    "id": 25321,
+                    "id": 25373,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -18180,7 +18180,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 25322,
+                  "id": 25374,
                   "nodeType": "ExpressionStatement",
                   "src": "529:39:50"
                 },
@@ -18189,7 +18189,7 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 25324,
+                          "id": 25376,
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
@@ -18200,7 +18200,7 @@
                             "typeString": "msg"
                           }
                         },
-                        "id": 25325,
+                        "id": 25377,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -18215,11 +18215,11 @@
                         }
                       },
                       {
-                        "id": 25326,
+                        "id": 25378,
                         "name": "SWORD",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 25290,
+                        "referencedDeclaration": 25342,
                         "src": "596:5:50",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -18228,7 +18228,7 @@
                       },
                       {
                         "hexValue": "313030",
-                        "id": 25327,
+                        "id": 25379,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -18244,7 +18244,7 @@
                       },
                       {
                         "hexValue": "",
-                        "id": 25328,
+                        "id": 25380,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -18278,7 +18278,7 @@
                           "typeString": "literal_string \"\""
                         }
                       ],
-                      "id": 25323,
+                      "id": 25375,
                       "name": "_mint",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -18289,7 +18289,7 @@
                         "typeString": "function (address,uint256,uint256,bytes memory)"
                       }
                     },
-                    "id": 25329,
+                    "id": 25381,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -18305,7 +18305,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 25330,
+                  "id": 25382,
                   "nodeType": "ExpressionStatement",
                   "src": "578:33:50"
                 },
@@ -18314,7 +18314,7 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 25332,
+                          "id": 25384,
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
@@ -18325,7 +18325,7 @@
                             "typeString": "msg"
                           }
                         },
-                        "id": 25333,
+                        "id": 25385,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -18340,11 +18340,11 @@
                         }
                       },
                       {
-                        "id": 25334,
+                        "id": 25386,
                         "name": "SHIELD",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 25293,
+                        "referencedDeclaration": 25345,
                         "src": "639:6:50",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -18353,7 +18353,7 @@
                       },
                       {
                         "hexValue": "31313030303030",
-                        "id": 25335,
+                        "id": 25387,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -18369,7 +18369,7 @@
                       },
                       {
                         "hexValue": "",
-                        "id": 25336,
+                        "id": 25388,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -18403,7 +18403,7 @@
                           "typeString": "literal_string \"\""
                         }
                       ],
-                      "id": 25331,
+                      "id": 25383,
                       "name": "_mint",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -18414,7 +18414,7 @@
                         "typeString": "function (address,uint256,uint256,bytes memory)"
                       }
                     },
-                    "id": 25337,
+                    "id": 25389,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -18430,13 +18430,13 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 25338,
+                  "id": 25390,
                   "nodeType": "ExpressionStatement",
                   "src": "621:38:50"
                 }
               ]
             },
-            "id": 25340,
+            "id": 25392,
             "implemented": true,
             "kind": "constructor",
             "modifiers": [
@@ -18444,7 +18444,7 @@
                 "arguments": [
                   {
                     "hexValue": "68747470733a2f2f67616d652e6578616d706c652f6170692f6974656d2f7b69647d2e6a736f6e",
-                    "id": 25296,
+                    "id": 25348,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": true,
@@ -18459,10 +18459,10 @@
                     "value": "https://game.example/api/item/{id}.json"
                   }
                 ],
-                "id": 25297,
+                "id": 25349,
                 "kind": "baseConstructorSpecifier",
                 "modifierName": {
-                  "id": 25295,
+                  "id": 25347,
                   "name": "ERC1155",
                   "nameLocations": [
                     "374:7:50"
@@ -18479,25 +18479,25 @@
             "nameLocation": "-1:-1:-1",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 25294,
+              "id": 25346,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "371:2:50"
             },
             "returnParameters": {
-              "id": 25298,
+              "id": 25350,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "425:0:50"
             },
-            "scope": 25341,
+            "scope": 25393,
             "src": "360:306:50",
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "public"
           }
         ],
-        "scope": 25342,
+        "scope": 25394,
         "src": "118:550:50",
         "usedErrors": []
       }
@@ -18510,7 +18510,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-20T19:51:26.104Z",
+  "updatedAt": "2023-01-04T16:07:33.540Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

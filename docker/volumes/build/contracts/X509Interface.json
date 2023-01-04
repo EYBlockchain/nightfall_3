@@ -35,15 +35,15 @@
     "absolutePath": "project:/contracts/X509Interface.sol",
     "exportedSymbols": {
       "X509Interface": [
-        25273
+        25325
       ]
     },
-    "id": 25274,
+    "id": 25326,
     "license": "CC0-1.0",
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 25265,
+        "id": 25317,
         "literals": [
           "solidity",
           "^",
@@ -60,9 +60,9 @@
         "contractDependencies": [],
         "contractKind": "interface",
         "fullyImplemented": false,
-        "id": 25273,
+        "id": 25325,
         "linearizedBaseContracts": [
-          25273
+          25325
         ],
         "name": "X509Interface",
         "nameLocation": "72:13:49",
@@ -70,7 +70,7 @@
         "nodes": [
           {
             "functionSelector": "e23c27e9",
-            "id": 25272,
+            "id": 25324,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
@@ -78,17 +78,17 @@
             "nameLocation": "101:9:49",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 25268,
+              "id": 25320,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 25267,
+                  "id": 25319,
                   "mutability": "mutable",
                   "name": "user",
                   "nameLocation": "119:4:49",
                   "nodeType": "VariableDeclaration",
-                  "scope": 25272,
+                  "scope": 25324,
                   "src": "111:12:49",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -97,7 +97,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 25266,
+                    "id": 25318,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "111:7:49",
@@ -113,17 +113,17 @@
               "src": "110:14:49"
             },
             "returnParameters": {
-              "id": 25271,
+              "id": 25323,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 25270,
+                  "id": 25322,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 25272,
+                  "scope": 25324,
                   "src": "148:4:49",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -132,7 +132,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 25269,
+                    "id": 25321,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "148:4:49",
@@ -146,14 +146,14 @@
               ],
               "src": "147:6:49"
             },
-            "scope": 25273,
+            "scope": 25325,
             "src": "92:62:49",
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           }
         ],
-        "scope": 25274,
+        "scope": 25326,
         "src": "62:94:49",
         "usedErrors": []
       }
@@ -166,7 +166,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.10",
-  "updatedAt": "2022-12-20T19:46:31.482Z",
+  "updatedAt": "2023-01-04T16:02:55.757Z",
   "devdoc": {
     "kind": "dev",
     "methods": {},
