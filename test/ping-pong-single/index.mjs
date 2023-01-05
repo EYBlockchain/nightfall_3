@@ -5,6 +5,7 @@ Module that runs up as a user
 /* eslint-disable no-await-in-loop */
 
 import config from 'config';
+import correlator from '@polygon-nightfall/common-files/utils/correlation-id.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../cli/lib/nf3.mjs';
 import { waitForSufficientBalance, retrieveL2Balance, emptyL2, Web3Client } from '../utils.mjs';
@@ -18,10 +19,13 @@ const txPerBlock = 2;
 const { TX_WAIT = 1000, TEST_ERC20_ADDRESS } = process.env;
 
 const TEST_LENGTH = 4;
+
 /**
 Does the preliminary setup and starts listening on the websocket
 */
 export default async function localTest(IS_TEST_RUNNER) {
+  correlator.withId(() => {}); // generates a correlation id
+
   logger.info('Starting local test...');
   const tokenType = 'ERC20';
   const value = 1;

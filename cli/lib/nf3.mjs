@@ -360,7 +360,9 @@ class Nf3 {
   @returns {Promise} This will resolve into a transaction receipt.
   */
   async submitTransaction(unsignedTransaction, contractAddress = this.shieldContractAddress, fee) {
+    logger.info(`Submitting transaction...`);
     const tx = await this._signTransaction(unsignedTransaction, contractAddress, fee);
+    logger.info(`Transaction signed!`);
     return this._sendTransaction(tx);
   }
 
@@ -579,6 +581,7 @@ class Nf3 {
   ) {
     let txDataToSign;
     try {
+      logger.info({ msg: `Aproving trx...${this.ethereumAddress}`, xpto: 1234 });
       txDataToSign = await approve(
         ercAddress,
         this.ethereumAddress,
@@ -588,15 +591,28 @@ class Nf3 {
         this.web3,
         !!this.ethereumSigningKey,
       );
+      logger.info(`Trx approved! ${this.ethereumAddress}`);
     } catch (err) {
-      logger.error(`Approve transaction failed`);
       throw new Error(err);
     }
     if (txDataToSign) {
+      logger.info(`Adding approval submission to the queue`);
+
       userQueue.push(() => {
-        return this.submitTransaction(txDataToSign, ercAddress, 0);
+        logger.info(`Submitting approval...${this.ethereumAddress}`);
+        try {
+          return this.submitTransaction(txDataToSign, ercAddress, 0);
+        } catch (err) {
+          logger.error(`Error submitting approval - ${this.ethereumAddress} - ${err}`);
+        } finally {
+          logger.info(`Approval ok - ${this.ethereumAddress}`);
+        }
       });
+    } else {
+      logger.warn(`No data to sign!`);
     }
+
+    logger.info(`Posting deposit...${this.ethereumAddress}`);
 
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
@@ -609,11 +625,14 @@ class Nf3 {
       salt,
     });
 
+    logger.info(`response deposit ok - ${this.ethereumAddress}`);
     if (res.data.error) {
+      logger.error(res.data.error);
       throw new Error(res.data.error);
     }
 
     return new Promise((resolve, reject) => {
+      logger.info(`Submitting deposit tx - ${this.ethereumAddress}`);
       userQueue.push(async () => {
         try {
           const receipt = await this.submitTransaction(
