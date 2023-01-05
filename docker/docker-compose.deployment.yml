@@ -148,7 +148,7 @@ services:
     networks:
       - nightfall_network
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-local}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
