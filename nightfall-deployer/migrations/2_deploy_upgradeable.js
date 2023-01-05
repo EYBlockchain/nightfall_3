@@ -67,7 +67,7 @@ module.exports = async function (deployer) {
 
     sanctionsContractAddress = SanctionsListMock.address;
 
-    console.log('SANTIONED USER', sanctionsContractAddress, sanctionedUser);
+    console.log('SANCTIONED USER', sanctionsContractAddress, sanctionedUser);
   }
 
   await deployProxy(X509, [], { deployer });
