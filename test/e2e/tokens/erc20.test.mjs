@@ -57,7 +57,6 @@ const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 async function makeBlock() {
   logger.debug(`Make block...`);
-  await new Promise(resolve => setTimeout(resolve, 5000));
   await nf3Proposer.makeBlockNow();
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 }
@@ -155,6 +154,7 @@ describe('ERC20 tests', () => {
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
       await makeBlock();
+
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
       console.log('after', userL2BalanceAfter);
