@@ -57,6 +57,7 @@ const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
 async function makeBlock() {
   logger.debug(`Make block...`);
+  await new Promise(resolve => setTimeout(resolve, 5000));
   await nf3Proposer.makeBlockNow();
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 }
@@ -151,7 +152,6 @@ describe('ERC20 tests', () => {
         nf3User2.zkpKeys.compressedZkpPublicKey,
         fee,
       );
-      await new Promise(resolve => setTimeout(resolve, 10000));
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
       await makeBlock();
