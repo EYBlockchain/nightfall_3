@@ -151,10 +151,10 @@ describe('ERC20 tests', () => {
         nf3User2.zkpKeys.compressedZkpPublicKey,
         fee,
       );
+      await new Promise(resolve => setTimeout(resolve, 10000));
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
       await makeBlock();
-
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
       console.log('after', userL2BalanceAfter);
