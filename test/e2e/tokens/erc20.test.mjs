@@ -140,7 +140,6 @@ describe('ERC20 tests', () => {
     it('Should decrement user L2 balance after transferring some ERC20 to other wallet, and increment the other wallet balance', async function () {
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
       const user2L2BalanceBefore = await getLayer2Balances(nf3User2, erc20Address);
-      console.log('before', userL2BalanceBefore);
 
       const res = await nf3User.transfer(
         false,
@@ -157,7 +156,6 @@ describe('ERC20 tests', () => {
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
-      console.log('after', userL2BalanceAfter);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-(transferValue + fee));
       expect(user2L2BalanceAfter - user2L2BalanceBefore).to.be.equal(transferValue);
     });
