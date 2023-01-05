@@ -9,7 +9,7 @@ services:
       - 8546:8546
     command:
       ganache-cli --accounts=10 --defaultBalanceEther=1000 --gasLimit=0x3B9ACA00 --deterministic -i
-      1337 -p 8546 -b 60 -q
+      1337 -p 8546 -b 20 -q
       --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e,10000000000000000000000"
       --account="0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d,10000000000000000000000"
       --account="0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb,10000000000000000000000"
