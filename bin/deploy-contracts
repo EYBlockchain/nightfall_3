@@ -61,7 +61,7 @@ if [ -z "${NO_SERVICES_SETUP}" ]; then
   echo -e "Build finished!\n"
 fi
 
-echo -e "Creating volume's folders...\n"
+echo -e "Creating volumes folders...\n"
 
 # create the volumes folders
 mkdir -p docker/volumes/build
