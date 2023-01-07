@@ -111,6 +111,8 @@ services:
     entrypoint: ['npm', 'run', 'start']
 
   hosted-utils-api-server:
+    volumes:
+      - ../hosted-utils-api-server/entrypoint.sh:/app/entrypoint.sh
     ports:
       - 9249:9229
     command: ['npm', 'run', 'dev']
