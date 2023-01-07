@@ -83,7 +83,10 @@ services:
       context: ..
     image: ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server:latest
     depends_on:
-      - worker
+      worker:
+        condition: service_started
+      deployer:
+        condition: service_completed_successfully
     ports:
       - 8087:80
     volumes:
