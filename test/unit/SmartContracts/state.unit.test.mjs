@@ -94,6 +94,7 @@ describe('State contract State functions', function () {
     const X509Deployer = await ethers.getContractFactory('X509');
     const X509Instance = await upgrades.deployProxy(X509Deployer);
     const x509Address = X509Instance.address;
+    await X509Instance.enableWhitelisting(false);
 
     const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
     const sanctionsListMockInstance = await SanctionsListMockDeployer.deploy(
