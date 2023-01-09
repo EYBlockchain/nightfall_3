@@ -49,7 +49,7 @@ services:
       OPTIMIST_WS_PORT: ${OPTIMIST_WS_PORT:-8080}
       CLIENT_HOST: ${CLIENT_HOST:-client}
       CLIENT_PORT: ${CLIENT_PORT:-8080}
-      CHALLENGER_PORT: ${PROPOSER_PORT}
+      CHALLENGER_PORT: ${CHALLENGER_PORT}
     networks:
       - nightfall_network
     volumes:
