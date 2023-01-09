@@ -70,7 +70,7 @@ services:
     environment:
       TEST_SANCTIONS_CONTRACT: 'mock'
       # NB WHITELISTING is an important security feature and should not be disabled in production.
-      WHITELISTING: disable
+      WHITELISTING: ${WHITELISTING:-disable}
 
 
   optimist:
