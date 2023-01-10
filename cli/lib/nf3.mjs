@@ -27,10 +27,16 @@ import {
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
 // then there will only be one queue here. The constructor does not need to initialise clientBaseUrl
 // for proposer/liquidityProvider/challenger and optimistBaseUrl, optimistWsUrl for a user etc
-const userQueue = new Queue({ autostart: true, concurrency: 1 });
-const proposerQueue = new Queue({ autostart: true });
-const challengerQueue = new Queue({ autostart: true, concurrency: 1 });
-const liquidityProviderQueue = new Queue({ autostart: true, concurrency: 1 });
+const userQueue = catchQueueError(new Queue({ autostart: true, concurrency: 1 }));
+const proposerQueue = catchQueueError(new Queue({ autostart: true }));
+const challengerQueue = catchQueueError(new Queue({ autostart: true, concurrency: 1 }));
+const liquidityProviderQueue = catchQueueError(new Queue({ autostart: true, concurrency: 1 }));
+
+function catchQueueError(emitter) {
+  emitter.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
+
+  return emitter;
+}
 
 /**
 @class

@@ -21,9 +21,15 @@ import Queue from 'queue';
 import logger from './logger';
 
 const { MAX_QUEUE } = global.config;
-const fastQueue = new Queue({ autostart: true, concurrency: 1 });
-const slowQueue = new Queue({ autostart: true, concurrency: 1 });
+const fastQueue = catchQueueError(new Queue({ autostart: true, concurrency: 1 }));
+const slowQueue = catchQueueError(new Queue({ autostart: true, concurrency: 1 }));
 export const queues = [fastQueue, slowQueue];
+
+function catchQueueError(emitter) {
+  emitter.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
+
+  return emitter;
+}
 
 /**
 This function will return a promise that resolves to true when the next highest
