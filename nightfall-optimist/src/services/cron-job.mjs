@@ -7,7 +7,7 @@ import { getAllRegisteredProposers, getAllRegisteredChallengers } from './databa
 const { STATE_CONTRACT_NAME } = constants;
 
 // 00 00 00 * * 6
-const job = new CronJob('* 01 * * * *', async function () {
+const job = new CronJob('* */01 * * * *', async function () {
   console.log('-------in CronJob -------');
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
 

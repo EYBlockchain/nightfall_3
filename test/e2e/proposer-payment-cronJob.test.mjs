@@ -108,7 +108,7 @@ describe('Cron Job test', () => {
         '--- getProposerPendingPayments ---',
         await nf3Proposer.getProposerPendingPayments(),
       );
-      await web3Client.timeJump(3600 * 24 * 10);
+      await web3Client.timeJump(3600 * 24 * 70);
       console.log(
         '--after time jump- getProposerPendingPayments ---',
         await nf3Proposer.getProposerPendingPayments(),

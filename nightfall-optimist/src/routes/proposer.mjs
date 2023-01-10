@@ -192,6 +192,7 @@ router.get('/pending-payments', async (req, res, next) => {
   // get blocks by proposer
   try {
     const blocks = await findBlocksByProposer(proposerAddress);
+    console.log('----blocks---00000000000000---------------------********-', blocks);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
     for (let i = 0; i < blocks.length; i++) {
@@ -202,6 +203,7 @@ router.get('/pending-payments', async (req, res, next) => {
         pending = await shieldContractInstance.methods
           .isBlockPaymentPending(blocks[i].blockNumberL2)
           .call();
+          console.log('----pending-----', blocks[i].blockNumberL2, pending);
       } catch (e) {
         if (e.message.includes('Too soon to get paid for this block')) {
           challengePeriod = true;
