@@ -36,6 +36,8 @@ services:
       dockerfile: docker/challenger.Dockerfile
       context: ..
     image: ghcr.io/eyblockchain/nightfall3-challenger:latest
+    extra_hosts:
+      'host.docker.internal:host-gateway'
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
