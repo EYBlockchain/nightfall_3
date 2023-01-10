@@ -17,7 +17,7 @@ const job = new CronJob('* */01 * * * *', async function () {
   [...proposers, ...challengers].map(async account => {
     const balances = await stateContractInstance.methods.pendingWithdrawalsFees(account._id).call();
 
-    console.log('---account.address----', account.address, '---balances---', balances);
+    console.log('---account._id----', account._id, '---balances---', balances);
 
     // gas used/user gas limit  * (base fee + priority fee) * offset-margin
     // in wei

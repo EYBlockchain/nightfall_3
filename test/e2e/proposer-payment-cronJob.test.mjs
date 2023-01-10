@@ -108,17 +108,17 @@ describe('Cron Job test', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
     });
 
-    // it('Should increment user L2 balance after depositing some ERC20', async function () {
-    //   const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+    it('Should increment user L2 balance after depositing some ERC20', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
-    //   const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-    //   expectTransaction(res);
-    //   logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-    //   await makeBlock();
+      const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      await makeBlock();
 
-    //   const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-    //   expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
-    // });
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
+    });
 
     it('ooo', async () => {
       const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
