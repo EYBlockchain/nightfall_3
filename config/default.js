@@ -433,7 +433,7 @@ module.exports = {
         {
           name: 'USDC',
           address: '0x07865c6e87b9f70255377e024ace6630c1eaa37f',
-          amount: process.env.TEST_RESTRICT || '1000000000000',
+          amount: process.env.USDC_RESTRICT || '1000000000000',
         },
       ],
       staging: [
