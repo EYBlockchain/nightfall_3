@@ -191,8 +191,13 @@ router.get('/pending-payments', async (req, res, next) => {
   const pendingPayments = [];
   // get blocks by proposer
   try {
-    const blocks = await findBlocksByProposer(proposerAddress);
-    console.log('----blocks---00000000000000---------------------********-', blocks);
+    const blocks = await findBlocksByProposer(proposerAddress.toLocaleLowerCase());
+    console.log(
+      '----blocks---00000000000000---------------------********-',
+      blocks,
+      proposerAddress,
+      proposerAddress.toLocaleLowerCase,
+    );
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
     for (let i = 0; i < blocks.length; i++) {
