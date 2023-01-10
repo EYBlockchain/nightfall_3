@@ -1,7 +1,7 @@
-/* This adversary test relies on the bad block and bad tranasction types as defined in
+/* This adversary test relies on the bad block and bad transaction types as defined in
  * test/adversary/adversary-code/database.mjs and test/adversary/adversary-code/block.mjs
  * files. Later this test will work against random selection of bad block and bad
- * tranasction types
+ * transaction types
  */
 
 /* eslint-disable no-await-in-loop */
@@ -32,8 +32,8 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 const { generalise } = gen;
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const {
   fee,
   signingKeys,
@@ -78,6 +78,7 @@ const nf3AdversarialProposer = new Nf3(signingKeys.proposer1, {
   optimistApiUrl: adversarialOptimistApiUrl,
   optimistWsUrl: adversarialOptimistWsUrl,
 });
+nf3AdversarialProposer.setApiKey(environment.AUTH_TOKEN);
 
 const nf3Challenger = new Nf3(signingKeys.challenger, environment);
 
@@ -113,7 +114,6 @@ async function getLayer2Erc1155Balance(_nf3User, erc1155Address, _tokenId) {
 }
 
 describe('Testing with an adversary', () => {
-  let blockProposeEmitter;
   let challengeEmitter;
   let erc20Address;
   let erc1155Address;
@@ -160,31 +160,13 @@ describe('Testing with an adversary', () => {
       await nf3AdversarialProposer.getMinimumStake(),
     );
 
-    // Proposer listening for incoming events
-    blockProposeEmitter = await nf3AdversarialProposer.startProposer();
-    blockProposeEmitter
-      .on('receipt', (receipt, block) => {
-        logger.debug(
-          `L2 Block with L2 block number ${block.blockNumberL2} was proposed. The L1 transaction hash is ${receipt.transactionHash}`,
-        );
-      })
-      .on('submit-transaction-receipt', (receipt, transactions) => {
-        logger.debug(
-          `bad transaction submitted, transactionHash is ${transactions[0].transactionHash}`,
-        );
-      })
-      .on('error', (error, block) => {
-        logger.error(
-          `Proposing L2 Block with L2 block number ${block.blockNumberL2} failed due to error: ${error} `,
-        );
-      });
     // Because rollbacks removes the only registered proposer,
     // the proposer is registered again after each removal
     intervalId = setInterval(() => {
       registerProposerOnNoProposer(nf3AdversarialProposer);
     }, 5000);
 
-    // Chalenger listening for incoming events
+    // Challenger listening for incoming events
     challengeEmitter = await nf3Challenger.startChallenger();
     challengeEmitter
       .on('receipt', (receipt, type, txSelector) => {
@@ -195,7 +177,7 @@ describe('Testing with an adversary', () => {
       })
       .on('error', (error, type, txSelector) => {
         logger.error(
-          `Challenge transaction to the blochain of type ${type} failed due to error: ${error} `,
+          `Challenge transaction to the blockchain of type ${type} failed due to error: ${error} `,
         );
         challengeSelector = txSelector;
       })
@@ -644,8 +626,9 @@ describe('Testing with an adversary', () => {
   after(async () => {
     // stopping registerProposerOnNoProposer
     clearInterval(intervalId);
-    nf3User.close();
-    nf3AdversarialProposer.close();
-    nf3Challenger.close();
+    await nf3User.close();
+    await nf3AdversarialProposer.deregisterProposer();
+    await nf3AdversarialProposer.close();
+    await nf3Challenger.close();
   });
 });
