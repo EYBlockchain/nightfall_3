@@ -100,7 +100,7 @@ describe('Cron Job test', () => {
       console.log('-----proposer stake ---', await nf3Proposer.getProposerStake());
       console.log(
         '--proposer account balance---',
-        web3.fromWei(web3.eth.getBalance( nf3Proposer.getAccounts())),
+        web3.fromWei(web3.eth.getBalance(nf3Proposer.getAccounts())),
       );
     });
 
