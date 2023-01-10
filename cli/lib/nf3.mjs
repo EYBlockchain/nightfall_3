@@ -1046,41 +1046,6 @@ class Nf3 {
   }
 
   /**
-    Get all the proposer pending payments.
-    @method
-    @async
-    @returns {array} A promise that resolves to the Ethereum transaction receipt.
-    */
-  async getProposerPendingPayments() {
-    const res = await axios.get(`${this.optimistBaseUrl}/proposer/pending-payments`);
-    return res.data.pendingPayments;
-  }
-
-  /**
-    Get all the proposer stake.
-    @method
-    @async
-    @returns {array} A promise that resolves to the Ethereum transaction receipt.
-    */
-  async getProposerStake() {
-    const res = await axios.get(`${this.optimistBaseUrl}/proposer/stake`);
-    return res.data;
-  }
-
-  /**
-    Request block payment.
-    @method
-    @async
-    @return {Promise} A promise that resolves to an axios response.
-    */
-  async requestBlockPayment(blockHash) {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/payment`, {
-      blockHash,
-    });
-    return res?.data;
-  }
-
-  /**
     Get current proposer
     @method
     @async
@@ -1173,82 +1138,6 @@ class Nf3 {
     */
   async getRotateProposerBlocks() {
     return this.stateContract.methods.getRotateProposerBlocks().call();
-  }
-
-  /**
-    Starts a Proposer that listens for blocks and submits block proposal
-    transactions to the blockchain.
-    @method
-    @async
-    */
-  async startProposer() {
-    const proposeEmitter = this.createEmitter();
-    // const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
-
-    // this.websockets.push(connection); // save so we can close it properly later
-
-    // /*
-    //   we can't setup up a ping until the connection is made because the ping function
-    //   only exists in the underlying 'ws' object (_ws) and that is undefined until the
-    //   websocket is opened, it seems. Hence, we put all this code inside the onopen.
-    //  */
-    // connection.onopen = () => {
-    //   // setup a ping every 15s
-    //   this.intervalIDs.push(
-    //     setInterval(() => {
-    //       connection._ws.ping();
-    //     }, WEBSOCKET_PING_TIME),
-    //   );
-    //   // and a listener for the pong
-    //   logger.debug('Proposer websocket connection opened');
-
-    //   connection.send('blocks');
-    // };
-
-    // connection.onmessage = async message => {
-    //   const msg = JSON.parse(message.data);
-    //   const { type, txDataToSign, block, transactions, data } = msg;
-
-    //   logger.debug(`Proposer received websocket message of type ${type}`);
-
-    //   if (type === 'block') {
-    //     // First sign transaction, and send it within asynchronous queue. This will
-    //     // ensure that blockProposed events are emitted in order and with the correct nonce.
-    //     const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0); // we don't send more stake
-    //     proposerQueue.push(async () => {
-    //       try {
-    //         const receipt = await this._sendTransaction(tx);
-    //         proposeEmitter.emit('receipt', receipt, block, transactions);
-    //       } catch (err) {
-    //         logger.error({
-    //           msg: 'Error while trying to submit a block',
-    //           err,
-    //         });
-
-    //         // block proposed is reverted. Send transactions back to mempool
-    //         try {
-    //           await axios.get(`${this.optimistBaseUrl}/block/reset-localblock`);
-    //         } catch (errorResetLocalBlock) {
-    //           logger.error({
-    //             msg: 'Error while trying to reset local block',
-    //             errorResetLocalBlock,
-    //           });
-    //         }
-    //         proposeEmitter.emit('error', err, block, transactions);
-    //       }
-    //     });
-    //   } else if (type === 'rollback') {
-    //     proposeEmitter.emit('rollback', data);
-    //   }
-
-    //   return null;
-    // };
-
-    // connection.onerror = () => logger.error('Proposer websocket connection error');
-    // connection.onclosed = () => logger.warn('Proposer websocket connection closed');
-
-    // add this proposer to the list of peers that can accept direct transfers and withdraws
-    return proposeEmitter;
   }
 
   /**
