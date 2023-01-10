@@ -574,7 +574,8 @@ class Nf3 {
     value,
     tokenId,
     fee = this.defaultFeeTokenValue,
-    providedCommitmentsFee,
+    providedCommitmentsFee = [],
+    salt = undefined,
   ) {
     let txDataToSign;
     try {
@@ -605,6 +606,7 @@ class Nf3 {
       rootKey: this.zkpKeys.rootKey,
       fee,
       providedCommitmentsFee,
+      salt,
     });
 
     if (res.data.error) {

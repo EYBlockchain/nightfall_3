@@ -18,7 +18,6 @@ import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import {
   getBlockByBlockNumberL2,
   getTransactionHashSiblingInfo,
-  getLatestBlockInfo,
   getTransactionMempoolByCommitment,
   getTransactionMempoolByNullifier,
   getTransactionL2ByCommitment,
@@ -33,7 +32,7 @@ async function checkDuplicateCommitment({
   transaction,
   checkDuplicatesInL2,
   checkDuplicatesInMempool,
-  blockNumberL2,
+  transactionBlockNumberL2,
 }) {
   // Note: There is no need to check the duplicate commitment in the same transaction since this is already checked in the circuit
   // check if any commitment in the transaction is already part of an L2 block
@@ -48,6 +47,10 @@ async function checkDuplicateCommitment({
         );
 
         if (transactionMempoolHigherFee !== null) {
+          logger.debug({
+            msg: 'Duplicate mempool commitment with higher fee: ',
+            transactionMempoolHigherFee,
+          });
           throw new TransactionError(
             `The transaction has a duplicate commitment ${commitment} in the mempool with a higher fee`,
             0,
@@ -58,7 +61,10 @@ async function checkDuplicateCommitment({
 
       if (checkDuplicatesInL2) {
         // Search if there is any transaction in L2 that already contains the commitment
-        const transactionL2 = await getTransactionL2ByCommitment(commitment, blockNumberL2);
+        const transactionL2 = await getTransactionL2ByCommitment(
+          commitment,
+          transactionBlockNumberL2,
+        );
         // If a transaction was found, means that the commitment is duplicated
         if (transactionL2 !== null) {
           // Get the number of the block in L2 containing the duplicated commitment
@@ -91,7 +97,7 @@ async function checkDuplicateNullifier({
   transaction,
   checkDuplicatesInL2,
   checkDuplicatesInMempool,
-  blockNumberL2,
+  transactionBlockNumberL2,
 }) {
   // Note: There is no need to check the duplicate nullifiers in the same transaction since this is already checked in the circuit
   // check if any nullifier in the transction is already part of an L2 block
@@ -104,6 +110,10 @@ async function checkDuplicateNullifier({
         );
 
         if (transactionMempoolHigherFee !== null) {
+          logger.debug({
+            msg: 'Duplicate mempool nullifier with higher fee: ',
+            transactionMempoolHigherFee,
+          });
           throw new TransactionError(
             `The transaction has a duplicate commitment ${nullifier} in the mempool with a higher fee`,
             1,
@@ -114,7 +124,10 @@ async function checkDuplicateNullifier({
 
       if (checkDuplicatesInL2) {
         // Search if there is any transaction in L2 that already contains the commitment
-        const transactionL2 = await getTransactionL2ByNullifier(nullifier, blockNumberL2);
+        const transactionL2 = await getTransactionL2ByNullifier(
+          nullifier,
+          transactionBlockNumberL2,
+        );
         // If a transaction was found, means that the commitment is duplicated
         if (transactionL2 !== null) {
           // Get the number of the block in L2 containing the duplicated commitment
@@ -143,14 +156,34 @@ async function checkDuplicateNullifier({
   }
 }
 
-async function checkHistoricRootBlockNumber(transaction) {
-  const { blockNumberL2: LatestL2BlockNumber } = await getLatestBlockInfo();
-  transaction.historicRootBlockNumberL2.forEach(L2BlockNumber => {
-    if (Number(L2BlockNumber) === 0 && LatestL2BlockNumber === -1) return;
-    if (Number(L2BlockNumber) > LatestL2BlockNumber) {
-      throw new TransactionError('Historic root has block number L2 greater than on chain', 3, {
-        transactionHash: transaction.transactionHash,
-      });
+async function checkHistoricRootBlockNumber(transaction, lastValidBlockNumberL2) {
+  let latestBlockNumberL2;
+  if (lastValidBlockNumberL2) {
+    latestBlockNumberL2 = lastValidBlockNumberL2;
+  } else {
+    const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
+    latestBlockNumberL2 = Number((await stateInstance.methods.getNumberOfL2Blocks().call()) - 1);
+  }
+
+  logger.debug({ msg: `Latest valid block number in L2`, latestBlockNumberL2 });
+
+  transaction.historicRootBlockNumberL2.forEach((blockNumberL2, i) => {
+    if (transaction.nullifiers[i] === ZERO) {
+      if (Number(blockNumberL2) !== 0) {
+        throw new TransactionError('Invalid historic root', 3, {
+          transactionHash: transaction.transactionHash,
+        });
+      }
+    } else if (Number(blockNumberL2) > latestBlockNumberL2) {
+      throw new TransactionError(
+        `Historic root block number, which is ${Number(
+          blockNumberL2,
+        )}, has block number L2 greater than on chain, which is ${latestBlockNumberL2}`,
+        3,
+        {
+          transactionHash: transaction.transactionHash,
+        },
+      );
     }
   });
 }
@@ -171,9 +204,11 @@ async function verifyProof(transaction) {
     }),
   );
 
-  logger.debug({
-    msg: 'The historic roots are the following',
-    historicRoots: historicRoots.map(h => h.root),
+  logger.info({
+    msg: 'Constructing proof with blockNumberL2s and roots',
+    transaction: transaction.transactionHash,
+    blockNumberL2s: transaction.historicRootBlockNumberL2.map(r => Number(r)),
+    roots: historicRoots.map(h => h.root),
   });
 
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
@@ -224,22 +259,23 @@ export async function checkTransaction({
   transaction,
   checkDuplicatesInL2 = false,
   checkDuplicatesInMempool = false,
-  blockNumberL2,
+  transactionBlockNumberL2,
+  lastValidBlockNumberL2,
 }) {
   return Promise.all([
     checkDuplicateCommitment({
       transaction,
       checkDuplicatesInL2,
       checkDuplicatesInMempool,
-      blockNumberL2,
+      transactionBlockNumberL2,
     }),
     checkDuplicateNullifier({
       transaction,
       checkDuplicatesInL2,
       checkDuplicatesInMempool,
-      blockNumberL2,
+      transactionBlockNumberL2,
     }),
-    checkHistoricRootBlockNumber(transaction),
+    checkHistoricRootBlockNumber(transaction, lastValidBlockNumberL2),
     verifyProof(transaction),
   ]);
 }

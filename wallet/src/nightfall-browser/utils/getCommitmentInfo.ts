@@ -5,7 +5,7 @@ import Nullifier from '../classes/nullifier';
 import {
   clearPending,
   findUsableCommitmentsMutex,
-  getCommitmentsByHash,
+  getCommitmentsAvailableByHash,
   getSiblingInfo,
   markPending,
 } from '../services/commitment-storage';
@@ -106,7 +106,10 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
 
       // Search for the commitment hashes in the DB. The commitment will be considered valid
       // as long as it is not already nullified
-      const rawCommitments = await getCommitmentsByHash(commitmentHashes, compressedZkpPublicKey);
+      const rawCommitments = await getCommitmentsAvailableByHash(
+        commitmentHashes,
+        compressedZkpPublicKey,
+      );
 
       // Filter which of those commitments belong to the ercAddress
       const ercAddressCommitments = rawCommitments.filter(
@@ -145,7 +148,7 @@ const getCommitmentInfo = async (txInfo: TxInfo): Promise<CommitmentsInfo> => {
 
       // Search for the commitment hashes in the DB. The commitment will be considered valid
       // as long as it is not already nullified
-      const rawCommitmentsFee = await getCommitmentsByHash(
+      const rawCommitmentsFee = await getCommitmentsAvailableByHash(
         commitmentHashesFee,
         compressedZkpPublicKey,
       );

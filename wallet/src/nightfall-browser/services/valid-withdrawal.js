@@ -18,7 +18,6 @@ export async function isValidWithdrawal(transactionHash, shieldContractAddress) 
     block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
   );
   const index = transactions.findIndex(f => f.transactionHash === transactionHash);
-
   const siblingPath = [transactions[index].transactionHashesRoot].concat(
     transactions[index].transactionHashSiblingPath.path.map(p => p.value).reverse(),
   );

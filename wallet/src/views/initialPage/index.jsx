@@ -19,35 +19,9 @@ import './initial.scss';
 const cardsData = [
   {
     imageName: 'poly-wallet',
-    title: 'Polygon Wallet',
-    desc: 'Send and receive crypto assets on Polygon network',
-    route: 'wallet',
-  },
-  {
-    imageName: 'poly-bridge',
-    title: 'Polygon Bridge',
-    desc: 'Deposit and withdraw between networks',
-    route: 'bridge',
-  },
-  {
-    imageName: 'poly-wallet',
-    title: 'Polygon Nightfall Wallet',
+    title: 'Nightfall Wallet',
     desc: 'Privately send and receive crypto assets on Ethereum',
     route: 'walletNF3',
-  },
-  {
-    imageName: 'poly-staking',
-    title: 'Polygon Staking',
-    desc: 'Stake MATIC to earn rewards',
-    route: 'staking',
-    tag: 'Live on ETHEREUM chain',
-  },
-  {
-    imageName: 'poly-widget-dashboard',
-    title: 'Widget Dashboard',
-    desc: 'Manage all your Polygon wallet widgets at one place',
-    route: 'widget-dashboard',
-    tag: 'Supported only on desktop',
   },
 ];
 

@@ -5,30 +5,19 @@ import { setStorageAt, time } from '@nomicfoundation/hardhat-network-helpers';
 
 const { ethers } = hardhat;
 
-const txInfoSlot = 163;
+const commitmentEscrowedSlot = 163;
 const blockHashesSlot = 164;
 const stakeAccountsSlot = 167;
 const blockInfoSlot = 168;
 
-export async function setTransactionInfo(
-  stateAddress,
-  transactionHash,
-  isEscrowed = false,
-  ethFee = 0,
-) {
+export async function setCommitmentHashEscrowed(stateAddress, commitments) {
   const index = ethers.utils.solidityKeccak256(
     ['uint256', 'uint256'],
-    [transactionHash, txInfoSlot],
+    [commitments[0], commitmentEscrowedSlot],
   );
-
-  const txInfoStruct = ethers.utils.hexlify(
-    ethers.utils.concat([
-      ethers.utils.hexlify(Number(isEscrowed)),
-      ethers.utils.hexZeroPad(ethers.utils.hexlify(ethFee), 31),
-    ]),
-  );
-
-  await setStorageAt(stateAddress, index, txInfoStruct);
+  const commitmentEscrowed = ethers.utils.hexZeroPad(ethers.utils.hexlify(Number(true)), 14);
+  // eslint-disable-next-line no-await-in-loop
+  await setStorageAt(stateAddress, index, commitmentEscrowed);
 }
 
 export async function setBlockInfo(

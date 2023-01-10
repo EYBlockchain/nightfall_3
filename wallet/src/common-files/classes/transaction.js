@@ -31,9 +31,11 @@ export const packTransactionInfo = (value, fee, circuitHash, tokenType) => {
 };
 
 export const packHistoricRoots = historicRootBlockNumberL2 => {
-  const historicRootsHex = historicRootBlockNumberL2
-    .map(h => generalise(h).hex(8).slice(2))
-    .join('');
+  let historicRootsHex = historicRootBlockNumberL2.map(h => generalise(h).hex(8).slice(2)).join('');
+
+  while (historicRootsHex.length % 64 !== 0) {
+    historicRootsHex += '0';
+  }
 
   const historicRootsPacked = [];
   for (let i = 0; i < historicRootsHex.length; i += 64) {
@@ -60,7 +62,11 @@ function keccak(preimage) {
     compressedSecrets,
   } = preimage;
   let { proof } = preimage;
-  proof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof);
+
+  // Proof is uncompressed
+  if (proof.length === 8) {
+    proof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof);
+  }
 
   const packedInfo = packTransactionInfo(value, fee, circuitHash, tokenType);
 
@@ -198,6 +204,13 @@ class Transaction {
 
     const historicRootsPacked = packHistoricRoots(historicRootBlockNumberL2);
 
+    // Proof may already be compressed
+    let compressedProof = proof;
+    if (proof.length === 8) {
+      compressedProof = arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0])
+        ? [0, 0, 0, 0]
+        : compressProof(proof);
+    }
     return {
       packedInfo,
       historicRootBlockNumberL2: historicRootsPacked,
@@ -207,7 +220,7 @@ class Transaction {
       commitments,
       nullifiers,
       compressedSecrets,
-      proof: arrayEquality(proof, [0, 0, 0, 0, 0, 0, 0, 0]) ? [0, 0, 0, 0] : compressProof(proof),
+      proof: compressedProof,
     };
   }
 }

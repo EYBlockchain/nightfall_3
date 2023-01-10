@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: [master]
 
+env:
+# Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
+  WHITELISTING: disable
+
 jobs:
   dependency-review:
     runs-on: ubuntu-20.04

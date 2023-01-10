@@ -3,11 +3,11 @@
     "inputs": [
       {
         "internalType": "bytes32",
-        "name": "depositHash",
+        "name": "commitmentHash",
         "type": "bytes32"
       }
     ],
-    "name": "DepositNotEscrowed",
+    "name": "CommitmentNotEscrowed",
     "type": "error"
   },
   {
@@ -1297,7 +1297,7 @@
     ],
     "name": "submitTransaction",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

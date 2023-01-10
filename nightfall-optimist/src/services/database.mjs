@@ -469,8 +469,8 @@ export async function getTransactionMempoolByCommitment(commitmentHash, transact
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = {
-    commitments: commitmentHash,
-    fee: { $gt: Number(transactionFee) },
+    commitments: { $in: [commitmentHash] },
+    fee: { $gt: transactionFee },
     mempool: true,
   };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
@@ -480,7 +480,7 @@ export async function getTransactionL2ByCommitment(commitmentHash, blockNumberL2
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = {
-    commitments: commitmentHash,
+    commitments: { $in: [commitmentHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
@@ -489,7 +489,11 @@ export async function getTransactionL2ByCommitment(commitmentHash, blockNumberL2
 export async function getTransactionMempoolByNullifier(nullifierHash, transactionFee) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { nullifiers: nullifierHash, fee: { $gt: Number(transactionFee) }, mempool: true };
+  const query = {
+    nullifiers: { $in: [nullifierHash] },
+    fee: { $gt: transactionFee },
+    mempool: true,
+  };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
@@ -497,7 +501,7 @@ export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2Of
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = {
-    nullifiers: nullifierHash,
+    nullifiers: { $in: [nullifierHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
   };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);

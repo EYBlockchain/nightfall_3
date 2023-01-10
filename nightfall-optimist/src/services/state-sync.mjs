@@ -144,7 +144,7 @@ export default async proposer => {
   if (!latestBlockLocally || missingBlocks[0] !== latestBlockLocally.blockNumber + 1) {
     // The latest block stored locally does not match the last on-chain block
     // or we have detected a gap in the L2 blockchain
-    await stopMakingChallenges();
+    stopMakingChallenges();
     for (let i = 0; i < missingBlocks.length; i++) {
       const [fromBlock, toBlock] = missingBlocks[i];
       // Sync the state inbetween these blocks

@@ -70,7 +70,15 @@ module.exports = function (deployer, _, accounts) {
         accounts[0],
         addresses.user1,
         [0, 1, 2, 3, 4],
-        [100000, 200000, 10, 50, 80000],
+        [50000, 100000, 5, 25, 40000],
+        [],
+      );
+
+      await ERC1155deployed.safeBatchTransferFrom(
+        accounts[0],
+        addresses.user2,
+        [0, 1, 2, 3, 4],
+        [50000, 100000, 5, 25, 40000],
         [],
       );
     }

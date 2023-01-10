@@ -13,11 +13,12 @@ export default function WithdrawTransaction(props: WithdrawProps): JSX.Element {
   return (
     <>
       <div onClick={e => e.stopPropagation()}>
-        {/* <InstantWithdraw
-          onHide={() => setInstant(false)}
-          show={showInstant}
-          transactionhash={props.transactionhash}
-        ></InstantWithdraw> */}
+        {/*
+          <InstantWithdraw
+            onHide={() => setInstant(false)}
+            show={showInstant}
+            transactionhash={props.transactionhash}
+          ></InstantWithdraw> */}
       </div>
       <div className="withdrawDrop">
         <div className="withdraw-section">
@@ -34,7 +35,9 @@ export default function WithdrawTransaction(props: WithdrawProps): JSX.Element {
                 variant="primary"
                 // Prop for if it is confirmed
                 bsPrefix="withdraw-continue-btn"
-                onClick={() => console.log('Finalised')}
+                onClick={() => {
+                  console.log('Finalised');
+                }}
               >
                 Confirm Withdrawal
               </Button>

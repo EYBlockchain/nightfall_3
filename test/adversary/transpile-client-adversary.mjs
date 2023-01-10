@@ -68,10 +68,10 @@ const transpileGetCommitmentInfo = _pathToSrc => {
     transactionType,`;
   srcFile = srcFile.replace(regexPassTransactionTypeParam, rePassTransactionTypeParam);
 
-  // Modify getCommitmentsByHash logic in order to call faulty function if transaction type is
+  // Modify getCommitmentsAvailableByHash logic in order to call faulty function if transaction type is
   // duplicateNulifier
-  const regexModifyGetCommitmentsCall = /getCommitmentsByHash/g;
-  const reModifyGetCommitmentsCall = `getCommitmentsByHashFaulty`;
+  const regexModifyGetCommitmentsCall = /getCommitmentsAvailableByHash/g;
+  const reModifyGetCommitmentsCall = `getCommitmentsAvailableByHashFaulty`;
   srcFile = srcFile.replace(regexModifyGetCommitmentsCall, reModifyGetCommitmentsCall);
 
   // Add incorrect Historic Block Number code, which modifies the blockNumberL2s array,

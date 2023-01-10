@@ -5,6 +5,8 @@ import Web3 from 'web3';
 import chai from 'chai';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import compose from 'docker-compose';
+import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
 import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 
 const { expect } = chai;
@@ -478,10 +480,12 @@ export const waitForSufficientBalance = ({ nf3User, value, ercAddress, message }
 /**
   function to wait for a number of transactions in the mempool before creating block
 */
-export const waitForSufficientTransactionsMempool = ({ nf3User, nTransactions }) => {
+export const waitForSufficientTransactionsMempool = ({ optimistBaseUrl, nTransactions }) => {
   return new Promise(resolve => {
     async function isSufficientTransactions() {
-      const numberTxs = await nf3User.unprocessedTransactionCount();
+      const { result: mempool } = (await axios.get(`${optimistBaseUrl}/proposer/mempool`)).data;
+      const numberTxs = mempool.filter(e => e.mempool).length;
+
       logger.debug(
         ` Waiting for ${nTransactions} to create a block. Current transactions: ${numberTxs}`,
       );
@@ -555,4 +559,77 @@ export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {
         value: c.preimage.value,
       };
     });
+}
+
+// setup a healthcheck wait
+const healthy = async nf3Proposer => {
+  while (!(await nf3Proposer.healthcheck('optimist'))) {
+    await waitForTimeout(1000);
+  }
+
+  logger.debug('optimist is healthy');
+};
+
+const dropOptimistMongoDatabase = async () => {
+  logger.debug(`Dropping Optimist's Mongo database`);
+  let mongoConn;
+  try {
+    mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+    while (!(await mongoConn.db('optimist_data').dropDatabase())) {
+      logger.debug(`Retrying dropping MongoDB`);
+      await waitForTimeout(2000);
+    }
+
+    logger.debug(`Optimist's Mongo database dropped successfuly!`);
+  } finally {
+    mongo.disconnect();
+  }
+};
+
+const dropOptimistMongoBlocksCollection = async () => {
+  logger.debug(`Dropping Optimist's Mongo collection`);
+  let mongoConn;
+  try {
+    mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+    while (!(await mongoConn.db('optimist_data').collection('blocks').drop())) {
+      logger.debug(`Retrying dropping MongoDB blocks colection`);
+      await waitForTimeout(2000);
+    }
+    while (!(await mongoConn.db('optimist_data').collection('timber').drop())) {
+      logger.debug(`Retrying dropping MongoDB timber colection`);
+      await waitForTimeout(2000);
+    }
+
+    logger.debug(`Optimist's Mongo blocks dropped successfuly!`);
+  } finally {
+    mongo.disconnect();
+  }
+};
+
+export async function restartOptimist(nf3Proposer, dropDb = true) {
+  const options = {
+    config: [
+      'docker/docker-compose.yml',
+      'docker/docker-compose.dev.yml',
+      'docker/docker-compose.ganache.yml',
+    ],
+    log: process.env.LOG_LEVEL || 'silent',
+    composeOptions: [['-p', 'nightfall_3']],
+  };
+
+  await compose.stopOne('optimist', options);
+  await compose.rm(options, 'optimist');
+
+  // dropDb vs dropCollection.
+  if (dropDb) {
+    await dropOptimistMongoDatabase();
+  } else {
+    await dropOptimistMongoBlocksCollection();
+  }
+
+  await compose.upOne('optimist', options);
+
+  await healthy(nf3Proposer);
 }

@@ -33,8 +33,7 @@ const Bridge = () => {
               <div className="info_wrapper">
                 <div className="info_painel_title">Nightfall Bridge</div>
                 <div className="info_painel_description">
-                  The safe, fast and most secure way to bring cross-chain assets to Polygon
-                  Nightfall.
+                  The safe, fast and most secure way to bring cross-chain assets to Nightfall.
                 </div>
                 {isTabletOrMobile && (
                   <>

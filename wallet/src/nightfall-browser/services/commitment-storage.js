@@ -53,6 +53,7 @@ export async function storeCommitment(commitment, nullifierKey) {
     isNullifiedOnChain: Number(commitment.isNullifiedOnChain) || -1,
     nullifier: nullifierHash,
     blockNumber: -1,
+    isCommitmentInTransaction: commitment.isCommitmentInTransaction || true,
   };
   const db = await connectDB();
   return db.put(COMMITMENTS_COLLECTION, data, data._id);
@@ -195,6 +196,12 @@ export async function getCommitmentBySalt(salt) {
   return res.filter(r => r.preimage.salt === generalise(salt).hex(32));
 }
 
+export async function getCommitmentByHash(commitment) {
+  const db = await connectDB();
+  const res = await db.getAll(COMMITMENTS_COLLECTION);
+  return res.filter(r => r._id === commitment.hash.hex(32));
+}
+
 // function to retrieve commitments by transactionHash of the block in which they were
 // committed to
 export async function getCommitmentsByTransactionHashL1(transactionHashCommittedL1) {
@@ -226,7 +233,7 @@ Without that number, we can't tell which spends to roll back.
 Once these properties are cleared, the commitment will automatically become
 available for spending again.
 */
-export async function clearNullified(blockNumberL2) {
+export async function clearNullifiedOnChain(blockNumberL2) {
   const db = await connectDB();
   const res = await db.getAll(COMMITMENTS_COLLECTION);
   const filtered = res.filter(r => r.isNullifiedOnChain >= Number(blockNumberL2));
@@ -239,6 +246,29 @@ export async function clearNullified(blockNumberL2) {
           {
             isNullifiedOnChain: -1,
             blockNumber: -1,
+            transactionHashNullifiedL1: null,
+            ...rest,
+          },
+          f._id,
+        );
+      }),
+    );
+  }
+  return null;
+}
+
+export async function clearNullifiers(nullifiers) {
+  const db = await connectDB();
+  const res = await db.getAll(COMMITMENTS_COLLECTION);
+  const filtered = res.filter(r => nullifiers.includes(r.nullifier));
+  if (filtered.length > 0) {
+    return Promise.all(
+      filtered.map(f => {
+        const { isNullified: a, ...rest } = f;
+        return db.put(
+          COMMITMENTS_COLLECTION,
+          {
+            isNullified: false,
             ...rest,
           },
           f._id,
@@ -263,6 +293,7 @@ export async function clearOnChain(blockNumberL2) {
           {
             isOnChain: -1,
             blockNumber: -1,
+            transactionHashCommittedL1: null,
             ...rest,
           },
           f._id,
@@ -367,7 +398,9 @@ export async function getWalletPendingDepositBalance() {
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
   const wallet =
     Object.keys(vals).length > 0
-      ? vals.filter(v => v.isDeposited && !v.isNullified && v.isOnChain === -1)
+      ? vals.filter(
+          v => v.isDeposited && !v.isNullified && v.isOnChain === -1 && v.isCommitmentInTransaction,
+        )
       : [];
   // the below is a little complex.  First we extract the ercAddress, tokenId and value
   // from the preimage.  Then we format them nicely. We don't care about the value of the
@@ -525,8 +558,23 @@ export async function getWalletCommitments() {
 export async function deleteCommitments(commitments) {
   const db = await connectDB();
   const vals = await db.getAll(COMMITMENTS_COLLECTION);
-  const f = vals.filter(v => commitments.includes(v._id) && v.isOnChain === -1);
-  return Promise.all(f.map(deleteC => db.delete(COMMITMENTS_COLLECTION, deleteC._id)));
+  const f = vals.filter(v => commitments.includes(v._id) && !v.isDeposited);
+  await Promise.all(f.map(deleteC => db.delete(COMMITMENTS_COLLECTION, deleteC._id)));
+
+  const d = vals.filter(v => commitments.includes(v._id) && v.isDeposited);
+  await Promise.all(
+    d.map(c => {
+      const { isCommitmentInTransaction: a, ...rest } = c;
+      return db.put(
+        COMMITMENTS_COLLECTION,
+        {
+          isCommitmentInTransaction: false,
+          ...rest,
+        },
+        c._id,
+      );
+    }),
+  );
 }
 
 export async function getCommitmentsFromBlockNumberL2(blockNumberL2) {
@@ -867,7 +915,7 @@ export async function findUsableCommitmentsMutex(
   );
 }
 
-export async function getCommitmentsByHash(hashes, compressedZkpPublicKey) {
+export async function getCommitmentsAvailableByHash(hashes, compressedZkpPublicKey) {
   const db = await connectDB();
   const vals = db.getAll(COMMITMENTS_COLLECTION);
   const commitment = vals.filter(
@@ -876,6 +924,20 @@ export async function getCommitmentsByHash(hashes, compressedZkpPublicKey) {
       v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
       v.isNullifiedOnChain === -1 &&
       !v.isPendingNullification,
+  );
+
+  return commitment;
+}
+
+export async function getCommitmentsDepositedRollbacked(compressedZkpPublicKey) {
+  const db = await connectDB();
+  const vals = db.getAll(COMMITMENTS_COLLECTION);
+  const commitment = vals.filter(
+    v =>
+      v.compressedZkpPublicKey === compressedZkpPublicKey.hex(32) &&
+      v.isDeposited &&
+      v.isOnChain === -1 &&
+      !v.isCommitmentInTransaction,
   );
 
   return commitment;
