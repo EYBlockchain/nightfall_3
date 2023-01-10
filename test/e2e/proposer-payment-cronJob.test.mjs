@@ -95,6 +95,19 @@ describe('Cron Job test', () => {
     beforeEach(async () => {
       console.log('-----proposer stake ---', await nf3Proposer.getProposerStake());
     });
+
+    it('Should increment user L2 balance after depositing some ERC20', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      await makeBlock();
+
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
+    });
+
     it('Should increment user L2 balance after depositing some ERC20', async function () {
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
