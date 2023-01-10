@@ -16,6 +16,7 @@ const {
   OPTIMIST_DB,
   TRANSACTIONS_COLLECTION,
   PROPOSER_COLLECTION,
+  CHALLENGER_COLLECTION,
   SUBMITTED_BLOCKS_COLLECTION,
   INVALID_BLOCKS_COLLECTION,
   COMMIT_COLLECTION,
@@ -270,11 +271,34 @@ export async function deleteRegisteredProposerAddress(address) {
   }
 }
 
-// get all register proposer
+// get total register proposer count
 export async function getAllRegisteredProposersCount() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db.collection(PROPOSER_COLLECTION).count();
+}
+
+// get all register proposer
+export async function getAllRegisteredProposers() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(PROPOSER_COLLECTION).find().toArray();
+}
+
+export async function insertNewChallenger(address, url) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+
+  const data = { _id: address };
+  const update = { $set: { url } };
+  return db.collection(CHALLENGER_COLLECTION).updateOne(data, update, { upsert: true });
+}
+
+// get all stored challenger
+export async function getAllRegisteredChallengers() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(CHALLENGER_COLLECTION).find().toArray();
 }
 
 /**

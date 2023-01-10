@@ -1266,6 +1266,13 @@ class Nf3 {
     @async
     */
   async startChallenger() {
+    // Unlike proposer registeration challenger registeration does
+    // only store challenger address in optimist db
+    // incase register API is called for existing challenger
+    // no new record will be add in DB.
+    axios.post(`${this.optimistBaseUrl}/challenger/register`, {
+      address: this.ethereumAddress,
+    });
     const challengeEmitter = this.createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
 

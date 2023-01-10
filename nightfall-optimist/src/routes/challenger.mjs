@@ -5,8 +5,22 @@ import express from 'express';
 import { flushQueue, queues } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { startMakingChallenges, stopMakingChallenges } from '../services/challenges.mjs';
+import { insertNewChallenger } from '../services/database.mjs';
 
 const router = express.Router();
+
+/**
+ * register API for now store challenger data in db
+ */
+router.post('/register', async (req, res, next) => {
+  const { address } = req.body;
+  try {
+    const result = await insertNewChallenger(address);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.post('/enable', async (req, res, next) => {
   try {
