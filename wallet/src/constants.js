@@ -35,6 +35,10 @@ const ERROR_AUTO_HIDE_PERIOD = 2000; // 2s
 // TODO - verify balance refres rate
 const BALANCE_INTERVAL = 60000;
 
+const GAS_ESTIMATE_ENDPOINT =
+  process.env.GAS_ESTIMATE_ENDPOINT ||
+  'https://vqxy02tr5e.execute-api.us-east-2.amazonaws.com/production/estimateGas';
+
 export {
   DEFAULT_NF_ADDRESS_INDEX,
   NF3_GITHUB_ISSUES_URL,
@@ -50,4 +54,5 @@ export {
   TRANSACTION_RETRY_PERIOD,
   ERROR_AUTO_HIDE_PERIOD,
   BALANCE_INTERVAL,
+  GAS_ESTIMATE_ENDPOINT,
 };
