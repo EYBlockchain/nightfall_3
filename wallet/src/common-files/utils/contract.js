@@ -3,7 +3,7 @@ import axios from 'axios';
 import Web3 from './web3';
 import logger from './logger';
 import contractABIs from '../../contract-abis';
-import { TOKEN_TYPE, APPROVE_AMOUNT } from '../../constants';
+import { TOKEN_TYPE, APPROVE_AMOUNT, GAS_ESTIMATE_ENDPOINT } from '../../constants';
 
 const { ethereum } = global;
 const { proposerUrl } = global.config;
@@ -11,8 +11,7 @@ const { proposerUrl } = global.config;
 const options = global.config.WEB3_OPTIONS;
 
 // This is hardcoded because we just use it for all estimation.
-const gasEstimateEndpoint =
-  'https://vqxy02tr5e.execute-api.us-east-2.amazonaws.com/production/estimateGas';
+const gasEstimateEndpoint = GAS_ESTIMATE_ENDPOINT;
 
 // returns a web3 contract instance
 export async function getContractInstance(contractName, deployedAddress) {
