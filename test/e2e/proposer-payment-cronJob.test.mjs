@@ -572,7 +572,7 @@ describe('Cron Job test', () => {
   // });
 
   after(async () => {
-    await new Promise(reslove => setTimeout(reslove, 10000));
+    await new Promise(reslove => setTimeout(reslove, 100000));
     await nf3Proposer.deregisterProposer();
     await nf3Proposer.close();
     await nf3User.close();
