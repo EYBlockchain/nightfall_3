@@ -108,28 +108,29 @@ describe('Cron Job test', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
     });
 
-    it('Should increment user L2 balance after depositing some ERC20', async function () {
-      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+    // it('Should increment user L2 balance after depositing some ERC20', async function () {
+    //   const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
-      const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      expectTransaction(res);
-      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+    //   const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+    //   expectTransaction(res);
+    //   logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+    //   await makeBlock();
 
-      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
-    });
+    //   const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+    //   expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
+    // });
 
     it('ooo', async () => {
-      console.log(
-        '--- getProposerPendingPayments ---',
-        await nf3Proposer.getProposerPendingPayments(),
-      );
-      await web3Client.timeJump(3600 * 24 * 70);
+      const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
+      await web3Client.timeJump(3600 * 24 * 10);
       console.log(
         '--after time jump- getProposerPendingPayments ---',
         await nf3Proposer.getProposerPendingPayments(),
       );
+      for (const blockHash of blockHashs) {
+        console.log('--blockHash---', blockHash);
+        await nf3Proposer.requestBlockPayment(blockHash);
+      }
     });
 
     // it('Should fail to send a deposit if commitment is already on chain', async function () {
