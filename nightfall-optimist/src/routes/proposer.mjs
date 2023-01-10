@@ -203,7 +203,7 @@ router.get('/pending-payments', async (req, res, next) => {
         pending = await shieldContractInstance.methods
           .isBlockPaymentPending(blocks[i].blockNumberL2)
           .call();
-          console.log('----pending-----', blocks[i].blockNumberL2, pending);
+        console.log('----pending-----', blocks[i].blockNumberL2, pending);
       } catch (e) {
         if (e.message.includes('Too soon to get paid for this block')) {
           challengePeriod = true;
