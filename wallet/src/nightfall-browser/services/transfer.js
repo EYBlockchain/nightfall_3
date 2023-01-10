@@ -105,7 +105,7 @@ async function transfer(transferParams, shieldContractAddress) {
 
       const circuitHashData = await getStoreCircuit(`${circuitName}-hash`);
 
-      const circuitHash = circuitHashData.data;
+      const circuitHash = generalise(circuitHashData.data).hex(32);
 
       // now we have everything we need to create a Witness and compute a proof
       const publicData = new Transaction({

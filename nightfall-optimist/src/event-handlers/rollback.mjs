@@ -64,7 +64,7 @@ async function rollbackEventHandler(data) {
     );
     logger.info({
       msg: 'Rollback - blockTransactions to check:',
-      blockTransactions,
+      blockTransactions: blockTransactions.map(t => t.transactionHash),
     });
 
     const transactionsSortedByFee = blockTransactions.sort((tx1, tx2) =>
@@ -80,7 +80,8 @@ async function rollbackEventHandler(data) {
         await checkTransaction({
           transaction,
           checkDuplicatesInL2: true,
-          blockNumberL2: blockNumber,
+          transactionBlockNumberL2: blockNumber,
+          lastValidBlockNumberL2: blockNumberL2 - 1,
         });
 
         for (let k = 0; k < transaction.commitments.length; k++) {

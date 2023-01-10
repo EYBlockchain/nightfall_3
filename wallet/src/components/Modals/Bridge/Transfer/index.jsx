@@ -137,11 +137,11 @@ const TransferModal = ({ show, handleClose, transferValue, txType, triggerTx, se
           <div>
             <NetworkButtons>
               <Button1>
-                <span>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</span>
+                <span>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Nightfall L2'}</span>
               </Button1>
               <MdArrowForwardIos />
               <Button2>
-                <span>{txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}</span>
+                <span>{txType === 'deposit' ? 'Nightfall L2' : 'Ethereum Mainnet'}</span>
               </Button2>
             </NetworkButtons>
           </div>

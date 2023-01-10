@@ -8,7 +8,6 @@ much cheaper, although the offchain part is more complex.
 import Web3 from '../../common-files/utils/web3';
 import { unpackBlockInfo } from '../../common-files/utils/block-utils.js';
 import Transaction from '../../common-files/classes/transaction';
-import { decompressProof } from '../../common-files/utils/curve-maths/curves';
 
 const { SIGNATURES } = global.config;
 
@@ -36,7 +35,7 @@ async function getProposeBlockCalldata(eventData) {
   };
   const transactions = transactionsData.map(t => {
     const [
-      packedInfo,
+      packedTransactionInfo,
       historicRootBlockNumberL2Packed,
       tokenId,
       ercAddress,
@@ -47,7 +46,8 @@ async function getProposeBlockCalldata(eventData) {
       proof,
     ] = t;
 
-    const { value, fee, circuitHash, tokenType } = Transaction.unpackTransactionInfo(packedInfo);
+    const { value, fee, circuitHash, tokenType } =
+      Transaction.unpackTransactionInfo(packedTransactionInfo);
 
     const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
       nullifiers.length,
@@ -66,7 +66,7 @@ async function getProposeBlockCalldata(eventData) {
       commitments,
       nullifiers,
       compressedSecrets,
-      proof: decompressProof(proof),
+      proof,
     };
     // note, this transaction is incomplete in that the 'fee' field is empty.
     // that shouldn't matter as it's not needed.

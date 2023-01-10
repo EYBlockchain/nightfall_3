@@ -124,7 +124,7 @@ function ReceiveModal(props) {
       >
         <Modal.Header closeButton>
           <Header>
-            <HeaderTitle>Receive on Polygon Nightfall</HeaderTitle>
+            <HeaderTitle>Receive on Nightfall</HeaderTitle>
           </Header>
         </Modal.Header>
         <Modal.Body style={{ padding: '0px' }}>
@@ -170,7 +170,7 @@ export default function Assets({ tokenList }) {
     <div className="dashboardTopSection">
       <div className="container">
         <div className="containerLeftSide">
-          <div className="heading">Polygon Nightfall</div>
+          <div className="heading">Nightfall</div>
           <div className="amount">&#36;{total.toFixed(2)}</div>
           <div className="buttonsWrapper">
             <button type="button" onClick={() => setModalShow(true)}>
@@ -185,15 +185,6 @@ export default function Assets({ tokenList }) {
         </div>
 
         <div className="depositWrapper">
-          <a
-            className="linkButton"
-            href="https://wiki.polygon.technology/docs/nightfall/tools/nightfall-wallet"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            How it works?
-          </a>
-
           <button type="button" className="linkButton" onClick={() => {}}>
             <Link
               to={{

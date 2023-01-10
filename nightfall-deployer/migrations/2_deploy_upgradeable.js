@@ -123,9 +123,11 @@ module.exports = async function (deployer) {
   ).address;
   await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
 
-  if (process.env.WHITELISTING !== 'enable') return;
-
-  await x509.enableWhitelisting(true);
+  console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
+  if (process.env.WHITELISTING === 'disable') {
+    await x509.enableWhitelisting(false);
+    return;
+  }
 
   const { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS } = x509Params[process.env.ETH_NETWORK];
 

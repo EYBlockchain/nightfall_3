@@ -25,6 +25,7 @@ if (transactionType === 'IncorrectInput') {
     transaction[selectedKey] = modifiedValue;
   }
 
+  transaction.transactionHash = Transaction.calcHash(transaction);
   logger.debug({
     msg: 'Transaction after modification',
     transaction,
@@ -32,8 +33,10 @@ if (transactionType === 'IncorrectInput') {
 } else if (transactionType === 'IncorrectProof') {
   transaction.proof[0] = generalise(Math.floor(Math.random() * 2 ** 32)).hex(32);
 
+  transaction.transactionHash = Transaction.calcHash(transaction);
   logger.debug({
     msg: 'Transaction after modification',
     transaction,
   });
+  transaction.transactionHash = Transaction.calcHash(transaction);
 }

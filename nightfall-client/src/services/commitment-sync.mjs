@@ -45,7 +45,11 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
         salt: plainTexts[3].bigInt,
       });
       if (commitment.hash.hex(32) === nonZeroCommitments[0]) {
-        logger.info('Successfully decrypted commitment for this recipient');
+        logger.info({
+          msg: 'Commitment successfully decrypted for this recipient',
+          commitment,
+          transactionHash: transaction.transactionHash,
+        });
         storeCommitments.push(storeCommitment(commitment, nullifierKey[j]));
       }
     } catch (err) {
@@ -54,7 +58,11 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
     }
   });
 
-  return Promise.all(storeCommitments);
+  const commitmentsStored = await Promise.all(storeCommitments);
+  if (commitmentsStored.length > 0) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -67,9 +75,10 @@ export async function clientCommitmentSync(zkpPrivateKey, nullifierKey) {
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transactions[i].commitments.filter(n => n !== ZERO);
     // In order to check if the transaction is a transfer, we check if the compressed secrets
-    // are different than zero. All other transaction types have compressedSecrets = [0,0]
+    // are different than zero. All other transaction types have compressedSecrets = [ZERO,ZERO]
     if (
-      (transactions[i].compressedSecrets[0] !== 0 || transactions[i].compressedSecrets[1] !== 0) &&
+      (transactions[i].compressedSecrets[0] !== ZERO ||
+        transactions[i].compressedSecrets[1] !== ZERO) &&
       countCommitments([nonZeroCommitments[0]]) === 0
     )
       decryptCommitment(transactions[i], zkpPrivateKey, nullifierKey);

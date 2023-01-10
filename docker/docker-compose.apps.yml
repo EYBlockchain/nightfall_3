@@ -22,8 +22,8 @@ services:
       OPTIMIST_WS_PORT: ${OPTIMIST_WS_PORT:-8080}
       CLIENT_HOST: ${CLIENT_HOST:-client}
       CLIENT_PORT: ${CLIENT_PORT:-8080}
-      PROPOSER_HOST: ${PROPOSER_HOST}
-      PROPOSER_PORT: ${PROPOSER_PORT}
+      PROPOSER_HOST: ${PROPOSER_HOST:-proposer}
+      PROPOSER_PORT: ${PROPOSER_PORT:-8092}
     networks:
       - nightfall_network
     volumes:

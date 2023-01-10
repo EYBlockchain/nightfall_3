@@ -3,13 +3,11 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import compose from 'docker-compose';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
 import { buildBlockSolidityStruct } from '../common-files/utils/block-utils.mjs';
 import Transaction from '../common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { Web3Client, waitForTimeout } from './utils.mjs';
+import { Web3Client, waitForTimeout, restartOptimist } from './utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -43,15 +41,6 @@ let minimumStake;
 describe('Optimist synchronisation tests', () => {
   let blockProposeEmitter;
   let challengeEmitter;
-  const options = {
-    config: [
-      'docker/docker-compose.yml',
-      'docker/docker-compose.dev.yml',
-      'docker/docker-compose.ganache.yml',
-    ],
-    log: process.env.LOG_LEVEL || 'silent',
-    composeOptions: [['-p', 'nightfall_3']],
-  };
 
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
@@ -93,69 +82,6 @@ describe('Optimist synchronisation tests', () => {
         }),
       );
 
-    // setup a healthcheck wait
-    const healthy = async () => {
-      while (!(await nf3Proposer1.healthcheck('optimist'))) {
-        await waitForTimeout(1000);
-      }
-
-      logger.debug('optimist is healthy');
-    };
-
-    const dropOptimistMongoDatabase = async () => {
-      logger.debug(`Dropping Optimist's Mongo database`);
-      let mongoConn;
-      try {
-        mongoConn = await mongo.connection('mongodb://localhost:27017');
-
-        while (!(await mongoConn.db('optimist_data').dropDatabase())) {
-          logger.debug(`Retrying dropping MongoDB`);
-          await waitForTimeout(2000);
-        }
-
-        logger.debug(`Optimist's Mongo database dropped successfuly!`);
-      } finally {
-        mongo.disconnect();
-      }
-    };
-
-    const dropOptimistMongoBlocksCollection = async () => {
-      logger.debug(`Dropping Optimist's Mongo collection`);
-      let mongoConn;
-      try {
-        mongoConn = await mongo.connection('mongodb://localhost:27017');
-
-        while (!(await mongoConn.db('optimist_data').collection('blocks').drop())) {
-          logger.debug(`Retrying dropping MongoDB blocks colection`);
-          await waitForTimeout(2000);
-        }
-        while (!(await mongoConn.db('optimist_data').collection('timber').drop())) {
-          logger.debug(`Retrying dropping MongoDB timber colection`);
-          await waitForTimeout(2000);
-        }
-
-        logger.debug(`Optimist's Mongo blocks dropped successfuly!`);
-      } finally {
-        mongo.disconnect();
-      }
-    };
-
-    async function restartOptimist(dropDb = true) {
-      await compose.stopOne('optimist', options);
-      await compose.rm(options, 'optimist');
-
-      // dropDb vs dropCollection.
-      if (dropDb) {
-        await dropOptimistMongoDatabase();
-      } else {
-        await dropOptimistMongoBlocksCollection();
-      }
-
-      await compose.upOne('optimist', options);
-
-      await healthy();
-    }
-
     it('Resync optimist after making a good block without dropping dB', async function () {
       // We create enough good transactions to fill a block full of deposits.
       logger.debug(`      Sending a deposit...`);
@@ -171,7 +97,7 @@ describe('Optimist synchronisation tests', () => {
       const firstBlock = { ...block };
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
       await waitForTimeout(5000);
-      await restartOptimist(false);
+      await restartOptimist(nf3Proposer1, false);
 
       // we need to remind optimist which proposer it's connected to
       await nf3Proposer1.registerProposer('http://optimist', minimumStake);
@@ -206,7 +132,7 @@ describe('Optimist synchronisation tests', () => {
       const { block } = await p;
       const firstBlock = { ...block };
       // Now we have a block, let's force Optimist to re-sync by turning it off and on again!
-      await restartOptimist();
+      await restartOptimist(nf3Proposer1, true);
 
       // we need to remind optimist which proposer it's connected to
       await nf3Proposer1.registerProposer('http://optimist', minimumStake);
@@ -274,7 +200,7 @@ describe('Optimist synchronisation tests', () => {
       logger.debug('bad block submitted');
       const r = rollbackPromise();
       // Now we have a bad block, let's force Optimist to re-sync by turning it off and on again!
-      await restartOptimist();
+      await restartOptimist(nf3Proposer1, true);
 
       logger.debug('waiting for rollback to complete');
       await r;

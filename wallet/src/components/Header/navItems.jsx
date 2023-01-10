@@ -3,7 +3,7 @@ import { useMediaQuery } from 'react-responsive';
 import { IoIosArrowDown } from 'react-icons/io';
 // import MenuItem from './menuItem.jsx';
 import AccountDetails from './accountDetails.jsx';
-import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
+import nightfall from '../../assets/svg/nightfall.svg';
 
 import './navItems.scss';
 import { UserContext } from '../../hooks/User/index.jsx';
@@ -16,7 +16,7 @@ export default function NavItems() {
       {/* <MenuItem /> */}
       {!isSmallScreen && (
         <div className="accountBox">
-          <img src={polygonNightfall} />
+          <img src={nightfall} />
           {state.compressedZkpPublicKey && (
             <div className="accountAddress">
               {`${state.compressedZkpPublicKey.slice(0, 6)}...${state.compressedZkpPublicKey.slice(

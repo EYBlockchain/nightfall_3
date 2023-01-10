@@ -76,6 +76,7 @@ describe('Testing Shield Contract', function () {
 
     const X509Deployer = await ethers.getContractFactory('X509');
     X509Instance = await upgrades.deployProxy(X509Deployer);
+    await X509Instance.enableWhitelisting(false);
     x509Address = X509Instance.address;
 
     const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');
@@ -185,7 +186,14 @@ describe('Testing Shield Contract', function () {
 
       const tx = await ShieldInstance.submitTransaction(depositTransaction);
 
-      expect(await StateInstance.isTransactionEscrowed(depositTransactionHash)).to.equal(true);
+      for (let i = 0; i < depositTransaction.commitments.length; ++i) {
+        if (Number(depositTransaction.commitments[i]) !== 0) {
+          expect(
+            // eslint-disable-next-line no-await-in-loop
+            await StateInstance.isCommitmentEscrowed(depositTransaction.commitments[i]),
+          ).to.equal(true);
+        }
+      }
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 
@@ -246,11 +254,14 @@ describe('Testing Shield Contract', function () {
         ],
       };
       const tx = await ShieldInstance.submitTransaction(depositTransactionERC721);
-      expect(
-        await StateInstance.isTransactionEscrowed(
-          calculateTransactionHash(depositTransactionERC721),
-        ),
-      ).to.equal(true);
+      for (let i = 0; i < depositTransactionERC721.commitments.length; ++i) {
+        if (Number(depositTransactionERC721.commitments[i]) !== 0) {
+          expect(
+            // eslint-disable-next-line no-await-in-loop
+            await StateInstance.isCommitmentEscrowed(depositTransactionERC721.commitments[i]),
+          ).to.equal(true);
+        }
+      }
       expect(
         await Erc721MockInstance.ownerOf(
           '28948022309329048855892746252171976963317496166410141009864396001978282409986',
@@ -302,11 +313,14 @@ describe('Testing Shield Contract', function () {
         ],
       };
       const tx = await ShieldInstance.submitTransaction(depositTransactionERC1155);
-      expect(
-        await StateInstance.isTransactionEscrowed(
-          calculateTransactionHash(depositTransactionERC1155),
-        ),
-      ).to.equal(true);
+      for (let i = 0; i < depositTransactionERC1155.commitments.length; ++i) {
+        if (Number(depositTransactionERC1155.commitments[i]) !== 0) {
+          expect(
+            // eslint-disable-next-line no-await-in-loop
+            await StateInstance.isCommitmentEscrowed(depositTransactionERC1155.commitments[i]),
+          ).to.equal(true);
+        }
+      }
       expect(await Erc1155MockInstance.balanceOf(await owner[0].address, 0)).to.equal(1099995);
       expect(await Erc1155MockInstance.balanceOf(shieldAddress, 0)).to.equal(5);
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
@@ -314,7 +328,14 @@ describe('Testing Shield Contract', function () {
 
     it('succeeds for a non deposit transaction', async function () {
       const tx = await ShieldInstance.submitTransaction(withdrawTransaction);
-      expect(await StateInstance.isTransactionEscrowed(withdrawTransactionHash)).to.equal(false);
+      for (let i = 0; i < withdrawTransaction.commitments.length; ++i) {
+        if (Number(withdrawTransaction.commitments[i]) !== 0) {
+          expect(
+            // eslint-disable-next-line no-await-in-loop
+            await StateInstance.isCommitmentEscrowed(withdrawTransaction.commitments[i]),
+          ).to.equal(false);
+        }
+      }
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 
@@ -425,7 +446,14 @@ describe('Testing Shield Contract', function () {
 
       const tx = await ShieldInstance.submitTransaction(depositTransaction);
 
-      expect(await StateInstance.isTransactionEscrowed(depositTransactionHash)).to.equal(true);
+      for (let i = 0; i < depositTransaction.commitments.length; ++i) {
+        if (Number(depositTransaction.commitments[i]) !== 0) {
+          expect(
+            // eslint-disable-next-line no-await-in-loop
+            await StateInstance.isCommitmentEscrowed(depositTransaction.commitments[i]),
+          ).to.equal(true);
+        }
+      }
       await expect(tx).to.emit(ShieldInstance, 'TransactionSubmitted').withArgs();
     });
 

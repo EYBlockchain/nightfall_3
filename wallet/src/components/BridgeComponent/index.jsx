@@ -11,7 +11,7 @@ import { getWalletBalance } from '@Nightfall/services/commitment-storage';
 import { saveTransaction } from '@Nightfall/services/database';
 import Lottie from 'lottie-react';
 import ethChainImage from '../../assets/img/ethereum-chain.svg';
-import polygonNightfall from '../../assets/svg/polygon-nightfall.svg';
+import nightfall from '../../assets/svg/nightfall.svg';
 import discloserBottomImage from '../../assets/img/discloser-bottom.svg';
 import lightArrowImage from '../../assets/img/light-arrow.svg';
 import { approve, submitTransaction } from '../../common-files/utils/contract';
@@ -419,9 +419,9 @@ const BridgeComponent = () => {
                   {txType === 'deposit' ? (
                     <img src={ethChainImage} alt="ethereum chain logo" />
                   ) : (
-                    <img src={polygonNightfall} alt="polygon chain logo" height="24" width="24" />
+                    <img src={nightfall} alt="Nightfall chain logo" height="24" width="24" />
                   )}
-                  <p>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Polygon Nightfall L2'}</p>
+                  <p>{txType === 'deposit' ? 'Ethereum Mainnet' : 'Nightfall L2'}</p>
                 </div>
                 <div className="balance_details">
                   <p>Balance:</p>
@@ -522,9 +522,9 @@ const BridgeComponent = () => {
                 {txType === 'withdraw' ? (
                   <img src={ethChainImage} alt="ethereum chain logo" height="24" width="24" />
                 ) : (
-                  <img src={polygonNightfall} alt="polygon chain logo" height="24" width="24" />
+                  <img src={nightfall} alt="Nightfall chain logo" height="24" width="24" />
                 )}
-                <p>{txType === 'deposit' ? 'Polygon Nightfall L2' : 'Ethereum Mainnet'}</p>
+                <p>{txType === 'deposit' ? 'Nightfall L2' : 'Ethereum Mainnet'}</p>
               </div>
               <div className="balance_details">
                 <p>Balance: </p>
