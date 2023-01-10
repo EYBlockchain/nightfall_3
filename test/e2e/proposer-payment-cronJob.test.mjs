@@ -50,6 +50,7 @@ const eventLogs = [];
 let rollbackCount = 0;
 
 const nf3User = new Nf3(signingKeys.user1, environment);
+const nf3Challenger = new Nf3(signingKeys.challenger, environment);
 // const nf3User2 = new Nf3(signingKeys.user2, environment);
 // const nf3UserSanctioned = new Nf3(signingKeys.sanctionedUser, environment);
 
@@ -67,6 +68,7 @@ describe('Cron Job test', () => {
 
   before(async () => {
     await nf3User.init(mnemonics.user1);
+    await nf3Challenger.init(mnemonics.challenger);
     // await nf3User2.init(mnemonics.user2);
     // await nf3UserSanctioned.init(mnemonics.sanctionedUser);
 
@@ -81,6 +83,8 @@ describe('Cron Job test', () => {
         `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
       );
     });
+
+    await nf3Challenger.startChallenger();
 
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
     stateAddress = await nf3User.stateContractAddress;

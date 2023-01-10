@@ -15,9 +15,7 @@ const job = new CronJob('* */01 * * * *', async function () {
   const challengers = await getAllRegisteredChallengers();
   console.log(proposers, challengers);
   [...proposers, ...challengers].map(async account => {
-    const balances = await stateContractInstance.methods
-      .pendingWithdrawalsFees(account.address)
-      .call();
+    const balances = await stateContractInstance.methods.pendingWithdrawalsFees(account._id).call();
 
     console.log('---account.address----', account.address, '---balances---', balances);
 
