@@ -95,8 +95,8 @@ To perform a deployment follow the instructions bellow:
         },
     ```
 
-  - If whitelist functionality is required to perform transactions on the contracts, the `WHITELISTING` environment variable should have the value 
-  set to `enable` to enable the whitelisting functionality. This setting can be found in the file created in the `Step 1.`. If needed, then one is 
+  - The Whitelisting functionality is enabled by default. To disable it, the `WHITELISTING` environment variable should have the value 
+  set to `disable`. This setting can be found in the file created in the `Step 1.`. When enabled, one is 
   going to need to setup the Root Certificate Authorities information that the contracts will trust for intermediate/end-user certificates and the 
   Extended Key Usages & Object Identifiers for each Certificate Authority that is going to be used. An entry should be added under the `X509` similar
   to the following:
