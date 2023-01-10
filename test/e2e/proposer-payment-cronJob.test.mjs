@@ -42,7 +42,7 @@ const {
 // const { BN128_GROUP_ORDER } = constants;
 
 const web3Client = new Web3Client();
-// const web3 = web3Client.getWeb3();
+const web3 = web3Client.getWeb3();
 const eventLogs = [];
 // const logs = {
 //   instantWithdraw: 0,
@@ -71,7 +71,10 @@ describe('Cron Job test', () => {
     await nf3Challenger.init(mnemonics.challenger);
     // await nf3User2.init(mnemonics.user2);
     // await nf3UserSanctioned.init(mnemonics.sanctionedUser);
-
+    console.log(
+      '--before proposer register it balance is---',
+      web3.fromWei(web3.eth.getBalance(nf3Proposer.ethereumAddress)),
+    );
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
@@ -94,6 +97,10 @@ describe('Cron Job test', () => {
   describe('Block payment', () => {
     beforeEach(async () => {
       console.log('-----proposer stake ---', await nf3Proposer.getProposerStake());
+      console.log(
+        '--proposer account balance---',
+        web3.fromWei(web3.eth.getBalance(nf3Proposer.ethereumAddress)),
+      );
     });
 
     it('Should increment user L2 balance after depositing some ERC20', async function () {

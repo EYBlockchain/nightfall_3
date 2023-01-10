@@ -276,13 +276,15 @@ router.get('/withdraw', async (req, res, next) => {
  */
 router.post('/payment', async (req, res, next) => {
   const { blockHash } = req.body;
+  console.log('-----in /payment--    blockHash --- ', blockHash);
   try {
     const block = await getBlockByBlockHash(blockHash);
+    console.log('-----in /payment---  block -- ', block);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
       .requestBlockPayment(block)
       .encodeABI();
-
+    console.log('-----in /payment---  txDataToSign -- ', txDataToSign);
     res.json({ txDataToSign });
   } catch (err) {
     next(err);
