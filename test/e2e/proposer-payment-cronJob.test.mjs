@@ -73,7 +73,8 @@ describe('Cron Job test', () => {
     // await nf3UserSanctioned.init(mnemonics.sanctionedUser);
     console.log(
       '--before proposer register it balance is---',
-      web3.fromWei(web3.eth.getBalance(nf3Proposer.ethereumAddress)),
+      nf3Proposer.getAccounts(),
+      web3.fromWei(web3.eth.getBalance(nf3Proposer.getAccounts())),
     );
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
@@ -99,7 +100,7 @@ describe('Cron Job test', () => {
       console.log('-----proposer stake ---', await nf3Proposer.getProposerStake());
       console.log(
         '--proposer account balance---',
-        web3.fromWei(web3.eth.getBalance(nf3Proposer.ethereumAddress)),
+        web3.fromWei(web3.eth.getBalance( nf3Proposer.getAccounts())),
       );
     });
 
