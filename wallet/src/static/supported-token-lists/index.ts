@@ -5,9 +5,10 @@ import TokenType from './TokenType';
 import { ChainIdMapping } from '../../common-files/utils/web3';
 
 const supportedTokens = (): TokenType[] => {
-  // const result = obj1.key != undefined ? obj2[obj1.key as keyof typeof obj2] : '';
-  switch (ChainIdMapping[process.env.REACT_APP_MODE as keyof typeof ChainIdMapping].chainName) {
-    // switch (process.env.REACT_APP_MODE) {
+  switch (
+    ChainIdMapping[process.env.REACT_APP_MODE?.replace('-', '_') as keyof typeof ChainIdMapping]
+      .chainName
+  ) {
     case 'Mainnet':
       return mainnetTokens.tokens;
     case 'Ganache':

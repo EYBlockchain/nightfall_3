@@ -91,5 +91,9 @@ if [ ! -z "$DEV" ]; then
   cd common-files && npm ci && cd ..
 fi
 
+if [ -z "$NF_SERVICES_TO_LOG" ]; then
+  NF_SERVICES_TO_LOG=$NF_SERVICES_TO_START
+fi
+
 docker-compose $FILE  $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }
-docker-compose -p 'nightfall_3' $FILE $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_START//,/ }
+docker-compose -p 'nightfall_3' $FILE $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_LOG//,/ }
