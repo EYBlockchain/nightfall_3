@@ -76,6 +76,7 @@ describe('Testing Shield Contract', function () {
 
     const X509Deployer = await ethers.getContractFactory('X509');
     X509Instance = await upgrades.deployProxy(X509Deployer);
+    await X509Instance.enableWhitelisting(false);
     x509Address = X509Instance.address;
 
     const SanctionsListMockDeployer = await ethers.getContractFactory('SanctionsListMock');

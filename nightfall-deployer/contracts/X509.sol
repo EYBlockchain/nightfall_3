@@ -49,7 +49,7 @@ contract X509 is DERParser, Whitelist, X509Interface {
     }
 
     // NB this function removes everything.  You need to re-add all oids if you call this but removing
-    // everything has the advantage of not creating a sparse array, whihc would happend if we deleted
+    // everything has the advantage of not creating a sparse array, which would happend if we deleted
     // individual elements. Of course it is unlikely that this function will ever be needed.
     function removeExtendedKeyUsage() external onlyOwner {
         delete extendedKeyUsageOIDs;

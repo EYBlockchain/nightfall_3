@@ -67,8 +67,8 @@ async function deposit(depositParams) {
 
   if (fee.bigInt > 0) {
     if (feeL2TokenAddress.hex(32) === ercAddress.hex(32)) {
-      if (value.bigInt < fee.bigInt) {
-        throw new Error('Value deposited needs to be bigger than the fee');
+      if (value.bigInt <= fee.bigInt) {
+        throw new Error('Value deposited needs to be greater than the fee');
       }
       valueNewCommitment = generalise(value.bigInt - fee.bigInt);
       circuitName = DEPOSIT;

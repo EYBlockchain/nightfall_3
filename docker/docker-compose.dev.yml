@@ -69,6 +69,9 @@ services:
         target: /app/entrypoint.sh
     environment:
       TEST_SANCTIONS_CONTRACT: 'mock'
+      # NB WHITELISTING is an important security feature and should not be disabled in production.
+      WHITELISTING: ${WHITELISTING:-disable}
+
 
   optimist:
     build:

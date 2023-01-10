@@ -104,6 +104,7 @@ describe('ERC20 tests', () => {
       await makeBlock();
       try {
         await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee, [], salt);
+        expect.fail('Throw error, deposit did not fail');
       } catch (err) {
         expect(err.message).to.include('You can not re-send a commitment that is already on-chain');
       }
@@ -112,8 +113,9 @@ describe('ERC20 tests', () => {
     it('Should fail to send a deposit if fee is higher or equal than the value', async function () {
       try {
         await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, transferValue);
+        expect.fail('Throw error, deposit did not fail');
       } catch (err) {
-        expect(err.message).to.include('Value deposited needs to be bigger than the fee');
+        expect(err.message).to.include('Value deposited needs to be greater than the fee');
       }
     });
   });
@@ -143,7 +145,6 @@ describe('ERC20 tests', () => {
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
-
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-(transferValue + fee));
       expect(user2L2BalanceAfter - user2L2BalanceBefore).to.be.equal(transferValue);
     });

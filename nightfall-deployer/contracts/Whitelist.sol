@@ -8,7 +8,7 @@ abstract contract Whitelist is Ownable {
     mapping(address => bool) public users;
 
     function initialize() public virtual override onlyInitializing {
-        whitelisting = false;
+        whitelisting = true;
         Ownable.initialize();
     }
 
