@@ -20,15 +20,16 @@ and catch these removals, processing them appropriately.
 import Queue from 'queue';
 import logger from './logger';
 
-function catchQueueError(emitter) {
-  emitter.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
+function createQueue(options) {
+  const queue = new Queue(options);
+  queue.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
 
-  return emitter;
+  return queue;
 }
 
 const { MAX_QUEUE } = global.config;
-const fastQueue = catchQueueError(new Queue({ autostart: true, concurrency: 1 }));
-const slowQueue = catchQueueError(new Queue({ autostart: true, concurrency: 1 }));
+const fastQueue = createQueue({ autostart: true, concurrency: 1 });
+const slowQueue = createQueue({ autostart: true, concurrency: 1 });
 export const queues = [fastQueue, slowQueue];
 
 /**
