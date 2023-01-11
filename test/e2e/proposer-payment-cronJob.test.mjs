@@ -76,10 +76,7 @@ describe('Cron Job test', () => {
     await nf3Proposer.setWeb3Provider();
     const web3 = nf3Proposer.getWeb3Provider();
     console.log('--before proposer register it balance is---', nf3Proposer.ethereumAddress);
-    console.log(
-      '--proposer account balance---',
-      web3.eth.getBalance(nf3Proposer.ethereumAddress),
-    );
+    console.log('--proposer account balance---', web3.eth.getBalance(nf3Proposer.ethereumAddress));
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
     // Proposer listening for incoming events
