@@ -14,9 +14,9 @@ const { STATE_CONTRACT_NAME } = constants;
 
 let stateContractInstance;
 
-function withdrawPendingWithdraw(entity) {
-  return entity.map(async account => {
-    let rawTransaction;
+async function withdrawPendingWithdraw(entity) {
+  const rawTransactions = [];
+  for (const account of entity) {
     const balances = await stateContractInstance.methods.pendingWithdrawalsFees(account._id).call();
     console.log('---account._id----', account._id, '---balances---', balances);
     if (
@@ -25,10 +25,10 @@ function withdrawPendingWithdraw(entity) {
       balances.feesL1 >= MIN_L1_FEES ||
       balances.feesL2 >= MIN_L2_FEES
     ) {
-      rawTransaction = await stateContractInstance.methods.withdraw().encodeABI();
+      rawTransactions.push(await stateContractInstance.methods.withdraw().encodeABI());
     }
-    return rawTransaction;
-  });
+  }
+  return rawTransactions;
 }
 
 // 00 00 00 * * */06
