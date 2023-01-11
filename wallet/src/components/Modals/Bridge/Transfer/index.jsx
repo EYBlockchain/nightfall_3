@@ -111,6 +111,7 @@ const ContinueTransferButton = styled.button`
 `;
 
 const { ethereum } = global;
+const targetEnv = process.env.REACT_APP_MODE.replace('-', '_');
 
 const TransferModal = ({ show, handleClose, transferValue, txType, triggerTx, setReadyTx }) => {
   return (
@@ -169,8 +170,7 @@ const TransferModal = ({ show, handleClose, transferValue, txType, triggerTx, se
               <EstimationFeeTitleLight>Free</EstimationFeeTitleLight>
             </EstimationFeeTitle>
             {txType === 'withdraw' ||
-            (txType === 'deposit' &&
-              ethereum.chainId === ChainIdMapping[process.env.REACT_APP_MODE].chainId) ? (
+            (txType === 'deposit' && ethereum.chainId === ChainIdMapping[targetEnv].chainId) ? (
               <ContinueTransferButton
                 type="button"
                 onClick={async () => {
@@ -187,11 +187,11 @@ const TransferModal = ({ show, handleClose, transferValue, txType, triggerTx, se
                 onClick={() => {
                   return ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: ChainIdMapping[process.env.REACT_APP_MODE].chainId }], // chainId must be in hexadecimal numbers
+                    params: [{ chainId: ChainIdMapping[targetEnv].chainId }], // chainId must be in hexadecimal numbers
                   });
                 }}
               >
-                Switch to {ChainIdMapping[process.env.REACT_APP_MODE].chainName} For Deposits.
+                Switch to {ChainIdMapping[targetEnv].chainName} For Deposits.
               </ContinueTransferButton>
             )}
           </EstimationFee>
