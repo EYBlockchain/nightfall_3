@@ -137,22 +137,17 @@ describe('Cron Job test', () => {
       );
       for (const blockHash of blockHashs) {
         console.log('--blockHash---', blockHash);
-        const res = await nf3Proposer.requestBlockPayment(blockHash);
-        console.log('---txDataToSign--', res);
-        // console.log(
-        //   '--submitTransaction--',
-        //   await nf3Proposer.submitTransaction(txDataToSign, nf3Proposer.shieldContractAddress, 0),
-        // );
+        await nf3Proposer.requestBlockPayment(blockHash);
       }
     });
 
-    // it('withdraw proposer stake', async () => {
-    //   await nf3Proposer.withdrawStake();
-    //   console.log(
-    //     '-----proposer stake after nf3Proposer.withdrawStake()---',
-    //     await nf3Proposer.getProposerStake(),
-    //   );
-    // });
+    it('withdraw proposer stake', async () => {
+      await nf3Proposer.withdrawStake();
+      console.log(
+        '-----proposer stake after nf3Proposer.withdrawStake()---',
+        await nf3Proposer.getProposerStake(),
+      );
+    });
   });
 
   after(async () => {
