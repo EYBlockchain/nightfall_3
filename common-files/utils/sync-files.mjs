@@ -12,7 +12,7 @@ const {
 } = config;
 
 export async function checkContractsABI() {
-  if (CONTRACT_FILES_URL !== '') {
+  if (CONTRACT_FILES_URL) {
     const baseUrl = CONTRACT_FILES_URL;
     const url = `${baseUrl}/hash.txt`;
 
@@ -80,7 +80,7 @@ async function getCircuitNames() {
 }
 
 export async function checkCircuits() {
-  if (CIRCUIT_FILES_URL !== '') {
+  if (CIRCUIT_FILES_URL) {
     const baseUrl = CIRCUIT_FILES_URL;
     const url = `${baseUrl}/hash.txt`;
     const outputPath = `./output`;
