@@ -796,3 +796,68 @@ jobs:
         with:
           name: test-gas-logs
           path: ./test-gas.log
+
+  test-apps:
+    name: check apps for liveliness
+    runs-on: ubuntu-20.04
+    env:
+      NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          npm link @polygon-nightfall/common-files
+          cd cli
+          npm link @polygon-nightfall/common-files
+          cd ..
+
+      - name: Start Containers with ganache
+        run: |
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> test-apps.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after container startup
+        if: always()
+        run: cat test-apps.log
+
+      - name: Boot up the apps
+        run: |
+          ./bin/start-apps &> test-proposer.log &disown
+      
+      - name: 'Check challenger liveliness'
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            curl -i http://localhost:8192/healthcheck
+          attempt_limit: 10
+          attempt_delay: 30000
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat test-apps.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: test-apps-logs
+          path: ./test-apps.log
