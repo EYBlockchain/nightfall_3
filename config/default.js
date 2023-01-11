@@ -78,13 +78,31 @@ module.exports = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
   LOG_HTTP_PAYLOAD_ENABLED: process.env.LOG_HTTP_PAYLOAD_ENABLED || 'true',
   LOG_HTTP_FULL_DATA: process.env.LOG_HTTP_FULL_DATA || 'false',
+  BLOCKCHAIN_WS_HOST: process.env.BLOCKCHAIN_WS_HOST || 'blockchain',
+  BLOCKCHAIN_PORT: process.env.BLOCKCHAIN_PORT || 8546,
   MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017/',
   PROTOCOL: process.env.PROTOCOL || 'http://', // connect to circom worker microservice like this
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
   CIRCOM_WORKER_HOST: process.env.CIRCOM_WORKER_HOST || 'worker',
+<<<<<<< HEAD
   DEPLOY_MOCKED_SANCTIONS_CONTRACT: process.env.DEPLOY_MOCKED_SANCTIONS_CONTRACT,
   FEE_L2_TOKEN_ID: process.env.FEE_L2_TOKEN_ID || 'MATIC',
+=======
+  RABBITMQ_HOST: process.env.RABBITMQ_HOST || 'amqp://rabbitmq',
+  RABBITMQ_PORT: process.env.RABBITMQ_PORT || 5672,
+  ENABLE_QUEUE: process.env.ENABLE_QUEUE || 1,
+  OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
+  OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
+  CLIENT_MONGO_URL: process.env.CLIENT_MONGO_URL || 'mongodb://mongodb:27017',
+  ENVIRONMENT: process.env.ENVIRONMENT || 'local',
+  OPTIMIST_MONGO_URL: process.env.OPTIMIST_MONGO_URL || 'mongodb://mongodb:27017',
+  IS_CHALLENGER: process.env.IS_CHALLENGER || 'true',
+  ETH_NETWORK: process.env.ETH_NETWORK || 'blockchain',
+  WHITELISTING: process.env.WHITELISTING,
+  UPGRADE_CONTRACTS: process.env.UPGRADE_CONTRACTS,
+
+>>>>>>> master
   SANCTIONS_CONTRACT:
     process.env.TEST_SANCTIONS_CONTRACT || '0x40C57923924B5c5c5455c48D93317139ADDaC8fb',
   MULTISIG: {
@@ -178,8 +196,8 @@ module.exports = {
     },
   }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
   DEPLOYMENT_FILES_URL: {
-    DEFAULT_CIRCUIT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
-    DEFAULT_CONTRACT_FILES_URL: 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com',
+    CIRCUIT_FILES_URL: process.env.CIRCUIT_FILES_URL,
+    CONTRACT_FILES_URL: process.env.CONTRACT_FILES_URL,
   },
   PROPOSER_MAX_BLOCK_PERIOD_MILIS: Number(process.env.PROPOSER_MAX_BLOCK_PERIOD_MILIS) || 0,
   ENVIRONMENTS: {
