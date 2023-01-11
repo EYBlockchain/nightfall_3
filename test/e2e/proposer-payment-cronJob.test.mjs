@@ -70,8 +70,8 @@ describe('Cron Job test', () => {
     await nf3Challenger.init(mnemonics.challenger);
     // await nf3User2.init(mnemonics.user2);
     // await nf3UserSanctioned.init(mnemonics.sanctionedUser);
-    const web3 = nf3Proposer.getWeb3Provider();
-    console.log('--before proposer register it balance is---', nf3Proposer.getAccounts(), web3);
+    // const web3 = nf3Proposer.getWeb3Provider();
+    // console.log('--before proposer register it balance is---', nf3Proposer.getAccounts(), web3);
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
