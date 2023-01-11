@@ -98,7 +98,7 @@ describe('Cron Job test', () => {
   describe('Block payment', () => {
     beforeEach(async () => {
       console.log('-----proposer stake ---', await nf3Proposer.getProposerStake());
-      const web3 = nf3Proposer.getWeb3Provider();
+      // const web3 = nf3Proposer.getWeb3Provider();
       // console.log(
       //   '--proposer account balance---',
       //   web3.fromWei(web3.eth.getBalance(nf3Proposer.getAccounts())),
