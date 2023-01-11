@@ -6,27 +6,31 @@ import { getAllRegisteredProposers, getAllRegisteredChallengers } from './databa
 
 const { STATE_CONTRACT_NAME } = constants;
 
-async function withdrawPendingWithdraw(entity) {
+let stateContractInstance;
+
+function withdrawPendingWithdraw(entity) {
   return entity.map(async account => {
+    let txDataToSign;
     const balances = await stateContractInstance.methods.pendingWithdrawalsFees(account._id).call();
     console.log('---account._id----', account._id, '---balances---', balances);
-    // gas used/user gas limit  * (base fee + priority fee) * offset-margin
-    // in wei
-    if (balances.feesL1 > 21000 * (10000000000 + 2000000000) * 10) {
-      console.log('---- feesL1 --- enough balance');
+    if (
+      // gas used/user gas limit  * (base fee + priority fee) * offset-margin
+      // in wei
+      balances.feesL1 > 21000 * (10000000000 + 2000000000) * 10 ||
+      balances.feesL2 > 0
+    ) {
+      txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
     }
-    if (balances.feesL2 > 0) {
-      console.log('---- feesL2 --- enough balance');
-      return (await stateContractInstance.methods.withdraw().encodeABI());
-    }
-    return null;
+    return txDataToSign;
   });
 }
 
 // 00 00 00 * * */06
 const job = new CronJob('* */01 * * * *', async function () {
   console.log('-------in CronJob -------');
-  const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+  if (!stateContractInstance) {
+    stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+  }
 
   const proposers = await getAllRegisteredProposers();
   const challengers = await getAllRegisteredChallengers();
