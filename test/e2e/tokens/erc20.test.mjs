@@ -456,7 +456,7 @@ describe('ERC20 tests', () => {
     // Transfer 600 + 200 to self       Input [600, 250]   Output [800, 50]     Commitment List after [50, 50, 100, 250, 250, 800]
     // Transfer 800 + 200 to self       Input [800, 250]   Output [800, 50]     Commitment List after [50, 50, 50, 100, 250, 1000]
     // Transfer 1000 + 200 to self      Input [1000, 250]  Output [1200, 50]    Commitment List after [50, 50, 50, 50, 100, 1200]
-    it.skip('Should restrict withdrawals', async function () {
+    it('Should restrict withdrawals', async function () {
       const nodeInfo = await web3Client.getInfo();
       if (!nodeInfo.includes('TestRPC')) {
         logger.info('Not using a time-jump capable test client so this test is skipped');
@@ -498,14 +498,16 @@ describe('ERC20 tests', () => {
           nf3User.zkpKeys.compressedZkpPublicKey,
           0,
         );
+
         await nf3Proposer.makeBlockNow();
+
         await waitForSufficientBalance({
           nf3User,
           value: 6 * maxERC20DepositValue,
           ercAddress: erc20Address,
         });
 
-        await nf3User.withdraw(
+        const rec = await nf3User.withdraw(
           false,
           erc20Address,
           tokenType,
@@ -514,14 +516,19 @@ describe('ERC20 tests', () => {
           nf3User.ethereumAddress,
           0,
         );
+
         await nf3Proposer.makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
+        await new Promise(resolve => setTimeout(resolve, 30000));
+
+        expectTransaction(rec);
+
         const withdrawalTxHash = nf3User.getLatestWithdrawHash();
         await web3Client.timeJump(3600 * 24 * 10);
-
         // Anything equal or above the restricted amount should fail
         await nf3User.finaliseWithdrawal(withdrawalTxHash);
+
         expect.fail('Throw error, withdrawal not restricted');
       } catch (err) {
         expect(err.message).to.include('Transaction has been reverted by the EVM');

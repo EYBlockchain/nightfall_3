@@ -560,10 +560,11 @@ export async function waitTransactionToBeMined(txHash, web3, counter = 50) {
   }
 
   if (receipt === null) throw new Error(`Unable to get tx receipt`);
+  return receipt;
 }
 
-export async function getLayer2Balances(_nf3User, tokenAddress) {
-  return (await _nf3User.getLayer2Balances())[tokenAddress]?.[0].balance || 0;
+export async function getLayer2Balances(nf3User, tokenAddress) {
+  return (await nf3User.getLayer2Balances())[tokenAddress]?.[0].balance || 0;
 }
 
 export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {
