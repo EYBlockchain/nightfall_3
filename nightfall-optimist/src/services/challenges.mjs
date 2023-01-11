@@ -46,6 +46,25 @@ export async function signalRollbackCompleted(data) {
   ws.send(JSON.stringify({ type: 'rollback', data }));
 }
 
+/**
+ * Function to send rawTransction to listening challenger so that challenger can sign
+ *  and submit the transaction.
+ * @param rawTransaction
+ */
+export async function sendRawTransactionToWebSocket(rawTransaction) {
+  // check that the websocket exists (it should) and its readyState is OPEN
+  // before sending. If not wait until the challenger reconnects
+  let tryCount = 0;
+  while (!ws || ws.readyState !== WebSocket.OPEN) {
+    await waitForTimeout(3000);
+    logger.warn(
+      `Websocket to challenger is closed for sending tx.  Waiting for challenger to reconnect`,
+    );
+    if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
+  }
+  ws.send(JSON.stringify({ type: 'rawTransaction', rawTransaction }));
+}
+
 export function startMakingChallenges() {
   if (process.env.IS_CHALLENGER !== 'true') {
     throw new Error('Cannot start challenger as this optimist never intend to be a challenger');

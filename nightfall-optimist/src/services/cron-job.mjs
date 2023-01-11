@@ -3,6 +3,9 @@ import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
 import { getAllRegisteredProposers, getAllRegisteredChallengers } from './database.mjs';
+import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfProposer } from './block-assembler.mjs';
+import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfChallenger } from './challenges.mjs';
+import { resolve } from 'path/posix';
 
 const { STATE_CONTRACT_NAME } = constants;
 
@@ -10,7 +13,7 @@ let stateContractInstance;
 
 function withdrawPendingWithdraw(entity) {
   return entity.map(async account => {
-    let txDataToSign;
+    let rawTransaction;
     const balances = await stateContractInstance.methods.pendingWithdrawalsFees(account._id).call();
     console.log('---account._id----', account._id, '---balances---', balances);
     if (
@@ -19,9 +22,9 @@ function withdrawPendingWithdraw(entity) {
       balances.feesL1 > 21000 * (10000000000 + 2000000000) * 10 ||
       balances.feesL2 > 0
     ) {
-      txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
+      rawTransaction = await stateContractInstance.methods.withdraw().encodeABI();
     }
-    return txDataToSign;
+    return rawTransaction;
   });
 }
 
@@ -40,22 +43,15 @@ const job = new CronJob('* */01 * * * *', async function () {
 
   console.log(proposerWithdrawRawTx, challengerWithdrawRawTx);
 
-  // [...proposers, ...challengers].map(async account => {
-  //   const balances = await stateContractInstance.methods.pendingWithdrawalsFees(account._id).call();
+  proposerWithdrawRawTx.forEach(async (rawTx) => {
+    await sendRawTransactionToWebSocketOfProposer(rawTx);
+    await new Promise(resolve => setTimeout(3000, resolve));
+  });
 
-  //   console.log('---account._id----', account._id, '---balances---', balances);
-
-  //   // gas used/user gas limit  * (base fee + priority fee) * offset-margin
-  //   // in wei
-  //   if (balances.feesL1 > 21000 * (10000000000 + 2000000000) * 10) {
-  //     console.log('---- feesL1 --- enough balance');
-  //   }
-  //   if (balances.feesL2 > 0) {
-  //     console.log('---- feesL2 --- enough balance');
-  //     const txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
-  //     console.log('---------CronJob---txDataToSign----', txDataToSign);
-  //   }
-  // });
+  challengerWithdrawRawTx.forEach(async (rawTx) => {
+    await sendRawTransactionToWebSocketOfChallenger(rawTx);
+    await new Promise(resolve => setTimeout(3000, resolve));
+  });
 });
 
 job.start();

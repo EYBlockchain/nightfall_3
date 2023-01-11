@@ -47,7 +47,7 @@ we need to use the proposer's websocket!
 */
 export async function signalRollbackCompleted(data) {
   // check that the websocket exists (it should) and its readyState is OPEN
-  // before sending. If not wait until the challenger reconnects
+  // before sending. If not wait until the proposer reconnects
   let tryCount = 0;
   while (!ws || ws.readyState !== WebSocket.OPEN) {
     await waitForTimeout(3000);
@@ -58,6 +58,25 @@ export async function signalRollbackCompleted(data) {
   }
   logger.debug('Rollback completed');
   ws.send(JSON.stringify({ type: 'rollback', data }));
+}
+
+/**
+ * Function to send rawTransction to listening proposer so that proposer can sign
+ *  and submit the transaction.
+ * @param rawTransaction
+ */
+export async function sendRawTransactionToWebSocket(rawTransaction) {
+  // check that the websocket exists (it should) and its readyState is OPEN
+  // before sending. If not wait until the proposer reconnects
+  let tryCount = 0;
+  while (!ws || ws.readyState !== WebSocket.OPEN) {
+    await waitForTimeout(3000);
+    logger.warn(
+      `Websocket to proposer is closed for sending tx.  Waiting for proposer to reconnect`,
+    );
+    if (tryCount++ > 100) throw new Error(`Websocket to proposer has failed`);
+  }
+  ws.send(JSON.stringify({ type: 'rawTransaction', rawTransaction }));
 }
 
 async function makeBlock(proposer, transactions) {

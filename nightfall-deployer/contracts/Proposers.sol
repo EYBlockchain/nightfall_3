@@ -98,14 +98,14 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
 
     function withdrawStake() external {
         TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
-        require(
-            stake.time + CHALLENGE_PERIOD < block.timestamp,
-            'Proposers: Too soon to withdraw the stake'
-        );
-        require(
-            state.getProposer(msg.sender).thisAddress == address(0),
-            'Proposers: Cannot withdraw while staking as proposer'
-        );
+        // require(
+        //     stake.time + CHALLENGE_PERIOD < block.timestamp,
+        //     'Proposers: Too soon to withdraw the stake'
+        // );
+        // require(
+        //     state.getProposer(msg.sender).thisAddress == address(0),
+        //     'Proposers: Cannot withdraw while staking as proposer'
+        // );
         // Zero out the entry in the stake escrow
         state.setStakeAccount(msg.sender, 0, 0);
         // We have waited a CHALLENGE_PERIOD so we can also withdraw the pending challengeLocked still pending
