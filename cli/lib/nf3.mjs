@@ -236,16 +236,6 @@ class Nf3 {
   }
 
   /**
-  Gets the mempool transactions on the optimist
-  @method
-  @async
-  */
-  async getMempoolTransactions() {
-    const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
-    return mempool;
-  }
-
-  /**
   Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
   until the block is full
   @method
@@ -993,59 +983,6 @@ class Nf3 {
   }
 
   /**
-    Change current proposer.
-    It will use the address of the Ethereum Signing key that is holds to change the current
-    proposer.
-    @method
-    @async
-    @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
-    */
-  async changeCurrentProposer() {
-    const res = await axios.get(`${this.optimistBaseUrl}/proposer/change`);
-    return res?.data;
-    // return new Promise((resolve, reject) => {
-    //   proposerQueue.push(async () => {
-    //     try {
-    //       const receipt = await this.submitTransaction(
-    //         res.data.txDataToSign,
-    //         this.stateContractAddress,
-    //         0,
-    //       );
-    //       resolve(receipt);
-    //     } catch (err) {
-    //       reject(err);
-    //     }
-    //   });
-    // });
-  }
-
-  /**
-    Withdraw the stake left by the proposer.
-    It will use the address of the Ethereum Signing key that is holds to withdraw the stake.
-    @method
-    @async
-    @returns {Promise} A promise that resolves to the Ethereum transaction receipt.
-    */
-  async withdrawStake() {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/withdrawStake`);
-    return res?.data;
-    // return new Promise((resolve, reject) => {
-    //   proposerQueue.push(async () => {
-    //     try {
-    //       const receipt = await this.submitTransaction(
-    //         res.data.txDataToSign,
-    //         this.proposersContractAddress,
-    //         0,
-    //       );
-    //       resolve(receipt);
-    //     } catch (err) {
-    //       reject(err);
-    //     }
-    //   });
-    // });
-  }
-
-  /**
     Get current proposer
     @method
     @async
@@ -1065,38 +1002,6 @@ class Nf3 {
   async getProposers() {
     const res = await axios.get(`${this.optimistBaseUrl}/proposer/proposers`);
     return res.data;
-  }
-
-  /**
-    Update Proposers URL
-    @method
-    @async
-    @param {string} Proposer REST API URL with format https://xxxx.xxx.xx
-    @param {number} stake - amount to stake
-    @param {number} fee - fee of the proposer
-    @returns {array} A promise that resolves to the Ethereum transaction receipt.
-    */
-  async updateProposer(url, stake, fee) {
-    const res = await axios.post(`${this.optimistBaseUrl}/proposer/update`, {
-      stake,
-      url,
-      fee,
-    });
-    return res?.data;
-    // return new Promise((resolve, reject) => {
-    //   proposerQueue.push(async () => {
-    //     try {
-    //       const receipt = await this.submitTransaction(
-    //         res.data.txDataToSign,
-    //         this.proposersContractAddress,
-    //         stake,
-    //       );
-    //       resolve(receipt);
-    //     } catch (err) {
-    //       reject(err);
-    //     }
-    //   });
-    // });
   }
 
   createEmitter() {
@@ -1128,32 +1033,6 @@ class Nf3 {
       */
   async getMinimumStake() {
     return this.stateContract.methods.getMinimumStake().call();
-  }
-
-  /**
-    Get rotate proposer blocks
-    @method
-    @async
-    @returns {array} A promise that resolves to the Ethereum call.
-    */
-  async getRotateProposerBlocks() {
-    return this.stateContract.methods.getRotateProposerBlocks().call();
-  }
-
-  /**
-    Send offchain transaction to Optimist
-    @method
-    @async
-    @param {string} transaction
-    @returns {array} A promise that resolves to the API call status
-    */
-  async sendOffchainTransaction(transaction) {
-    const res = axios.post(
-      `${this.optimistBaseUrl}/proposer/offchain-transaction`,
-      { transaction },
-      { timeout: 3600000 },
-    );
-    return res.status;
   }
 
   /**
@@ -1500,66 +1379,6 @@ class Nf3 {
     });
     const txDataToSign = res.data;
     return this.submitTransaction(txDataToSign, this.x509ContractAddress);
-  }
-
-  /**
-    Get proposerStartBlock
-    @method
-    @async
-    @returns {uint256} A promise that resolves to the Ethereum call.
-    */
-  async proposerStartBlock() {
-    return this.stateContract.methods.proposerStartBlock().call();
-  }
-
-  /**
-  getMaxProposers
-  @method
-  @async
-  @returns {uint256} A promise that resolves to the Ethereum call.
-  */
-  async getMaxProposers() {
-    return this.stateContract.methods.getMaxProposers().call();
-  }
-
-  /**
-  get spanProposersList
-  @method
-  @async
-  @returns {uint256} A promise that resolves to the Ethereum call.
-  */
-  async spanProposersList(sprint) {
-    return this.stateContract.methods.spanProposersList(sprint).call();
-  }
-
-  /**
-  get currentSprint
-  @method
-  @async
-  @returns {uint256} A promise that resolves to the Ethereum call.
-  */
-  async currentSprint() {
-    return this.stateContract.methods.currentSprint().call();
-  }
-
-  /**
-  getNumProposers
-  @method
-  @async
-  @returns {uint256} A promise that resolves to the Ethereum call.
-  */
-  async getNumProposers() {
-    return this.stateContract.methods.getNumProposers().call();
-  }
-
-  /**
-    getSprintsInSpan
-    @method
-    @async
-    @returns {uint256} A promise that resolves to the Ethereum call.
-    */
-  async getSprintsInSpan() {
-    return this.stateContract.methods.getSprintsInSpan().call();
   }
 }
 
