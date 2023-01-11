@@ -98,7 +98,7 @@ describe('Cron Job test', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
-  describe('Block payment', () => {
+  describe('Proposer payments', () => {
     beforeEach(async () => {
       console.log('-----proposer stake ---', await nf3Proposer.getProposerStake());
       // const web3 = nf3Proposer.getWeb3Provider();
@@ -132,7 +132,7 @@ describe('Cron Job test', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
     });
 
-    it('ooo', async () => {
+    it('Get blocks payment', async () => {
       const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
       await web3Client.timeJump(3600 * 24 * 10);
       console.log(
@@ -141,7 +141,12 @@ describe('Cron Job test', () => {
       );
       for (const blockHash of blockHashs) {
         console.log('--blockHash---', blockHash);
-        await nf3Proposer.requestBlockPayment(blockHash);
+        const { txDataToSign } = await nf3Proposer.requestBlockPayment(blockHash);
+        console.log('---txDataToSign--', txDataToSign);
+        console.log(
+          '--submitTransaction--',
+          await nf3Proposer.submitTransaction(txDataToSign, nf3Proposer.shieldContractAddress, 0),
+        );
       }
     });
 
