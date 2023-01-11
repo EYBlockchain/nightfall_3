@@ -282,7 +282,7 @@ router.post('/payment', async (req, res, next) => {
     console.log('-----in /payment---  block -- ', block);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
-      .requestBlockPayment(block)
+      .requestBlockPayment(Block.buildSolidityStruct(block))
       .encodeABI();
     console.log('-----in /payment---  txDataToSign -- ', txDataToSign);
     res.json({ txDataToSign });
