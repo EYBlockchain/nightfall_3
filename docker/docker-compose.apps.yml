@@ -36,6 +36,9 @@ services:
       dockerfile: docker/challenger.Dockerfile
       context: ..
     image: ghcr.io/eyblockchain/nightfall3-challenger:latest
+    ports:
+      # to use with postman and etc
+      - 8192:8192
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     environment:
