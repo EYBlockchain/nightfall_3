@@ -78,7 +78,7 @@ describe('Cron Job test', () => {
     console.log('--before proposer register it balance is---', nf3Proposer.ethereumAddress);
     console.log(
       '--proposer account balance---',
-      web3.fromWei(web3.eth.getBalance(nf3Proposer.ethereumAddress)),
+      web3.eth.getBalance(nf3Proposer.ethereumAddress),
     );
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
@@ -101,6 +101,11 @@ describe('Cron Job test', () => {
   describe('Proposer payments', () => {
     beforeEach(async () => {
       console.log('-----proposer stake ---', await nf3Proposer.getProposerStake());
+      const web3 = nf3Proposer.getWeb3Provider();
+      console.log(
+        '--proposer account balance---',
+        web3.eth.getBalance(nf3Proposer.ethereumAddress),
+      );
       // const web3 = nf3Proposer.getWeb3Provider();
       // console.log(
       //   '--proposer account balance---',
