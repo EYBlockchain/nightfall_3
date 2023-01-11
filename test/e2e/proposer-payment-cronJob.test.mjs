@@ -134,7 +134,7 @@ describe('Cron Job test', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
     });
 
-    it('Get blocks payment', async () => {
+    it('Get block payment and add in pending withdraw of proposer', async () => {
       const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
       await web3Client.timeJump(3600 * 24 * 10);
       console.log(
@@ -150,6 +150,10 @@ describe('Cron Job test', () => {
           await nf3Proposer.submitTransaction(txDataToSign, nf3Proposer.shieldContractAddress, 0),
         );
       }
+    });
+
+    it('withdraw proposer stake', async () => {
+      await nf3Proposer.withdrawStake();
     });
 
     // it('Should fail to send a deposit if commitment is already on chain', async function () {
@@ -602,11 +606,11 @@ describe('Cron Job test', () => {
   //   });
   // });
 
-  // describe('Rollback checks', () => {
-  //   it('test should encounter zero rollbacks', function () {
-  //     expect(rollbackCount).to.be.equal(0);
-  //   });
-  // });
+  describe('Rollback checks', () => {
+    it('test should encounter zero rollbacks', function () {
+      expect(rollbackCount).to.be.equal(0);
+    });
+  });
 
   after(async () => {
     await new Promise(reslove => setTimeout(reslove, 100000));
