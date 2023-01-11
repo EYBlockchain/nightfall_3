@@ -74,7 +74,8 @@ describe('Cron Job test', () => {
     console.log(
       '--before proposer register it balance is---',
       nf3Proposer.getAccounts(),
-      web3.fromWei(web3.eth.getBalance(nf3Proposer.getAccounts())),
+      web3,
+      // web3.fromWei(web3.eth.getBalance(nf3Proposer.getAccounts())),
     );
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
@@ -98,10 +99,10 @@ describe('Cron Job test', () => {
   describe('Block payment', () => {
     beforeEach(async () => {
       console.log('-----proposer stake ---', await nf3Proposer.getProposerStake());
-      console.log(
-        '--proposer account balance---',
-        web3.fromWei(web3.eth.getBalance(nf3Proposer.getAccounts())),
-      );
+      // console.log(
+      //   '--proposer account balance---',
+      //   web3.fromWei(web3.eth.getBalance(nf3Proposer.getAccounts())),
+      // );
     });
 
     it('Should increment user L2 balance after depositing some ERC20', async function () {
