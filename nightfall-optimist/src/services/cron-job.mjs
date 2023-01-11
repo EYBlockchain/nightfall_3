@@ -1,3 +1,5 @@
+/* eslint no-await-in-loop: "off" */
+
 import { CronJob } from 'cron';
 import config from 'config';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
@@ -48,13 +50,13 @@ const job = new CronJob('* */01 * * * *', async function () {
     challengerWithdrawRawTx,
   );
 
-  for (let rawTx of proposerWithdrawRawTx) {
+  for (const rawTx of proposerWithdrawRawTx) {
     console.log('prop--rawTx-', rawTx);
     await sendRawTransactionToWebSocketOfProposer(rawTx);
     await new Promise(resolve => setTimeout(3000, resolve));
   }
 
-  for (let rawTx of challengerWithdrawRawTx) {
+  for (const rawTx of challengerWithdrawRawTx) {
     console.log('challenger--rawTx-', rawTx);
     await sendRawTransactionToWebSocketOfChallenger(rawTx);
     await new Promise(resolve => setTimeout(3000, resolve));
