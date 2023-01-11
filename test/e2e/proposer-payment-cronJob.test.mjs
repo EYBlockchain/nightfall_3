@@ -72,7 +72,10 @@ describe('Cron Job test', () => {
     await nf3Proposer.setWeb3Provider();
     const web3 = nf3Proposer.getWeb3Provider();
     console.log('--before proposer register it balance is---', nf3Proposer.ethereumAddress);
-    console.log('--proposer account balance---', web3.eth.getBalance(nf3Proposer.ethereumAddress));
+    console.log(
+      '--proposer account balance---',
+      await web3.eth.getBalance(nf3Proposer.ethereumAddress),
+    );
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
     // Proposer listening for incoming events
@@ -97,7 +100,7 @@ describe('Cron Job test', () => {
       const web3 = nf3Proposer.getWeb3Provider();
       console.log(
         '--proposer account balance---',
-        web3.eth.getBalance(nf3Proposer.ethereumAddress),
+        await web3.eth.getBalance(nf3Proposer.ethereumAddress),
       );
     });
 
@@ -134,22 +137,22 @@ describe('Cron Job test', () => {
       );
       for (const blockHash of blockHashs) {
         console.log('--blockHash---', blockHash);
-        const { txDataToSign } = await nf3Proposer.requestBlockPayment(blockHash);
-        console.log('---txDataToSign--', txDataToSign);
-        console.log(
-          '--submitTransaction--',
-          await nf3Proposer.submitTransaction(txDataToSign, nf3Proposer.shieldContractAddress, 0),
-        );
+        const res = await nf3Proposer.requestBlockPayment(blockHash);
+        console.log('---txDataToSign--', res);
+        // console.log(
+        //   '--submitTransaction--',
+        //   await nf3Proposer.submitTransaction(txDataToSign, nf3Proposer.shieldContractAddress, 0),
+        // );
       }
     });
 
-    it('withdraw proposer stake', async () => {
-      await nf3Proposer.withdrawStake();
-      console.log(
-        '-----proposer stake after nf3Proposer.withdrawStake()---',
-        await nf3Proposer.getProposerStake(),
-      );
-    });
+    // it('withdraw proposer stake', async () => {
+    //   await nf3Proposer.withdrawStake();
+    //   console.log(
+    //     '-----proposer stake after nf3Proposer.withdrawStake()---',
+    //     await nf3Proposer.getProposerStake(),
+    //   );
+    // });
   });
 
   after(async () => {
