@@ -287,6 +287,7 @@ router.post('/payment', async (req, res, next) => {
     console.log('-----in /payment---  txDataToSign -- ', txDataToSign);
     res.json({ txDataToSign });
   } catch (err) {
+    console.log('-----in /payment---  err -- ', err);
     next(err);
   }
 });
