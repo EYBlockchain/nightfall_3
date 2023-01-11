@@ -42,7 +42,7 @@ const {
 // const { BN128_GROUP_ORDER } = constants;
 
 const web3Client = new Web3Client();
-const web3 = web3Client.getWeb3();
+const web3 = nf3Proposer.getWeb3Provider();
 const eventLogs = [];
 // const logs = {
 //   instantWithdraw: 0,
@@ -74,8 +74,7 @@ describe('Cron Job test', () => {
     console.log(
       '--before proposer register it balance is---',
       nf3Proposer.getAccounts(),
-      web3,
-      // web3.fromWei(web3.eth.getBalance(nf3Proposer.getAccounts())),
+      web3.fromWei(web3.eth.getBalance(nf3Proposer.getAccounts())),
     );
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
