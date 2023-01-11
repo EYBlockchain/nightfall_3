@@ -192,12 +192,6 @@ router.get('/pending-payments', async (req, res, next) => {
   // get blocks by proposer
   try {
     const blocks = await findBlocksByProposer(proposerAddress.toLocaleLowerCase());
-    console.log(
-      '----blocks---00000000000000---------------------********-',
-      blocks,
-      proposerAddress,
-      proposerAddress.toLocaleLowerCase,
-    );
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
     for (let i = 0; i < blocks.length; i++) {
@@ -208,7 +202,6 @@ router.get('/pending-payments', async (req, res, next) => {
         pending = await shieldContractInstance.methods
           .isBlockPaymentPending(blocks[i].blockNumberL2)
           .call();
-        console.log('----pending-----', blocks[i].blockNumberL2, pending);
       } catch (e) {
         if (e.message.includes('Too soon to get paid for this block')) {
           challengePeriod = true;
@@ -276,18 +269,14 @@ router.get('/withdraw', async (req, res, next) => {
  */
 router.post('/payment', async (req, res, next) => {
   const { blockHash } = req.body;
-  console.log('-----in /payment--    blockHash --- ', blockHash);
   try {
     const block = await getBlockByBlockHash(blockHash);
-    console.log('-----in /payment---  block -- ', block);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
       .requestBlockPayment(Block.buildSolidityStruct(block))
       .encodeABI();
-    console.log('-----in /payment---  txDataToSign -- ', txDataToSign);
     res.json({ txDataToSign });
   } catch (err) {
-    console.log('-----in /payment---  err -- ', err);
     next(err);
   }
 });

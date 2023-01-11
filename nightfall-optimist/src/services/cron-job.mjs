@@ -51,15 +51,15 @@ const job = new CronJob('* */01 * * * *', async function () {
   );
 
   for (const rawTx of proposerWithdrawRawTx) {
-    console.log('prop--rawTx-', rawTx);
+    console.log('prop-----------------------dddddddddddd----------rawTx-', rawTx);
     await sendRawTransactionToWebSocketOfProposer(rawTx);
-    await new Promise(resolve => setTimeout(3000, resolve));
+    await new Promise(resolve => setTimeout(resolve, 3000));
   }
 
   for (const rawTx of challengerWithdrawRawTx) {
-    console.log('challenger--rawTx-', rawTx);
+    console.log('challenger-----------------------dddddddddddd----------rawTx-', rawTx);
     await sendRawTransactionToWebSocketOfChallenger(rawTx);
-    await new Promise(resolve => setTimeout(3000, resolve));
+    await new Promise(resolve => setTimeout(resolve, 3000));
   }
 });
 
