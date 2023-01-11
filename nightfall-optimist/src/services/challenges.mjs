@@ -56,7 +56,7 @@ export async function sendRawTransactionToWebSocket(rawTransaction) {
   // before sending. If not wait until the challenger reconnects
   let tryCount = 0;
   while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await waitForTimeout(3000);
+    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
     logger.warn(
       `Websocket to challenger is closed for sending tx.  Waiting for challenger to reconnect`,
     );
