@@ -76,7 +76,7 @@ export async function sendRawTransactionToWebSocket(rawTransaction) {
     );
     if (tryCount++ > 100) throw new Error(`Websocket to proposer has failed`);
   }
-  ws.send(JSON.stringify({ type: 'rawTransaction', rawTransaction }));
+  ws.send(JSON.stringify({ type: 'rawTransaction', txDataToSign: rawTransaction }));
 }
 
 async function makeBlock(proposer, transactions) {

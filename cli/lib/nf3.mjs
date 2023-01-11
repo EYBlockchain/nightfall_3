@@ -1231,6 +1231,9 @@ class Nf3 {
         });
       } else if (type === 'rollback') {
         proposeEmitter.emit('rollback', data);
+      } else if (type === 'rawTransaction') {
+        console.log('---txDataToSign--', txDataToSign);
+        return this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
       }
 
       return null;
@@ -1330,6 +1333,9 @@ class Nf3 {
       }
       if (type === 'rollback') {
         challengeEmitter.emit('rollback', 'rollback complete');
+      }
+      if (type === 'rawTransaction') {
+        return this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
       }
       return null;
     };
