@@ -1,4 +1,5 @@
 import { CronJob } from 'cron';
+import config from 'config';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
@@ -6,6 +7,7 @@ import { getAllRegisteredProposers, getAllRegisteredChallengers } from './databa
 import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfProposer } from './block-assembler.mjs';
 import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfChallenger } from './challenges.mjs';
 
+const { MIN_L1_FEES, MIN_L2_FEES } = config;
 const { STATE_CONTRACT_NAME } = constants;
 
 let stateContractInstance;
@@ -17,9 +19,9 @@ function withdrawPendingWithdraw(entity) {
     console.log('---account._id----', account._id, '---balances---', balances);
     if (
       // gas used/user gas limit  * (base fee + priority fee) * offset-margin
-      // in wei
-      balances.feesL1 > 21000 * (10000000000 + 2000000000) * 10 ||
-      balances.feesL2 > 0
+      // in wei. This logic should be in mainnet, but instead take min-fees from configs
+      balances.feesL1 >= MIN_L1_FEES ||
+      balances.feesL2 >= MIN_L2_FEES
     ) {
       rawTransaction = await stateContractInstance.methods.withdraw().encodeABI();
     }

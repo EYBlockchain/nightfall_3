@@ -586,4 +586,6 @@ module.exports = {
   },
   TIMER_CHANGE_PROPOSER_SECOND: Number(process.env.TIMER_CHANGE_PROPOSER_SECOND) || 30,
   MAX_ROTATE_TIMES: Number(process.env.MAX_ROTATE_TIMES) || 2,
+  MIN_L1_FEES: 1, // minimum l1 fee required before withdraw
+  MIN_L2_FEES: 1, // minimum l2 fee required before withdraw
 };
