@@ -6,6 +6,7 @@ import {
   pauseQueue,
   unpauseQueue,
 } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
+import { checkContractsABI } from '@polygon-nightfall/common-files/utils/sync-files.mjs';
 import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
@@ -27,8 +28,14 @@ const main = async () => {
     }
 
     await mongo.connection(config.MONGO_URL); // get a db connection
+    console.log('download Contracts....')
+    await checkContractsABI();
+    console.log('download Contracts done')
+    console.log('statrEventqieie called....')
     await startEventQueue(queueManager, eventHandlers);
+    console.log('statrEventqieie done')
     await pauseQueue(0);
+    console.log('queue paused done')
     initialClientSync().then(() => {
       app.set('isSyncing', false);
       unpauseQueue(0);

@@ -4,6 +4,7 @@ import {
   queues,
   enqueueEvent,
 } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
+import { checkContractsABI } from '@polygon-nightfall/common-files/utils/sync-files.mjs';
 import app from './app.mjs';
 import {
   startEventQueue,
@@ -26,6 +27,7 @@ import { setBlockProposedWebSocketConnection } from './event-handlers/block-prop
 
 const main = async () => {
   try {
+    await checkContractsABI();
     const proposer = new Proposer();
     setProposer(proposer); // passes the proposer instance int the proposer routes
 

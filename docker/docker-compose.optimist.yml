@@ -1,0 +1,59 @@
+version: '3.5'
+# Use this script for running up nightfall_3 in 'developer' mode with local
+# bindings.  See the readme for more information.
+services:
+  optimist_1:
+    image: ghcr.io/eyblockchain/nightfall3-optimist:latest
+    depends_on:
+      - mongodb_optimist_1
+    networks:
+      - nightfall_network
+    ports:
+      - 8083:80
+      # websocket port for Optimist is on localhost:8082
+      - 8084:8080
+    volumes:
+      - type: volume
+        source: build_optimist_1
+        target: /app/build/
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      WEBSOCKET_PORT: 8080
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://mongodb_optimist_1:27017}
+      HASH_TYPE: poseidon
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      IS_CHALLENGER: ${IS_CHALLENGER:-true}
+      PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
+      MAX_BLOCK_SIZE: ${MAX_BLOCK_SIZE:-50000}
+      CONTRACT_FILES_URL: ${CONTRACT_FILES_URL:-https://nightfallv3-proving-files-tmp-demo.s3.eu-central-1.amazonaws.com/build}
+    command: ['npm', 'run', 'dev']
+
+  mongodb_optimist_1:
+    image: mongo:4.4.1-bionic
+    hostname: mongodb_optimist_1
+    ports:
+      - 27027:27027
+    networks:
+      - nightfall_network
+    command: --quiet
+    volumes:
+      - type: volume
+        source: mongodb_optimist_1
+        target: /data/db
+
+volumes:
+  mongodb_optimist_1:
+  build_optimist_1:
+
+networks:
+  nightfall_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
+          gateway: 172.16.238.1

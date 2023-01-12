@@ -120,7 +120,7 @@ const checkBlocks = async () => {
 };
 
 export default async proposer => {
-  await checkContractsABI();
+  //await checkContractsABI();
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
   const lastBlockNumberL2 = Number(
     (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,

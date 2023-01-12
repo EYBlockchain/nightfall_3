@@ -1,13 +1,13 @@
 #! /bin/bash
 
-if [ -f client.env ]; then
-  grep -v '^#' client.env
+if [ -f optimist.env ]; then
+  grep -v '^#' optimist.env
   # Export env vars
-  export $(grep -v '^#' client.env | xargs)
+  export $(grep -v '^#' optimist.env | xargs)
 fi
 
 VOLUME_LIST=$(docker volume ls -q)
-FILE="-f ../docker/docker-compose.client.yml"
+FILE="-f ../docker/docker-compose.optimist.yml"
 
 usage()
 {
@@ -34,19 +34,14 @@ fi
 
 if [ -n "$REMOVE_VOLUMES" ]; then
   # if-else block checks - volume exist and then removes it.
-  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb_client_1) ]]; then
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb_optimist_1) ]]; then
     echo -n 'Removing '
-    docker volume rm nightfall_3_mongodb_client_1
+    docker volume rm nightfall_3_mongodb_optimist_1
   fi
 
-  if [[ $(echo $VOLUME_LIST | grep nightfall_3_build_client_1) ]]; then
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_build_optimist_1) ]]; then
     echo -n 'Removing '
-    docker volume rm nightfall_3_build_client_1
-  fi
-
-  if [[ $(echo $VOLUME_LIST | grep nightfall_3_proving_files_client_1) ]]; then
-    echo -n 'Removing '
-    docker volume rm nightfall_3_proving_files_client_1
+    docker volume rm nightfall_3_build_optimist_1
   fi
 fi 
 
