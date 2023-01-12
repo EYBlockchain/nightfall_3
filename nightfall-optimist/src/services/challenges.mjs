@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
