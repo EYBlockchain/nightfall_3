@@ -142,7 +142,7 @@ describe('Cron Job test', () => {
     });
 
     it('withdraw proposer stake', async () => {
-      // await nf3Proposer.deregisterProposer();
+      await nf3Proposer.deregisterProposer();
       await web3Client.timeJump(3600 * 24 * 10);
       await nf3Proposer.withdrawStake();
       console.log(

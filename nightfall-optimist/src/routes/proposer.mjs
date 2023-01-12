@@ -160,7 +160,7 @@ router.post('/de-register', async (req, res, next) => {
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
 
-    await deleteRegisteredProposerAddress(address);
+    // await deleteRegisteredProposerAddress(address);
 
     res.json({ txDataToSign });
   } catch (err) {
