@@ -2,7 +2,7 @@ name: Check PR
 
 on:
   pull_request:
-    branches: [master]
+    branches: [master, nightfall-node]
 
 env:
 # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
