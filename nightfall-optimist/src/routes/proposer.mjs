@@ -18,7 +18,7 @@ import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
   setRegisteredProposerAddress,
   isRegisteredProposerAddressMine,
-  deleteRegisteredProposerAddress,
+  // deleteRegisteredProposerAddress,
   getMempoolTransactions,
   getLatestTree,
   findBlocksByProposer,
@@ -156,7 +156,7 @@ router.get('/proposers', async (req, res, next) => {
  */
 router.post('/de-register', async (req, res, next) => {
   try {
-    const { address = '' } = req.body;
+    // const { address = '' } = req.body;
     const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
     const txDataToSign = await proposersContractInstance.methods.deRegisterProposer().encodeABI();
 

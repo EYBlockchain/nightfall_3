@@ -158,7 +158,7 @@ describe('Cron Job test', () => {
   });
 
   after(async () => {
-    await new Promise(reslove => setTimeout(reslove, 100000));
+    await new Promise(reslove => setTimeout(reslove, 300000));
     console.log(
       '------in after block--------proposer stake after nf3Proposer.withdrawStake()---',
       await nf3Proposer.getProposerStake(),

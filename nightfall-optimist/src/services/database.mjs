@@ -256,20 +256,20 @@ export async function isRegisteredProposerAddressMine(address) {
   return proposer;
 }
 
-/**
- * Remove proposer from dB
- */
-export async function deleteRegisteredProposerAddress(address) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { _id: address };
-  const foundProposer = !!(await db.collection(PROPOSER_COLLECTION).findOne(query));
-  if (foundProposer) {
-    await db.collection(PROPOSER_COLLECTION).deleteOne(query);
+// /**
+//  * Remove proposer from dB
+//  */
+// export async function deleteRegisteredProposerAddress(address) {
+//   const connection = await mongo.connection(MONGO_URL);
+//   const db = connection.db(OPTIMIST_DB);
+//   const query = { _id: address };
+//   const foundProposer = !!(await db.collection(PROPOSER_COLLECTION).findOne(query));
+//   if (foundProposer) {
+//     await db.collection(PROPOSER_COLLECTION).deleteOne(query);
 
-    logger.debug({ msg: 'Deleted registered proposer', address });
-  }
-}
+//     logger.debug({ msg: 'Deleted registered proposer', address });
+//   }
+// }
 
 // get total register proposer count
 export async function getAllRegisteredProposersCount() {
