@@ -1232,8 +1232,18 @@ class Nf3 {
       } else if (type === 'rollback') {
         proposeEmitter.emit('rollback', data);
       } else if (type === 'rawTransaction') {
-        console.log('---txDataToSign--', txDataToSign);
-        return this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+        proposerQueue.push(async () => {
+          try {
+            logger.info({ msg: 'in th queue going to submitTransaction' });
+            await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+            logger.info({ msg: 'in th queue submitTransaction done' });
+          } catch (err) {
+            logger.error({
+              msg: 'Error while trying to submit rawTx',
+              err,
+            });
+          }
+        });
       }
 
       return null;
@@ -1335,7 +1345,7 @@ class Nf3 {
         challengeEmitter.emit('rollback', 'rollback complete');
       }
       if (type === 'rawTransaction') {
-        return this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+        await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
       }
       return null;
     };

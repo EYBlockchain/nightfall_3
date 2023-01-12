@@ -22,8 +22,8 @@ async function withdrawPendingWithdraw(entity) {
     if (
       // gas used/user gas limit  * (base fee + priority fee) * offset-margin
       // in wei. This logic should be in mainnet, but instead take min-fees from configs
-      balances.feesL1 >= MIN_L1_FEES ||
-      balances.feesL2 >= MIN_L2_FEES
+      Number(balances.feesL1) >= MIN_L1_FEES ||
+      Number(balances.feesL2) >= MIN_L2_FEES
     ) {
       console.log('--encodeABI--', await stateContractInstance.methods.withdraw().encodeABI());
       rawTransactions.push(await stateContractInstance.methods.withdraw().encodeABI());

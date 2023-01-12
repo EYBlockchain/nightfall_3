@@ -142,6 +142,7 @@ describe('Cron Job test', () => {
     });
 
     it('withdraw proposer stake', async () => {
+      await nf3Proposer.deregisterProposer();
       await web3Client.timeJump(3600 * 24 * 10);
       await nf3Proposer.withdrawStake();
       console.log(
@@ -152,8 +153,7 @@ describe('Cron Job test', () => {
   });
 
   after(async () => {
-    await new Promise(reslove => setTimeout(reslove, 100000));
-    await nf3Proposer.deregisterProposer();
+    await new Promise(reslove => setTimeout(reslove, 1000000));
     await nf3Proposer.close();
     await nf3User.close();
     web3Client.closeWeb3();
