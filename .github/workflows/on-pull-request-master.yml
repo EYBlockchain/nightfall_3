@@ -871,7 +871,7 @@ jobs:
           name: test-apps-logs
           path: ./test-apps.log
 
-test-client:
+  test-client:
     name: check client for liveliness
     env:
       CONFIRMATIONS: 1
