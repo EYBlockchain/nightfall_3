@@ -6,8 +6,8 @@ import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
 import { getAllRegisteredProposers, getAllRegisteredChallengers } from './database.mjs';
-import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfProposer } from './block-assembler.mjs';
-import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfChallenger } from './challenges.mjs';
+// import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfProposer } from './block-assembler.mjs';
+// import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfChallenger } from './challenges.mjs';
 
 const { MIN_L1_FEES, MIN_L2_FEES } = config;
 const { STATE_CONTRACT_NAME } = constants;
@@ -45,7 +45,11 @@ const job = new CronJob('* * */01 * * *', async function () {
   const proposerWithdrawRawTx = await withdrawPendingWithdraw(proposers);
   const challengerWithdrawRawTx = await withdrawPendingWithdraw(challengers);
 
-  console.log('----- proposerWithdrawRawTx challengerWithdrawRawTx --', proposerWithdrawRawTx);
+  console.log(
+    '----- proposerWithdrawRawTx challengerWithdrawRawTx --',
+    proposerWithdrawRawTx,
+    challengerWithdrawRawTx,
+  );
   // for (const rawTx of proposerWithdrawRawTx) {
   //   await sendRawTransactionToWebSocketOfProposer(rawTx);
   //   await new Promise(resolve => setTimeout(resolve, 3000));
