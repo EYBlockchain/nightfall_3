@@ -24,7 +24,7 @@ services:
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       CIRCOM_WORKER_HOST: worker_1
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb_client_1}
-      CONTRACT_FILES_URL: ${CONTRACT_FILES_URL:-https://nightfallv3-proving-files-tmp-demo.s3.eu-central-1.amazonaws.com/build}
+      CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
     command: ['npm', 'run', 'dev']
 
   mongodb_client_1:
