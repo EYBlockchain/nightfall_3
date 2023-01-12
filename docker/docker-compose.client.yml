@@ -32,6 +32,7 @@ services:
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
       LAUNCH_LOCAL: 1
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     command: ['npm', 'run', 'dev']
 
   rabbitmq:
