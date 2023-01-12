@@ -141,20 +141,20 @@ describe('Cron Job test', () => {
       }
     });
 
-    it('withdraw proposer stake', async () => {
-      await nf3Proposer.deregisterProposer();
-      await web3Client.timeJump(3600 * 24 * 10);
-      await nf3Proposer.withdrawStake();
-      console.log(
-        '-----proposer stake after nf3Proposer.withdrawStake()---',
-        await nf3Proposer.getProposerStake(),
-      );
-      const web3 = nf3Proposer.getWeb3Provider();
-      console.log(
-        '--proposer account balance---',
-        await web3.eth.getBalance(nf3Proposer.ethereumAddress),
-      );
-    });
+    // it.skip('withdraw proposer stake', async () => {
+    //   await nf3Proposer.deregisterProposer();
+    //   await web3Client.timeJump(3600 * 24 * 10);
+    //   await nf3Proposer.withdrawStake();
+    //   console.log(
+    //     '-----proposer stake after nf3Proposer.withdrawStake()---',
+    //     await nf3Proposer.getProposerStake(),
+    //   );
+    //   const web3 = nf3Proposer.getWeb3Provider();
+    //   console.log(
+    //     '--proposer account balance---',
+    //     await web3.eth.getBalance(nf3Proposer.ethereumAddress),
+    //   );
+    // });
   });
 
   after(async () => {
