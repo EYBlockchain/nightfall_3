@@ -25,6 +25,10 @@ async function withdrawPendingWithdraw(entity) {
       Number(balances.feesL1) >= MIN_L1_FEES ||
       Number(balances.feesL2) >= MIN_L2_FEES
     ) {
+      console.log(
+        '-----state balances-----',
+        await stateContractInstance.methods.balancesOfContractAndProposer().call(),
+      );
       console.log('--encodeABI--', await stateContractInstance.methods.withdraw().encodeABI());
       rawTransactions.push(await stateContractInstance.methods.withdraw().encodeABI());
     }
