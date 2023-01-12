@@ -12,7 +12,6 @@ import {
   flushQueue,
 } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { checkContractsABI } from '@polygon-nightfall/common-files/utils/sync-files.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';
@@ -120,7 +119,6 @@ const checkBlocks = async () => {
 };
 
 export default async proposer => {
-  //await checkContractsABI();
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
   const lastBlockNumberL2 = Number(
     (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,

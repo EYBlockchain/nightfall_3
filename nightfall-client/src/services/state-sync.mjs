@@ -7,7 +7,6 @@ their local commitments databsae.
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
-import { checkContractsABI } from '@polygon-nightfall/common-files/utils/sync-files.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { unpauseQueue } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
@@ -67,8 +66,6 @@ const genGetCommitments = async (query = {}, proj = {}) => {
 
 // eslint-disable-next-line import/prefer-default-export
 export const initialClientSync = async () => {
-  console.log("Initial client Sync")
-  //await checkContractsABI();
   const allCommitments = await genGetCommitments();
   const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
 
