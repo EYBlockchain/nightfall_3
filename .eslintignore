@@ -16,3 +16,4 @@ typechain-types/
 config/geth/data
 backup/
 coverage/
+docker/volumes
