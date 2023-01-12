@@ -33,7 +33,7 @@ async function withdrawPendingWithdraw(entity) {
 }
 
 // 00 00 00 * * */06
-const job = new CronJob('* * */01 * * *', async function () {
+const job = new CronJob('* */01 * * * *', async function () {
   console.log('-------in CronJob -------');
   if (!stateContractInstance) {
     stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
@@ -52,7 +52,7 @@ const job = new CronJob('* * */01 * * *', async function () {
   );
   for (const rawTx of proposerWithdrawRawTx) {
     console.log('--rawTx---', rawTx);
-    if (rawTx !== '') return;
+    // if (rawTx !== '') return;
     await sendRawTransactionToWebSocketOfProposer(rawTx);
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
