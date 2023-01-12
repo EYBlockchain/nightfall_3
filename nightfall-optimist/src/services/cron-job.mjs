@@ -46,15 +46,15 @@ const job = new CronJob('* * */01 * * *', async function () {
   const challengerWithdrawRawTx = await withdrawPendingWithdraw(challengers);
 
   console.log('----- proposerWithdrawRawTx challengerWithdrawRawTx --', proposerWithdrawRawTx);
-  for (const rawTx of proposerWithdrawRawTx) {
-    await sendRawTransactionToWebSocketOfProposer(rawTx);
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  }
+  // for (const rawTx of proposerWithdrawRawTx) {
+  //   await sendRawTransactionToWebSocketOfProposer(rawTx);
+  //   await new Promise(resolve => setTimeout(resolve, 3000));
+  // }
 
-  for (const rawTx of challengerWithdrawRawTx) {
-    await sendRawTransactionToWebSocketOfChallenger(rawTx);
-    await new Promise(resolve => setTimeout(resolve, 3000));
-  }
+  // for (const rawTx of challengerWithdrawRawTx) {
+  //   await sendRawTransactionToWebSocketOfChallenger(rawTx);
+  //   await new Promise(resolve => setTimeout(resolve, 3000));
+  // }
 });
 
 job.start();
