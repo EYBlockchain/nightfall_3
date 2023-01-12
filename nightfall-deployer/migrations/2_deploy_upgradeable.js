@@ -79,7 +79,7 @@ module.exports = async function (deployer) {
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
   const x509 = await X509.deployed();
-  await State.deployed();
+  const state = await State.deployed();
   const { bootProposer, bootChallenger } = addresses;
   await proposers.setBootProposer(bootProposer);
   await challengers.setBootChallenger(bootChallenger);
@@ -105,6 +105,7 @@ module.exports = async function (deployer) {
   ).address;
   console.log('in 2_deploy---feeL2TokenAddress----', feeL2TokenAddress);
   await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
+  await state.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'enable') await x509.enableWhitelisting(true);
   // set a trusted RSA root public key for X509 certificate checks
