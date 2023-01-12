@@ -51,6 +51,7 @@ services:
       OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
+      STATE_GENESIS_BLOCK: ${STATE_GENESIS_BLOCK:-0}
     command: ['npm', 'run', 'dev']
 
     # Temporary container to deploy contracts and circuits and populate volumes
@@ -60,6 +61,8 @@ services:
       - type: volume
         source: build
         target: /app/build/
+    depends_on:
+      - worker
     networks:
       - nightfall_network
     environment:
@@ -75,6 +78,10 @@ services:
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
       UPGRADE: ${UPGRADE_CONTRACTS}
       ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
+      ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
+      ETH_ADDRESS: ${ETH_ADDRESS}
+      DEPLOY_MOCKED_SANCTIONS_CONTRACT: ${DEPLOY_MOCKED_SANCTIONS_CONTRACT:-true}
+      FEE_L2_TOKEN_ID: 'MATIC'
       WETH_RESTRICT: ${WETH_RESTRICT} 
       ERC20MOCK_RESTRICT: ${ERC20MOCK_RESTRICT}
       MATIC_RESTRICT: ${MATIC_RESTRICT}
@@ -152,7 +159,6 @@ services:
         source: proving_files
         target: /app/output/
     depends_on:
-      - deployer
       - rabbitmq
     networks:
       - nightfall_network
@@ -161,7 +167,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      MPC: ${MPC}
+    entrypoint: ['npm', 'run', 'start']
 
 volumes:
   mongodb:

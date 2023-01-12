@@ -85,6 +85,8 @@ module.exports = {
   WEBSOCKET_PORT: process.env.WEBSOCKET_PORT || 8080,
   WEBSOCKET_PING_TIME: 15000,
   CIRCOM_WORKER_HOST: process.env.CIRCOM_WORKER_HOST || 'worker',
+  DEPLOY_MOCKED_SANCTIONS_CONTRACT: process.env.DEPLOY_MOCKED_SANCTIONS_CONTRACT,
+  FEE_L2_TOKEN_ID: process.env.FEE_L2_TOKEN_ID || 'MATIC',
   RABBITMQ_HOST: process.env.RABBITMQ_HOST || 'amqp://rabbitmq',
   RABBITMQ_PORT: process.env.RABBITMQ_PORT || 5672,
   ENABLE_QUEUE: process.env.ENABLE_QUEUE || 1,
@@ -97,7 +99,6 @@ module.exports = {
   ETH_NETWORK: process.env.ETH_NETWORK || 'blockchain',
   WHITELISTING: process.env.WHITELISTING,
   UPGRADE_CONTRACTS: process.env.UPGRADE_CONTRACTS,
-
   SANCTIONS_CONTRACT:
     process.env.TEST_SANCTIONS_CONTRACT || '0x40C57923924B5c5c5455c48D93317139ADDaC8fb',
   MULTISIG: {
@@ -190,12 +191,6 @@ module.exports = {
       isWithdrawing: false,
     },
   }, // used as an enum to mirror the Shield contracts enum for vk types. The keys of this object must correspond to a 'folderpath' (the .zok file without the '.zok' bit)
-  MPC: {
-    MPC_PARAMS_URL:
-      process.env.MPC_PARAMS_URL ||
-      'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/phase2/mpc_params',
-  },
-  // 'https://nightfallv3-proving-files.s3.eu-west-1.amazonaws.com/testnet/proving_files',
   DEPLOYMENT_FILES_URL: {
     CIRCUIT_FILES_URL: process.env.CIRCUIT_FILES_URL,
     CONTRACT_FILES_URL: process.env.CONTRACT_FILES_URL,

@@ -12,7 +12,6 @@ const ERC20Mock = artifacts.require('ERC20Mock.sol');
 const ERC721Mock = artifacts.require('ERC721Mock.sol');
 const ERC1155Mock = artifacts.require('ERC1155Mock.sol');
 
-const liquidityProviderAddress = '0x4789FD18D5d71982045d85d5218493fD69F55AC4';
 const nERC721 = 35;
 
 module.exports = function (deployer, _, accounts) {
@@ -24,13 +23,15 @@ module.exports = function (deployer, _, accounts) {
     await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
 
     const ERC20deployed = await ERC20Mock.deployed();
+
     // For ping pong tests
     await ERC20deployed.transfer(addresses.user1, 1000000000000);
     await ERC20deployed.transfer(addresses.user2, 1000000000000);
-    // give proposer also balance, because in adversary, proposer need balance
-    // to submit bad transaction
+
+    // Fund proposer, because in adversary these need balance to submit bad transactions
     await ERC20deployed.transfer(addresses.proposer1, 1000000000000);
-    await ERC20deployed.transfer(shield.address, 1000000000000); // for testing Shield balance withdraw
+    // for testing Shield balance withdraw
+    await ERC20deployed.transfer(shield.address, 1000000000000);
 
     // set restictions for test ERC20Mock contract (we handle this differently because the address is not fixed)
     // set payment address to ERC20Mock contract
@@ -57,14 +58,17 @@ module.exports = function (deployer, _, accounts) {
       // For e2e tests
       await deployer.deploy(ERC721Mock);
       await deployer.deploy(ERC1155Mock);
+
       const ERC721deployed = await ERC721Mock.deployed();
       const ERC1155deployed = await ERC1155Mock.deployed();
+
       // For e2e tests
       for (let i = 0; i < nERC721; i++) {
         await ERC721deployed.awardItem(addresses.user1, `https://erc721mock/item-id-${i}.json`);
       }
+
       // For testing the wallet
-      await ERC20deployed.transfer(liquidityProviderAddress, 1000000000000);
+      await ERC20deployed.transfer(addresses.liquidityProvider, 1000000000000);
 
       await ERC1155deployed.safeBatchTransferFrom(
         accounts[0],
