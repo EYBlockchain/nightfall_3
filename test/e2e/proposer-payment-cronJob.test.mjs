@@ -149,11 +149,25 @@ describe('Cron Job test', () => {
         '-----proposer stake after nf3Proposer.withdrawStake()---',
         await nf3Proposer.getProposerStake(),
       );
+      const web3 = nf3Proposer.getWeb3Provider();
+      console.log(
+        '--proposer account balance---',
+        await web3.eth.getBalance(nf3Proposer.ethereumAddress),
+      );
     });
   });
 
   after(async () => {
     await new Promise(reslove => setTimeout(reslove, 1000000));
+    console.log(
+      '------in after block--------proposer stake after nf3Proposer.withdrawStake()---',
+      await nf3Proposer.getProposerStake(),
+    );
+    const web3 = nf3Proposer.getWeb3Provider();
+    console.log(
+      '------in after block--------proposer account balance---',
+      await web3.eth.getBalance(nf3Proposer.ethereumAddress),
+    );
     await nf3Proposer.close();
     await nf3User.close();
     web3Client.closeWeb3();
