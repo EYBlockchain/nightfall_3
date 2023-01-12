@@ -23,51 +23,48 @@ It has a docker-compose.yml file that will run nightfall-client up with local fi
 as well as a number of supporting services. This is useful for development work (you can change
 source code without having to rebuild the Docker image).
 
-Nightfall-client requires a number of services to be present for it to work in testnet/mainnet. The
+Nightfall-client requires a number of services to be present for it to work. The
 following instructions explain how set up testnet and mainnet deployment for this client.
 
 ## Building and testing nightfall-client
+Clients can be lauched independently after deployment. Only requirement is that contract and circuit arfifacts
+generated during deployment are left in some server so that they can be downloaded when deploying a standalone Client.
 
-### Testnet and mainnet deployment
+Client is configured using `docker/docker-compose.client.yml`. To deploy a full Client, three services are launched:
+- **client** 
+- **worker** 
+- **mongodb**
 
-To test Nightfall with this client in the current testnet or mainnet deployment you need to
-configure a `client.env` file in the root folder of `nightfall-client` with the needed variables to
-run the client.
+### Configuration 
+If some of the env variables defined in `docker/docker-compose.client.yml` need to be configured, you must create a file called `client.env` in `nightfall-client/` folder with the new values. Default values defined in the docker compose configuration file are valid for deployments to localhost only using ganache.
+
+For example, for a deployment of nightfall in `goerli` testnet, a new client configuration file would look something like the one below.
 
 ```
-ETH_NETWORK=goerli or mainnet
-BLOCKCHAIN_WS_HOST=your web3 host to access the blockchain
-```
-
-Example of `client.env`:
-
-```
-ETH_NETWORK=goerli
 BLOCKCHAIN_WS_HOST=eth-goerli.alchemyapi.io/v2/xxxxxxxxxxxxxxxxxxxxxxxxxxxxs
+CONTRACT_FILES_URL=https://nightfallv3.s3.eu-central-1.amazonaws.com/build
+CIRCUIT_FILES_URL=https://nightfallv3.s3.eu-central-1.amazonaws.com/proving_files
 ```
 
-To run the script with existing images of the different services based on the
-`docker-compose.client.yml` of the Nightfall root folder:
+Here `CONTRACT_FILES_URL` and `CIRCUIT_FILES_URL` are configured with the URL of an AWS S3 bucket where artifacts have been stored.
 
+To deploy multiple Clients, you will need to modify values in `docker/docker-compose.client.yml` to define additional services. Simple copy definition of `client`, `worker` and `mongodb` services as many times as needed and edit some of the 
+properties.
+
+- Default **service** name defined in `docker/docker-compose.client.yml` is `client_1`. Update name if more than one Client
+needs to be created.
+- **image**: Points to default location where docker images are stored. Update value where desired docker image can be retrieved.
+- **volumes**: Single volume defined where contracts are stored. Update source name if multiple Clients are deployed.
+- **ports**: Default ports. Update external port if multiple Clients are deployed.
+- **depends_on** : Container dependencies. Updates dependency services accordingly.
+
+
+### Start Client
 ```
 ./start-client
 ```
 
-For development purposes you can pass CIRCUIT_FILES_URL and CONTRACT_FILES_URL.
-
+### Stop Client
 ```
-CIRCUIT_FILES_URL=url of the repository for the circuit files
-CONTRACT_FILES_URL=url of the repository for the contract files
+./stop-client
 ```
-
-This will run a docker-compose with the needed components:
-
-- client. Nightfall client service with endpoints to interact with.
-- worker. Circom worker service used by the client to generate the proofs.
-- rabittmq. Queue service used by the client to manage some queues.
-
-### Localhost deployment
-
-If you just want to run Nightfall in localhost then use `./bin/start-nightfall` script with all
-necessary services conteainerised in localhost. See the README in the
-[Nightfall](https://github.com/EYBlockchain/nightfall_3) repository

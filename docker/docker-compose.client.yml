@@ -23,8 +23,6 @@ services:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       CIRCOM_WORKER_HOST: worker_1
-      #OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
-      #OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb_client_1}
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL:-https://nightfallv3-proving-files-tmp-demo.s3.eu-central-1.amazonaws.com/build}
     command: ['npm', 'run', 'dev']
@@ -51,11 +49,9 @@ services:
     networks:
       - nightfall_network
     environment:
-      #ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      #ETH_NETWORK: ${ETH_NETWORK}
       CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL:-https://nightfallv3-proving-files-tmp-demo.s3.eu-central-1.amazonaws.com/proving_files}
 
 volumes:
