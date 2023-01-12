@@ -27,7 +27,7 @@ Optimist is configured using `docker/docker-compose.optimist.yml`. To deploy a f
 - **mongodb**
 
 ### Configuration 
-If some of the env variables defined in `docker/docker-compose.optimistyml` need to be configured, you must create a file called `optimist.env` in `nightfall-optimist/` folder with the new values. Default values defined in the docker compose configuration file are valid for deployments to localhost only using ganache.
+If some of the env variables defined in `docker/docker-compose.optimistyml` need to be configured, you must create a file called `optimist.env` in `nightfall-optimist/` folder with the new values. Default values defined in the docker compose configuration file are valid for deployments to localhost only using ganache except for `CONTRACT_FILES_URL`. You will need to ensure that after deployment, the artifacts have been copied there.
 
 For example, for a deployment of nightfall in `goerli` testnet, a new optimist configuration file would look something like the one below.
 

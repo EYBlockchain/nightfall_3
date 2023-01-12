@@ -36,7 +36,7 @@ Client is configured using `docker/docker-compose.client.yml`. To deploy a full 
 - **mongodb**
 
 ### Configuration 
-If some of the env variables defined in `docker/docker-compose.client.yml` need to be configured, you must create a file called `client.env` in `nightfall-client/` folder with the new values. Default values defined in the docker compose configuration file are valid for deployments to localhost only using ganache.
+If some of the env variables defined in `docker/docker-compose.client.yml` need to be configured, you must create a file called `client.env` in `nightfall-client/` folder with the new values. Default values defined in the docker compose configuration file are valid for deployments to localhost only using ganache except for `CIRCUIT_FILES_URL` and `CONTRACT_FILES_URL`. You will need to ensure that after deployment, the artifacts have been copied there.
 
 For example, for a deployment of nightfall in `goerli` testnet, a new client configuration file would look something like the one below.
 
