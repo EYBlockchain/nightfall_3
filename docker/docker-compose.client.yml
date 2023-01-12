@@ -52,7 +52,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL:-https://nightfallv3-proving-files-tmp-demo.s3.eu-central-1.amazonaws.com/proving_files}
+      CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL}
 
 volumes:
   mongodb_client_1:
