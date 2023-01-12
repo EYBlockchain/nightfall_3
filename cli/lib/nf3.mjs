@@ -31,11 +31,7 @@ function createQueue(options) {
   return queue;
 }
 
-// TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
-// then there will only be one queue here. The constructor does not need to initialise clientBaseUrl
-// for proposer/liquidityProvider/challenger and optimistBaseUrl, optimistWsUrl for a user etc
 const userQueue = createQueue({ autostart: true, concurrency: 1 });
-const challengerQueue = createQueue({ autostart: true, concurrency: 1 });
 const liquidityProviderQueue = createQueue({ autostart: true, concurrency: 1 });
 
 /**
@@ -43,9 +39,9 @@ const liquidityProviderQueue = createQueue({ autostart: true, concurrency: 1 });
 Creates a new Nightfall_3 library instance.
 @param {string} clientBaseUrl - The base url for nightfall-client
 @param {string} optimistBaseUrl - The base url for nightfall-optimist
-@param {string} optimistWsUrl - The webscocket url for nightfall-optimist
+@param {string} optimistWsUrl - The websocket url for nightfall-optimist
 @param {string} web3WsUrl - The websocket url for the web3js client
-@param {string} ethereumSigningKey - the Ethereum siging key to be used for transactions (hex string).
+@param {string} ethereumSigningKey - the Ethereum signing key to be used for transactions (hex string).
 @param {object} zkpKeys - An object containing the zkp keys to use.  These will be auto-generated if left undefined.
 */
 class Nf3 {
@@ -415,7 +411,7 @@ class Nf3 {
     @method
     @async
     @param {string} contractName - the name of the smart contract in question. Possible
-    values are 'Shield', 'State', 'Proposers', 'Challengers'.
+    values are 'Shield', 'State', 'Proposers', 'Challenges'.
     @returns {Promise} Resolves into the Ethereum address of the contract
     */
   async getContractAbi(contractName) {
@@ -428,7 +424,7 @@ class Nf3 {
     @method
     @async
     @param {string} contractName - the name of the smart contract in question. Possible
-    values are 'Shield', 'State', 'Proposers', 'Challengers'.
+    values are 'Shield', 'State', 'Proposers', 'Challenges'.
     @returns {Promise} Resolves into the Ethereum ABI of the contract
   */
   async getContractAbiOptimist(contractName) {
@@ -441,7 +437,7 @@ class Nf3 {
     @method
     @async
     @param {string} contractName - the name of the smart contract in question. Possible
-    values are 'Shield', 'State', 'Proposers', 'Challengers'.
+    values are 'Shield', 'State', 'Proposers', 'Challenges'.
     @returns {Promise} Resolves into the Ethereum address of the contract
     */
   async getContractAddress(contractName) {
@@ -454,7 +450,7 @@ class Nf3 {
     @method
     @async
     @param {string} contractName - the name of the smart contract in question. Possible
-    values are 'Shield', 'State', 'Proposers', 'Challengers'.
+    values are 'Shield', 'State', 'Proposers', 'Challenges'.
     @returns {Promise} Resolves into the Ethereum address of the contract
     */
   async getContractAddressOptimist(contractName) {
@@ -1050,96 +1046,72 @@ class Nf3 {
     */
   async startChallenger() {
     const challengeEmitter = this.createEmitter();
-    const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
+    // const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
 
-    this.websockets.push(connection); // save so we can close it properly later
+    // this.websockets.push(connection); // save so we can close it properly later
 
-    /*
-      we can't setup up a ping until the connection is made because the ping function
-      only exists in the underlying 'ws' object (_ws) and that is undefined until the
-      websocket is opened, it seems. Hence, we put all this code inside the onopen.
-     */
-    connection.onopen = () => {
-      // setup a ping every 15s
-      this.intervalIDs.push(
-        setInterval(() => {
-          connection._ws.ping();
-        }, WEBSOCKET_PING_TIME),
-      );
-      // and a listener for the pong
-      logger.debug('Challenge websocket connection opened');
+    // /*
+    //   we can't setup up a ping until the connection is made because the ping function
+    //   only exists in the underlying 'ws' object (_ws) and that is undefined until the
+    //   websocket is opened, it seems. Hence, we put all this code inside the onopen.
+    //  */
+    // connection.onopen = () => {
+    //   // setup a ping every 15s
+    //   this.intervalIDs.push(
+    //     setInterval(() => {
+    //       connection._ws.ping();
+    //     }, WEBSOCKET_PING_TIME),
+    //   );
+    //   // and a listener for the pong
+    //   logger.debug('Challenge websocket connection opened');
 
-      connection.send('challenge');
-    };
+    //   connection.send('challenge');
+    // };
 
-    connection.onmessage = async message => {
-      const msg = JSON.parse(message.data);
-      const { type, txDataToSign, sender } = msg;
+    // connection.onmessage = async message => {
+    //   const msg = JSON.parse(message.data);
+    //   const { type, txDataToSign, sender } = msg;
 
-      logger.debug(`Challenger received websocket message of type ${type}`);
+    //   logger.debug(`Challenger received websocket message of type ${type}`);
 
-      // if we're about to challenge, check it's actually our challenge, so as not to waste gas
-      if (type === 'challenge' && sender !== this.ethereumAddress) return null;
-      if (type === 'commit' || type === 'challenge') {
-        // Get the function selector from the encoded ABI, which corresponds to the first 4 bytes.
-        // In hex, it will correspond to the first 8 characters + 2 extra characters (0x), hence we
-        // do slice(0,10)
-        const txSelector = txDataToSign.slice(0, 10);
-        challengerQueue.push(async () => {
-          try {
-            const receipt = await this.submitTransaction(
-              txDataToSign,
-              this.challengesContractAddress,
-              0,
-            );
-            challengeEmitter.emit('receipt', receipt, type, txSelector);
-          } catch (err) {
-            logger.error({
-              msg: 'Error while trying to challenge a block',
-              type,
-              err,
-            });
-            challengeEmitter.emit('error', err, type, txSelector);
-          }
-        });
-        logger.debug(`queued ${type} ${txDataToSign}`);
-      }
-      if (type === 'rollback') {
-        challengeEmitter.emit('rollback', 'rollback complete');
-      }
-      return null;
-    };
-    connection.onerror = () => logger.error('websocket connection error');
-    connection.onclosed = () => logger.warn('websocket connection closed');
+    //   // if we're about to challenge, check it's actually our challenge, so as not to waste gas
+    //   if (type === 'challenge' && sender !== this.ethereumAddress) return null;
+    //   if (type === 'commit' || type === 'challenge') {
+    //     // Get the function selector from the encoded ABI, which corresponds to the first 4 bytes.
+    //     // In hex, it will correspond to the first 8 characters + 2 extra characters (0x), hence we
+    //     // do slice(0,10)
+    //     const txSelector = txDataToSign.slice(0, 10);
+    //     challengerQueue.push(async () => {
+    //       try {
+    //         const receipt = await this.submitTransaction(
+    //           txDataToSign,
+    //           this.challengesContractAddress,
+    //           0,
+    //         );
+    //         challengeEmitter.emit('receipt', receipt, type, txSelector);
+    //       } catch (err) {
+    //         logger.error({
+    //           msg: 'Error while trying to challenge a block',
+    //           type,
+    //           err,
+    //         });
+    //         challengeEmitter.emit('error', err, type, txSelector);
+    //       }
+    //     });
+    //     logger.debug(`queued ${type} ${txDataToSign}`);
+    //   }
+    //   if (type === 'rollback') {
+    //     challengeEmitter.emit('rollback', 'rollback complete');
+    //   }
+    //   return null;
+    // };
+    // connection.onerror = () => logger.error('websocket connection error');
+    // connection.onclosed = () => logger.warn('websocket connection closed');
     return challengeEmitter;
   }
 
-  // method to turn challenges off and on.  Note, this does not affect the queue
-  challengeEnable(enable) {
+  async challengeEnable(enable) {
     return axios.post(`${this.optimistBaseUrl}/challenger/enable`, { enable });
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  pauseQueueChallenger() {
-    return new Promise(resolve => {
-      if (challengerQueue.autostart) {
-        // put an event at the head of the queue which will cleanly pause it.
-        challengerQueue.unshift(async () => {
-          challengerQueue.autostart = false;
-          challengerQueue.stop();
-          logger.info(`queue challengerQueue has been paused`);
-          resolve();
-        });
-      } else {
-        resolve();
-      }
-    });
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  unpauseQueueChallenger() {
-    challengerQueue.autostart = true;
-    challengerQueue.unshift(async () => logger.info(`queue challengerQueue has been unpaused`));
   }
 
   /**

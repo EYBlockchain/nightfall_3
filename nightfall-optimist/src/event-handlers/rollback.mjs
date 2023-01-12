@@ -6,7 +6,7 @@
  */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { dequeueEvent, enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
+import { dequeueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import {
   addTransactionsToMemPool,
   deleteBlock,
@@ -17,10 +17,6 @@ import {
 } from '../services/database.mjs';
 import Block from '../classes/block.mjs';
 import { checkTransaction } from '../services/transaction-checker.mjs';
-import {
-  signalRollbackCompleted as signalRollbackCompletedToChallenger,
-  isMakeChallengesEnable,
-} from '../services/challenges.mjs';
 
 const { ZERO } = constants;
 
@@ -132,10 +128,6 @@ async function rollbackEventHandler(data) {
   await dequeueEvent(2); // Remove an event from the stopQueue.
   // A Rollback triggers a NewCurrentProposer event which should trigger queue[0].end()
   // But to be safe we enqueue a helper event to guarantee queue[0].end() runs.
-
-  // assumption is if optimist has makeChallenges ON there is challenger
-  // websocket client waiting for signal rollback
-  if (isMakeChallengesEnable()) await enqueueEvent(() => signalRollbackCompletedToChallenger(), 0);
 }
 
 export default rollbackEventHandler;

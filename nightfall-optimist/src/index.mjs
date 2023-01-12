@@ -7,13 +7,11 @@ import {
 import app from './app.mjs';
 import {
   startEventQueue,
-  subscribeToChallengeWebSocketConnection,
   subscribeToInstantWithDrawalWebSocketConnection,
   eventHandlers,
 } from './event-handlers/index.mjs';
 import Proposer from './classes/proposer.mjs';
 import { conditionalMakeBlock } from './services/block-assembler.mjs';
-import { setChallengeWebSocketConnection } from './services/challenges.mjs';
 import initialBlockSync from './services/state-sync.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 import { setProposer } from './routes/proposer.mjs';
@@ -26,7 +24,6 @@ const main = async () => {
     const proposerEthAddress = app.get('proposerEthAddress');
     autoChangeCurrentProposer(proposerEthAddress); // starts the auto change current proposer service
     // subscribe to WebSocket events first
-    await subscribeToChallengeWebSocketConnection(setChallengeWebSocketConnection);
     await subscribeToInstantWithDrawalWebSocketConnection(setInstantWithdrawalWebSocketConnection);
     await startEventQueue(queueManager, eventHandlers, proposer);
 

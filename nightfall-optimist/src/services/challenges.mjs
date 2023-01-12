@@ -1,4 +1,3 @@
-import WebSocket from 'ws';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
@@ -18,32 +17,8 @@ const { TIMBER_HEIGHT } = config;
 const { CHALLENGES_CONTRACT_NAME, ZERO } = constants;
 
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
-let ws;
-
 export function isMakeChallengesEnable() {
   return makeChallenges;
-}
-
-export function setChallengeWebSocketConnection(_ws) {
-  ws = _ws;
-}
-
-/**
-Function to indicate to a listening challenger that a rollback has been completed.
-*/
-export async function signalRollbackCompleted(data) {
-  // check that the websocket exists (it should) and its readyState is OPEN
-  // before sending. If not wait until the challenger reconnects
-  let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-    logger.warn(
-      `Websocket to challenger is closed for rollback complete. Waiting for challenger to reconnect`,
-    );
-    if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
-  }
-  logger.debug('Rollback completed');
-  ws.send(JSON.stringify({ type: 'rollback', data }));
 }
 
 export function startMakingChallenges() {
@@ -73,44 +48,15 @@ export async function commitToChallenge(txDataToSign) {
 
   await saveCommit(commitHash, txDataToSign);
 
-  // check that the websocket exists (it should) and its readyState is OPEN
-  // before sending commit. If not wait until the challenger reconnects
-  let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
-
-    logger.warn(
-      'Websocket to challenger is closed for commit.  Waiting for challenger to reconnect',
-    );
-
-    if (tryCount++ > 100) throw new Error(`Websocket to challenger has failed`);
-  }
-
-  ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
-
-  logger.debug({
-    msg: 'Raw transaction for committing to challenge has been sent to be signed and submitted',
-    rawTransaction: commitToSign,
-  });
+  // ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
+  // TODO sign and send commitToSign
 }
 
 export async function revealChallenge(txDataToSign, sender) {
   logger.debug('Revealing challenge');
-  // check that the websocket exists (it should) and its readyState is OPEN
-  // before sending commit. If not wait until the challenger reconnects
-  let tryCount = 0;
-  while (!ws || ws.readyState !== WebSocket.OPEN) {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // eslint-disable-line no-await-in-loop
 
-    logger.warn(
-      'Websocket to challenger is closed for reveal.  Waiting for challenger to reconnect',
-    );
-
-    if (tryCount++ > 100) {
-      throw new Error(`Websocket to $challenger has failed`);
-    }
-  }
-  ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
+  // ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
+  // TODO sign and send txDataToSign
 }
 
 export async function createChallenge(block, transactions, err) {

@@ -16,7 +16,7 @@ const router = express.Router();
  *      security:
  *        - ApiKeyAuth: []
  *      tags:
- *      - Challanger
+ *      - Challenger
  *      summary: Enable a challenger.
  *      description: TBC
  *      parameters:
@@ -41,11 +41,12 @@ router.post('/enable', auth, async (req, res, next) => {
     const { enable } = req.body;
     const result = enable === true ? startMakingChallenges() : stopMakingChallenges();
     res.json(result);
+
     if (queues[2].length === 0) {
       logger.info('After enabling challenges back, no challenges remain unresolved');
     } else {
       logger.info(
-        `After enabling challenges back, there were ${queues[2].length} unresolved challenges.  Running them now.`,
+        `After enabling challenges back, there were ${queues[2].length} unresolved challenges. Running them now.`,
       );
 
       // start queue[2] and await all the unresolved challenges being run

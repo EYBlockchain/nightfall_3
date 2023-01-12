@@ -76,18 +76,6 @@ export async function startEventQueue(callback, ...arg) {
   return emitters;
 }
 
-export async function subscribeToChallengeWebSocketConnection(callback, ...args) {
-  wss.on('connection', ws => {
-    ws.on('message', message => {
-      if (message === 'challenge') {
-        setupWebsocketEvents(ws, 'challenge');
-        callback(ws, args);
-      }
-    });
-  });
-  logger.debug('Subscribed to Challenge WebSocket connection');
-}
-
 export async function subscribeToInstantWithDrawalWebSocketConnection(callback, ...args) {
   wss.on('connection', ws => {
     ws.on('message', message => {
