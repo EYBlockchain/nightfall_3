@@ -351,24 +351,24 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     }
 
     function withdraw() external nonReentrant whenNotPaused {
-        // uint256 amountL1Token = pendingWithdrawalsFees[msg.sender].feesL1;
-        // uint256 amountL2Token = pendingWithdrawalsFees[msg.sender].feesL2;
+        uint256 amountL1Token = pendingWithdrawalsFees[msg.sender].feesL1;
+        uint256 amountL2Token = pendingWithdrawalsFees[msg.sender].feesL2;
 
-        pendingWithdrawalsFees[msg.sender] = FeeTokens(0, 0);
+        // pendingWithdrawalsFees[msg.sender] = FeeTokens(0, 0);
 
-        // if (amountL1Token > 0) {
-        //     pendingWithdrawalsFees[msg.sender].feesL1 = 0;
-        //     (bool success, ) = payable(msg.sender).call{value: amountL1Token}('');
-        //     require(success, 'Transfer failed.');
-        // }
-        // if (amountL2Token > 0) {
-        // pendingWithdrawalsFees[msg.sender].feesL2 = 0;
-        // IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransferFrom(
-        //     address(this),
-        //     msg.sender,
-        //     amountL2Token
-        // );
-        // }
+        if (amountL1Token > 0) {
+            pendingWithdrawalsFees[msg.sender].feesL1 = 0;
+            (bool success, ) = payable(msg.sender).call{value: amountL1Token}('');
+            require(success, 'Transfer failed.');
+        }
+        if (amountL2Token > 0) {
+            pendingWithdrawalsFees[msg.sender].feesL2 = 0;
+            // IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransferFrom(
+            //     address(this),
+            //     msg.sender,
+            //     amountL2Token
+            // );
+        }
     }
 
     function setProposerStartBlock(uint256 sb) public onlyProposer {

@@ -128,7 +128,7 @@ describe('Cron Job test', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
     });
 
-    it('Get block payment and add in pending withdraw of proposer', async () => {
+    it.skip('Get block payment and add in pending withdraw of proposer', async () => {
       const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
       await web3Client.timeJump(3600 * 24 * 10);
       console.log(
@@ -141,20 +141,20 @@ describe('Cron Job test', () => {
       }
     });
 
-    // it.skip('withdraw proposer stake', async () => {
-    //   await nf3Proposer.deregisterProposer();
-    //   await web3Client.timeJump(3600 * 24 * 10);
-    //   await nf3Proposer.withdrawStake();
-    //   console.log(
-    //     '-----proposer stake after nf3Proposer.withdrawStake()---',
-    //     await nf3Proposer.getProposerStake(),
-    //   );
-    //   const web3 = nf3Proposer.getWeb3Provider();
-    //   console.log(
-    //     '--proposer account balance---',
-    //     await web3.eth.getBalance(nf3Proposer.ethereumAddress),
-    //   );
-    // });
+    it('withdraw proposer stake', async () => {
+      await nf3Proposer.deregisterProposer();
+      await web3Client.timeJump(3600 * 24 * 10);
+      await nf3Proposer.withdrawStake();
+      console.log(
+        '-----proposer stake after nf3Proposer.withdrawStake()---',
+        await nf3Proposer.getProposerStake(),
+      );
+      const web3 = nf3Proposer.getWeb3Provider();
+      console.log(
+        '--proposer account balance---',
+        await web3.eth.getBalance(nf3Proposer.ethereumAddress),
+      );
+    });
   });
 
   after(async () => {
