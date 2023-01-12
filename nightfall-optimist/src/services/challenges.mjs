@@ -18,9 +18,6 @@ const { TIMBER_HEIGHT } = config;
 const { CHALLENGES_CONTRACT_NAME, ZERO } = constants;
 
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
-export function isMakeChallengesEnable() {
-  return makeChallenges;
-}
 
 export function startMakingChallenges() {
   if (process.env.IS_CHALLENGER !== 'true') {
