@@ -90,6 +90,7 @@ describe('Cron Job test', () => {
     await nf3Challenger.startChallenger();
 
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
+    console.log('------ERC20Mock---', erc20Address);
     stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });

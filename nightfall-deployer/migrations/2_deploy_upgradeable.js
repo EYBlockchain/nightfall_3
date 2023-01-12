@@ -99,9 +99,11 @@ module.exports = async function (deployer) {
     );
   }
   // set Fee Token Address
+  console.log('in 2_deploy---process.env.ETH_NETWORK----', process.env.ETH_NETWORK);
   const feeL2TokenAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
     token => token.name === 'MATIC',
   ).address;
+  console.log('in 2_deploy---feeL2TokenAddress----', feeL2TokenAddress);
   await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
   console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'enable') await x509.enableWhitelisting(true);
