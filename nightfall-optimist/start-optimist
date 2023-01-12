@@ -47,4 +47,5 @@ fi
 
 echo "docker-compose $FILE -p 'nightfall_3' up -d"
 docker-compose $FILE -p 'nightfall_3' up -d
+
 docker-compose -p 'nightfall_3' $FILE logs -f 
