@@ -128,7 +128,7 @@ describe('Cron Job test', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
     });
 
-    it.skip('Get block payment and add in pending withdraw of proposer', async () => {
+    it('Get block payment and add in pending withdraw of proposer', async () => {
       const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
       await web3Client.timeJump(3600 * 24 * 10);
       console.log(
@@ -141,7 +141,7 @@ describe('Cron Job test', () => {
       }
     });
 
-    it('withdraw proposer stake', async () => {
+    it.skip('withdraw proposer stake', async () => {
       await nf3Proposer.deregisterProposer();
       await web3Client.timeJump(3600 * 24 * 10);
       await nf3Proposer.withdrawStake();

@@ -354,8 +354,6 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         uint256 amountL1Token = pendingWithdrawalsFees[msg.sender].feesL1;
         uint256 amountL2Token = pendingWithdrawalsFees[msg.sender].feesL2;
 
-        // pendingWithdrawalsFees[msg.sender] = FeeTokens(0, 0);
-
         if (amountL1Token > 0) {
             pendingWithdrawalsFees[msg.sender].feesL1 = 0;
             (bool success, ) = payable(msg.sender).call{value: amountL1Token}('');
@@ -363,11 +361,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         }
         if (amountL2Token > 0) {
             pendingWithdrawalsFees[msg.sender].feesL2 = 0;
-            // IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransferFrom(
-            //     address(this),
-            //     msg.sender,
-            //     amountL2Token
-            // );
+            IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransfer(msg.sender, amountL2Token);
         }
     }
 
