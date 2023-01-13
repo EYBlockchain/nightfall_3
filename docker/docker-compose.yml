@@ -87,6 +87,7 @@ services:
       MATIC_RESTRICT: ${MATIC_RESTRICT}
       USDC_RESTRICT: ${USDC_RESTRICT}
       DAI_RESTRICT: ${DAI_RESTRICT}
+      WHITELISTING: ${WHITELISTING}
 
   hosted-utils-api-server:
     build:
