@@ -369,15 +369,15 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         public
         view
         returns (
-            // uint256,
-            // uint256,
+            uint256,
+            uint256,
             address,
             uint256
         )
     {
         return (
-            // IERC20Upgradeable(super.getFeeL2TokenAddress()).balanceOf(address(msg.sender)),
-            // IERC20Upgradeable(super.getFeeL2TokenAddress()).balanceOf(address(this)),
+            IERC20Upgradeable(super.getFeeL2TokenAddress()).balanceOf(address(msg.sender)),
+            IERC20Upgradeable(super.getFeeL2TokenAddress()).balanceOf(address(this)),
             super.getFeeL2TokenAddress(),
             pendingWithdrawalsFees[msg.sender].feesL2
         );

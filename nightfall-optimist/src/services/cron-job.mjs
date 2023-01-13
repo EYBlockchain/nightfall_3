@@ -26,7 +26,7 @@ async function withdrawPendingWithdraw(entity) {
       Number(balances.feesL2) >= MIN_L2_FEES
     ) {
       console.log(
-        '-----state balances-----',
+        '-----state balances--- 2 --',
         await stateContractInstance.methods.balancesOfContractAndProposer().call(),
       );
       console.log('--encodeABI--', await stateContractInstance.methods.withdraw().encodeABI());
@@ -39,6 +39,10 @@ async function withdrawPendingWithdraw(entity) {
 // 00 00 00 * * */06
 const job = new CronJob('* */01 * * * *', async function () {
   console.log('-------in CronJob -------');
+  console.log(
+    '-----state balances-- 1 ---',
+    await stateContractInstance.methods.balancesOfContractAndProposer().call(),
+  );
   if (!stateContractInstance) {
     stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
   }
