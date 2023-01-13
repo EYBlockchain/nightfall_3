@@ -98,7 +98,7 @@ describe('Periodic Payment', () => {
   });
 
   it('Start periodic payment job', async () => {
-    periodicPaymentJob = startPeriodicPayment('*/03 * * * *'); // At every 3rd minute
+    periodicPaymentJob = nf3Proposer.startPeriodicPayment('*/03 * * * *'); // At every 3rd minute
     await new Promise(reslove => setTimeout(reslove, 240000));
     const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     expect(Number(feesL2)).to.be.equal(0);
@@ -110,6 +110,7 @@ describe('Periodic Payment', () => {
     console.log(
       '-------getPendingWithdrawsFromStateContract---------',
       await nf3Proposer.getPendingWithdrawsFromStateContract(),
+      periodicPaymentJob,
     );
     await nf3Proposer.close();
     await nf3User.close();

@@ -100,6 +100,7 @@ class Nf3 {
   // min fee or reward one should hold for withdaw
   // in State contract.
   minL1Balance = DEFAULT_MIN_L1_WITHDRAW;
+
   minL2Balance = DEFAULT_MIN_L2_WITHDRAW;
 
   constructor(
