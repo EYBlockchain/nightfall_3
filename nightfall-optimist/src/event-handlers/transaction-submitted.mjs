@@ -5,8 +5,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
-  deleteDuplicateCommitmentsFromMemPool,
-  deleteDuplicateNullifiersFromMemPool,
+  deleteDuplicateCommitmentsAndNullifiersFromMemPool,
   saveTransaction,
 } from '../services/database.mjs';
 import { checkTransaction } from '../services/transaction-checker.mjs';
@@ -56,13 +55,14 @@ async function transactionSubmittedEventHandler(eventParams) {
       checkDuplicatesInL2: true,
       checkDuplicatesInMempool: true,
     });
-    logger.info({ msg: 'Transaction checks passed' });
 
     const transactionCommitments = transaction.commitments.filter(c => c !== ZERO);
     const transactionNullifiers = transaction.nullifiers.filter(n => n !== ZERO);
 
-    await deleteDuplicateCommitmentsFromMemPool(transactionCommitments);
-    await deleteDuplicateNullifiersFromMemPool(transactionNullifiers);
+    await deleteDuplicateCommitmentsAndNullifiersFromMemPool(
+      transactionCommitments,
+      transactionNullifiers,
+    );
 
     await saveTransaction({ ...transaction });
   } catch (err) {

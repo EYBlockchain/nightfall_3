@@ -13,8 +13,7 @@ import {
   getLatestTree,
   saveTree,
   saveInvalidBlock,
-  deleteDuplicateCommitmentsFromMemPool,
-  deleteDuplicateNullifiersFromMemPool,
+  deleteDuplicateCommitmentsAndNullifiersFromMemPool,
   saveTransaction,
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
@@ -84,8 +83,12 @@ async function blockProposedEventHandler(data) {
     const blockNullifiers = transactions
       .map(t => t.nullifiers.filter(c => c !== ZERO))
       .flat(Infinity);
-    await deleteDuplicateCommitmentsFromMemPool(blockCommitments, block.transactionHashes);
-    await deleteDuplicateNullifiersFromMemPool(blockNullifiers, block.transactionHashes);
+
+    await deleteDuplicateCommitmentsAndNullifiersFromMemPool(
+      blockCommitments,
+      blockNullifiers,
+      block.transactionHashes,
+    );
 
     const latestTree = await getLatestTree();
     const updatedTimber = Timber.statelessUpdate(
