@@ -41,6 +41,7 @@ async function logProposerStats() {
 
 describe('Periodic Payment', () => {
   let erc20Address;
+  let periodicPaymentJob;
 
   before(async () => {
     await nf3User.init(mnemonics.user1);
@@ -92,15 +93,20 @@ describe('Periodic Payment', () => {
     for (const blockHash of blockHashs) {
       await nf3Proposer.requestBlockPayment(blockHash);
     }
-    console.log(
-      '-------getPendingWithdrawsFromStateContract---------',
-      await nf3Proposer.getPendingWithdrawsFromStateContract(),
-    );
+    const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+    expect(Number(feesL2)).to.be.equal(2);
+  });
+
+  it('Start periodic payment job', async () => {
+    periodicPaymentJob = startPeriodicPayment('*/03 * * * *'); // At every 3rd minute
+    await new Promise(reslove => setTimeout(reslove, 240000));
+    const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+    expect(Number(feesL2)).to.be.equal(0);
   });
 
   after(async () => {
-    await new Promise(reslove => setTimeout(reslove, 30000));
-    logProposerStats();
+    // await new Promise(reslove => setTimeout(reslove, 240000));
+    // logProposerStats();
     console.log(
       '-------getPendingWithdrawsFromStateContract---------',
       await nf3Proposer.getPendingWithdrawsFromStateContract(),

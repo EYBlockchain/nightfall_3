@@ -13,6 +13,7 @@ import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
+import createJob from './jobScheduler.mjs';
 
 import {
   DEFAULT_FEE_TOKEN_VALUE,
@@ -22,6 +23,8 @@ import {
   GAS_PRICE,
   GAS_PRICE_MULTIPLIER,
   GAS_ESTIMATE_ENDPOINT,
+  DEFAULT_MIN_L1_WITHDRAW,
+  DEFAULT_MIN_L2_WITHDRAW,
 } from './constants.mjs';
 
 function createQueue(options) {
@@ -93,6 +96,11 @@ class Nf3 {
   nonce = 0;
 
   nonceMutex = new Mutex();
+
+  // min fee or reward one should hold for withdaw
+  // in State contract.
+  minL1Balance = DEFAULT_MIN_L1_WITHDRAW;
+  minL2Balance = DEFAULT_MIN_L2_WITHDRAW;
 
   constructor(
     ethereumSigningKey,
@@ -1675,6 +1683,24 @@ class Nf3 {
     */
   async getSprintsInSpan() {
     return this.stateContract.methods.getSprintsInSpan().call();
+  }
+
+  /**
+   * function start periodic payment
+   * @param cronExp {string} default is At 00:00 on every 6th day-of-week (Saturday).
+   */
+  startPeriodicPayment(cronExp = '0 0 * * */6') {
+    const job = createJob(cronExp, async () => {
+      logger.debug(`--in cron job --- ${new Date().toLocaleString()}`);
+      const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
+      if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
+        return;
+      }
+      const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`)).data;
+      await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+    });
+    job.start();
+    return job;
   }
 }
 
