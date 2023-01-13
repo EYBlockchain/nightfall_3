@@ -31,7 +31,7 @@ async function makeBlock() {
 }
 
 async function logProposerStats() {
-  logger.info(`proposer stake: ${await nf3Proposer.getProposerStake()}`);
+  logger.info(`proposer stake: ${JSON.stringify(await nf3Proposer.getProposerStake())}`);
   const web3 = nf3Proposer.getWeb3Provider();
   logger.info(
     `-- proposer account balance ---
@@ -59,6 +59,8 @@ describe('Periodic Payment', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     logProposerStats();
   });
+
+  afterEach(async() => logProposerStats());
 
   it('Deposit: Should increment user L2 balance after depositing some ERC20', async function () {
     const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
@@ -94,5 +96,17 @@ describe('Periodic Payment', () => {
       '-------getPendingWithdrawsFromStateContract---------',
       await nf3Proposer.getPendingWithdrawsFromStateContract(),
     );
+  });
+
+  after(async () => {
+    await new Promise(reslove => setTimeout(reslove, 30000));
+    logProposerStats();
+    console.log(
+      '-------getPendingWithdrawsFromStateContract---------',
+      await nf3Proposer.getPendingWithdrawsFromStateContract(),
+    );
+    await nf3Proposer.close();
+    await nf3User.close();
+    web3Client.closeWeb3();
   });
 });
