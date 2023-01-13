@@ -41,13 +41,15 @@ async function withdrawPendingWithdraw(entity) {
 // 00 00 00 * * */06
 const job = new CronJob('0 */03 * * * *', async function () {
   console.log('-------in CronJob -------', new Date());
+
+  if (!stateContractInstance) {
+    stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
+  }
+
   console.log(
     '-----state balances-- 2 ---',
     await stateContractInstance.methods.balancesOfContractAndProposer().call(),
   );
-  if (!stateContractInstance) {
-    stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-  }
 
   const proposers = await getAllRegisteredProposers();
   const challengers = await getAllRegisteredChallengers();
