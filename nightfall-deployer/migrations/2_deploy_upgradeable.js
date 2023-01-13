@@ -89,8 +89,7 @@ module.exports = async function (deployer) {
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
   const x509 = await X509.deployed();
-
-  await State.deployed();
+  const state = await State.deployed();
 
   const { bootProposer, bootChallenger } = addresses;
 
@@ -122,6 +121,7 @@ module.exports = async function (deployer) {
     token => token.name === FEE_L2_TOKEN_ID,
   ).address;
   await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
+  await state.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
 
   console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'disable') {

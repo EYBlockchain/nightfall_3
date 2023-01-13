@@ -1174,6 +1174,12 @@ class Nf3 {
     return this.stateContract.methods.getRotateProposerBlocks().call();
   }
 
+  // used by proposers and challengers
+  async getPendingWithdrawsFromStateContract() {
+    console.log(await this.stateContract.methods.getFeeL2TokenAddress().call(), '---------------');
+    return this.stateContract.methods.pendingWithdrawalsFees(this.ethereumAddress).call();
+  }
+
   /**
     Starts a Proposer that listens for blocks and submits block proposal
     transactions to the blockchain.
