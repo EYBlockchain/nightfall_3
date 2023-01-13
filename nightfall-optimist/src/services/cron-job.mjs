@@ -38,7 +38,7 @@ async function withdrawPendingWithdraw(entity) {
 
 // 00 00 00 * * */06
 const job = new CronJob('0 */03 * * * *', async function () {
-  console.log('-------in CronJob -------');
+  console.log('-------in CronJob -------', new Date());
   console.log(
     '-----state balances-- 1 ---',
     await stateContractInstance.methods.balancesOfContractAndProposer().call(),
