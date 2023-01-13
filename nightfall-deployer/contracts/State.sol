@@ -346,7 +346,8 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
             'State: Not authorised to call this function'
         );
 
-        pendingWithdrawalsFees[addr] = FeeTokens(feesL1, feesL2);
+        if (feesL1 > 0) pendingWithdrawalsFees[addr].feesL1 += feesL1;
+        if (feesL2 > 0) pendingWithdrawalsFees[addr].feesL2 += feesL2;
     }
 
     function withdraw() external nonReentrant whenNotPaused {

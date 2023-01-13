@@ -1176,7 +1176,6 @@ class Nf3 {
 
   // used by proposers and challengers
   async getPendingWithdrawsFromStateContract() {
-    console.log(await this.stateContract.methods.getFeeL2TokenAddress().call(), '---------------');
     return this.stateContract.methods.pendingWithdrawalsFees(this.ethereumAddress).call();
   }
 
