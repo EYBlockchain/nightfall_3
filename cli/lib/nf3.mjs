@@ -1694,10 +1694,13 @@ class Nf3 {
     const job = createJob(cronExp, async () => {
       logger.debug(`--in cron job --- ${new Date().toLocaleString()}`);
       const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
+      console.log(feesL1, feesL2, await this.getPendingWithdrawsFromStateContract());
       if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
         return;
       }
+      console.log('fffff');
       const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`)).data;
+      console.log(txDataToSign);
       await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
     });
     job.start();
