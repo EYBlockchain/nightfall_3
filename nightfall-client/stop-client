@@ -1,0 +1,2 @@
+#! /bin/bash
+docker stop nightfall_3-client_1-1 nightfall_3-worker_1-1 nightfall_3-mongodb_client_1-1
