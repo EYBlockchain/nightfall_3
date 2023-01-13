@@ -62,7 +62,6 @@ module.exports = async function (deployer) {
   const proposers = await Proposers.deployed();
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
-  const state = await State.deployed();
 
   const { bootProposer, bootChallenger } = addresses;
   console.log(`Setting boot proposer ${bootProposer}...`);
@@ -91,5 +90,4 @@ module.exports = async function (deployer) {
     token => token.name === 'MATIC',
   ).address;
   await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLocaleLowerCase());
-  await state.setFeeL2TokenAddress(feeL2TokenAddress.toLocaleLowerCase());
 };
