@@ -60,7 +60,7 @@ describe('Periodic Payment', () => {
     logProposerStats();
   });
 
-  afterEach(async() => logProposerStats());
+  afterEach(async () => logProposerStats());
 
   it('Deposit: Should increment user L2 balance after depositing some ERC20', async function () {
     const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
