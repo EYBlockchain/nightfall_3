@@ -37,7 +37,7 @@ async function withdrawPendingWithdraw(entity) {
 }
 
 // 00 00 00 * * */06
-const job = new CronJob('* */01 * * * *', async function () {
+const job = new CronJob('0 */03 * * * *', async function () {
   console.log('-------in CronJob -------');
   console.log(
     '-----state balances-- 1 ---',
