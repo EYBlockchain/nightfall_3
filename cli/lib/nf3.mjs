@@ -1234,9 +1234,7 @@ class Nf3 {
       } else if (type === 'rawTransaction') {
         proposerQueue.push(async () => {
           try {
-            logger.info({ msg: 'in th queue going to submitTransaction' });
             await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
-            logger.info({ msg: 'in th queue submitTransaction done' });
           } catch (err) {
             logger.error({
               msg: 'Error while trying to submit rawTx',
@@ -1487,6 +1485,11 @@ class Nf3 {
   async getPendingWithdraws() {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/withdraws`);
     return res.data.commitments;
+  }
+
+  // used by proposers and challengers
+  getPendingWithdrawsFromStateContract() {
+    return this.stateContract.methods.pendingWithdrawalsFees(this.ethereumAddress).call();
   }
 
   /**

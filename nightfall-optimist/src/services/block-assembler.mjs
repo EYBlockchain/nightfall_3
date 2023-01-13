@@ -66,7 +66,6 @@ export async function signalRollbackCompleted(data) {
  * @param rawTransaction
  */
 export async function sendRawTransactionToWebSocket(rawTransaction) {
-  console.log('-------proposer---sendRawTransactionToWebSocket-', rawTransaction);
   // check that the websocket exists (it should) and its readyState is OPEN
   // before sending. If not wait until the proposer reconnects
   let tryCount = 0;

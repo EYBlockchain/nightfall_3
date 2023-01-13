@@ -9,7 +9,7 @@ import { getAllRegisteredProposers, getAllRegisteredChallengers } from './databa
 import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfProposer } from './block-assembler.mjs';
 import { sendRawTransactionToWebSocket as sendRawTransactionToWebSocketOfChallenger } from './challenges.mjs';
 
-const { MIN_L1_FEES, MIN_L2_FEES } = config;
+const { MIN_L1_WITHDRAW, MIN_L2_WITHDRAW } = config;
 const { STATE_CONTRACT_NAME } = constants;
 
 let stateContractInstance;
@@ -20,16 +20,18 @@ async function withdrawPendingWithdraw(entity) {
     const balances = await stateContractInstance.methods.pendingWithdrawalsFees(account._id).call();
     console.log('---account._id----', account._id, '---balances---', balances);
     if (
-      // gas used/user gas limit  * (base fee + priority fee) * offset-margin
-      // in wei. This logic should be in mainnet, but instead take min-fees from configs
-      Number(balances.feesL1) >= MIN_L1_FEES ||
-      Number(balances.feesL2) >= MIN_L2_FEES
+      /**
+       * the logic should be:-
+       *  gas used/user gas limit  * (base fee + priority fee) * offset-margin [in wei]
+       * but instead for now we take min-withdraw from config
+       */
+      Number(balances.feesL1) >= MIN_L1_WITHDRAW ||
+      Number(balances.feesL2) >= MIN_L2_WITHDRAW
     ) {
       console.log(
-        '-----state balances--- 2 --',
+        '-----state balances--- 1 --',
         await stateContractInstance.methods.balancesOfContractAndProposer().call(),
       );
-      console.log('--encodeABI--', await stateContractInstance.methods.withdraw().encodeABI());
       rawTransactions.push(await stateContractInstance.methods.withdraw().encodeABI());
     }
   }
@@ -40,7 +42,7 @@ async function withdrawPendingWithdraw(entity) {
 const job = new CronJob('0 */03 * * * *', async function () {
   console.log('-------in CronJob -------', new Date());
   console.log(
-    '-----state balances-- 1 ---',
+    '-----state balances-- 2 ---',
     await stateContractInstance.methods.balancesOfContractAndProposer().call(),
   );
   if (!stateContractInstance) {
@@ -53,14 +55,7 @@ const job = new CronJob('0 */03 * * * *', async function () {
   const proposerWithdrawRawTx = await withdrawPendingWithdraw(proposers);
   const challengerWithdrawRawTx = await withdrawPendingWithdraw(challengers);
 
-  console.log(
-    '----- proposerWithdrawRawTx challengerWithdrawRawTx --',
-    proposerWithdrawRawTx,
-    challengerWithdrawRawTx,
-  );
   for (const rawTx of proposerWithdrawRawTx) {
-    console.log('--rawTx---', rawTx);
-    // if (rawTx !== '') return;
     await sendRawTransactionToWebSocketOfProposer(rawTx);
     await new Promise(resolve => setTimeout(resolve, 3000));
   }

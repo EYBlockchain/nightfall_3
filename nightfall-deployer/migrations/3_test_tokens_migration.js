@@ -50,7 +50,6 @@ module.exports = function (deployer, _, accounts) {
         'Test contract restrictions were not set, and yet you have deployed test contracts',
       );
     }
-    console.log('--in 3_test------', config, config.ETH_ADDRESS);
     if (!config.ETH_ADDRESS) {
       //modify the fee token address to be ERCMock for tests
       await shield.setFeeL2TokenAddress(ERC20deployed.address.toLocaleLowerCase());
