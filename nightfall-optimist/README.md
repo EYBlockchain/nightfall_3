@@ -1,62 +1,59 @@
-# Optimist
+# nightfall-optimist
 
-To launch a stand alone optimist:
+## Requirements
 
-1. Copy `optimist.copy.env` to `optimist.env`
-2. Configure variables in `optimist.env`
-3. Launch optimist
+This application runs in docker containers so you will need Docker installed and Docker Compose
+v3.5.
+
+You will need a local copy of `node` and `npm` to run the tests and `git` to clone the repository.
+We have tested with versions 16.17.0 and 8.15.0 of `node` and `npm`, respectively.
+
+This code generates a containerised client application that can be used to interact with
+Nightfall via http endpoints.
+
+It has a docker-compose.yml file that will run nightfall-optimist up with local file system bindings
+as well as a number of supporting services. This is useful for development work (you can change
+source code without having to rebuild the Docker image).
+
+Nightfall-optimist requires a number of services to be present for it to work. The
+following instructions explain how set up testnet and mainnet deployment for this client.
+
+## Building and testing nightfall-optimist
+Optimists can be lauched independently after deployment. Only requirement is that contract and circuit arfifacts
+generated during deployment are left in some server so that they can be downloaded when deploying a standalone Optimist.
+
+Optimist is configured using `docker/docker-compose.optimist.yml`. To deploy a full Optimist, three services are launched:
+- **optimist** 
+- **mongodb**
+
+### Configuration 
+If some of the env variables defined in `docker/docker-compose.optimistyml` need to be configured, you must create a file called `optimist.env` in `nightfall-optimist/` folder with the new values. Default values defined in the docker compose configuration file are valid for deployments to localhost only using ganache except for `CONTRACT_FILES_URL`. You will need to ensure that after deployment, the artifacts have been copied there.
+
+For example, for a deployment of nightfall in `goerli` testnet, a new optimist configuration file would look something like the one below.
 
 ```
-./start-optimist.sh [OPTIONS]
+BLOCKCHAIN_WS_HOST=eth-goerli.alchemyapi.io/v2/xxxxxxxxxxxxxxxxxxxxxxxxxxxxs
+CONTRACT_FILES_URL=https://nightfallv3.s3.eu-central-1.amazonaws.com/build
 ```
 
-`OPTIONS` include:
+Here `CONTRACT_FILES_URL` is configured with the URL of an AWS S3 bucket where artifacts have been stored.
 
-- -d|--delete : Delete mondodb contents
-- -e|--environment : Set Nightfall environment. Possible values are `mainnet` and `testnet`. If
-  `environment` is not configured, it is assumed that optimist is to be attached to the Nightfall
-  environment that results from launching `./bin/start-nightfall`
+To deploy multiple Optimists, you will need to modify values in `docker/docker-compose.optimist.yml` to define additional services. Simple copy definition of `optimist` and `mongodb` services as many times as needed and edit some of the 
+properties.
 
-4. To stop optimist:
+- Default **service** name defined in `docker/docker-compose.optimist.yml` is `optimist_1`. Update name if more than one optimist needs to be created.
+- **image**: Points to default location where docker images are stored. Update value where desired docker image can be retrieved.
+- **volumes**: Single volume defined where contracts are stored. Update source name if multiple Optimists are deployed.
+- **ports**: Default ports. Update external port if multiple Optimists are deployed.
+- **depends_on** : Container dependencies. Updates dependency services accordingly.
 
+
+### Start Optimist
 ```
-./stop-optimist.sh
+./start-optimist
 ```
 
-## Configuration
-
-File `optimist.env` contains the configuration variables needed. When launching
-`./start-optimist.sh`, two containers, mongoDb and optimist, are deployed.
-
-- **MONGO_INITDB_ROOT_USERNAME** : MongoDb username.
-- **MONGO_INITDB_ROOT_PASSWORD** : MongoDb password.
-- **MONGO_PORT** : Port where MongoDb is served.
-- **OPTIMIST_PORT** : HTTP optimist port
-- **OPTIMIST_WS_PORT** : WebSocket optimist port
-- **BLOCKCHAIN_URL** : Websocket Web3 URL (wss://web3.test.com). Alternatively, one can pass a host
-  and a port so that it Web3 websocket can be found at ws://${BLOCKCHAIN_WS_HOST}:${BLOCKCHAIN_PORT}
-- **BLOCKCHAIN_WS_HOST** : Websocket Web3 host (i.e, localhost)
-- **BLOCKCHAIN_PORT** : Websocket Web3 port (8546)
-
-## Operation
-
-Scripts provided can spin an optimist and connect it to an existing testnet or mainntet nightfall
-deployment. In this case, one needs to have access to Web3 node. Alternatively, the optimist can
-connect to the sandbox environment provided by `./bin/start-nightfall` script. In this case, it is
-not necessary to provide `BLOCKCHAIN_URL` parameters. The same ganache node will be automatically
-configured.
-
-## Applications
-
-This stand alone optimist have been thought to be used with `nightfall_3/apps` applications. This
-folder includes several applications that use the optimist to provide certain applications such as:
-
-- Proposer
-- Challenger
-- Synchronizer
-
-In order to configure the optimist in one of these roles:
-
-1.  Launch optimist with `./start-optimist.sh`
-2.  Ensure `optimist.env` is configured.
-3.  Go to the folder including the role you need (`apss/proposer`) and launch `npm start`
+### Stop Optimist
+```
+./stop-optimist
+```

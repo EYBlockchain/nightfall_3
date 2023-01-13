@@ -324,6 +324,10 @@ docker volume prune
 These will hopefully delete every image, container and volume so you should have a clean slate. Mind
 that you need to run `./bin/setup-nightfall` again.
 
+# Deployment
+
+EY expects to deploy Nightfall as a fully-decentralised application in the near future.
+
 # Acknowledgements
 
 We gratefully acknowledge the inspiration of the Ethereum Foundation and, particularly, Barry
