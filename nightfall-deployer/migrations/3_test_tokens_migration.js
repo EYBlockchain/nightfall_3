@@ -7,6 +7,7 @@ const {
 const { DEPLOY_MOCK_TOKENS = true } = process.env;
 
 const Shield = artifacts.require('Shield.sol');
+const State = artifacts.require('State.sol');
 
 const ERC20Mock = artifacts.require('ERC20Mock.sol');
 const ERC721Mock = artifacts.require('ERC721Mock.sol');
@@ -18,6 +19,7 @@ const nERC721 = 35;
 module.exports = function (deployer, _, accounts) {
   deployer.then(async () => {
     const shield = await Shield.deployed();
+    const state = await State.deployed();
 
     if (DEPLOY_MOCK_TOKENS === 'false') return;
 
@@ -51,7 +53,8 @@ module.exports = function (deployer, _, accounts) {
     console.log('--in 3_test------', config, config.ETH_ADDRESS);
     if (!config.ETH_ADDRESS) {
       //modify the fee token address to be ERCMock for tests
-      await shield.setFeeL2TokenAddress(ERC20deployed.address.toLowerCase());
+      await shield.setFeeL2TokenAddress(ERC20deployed.address.toLocaleLowerCase());
+      await state.setFeeL2TokenAddress(ERC20deployed.address.toLocaleLowerCase());
 
       // indicates we're running a wallet test that uses hardcoded addresses
       // For e2e tests
