@@ -378,9 +378,7 @@ class Nf3 {
   @returns {Promise} This will resolve into a transaction receipt.
   */
   async submitTransaction(unsignedTransaction, contractAddress = this.shieldContractAddress, fee) {
-    console.log('in submitTransaction 1');
     const tx = await this._signTransaction(unsignedTransaction, contractAddress, fee);
-    console.log('in submitTransaction 2', tx);
     return this._sendTransaction(tx);
   }
 
@@ -1702,7 +1700,7 @@ class Nf3 {
       if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
         return;
       }
-      console.log('fffff');
+      console.log('fffff', await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`));
       const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`)).data;
       console.log('-----txDataToSign---', txDataToSign);
       await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
