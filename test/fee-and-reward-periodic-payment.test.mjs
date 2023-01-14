@@ -89,10 +89,7 @@ describe('Periodic Payment', () => {
     let { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     while (Number(feesL2) !== 0) {
       ({ feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract());
-      console.log(
-        '-------getPendingWithdrawsFromStateContract---------',
-        feesL2,
-      );
+      console.log('-------getPendingWithdrawsFromStateContract---------', feesL2);
       await new Promise(reslove => setTimeout(reslove, 60000));
     }
     // const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
