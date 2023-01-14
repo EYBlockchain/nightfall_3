@@ -253,9 +253,10 @@ router.get('/stake', async (req, res, next) => {
  */
 router.get('/withdraw', async (req, res, next) => {
   try {
+    console.log('-----------in proposer/withdraw-------1-----');
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
     const txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
-
+    console.log('-----------in proposer/withdraw------------', txDataToSign);
     res.json({ txDataToSign });
   } catch (err) {
     next(err);

@@ -1700,7 +1700,7 @@ class Nf3 {
       }
       console.log('fffff');
       const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`)).data;
-      console.log(txDataToSign);
+      console.log('-----txDataToSign---', txDataToSign);
       await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
     });
     job.start();
