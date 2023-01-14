@@ -103,6 +103,8 @@ class Nf3 {
 
   minL2Balance = DEFAULT_MIN_L2_WITHDRAW;
 
+  periodicPaymentJob;
+
   constructor(
     ethereumSigningKey,
     environment = {
@@ -376,7 +378,9 @@ class Nf3 {
   @returns {Promise} This will resolve into a transaction receipt.
   */
   async submitTransaction(unsignedTransaction, contractAddress = this.shieldContractAddress, fee) {
+    console.log('in submitTransaction 1');
     const tx = await this._signTransaction(unsignedTransaction, contractAddress, fee);
+    console.log('in submitTransaction 2', tx);
     return this._sendTransaction(tx);
   }
 
@@ -1691,7 +1695,7 @@ class Nf3 {
    * @param cronExp {string} default is At 00:00 on every 6th day-of-week (Saturday).
    */
   startPeriodicPayment(cronExp = '0 0 * * */6') {
-    const job = createJob(cronExp, async () => {
+    this.periodicPaymentJob = createJob(cronExp, async () => {
       logger.debug(`--in cron job --- ${new Date().toLocaleString()}`);
       const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
       console.log(feesL1, feesL2, await this.getPendingWithdrawsFromStateContract());
@@ -1703,8 +1707,13 @@ class Nf3 {
       console.log('-----txDataToSign---', txDataToSign);
       await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
     });
-    job.start();
-    return job;
+    this.periodicPaymentJob.start();
+  }
+
+  stopPeriodicPayment() {
+    if (!this.periodicPaymentJob) throw Error('Periodic Payment job not created yet');
+    this.periodicPaymentJob.stop();
+    this.periodicPaymentJob = undefined;
   }
 }
 

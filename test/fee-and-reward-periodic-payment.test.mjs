@@ -5,7 +5,7 @@ import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 
-import { getLayer2Balances, expectTransaction, Web3Client } from './utils.mjs';
+import { getLayer2Balances, Web3Client } from './utils.mjs';
 
 const { expect } = chai;
 
@@ -41,7 +41,6 @@ async function logProposerStats() {
 
 describe('Periodic Payment', () => {
   let erc20Address;
-  let periodicPaymentJob;
 
   before(async () => {
     await nf3User.init(mnemonics.user1);
@@ -63,28 +62,16 @@ describe('Periodic Payment', () => {
 
   afterEach(async () => logProposerStats());
 
-  it('Deposit: Should increment user L2 balance after depositing some ERC20', async function () {
+  it('do 2 Deposit and make 2 blocks', async function () {
     const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
-    const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-    expectTransaction(res);
-    logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+    await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+    await makeBlock();
+    await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
     await makeBlock();
 
     const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-    expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
-  });
-
-  it('Deposit: Should increment user L2 balance after depositing some ERC20', async function () {
-    const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
-
-    const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-    expectTransaction(res);
-    logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-    await makeBlock();
-
-    const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-    expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
+    expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
   });
 
   it('Should do request for payment for two blocks', async () => {
@@ -98,10 +85,35 @@ describe('Periodic Payment', () => {
   });
 
   it('Start periodic payment job', async () => {
-    periodicPaymentJob = nf3Proposer.startPeriodicPayment('*/03 * * * *'); // At every 3rd minute
-    await new Promise(reslove => setTimeout(reslove, 240000));
+    nf3Proposer.startPeriodicPayment('*/03 * * * *'); // At every 3rd minute
+    await new Promise(reslove => setTimeout(reslove, 440000));
     const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     expect(Number(feesL2)).to.be.equal(0);
+  });
+
+  context('while cron job runing', () => {
+    it('do 2 Deposit and make  block', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
+    });
+
+    it('Should do request for block payment and success withdraw as part of cron job', async () => {
+      const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
+      await web3Client.timeJump(3600 * 24 * 10);
+      for (const blockHash of blockHashs) {
+        await nf3Proposer.requestBlockPayment(blockHash);
+      }
+      console.log(await nf3Proposer.getPendingWithdrawsFromStateContract());
+      await new Promise(reslove => setTimeout(reslove, 240000)); // wait till cron job trigger next
+      const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+      expect(Number(feesL2)).to.be.equal(0);
+    });
   });
 
   after(async () => {
@@ -110,7 +122,6 @@ describe('Periodic Payment', () => {
     console.log(
       '-------getPendingWithdrawsFromStateContract---------',
       await nf3Proposer.getPendingWithdrawsFromStateContract(),
-      periodicPaymentJob,
     );
     await nf3Proposer.close();
     await nf3User.close();
