@@ -251,7 +251,7 @@ router.get('/stake', async (req, res, next) => {
  * Through a successful challenge or proposing state updates. This just
  * provides the tx data, the user will need to call the blockchain client.
  */
-router.get('/withdraw', async (req, res, next) => {
+router.post('/withdraw', async (req, res, next) => {
   try {
     console.log('-----------in proposer/withdraw-------1-----');
     const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
