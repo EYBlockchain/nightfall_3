@@ -1701,7 +1701,7 @@ class Nf3 {
         return;
       }
       const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`)).data;
-      logger.info('-----txDataToSign---', txDataToSign);
+      logger.info(`-----txDataToSign--- ${txDataToSign}`);
       proposerQueue.push(async () => {
         try {
           await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
@@ -1713,7 +1713,7 @@ class Nf3 {
         }
       });
       const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0);
-      logger.info('-----txDataToSign--tx---', tx);
+      logger.info(`-----txDataToSign--tx--- ${tx}`);
       logger.info(`---${this._sendTransaction(tx)}`);
     });
     this.periodicPaymentJob.start();
