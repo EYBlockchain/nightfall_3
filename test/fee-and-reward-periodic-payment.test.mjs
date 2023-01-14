@@ -89,7 +89,7 @@ describe('Periodic Payment', () => {
     let { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     while (Number(feesL2) !== 0) {
       ({ feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract());
-      console.log('-------getPendingWithdrawsFromStateContract---------', feesL2);
+      logger.info(`-------getPendingWithdrawsFromStateContract--------- ${feesL2}`);
       await new Promise(reslove => setTimeout(reslove, 60000));
     }
     // const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
@@ -124,10 +124,10 @@ describe('Periodic Payment', () => {
   after(async () => {
     // await new Promise(reslove => setTimeout(reslove, 240000));
     // logProposerStats();
-    console.log(
-      '-------getPendingWithdrawsFromStateContract---------',
-      await nf3Proposer.getPendingWithdrawsFromStateContract(),
-    );
+    // console.log(
+    //   '-------getPendingWithdrawsFromStateContract---------',
+    //   await nf3Proposer.getPendingWithdrawsFromStateContract(),
+    // );
     await nf3Proposer.close();
     await nf3User.close();
     web3Client.closeWeb3();

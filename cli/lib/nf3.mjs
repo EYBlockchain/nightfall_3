@@ -1694,16 +1694,27 @@ class Nf3 {
    */
   startPeriodicPayment(cronExp = '0 0 * * */6') {
     this.periodicPaymentJob = createJob(cronExp, async () => {
-      logger.debug(`--in cron job --- ${new Date().toLocaleString()}`);
+      logger.info(`--in cron job --- ${new Date().toLocaleString()}`);
       const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
-      console.log(feesL1, feesL2, await this.getPendingWithdrawsFromStateContract());
+      logger.info(`- ${await this.getPendingWithdrawsFromStateContract()}`);
       if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
         return;
       }
-      console.log('fffff', await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`));
       const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`)).data;
-      console.log('-----txDataToSign---', txDataToSign);
-      await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+      logger.info('-----txDataToSign---', txDataToSign);
+      proposerQueue.push(async () => {
+        try {
+          await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+        } catch (err) {
+          logger.error({
+            msg: 'Error while trying to submit rawTx',
+            err,
+          });
+        }
+      });
+      const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0);
+      logger.info('-----txDataToSign--tx---', tx);
+      logger.info(`---${this._sendTransaction(tx)}`);
     });
     this.periodicPaymentJob.start();
   }
