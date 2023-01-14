@@ -369,6 +369,24 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         }
     }
 
+    function balancesOfContractAndProposer()
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            address,
+            uint256
+        )
+    {
+        return (
+            IERC20Upgradeable(super.getFeeL2TokenAddress()).balanceOf(address(msg.sender)),
+            IERC20Upgradeable(super.getFeeL2TokenAddress()).balanceOf(address(this)),
+            super.getFeeL2TokenAddress(),
+            pendingWithdrawalsFees[msg.sender].feesL2
+        );
+    }
+
     function setProposerStartBlock(uint256 sb) public onlyProposer {
         proposerStartBlock = sb;
     }

@@ -1694,27 +1694,45 @@ class Nf3 {
    */
   startPeriodicPayment(cronExp = '0 0 * * */6') {
     this.periodicPaymentJob = createJob(cronExp, async () => {
-      logger.info(`--in cron job --- ${new Date().toLocaleString()}`);
-      const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
-      logger.info(`- ${await this.getPendingWithdrawsFromStateContract()}`);
-      if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
-        return;
-      }
-      const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`)).data;
-      logger.info(`-----txDataToSign--- ${txDataToSign}`);
-      proposerQueue.push(async () => {
-        try {
-          await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
-        } catch (err) {
-          logger.error({
-            msg: 'Error while trying to submit rawTx',
-            err,
-          });
+      try {
+        logger.info(`--in cron job --- ${new Date().toLocaleString()}`);
+        const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
+        logger.info(`- ${JSON.stringify(await this.getPendingWithdrawsFromStateContract())}`);
+        if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
+          return;
         }
-      });
-      const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0);
-      logger.info(`-----txDataToSign--tx--- ${tx}`);
-      logger.info(`---${this._sendTransaction(tx)}`);
+        const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`))
+          .data;
+        logger.info(`-----txDataToSign--- ${txDataToSign}`);
+        // proposerQueue.push(async () => {
+        //   try {
+        //     await this.submitTransaction(txDataToSign, this.stateContractAddress, 0);
+        //   } catch (err) {
+        //     logger.error({
+        //       msg: 'Error while trying to submit rawTx',
+        //       err,
+        //     });
+        //   }
+        // });
+        const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0);
+        logger.info(`-----txDataToSign--tx--- ${JSON.stringify(tx)}`);
+        logger.info(`--_sendTransaction -${await this._sendTransaction(tx)}`);
+      } catch (err) {
+        logger.info(
+          `-- erc20Address in state contract -- ${await this.stateContract.methods
+            .getFeeL2TokenAddress()
+            .call()}`,
+        );
+        logger.info(
+          `-- state contract info -- ${await this.stateContract.methods
+            .balancesOfContractAndProposer()
+            .call()}`,
+        );
+        logger.error({
+          msg: 'Error while trying to submit withdraw tx',
+          err,
+        });
+      }
     });
     this.periodicPaymentJob.start();
   }
