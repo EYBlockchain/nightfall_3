@@ -77,6 +77,8 @@ class Nf3 {
 
   stateContract;
 
+  shieldContract;
+
   ethereumSigningKey;
 
   ethereumAddress;
@@ -155,6 +157,7 @@ class Nf3 {
     this.challengesContractAddress = await this.contractGetter('Challenges');
     this.stateContractAddress = await this.contractGetter('State');
     this.stateContract = await this.getContractInstance('State');
+    this.shieldContract = await this.getContractInstance('Shield');
 
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
@@ -1718,13 +1721,23 @@ class Nf3 {
         logger.info(`-----txDataToSign--tx--- ${JSON.stringify(tx)}`);
         logger.info(`--_sendTransaction -${JSON.stringify(await this._sendTransaction(tx))}`);
       } catch (err) {
-        logger.info(
-          `-- state contract info -- ${JSON.stringify(
-            await this.stateContract.methods.balancesOfContractAndProposer().call(),
-          )}`,
-        );
+        try {
+          logger.info(
+            `-- state contract info -- ${JSON.stringify(
+              await this.stateContract.methods.balancesOfContractAndProposer().call(),
+            )}`,
+          );
+        } catch (err1) {
+          logger.info(`Error balancesOfContractAndProposer ${err1}`);
+        }
+
         logger.info(
           `-- erc20Address in state contract -- ${await this.stateContract.methods
+            .getFeeL2TokenAddress()
+            .call()}`,
+        );
+        logger.info(
+          `-- erc20Address in shield contract -- ${await this.shieldContract.methods
             .getFeeL2TokenAddress()
             .call()}`,
         );
