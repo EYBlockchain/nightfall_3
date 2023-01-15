@@ -4,6 +4,7 @@ import {
   queues,
   enqueueEvent,
 } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
+import { checkContractsABI } from '@polygon-nightfall/common-files/utils/sync-files.mjs';
 import app from './app.mjs';
 import {
   startEventQueue,
@@ -21,6 +22,7 @@ import autoChangeCurrentProposer from './services/auto-change-current-proposer.m
 
 const main = async () => {
   try {
+    await checkContractsABI();
     const proposer = new Proposer();
     setProposer(proposer); // passes the proposer instance int the proposer routes
     const proposerEthAddress = app.get('proposerEthAddress');

@@ -24,9 +24,6 @@ export default {
       const client = await new MongoClient(url, {
         useUnifiedTopology: true,
         connectTimeoutMS: 40000,
-        // keepAlive: true,
-        // serverSelectionTimeoutMS: 30000,
-        // socketTimeoutMS: 360000,
       });
       connection[url] = await client.connect();
     }
