@@ -104,7 +104,7 @@ describe('Periodic Payment', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
     });
 
-    it('Should do request for block payment and success withdraw as part of cron job', async () => {
+    it('Should do request for block payment and succesful withdraw', async () => {
       const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
       await web3Client.timeJump(3600 * 24 * 10);
       for (const blockHash of blockHashs) {
@@ -135,7 +135,7 @@ describe('Periodic Payment', () => {
         expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
       });
 
-      it('Should do request for block payment and unsuccess withdraw as part of cron job', async () => {
+      it('Should do request for block payment and unsuccesful withdraw', async () => {
         const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(
           rec => rec.blockHash,
         );
@@ -152,6 +152,7 @@ describe('Periodic Payment', () => {
       it('Do one more deposit to make periodic payment cron job work', async () => {
         await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
         await makeBlock();
+        await web3Client.timeJump(3600 * 24 * 10);
         await nf3Proposer.requestBlockPayment(
           (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash)[0],
         );
