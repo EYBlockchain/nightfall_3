@@ -1718,14 +1718,14 @@ class Nf3 {
         logger.info(`-----txDataToSign--tx--- ${JSON.stringify(tx)}`);
         logger.info(`--_sendTransaction -${JSON.stringify(await this._sendTransaction(tx))}`);
       } catch (err) {
-        logger.info(
-          `-- erc20Address in state contract -- ${await this.stateContract.methods
-            .getFeeL2TokenAddress()
-            .call()}`,
-        );
-        logger.info(
+        logger.error(
           `-- state contract info -- ${await this.stateContract.methods
             .balancesOfContractAndProposer()
+            .call()}`,
+        );
+        logger.error(
+          `-- erc20Address in state contract -- ${await this.stateContract.methods
+            .getFeeL2TokenAddress()
             .call()}`,
         );
         logger.error({

@@ -120,8 +120,8 @@ module.exports = async function (deployer) {
   const feeL2TokenAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
     token => token.name === FEE_L2_TOKEN_ID,
   ).address;
-  await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLocaleLowerCase());
-  // await state.setFeeL2TokenAddress(feeL2TokenAddress.toLocaleLowerCase());
+  await shield.setFeeL2TokenAddress(feeL2TokenAddress);
+  await state.setFeeL2TokenAddress(feeL2TokenAddress);
 
   console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'disable') {
