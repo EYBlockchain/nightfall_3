@@ -121,7 +121,7 @@ module.exports = async function (deployer) {
     token => token.name === FEE_L2_TOKEN_ID,
   ).address;
   await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLocaleLowerCase());
-  await state.setFeeL2TokenAddress(feeL2TokenAddress.toLocaleLowerCase());
+  // await state.setFeeL2TokenAddress(feeL2TokenAddress.toLocaleLowerCase());
 
   console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'disable') {
