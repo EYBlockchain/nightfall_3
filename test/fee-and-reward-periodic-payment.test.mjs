@@ -91,8 +91,8 @@ describe('Periodic Payment', () => {
     //   logger.info(`-------getPendingWithdrawsFromStateContract--------- ${feesL2}`);
     //   await new Promise(reslove => setTimeout(reslove, 60000));
     // }
-    logger.info(`---- ${await nf3Proposer.getPendingWithdrawsFromStateContract()}`);
-    await new Promise(reslove => setTimeout(reslove, 60000));
+    logger.info(`---- ${JSON.stringify(await nf3Proposer.getPendingWithdrawsFromStateContract())}`);
+    await new Promise(reslove => setTimeout(reslove, 240000));
     const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     expect(Number(feesL2)).to.be.equal(0);
   });
