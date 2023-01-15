@@ -681,7 +681,14 @@ jobs:
           cd ..
 
       - name: Build adversary
-        run: npm run build-adversary
+        run: |
+          npm run build-adversary
+          cd test/adversary/adversary-cli
+          cat package.json
+          cd ..
+          cd ..
+          cd ..
+          pwd
 
       - name: Start Containers
         run: |
