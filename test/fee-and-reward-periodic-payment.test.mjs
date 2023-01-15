@@ -110,13 +110,13 @@ describe('Periodic Payment', () => {
       for (const blockHash of blockHashs) {
         await nf3Proposer.requestBlockPayment(blockHash);
       }
-      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+      await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(0);
     });
   });
 
-  context('Update minimum l2 erc20 token balance required for withdraw from State contract', () => {
+  context('Update - minimum l2 erc20 token balance required for withdraw from State contract', () => {
     before(() => {
       nf3Proposer.minL2Balance = 3; // changing l2 withdraw limit
     });
@@ -139,7 +139,7 @@ describe('Periodic Payment', () => {
       for (const blockHash of blockHashs) {
         await nf3Proposer.requestBlockPayment(blockHash);
       }
-      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+      await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(2); // could not withdraw because limit is 3 now
     });
@@ -156,7 +156,7 @@ describe('Periodic Payment', () => {
           await nf3Proposer.getPendingWithdrawsFromStateContract(),
         )}`,
       );
-      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+      await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(0);
     });
@@ -191,7 +191,7 @@ describe('Periodic Payment', () => {
           await nf3Proposer.getPendingWithdrawsFromStateContract(),
         )}`,
       );
-      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job (if cron job exist)
+      await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job (if cron job exist)
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(2);
     });
