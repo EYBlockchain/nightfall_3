@@ -110,77 +110,112 @@ describe('Periodic Payment', () => {
       for (const blockHash of blockHashs) {
         await nf3Proposer.requestBlockPayment(blockHash);
       }
-      // let { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
-      // while (Number(feesL2) !== 0) {
-      //   await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job
-      //   ({ feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract());
-      //   logger.debug(feesL2);
-      // }
+      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+      const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+      expect(Number(feesL2)).to.be.equal(0);
+    });
+  });
+
+  context('Update minimum l2 erc20 token balance required for withdraw from State contract', () => {
+    before(() => nf3Proposer.minL2Balance = 3); // changing l2 withdraw limit
+
+    it('Do 2 Deposit and make 2 blocks', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
+    });
+
+    it('Should do request for block payment and unsuccess withdraw as part of cron job', async () => {
+      const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
+      await web3Client.timeJump(3600 * 24 * 10);
+      for (const blockHash of blockHashs) {
+        await nf3Proposer.requestBlockPayment(blockHash);
+      }
+      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+      const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+      expect(Number(feesL2)).to.be.equal(2); // could not withdraw because limit is 3 now
+    });
+
+    // this test satisfy changed withdraw limit from before block
+    it('Do one more deposit to make periodic payment cron job work', async () => {
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+      await nf3Proposer.requestBlockPayment(
+        (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash)[0]
+      );
       logger.info(
         `-- in test file -- ${JSON.stringify(
           await nf3Proposer.getPendingWithdrawsFromStateContract(),
         )}`,
       );
-
       await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(0);
-      // console.log(await nf3Proposer.getPendingWithdrawsFromStateContract());
-      // await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job
-      // const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
-      // expect(Number(feesL2)).to.be.equal(0);
     });
   });
 
-  // it('Stop periodic payment job', () => {
-  //   nf3Proposer.stopPeriodicPayment();
-  //   expect(nf3Proposer.periodicPaymentJob).to.be.equal(undefined);
-  // });
+  it('Stop periodic payment job', () => {
+    nf3Proposer.stopPeriodicPayment();
+    expect(nf3Proposer.periodicPaymentJob).to.be.equal(undefined);
+  });
 
-  // context('While there is not active cron job runing', () => {
-  //   it('Do 2 Deposit and make 2 blocks', async function () {
-  //     const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+  context('While there is not active cron job runing', () => {
+    it('Do 2 Deposit and make 2 blocks', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
-  //     await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-  //     await makeBlock();
-  //     await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-  //     await makeBlock();
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
 
-  //     const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-  //     expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
-  //   });
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
+    });
 
-  //   it('Should do request for block payment and add then in pendingWithdraw', async () => {
-  //     const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
-  //     await web3Client.timeJump(3600 * 24 * 10);
-  //     for (const blockHash of blockHashs) {
-  //       await nf3Proposer.requestBlockPayment(blockHash);
-  //     }
-  //     console.log(await nf3Proposer.getPendingWithdrawsFromStateContract());
-  //     await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job (if cron job exist)
-  //     const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
-  //     expect(Number(feesL2)).to.be.equal(2);
-  //   });
-  // });
+    it('Should do request for block payment and add then in pendingWithdraw', async () => {
+      const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
+      await web3Client.timeJump(3600 * 24 * 10);
+      for (const blockHash of blockHashs) {
+        await nf3Proposer.requestBlockPayment(blockHash);
+      }
+      logger.info(
+        `-- in test file -- ${JSON.stringify(
+          await nf3Proposer.getPendingWithdrawsFromStateContract(),
+        )}`,
+      );
+      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job (if cron job exist)
+      const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+      expect(Number(feesL2)).to.be.equal(2);
+    });
+  });
 
-  // context('Test L1 withdraw with periodic payment cron job', () => {
-  //   it('Should withdraw proposer stake', async () => {
-  //     await nf3Proposer.deregisterProposer();
-  //     await nf3Proposer.withdrawStake();
-  //     const { feesL1 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
-  //     expect(Number(feesL1)).to.be.equal(1000000);
-  //   });
+  context('Test L1 withdraw with periodic payment cron job', () => {
+    it('Should withdraw proposer stake', async () => {
+      await nf3Proposer.deregisterProposer();
+      await nf3Proposer.withdrawStake();
+      const { feesL1 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+      expect(Number(feesL1)).to.be.equal(1000000);
+    });
 
-  //   it('Start periodic payment job', async () => {
-  //     nf3Proposer.startPeriodicPayment('*/01 * * * *'); // At every 3rd minute
-  //     logger.info(
-  //       `---- ${JSON.stringify(await nf3Proposer.getPendingWithdrawsFromStateContract())}`,
-  //     );
-  //     await new Promise(reslove => setTimeout(reslove, 60000)); // wait till cron job trigger and does it job
-  //     const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
-  //     expect(Number(feesL2)).to.be.equal(0);
-  //   });
-  // });
+    it('Start periodic payment job', async () => {
+      nf3Proposer.startPeriodicPayment('*/01 * * * *'); // At every minute
+      logger.info(
+        `-- in test file -- ${JSON.stringify(
+          await nf3Proposer.getPendingWithdrawsFromStateContract(),
+        )}`,
+      );
+      await new Promise(reslove => setTimeout(reslove, 100000)); // wait till cron job trigger next and does it job
+      const { feesL1, feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+      expect(Number(feesL1)).to.be.equal(0);
+      expect(Number(feesL2)).to.be.equal());
+    });
+  });
 
   after(async () => {
     await nf3Proposer.close();
