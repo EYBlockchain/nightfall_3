@@ -168,7 +168,6 @@ describe('Periodic Payment', () => {
   );
 
   context('While there is not active cron job runing', () => {
-
     it('Stop periodic payment job', () => {
       nf3Proposer.stopPeriodicPayment();
       expect(nf3Proposer.periodicPaymentJob).to.be.equal(undefined);
