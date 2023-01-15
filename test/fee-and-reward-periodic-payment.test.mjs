@@ -169,6 +169,9 @@ describe('Periodic Payment', () => {
   );
 
   context('While there is not active cron job runing', () => {
+    before(() => {
+      nf3Proposer.minL2Balance = 1; // chang l2 withdraw limit back to 1
+    });
     it('Stop periodic payment job', () => {
       nf3Proposer.stopPeriodicPayment();
       expect(nf3Proposer.periodicPaymentJob).to.be.equal(undefined);
@@ -186,7 +189,7 @@ describe('Periodic Payment', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
     });
 
-    it('Should do request for block payment and add then in pendingWithdraw', async () => {
+    it('Should do request for block payment and then add in pendingWithdraw', async () => {
       const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
       await web3Client.timeJump(3600 * 24 * 10);
       for (const blockHash of blockHashs) {
