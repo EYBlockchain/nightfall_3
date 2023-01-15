@@ -670,16 +670,6 @@ jobs:
         with:
           node-version: '16.17.0'
 
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
-
       - name: Build adversary
         run: |
           npm run build-adversary
@@ -689,6 +679,19 @@ jobs:
           cd ..
           cd ..
           pwd
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          npm link @polygon-nightfall/common-files
+          cd cli
+          npm link @polygon-nightfall/common-files
+          cd ..
+          cd test/adversary/adversary-cli
+          npm link @polygon-nightfall/common-files
+          cd .. && cd .. && cd ..
 
       - name: Start Containers
         run: |
