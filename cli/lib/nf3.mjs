@@ -1719,9 +1719,9 @@ class Nf3 {
         logger.info(`--_sendTransaction -${JSON.stringify(await this._sendTransaction(tx))}`);
       } catch (err) {
         logger.error(
-          `-- state contract info -- ${await this.stateContract.methods
-            .balancesOfContractAndProposer()
-            .call()}`,
+          `-- state contract info -- ${JSON.stringify(
+            await this.stateContract.methods.balancesOfContractAndProposer().call(),
+          )}`,
         );
         logger.error(
           `-- erc20Address in state contract -- ${await this.stateContract.methods
