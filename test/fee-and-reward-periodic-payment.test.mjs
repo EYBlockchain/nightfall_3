@@ -86,7 +86,7 @@ describe('Periodic Payment', () => {
 
   it('Start periodic payment job', async () => {
     nf3Proposer.startPeriodicPayment('*/03 * * * *'); // At every 3rd minute
-    let { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+    // let { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     // while (Number(feesL2) !== 0) {
     //   await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job
     //   ({ feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract());
