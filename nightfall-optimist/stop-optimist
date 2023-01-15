@@ -1,0 +1,2 @@
+#! /bin/bash
+docker stop nightfall_3-optimist_1-1 nightfall_3-mongodb_optimist_1-1
