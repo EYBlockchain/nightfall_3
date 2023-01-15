@@ -361,17 +361,26 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         }
         if (amountL2Token > 0) {
             pendingWithdrawalsFees[msg.sender].feesL2 = 0;
-            // IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransfer(msg.sender, amountL2Token);
-            IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransferFrom(
-                address(this),
-                msg.sender,
-                amountL2Token
-            );
+            IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransfer(msg.sender, amountL2Token);
+            // IERC20Upgradeable(super.getFeeL2TokenAddress()).safeTransferFrom(
+            //     address(this),
+            //     msg.sender,
+            //     amountL2Token
+            // );
         }
     }
 
-    function balancesOfContractAndProposer() public view returns (uint256, address) {
+    function balancesOfContractAndProposer()
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            address
+        )
+    {
         return (
+            IERC20Upgradeable(super.getFeeL2TokenAddress()).balanceOf(msg.sender),
             IERC20Upgradeable(super.getFeeL2TokenAddress()).balanceOf(address(this)),
             super.getFeeL2TokenAddress()
         );
