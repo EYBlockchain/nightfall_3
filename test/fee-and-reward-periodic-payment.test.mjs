@@ -117,7 +117,9 @@ describe('Periodic Payment', () => {
   });
 
   context('Update minimum l2 erc20 token balance required for withdraw from State contract', () => {
-    before(() => nf3Proposer.minL2Balance = 3); // changing l2 withdraw limit
+    before(() => {
+      nf3Proposer.minL2Balance = 3; // changing l2 withdraw limit
+    });
 
     it('Do 2 Deposit and make 2 blocks', async function () {
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
@@ -147,7 +149,7 @@ describe('Periodic Payment', () => {
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       await makeBlock();
       await nf3Proposer.requestBlockPayment(
-        (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash)[0]
+        (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash)[0],
       );
       logger.info(
         `-- in test file -- ${JSON.stringify(
@@ -213,7 +215,7 @@ describe('Periodic Payment', () => {
       await new Promise(reslove => setTimeout(reslove, 100000)); // wait till cron job trigger next and does it job
       const { feesL1, feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL1)).to.be.equal(0);
-      expect(Number(feesL2)).to.be.equal());
+      expect(Number(feesL2)).to.be.equal(0);
     });
   });
 
