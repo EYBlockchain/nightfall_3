@@ -62,7 +62,7 @@ describe('Periodic Payment', () => {
 
   afterEach(async () => logProposerStats());
 
-  it('do 2 Deposit and make 2 blocks', async function () {
+  it('Do 2 Deposit and make 2 blocks', async function () {
     const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
     await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
@@ -86,22 +86,18 @@ describe('Periodic Payment', () => {
 
   it('Start periodic payment job', async () => {
     nf3Proposer.startPeriodicPayment('*/03 * * * *'); // At every 3rd minute
-    // while (Number(feesL2) !== 0) {
-    //   ({ feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract());
-    //   logger.info(`-------getPendingWithdrawsFromStateContract--------- ${feesL2}`);
-    //   await new Promise(reslove => setTimeout(reslove, 60000));
-    // }
     logger.info(`---- ${JSON.stringify(await nf3Proposer.getPendingWithdrawsFromStateContract())}`);
-    await new Promise(reslove => setTimeout(reslove, 240000));
+    await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
     const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     expect(Number(feesL2)).to.be.equal(0);
   });
 
-  context('while cron job runing', () => {
-    it('do 2 Deposit and make  block', async function () {
+  context('While cron job runing', () => {
+    it('Do 2 Deposit and make 2 blocks', async function () {
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       await makeBlock();
 
@@ -116,19 +112,63 @@ describe('Periodic Payment', () => {
         await nf3Proposer.requestBlockPayment(blockHash);
       }
       console.log(await nf3Proposer.getPendingWithdrawsFromStateContract());
-      await new Promise(reslove => setTimeout(reslove, 240000)); // wait till cron job trigger next
+      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+      const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+      expect(Number(feesL2)).to.be.equal(0);
+    });
+  });
+
+  it('Stop periodic payment job', () => {
+    nf3Proposer.stopPeriodicPayment();
+    expect(nf3Proposer.periodicPaymentJob).to.be.equal(undefined);
+  });
+
+  context('While there is not active cron job runing', () => {
+    it('Do 2 Deposit and make 2 blocks', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
+    });
+
+    it('Should do request for block payment and add then in pendingWithdraw', async () => {
+      const blockHashs = (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash);
+      await web3Client.timeJump(3600 * 24 * 10);
+      for (const blockHash of blockHashs) {
+        await nf3Proposer.requestBlockPayment(blockHash);
+      }
+      console.log(await nf3Proposer.getPendingWithdrawsFromStateContract());
+      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job (if cron job exist)
+      const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+      expect(Number(feesL2)).to.be.equal(2);
+    });
+  });
+
+  context('Test L1 withdraw with periodic payment cron job', () => {
+    it('Should withdraw proposer stake', async () => {
+      await nf3Proposer.deregisterProposer();
+      await nf3Proposer.withdrawStake();
+      const { feesL1 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
+      expect(Number(feesL1)).to.be.equal(1000000);
+    });
+
+    it('Start periodic payment job', async () => {
+      nf3Proposer.startPeriodicPayment('*/01 * * * *'); // At every 3rd minute
+      logger.info(
+        `---- ${JSON.stringify(await nf3Proposer.getPendingWithdrawsFromStateContract())}`,
+      );
+      await new Promise(reslove => setTimeout(reslove, 60000)); // wait till cron job trigger and does it job
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(0);
     });
   });
 
   after(async () => {
-    // await new Promise(reslove => setTimeout(reslove, 240000));
-    // logProposerStats();
-    // console.log(
-    //   '-------getPendingWithdrawsFromStateContract---------',
-    //   await nf3Proposer.getPendingWithdrawsFromStateContract(),
-    // );
     await nf3Proposer.close();
     await nf3User.close();
     web3Client.closeWeb3();
