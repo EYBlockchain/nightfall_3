@@ -92,7 +92,11 @@ describe('Periodic Payment', () => {
     //   ({ feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract());
     //   logger.debug(feesL2);
     // }
-    logger.info(`---- ${JSON.stringify(await nf3Proposer.getPendingWithdrawsFromStateContract())}`);
+    logger.info(
+      `-- in test file -- ${JSON.stringify(
+        await nf3Proposer.getPendingWithdrawsFromStateContract(),
+      )}`,
+    );
     await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
     const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     expect(Number(feesL2)).to.be.equal(0);
