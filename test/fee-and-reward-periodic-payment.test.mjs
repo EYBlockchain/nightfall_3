@@ -163,11 +163,6 @@ describe('Periodic Payment', () => {
         await nf3Proposer.requestBlockPayment(
           (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash)[0],
         );
-        logger.info(
-          `-- in test file -- ${JSON.stringify(
-            await nf3Proposer.getPendingWithdrawsFromStateContract(),
-          )}`,
-        );
         await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
         const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
         expect(Number(feesL2)).to.be.equal(0);
@@ -202,11 +197,6 @@ describe('Periodic Payment', () => {
       for (const blockHash of blockHashs) {
         await nf3Proposer.requestBlockPayment(blockHash);
       }
-      logger.info(
-        `-- in test file -- ${JSON.stringify(
-          await nf3Proposer.getPendingWithdrawsFromStateContract(),
-        )}`,
-      );
       await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job (if cron job exist)
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(2);
@@ -224,11 +214,6 @@ describe('Periodic Payment', () => {
 
     it('Start periodic payment job', async () => {
       nf3Proposer.startPeriodicPayment('*/01 * * * *'); // At every minute
-      logger.info(
-        `-- in test file -- ${JSON.stringify(
-          await nf3Proposer.getPendingWithdrawsFromStateContract(),
-        )}`,
-      );
       await new Promise(reslove => setTimeout(reslove, 100000)); // wait till cron job trigger next and does it job
       const { feesL1, feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL1)).to.be.equal(0);
