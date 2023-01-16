@@ -26,7 +26,7 @@ import {
   sendSignedTransaction,
 } from '../services/transaction-sign-send.mjs';
 import auth from '../utils/auth.mjs';
-import txsQueue from '../utils/transactions-queue.mjs';
+import { proposerTxsQueue } from '../utils/transactions-queue.mjs';
 
 const router = express.Router();
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
@@ -119,7 +119,7 @@ router.post('/register', auth, async (req, res, next) => {
       );
 
       // Submit tx
-      txsQueue.push(async () => {
+      proposerTxsQueue.push(async () => {
         try {
           const receipt = await sendSignedTransaction(signedTx);
           logger.debug({ msg: 'Proposer registered', receipt });
@@ -230,7 +230,7 @@ router.post('/update', auth, async (req, res, next) => {
     );
 
     // Submit tx and update db if tx is successful
-    txsQueue.push(async () => {
+    proposerTxsQueue.push(async () => {
       try {
         const receipt = await sendSignedTransaction(signedTx);
         logger.debug({ msg: 'Proposer updated', receipt });
@@ -354,7 +354,7 @@ router.post('/de-register', auth, async (req, res, next) => {
     );
 
     // Submit tx and update db if tx is successful
-    txsQueue.push(async () => {
+    proposerTxsQueue.push(async () => {
       try {
         const receipt = await sendSignedTransaction(signedTx);
         logger.debug({ msg: 'Proposer removed', receipt });
@@ -423,7 +423,7 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
     );
 
     // Submit tx
-    txsQueue.push(async () => {
+    proposerTxsQueue.push(async () => {
       try {
         const receipt = await sendSignedTransaction(signedTx);
         logger.debug({ msg: 'Proposer stake withdrawn', receipt });
@@ -593,7 +593,7 @@ router.get('/withdraw', auth, async (req, res, next) => {
     );
 
     // Submit tx
-    txsQueue.push(async () => {
+    proposerTxsQueue.push(async () => {
       try {
         const receipt = await sendSignedTransaction(signedTx);
         logger.debug({ msg: 'Proposer profits withdrawn', receipt });
@@ -673,7 +673,7 @@ router.post('/payment', auth, async (req, res, next) => {
     );
 
     // Submit tx
-    txsQueue.push(async () => {
+    proposerTxsQueue.push(async () => {
       try {
         const receipt = await sendSignedTransaction(signedTx);
         logger.debug({ msg: 'Proposer payment completed', receipt });
@@ -738,7 +738,7 @@ router.get('/change', auth, async (req, res, next) => {
     );
 
     // Submit tx
-    txsQueue.push(async () => {
+    proposerTxsQueue.push(async () => {
       try {
         const receipt = await sendSignedTransaction(signedTx);
         logger.debug({ msg: 'Proposer was rotated', receipt });

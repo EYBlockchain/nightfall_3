@@ -13,7 +13,7 @@ import { removeTransactionsFromMemPool, getMempoolTxsSortedByFee } from './datab
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { createSignedTransaction, sendSignedTransaction } from './transaction-sign-send.mjs';
-import txsQueue from '../utils/transactions-queue.mjs';
+import { proposerTxsQueue } from '../utils/transactions-queue.mjs';
 
 const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
 const { STATE_CONTRACT_NAME } = constants;
@@ -169,7 +169,7 @@ export async function conditionalMakeBlock(args) {
         );
 
         // Submit tx and update db if tx is successful
-        txsQueue.push(async () => {
+        proposerTxsQueue.push(async () => {
           try {
             const receipt = await sendSignedTransaction(signedTx);
             logger.debug({ msg: 'Block proposed', receipt });

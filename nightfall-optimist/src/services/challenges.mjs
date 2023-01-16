@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
+
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
-import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import { getContractInstance, web3 } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
 import {
@@ -11,11 +11,19 @@ import {
   getTreeByBlockNumberL2,
   getTransactionHashSiblingInfo,
 } from './database.mjs';
+import { createSignedTransaction, sendSignedTransaction } from './transaction-sign-send.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
+import { challengerTxsQueue } from '../utils/transactions-queue.mjs';
 
 const { TIMBER_HEIGHT } = config;
+const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+
 const { CHALLENGES_CONTRACT_NAME, ZERO } = constants;
+
+const challengerEthPrivateKey = environment.PROPOSER_KEY;
+const { address: challengerEthAddress } =
+  web3.eth.accounts.privateKeyToAccount(challengerEthPrivateKey);
 
 let makeChallenges = process.env.IS_CHALLENGER === 'true';
 
@@ -37,24 +45,65 @@ export async function commitToChallenge(txDataToSign) {
     logger.debug('makeChallenges is off, no challenge commitment was sent');
     return;
   }
-  const web3 = Web3.connection();
   const commitHash = web3.utils.soliditySha3({ t: 'bytes', v: txDataToSign });
+
   const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const challengesContractAddress = challengeContractInstance.options.address;
+
   const commitToSign = await challengeContractInstance.methods
     .commitToChallenge(commitHash)
     .encodeABI();
 
-  await saveCommit(commitHash, txDataToSign);
+  const signedCommit = await createSignedTransaction(
+    challengerEthPrivateKey,
+    challengerEthAddress,
+    challengesContractAddress,
+    commitToSign,
+  );
 
-  // ws.send(JSON.stringify({ type: 'commit', txDataToSign: commitToSign }));
-  // TODO sign and send commitToSign
+  challengerTxsQueue.push(async () => {
+    try {
+      const receipt = await sendSignedTransaction(signedCommit);
+      logger.debug({ msg: 'Commit to challenge completed', receipt });
+
+      await saveCommit(commitHash, txDataToSign);
+      logger.debug('Commit hash to challenge in db');
+    } catch (err) {
+      logger.error({
+        msg: 'Something went wrong',
+        err,
+      });
+    }
+  });
 }
 
 export async function revealChallenge(txDataToSign, sender) {
   logger.debug('Revealing challenge');
 
-  // ws.send(JSON.stringify({ type: 'challenge', txDataToSign, sender }));
-  // TODO sign and send txDataToSign
+  // Challenge coming from different address, ignore
+  if (sender !== challengerEthAddress) return;
+
+  const challengeContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME);
+  const challengesContractAddress = challengeContractInstance.options.address;
+
+  const signedTx = await createSignedTransaction(
+    challengerEthPrivateKey,
+    challengerEthAddress,
+    challengesContractAddress,
+    txDataToSign,
+  );
+
+  challengerTxsQueue.push(async () => {
+    try {
+      const receipt = await sendSignedTransaction(signedTx);
+      logger.debug({ msg: 'Reveal challenge completed', receipt });
+    } catch (err) {
+      logger.error({
+        msg: 'Something went wrong',
+        err,
+      });
+    }
+  });
 }
 
 export async function createChallenge(block, transactions, err) {

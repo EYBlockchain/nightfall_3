@@ -8,6 +8,5 @@ function createQueue(options) {
   return queue;
 }
 
-const txsQueue = createQueue({ autostart: true });
-
-export default txsQueue;
+export const proposerTxsQueue = createQueue({ autostart: true });
+export const challengerTxsQueue = createQueue({ autostart: true });
