@@ -1,5 +1,12 @@
 /* eslint no-await-in-loop: "off" */
 
+/**
+ * this test suits mainly test periodic payment
+ * cron job in context to proposer, but successful
+ * execution this test suits also imply that logic
+ * will work for challenger as well for withdrawing
+ * reward from Pendging L1 withdraw
+ */
 import chai from 'chai';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
@@ -230,6 +237,7 @@ describe('Periodic Payment', () => {
   });
 
   after(async () => {
+    nf3Proposer.stopPeriodicPayment();
     await nf3Proposer.close();
     await nf3User.close();
     web3Client.closeWeb3();

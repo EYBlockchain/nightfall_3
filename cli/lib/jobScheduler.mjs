@@ -1,6 +1,6 @@
 /**
  * This is cron library to create scheduler
- * for any give job
+ * for any given job
  */
 import cron from 'node-cron';
 
