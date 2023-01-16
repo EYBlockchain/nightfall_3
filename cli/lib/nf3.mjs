@@ -1700,7 +1700,9 @@ class Nf3 {
       try {
         logger.info(`--in cron job --- ${new Date().toLocaleString()}`);
         const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
-        logger.info(`${this.ethereumAddress} pending balance are feesL1 - ${feesL1}, and feesL2 - ${feesL2}`);
+        logger.info(
+          `${this.ethereumAddress} pending balance are feesL1 - ${feesL1}, and feesL2 - ${feesL2}`,
+        );
         if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
           return;
         }
