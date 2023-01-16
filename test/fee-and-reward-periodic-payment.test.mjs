@@ -209,6 +209,7 @@ describe('Periodic Payment', () => {
   context('Test L1 withdraw with periodic payment cron job', () => {
     it('Should withdraw proposer stake', async () => {
       await nf3Proposer.deregisterProposer();
+      await web3Client.timeJump(3600 * 24 * 10);
       await nf3Proposer.withdrawStake();
       const { feesL1 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL1)).to.be.equal(1000000);
