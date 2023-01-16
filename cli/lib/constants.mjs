@@ -21,4 +21,9 @@ export const GAS_MULTIPLIER = Number(process.env.GAS_MULTIPLIER) || 2;
 export const GAS_PRICE_MULTIPLIER = Number(process.env.GAS_PRICE_MULTIPLIER) || 2;
 export const GAS = process.env.GAS || 4000000;
 export const GAS_PRICE = process.env.GAS_PRICE || '10000000000';
-export const { GAS_ESTIMATE_ENDPOINT } = process.env;
+export const GAS_ESTIMATE_ENDPOINT =
+  process.env.GAS_ESTIMATE_ENDPOINT ||
+  'https://vqxy02tr5e.execute-api.us-east-2.amazonaws.com/production/estimateGas';
+
+export const DEFAULT_MIN_L1_WITHDRAW = 1; // minimum l1 balance in wei required for withdraw from State contract
+export const DEFAULT_MIN_L2_WITHDRAW = 1; // minimum l2 erc20 token balance required for withdraw from State contract
