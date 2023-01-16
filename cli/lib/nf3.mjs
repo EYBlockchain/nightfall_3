@@ -1700,37 +1700,15 @@ class Nf3 {
       try {
         logger.info(`--in cron job --- ${new Date().toLocaleString()}`);
         const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
-        logger.info(`- ${JSON.stringify(await this.getPendingWithdrawsFromStateContract())}`);
+        logger.info(`${this.ethereumAddress} pending balance are feesL1 - ${feesL1}, and feesL2 - ${feesL2}`);
         if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
           return;
         }
         const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`))
           .data;
-        // logger.info(`-----txDataToSign--- ${txDataToSign}`);
         const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0);
-        // logger.info(`-----txDataToSign--tx--- ${JSON.stringify(tx)}`);
-        logger.info(`--_sendTransaction -${JSON.stringify(await this._sendTransaction(tx))}`);
+        await this._sendTransaction(tx);
       } catch (err) {
-        try {
-          logger.info(
-            `-- state contract info -- ${JSON.stringify(
-              await this.stateContract.methods.balancesOfContractAndProposer().call(),
-            )}`,
-          );
-        } catch (err1) {
-          logger.info(`Error balancesOfContractAndProposer ${err1}`);
-        }
-
-        logger.info(
-          `-- erc20Address in state contract -- ${await this.stateContract.methods
-            .getFeeL2TokenAddress()
-            .call()}`,
-        );
-        logger.info(
-          `-- erc20Address in shield contract -- ${await this.shieldContract.methods
-            .getFeeL2TokenAddress()
-            .call()}`,
-        );
         logger.error({
           msg: 'Error while trying to submit withdraw tx',
           err,
