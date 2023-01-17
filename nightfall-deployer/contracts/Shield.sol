@@ -342,8 +342,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         if (tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
                 revert('Shield: ERC20 withdrawal should have tokenId equal to ZERO');
-            uint256 check = super.getRestrictionWithdraw(addr);
-            if (value > check && check != 0)
+            int256 check = super.getRestrictionWithdraw(addr);
+            if (int256(uint256(value)) > check && check != -1)
                 revert('Shield: Value is above current restrictions for withdrawals');
             else IERC20Upgradeable(addr).safeTransfer(recipientAddress, uint256(value));
         } else if (tokenType == TokenType.ERC721) {
@@ -383,8 +383,8 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         if (tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
                 revert('Shield: ERC20 deposit should have tokenId equal to ZERO');
-            uint256 check = super.getRestrictionDeposit(addr);
-            if (value > check && check != 0)
+            int256 check = super.getRestrictionDeposit(addr);
+            if (int256(uint256(value)) > check && check != -1)
                 revert('Shield: Value is above current restrictions for deposits');
             else
                 IERC20Upgradeable(addr).safeTransferFrom(msg.sender, address(this), uint256(value));

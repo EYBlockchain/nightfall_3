@@ -441,9 +441,10 @@ describe('Testing Shield Contract', function () {
       );
     });
 
-    it('allows a deposit transaction (of any size) if tokenType is ERC20 and deposit restriction has not been set', async function () {
+    it('allows a deposit transaction (of any size) if tokenType is ERC20 and deposit restriction has been unset', async function () {
       await Erc20MockInstance.approve(shieldAddress, '10');
 
+      await ShieldInstance.setRestriction(erc20MockAddress, '-1', '-1');
       const tx = await ShieldInstance.submitTransaction(depositTransaction);
 
       for (let i = 0; i < depositTransaction.commitments.length; ++i) {
