@@ -19,7 +19,7 @@ const {
   RESTRICTIONS,
   MULTISIG,
   X509: x509Params,
-  SANCTIONS_CONTRACT,
+  SANCTIONS_CONTRACT_ADDRESS,
   DEPLOY_MOCKED_SANCTIONS_CONTRACT,
   TEST_OPTIONS: {
     addresses: { sanctionedUser },
@@ -59,7 +59,7 @@ module.exports = async function (deployer) {
 
   await deployer.deploy(SimpleMultiSig, SIGNATURE_THRESHOLD, sortedOwners, network_id);
 
-  let sanctionsContractAddress = SANCTIONS_CONTRACT;
+  let sanctionsContractAddress = SANCTIONS_CONTRACT_ADDRESS;
   // if we're just testing, we want to deploy a mock sanctions list. We do it here because
   // we need to know the address to give to the Shield contract
   if (DEPLOY_MOCKED_SANCTIONS_CONTRACT === 'true') {
