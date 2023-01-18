@@ -96,17 +96,18 @@ router.post('/register', auth, async (req, res, next) => {
 
     // Check if the proposer is already registered on the blockchain
     const proposerAddresses = (await getProposers()).map(p => p.thisAddress);
-    const isRegistered = proposerAddresses.includes(ethAddress);
+    const isProposerRegistered = proposerAddresses.includes(ethAddress);
 
     // Check if proposer is registered with this Optimist instance (aka 'locally')
     const registeredProposerInDb = await findRegisteredProposerAddress(ethAddress);
 
     // Ops in Proposers smart contract
-    let txDataToSign = '';
     let signedTx = {};
-    if (!isRegistered) {
+    if (!isProposerRegistered) {
       logger.debug('Register new proposer...');
-      txDataToSign = await proposersContractInstance.methods.registerProposer(url, fee).encodeABI();
+      const txDataToSign = await proposersContractInstance.methods
+        .registerProposer(url, fee)
+        .encodeABI();
 
       // Sign tx
       const proposersContractAddress = proposersContractInstance.options.address;
@@ -141,7 +142,7 @@ router.post('/register', auth, async (req, res, next) => {
       await setRegisteredProposerAddress(ethAddress, url); // save the registration address
 
       // I we were already registered on the blockchain, check if we're the current proposer
-      if (txDataToSign === '') {
+      if (isProposerRegistered) {
         logger.warn(
           'Proposer was already registered on the blockchain, now is also registered with this Optimist instance',
         );
