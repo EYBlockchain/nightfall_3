@@ -52,6 +52,7 @@ services:
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
       STATE_GENESIS_BLOCK: ${STATE_GENESIS_BLOCK:-0}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     command: ['npm', 'run', 'dev']
 
     # Temporary container to deploy contracts and circuits and populate volumes
@@ -87,7 +88,9 @@ services:
       MATIC_RESTRICT: ${MATIC_RESTRICT}
       USDC_RESTRICT: ${USDC_RESTRICT}
       DAI_RESTRICT: ${DAI_RESTRICT}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
       WHITELISTING: ${WHITELISTING}
+
 
   hosted-utils-api-server:
     build:

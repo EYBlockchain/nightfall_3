@@ -53,6 +53,7 @@ services:
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       STATE_GENESIS_BLOCK: ${STATE_GENESIS_BLOCK:-0}
       USE_EXTERNAL_NODE: ${USE_EXTERNAL_NODE}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     command: ['npm', 'run', 'start']
 
   deployer:
@@ -84,6 +85,7 @@ services:
       SKIP_DEPLOYMENT: ${SKIP_DEPLOYMENT:-'false'}
       WHITELISTING: ${WHITELISTING?WHITELISTING-not-set}
       UPGRADE: ${UPGRADE_CONTRACTS}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
 
   mongodb:
     image: mongo:4.4.1-bionic
@@ -134,6 +136,7 @@ services:
       PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
       USE_EXTERNAL_NODE: ${USE_EXTERNAL_NODE}
       WEBSOCKET_PORT: 8080
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     command: ['npm', 'run', 'start']
 
   worker:

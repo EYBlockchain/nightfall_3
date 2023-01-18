@@ -54,6 +54,7 @@ services:
       UPGRADE: ${UPGRADE_CONTRACTS}
       ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
       DEPLOY_MOCKED_SANCTIONS_CONTRACT: 'true'
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
 
   hosted-utils-api-server:
     build:
@@ -132,6 +133,7 @@ services:
       OPTIMIST_HOST: ${OPTIMIST_HOST:-proposer_optimist_1}
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://optimist_mongodb_1:27017}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     command: ['npm', 'run', 'dev']
 
   client_2:
@@ -179,6 +181,7 @@ services:
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_1:
@@ -214,6 +217,7 @@ services:
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
       PROPOSER_KEY: ${PROPOSER_KEY:-0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a}
       AUTH_TOKEN: ${AUTH_TOKEN:-0ce4fee0-c765-43d6-973c-d404bfdde2e9}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
@@ -260,6 +264,7 @@ services:
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
       PROPOSER_KEY: ${PROPOSER2_KEY:-0xabf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce}
       AUTH_TOKEN: ${AUTH_TOKEN:-0ce4fee0-c765-43d6-973c-d404bfdde2e9}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     command: ['npm', 'run', 'dev']
 
   optimist_mongodb_1:
@@ -307,6 +312,7 @@ services:
       PROPOSER_KEY: ${PROPOSER_KEY:-0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a}
       DEPLOYER_HOST: ${DEPLOYER_HOST:-deployer}
       AUTH_TOKEN: ${AUTH_TOKEN:-0ce4fee0-c765-43d6-973c-d404bfdde2e9}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     networks:
       - nightfall_network
     volumes:
@@ -331,6 +337,7 @@ services:
       PROPOSER_KEY: ${PROPOSER2_KEY:-0xabf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce}
       DEPLOYER_HOST: ${DEPLOYER_HOST:-deployer}
       AUTH_TOKEN: ${AUTH_TOKEN:-0ce4fee0-c765-43d6-973c-d404bfdde2e9}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     networks:
       - nightfall_network
     volumes:
@@ -358,6 +365,7 @@ services:
       CHALLENGER_PORT: 8192
       CHALLENGER_KEY: ${CHALLENGER_KEY:-0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb}
       DEPLOYER_HOST: ${DEPLOYER_HOST:-deployer}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     networks:
       - nightfall_network
     volumes:
