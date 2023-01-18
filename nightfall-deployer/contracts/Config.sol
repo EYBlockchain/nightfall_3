@@ -21,7 +21,7 @@ contract Config is Ownable, Structures {
     address bootProposer;
     address bootChallenger;
     address feeL2TokenAddress;
-    mapping(address => uint256[2]) erc20limit;
+    mapping(address => int256[2]) erc20limit;
 
     function initialize() public virtual override onlyInitializing {
         Ownable.initialize();
@@ -78,12 +78,12 @@ contract Config is Ownable, Structures {
     }
 
     // restricting tokens for deposit
-    function getRestrictionDeposit(address tokenAddr) public view returns (uint256) {
+    function getRestrictionDeposit(address tokenAddr) public view returns (int256) {
         return erc20limit[tokenAddr][0];
     }
 
     // restricting tokens for deposit
-    function getRestrictionWithdraw(address tokenAddr) public view returns (uint256) {
+    function getRestrictionWithdraw(address tokenAddr) public view returns (int256) {
         return erc20limit[tokenAddr][1];
     }
 
@@ -92,8 +92,8 @@ contract Config is Ownable, Structures {
      */
     function setRestriction(
         address tokenAddr,
-        uint256 depositAmount,
-        uint256 withdrawAmount
+        int256 depositAmount,
+        int256 withdrawAmount
     ) external onlyOwner {
         erc20limit[tokenAddr][0] = depositAmount;
         erc20limit[tokenAddr][1] = withdrawAmount;
