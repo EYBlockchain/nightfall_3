@@ -27,6 +27,7 @@ services:
       OPTIMIST_WS_PORT: ${OPTIMIST_WS_PORT:-8080}
       PROPOSER_HOST: ${PROPOSER_HOST:-proposer}
       PROPOSER_PORT: ${PROPOSER_PORT:-8092}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     networks:
       - nightfall_network
     volumes:
@@ -58,6 +59,7 @@ services:
       CLIENT_HOST: ${CLIENT_HOST:-client}
       CLIENT_PORT: ${CLIENT_PORT:-8080}
       CHALLENGER_PORT: ${CHALLENGER_PORT}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     networks:
       - nightfall_network
     volumes:
