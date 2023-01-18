@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const { COMMAND = '' } = process.env;
 const { clientApiUrls, addresses } = config.TEST_OPTIONS;
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const environment = config.ENVIRONMENTS[config.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 async function fundAccounts() {
   const CLIENT_HOST = clientApiUrls.client1;

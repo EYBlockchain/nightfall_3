@@ -11,7 +11,7 @@ import Nf3 from '../cli/lib/nf3.mjs';
 
 const PROPOSER_PORT = process.env.PROPOSER_PORT || 8092;
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const environment = config.ENVIRONMENTS[config.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const app = express();
 const nf3 = new Nf3(environment.PROPOSER_KEY, environment);
