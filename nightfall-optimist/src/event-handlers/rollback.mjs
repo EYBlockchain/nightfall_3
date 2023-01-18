@@ -130,10 +130,8 @@ async function rollbackEventHandler(data) {
   ]);
 
   await dequeueEvent(2); // Remove an event from the stopQueue.
-  // A Rollback triggers a NewCurrentProposer event which should trigger queue[0].end()
-  // But to be safe we enqueue a helper event to guarantee queue[0].end() runs.
 
-  // assumption is if optimist has makeChallenges ON there is challenger
+  // Assumption is if optimist has makeChallenges ON there is challenger
   // websocket client waiting for signal rollback
   if (isMakeChallengesEnable()) await enqueueEvent(() => signalRollbackCompletedToChallenger(), 0);
 }
