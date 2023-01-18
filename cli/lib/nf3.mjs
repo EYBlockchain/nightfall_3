@@ -946,21 +946,6 @@ class Nf3 {
       fee,
     });
     return res?.data;
-    // if (res.data.txDataToSign === '') return false; // already registered
-    // return new Promise((resolve, reject) => {
-    //   proposerQueue.push(async () => {
-    //     try {
-    //       const receipt = await this.submitTransaction(
-    //         res.data.txDataToSign,
-    //         this.proposersContractAddress,
-    //         stake,
-    //       );
-    //       resolve(receipt);
-    //     } catch (err) {
-    //       reject(err);
-    //     }
-    //   });
-    // });
   }
 
   /**
@@ -973,20 +958,6 @@ class Nf3 {
     */
   async deregisterProposer() {
     return axios.post(`${this.optimistBaseUrl}/proposer/de-register`);
-    // return new Promise((resolve, reject) => {
-    //   proposerQueue.push(async () => {
-    //     try {
-    //       const receipt = await this.submitTransaction(
-    //         res.data.txDataToSign,
-    //         this.proposersContractAddress,
-    //         0,
-    //       );
-    //       resolve(receipt);
-    //     } catch (err) {
-    //       reject(err);
-    //     }
-    //   });
-    // });
   }
 
   /**
@@ -1179,7 +1150,7 @@ class Nf3 {
     ones compressed zkp public key
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-    value of each propery is the number of tokens pending deposit from that contract.
+    value of each property is the number of tokens pending deposit from that contract.
     */
   async getLayer2PendingDepositBalances(ercList, filterByCompressedZkpPublicKey) {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/pending-deposit`, {
@@ -1201,7 +1172,7 @@ class Nf3 {
     ones compressed zkp public key
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-    value of each propery is the number of tokens pending spent (transfer & withdraw)
+    value of each property is the number of tokens pending spent (transfer & withdraw)
     from that contract.
     */
   async getLayer2PendingSpentBalances(ercList, filterByCompressedZkpPublicKey) {
@@ -1223,7 +1194,7 @@ class Nf3 {
     @param {Boolean} filterByCompressedZkpPublicKey- flag to indicate if request is filtered
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-    value of each propery is an array of commitments originating from that contract.
+    value of each property is an array of commitments originating from that contract.
     */
   async getLayer2Commitments(ercList, filterByCompressedZkpPublicKey) {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/commitments`, {
@@ -1242,7 +1213,7 @@ class Nf3 {
     @async
     @returns {Promise} This promise resolves into an object whose properties are the
     addresses of the ERC contracts of the tokens held by this account in Layer 2. The
-    value of each propery is an array of withdraw commitments originating from that contract.
+    value of each property is an array of withdraw commitments originating from that contract.
     */
   async getPendingWithdraws() {
     const res = await axios.get(`${this.clientBaseUrl}/commitment/withdraws`);
@@ -1254,7 +1225,7 @@ class Nf3 {
    */
   async setWeb3Provider() {
     // initialization of web3 provider has been taken from common-files/utils/web3.mjs
-    //  Target is to mainain web3 socker alive
+    // Target is to maintain web3 socket alive
     const WEB3_PROVIDER_OPTIONS = {
       clientConfig: {
         // Useful to keep a connection alive
