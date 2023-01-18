@@ -20,7 +20,7 @@ chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
 // we need require here to import jsons
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const environment = config.ENVIRONMENTS[config.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const {
   transferValue,

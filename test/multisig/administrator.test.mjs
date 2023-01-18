@@ -15,7 +15,7 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const environment = config.ENVIRONMENTS[config.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 
 const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
 const amount1 = 10;
@@ -217,7 +217,7 @@ describe(`Testing Administrator`, () => {
     });
 
     it('Allowing register first proposer', async () => {
-      if (process.env.ENVIRONMENT !== 'aws') {
+      if (config.ENVIRONMENT !== 'aws') {
         const res = await proposers[0].registerProposer('http://optimist', minimumStakeDef);
         expectTransaction(res);
       }
@@ -653,7 +653,7 @@ describe(`Testing Administrator`, () => {
 
   after(async () => {
     nf3User.close();
-    if (process.env.ENVIRONMENT !== 'aws') {
+    if (config.ENVIRONMENT !== 'aws') {
       await proposers[0].deregisterProposer();
     }
     proposers[0].close();

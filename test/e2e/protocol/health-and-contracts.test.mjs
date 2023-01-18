@@ -11,7 +11,7 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const environment = config.ENVIRONMENTS[config.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const { mnemonics, signingKeys } = config.TEST_OPTIONS;
 
 const nf3User1 = new Nf3(signingKeys.user1, environment);
@@ -54,13 +54,13 @@ describe('Health and Contract Checks', () => {
   });
 
   it('should get the address of the test ERC721 mock contract', async function () {
-    if (process.env.ENVIRONMENT === 'aws') this.skip();
+    if (config.ENVIRONMENT === 'aws') this.skip();
     const res = await nf3User1.getContractAddress('ERC721Mock');
     expect(res).to.be.a('string').and.to.include('0x');
   });
 
   it('should get the address of the test ERC1155 mock contract', async function () {
-    if (process.env.ENVIRONMENT === 'aws') this.skip();
+    if (config.ENVIRONMENT === 'aws') this.skip();
     const res = await nf3User1.getContractAddress('ERC1155Mock');
     expect(res).to.be.a('string').and.to.include('0x');
   });
