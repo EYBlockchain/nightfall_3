@@ -2,6 +2,10 @@
 /* eslint no-shadow: "off" */
 /* eslint import/no-unresolved: "off" */
 
+/*
+ @deprecated This file will be removed soon. Please, don't add changes to it.
+*/
+
 import config from 'config';
 import startProposer from './proposer.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';

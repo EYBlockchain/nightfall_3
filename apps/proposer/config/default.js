@@ -1,3 +1,7 @@
+/*
+ @deprecated This file will be removed soon. Please, don't add changes to it.
+*/
+
 module.exports = {
   SIGNING_KEY:
     process.env.SIGNING_KEY || '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',

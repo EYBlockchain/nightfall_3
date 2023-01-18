@@ -1,13 +1,12 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-disable no-await-in-loop */
-/**
-Module that runs up as a proposer
+
+/*
+ @deprecated This file will be removed soon. Please, don't add changes to it.
 */
+
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
-/**
-Does the preliminary setup and starts listening on the websocket
-*/
 export default async function startProposer(nf3, optimistApiUrl) {
   logger.info('Starting Proposer...');
   // Mnemonic are only required for services connecting to a client that
