@@ -11,7 +11,7 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const environment = config.ENVIRONMENTS[config.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const environment = config.ENVIRONMENTS[config.ENVIRONMENT];
 const { mnemonics, signingKeys } = config.TEST_OPTIONS;
 
 const nf3User1 = new Nf3(signingKeys.user1, environment);

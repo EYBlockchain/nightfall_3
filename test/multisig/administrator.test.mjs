@@ -15,7 +15,7 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-const environment = config.ENVIRONMENTS[config.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const environment = config.ENVIRONMENTS[config.ENVIRONMENT];
 
 const { mnemonics, signingKeys, addresses } = config.TEST_OPTIONS;
 const amount1 = 10;
