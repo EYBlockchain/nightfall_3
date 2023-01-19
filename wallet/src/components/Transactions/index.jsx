@@ -15,7 +15,7 @@ import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import tickBox from '../../assets/svg/tickBox.svg';
 import etherscanArrow from '../../assets/svg/etherscanGo.svg';
 import TxInfoModal from '../Modals/txInfoModal.tsx';
-import Web3, { ChainIdMapping } from '../../common-files/utils/web3';
+import Web3 from '../../common-files/utils/web3';
 import './index.scss';
 import { getContractInstance } from '../../common-files/utils/contract';
 import useInterval from '../../hooks/useInterval';

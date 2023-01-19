@@ -1,5 +1,5 @@
 const tokensList = {
-  tokens:	[
+  tokens: [
     {
       chainId: 100,
       name: 'Ether - ERC20 Mock',
@@ -7,12 +7,7 @@ const tokensList = {
       decimals: 9,
       address: '0xe721F2D97c58b1D1ccd0C80B88256a152d27f0Fe',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/eth.svg',
-      tags: [
-        'pos',
-        'erc20',
-        'swapable',
-        'metaTx',
-      ],
+      tags: ['pos', 'erc20', 'swapable', 'metaTx'],
       id: 'ethereum',
       tokenId: '0',
       restrictions: {
@@ -38,12 +33,7 @@ const tokensList = {
       tokenType: 'ERC1155',
       address: '0xB6428a7C3bcb497750C217835539aa96B0c947b5',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/usdc.svg',
-      tags: [
-        'pos',
-        'erc20',
-        'swapable',
-        'metaTx',
-      ],
+      tags: ['pos', 'erc20', 'swapable', 'metaTx'],
       id: 'ethereum',
       restrictions: {
         withdraw: '1000000000',
@@ -68,12 +58,7 @@ const tokensList = {
       tokenType: 'ERC1155',
       address: '0xB6428a7C3bcb497750C217835539aa96B0c947b5',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/usdc.svg',
-      tags: [
-        'pos',
-        'erc20',
-        'swapable',
-        'metaTx',
-      ],
+      tags: ['pos', 'erc20', 'swapable', 'metaTx'],
       id: 'ethereum',
       restrictions: {
         withdraw: '1000000000',
@@ -98,12 +83,7 @@ const tokensList = {
       tokenType: 'ERC1155',
       address: '0xB6428a7C3bcb497750C217835539aa96B0c947b5',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/usdc.svg',
-      tags: [
-        'pos',
-        'erc20',
-        'swapable',
-        'metaTx',
-      ],
+      tags: ['pos', 'erc20', 'swapable', 'metaTx'],
       id: 'ethereum',
       restrictions: {
         withdraw: '1000000000',
@@ -119,7 +99,7 @@ const tokensList = {
         },
       },
     },
-    ],,
+  ],
 };
 
 export default tokensList;
