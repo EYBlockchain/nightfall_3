@@ -10,6 +10,8 @@ const { GAS, GAS_MULTIPLIER, GAS_ESTIMATE_ENDPOINT, GAS_PRICE, GAS_PRICE_MULTIPL
 
 const nonceMutex = new Mutex();
 
+let nonce = 0;
+
 /**
  * Create and sign a web3 transaction (tx) object
  *
@@ -31,8 +33,11 @@ export async function createSignedTransaction(ethPrivateKey, from, to, data, val
 
   let signedTx;
   await nonceMutex.runExclusive(async () => {
-    // Get nonce
-    const nonce = await web3.eth.getTransactionCount(from);
+    // Update nonce if necessary
+    const _nonce = await web3.eth.getTransactionCount(from);
+    if (nonce < _nonce) {
+      nonce = _nonce;
+    }
     // Estimate gasPrice
     const gasPrice = await estimateGasPrice(
       web3,
@@ -49,6 +54,8 @@ export async function createSignedTransaction(ethPrivateKey, from, to, data, val
       gasPrice,
       nonce,
     };
+    nonce++;
+
     // Estimate gas
     const gas = await estimateGas(tx, web3, GAS, GAS_MULTIPLIER);
     tx.gas = gas;
