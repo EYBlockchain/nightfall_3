@@ -43,12 +43,6 @@ const Transactions = () => {
   const [isActive, setActive] = React.useState('all');
   const [showModal, setShowModal] = React.useState({ show: false });
   const [delay, setDelay] = React.useState(50);
-  const targetEnv = process.env.REACT_APP_MODE.replace('-', '_');
-  const [etherscan] = React.useState(
-    ChainIdMapping[targetEnv].chainName === 'Ethereum Mainnet'
-      ? 'etherscan.io'
-      : 'goerli.etherscan.io',
-  );
 
   const initialPrices = {};
   supportedTokens.forEach(t => {
