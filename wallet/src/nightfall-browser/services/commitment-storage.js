@@ -377,7 +377,6 @@ export async function getWalletBalance(compressedZkpPublicKey) {
       tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: BigInt(e.preimage.value),
     }))
-    //.filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
     .map(e => {
       return {
         compressedZkpPublicKey: e.compressedZkpPublicKey,
