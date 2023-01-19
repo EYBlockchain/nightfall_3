@@ -9,7 +9,7 @@ import config from 'config';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
-import { getLayer2Balances, waitTransactionToBeMined, Web3Client } from '../../utils.mjs';
+import { getLayer2Balances, Web3Client } from '../../utils.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
@@ -29,7 +29,6 @@ const {
 axios.defaults.headers.common['X-APP-TOKEN'] = environment.AUTH_TOKEN;
 
 const web3Client = new Web3Client();
-const web3 = web3Client.getWeb3();
 const eventLogs = [];
 
 const nf3User = new Nf3(signingKeys.user1, environment);
@@ -157,23 +156,27 @@ describe('Basic Proposer tests', () => {
     expect(currentProposer).to.be.equal(proposerAddress);
   });
 
-  it('Should fail to change current proposer because insufficient blocks have passed', async () => {
-    const currentProposerBefore = await getCurrentProposer();
-
-    const { transactionHash } = (await axios.get(`${optimistApiUrl}/proposer/change`)).data;
-    await waitTransactionToBeMined(transactionHash, web3);
-
-    const currentProposerAfter = await getCurrentProposer();
-    expect(currentProposerAfter).to.be.equal(currentProposerBefore);
-  });
-
-  it('Should fail to register a proposer twice', async () => {
+  it('Should ignore an attempt to register a proposer twice', async () => {
     const res = await axios.post(`${optimistApiUrl}/proposer/register`, {
       url: 'potato',
       stake: minimumStake,
     });
-    // Registration attempt will be ignored at the endpoint since the Eth address will be the same
+    // Registration attempt ignored at the endpoint since the Eth address is the same
     expect(res.data).to.be.an('object').that.is.empty;
+  });
+
+  it('Should fail to change current proposer because insufficient blocks have passed', async () => {
+    const currentProposerBefore = await getCurrentProposer();
+
+    try {
+      await axios.get(`${optimistApiUrl}/proposer/change`);
+      expect.fail('Change proposer did not fail');
+    } catch (err) {
+      expect(err.response).to.have.property('status', 500);
+    }
+
+    const currentProposerAfter = await getCurrentProposer();
+    expect(currentProposerAfter).to.be.equal(currentProposerBefore);
   });
 
   it('Should update the proposer fee', async () => {
@@ -186,16 +189,11 @@ describe('Basic Proposer tests', () => {
     const currentUrl = proposersBeforeUpdate[0].url; // Need to pass current value
     const stake = 0; // Contract adds given value to existing amount
     const newFee = fee;
-    const { transactionHash } = (
-      await axios.post(`${optimistApiUrl}/proposer/update`, {
-        url: currentUrl,
-        stake,
-        fee: newFee,
-      })
-    ).data;
-
-    // Wait for transaction to be mined
-    await waitTransactionToBeMined(transactionHash, web3);
+    await axios.post(`${optimistApiUrl}/proposer/update`, {
+      url: currentUrl,
+      stake,
+      fee: newFee,
+    });
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(proposerAddress);
@@ -221,16 +219,11 @@ describe('Basic Proposer tests', () => {
     const newUrl = testProposersUrl[1];
     const stake = 0; // Contract adds given value to existing amount
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    const { transactionHash } = (
-      await axios.post(`${optimistApiUrl}/proposer/update`, {
-        url: newUrl,
-        stake,
-        fee: currentFee,
-      })
-    ).data;
-
-    // Wait for transaction to be mined
-    await waitTransactionToBeMined(transactionHash, web3);
+    await axios.post(`${optimistApiUrl}/proposer/update`, {
+      url: newUrl,
+      stake,
+      fee: currentFee,
+    });
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(proposerAddress);
@@ -255,16 +248,11 @@ describe('Basic Proposer tests', () => {
     // Update proposer url
     const currentUrl = proposersBeforeUpdate[0].url;
     const currentFee = Number(proposersBeforeUpdate[0].fee); // Need to pass current value
-    const { transactionHash } = (
-      await axios.post(`${optimistApiUrl}/proposer/update`, {
-        url: currentUrl,
-        stake: minimumStake,
-        fee: currentFee,
-      })
-    ).data;
-
-    // Wait for transaction to be mined
-    await waitTransactionToBeMined(transactionHash, web3);
+    await axios.post(`${optimistApiUrl}/proposer/update`, {
+      url: currentUrl,
+      stake: minimumStake,
+      fee: currentFee,
+    });
 
     // After updating proposer
     const proposersAfterUpdate = await filterByThisProposer(proposerAddress);
@@ -321,14 +309,17 @@ describe('Basic Proposer tests', () => {
     expect(currentProposer).to.have.string('0x0');
   });
 
-  it('Should not withdraw stake due to the cooling off period', async () => {
+  it('Should fail to withdraw stake due to the cooling off period', async () => {
     const stakeBeforeWithdrawal = await getStakeAccount();
 
-    const { transactionHash } = (await axios.post(`${optimistApiUrl}/proposer/withdrawStake`)).data;
-    const receipt = await waitTransactionToBeMined(transactionHash, web3);
+    try {
+      await axios.post(`${optimistApiUrl}/proposer/withdrawStake`);
+      expect.fail('Withdraw stake did not fail');
+    } catch (err) {
+      expect(err.response).to.have.property('status', 500);
+    }
 
     const stakeAfterWithdrawal = await getStakeAccount();
-    expect(receipt).to.have.property('status', false);
     expect(stakeAfterWithdrawal.amount).to.be.equal(stakeBeforeWithdrawal.amount);
   });
 
@@ -342,11 +333,9 @@ describe('Basic Proposer tests', () => {
     const stakeBeforeWithdrawal = await getStakeAccount();
     await web3Client.timeJump(3600 * 24 * 10);
 
-    const { transactionHash } = (await axios.post(`${optimistApiUrl}/proposer/withdrawStake`)).data;
-    const receipt = await waitTransactionToBeMined(transactionHash, web3);
+    await axios.post(`${optimistApiUrl}/proposer/withdrawStake`);
 
     const stakeAfterWithdrawal = await getStakeAccount();
-    expect(receipt).to.have.property('status', true);
     expect(stakeBeforeWithdrawal.amount).to.not.equal(0);
     expect(stakeAfterWithdrawal.amount).to.equal(0);
   });

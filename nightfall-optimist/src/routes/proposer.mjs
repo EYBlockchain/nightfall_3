@@ -26,7 +26,6 @@ import {
   sendSignedTransaction,
 } from '../services/transaction-sign-send.mjs';
 import auth from '../utils/auth.mjs';
-import txsQueue from '../utils/transactions-queue.mjs';
 
 const router = express.Router();
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
@@ -102,7 +101,7 @@ router.post('/register', auth, async (req, res, next) => {
     const registeredProposerInDb = await findRegisteredProposerAddress(ethAddress);
 
     // Ops in Proposers smart contract
-    let signedTx = {};
+    let receipt = {};
     if (!isProposerRegistered) {
       logger.debug('Register new proposer...');
       const txDataToSign = await proposersContractInstance.methods
@@ -111,7 +110,7 @@ router.post('/register', auth, async (req, res, next) => {
 
       // Sign tx
       const proposersContractAddress = proposersContractInstance.options.address;
-      signedTx = await createSignedTransaction(
+      const signedTx = await createSignedTransaction(
         ethPrivateKey,
         ethAddress,
         proposersContractAddress,
@@ -120,17 +119,8 @@ router.post('/register', auth, async (req, res, next) => {
       );
 
       // Submit tx
-      txsQueue.push(async () => {
-        try {
-          const receipt = await sendSignedTransaction(signedTx);
-          logger.debug({ msg: 'Proposer registered', receipt });
-        } catch (err) {
-          logger.error({
-            msg: 'Something went wrong',
-            err,
-          });
-        }
-      });
+      receipt = await sendSignedTransaction(signedTx);
+      logger.debug({ msg: 'Proposer registered', receipt });
     } else {
       logger.warn('Proposer was already registered, registration attempt ignored!');
     }
@@ -163,8 +153,7 @@ router.post('/register', auth, async (req, res, next) => {
       await enqueueEvent(() => logger.info('Start Queue'), 0); // kickstart the queue
     }
 
-    const { transactionHash } = signedTx;
-    res.json({ transactionHash });
+    res.json(receipt);
   } catch (err) {
     next(err);
   }
@@ -231,23 +220,13 @@ router.post('/update', auth, async (req, res, next) => {
     );
 
     // Submit tx and update db if tx is successful
-    txsQueue.push(async () => {
-      try {
-        const receipt = await sendSignedTransaction(signedTx);
-        logger.debug({ msg: 'Proposer updated', receipt });
+    const receipt = await sendSignedTransaction(signedTx);
+    logger.debug({ msg: 'Proposer updated', receipt });
 
-        await setRegisteredProposerAddress(ethAddress, url);
-        logger.debug('Proposer updated in db');
-      } catch (err) {
-        logger.error({
-          msg: 'Something went wrong',
-          err,
-        });
-      }
-    });
+    await setRegisteredProposerAddress(ethAddress, url);
+    logger.debug('Proposer updated in db');
 
-    const { transactionHash } = signedTx;
-    res.json({ transactionHash });
+    res.json(receipt);
   } catch (err) {
     next(err);
   }
@@ -355,23 +334,13 @@ router.post('/de-register', auth, async (req, res, next) => {
     );
 
     // Submit tx and update db if tx is successful
-    txsQueue.push(async () => {
-      try {
-        const receipt = await sendSignedTransaction(signedTx);
-        logger.debug({ msg: 'Proposer removed', receipt });
+    const receipt = await sendSignedTransaction(signedTx);
+    logger.debug({ msg: 'Proposer removed', receipt });
 
-        await deleteRegisteredProposerAddress(ethAddress);
-        logger.debug('Proposer removed from db');
-      } catch (err) {
-        logger.error({
-          msg: 'Something went wrong',
-          err,
-        });
-      }
-    });
+    await deleteRegisteredProposerAddress(ethAddress);
+    logger.debug('Proposer removed from db');
 
-    const { transactionHash } = signedTx;
-    res.json({ transactionHash });
+    res.json(receipt);
   } catch (err) {
     next(err);
   }
@@ -424,20 +393,10 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
     );
 
     // Submit tx
-    txsQueue.push(async () => {
-      try {
-        const receipt = await sendSignedTransaction(signedTx);
-        logger.debug({ msg: 'Proposer stake withdrawn', receipt });
-      } catch (err) {
-        logger.error({
-          msg: 'Something went wrong',
-          err,
-        });
-      }
-    });
+    const receipt = await sendSignedTransaction(signedTx);
+    logger.debug({ msg: 'Proposer stake withdrawn', receipt });
 
-    const { transactionHash } = signedTx;
-    res.json({ transactionHash });
+    res.json(receipt);
   } catch (error) {
     next(error);
   }
@@ -594,20 +553,10 @@ router.get('/withdraw', auth, async (req, res, next) => {
     );
 
     // Submit tx
-    txsQueue.push(async () => {
-      try {
-        const receipt = await sendSignedTransaction(signedTx);
-        logger.debug({ msg: 'Proposer profits withdrawn', receipt });
-      } catch (err) {
-        logger.error({
-          msg: 'Something went wrong',
-          err,
-        });
-      }
-    });
+    const receipt = await sendSignedTransaction(signedTx);
+    logger.debug({ msg: 'Proposer profits withdrawn', receipt });
 
-    const { transactionHash } = signedTx;
-    res.json({ transactionHash });
+    res.json(receipt);
   } catch (err) {
     next(err);
   }
@@ -674,20 +623,10 @@ router.post('/payment', auth, async (req, res, next) => {
     );
 
     // Submit tx
-    txsQueue.push(async () => {
-      try {
-        const receipt = await sendSignedTransaction(signedTx);
-        logger.debug({ msg: 'Proposer payment completed', receipt });
-      } catch (err) {
-        logger.error({
-          msg: 'Something went wrong',
-          err,
-        });
-      }
-    });
+    const receipt = await sendSignedTransaction(signedTx);
+    logger.debug({ msg: 'Proposer payment completed', receipt });
 
-    const { transactionHash } = signedTx;
-    res.json({ transactionHash });
+    res.json(receipt);
   } catch (err) {
     next(err);
   }
@@ -739,20 +678,10 @@ router.get('/change', auth, async (req, res, next) => {
     );
 
     // Submit tx
-    txsQueue.push(async () => {
-      try {
-        const receipt = await sendSignedTransaction(signedTx);
-        logger.debug({ msg: 'Proposer was rotated', receipt });
-      } catch (err) {
-        logger.error({
-          msg: 'Something went wrong',
-          err,
-        });
-      }
-    });
+    const receipt = await sendSignedTransaction(signedTx);
+    logger.debug({ msg: 'Proposer was rotated', receipt });
 
-    const { transactionHash } = signedTx;
-    res.json({ transactionHash });
+    res.json(receipt);
   } catch (err) {
     next(err);
   }
