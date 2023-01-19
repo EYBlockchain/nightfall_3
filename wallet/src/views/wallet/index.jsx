@@ -454,6 +454,7 @@ export default function Wallet() {
     return {
       l2Balance: '0',
       currencyValue: currencyValues[t.id],
+      tokenId: t.tokenId ?? '0',
       ...t,
     };
   });
@@ -502,15 +503,32 @@ export default function Wallet() {
     const updatedState = await Promise.all(
       tokens.map(async t => {
         const currencyValue = currencyValues[t.id];
-        if (Object.keys(l2BalanceObj).includes(state.compressedZkpPublicKey)) {
-          const token = l2BalanceObj[state.compressedZkpPublicKey][t.address.toLowerCase()] ?? 0;
+        const tokenIdFull = `0x${BigInt(t.tokenId ?? 0)
+          .toString(16)
+          .padStart(64, '0')}`;
+        if (!Object.hasOwnProperty.call(l2BalanceObj, t.address.toLowerCase())) {
           return {
             ...t,
-            l2Balance: token.toString(),
+            l2Balance: '0',
             currencyValue,
           };
         }
-        return t;
+        const tokenIdx = l2BalanceObj[t.address.toLowerCase()].findIndex(
+          c => c.tokenId === tokenIdFull,
+        );
+        if (tokenIdx === -1) {
+          return {
+            ...t,
+            l2Balance: '0',
+            currencyValue,
+          };
+        }
+        const token = l2BalanceObj[t.address.toLowerCase()][tokenIdx].balance;
+        return {
+          ...t,
+          l2Balance: token.toString(),
+          currencyValue,
+        };
       }),
     );
     setTokens(updatedState);

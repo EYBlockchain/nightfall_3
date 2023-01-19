@@ -26,6 +26,7 @@ import exportIndexdDB from '../../utils/CommitmentsBackup/export';
 const supportedTokens = importTokens();
 
 const { SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
+const { explorerUrl } = global.config;
 
 const txTypeOptions = ['Deposit', 'Transfer', 'Withdraw'];
 const txTypeDest = ['From Ethereum to L2', 'Private Transfer', 'From L2 to Ethereum'];
@@ -255,7 +256,9 @@ const Transactions = () => {
                     show: true,
                     transactionhash: tx.transactionHash,
                     symbol: tx.symbol,
-                    value: new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4),
+                    value: tx.decimals
+                      ? new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4)
+                      : BigInt(tx.value).toString(),
                     _id: tx._id,
                     recipientaddress: tx.recipientAddress,
                     withdrawready: tx.withdrawReady ? 1 : 0,
@@ -324,7 +327,10 @@ const Transactions = () => {
                     >
                       {/* amount-details */}
                       <div style={{ fontWeight: '600', fontSize: '14px', lineHeight: '20px' }}>
-                        {new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4)} {tx.symbol}
+                        {tx.decimals
+                          ? new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4)
+                          : BigInt(tx.value).toString()}{' '}
+                        {tx.symbol}
                       </div>
                       <div
                         style={{
@@ -375,7 +381,7 @@ const Transactions = () => {
                       </div>
                     </div>
                     <a
-                      href={`https://${etherscan}/tx/${tx.l1Hash}`}
+                      href={`${explorerUrl}/transaction/${tx.transactionHash}`}
                       className="etherscanLink"
                       rel="noopener noreferrer"
                       target="_blank"

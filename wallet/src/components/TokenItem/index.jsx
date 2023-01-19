@@ -20,17 +20,30 @@ export default function TokenItem(props) {
   useEffect(async () => {
     const l2bal = await getWalletBalance(state.compressedZkpPublicKey);
     console.log('Wallet Balance', l2bal);
-    if (Object.hasOwnProperty.call(l2bal, state.compressedZkpPublicKey))
+    if (Object.keys(l2bal).length) {
       setFilteredTokens(
         filteredTokens.map(t => {
+          const tokenIdFull = `0x${BigInt(t.tokenId ?? 0)
+            .toString(16)
+            .padStart(64, '0')}`;
+          if (Object.hasOwnProperty.call(l2bal, t.address.toLowerCase())) {
+            const tokenIdx = l2bal[t.address.toLowerCase()].findIndex(
+              c => c.tokenId === tokenIdFull,
+            );
+            return {
+              ...t,
+              l2Balance: tokenIdx >= 0 ? l2bal[t.address.toLowerCase()][tokenIdx].balance : 0n,
+            };
+          }
           return {
             ...t,
-            l2Balance: l2bal[state.compressedZkpPublicKey][t.address.toLowerCase()] ?? 0,
+            l2Balance: 0n,
           };
         }),
       );
-  }, []);
-
+    }
+  }, [state]);
+  const filteredTokenIdx = filteredTokens.findIndex(c => c.symbol === props.symbol);
   const tokenNameId = `TokenItem_tokenName${props.symbol}`;
   const tokenBalanceId = `TokenItem_tokenBalance${props.symbol}`;
   const tokenBalanceUsdId = `TokenItem_tokenBalanceUsd${props.symbol}`;
@@ -65,7 +78,15 @@ export default function TokenItem(props) {
           <div className="balancesDetails">
             <div className="balancesWrapper">
               <div className="balancesDetailsUpperSection" id={tokenBalanceId}>
-                {new BigFloat(BigInt(props.l2Balance), props.decimals).toFixed(4)}
+                {props.decimals
+                  ? new BigFloat(
+                      BigInt(filteredTokens[filteredTokenIdx].l2Balance ?? props.l2Balance),
+                      props.decimals,
+                    ).toFixed(4)
+                  : new BigFloat(
+                      String(filteredTokens[filteredTokenIdx].l2Balance ?? 0),
+                      props.decimals,
+                    ).toFixed(4)}
               </div>
               <div className="balancesDetailsLowerSection">
                 <span className="seperatingDot" id={tokenBalanceUsdId}>
@@ -73,9 +94,16 @@ export default function TokenItem(props) {
                   •{' '}
                 </span>
                 $
-                {new BigFloat(BigInt(props.l2Balance), props.decimals)
-                  .mul(props.currencyValue)
-                  .toFixed(4)}
+                {props.decimals
+                  ? new BigFloat(BigInt(props.l2Balance), props.decimals)
+                      .mul(props.currencyValue)
+                      .toFixed(4)
+                  : new BigFloat(
+                      String(filteredTokens[filteredTokenIdx].l2Balance ?? 0),
+                      props.decimals,
+                    )
+                      .mul(props.currencyValue)
+                      .toFixed(4)}
               </div>
             </div>
           </div>
@@ -84,7 +112,7 @@ export default function TokenItem(props) {
               to={{
                 pathname: '/bridge',
                 tokenState: {
-                  tokenAddress: props.address,
+                  tokenSymbol: props.symbol,
                   initialTxType: 'deposit',
                 },
               }}
@@ -97,7 +125,7 @@ export default function TokenItem(props) {
               to={{
                 pathname: '/bridge',
                 tokenState: {
-                  tokenAddress: props.address,
+                  tokenSymbol: props.symbol,
                   initialTxType: 'withdraw',
                 },
               }}
@@ -133,6 +161,7 @@ export default function TokenItem(props) {
         address={props.address}
         logoURI={props.logoURI}
         decimals={props.decimals}
+        tokenId={props.tokenId}
       />
     </div>
   );
@@ -146,4 +175,5 @@ TokenItem.propTypes = {
   address: PropTypes.string.isRequired,
   logoURI: PropTypes.string.isRequired,
   decimals: PropTypes.number.isRequired,
+  tokenId: PropTypes.string.isRequired,
 };

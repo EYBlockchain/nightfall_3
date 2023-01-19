@@ -5,6 +5,7 @@ import Web3 from 'web3';
 const { ethereum } = global;
 
 export const ChainIdMapping = {
+  tmp_demo: { chainId: '0x64', chainName: 'Edge' },
   preprod: { chainId: '0x539', chainName: 'Ganache' },
   testnet: { chainId: '0x5', chainName: 'Goerli' },
   mainnet: { chainId: '0x1', chainName: 'Mainnet' },

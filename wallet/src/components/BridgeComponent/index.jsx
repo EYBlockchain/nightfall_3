@@ -31,6 +31,7 @@ import checkMarkYes from '../../assets/lottie/check-mark-yes.json';
 import checkMarkCross from '../../assets/lottie/check-mark-cross.json';
 
 import ERC20 from '../../contract-abis/ERC20.json';
+import ERC1155 from '../../contract-abis/ERC1155.json';
 import { retrieveAndDecrypt } from '../../utils/lib/key-storage';
 import BigFloat from '../../common-files/classes/bigFloat';
 import { shieldAddressGet } from '../../utils/lib/local-storage';
@@ -131,9 +132,8 @@ const BridgeComponent = () => {
   const history = useHistory();
   const initialTx = history?.location?.tokenState?.initialTxType ?? 'deposit';
   const initialToken =
-    supportedTokens.find(
-      t => t.address.toLowerCase() === history?.location?.tokenState?.tokenAddress.toLowerCase(),
-    ) ?? supportedTokens[0];
+    supportedTokens.find(t => t.symbol === history?.location?.tokenState?.tokenSymbol) ??
+    supportedTokens[0];
   const [token, setToken] = useState(initialToken);
   const [txType, setTxType] = useState(initialTx);
   const [transferValue, setTransferValue] = useState('0');
@@ -224,12 +224,13 @@ const BridgeComponent = () => {
     if (shieldContractAddress === '') setShieldAddress(shieldAddressGet());
     const ercAddress = token.address;
     const zkpKeys = await retrieveAndDecrypt(state.compressedZkpPublicKey);
+    const tokenType = token.tokenType ?? 'ERC20';
     switch (txType) {
       case 'deposit': {
         await approve(
           ercAddress,
           shieldContractAddress,
-          'ERC20',
+          tokenType,
           new BigFloat(transferValue, token.decimals).toBigInt().toString(),
         );
         setShowModalConfirm(true);
@@ -240,11 +241,11 @@ const BridgeComponent = () => {
         const { rawTransaction, transaction } = await deposit(
           {
             ercAddress,
-            tokenId: 0,
+            tokenId: token.tokenId ?? 0,
             value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
             rootKey: zkpKeys.rootKey,
             fee: 0,
-            tokenType: 'ERC20',
+            tokenType,
           },
           shieldContractAddress,
         ).catch(e => {
@@ -273,11 +274,11 @@ const BridgeComponent = () => {
           {
             offchain: true,
             ercAddress,
-            tokenId: 0,
+            tokenId: token.tokenId ?? 0,
             value: new BigFloat(transferValue, token.decimals).toBigInt().toString(),
             recipientAddress: await Web3.getAccount(),
             rootKey: zkpKeys.rootKey,
-            tokenType: 'ERC20',
+            tokenType,
             fees: 1,
           },
           shieldContractAddress,
@@ -339,9 +340,16 @@ const BridgeComponent = () => {
   };
 
   async function updateL1Balance() {
+    let result;
+    const tokenType = token.tokenType ?? 'ERC20';
     if (token && token?.address) {
-      const contract = new window.web3.eth.Contract(ERC20, token.address);
-      const result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
+      if (tokenType === 'ERC20') {
+        const contract = new window.web3.eth.Contract(ERC20, token.address);
+        result = await contract.methods.balanceOf(accountInstance.address).call(); // 29803630997051883414242659
+      } else {
+        const contract = new window.web3.eth.Contract(ERC1155, token.address);
+        result = await contract.methods.balanceOf(accountInstance.address, token.tokenId).call(); // 29803630997051883414242659
+      }
       setL1Balance(BigInt(result));
     } else {
       setL1Balance(0n);
@@ -351,9 +359,17 @@ const BridgeComponent = () => {
   async function updateL2Balance() {
     if (token && token.address) {
       const l2bal = await getWalletBalance(state.compressedZkpPublicKey);
-      if (Object.hasOwnProperty.call(l2bal, state.compressedZkpPublicKey))
-        setL2Balance(l2bal[state.compressedZkpPublicKey][token.address.toLowerCase()] ?? 0n);
-      else setL2Balance(0n);
+      const tokenIdFull = `0x${BigInt(token.tokenId ?? 0)
+        .toString(16)
+        .padStart(64, '0')}`;
+      if (Object.hasOwnProperty.call(l2bal, token.address.toLowerCase())) {
+        const tokenIdIndex = l2bal[token.address.toLowerCase()].findIndex(
+          c => c.tokenId === tokenIdFull,
+        );
+        if (tokenIdIndex >= 0) {
+          setL2Balance(l2bal[token.address.toLowerCase()][tokenIdIndex].balance);
+        } else setL2Balance(0n);
+      } else setL2Balance(0n);
     }
   }
 
@@ -426,10 +442,18 @@ const BridgeComponent = () => {
                 <div className="balance_details">
                   <p>Balance:</p>
                   {token && txType === 'deposit' && (
-                    <p>{`${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    <p>
+                      {token.decimals
+                        ? `${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`
+                        : `${String(l1Balance)} ${token.symbol}`}
+                    </p>
                   )}
                   {token && txType === 'withdraw' && (
-                    <p>{`${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                    <p>
+                      {token.decimals
+                        ? `${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`
+                        : `${String(l2Balance)} ${token.symbol}`}
+                    </p>
                   )}
                   {!token && <p>0</p>}
                 </div>
@@ -529,10 +553,18 @@ const BridgeComponent = () => {
               <div className="balance_details">
                 <p>Balance: </p>
                 {token && txType === 'deposit' && (
-                  <p>{`${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  <p>
+                    {token.decimals
+                      ? `${new BigFloat(l2Balance, token.decimals).toFixed(4)} ${token.symbol}`
+                      : `${String(l2Balance)} ${token.symbol}`}
+                  </p>
                 )}
                 {token && txType === 'withdraw' && (
-                  <p>{`${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`}</p>
+                  <p>
+                    {token.decimals
+                      ? `${new BigFloat(l1Balance, token.decimals).toFixed(4)} ${token.symbol}`
+                      : `${String(l1Balance)} ${token.symbol}`}
+                  </p>
                 )}
                 {!token && (
                   <p>

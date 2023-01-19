@@ -354,6 +354,7 @@ type SendModalProps = {
   address: string;
   logoURI: string;
   decimals: number;
+  tokenId: string;
   show: boolean;
   onHide: () => void;
 };
@@ -368,7 +369,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   const { onHide, show, ...initialSendToken } = props;
   const [sendToken, setSendToken] = useState(initialSendToken);
   const [filteredTokens, setFilteredTokens] = useState(
-    supportedTokens.map(({ name, symbol, address, logoURI, decimals }) => {
+    supportedTokens.map(({ name, symbol, address, logoURI, decimals, tokenId }) => {
       return {
         name,
         symbol,
@@ -377,6 +378,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
         decimals,
         currencyValue: 0,
         l2Balance: '0',
+        tokenId,
       };
     }),
   );
@@ -386,7 +388,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
   const filterTxs = (criteria: string): any[] =>
     supportedTokens
       .filter((t: TokenType) => t.name.toLowerCase().includes(criteria))
-      .map(({ name, symbol, address, logoURI, decimals }) => {
+      .map(({ name, symbol, address, logoURI, decimals, tokenId }) => {
         return {
           name,
           symbol,
@@ -395,17 +397,32 @@ const SendModal = (props: SendModalProps): JSX.Element => {
           decimals,
           currencyValue: 0,
           l2Balance: '0',
+          tokenId,
         };
       });
 
   useEffect(() => {
     const getBalance = async () => {
-      const l2bal: Record<string, Record<string, bigint>> = await getWalletBalance(
-        state?.compressedZkpPublicKey,
-      );
-      if (Object.hasOwnProperty.call(l2bal, state?.compressedZkpPublicKey))
-        setL2Balance(l2bal[state.compressedZkpPublicKey][sendToken.address.toLowerCase()] ?? 0n);
-      else setL2Balance(0n);
+      // const l2bal: Record<string, Record<string, bigint>> = await getWalletBalance(
+      const l2bal: Record<
+        string,
+        Array<{ balance: bigint; tokenId: string }>
+      > = await getWalletBalance(state?.compressedZkpPublicKey);
+      if (!Object.hasOwnProperty.call(l2bal, sendToken.address.toLowerCase())) {
+        setL2Balance(0n);
+      } else {
+        const tokenIdFull = `0x${BigInt(sendToken.tokenId ?? 0)
+          .toString(16)
+          .padStart(64, '0')}`;
+
+        const tokenIdx = l2bal[sendToken.address.toLowerCase()].findIndex(
+          c => c.tokenId === tokenIdFull,
+        );
+
+        if (tokenIdx >= 0) {
+          setL2Balance(l2bal[sendToken.address.toLowerCase()][tokenIdx].balance);
+        } else setL2Balance(0n);
+      }
     };
     getBalance();
   }, [sendToken, state]);
@@ -484,8 +501,10 @@ const SendModal = (props: SendModalProps): JSX.Element => {
 
   useEffect(() => {
     if (
-      new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) >
-      new BigFloat(l2Balance, sendToken.decimals).toFixed(4)
+      (new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) >
+        new BigFloat(l2Balance, sendToken.decimals).toFixed(4) &&
+        sendToken.decimals) ||
+      (!sendToken.decimals && valueToSend > l2Balance.toString())
     ) {
       setIsValidBalance(false);
       return;
@@ -643,7 +662,10 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                   <BalanceTextRight>
                     <p>Available Balance:</p>
                     <p>
-                      {new BigFloat(l2Balance, sendToken.decimals).toFixed(4)} {sendToken.symbol}
+                      {sendToken.decimals
+                        ? new BigFloat(l2Balance, sendToken.decimals).toFixed(4)
+                        : BigInt(l2Balance).toString()}{' '}
+                      {sendToken.symbol}
                     </p>
                   </BalanceTextRight>
                 </BalanceText>
@@ -652,8 +674,10 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                   <img src={maticImg} alt="matic icon" />
                   <p className="gasFee"> 0.00 Matic Transfer Fee</p>
                 </SendModalFooter>
-                {new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) >
-                  new BigFloat(l2Balance, sendToken.decimals).toFixed(4) && (
+                {((new BigFloat(valueToSend.toString(), sendToken.decimals).toBigInt() >
+                  new BigFloat(l2Balance, sendToken.decimals).toBigInt() &&
+                  sendToken.decimals) ||
+                  (!sendToken.decimals && BigInt(valueToSend) > BigInt(l2Balance))) && (
                   <p style={{ color: 'red' }}>The amount is greater than your balance.</p>
                 )}
                 {new BigFloat(valueToSend.toString(), sendToken.decimals).toFixed(4) ===

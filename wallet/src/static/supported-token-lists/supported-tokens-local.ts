@@ -9,6 +9,7 @@ const tokensList = {
       logoURI: 'https://wallet-asset.matic.network/img/tokens/eth.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx'],
       id: 'ethereum',
+      tokenId: '0',
       restrictions: {
         withdraw: '1000000000',
         deposit: '250000000',
