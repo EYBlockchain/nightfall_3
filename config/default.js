@@ -99,7 +99,8 @@ module.exports = {
   ETH_NETWORK: process.env.ETH_NETWORK || 'blockchain',
   WHITELISTING: process.env.WHITELISTING,
   UPGRADE_CONTRACTS: process.env.UPGRADE_CONTRACTS,
-  SANCTIONS_CONTRACT_ADDRESS: '0x40C57923924B5c5c5455c48D93317139ADDaC8fb',
+  SANCTIONS_CONTRACT:
+    process.env.TEST_SANCTIONS_CONTRACT || '0x40C57923924B5c5c5455c48D93317139ADDaC8fb',
   MULTISIG: {
     SIGNATURE_THRESHOLD: process.env.MULTISIG_SIGNATURE_THRESHOLD || 2, // number of signatures needed to perform an admin task
     APPROVERS: process.env.MULTISIG_APPROVERS
@@ -580,6 +581,8 @@ module.exports = {
   },
 
   utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,
+
+  explorerUrl: `https://explorer.${process.env.DOMAIN_NAME}`,
 
   // assumption is if LOCAL_PROPOSER is true, wallet UI app
   // is running in local machine
