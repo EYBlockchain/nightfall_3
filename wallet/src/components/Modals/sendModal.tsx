@@ -532,7 +532,7 @@ const SendModal = (props: SendModalProps): JSX.Element => {
       {
         offchain: true,
         ercAddress: sendToken.address,
-        tokenId: 0,
+        tokenId: sendToken.tokenId,
         recipientData: {
           recipientCompressedZkpPublicKeys: [recipient],
           values: [new BigFloat(valueToSend, sendToken.decimals).toBigInt().toString()],
