@@ -260,15 +260,15 @@ const options = {
           properties: {
             url: {
               type: 'string',
-              description: "Proposer's url",
+              description: 'Proposers url',
             },
             stake: {
               type: 'string',
-              description: "Proposer's stake",
+              description: 'Proposers stake',
             },
             fee: {
               type: 'integer',
-              description: "Proposer's fee",
+              description: 'Proposers fee',
             },
           },
           example: {
@@ -282,11 +282,72 @@ const options = {
           properties: {
             txDataToSign: {
               type: 'string',
-              description: 'The current proposer address',
+              description: 'Unsigned transaction',
+            },
+            example: {
+              txDataToSign:
+                '0x0d602201000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000015687474703a2f2f746573742d70726f706f736572320000000000000000000000',
+            },
+          },
+        },
+        TransactionReceipt: {
+          type: 'object',
+          properties: {
+            transactionHash: {
+              type: 'string',
+            },
+            transactionIndex: {
+              type: 'number',
+            },
+            blockHash: {
+              type: 'string',
+            },
+            blockNumber: {
+              type: 'number',
+            },
+            from: {
+              type: 'string',
+            },
+            to: {
+              type: 'string',
+            },
+            gasUsed: {
+              type: 'number',
+            },
+            cumulativeGasUsed: {
+              type: 'number',
+            },
+            contractAddress: {
+              type: 'string',
+            },
+            logs: {
+              type: 'object',
+            },
+            status: {
+              type: 'boolean',
+            },
+            logsBloom: {
+              type: 'string',
+            },
+            events: {
+              type: 'array',
             },
           },
           example: {
-            txDataToSign: '0x0d6022010000000000000',
+            transactionHash: '0xd3a7c30ddda7a0171b632e8227607b5dc096da39af92e10dae033b2ded40c595',
+            transactionIndex: 0,
+            blockHash: '0x32439cb9d801b7ba4a5c1061ef889f9dbb015fa9bce50434467902e49a1a50cb',
+            blockNumber: 461,
+            from: '0xfeeda3882dd44aeb394caeef941386e7ed88e0e0',
+            to: '0x9f34fe84bb91235a2357716e7a868359768fe3b7',
+            gasUsed: 85979,
+            cumulativeGasUsed: 85979,
+            contractAddress: null,
+            logs: {},
+            status: true,
+            logsBloom:
+              '0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+            events: [],
           },
         },
         BlockTimeSet: {
@@ -408,11 +469,11 @@ const options = {
               },
               3: {
                 type: 'string',
-                description: "Proposer's url",
+                description: 'Proposers url',
               },
               4: {
                 type: 'string',
-                description: "Proposer's fee",
+                description: 'Proposers fee',
               },
               5: {
                 type: 'boolean',
@@ -436,11 +497,11 @@ const options = {
               },
               url: {
                 type: 'string',
-                description: "Proposer's url",
+                description: 'Proposers url',
               },
               fee: {
                 type: 'string',
-                description: "Proposer's fee",
+                description: 'Proposers fee',
               },
               inProposerSet: {
                 type: 'boolean',
@@ -615,7 +676,7 @@ const options = {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/TxDataToSign',
+                $ref: '#/components/schemas/TransactionReceipt',
               },
             },
           },
@@ -625,7 +686,7 @@ const options = {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/TxDataToSign',
+                $ref: '#/components/schemas/TransactionReceipt',
               },
             },
           },
@@ -675,7 +736,7 @@ const options = {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/TxDataToSign',
+                $ref: '#/components/schemas/TransactionReceipt',
               },
             },
           },
@@ -685,7 +746,7 @@ const options = {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/TxDataToSign',
+                $ref: '#/components/schemas/TransactionReceipt',
               },
             },
           },
@@ -735,7 +796,7 @@ const options = {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/TxDataToSign',
+                $ref: '#/components/schemas/TransactionReceipt',
               },
             },
           },
@@ -747,7 +808,7 @@ const options = {
               schema: {
                 type: 'array',
                 items: {
-                  $ref: '#/components/schemas/TxDataToSign',
+                  $ref: '#/components/schemas/TransactionReceipt',
                 },
               },
             },
@@ -758,7 +819,7 @@ const options = {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/TxDataToSign',
+                $ref: '#/components/schemas/TransactionReceipt',
               },
             },
           },

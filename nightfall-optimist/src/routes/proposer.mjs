@@ -38,35 +38,35 @@ export function setProposer(p) {
 
 /**
  * @openapi
- *  /proposer/register:
- *    post:
- *      security:
- *        - ApiKeyAuth: []
- *      tags:
- *      - Proposer
- *      summary: Register proposer.
- *      description: Registers a proposer to the Proposers contract.
- *        The user must post the url, stake and fee.
- *        A stake of 0 is taken as minimum configured stake.
- *      parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
- *      requestBody:
- *        content:
- *          application/json:
- *            schema:
- *              $ref: '#/components/schemas/Proposer'
- *      responses:
- *        200:
- *          $ref: '#/components/responses/SuccessProposerRegister'
- *        401:
- *          $ref: '#/components/responses/Unauthorized'
- *        500:
- *          $ref: '#/components/responses/InternalServerError'
+ * /proposer/register:
+ *   post:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *       - Proposer
+ *     summary: Register proposer.
+ *     description: Registers a proposer to the Proposers contract.
+ *       The user must post the url, stake and fee.
+ *       A stake of 0 is taken as minimum configured stake.
+ *     parameters:
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Proposer'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessProposerRegister'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/register', auth, async (req, res, next) => {
   const ethAddress = req.app.get('proposerEthAddress');
@@ -161,33 +161,33 @@ router.post('/register', auth, async (req, res, next) => {
 
 /**
  * @openapi
- *  /proposer/update:
- *    post:
- *      security:
- *        - ApiKeyAuth: []
- *      tags:
- *      - Proposer
- *      summary: Update proposer.
- *      description: Update proposer's url, stake or fee.
- *      parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
- *      requestBody:
- *        content:
- *          application/json:
- *            schema:
- *              $ref: '#/components/schemas/Proposer'
- *      responses:
- *        200:
- *          $ref: '#/components/responses/SuccessProposerUpdate'
- *        401:
- *          $ref: '#/components/responses/Unauthorized'
- *        500:
- *          $ref: '#/components/responses/InternalServerError'
+ * /proposer/update:
+ *   post:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *       - Proposer
+ *     summary: Update proposer.
+ *     description: Update proposers url, stake or fee.
+ *     parameters:
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Proposer'
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessProposerUpdate'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/update', auth, async (req, res, next) => {
   const ethAddress = req.app.get('proposerEthAddress');
@@ -234,19 +234,19 @@ router.post('/update', auth, async (req, res, next) => {
 
 /**
  * @openapi
- *  /proposer/current-proposer:
- *    get:
- *      tags:
- *      - Proposer
- *      summary: Current proposer.
- *      description: Returns the proposer currently proposing L2 blocks.
- *      responses:
- *        200:
- *          $ref: '#/components/responses/SuccessCurrentProposer'
- *        400:
- *          $ref: '#/components/responses/BadRequest'
- *        500:
- *          $ref: '#/components/responses/InternalServerError'
+ * /proposer/current-proposer:
+ *   get:
+ *     tags:
+ *       - Proposer
+ *     summary: Current proposer.
+ *     description: Returns the proposer currently proposing L2 blocks.
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessCurrentProposer'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/current-proposer', async (req, res, next) => {
   try {
@@ -263,19 +263,19 @@ router.get('/current-proposer', async (req, res, next) => {
 
 /**
  * @openapi
- *  /proposer/proposers:
- *    get:
- *      tags:
- *      - Proposer
- *      summary: Proposers list.
- *      description: Returns all registered proposers.
- *      responses:
- *        200:
- *          $ref: '#/components/responses/SuccessProposerList'
- *        400:
- *          $ref: '#/components/responses/BadRequest'
- *        500:
- *          $ref: '#/components/responses/InternalServerError'
+ * /proposer/proposers:
+ *   get:
+ *     tags:
+ *       - Proposer
+ *     summary: Proposers list.
+ *     description: Returns all registered proposers.
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessProposerList'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/proposers', async (req, res, next) => {
   try {
@@ -289,29 +289,29 @@ router.get('/proposers', async (req, res, next) => {
 
 /**
  * @openapi
- *  /proposer/de-register:
- *    post:
- *      security:
- *        - ApiKeyAuth: []
- *      tags:
- *      - Proposer
- *      summary: Deregister proposer.
- *      description: De-register a proposer - removes proposer from Proposers contract.
- *        Proposers can de-register even when they are the current proposer.
- *      parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
- *      responses:
- *        200:
- *          $ref: '#/components/responses/SuccessDeregisterProposer'
- *        401:
- *          $ref: '#/components/responses/Unauthorized'
- *        500:
- *          $ref: '#/components/responses/InternalServerError'
+ * /proposer/de-register:
+ *   post:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *       - Proposer
+ *     summary: Deregister proposer.
+ *     description: De-register a proposer - removes proposer from Proposers contract.
+ *       Proposers can de-register even when they are the current proposer.
+ *     parameters:
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessDeregisterProposer'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/de-register', auth, async (req, res, next) => {
   const ethAddress = req.app.get('proposerEthAddress');
@@ -348,29 +348,29 @@ router.post('/de-register', auth, async (req, res, next) => {
 
 /**
  * @openapi
- *  /proposer/withdrawStake:
- *    post:
- *      security:
- *        - ApiKeyAuth: []
- *      tags:
- *      - Proposer
- *      summary: Withdraw stake.
- *      description: Withdraw stake for a de-registered proposer.
- *        Can only be called after the cooling off period.
- *      parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
- *      responses:
- *        200:
- *          $ref: '#/components/responses/SuccessWithdrawStake'
- *        401:
- *          $ref: '#/components/responses/Unauthorized'
- *        500:
- *          $ref: '#/components/responses/InternalServerError'
+ * /proposer/withdrawStake:
+ *   post:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *       - Proposer
+ *     summary: Withdraw stake.
+ *     description: Withdraw stake for a de-registered proposer.
+ *       Can only be called after the cooling off period.
+ *     parameters:
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessWithdrawStake'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.post('/withdrawStake', auth, async (req, res, next) => {
   const ethAddress = req.app.get('proposerEthAddress');
@@ -404,28 +404,28 @@ router.post('/withdrawStake', auth, async (req, res, next) => {
 
 /**
  * @openapi
- *  /proposer/pending-payments:
- *    get:
- *      security:
- *        - ApiKeyAuth: []
- *      tags:
- *      - Proposer
- *      summary: Pending payments.
- *      description: TBC Get pending payments for new blocks proposed or successful block challenges.
- *      parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
- *      responses:
- *        200:
- *          $ref: '#/components/responses/SuccessPendingPayments'
- *        401:
- *          $ref: '#/components/responses/Unauthorized'
- *        500:
- *          $ref: '#/components/responses/InternalServerError'
+ * /proposer/pending-payments:
+ *   get:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *       - Proposer
+ *     summary: Pending payments.
+ *     description: TBC Get pending payments for new blocks proposed or successful block challenges.
+ *     parameters:
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessPendingPayments'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/pending-payments', auth, async (req, res, next) => {
   const ethAddress = req.app.get('proposerEthAddress');
@@ -464,30 +464,30 @@ router.get('/pending-payments', auth, async (req, res, next) => {
 
 /**
  * @openapi
- *  /proposer/stake:
- *    get:
- *      security:
- *        - ApiKeyAuth: []
- *      tags:
- *      - Proposer
- *      summary: Get stake.
- *      description: Request stake data - available stake, and locked stake plus locked time reference.
- *      parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
- *      responses:
- *        200:
- *          $ref: '#/components/responses/SuccessCurrentStake'
- *        401:
- *          $ref: '#/components/responses/Unauthorized'
- *        400:
- *          $ref: '#/components/responses/BadRequest'
- *        500:
- *          $ref: '#/components/responses/InternalServerError'
+ * /proposer/stake:
+ *   get:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *       - Proposer
+ *     summary: Get stake.
+ *     description: Request stake data - available stake, and locked stake plus locked time reference.
+ *     parameters:
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessCurrentStake'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/stake', auth, async (req, res, next) => {
   const ethAddress = req.app.get('proposerEthAddress');
@@ -509,28 +509,28 @@ router.get('/stake', auth, async (req, res, next) => {
 
 /**
  * @openapi
- *  /proposer/withdraw:
- *    get:
- *      security:
- *        - ApiKeyAuth: []
- *      tags:
- *      - Proposer
- *      summary: Finalise withdrawal.
- *      description: Withdraw profits to account after calling /payment.
- *      parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
- *      responses:
- *        200:
- *          $ref: '#/components/responses/SuccessWithdrawPayment'
- *        401:
- *          $ref: '#/components/responses/Unauthorized'
- *        500:
- *          $ref: '#/components/responses/InternalServerError'
+ * /proposer/withdraw:
+ *   get:
+ *     security:
+ *       - ApiKeyAuth: []
+ *     tags:
+ *       - Proposer
+ *     summary: Finalise withdrawal.
+ *     description: Withdraw profits to account after calling /payment.
+ *     parameters:
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
+ *     responses:
+ *       200:
+ *         $ref: '#/components/responses/SuccessWithdrawPayment'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get('/withdraw', auth, async (req, res, next) => {
   const ethAddress = req.app.get('proposerEthAddress');
@@ -569,26 +569,26 @@ router.get('/withdraw', auth, async (req, res, next) => {
  *     security:
  *       - ApiKeyAuth: []
  *     tags:
- *     - Proposer
+ *       - Proposer
  *     summary: Initiate withdrawal.
  *     description: Request payment for new blocks successfully proposed or challenged.
  *       Also unlocks any locked stake after the cooling off period.
  *       Then /withdraw can be called to recover the money.
  *       Can only be called after the cooling off period.
  *     parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
  *     requestBody:
  *       $ref: '#/components/requestBodies/ProposerPayment'
  *     responses:
  *       200:
  *         $ref: '#/components/responses/SuccessProposerPayment'
  *       401:
- *          $ref: '#/components/responses/Unauthorized'
+ *         $ref: '#/components/responses/Unauthorized'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
@@ -639,16 +639,16 @@ router.post('/payment', auth, async (req, res, next) => {
  *     security:
  *       - ApiKeyAuth: []
  *     tags:
- *     - Proposer
+ *       - Proposer
  *     summary: Change current proposer.
  *     description: Change the current proposer once their time has elapsed.
  *     parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
  *     responses:
  *       200:
  *         $ref: '#/components/responses/SuccessChangeProposer'
@@ -692,14 +692,14 @@ router.get('/change', auth, async (req, res, next) => {
  * /proposer/mempool:
  *   get:
  *     tags:
- *     - Proposer
+ *       - Proposer
  *     summary: Get transactions still in mempool.
- *     description: Get transactions from this proposer's mempool.
+ *     description: Get transactions from this proposers mempool.
  *     responses:
  *       200:
  *         $ref: '#/components/responses/Success'
  *       400:
- *          $ref: '#/components/responses/BadRequest'
+ *         $ref: '#/components/responses/BadRequest'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
@@ -719,21 +719,21 @@ router.get('/mempool', async (req, res, next) => {
  *     security:
  *       - ApiKeyAuth: []
  *     tags:
- *     - Proposer
+ *       - Proposer
  *     summary: Encode.
  *     description: TBC
  *     parameters:
- *        - in: header
- *          name: api_key
- *          schema:
- *            type: string
- *            format: uuid
- *          required: true
+ *       - in: header
+ *         name: api_key
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: true
  *     responses:
  *       200:
  *         $ref: '#/components/responses/Success'
  *       401:
- *          $ref: '#/components/responses/Unauthorized'
+ *         $ref: '#/components/responses/Unauthorized'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
@@ -823,7 +823,7 @@ router.post('/encode', auth, async (req, res, next) => {
  * /proposer/offchain-transaction:
  *   post:
  *     tags:
- *     - Proposer
+ *       - Proposer
  *     summary: Add an off-chain transaction to mempool.
  *     description: Request to add an off-chain transaction from a client to this proposer mempool, for a fee.
  *       This is only available for L2 transfers amd withdrawals.
@@ -832,7 +832,7 @@ router.post('/encode', auth, async (req, res, next) => {
  *       200:
  *         $ref: '#/components/responses/Success'
  *       400:
- *          $ref: '#/components/responses/BadRequest'
+ *         $ref: '#/components/responses/BadRequest'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
