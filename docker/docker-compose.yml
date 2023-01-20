@@ -38,6 +38,7 @@ services:
       - rabbitmq
       - mongodb
     environment:
+      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-2000}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
@@ -118,6 +119,7 @@ services:
         source: build
         target: /app/build/
     environment:
+      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-2000}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
