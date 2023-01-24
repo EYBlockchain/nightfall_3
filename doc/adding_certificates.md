@@ -87,7 +87,7 @@ You will need to do some editing to turn the key modulus and Subject Key Identif
 
 These can then be added to the Smart contract using the setter:
 
-```
+```sol
 function setTrustedPublicKey(
         RSAPublicKey calldata trustedPublicKey,
         bytes32 authorityKeyIdentifier) external onlyOwner;
@@ -120,9 +120,11 @@ The encoding of OIDs is a little tricky but there is a good utility [here](https
 ```sh
 2.16.840.1.114412.3.21.2
 ```
+
 becomes
+
 ```sh
 0x060a6086480186fd6c0315020000000000000000000000000000000000000000
 ```
 
-This is in the correct form to add to the contract.  
+This is in the correct form to add to the contract.
