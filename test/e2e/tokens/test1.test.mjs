@@ -132,10 +132,10 @@ describe('ERC20 tests', () => {
   });
 
   describe('Transfers', () => {
-    beforeEach(async () => {
-      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      await makeBlock();
-    });
+    // beforeEach(async () => {
+    //   await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+    //   await makeBlock();
+    // });
 
     it('Should decrement user L2 balance after transferring some ERC20 to other wallet, and increment the other wallet balance', async function () {
       //   const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
