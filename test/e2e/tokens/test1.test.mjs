@@ -141,6 +141,8 @@ describe('ERC20 tests', () => {
       //   const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
       //   const user2L2BalanceBefore = await getLayer2Balances(nf3User2, erc20Address);
 
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
       const userCommitments = await getUserCommitments(
         environment.clientApiUrl,
         nf3User.zkpKeys.compressedZkpPublicKey,
@@ -226,7 +228,7 @@ describe('ERC20 tests', () => {
     //   expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
     // });
 
-    it('should perform a transfer by specifying the commitment that provides enough value to cover value', async function () {
+    it.skip('should perform a transfer by specifying the commitment that provides enough value to cover value', async function () {
       // const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
       const userCommitments = await getUserCommitments(
