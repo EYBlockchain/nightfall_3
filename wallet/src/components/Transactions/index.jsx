@@ -340,9 +340,13 @@ const Transactions = () => {
                         }}
                       >
                         $
-                        {new BigFloat(BigInt(tx.value), tx.decimals)
-                          .mul(tx.currencyValue)
-                          .toFixed(4)}
+                        {tx.decimals
+                          ? new BigFloat(BigInt(tx.value), tx.decimals)
+                              .mul(tx.currencyValue)
+                              .toFixed(4)
+                          : new BigFloat(String(tx.value ?? 0).concat('.0000'), 4)
+                              .mul(tx.currencyValue)
+                              .toFixed(4)}
                       </div>
                     </div>
                     <div

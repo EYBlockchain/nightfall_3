@@ -34,7 +34,7 @@ const tokensList = {
       address: '0xB6428a7C3bcb497750C217835539aa96B0c947b5',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/usdc.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx'],
-      id: 'ethereum',
+      id: '',
       restrictions: {
         withdraw: '1000000000',
         deposit: '250000000',
@@ -59,7 +59,7 @@ const tokensList = {
       address: '0xB6428a7C3bcb497750C217835539aa96B0c947b5',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/usdc.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx'],
-      id: 'ethereum',
+      id: '',
       restrictions: {
         withdraw: '1000000000',
         deposit: '250000000',
@@ -84,7 +84,7 @@ const tokensList = {
       address: '0xB6428a7C3bcb497750C217835539aa96B0c947b5',
       logoURI: 'https://wallet-asset.matic.network/img/tokens/usdc.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx'],
-      id: 'ethereum',
+      id: '',
       restrictions: {
         withdraw: '1000000000',
         deposit: '250000000',

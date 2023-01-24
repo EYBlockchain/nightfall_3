@@ -45,7 +45,7 @@ async function setPricing(tokenIDs) {
   const now = Date.now();
   const pricingArray = await Promise.all(
     tokenIDs.map(async t => {
-      const price = await getPrice(t);
+      const price = t ? await getPrice(t) : 0;
       return {
         id: t,
         price,

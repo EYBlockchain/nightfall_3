@@ -98,10 +98,7 @@ export default function TokenItem(props) {
                   ? new BigFloat(BigInt(props.l2Balance), props.decimals)
                       .mul(props.currencyValue)
                       .toFixed(4)
-                  : new BigFloat(
-                      String(filteredTokens[filteredTokenIdx].l2Balance ?? 0),
-                      props.decimals,
-                    )
+                  : new BigFloat(String(props.l2Balance ?? 0).concat('.0000'), 4)
                       .mul(props.currencyValue)
                       .toFixed(4)}
               </div>
