@@ -7,6 +7,7 @@ import {
   checkIndexDBForCircuit,
   checkIndexDBForCircuitHash,
   getMaxBlock,
+  getNthBlockRoot,
   emptyStoreBlocks,
   emptyStoreTimber,
 } from '@Nightfall/services/database';
@@ -81,9 +82,13 @@ export const UserProvider = ({ children }) => {
     // Connection opened
     socket.addEventListener('open', async function () {
       console.log(`Websocket is open`);
-      const lastBlockL2 = (await getMaxBlock()) ?? -1;
-      console.log('LastBlock', lastBlockL2);
-      socket.send(JSON.stringify({ type: 'sync', lastBlock: lastBlockL2 }));
+
+      const indexDbBlockLast = await getMaxBlock();
+      console.log(
+        `Last local block number is ${indexDbBlockLast}, emitting sync event to fetch next block.`,
+      );
+
+      socket.send(JSON.stringify({ type: 'sync', lastBlock: indexDbBlockLast }));
     });
 
     setState(previousState => {
@@ -105,58 +110,55 @@ export const UserProvider = ({ children }) => {
 
     // Listen for messages
     messageEventHandler = async function (event) {
-      console.log('Message from server ', JSON.parse(event.data));
-      const parsed = JSON.parse(event.data);
+      const parsedEvent = JSON.parse(event.data);
+      console.log('Message from server ', parsedEvent);
+
       const { nullifierKey, zkpPrivateKey } = await retrieveAndDecrypt(compressedZkpPublicKey);
-      if (parsed.type === 'sync') {
-        await parsed.historicalData
+
+      if (parsedEvent.type === 'sync') {
+        await parsedEvent.historicalData
           .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
           .reduce(async (acc, curr) => {
             await acc; // Acc is a promise so we await it before processing the next one;
             return blockProposedEventHandler(curr, [zkpPrivateKey], [nullifierKey]); // TODO Should be array
           }, Promise.resolve());
 
-        // We want to verify that the received block is from the current contract deployment.
-        // for this, we store the lastBlock received in lastBlock, and compare the hash with the previousBlockHash
-        // from the received block. If they don't match, then there has been a redeployment.
-        if (Number(parsed.maxBlock) !== 1) {
-          if (
-            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash !==
-              lastBlock.blockHash &&
-            Number(lastBlock.blockHash) !== 0
-          ) {
-            // resync
-            console.log('Resync DB');
-            emptyStoreBlocks();
-            emptyStoreTimber();
-            Storage.shieldAddressSet();
-          } else if (
-            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash ===
-              lastBlock.blockHash ||
-            Number(lastBlock.blockHash) === 0
-          ) {
-            setLastBlock(parsed.historicalData[parsed.historicalData.length - 1].block);
+        const indexDbBlockRoot = await getNthBlockRoot(parsedEvent.numberBlockLast);
+        const matchContract = indexDbBlockRoot === parsedEvent.rootBlockLast;
+        const isFirst = parsedEvent.numberBlockLast === null;
+
+        if (matchContract || isFirst) {
+          if (parsedEvent.isLast) {
+            console.log('Sync complete');
+            setState(previousState => {
+              return {
+                ...previousState,
+                chainSync: true,
+              };
+            });
+          } else {
+            console.log(
+              `Last local block number is ${parsedEvent.numberBlockNext}, emitting sync event to fetch next block.`,
+            );
             socket.send(
               JSON.stringify({
                 type: 'sync',
-                lastBlock:
-                  parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2,
+                lastBlock: parsedEvent.numberBlockNext,
               }),
             );
           }
-        } else if (lastBlock.blockHash) {
-          console.log('Sync complete');
-          setState(previousState => {
-            return {
-              ...previousState,
-              chainSync: true,
-            };
-          });
+        } else {
+          console.log('Resync DB');
+          emptyStoreBlocks();
+          emptyStoreTimber();
+          Storage.shieldAddressSet();
         }
-      } else if (parsed.type === 'blockProposed') {
+      }
+
+      if (parsedEvent.type === 'blockProposed') {
         console.log('blockProposed Event');
         if (
-          parsed.data.block.previousBlockHash !== lastBlock.blockHash &&
+          parsedEvent.data.block.previousBlockHash !== lastBlock.blockHash &&
           Number(lastBlock.blockHash) !== 0
         ) {
           // resync
@@ -165,11 +167,23 @@ export const UserProvider = ({ children }) => {
           emptyStoreTimber();
           Storage.shieldAddressSet();
         } else {
-          setLastBlock(parsed.data.block);
-          await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);
+          setLastBlock(parsedEvent.data.block);
+          await blockProposedEventHandler(parsedEvent.data, [zkpPrivateKey], [nullifierKey]);
         }
       }
-      // TODO Rollback Handler
+
+      // if (parsedEvent.type === 'rollback') {
+      //   event schema
+      //   {
+      //     type: 'rollback',
+      //     data: {
+      //       blockNumberL2: number,
+      //     }
+      //   to do
+      //   - remove block from indexDB
+      //   - remove timber from indexDB
+      //   - remove all coresponsding data to the removed block (transactions & commitments)
+      // }
     };
 
     socket.addEventListener('message', messageEventHandler);
