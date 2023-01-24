@@ -111,9 +111,9 @@ const applyAxiosDefaults = () => {
 const getRequestParam = req => {
   const dataInput = {};
 
-  if (Object.keys(req.query).length !== 0) dataInput.query = req.query;
-  if (Object.keys(req.params).length !== 0) dataInput.params = req.params;
-  if (Object.keys(req.body).length !== 0) dataInput.body = req.body;
+  if (req.query && Object.keys(req.query).length !== 0) dataInput.query = req.query;
+  if (req.params && Object.keys(req.params).length !== 0) dataInput.params = req.params;
+  if (req.body && Object.keys(req.body).length !== 0) dataInput.body = req.body;
 
   return dataInput;
 };
@@ -239,7 +239,7 @@ const responseLogger = (req, res, next) => {
 const isEndpointWhitelisted = req => {
   let result = false;
   req.app.get(ENDPOINTS_WHITELISTED).forEach(e => {
-    if (! result) {
+    if (!result) {
       result = req.url.match(e) != null;
     }
   });
@@ -257,12 +257,14 @@ const authenticationHandler = (req, res, next) => {
   }
 
   res.sendStatus(401);
+
+  return null;
 };
 
 /**
- * Setup the default filters for the app being passed as parameter. It also enables endpoint authentication when 
+ * Setup the default filters for the app being passed as parameter. It also enables endpoint authentication when
  * the environment variable AUTHENTICATION_KEY is set: this is the key that will be used to authenticate requests
- * against the request header 'X-API-Key'. Endpoints can be whitelisted by using the environment variable 
+ * against the request header 'X-API-Key'. Endpoints can be whitelisted by using the environment variable
  * ENDPOINTS_WHITELISTED listing the whitelisted endpoints (e.g. ENDPOINTS_WHITELISTED="/commitment/save, /commitment/delete").
  * The env var ENDPOINTS_WHITELISTED accepts regex expression values.
  *
@@ -280,7 +282,10 @@ export const setupHttpDefaults = (
   app.use(requestLogger);
 
   if (process.env.AUTHENTICATION_KEY) {
-    app.set(ENDPOINTS_WHITELISTED, (process.env.ENDPOINTS_WHITELISTED ?? '').split(',').flatMap(v => v.trim()));
+    app.set(
+      ENDPOINTS_WHITELISTED,
+      (process.env.ENDPOINTS_WHITELISTED ?? '').split(',').flatMap(v => v.trim()),
+    );
     app.use(authenticationHandler);
   }
 

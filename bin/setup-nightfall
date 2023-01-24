@@ -2,7 +2,7 @@
 
 set -e
 
-if [ $SKIP_NPM_CI == "" ]; then
+if [ "$SKIP_NPM_CI" == "" ]; then
   # Install node dependencies
   npm ci
 fi
@@ -15,7 +15,7 @@ if [ $OS_ARCH != "x86_64" ]; then
   NO_CACHE_FLAG='--no-cache'
 fi
 
-if [ $SKIP_CIRCOM_BUILD == "" ]; then
+if [ "$SKIP_CIRCOM_BUILD" == "" ]; then
   docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
 fi
 
