@@ -548,7 +548,7 @@ export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {
   const userCommitments = (
     await axios.post(`${clientApiUrl}/commitment/compressedZkpPublicKeys`, [compressedZkpPublicKey])
   ).data.commitmentsByListOfCompressedZkpPublicKey;
-  logger.info(`---userCommitments- at api -- ${userCommitments}`);
+  logger.info(`---userCommitments- at api -- ${JSON.stringify(userCommitments, null, 2)}`);
   return userCommitments
     .filter(c => c.isNullifiedOnChain === -1)
     .map(c => {

@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import chai from 'chai';
-// import gen from 'general-number';
+import gen from 'general-number';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
@@ -23,7 +23,7 @@ const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
-// const { generalise } = gen;
+const { generalise } = gen;
 const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
 const {
   fee,
@@ -146,7 +146,7 @@ describe('ERC20 tests', () => {
         nf3User.zkpKeys.compressedZkpPublicKey,
       );
 
-      logger.info(`---userCommitments--- ${userCommitments}`);
+      logger.info(`---userCommitments- 1-- ${JSON.stringify(userCommitments)}`);
 
       const res = await nf3User.transfer(
         false,
@@ -226,44 +226,50 @@ describe('ERC20 tests', () => {
     //   expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
     // });
 
-    // it('should perform a transfer by specifying the commitment that provides enough value to cover value', async function () {
-    //   const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+    it('should perform a transfer by specifying the commitment that provides enough value to cover value', async function () {
+      // const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
-    //   const userCommitments = await getUserCommitments(
-    //     environment.clientApiUrl,
-    //     nf3User.zkpKeys.compressedZkpPublicKey,
-    //   );
+      const userCommitments = await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
 
-    //   const erc20Commitments = userCommitments
-    //     .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
-    //     .sort((a, b) => Number(generalise(a.value).bigInt - generalise(b.value).bigInt));
+      logger.info(`---userCommitments- 2-- ${JSON.stringify(userCommitments)}`);
 
-    //   const usedCommitments = [];
-    //   let totalValue = 0;
-    //   let i = 0;
+      const erc20Commitments = userCommitments
+        .filter(c => c.ercAddress === generalise(erc20Address).hex(32))
+        .sort((a, b) => Number(generalise(a.value).bigInt - generalise(b.value).bigInt));
 
-    //   while (totalValue < transferValue && i < erc20Commitments.length) {
-    //     usedCommitments.push(erc20Commitments[i].commitmentHash);
-    //     totalValue += Number(generalise(erc20Commitments[i].value).bigInt);
-    //     ++i;
-    //   }
+      logger.info(`---erc20Commitments--- ${JSON.stringify(erc20Commitments)}`);
 
-    //   const res = await nf3User.transfer(
-    //     false,
-    //     erc20Address,
-    //     tokenType,
-    //     transferValue,
-    //     tokenId,
-    //     nf3User.zkpKeys.compressedZkpPublicKey,
-    //     fee,
-    //     usedCommitments,
-    //   );
-    //   expectTransaction(res);
-    //   await makeBlock();
+      const usedCommitments = [];
+      let totalValue = 0;
+      let i = 0;
 
-    //   const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-    //   expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
-    // });
+      while (totalValue < transferValue && i < erc20Commitments.length) {
+        usedCommitments.push(erc20Commitments[i].commitmentHash);
+        totalValue += Number(generalise(erc20Commitments[i].value).bigInt);
+        ++i;
+      }
+
+      logger.info(`---usedCommitments--- ${JSON.stringify(usedCommitments)}`);
+
+      // const res = await nf3User.transfer(
+      //   false,
+      //   erc20Address,
+      //   tokenType,
+      //   transferValue,
+      //   tokenId,
+      //   nf3User.zkpKeys.compressedZkpPublicKey,
+      //   fee,
+      //   usedCommitments,
+      // );
+      // expectTransaction(res);
+      // await makeBlock();
+
+      // const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      // expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
+    });
 
     // it('should perform a transfer by specifying the commitment that provides enough value to cover value + fee', async function () {
     //   const userCommitments = await getUserCommitments(
