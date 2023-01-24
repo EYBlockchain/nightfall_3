@@ -33,11 +33,12 @@ services:
     ports:
       - 8080:80
     depends_on:
-      - deployer
       - worker
       - rabbitmq
       - mongodb
     environment:
+      AUTHENTICATION_KEY: ${AUTHENTICATION_KEY}
+      ENDPOINTS_WHITELISTED: ${ENDPOINTS_WHITELISTED}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
@@ -90,7 +91,6 @@ services:
       DAI_RESTRICT: ${DAI_RESTRICT}
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
       WHITELISTING: ${WHITELISTING}
-
 
   hosted-utils-api-server:
     build:

@@ -96,6 +96,102 @@ jobs:
           cd ../
           npm run unit-test-circuits
 
+  client-authentication-test:
+    env:
+      AUTHENTICATION_KEY: a3322a85-7222-4713-907b-b569679b2dd9
+      ENDPOINTS_WHITELISTED: '/commitment/salt\?.*, /contract-address/\w+/?'
+      NF_SERVICES_TO_START: blockchain,client,deployer,worker
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          npm link @polygon-nightfall/common-files
+          cd cli
+          npm link @polygon-nightfall/common-files
+          cd ..
+
+      - name: Start Containers
+        run: |
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> authentication-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat authentication-test.log
+
+      - name: Authentication Test - heathcheck OK
+        run: |
+          RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/healthcheck)
+          if [ $RESULT != "200"]; then
+            exit 1
+          fi
+      
+      - name: Authentication Test - endpoint whitelisted_1 OK
+        run: |
+          RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/commitment/salt/?salt=0123456789)
+          if [ $RESULT != "200"]; then
+            exit 1
+          fi
+
+      - name: Authentication Test - endpoint whitelisted_2 OK
+        run: |
+          RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/contract-address/State)
+          if [ $RESULT != "200"]; then
+            exit 1
+          fi
+
+      - name: Authentication Test - non-whitelisted endpoint without auth key failure
+        run: |
+          RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/commitment/)
+          if [ $RESULT != "401"]; then
+            exit 1
+          fi
+
+      - name: Authentication Test - non-whitelisted endpoint OK
+        run: |
+          RESULT=$(curl -w "%{http_code}" -o /dev/null --silent --header "X-Api-Key: $(echo $AUTHENTICATION_KEY)" http://localhost:8080/commitment/)
+          if [ $RESULT != "200"]; then
+            exit 1
+          fi
+
+      - name: Authentication Test - non-whitelisted endpoint failure
+        run: |
+          RESULT=$(curl -w "%{http_code}" -o /dev/null --silent --header "X-Api-Key: 0123456789" http://localhost:8080/commitment/)
+          if [ $RESULT != "401"]; then
+            exit 1
+          fi
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat authentication-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: authentication-test-logs
+          path: ./authentication-test.log
+
   circuits-test:
     env:
       CONFIRMATIONS: 1

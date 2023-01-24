@@ -19,6 +19,8 @@ import { isDev, obfuscate } from './utils.mjs';
 
 const { LOG_HTTP_PAYLOAD_ENABLED, LOG_HTTP_FULL_DATA } = config;
 
+const ENDPOINTS_WHITELISTED = 'ENDPOINTS_WHITELISTED';
+
 /**
  * Default obfuscation's rules.
  */
@@ -234,11 +236,40 @@ const responseLogger = (req, res, next) => {
   }
 };
 
+const isEndpointWhitelisted = req => {
+  let result = false;
+  req.app.get(ENDPOINTS_WHITELISTED).forEach(e => {
+    if (! result) {
+      result = req.url.match(e) != null;
+    }
+  });
+
+  return result;
+};
+
+const authenticationHandler = (req, res, next) => {
+  if (
+    req.url === '/healthcheck' ||
+    isEndpointWhitelisted(req) ||
+    req.get('x-api-key') === process.env.AUTHENTICATION_KEY
+  ) {
+    return next();
+  }
+
+  res.sendStatus(401);
+};
+
 /**
- * Setup the default filters for the app being passed as parameter. This can be extended later to allow
- * additional parameters to be passed to customize the filters/handlers.
+ * Setup the default filters for the app being passed as parameter. It also enables endpoint authentication when 
+ * the environment variable AUTHENTICATION_KEY is set: this is the key that will be used to authenticate requests
+ * against the request header 'X-API-Key'. Endpoints can be whitelisted by using the environment variable 
+ * ENDPOINTS_WHITELISTED listing the whitelisted endpoints (e.g. ENDPOINTS_WHITELISTED="/commitment/save, /commitment/delete").
+ * The env var ENDPOINTS_WHITELISTED accepts regex expression values.
  *
- * @param {*} app - an instance of 'expressjs'.
+ * @param {*} app - an instance of 'expressjs'
+ * @param routesDefiner - an annonymous function that receives an expressjs instance and defines the routes
+ * @param addHealthCheck - adds a /healthcheck endpoint automatically
+ * @param useFileUpload - adds a middleware for file uploading
  */
 export const setupHttpDefaults = (
   app,
@@ -246,6 +277,13 @@ export const setupHttpDefaults = (
   addHealthCheck = true,
   useFileUpload = true,
 ) => {
+  app.use(requestLogger);
+
+  if (process.env.AUTHENTICATION_KEY) {
+    app.set(ENDPOINTS_WHITELISTED, (process.env.ENDPOINTS_WHITELISTED ?? '').split(',').flatMap(v => v.trim()));
+    app.use(authenticationHandler);
+  }
+
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     next();
@@ -260,7 +298,6 @@ export const setupHttpDefaults = (
   app.use(cors());
   app.use(bodyParser.json({ limit: '2mb' }));
   app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
-  app.use(requestLogger);
   app.use(responseLogger);
 
   if (routesDefiner) {
