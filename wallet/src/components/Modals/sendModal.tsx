@@ -655,13 +655,17 @@ const SendModal = (props: SendModalProps): JSX.Element => {
                 <BalanceText>
                   <p>
                     ${' '}
-                    {sendToken.decimals
-                      ? new BigFloat(l2Balance, sendToken.decimals)
-                        .mul(sendToken.currencyValue)
-                        .toFixed(4)
-                      : new BigFloat(String(l2Balance).concat('.0000'), 4)
-                        .mul(sendToken.currencyValue)
-                        .toFixed(4)}
+                    {
+                      /* eslint-disable */
+                      sendToken.decimals
+                        ? new BigFloat(l2Balance, sendToken.decimals)
+                            .mul(sendToken.currencyValue)
+                            .toFixed(4)
+                        : new BigFloat(String(l2Balance).concat('.0000'), 4)
+                            .mul(sendToken.currencyValue)
+                            .toFixed(4)
+                      /* eslint-enable */
+                    }
                   </p>
                   <BalanceTextRight>
                     <p>Available Balance:</p>
