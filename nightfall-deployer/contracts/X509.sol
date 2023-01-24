@@ -135,7 +135,7 @@ contract X509 is DERParser, Whitelist, X509Interface {
             'X509: Incorrect tag or position for decrypted hash data'
         );
         bytes memory messageHashFromSignature = tlvs[4].value;
-
+        console.log(tlvs[4].value.length);
         return messageHashFromSignature;
     }
 
