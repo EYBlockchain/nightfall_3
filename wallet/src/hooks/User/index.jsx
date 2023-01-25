@@ -140,6 +140,8 @@ export const UserProvider = ({ children }) => {
             console.log(
               `Last local block number is ${parsedEvent.numberBlockNext}, emitting sync event to fetch next block.`,
             );
+            setLastBlock(parsedEvent.historicalData[parsedEvent.historicalData.length - 1].block);
+
             socket.send(
               JSON.stringify({
                 type: 'sync',
