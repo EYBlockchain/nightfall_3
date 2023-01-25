@@ -284,7 +284,7 @@ export const setupHttpDefaults = (
   if (process.env.AUTHENTICATION_KEY) {
     app.set(
       ENDPOINTS_WHITELISTED,
-      (process.env.ENDPOINTS_WHITELISTED ?? '').split(',').flatMap(v => v.trim()),
+      (process.env.ENDPOINTS_WHITELISTED ?? '').split(',').map(v => v.trim()),
     );
     app.use(authenticationHandler);
   }
