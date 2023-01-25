@@ -110,6 +110,7 @@ jobs:
 
       - name: Perform npm link
         run: |
+          exit 1
           cd common-files
           npm link
           cd ..
@@ -138,6 +139,7 @@ jobs:
       - name: Authentication Test - heathcheck OK
         run: |
           RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/healthcheck)
+          echo $RESULT
           if [ $RESULT != "200"]; then
             exit 1
           fi
@@ -145,6 +147,7 @@ jobs:
       - name: Authentication Test - endpoint whitelisted_1 OK
         run: |
           RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/commitment/salt/?salt=0123456789)
+          echo $RESULT
           if [ $RESULT != "200"]; then
             exit 1
           fi
@@ -152,6 +155,7 @@ jobs:
       - name: Authentication Test - endpoint whitelisted_2 OK
         run: |
           RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/contract-address/State)
+          echo $RESULT
           if [ $RESULT != "200"]; then
             exit 1
           fi
@@ -159,6 +163,7 @@ jobs:
       - name: Authentication Test - non-whitelisted endpoint without auth key failure
         run: |
           RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/commitment/)
+          echo $RESULT
           if [ $RESULT != "401"]; then
             exit 1
           fi
@@ -166,6 +171,7 @@ jobs:
       - name: Authentication Test - non-whitelisted endpoint OK
         run: |
           RESULT=$(curl -w "%{http_code}" -o /dev/null --silent --header "X-Api-Key: $(echo $AUTHENTICATION_KEY)" http://localhost:8080/commitment/)
+          echo $RESULT
           if [ $RESULT != "200"]; then
             exit 1
           fi
@@ -173,9 +179,11 @@ jobs:
       - name: Authentication Test - non-whitelisted endpoint failure
         run: |
           RESULT=$(curl -w "%{http_code}" -o /dev/null --silent --header "X-Api-Key: 0123456789" http://localhost:8080/commitment/)
+          echo $RESULT
           if [ $RESULT != "401"]; then
             exit 1
           fi
+          exit 1
 
       - name: Debug logs - after integration test run
         if: always()
