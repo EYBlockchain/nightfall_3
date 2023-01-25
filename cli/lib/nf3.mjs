@@ -1,4 +1,6 @@
 /* eslint class-methods-use-this: "off" */
+/* eslint prefer-destructuring: "off" */
+/* eslint no-param-reassign: "off" */
 
 import axios from 'axios';
 import Queue from 'queue';
@@ -111,6 +113,27 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
+
+    this.applyHttpClientAuthentication();
+  }
+
+  applyHttpClientAuthentication() {
+    if (!process.env.CLIENT_AUTHENTICATION_KEY) {
+      logger.info('No client authentication key is set!');
+      return;
+    }
+
+    const clientBaseUrl = this.clientBaseUrl;
+
+    axios.interceptors.request.use(function (config) {
+      if (!config.url.includes(clientBaseUrl)) {
+        return config;
+      }
+
+      config.headers['X-API-Key'] = process.env.CLIENT_AUTHENTICATION_KEY;
+
+      return config;
+    });
   }
 
   /**

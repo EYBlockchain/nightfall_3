@@ -177,6 +177,10 @@ jobs:
             exit 1
           fi
 
+      - name: Authentication Test for the NF3 lib
+        run: |
+          npm run test-e2e-nf3lib
+
       - name: Debug logs - after integration test run
         if: always()
         run: cat authentication-test.log
