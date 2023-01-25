@@ -39,12 +39,12 @@ contract Sha {
     function parseMessageBlock1024(bytes calldata messageBlock)
         public
         pure
-        returns (uint64[16] memory)
+        returns (uint256[16] memory)
     {
-        uint64[16] memory messageWords;
+        uint256[16] memory messageWords;
         uint256 j = 0;
         for (uint256 i = 0; i < 16; i = i + 8) {
-            messageWords[j++] = uint64(bytes8(messageBlock[i:i + 8]));
+            messageWords[j++] = uint256(uint64(bytes8(messageBlock[i:i + 8])));
         }
         return messageWords;
     }
@@ -52,8 +52,8 @@ contract Sha {
     /*
     Returns initial hash values for SHA512
     */
-    function getInitialHashValuesSha512() public pure returns (uint64[8] memory) {
-        uint64[8] memory H;
+    function getInitialHashValuesSha512() public pure returns (uint256[8] memory) {
+        uint256[8] memory H;
         H[0] = 0x6a09e667f3bcc908;
         H[1] = 0xbb67ae8584caa73b;
         H[2] = 0x3c6ef372fe94f82b;
@@ -68,9 +68,9 @@ contract Sha {
     /*
     Returns the sha512 constants
     */
-    function getConstantsSha512() public pure returns (uint64[80] memory) {
+    function getConstantsSha512() public pure returns (uint256[80] memory) {
         return [
-            0x428a2f98d728ae22,
+            uint256(0x428a2f98d728ae22),
             0x7137449123ef65cd,
             0xb5c0fbcfec4d3b2f,
             0xe9b5dba58189dbbc,
@@ -156,14 +156,14 @@ contract Sha {
     /*
     Implements the shift right function SHRn(x)=x >> n
     */
-    function SHR(uint64 n, uint64 x) public pure returns (uint64) {
+    function SHR(uint256 n, uint256 x) public pure returns (uint256) {
         return x >> n;
     }
 
     /*
     Implements the rotate right function ROTRn(x)=(x >> n)|(x << w - n).
     */
-    function ROTR(uint64 n, uint64 x) public pure returns (uint64) {
+    function ROTR(uint256 n, uint256 x) public pure returns (uint256) {
         return (x >> n) | (x << (64 - n));
     }
 
@@ -171,10 +171,10 @@ contract Sha {
     Implements the Ch function Ch(x, y,z) = (x & y)^(~x & z)
     */
     function Ch(
-        uint64 x,
-        uint64 y,
-        uint64 z
-    ) public pure returns (uint64) {
+        uint256 x,
+        uint256 y,
+        uint256 z
+    ) public pure returns (uint256) {
         return (x & y) ^ (~x & z);
     }
 
@@ -182,38 +182,38 @@ contract Sha {
     Implements the Maj function Maj(x ,y, z)
     */
     function Maj(
-        uint64 x,
-        uint64 y,
-        uint64 z
-    ) public pure returns (uint64) {
+        uint256 x,
+        uint256 y,
+        uint256 z
+    ) public pure returns (uint256) {
         return (x & y) ^ (x & z) ^ (y & z);
     }
 
     /*
     Implement the big and small sigma functions
     */
-    function Sigma0(uint64 x) public pure returns (uint64) {
+    function Sigma0(uint256 x) public pure returns (uint256) {
         return ROTR(28, x) ^ ROTR(34, x) ^ ROTR(39, x);
     }
 
-    function Sigma1(uint64 x) public pure returns (uint64) {
+    function Sigma1(uint256 x) public pure returns (uint256) {
         return ROTR(14, x) ^ ROTR(18, x) ^ ROTR(41, x);
     }
 
-    function sigma0(uint64 x) public pure returns (uint64) {
+    function sigma0(uint256 x) public pure returns (uint256) {
         return ROTR(1, x) ^ ROTR(8, x) ^ SHR(7, x);
     }
 
-    function sigma1(uint64 x) public pure returns (uint64) {
+    function sigma1(uint256 x) public pure returns (uint256) {
         return ROTR(19, x) ^ ROTR(61, x) ^ SHR(6, x);
     }
 
     function updateMessageSchedule(
-        uint64 a,
-        uint64 b,
-        uint64 c,
-        uint64 d
-    ) public pure returns (uint64) {
+        uint256 a,
+        uint256 b,
+        uint256 c,
+        uint256 d
+    ) public pure returns (uint256) {
         return sigma1(a) + b + sigma0(c) + d;
     }
 
@@ -224,11 +224,11 @@ contract Sha {
         bytes memory paddedMessage = padMessage1024(message);
         bytes[] memory messageBlocks = this.parseMessage1024(paddedMessage); // external call to deal with calldata conversion for slicing
         uint256 N = messageBlocks.length;
-        uint64[80] memory W;
-        uint64[8] memory H = getInitialHashValuesSha512();
+        uint256[80] memory W;
+        uint256[8] memory H = getInitialHashValuesSha512();
         for (uint256 i = 0; i < N; i++) {
             // NB FIPS 180-4 numbers from 1..N. WE number from 0..N-1.
-            uint64[16] memory M = this.parseMessageBlock1024(messageBlocks[i]);
+            uint256[16] memory M = this.parseMessageBlock1024(messageBlocks[i]);
             // messageShedule
             for (uint256 t = 0; t < 16; t++) {
                 W[t] = M[t];
@@ -237,18 +237,18 @@ contract Sha {
                 W[t] = sigma1(W[t - 2]) + W[t - 7] + sigma0(W[t - 15]) + W[t - 16];
             }
 
-            uint64[80] memory K = getConstantsSha512();
-            uint64 a = H[0];
-            uint64 b = H[1];
-            uint64 c = H[2];
-            uint64 d = H[3];
-            uint64 e = H[4];
-            uint64 f = H[5];
-            uint64 g = H[6];
-            uint64 h = H[7];
+            uint256[80] memory K = getConstantsSha512();
+            uint256 a = H[0];
+            uint256 b = H[1];
+            uint256 c = H[2];
+            uint256 d = H[3];
+            uint256 e = H[4];
+            uint256 f = H[5];
+            uint256 g = H[6];
+            uint256 h = H[7];
             for (uint256 t = 0; t < 80; t++) {
-                uint64 T1 = h + Sigma1(e) + Ch(e, f, g) + K[t] + W[t];
-                uint64 T2 = Sigma0(a) + Maj(a, b, c);
+                uint256 T1 = h + Sigma1(e) + Ch(e, f, g) + K[t] + W[t];
+                uint256 T2 = Sigma0(a) + Maj(a, b, c);
                 h = g;
                 g = f;
                 f = e;
@@ -269,14 +269,14 @@ contract Sha {
         }
         return
             abi.encodePacked(
-                bytes8(H[0]),
-                bytes8(H[1]),
-                bytes8(H[2]),
-                bytes8(H[3]),
-                bytes8(H[4]),
-                bytes8(H[5]),
-                bytes8(H[6]),
-                bytes8(H[7])
+                bytes8(uint64(H[0])),
+                bytes8(uint64(H[1])),
+                bytes8(uint64(H[2])),
+                bytes8(uint64(H[3])),
+                bytes8(uint64(H[4])),
+                bytes8(uint64(H[5])),
+                bytes8(uint64(H[6])),
+                bytes8(uint64(H[7]))
             );
     }
 }
