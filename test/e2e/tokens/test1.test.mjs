@@ -229,7 +229,7 @@ describe('ERC20 tests', () => {
     // });
 
     it('should perform a transfer by specifying the commitment that provides enough value to cover value', async function () {
-      // const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
       const userCommitments = await getUserCommitments(
         environment.clientApiUrl,
@@ -256,21 +256,21 @@ describe('ERC20 tests', () => {
 
       logger.info(`---usedCommitments--- ${JSON.stringify(usedCommitments)}`);
 
-      // const res = await nf3User.transfer(
-      //   false,
-      //   erc20Address,
-      //   tokenType,
-      //   transferValue,
-      //   tokenId,
-      //   nf3User.zkpKeys.compressedZkpPublicKey,
-      //   fee,
-      //   usedCommitments,
-      // );
-      // expectTransaction(res);
-      // await makeBlock();
+      const res = await nf3User.transfer(
+        false,
+        erc20Address,
+        tokenType,
+        transferValue,
+        tokenId,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+        fee,
+        usedCommitments,
+      );
+      expectTransaction(res);
+      await makeBlock();
 
-      // const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-      // expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
     });
 
     // it('should perform a transfer by specifying the commitment that provides enough value to cover value + fee', async function () {
