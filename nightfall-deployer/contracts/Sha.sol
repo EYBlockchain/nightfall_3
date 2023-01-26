@@ -208,13 +208,11 @@ contract Sha {
         return ROTR(19, x) ^ ROTR(61, x) ^ SHR(6, x);
     }
 
-    function updateMessageSchedule(
-        uint256 a,
-        uint256 b,
-        uint256 c,
-        uint256 d
-    ) public pure returns (uint256) {
-        return sigma1(a) + b + sigma0(c) + d;
+    /*
+    replicates the FIPS 180 add function by truncating the result to 64 bits
+    */
+    function add(uint256 x, uint256 y) public pure returns (uint256) {
+        return (x + y) & 0x000000000000000000000000000000000000000000000000ffffffffffffffff;
     }
 
     /*
@@ -226,6 +224,7 @@ contract Sha {
         uint256 N = messageBlocks.length;
         uint256[80] memory W;
         uint256[8] memory H = getInitialHashValuesSha512();
+        uint256[80] memory K = getConstantsSha512();
         for (uint256 i = 0; i < N; i++) {
             // NB FIPS 180-4 numbers from 1..N. WE number from 0..N-1.
             uint256[16] memory M = this.parseMessageBlock1024(messageBlocks[i]);
@@ -234,38 +233,26 @@ contract Sha {
                 W[t] = M[t];
             }
             for (uint256 t = 16; t < 80; t++) {
-                W[t] = sigma1(W[t - 2]) + W[t - 7] + sigma0(W[t - 15]) + W[t - 16];
+                W[t] = add(add(sigma1(W[t - 2]), W[t - 7]), add(sigma0(W[t - 15]), W[t - 16]));
             }
-
-            uint256[80] memory K = getConstantsSha512();
-            uint256 a = H[0];
-            uint256 b = H[1];
-            uint256 c = H[2];
-            uint256 d = H[3];
-            uint256 e = H[4];
-            uint256 f = H[5];
-            uint256 g = H[6];
-            uint256 h = H[7];
+            uint256[8] memory a;
+            for (uint256 j = 0; j < 8; j++) a[j] = H[j];
             for (uint256 t = 0; t < 80; t++) {
-                uint256 T1 = h + Sigma1(e) + Ch(e, f, g) + K[t] + W[t];
-                uint256 T2 = Sigma0(a) + Maj(a, b, c);
-                h = g;
-                g = f;
-                f = e;
-                e = d + T1;
-                d = c;
-                c = b;
-                b = a;
-                a = T1 + T2;
+                uint256 T1 = add(
+                    add(a[7], Sigma1(a[4])),
+                    add(add(Ch(a[4], a[5], a[6]), K[t]), W[t])
+                );
+                uint256 T2 = add(Sigma0(a[0]), Maj(a[0], a[1], a[2]));
+                a[7] = a[6];
+                a[6] = a[5];
+                a[5] = a[4];
+                a[4] = add(a[3], T1);
+                a[3] = a[2];
+                a[2] = a[1];
+                a[1] = a[0];
+                a[0] = add(T1, T2);
             }
-            H[0] = a + H[0];
-            H[1] = b + H[1];
-            H[2] = c + H[2];
-            H[3] = d + H[3];
-            H[4] = e + H[4];
-            H[5] = f + H[5];
-            H[6] = g + H[6];
-            H[7] = h + H[7];
+            for (uint256 j = 0; j < 8; j++) H[j] = add(a[j], H[j]);
         }
         return
             abi.encodePacked(
