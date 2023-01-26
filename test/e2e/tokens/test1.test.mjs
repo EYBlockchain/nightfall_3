@@ -161,7 +161,7 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      // await makeBlock();
+      await makeBlock();
 
       // const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       // const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
@@ -229,6 +229,9 @@ describe('ERC20 tests', () => {
     // });
 
     it('should perform a transfer by specifying the commitment that provides enough value to cover value', async function () {
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await makeBlock();
+
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
       const userCommitments = await getUserCommitments(
