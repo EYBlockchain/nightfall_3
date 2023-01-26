@@ -556,6 +556,8 @@ export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {
           ercAddress: c.preimage.ercAddress,
           tokenId: c.preimage.tokenId,
           value: c.preimage.value,
+          isNullified: c.isNullified,
+          isNullifiedOnChain: c.isNullifiedOnChain,
         };
       }),
     )}`,
