@@ -93,7 +93,7 @@ module.exports = {
   OPTIMIST_HOST: process.env.OPTIMIST_HOST || 'optimist',
   OPTIMIST_PORT: process.env.OPTIMIST_PORT || 80,
   CLIENT_MONGO_URL: process.env.CLIENT_MONGO_URL || 'mongodb://mongodb:27017',
-  ENVIRONMENT: process.env.ENVIRONMENT || 'local',
+  ENVIRONMENT: process.env.ENVIRONMENT || 'localhost',
   OPTIMIST_MONGO_URL: process.env.OPTIMIST_MONGO_URL || 'mongodb://mongodb:27017',
   IS_CHALLENGER: process.env.IS_CHALLENGER || 'true',
   ETH_NETWORK: process.env.ETH_NETWORK || 'blockchain',

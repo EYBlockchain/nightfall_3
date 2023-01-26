@@ -10,7 +10,7 @@ import startChallenger from './challenger.mjs';
 
 const CHALLENGER_PORT = process.env.CHALLENGER_PORT || 8192;
 
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const environment = config.ENVIRONMENTS[config.ENVIRONMENT];
 
 const app = express();
 const nf3 = new Nf3(environment.CHALLENGER_KEY, environment);
