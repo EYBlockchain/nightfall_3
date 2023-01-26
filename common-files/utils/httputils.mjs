@@ -247,9 +247,10 @@ const isEndpointWhitelisted = req => {
   return result;
 };
 
+const HEALTH_CHECK_REGEX = new RegExp(/^\/healthcheck\/?$/);
 const authenticationHandler = (req, res, next) => {
   if (
-    req.url === '/healthcheck' ||
+    req.url.match(HEALTH_CHECK_REGEX) != null ||
     isEndpointWhitelisted(req) ||
     req.get('x-api-key') === process.env.AUTHENTICATION_KEY
   ) {
@@ -269,9 +270,9 @@ const authenticationHandler = (req, res, next) => {
  * The env var ENDPOINTS_WHITELISTED accepts regex expression values.
  *
  * @param {*} app - an instance of 'expressjs'
- * @param routesDefiner - an annonymous function that receives an expressjs instance and defines the routes
- * @param addHealthCheck - adds a /healthcheck endpoint automatically
- * @param useFileUpload - adds a middleware for file uploading
+ * @param {Function} routesDefiner - an annonymous function that receives an expressjs instance and defines the routes
+ * @param {boolean} addHealthCheck - adds a /healthcheck endpoint automatically
+ * @param {boolean} useFileUpload - adds a middleware for file uploading
  */
 export const setupHttpDefaults = (
   app,
