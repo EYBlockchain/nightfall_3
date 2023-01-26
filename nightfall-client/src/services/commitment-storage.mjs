@@ -617,7 +617,7 @@ async function getAvailableCommitments(db, compressedZkpPublicKey, ercAddress, t
       compressedZkpPublicKey: compressedZkpPublicKey.hex(32),
       'preimage.ercAddress': ercAddress.hex(32),
       'preimage.tokenId': tokenId.hex(32),
-      isNullified: false,
+      // isNullified: false,
       isPendingNullification: false,
     })
     .toArray();
