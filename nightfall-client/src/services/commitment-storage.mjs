@@ -618,6 +618,7 @@ async function getAvailableCommitments(db, compressedZkpPublicKey, ercAddress, t
       'preimage.ercAddress': ercAddress.hex(32),
       'preimage.tokenId': tokenId.hex(32),
       // isNullified: false,
+      isNullifiedOnChain: -1,
       isPendingNullification: false,
     })
     .toArray();
@@ -649,6 +650,8 @@ async function verifyEnoughCommitments(
       ercAddress,
       tokenId,
     );
+
+    logger.debug({ msg: '------------verifyEnoughCommitments- 1-----', commitmentArray });
 
     // If not commitments are found, the transfer/withdrawal cannot be paid, so throw an error
     if (commitmentArray.length === 0)
@@ -704,6 +707,8 @@ async function verifyEnoughCommitments(
       ercAddressFee,
       generalise(0),
     );
+
+    logger.debug({ msg: '------------verifyEnoughCommitments- 2-----', commitmentArrayFee });
 
     // If not commitments are found, the fee cannot be paid, so throw an error
     if (commitmentArrayFee.length === 0) throw new Error('no commitments found to cover the fee');
