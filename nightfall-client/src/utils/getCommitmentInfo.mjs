@@ -236,7 +236,7 @@ export const getCommitmentInfo = async txInfo => {
       maxNullifiers,
       maxNonFeeNullifiers,
     );
-    logger.debug({ commitments });
+    logger.debug({ msg: '------------$$$$$$$$$$------', commitments });
     const { oldCommitments, oldCommitmentsFee } = commitments;
 
     // Add oldcommitments and oldCommitmentsFee to spentCommitments so that if anything goes wrong we can clear the pending
@@ -318,6 +318,7 @@ export const getCommitmentInfo = async txInfo => {
     const commitmentTreeInfo = await Promise.all(
       [...oldCommitments, ...oldCommitmentsFee].map(c => getSiblingInfo(c)),
     );
+    logger.debug({ msg: '------------commitmentTreeInfo------', commitmentTreeInfo });
     const localSiblingPaths = commitmentTreeInfo.map(l => {
       const path = l.siblingPath.path.map(p => p.value);
       return generalise([l.root].concat(path.reverse()));
