@@ -136,7 +136,11 @@ export const getCommitmentInfo = async txInfo => {
       if (nonFeeCommitmentsProvided) {
         logger.debug({ validatedProvidedCommitments, providedValue });
         maxNonFeeNullifiers = 0;
-        logger.debug({ msg: '******3*******getCommitmentInfo', maxNullifiers, maxNonFeeNullifiers });
+        logger.debug({
+          msg: '******3*******getCommitmentInfo',
+          maxNullifiers,
+          maxNonFeeNullifiers,
+        });
       }
     }
 
@@ -213,7 +217,11 @@ export const getCommitmentInfo = async txInfo => {
         maxNonFeeNullifiers =
           providedValue >= value ? 0 : maxNonFeeNullifiers - validatedCommitments.length;
         value = providedValue >= value ? 0n : value - providedValue;
-        logger.debug({ msg: '******4*******getCommitmentInfo', maxNullifiers, maxNonFeeNullifiers });
+        logger.debug({
+          msg: '******4*******getCommitmentInfo',
+          maxNullifiers,
+          maxNonFeeNullifiers,
+        });
       }
     }
 
