@@ -642,6 +642,7 @@ async function verifyEnoughCommitments(
   let minC = 0;
   let commitments = [];
 
+  logger.debug({ msg: '------------maxNonFeeNullifiers- 1-----', maxNonFeeNullifiers });
   if (maxNonFeeNullifiers !== 0) {
     // Get the commitments from the database
     const commitmentArray = await getAvailableCommitments(
