@@ -4,10 +4,12 @@
 /* eslint no-cond-assign: "off" */
 /* ignore unused exports */
 
+import config from 'config';
+
 export const isDev = () => process.env.NODE_ENV !== 'production';
 
 export const isLocal = () => {
-  return process.env.ENVIRONMENT !== 'aws';
+  return config.ENVIRONMENT !== 'aws';
 };
 
 /**
