@@ -652,7 +652,11 @@ async function verifyEnoughCommitments(
       tokenId,
     );
 
-    logger.debug({ msg: '------------verifyEnoughCommitments- 1-----', commitmentArray });
+    logger.debug({
+      msg: `------------verifyEnoughCommitments- 1--${fee.bigInt}---`,
+      commitmentArray,
+      fee,
+    });
 
     // If not commitments are found, the transfer/withdrawal cannot be paid, so throw an error
     if (commitmentArray.length === 0)

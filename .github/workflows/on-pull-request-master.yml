@@ -2,7 +2,7 @@ name: Check PR
 
 on:
   push:
-    branches: [liju.jose/test-nullifiers-logic-24-01-2023]
+    branches: [liju.jose/test-nullifiers-logic-27-01-2023]
 
 env:
 # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
