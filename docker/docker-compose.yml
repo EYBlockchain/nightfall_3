@@ -13,13 +13,13 @@ services:
         source: build
         target: /app/build/
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       LOG_LEVEL: ${LOG_LEVEL:-error}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       MONGO_URL: ${ADMIN_MONGO_URL:-mongodb://mongodb:27017}
 
   client:
@@ -33,26 +33,31 @@ services:
     ports:
       - 8080:80
     depends_on:
-      - deployer
       - worker
       - rabbitmq
       - mongodb
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
-      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-600}
+      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL} 
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
+      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      ETH_ADDRESS: ${ETH_ADDRESS}
+      ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
+      ETH_NETWORK: ${ETH_NETWORK}
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
+      MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
       RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://rabbitmq}
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
-      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
       OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
-      MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
       STATE_GENESIS_BLOCK: ${STATE_GENESIS_BLOCK:-0}
-      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
+      USE_EXTERNAL_NODE: ${USE_EXTERNAL_NODE}
     command: ['npm', 'run', 'dev']
 
     # Temporary container to deploy contracts and circuits and populate volumes
@@ -67,30 +72,34 @@ services:
     networks:
       - nightfall_network
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
-      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
-      # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
+      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
-      UPGRADE: ${UPGRADE_CONTRACTS}
-      ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
+      DEPLOY_MOCK_TOKENS: ${DEPLOY_MOCK_TOKENS:-false}
+      DEPLOY_MOCKED_SANCTIONS_CONTRACT: ${DEPLOY_MOCKED_SANCTIONS_CONTRACT:-false}
+      DAI_RESTRICT: ${DAI_RESTRICT}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      ERC20MOCK_RESTRICT: ${ERC20MOCK_RESTRICT}
+      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # startup routines will wait for a blockchain client to be reachable on this network
+      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
       ETH_ADDRESS: ${ETH_ADDRESS}
-      DEPLOY_MOCKED_SANCTIONS_CONTRACT: ${DEPLOY_MOCKED_SANCTIONS_CONTRACT:-false}
-      FEE_L2_TOKEN_ID: 'MATIC'
-      WETH_RESTRICT: ${WETH_RESTRICT} 
-      ERC20MOCK_RESTRICT: ${ERC20MOCK_RESTRICT}
-      MATIC_RESTRICT: ${MATIC_RESTRICT}
-      USDC_RESTRICT: ${USDC_RESTRICT}
-      DAI_RESTRICT: ${DAI_RESTRICT}
+      FEE_L2_TOKEN_ID: ${FEE_L2_TOKEN_ID:-MATIC}
+      GAS: ${GAS}
+      GAS_PRICE: ${GAS_PRICE}
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+      MULTISIG_APPROVERS: ${MULTISIG_APPROVERS}
+      MULTISIG_SIGNATURE_THRESHOLD: ${MULTISIG_SIGNATURE_THRESHOLD}
+      MATIC_RESTRICT: ${MATIC_RESTRICT}
+      SKIP_DEPLOYMENT: ${SKIP_DEPLOYMENT:-false}
+      USDC_RESTRICT: ${USDC_RESTRICT}
+      UPGRADE: ${UPGRADE_CONTRACTS}
       WHITELISTING: ${WHITELISTING}
-
+      WETH_RESTRICT: ${WETH_RESTRICT} 
 
   hosted-utils-api-server:
     build:
@@ -121,18 +130,21 @@ services:
         source: build
         target: /app/build/
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
-      WEBSOCKET_PORT: 8080
+      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-1000}
+      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
-      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://mongodb:27017}
+      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       HASH_TYPE: poseidon
+      IS_CHALLENGER: ${IS_CHALLENGER:-true}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      IS_CHALLENGER: ${IS_CHALLENGER:-true}
-      PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
       MAX_BLOCK_SIZE: ${MAX_BLOCK_SIZE:-50000}
+      MONGO_URL: ${OPTIMIST_MONGO_URL:-mongodb://mongodb:27017}
+      PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
+      USE_EXTERNAL_NODE: ${USE_EXTERNAL_NODE}
+      WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8080}
     command: ['npm', 'run', 'dev']
 
   rabbitmq:
