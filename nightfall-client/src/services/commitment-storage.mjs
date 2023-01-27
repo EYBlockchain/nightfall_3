@@ -642,7 +642,11 @@ async function verifyEnoughCommitments(
   let minC = 0;
   let commitments = [];
 
-  logger.debug({ msg: '------------maxNonFeeNullifiers- 1-----', maxNonFeeNullifiers });
+  logger.debug({
+    msg: `------------maxNonFeeNullifiers- 1--${fee.bigInt}---`,
+    maxNonFeeNullifiers,
+    fee,
+  });
   if (maxNonFeeNullifiers !== 0) {
     // Get the commitments from the database
     const commitmentArray = await getAvailableCommitments(
@@ -653,9 +657,8 @@ async function verifyEnoughCommitments(
     );
 
     logger.debug({
-      msg: `------------verifyEnoughCommitments- 1--${fee.bigInt}---`,
+      msg: `------------verifyEnoughCommitments- 1-----`,
       commitmentArray,
-      fee,
     });
 
     // If not commitments are found, the transfer/withdrawal cannot be paid, so throw an error
