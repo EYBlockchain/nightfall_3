@@ -33,8 +33,6 @@ export const getCommitmentInfo = async txInfo => {
 
   let { maxNullifiers, maxNonFeeNullifiers = undefined } = txInfo;
 
-  logger.debug({ msg: '******1*******getCommitmentInfo', maxNullifiers, maxNonFeeNullifiers });
-
   const { zkpPublicKey, compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
   const valuesArray = recipientZkpPublicKeysArray.map(() => totalValueToSend);
@@ -63,7 +61,6 @@ export const getCommitmentInfo = async txInfo => {
   if (maxNonFeeNullifiers === undefined) {
     maxNonFeeNullifiers = feeValue > 0n ? maxNullifiers - 1 : maxNullifiers;
   }
-  logger.debug({ msg: '******2*******getCommitmentInfo', maxNullifiers, maxNonFeeNullifiers });
 
   const spentCommitments = [];
   try {
@@ -136,11 +133,6 @@ export const getCommitmentInfo = async txInfo => {
       if (nonFeeCommitmentsProvided) {
         logger.debug({ validatedProvidedCommitments, providedValue });
         maxNonFeeNullifiers = 0;
-        logger.debug({
-          msg: '******3*******getCommitmentInfo',
-          maxNullifiers,
-          maxNonFeeNullifiers,
-        });
       }
     }
 
@@ -217,17 +209,11 @@ export const getCommitmentInfo = async txInfo => {
         maxNonFeeNullifiers =
           providedValue >= value ? 0 : maxNonFeeNullifiers - validatedCommitments.length;
         value = providedValue >= value ? 0n : value - providedValue;
-        logger.debug({
-          msg: '******4*******getCommitmentInfo',
-          maxNullifiers,
-          maxNonFeeNullifiers,
-        });
       }
     }
 
     // Update max nullifiers so that validatedCommitments spots are not used
     maxNullifiers -= validatedCommitments.length;
-    logger.debug({ msg: '******5*******getCommitmentInfo', maxNullifiers, maxNonFeeNullifiers });
 
     // Mark the commitments as pendingNullification
     await Promise.all(validatedCommitments.map(c => markPending(c)));
@@ -250,7 +236,7 @@ export const getCommitmentInfo = async txInfo => {
       maxNullifiers,
       maxNonFeeNullifiers,
     );
-    logger.debug({ msg: '------------$$$$$$$$$$------', commitments });
+    logger.debug({ commitments });
     const { oldCommitments, oldCommitmentsFee } = commitments;
 
     // Add oldcommitments and oldCommitmentsFee to spentCommitments so that if anything goes wrong we can clear the pending
@@ -332,7 +318,6 @@ export const getCommitmentInfo = async txInfo => {
     const commitmentTreeInfo = await Promise.all(
       [...oldCommitments, ...oldCommitmentsFee].map(c => getSiblingInfo(c)),
     );
-    logger.debug({ msg: '------------commitmentTreeInfo------', commitmentTreeInfo });
     const localSiblingPaths = commitmentTreeInfo.map(l => {
       const path = l.siblingPath.path.map(p => p.value);
       return generalise([l.root].concat(path.reverse()));
