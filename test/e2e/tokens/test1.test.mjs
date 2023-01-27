@@ -90,7 +90,7 @@ describe('ERC20 tests', () => {
   describe('Deposits', () => {
     it('Should increment user L2 balance after depositing some ERC20', async function () {
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
-
+      logger.info(`---transferValue-- ${transferValue}`);
       const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
@@ -149,12 +149,12 @@ describe('ERC20 tests', () => {
       );
 
       logger.info(`---userCommitments- 1-- ${JSON.stringify(userCommitments)}`);
-
+      logger.info(`---transferValue-- ${transferValue + 2}`);
       const res = await nf3User.transfer(
         false,
         erc20Address,
         tokenType,
-        transferValue,
+        transferValue + 2,
         tokenId,
         nf3User2.zkpKeys.compressedZkpPublicKey,
         fee,
@@ -258,12 +258,12 @@ describe('ERC20 tests', () => {
       }
 
       logger.info(`---usedCommitments--- ${JSON.stringify(usedCommitments)}`);
-
+      logger.info(`---transferValue-- ${transferValue + 3}`);
       const res = await nf3User.transfer(
         false,
         erc20Address,
         tokenType,
-        transferValue,
+        transferValue + 3,
         tokenId,
         nf3User.zkpKeys.compressedZkpPublicKey,
         fee,
