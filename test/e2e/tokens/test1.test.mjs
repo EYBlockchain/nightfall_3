@@ -149,12 +149,11 @@ describe('ERC20 tests', () => {
       );
 
       logger.info(`---userCommitments- 1-- ${JSON.stringify(userCommitments)}`);
-      logger.info(`---transferValue-- ${transferValue + 4}`);
       const res = await nf3User.transfer(
         false,
         erc20Address,
         tokenType,
-        transferValue + 4,
+        transferValue,
         tokenId,
         nf3User2.zkpKeys.compressedZkpPublicKey,
         fee,
@@ -249,7 +248,7 @@ describe('ERC20 tests', () => {
 
       const usedCommitments = [];
       let totalValue = 0;
-      let i = 0;
+      let i = 1;
 
       while (totalValue < transferValue && i < erc20Commitments.length) {
         usedCommitments.push(erc20Commitments[i].commitmentHash);
@@ -258,12 +257,11 @@ describe('ERC20 tests', () => {
       }
 
       logger.info(`---usedCommitments--- ${JSON.stringify(usedCommitments)}`);
-      logger.info(`---transferValue-- ${transferValue + 5}`);
       const res = await nf3User.transfer(
         false,
         erc20Address,
         tokenType,
-        transferValue + 5,
+        transferValue,
         tokenId,
         nf3User.zkpKeys.compressedZkpPublicKey,
         fee,
