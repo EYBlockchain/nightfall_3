@@ -160,7 +160,7 @@ describe('ERC20 tests', () => {
         transferValue,
         tokenId,
         nf3User2.zkpKeys.compressedZkpPublicKey,
-        fee,
+        fee + 1,
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
