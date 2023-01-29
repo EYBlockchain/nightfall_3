@@ -544,6 +544,11 @@ export async function getLayer2Balances(_nf3User, tokenAddress) {
   return (await _nf3User.getLayer2Balances())[tokenAddress]?.[0].balance || 0;
 }
 
+export async function getTransactions(clientApiUrl) {
+  const transactions = (await axios.get(`${clientApiUrl}/commitment/transactions`)).data.txs;
+  return transactions;
+}
+
 export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {
   const userCommitments = (
     await axios.post(`${clientApiUrl}/commitment/compressedZkpPublicKeys`, [compressedZkpPublicKey])

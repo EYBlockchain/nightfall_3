@@ -15,6 +15,7 @@ import {
   //   waitForSufficientTransactionsMempool,
   Web3Client,
   getUserCommitments,
+  getTransactions,
 } from '../../utils.mjs';
 // import { approve } from '../../../cli/lib/tokens.mjs';
 // import constants from '../../../common-files/constants/index.mjs';
@@ -168,6 +169,11 @@ describe('ERC20 tests', () => {
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       logger.info(`---userL2BalanceAfter-- ${userL2BalanceAfter}`);
+      logger.info(
+        `------getTransactions---${await getTransactions(environment.clientApiUrl)}---${
+          nf3User2.zkpKeys.compressedZkpPublicKey
+        }`,
+      );
       // const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
       // expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-(transferValue + fee));
       // expect(user2L2BalanceAfter - user2L2BalanceBefore).to.be.equal(transferValue);
@@ -278,6 +284,11 @@ describe('ERC20 tests', () => {
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       logger.info(`---userL2BalanceAfter-- ${userL2BalanceAfter} --- ${fee}`);
       await getUserCommitments(environment.clientApiUrl, nf3User.zkpKeys.compressedZkpPublicKey);
+      logger.info(
+        `------getTransactions---${await getTransactions(environment.clientApiUrl)}---${
+          nf3User2.zkpKeys.compressedZkpPublicKey
+        }`,
+      );
       // expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
     });
 
