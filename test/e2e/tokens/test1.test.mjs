@@ -160,7 +160,7 @@ describe('ERC20 tests', () => {
         transferValue,
         tokenId,
         nf3User2.zkpKeys.compressedZkpPublicKey,
-        fee + 1,
+        fee,
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
@@ -269,7 +269,7 @@ describe('ERC20 tests', () => {
         transferValue,
         tokenId,
         nf3User.zkpKeys.compressedZkpPublicKey,
-        fee,
+        fee + 1,
         usedCommitments,
       );
       expectTransaction(res);
@@ -277,6 +277,10 @@ describe('ERC20 tests', () => {
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       logger.info(`---userL2BalanceAfter-- ${userL2BalanceAfter} --- ${fee}`);
+      await getUserCommitments(
+        environment.clientApiUrl,
+        nf3User.zkpKeys.compressedZkpPublicKey,
+      );
       // expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
     });
 
