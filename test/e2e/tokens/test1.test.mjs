@@ -279,14 +279,21 @@ describe('ERC20 tests', () => {
         usedCommitments,
       );
       expectTransaction(res);
+      logger.info(
+        `------getTransactions-1--${JSON.stringify(
+          await getTransactions(environment.clientApiUrl),
+        )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
+      );
       await makeBlock();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       logger.info(`---userL2BalanceAfter-- ${userL2BalanceAfter} --- ${fee}`);
       await getUserCommitments(environment.clientApiUrl, nf3User.zkpKeys.compressedZkpPublicKey);
       logger.info(
-        `------getTransactions---${JSON.stringify(
+        `------getTransactions--2-${JSON.stringify(
           await getTransactions(environment.clientApiUrl),
+          null,
+          2,
         )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
       );
       // expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
