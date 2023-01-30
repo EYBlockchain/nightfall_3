@@ -642,7 +642,7 @@ async function verifyEnoughCommitments(
   let commitments = [];
 
   logger.debug({
-    msg: `------------maxNonFeeNullifiers- 1--${fee.bigInt}---`,
+    msg: `------------verifyEnoughCommitments- 1--${fee.bigInt}---`,
     maxNonFeeNullifiers,
     fee,
   });
@@ -656,7 +656,7 @@ async function verifyEnoughCommitments(
     );
 
     logger.debug({
-      msg: `------------verifyEnoughCommitments- 1-----`,
+      msg: `------------verifyEnoughCommitments- 2-----`,
       commitmentArray,
     });
 
@@ -715,7 +715,7 @@ async function verifyEnoughCommitments(
       generalise(0),
     );
 
-    logger.debug({ msg: '------------verifyEnoughCommitments- 2-----', commitmentArrayFee });
+    logger.debug({ msg: '------------verifyEnoughCommitments- 3-----', commitmentArrayFee });
 
     // If not commitments are found, the fee cannot be paid, so throw an error
     if (commitmentArrayFee.length === 0) throw new Error('no commitments found to cover the fee');
@@ -914,13 +914,15 @@ async function findUsableCommitments(
   const tokenId = generalise(_tokenId);
 
   logger.debug({
-    msg: 'verifying commitments',
+    msg: '--------findUsableCommitments-------',
     compressedZkpPublicKey,
     ercAddress,
     tokenId,
     value,
     ercAddressFee,
     fee,
+    maxNullifiers,
+    maxNonFeeNullifiers,
   });
   const commitmentsVerification = await verifyEnoughCommitments(
     compressedZkpPublicKey,
