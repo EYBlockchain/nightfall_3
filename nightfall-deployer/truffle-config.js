@@ -98,7 +98,7 @@ module.exports = {
       networkCheckTimeout: 1000000000,
       timeoutBlocks: 2000,
     },
-    goerli: {
+    mumbai: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 80001,
       networkCheckTimeout: 1000000000,

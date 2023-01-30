@@ -517,7 +517,7 @@ module.exports = {
           amount: process.env.DAI_RESTRICT || '1000000000000000000000',
         },
       ],
-      goerli: [
+      mumbai: [
         {
           name: 'WETH',
           address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
@@ -584,7 +584,7 @@ module.exports = {
     blockchain: getDefaultX509Params(),
     staging: getDefaultX509Params(),
     staging_edge: getDefaultX509Params(),
-    goerli: getDefaultX509Params(),
+    mumbai: getDefaultX509Params(),
     mainnet: getDefaultX509Params(),
     localhost: getDefaultX509Params(),
   },
