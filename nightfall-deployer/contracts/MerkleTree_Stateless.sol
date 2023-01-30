@@ -59,11 +59,11 @@ library MerkleTree_Stateless {
     /**
     @notice Insert multiple leaves into the Merkle Tree, and then update the root, The user must update and persistently stored the new frontier.
     @param _frontier - the current Frontier value
-    @param _lastLeafIndex - the index of the last leave inserted
+    @param _leafCount - the number of leaves
     */
     function calculateRoot(
         bytes32[33] memory _frontier,
-        uint256 _lastLeafIndex
+        uint256 _leafCount
     )
         public 
         returns (bytes32 root)
@@ -99,8 +99,14 @@ library MerkleTree_Stateless {
                 }
             }
 
-            slot := getFrontierSlot(_lastLeafIndex)
-            nodeValue := mload(add(_frontier, mul(0x20, sub(slot, 1))))
+            slot := getFrontierSlot(sub(_leafCount, 1)) 
+            nodeValue := mload(add(_frontier, mul(0x20, slot)))
+
+            nodeIndex := add(sub(_leafCount, 1), sub(exp(2,32), 1))
+
+            if gt(slot, 0) {
+                nodeIndex := sub(div(nodeIndex, exp(2, slot)), 1)
+            }
 
             // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
             for { let level := add(slot, 1)} lt(level, 33) { level := add(level, 1) } {

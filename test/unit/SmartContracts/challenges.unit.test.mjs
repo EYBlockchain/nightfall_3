@@ -1576,7 +1576,7 @@ describe('Challenges contract Challenges functions', function () {
       calculateBlockHash(transactionsCreated.block),
       1,
       '0x11cf76de9bb2b1efc8270e7e2380417daaa4c016456b43cfa831cea32b7840ba',
-      '0x280ecad231c91daad4cb1a97aba0c0d6b5278ed845aee0a46c3d426541498801',
+      '0x14cabaad7afba02a5d7f3a1813cb154975bc46212d29420dfe15fd263f19d770',
     );
     await state.proposeBlock(newTx.block, [newTx.withdrawTransaction, newTx.depositTransaction], {
       value: 10,
