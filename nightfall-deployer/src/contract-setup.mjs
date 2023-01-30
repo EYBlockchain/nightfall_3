@@ -31,19 +31,27 @@ async function setupContracts() {
       await Web3.submitRawTransaction(setStateContract.encodeABI(), contractState.options.address);
     }
   }
+  logger.debug('Contracts have been updated so they know the address of the State contract');
 
   // transfer ownership
   // Need to call transferOwnership 1 by 1 or transaction fails
-  for (const contractOwnable of contractsOwnables) {
-    const transferOwnership = contractOwnable.methods.transferOwnership(simpleMultiSigAddress);
-    if (!config.ETH_PRIVATE_KEY) {
-      await transferOwnership.send();
-    } else {
-      await Web3.submitRawTransaction(
-        transferOwnership.encodeABI(),
-        contractOwnable.options.address,
-      );
+  try {
+    for (const contractOwnable of contractsOwnables) {
+      const transferOwnership = contractOwnable.methods.transferOwnership(simpleMultiSigAddress);
+      if (!config.ETH_PRIVATE_KEY) {
+        logger.warn('Attempting to use an unlocked account to submit transactions');
+        await transferOwnership.send();
+      } else {
+        const rec = await Web3.submitRawTransaction(
+          transferOwnership.encodeABI(),
+          contractOwnable.options.address,
+        );
+        logger.debug(`Got receipt with transaction hash ${rec.transactionHash}`);
+      }
     }
+    logger.debug('Ownership has been transferred to the Multisig contract');
+  } catch (err) {
+    logger.error(`Transfer of ownership returned an error ${err}`);
   }
 }
 

@@ -64,10 +64,7 @@ module.exports = async function (deployer) {
   // we need to know the address to give to the Shield contract
   if (DEPLOY_MOCKED_SANCTIONS_CONTRACT === 'true') {
     await deployer.deploy(SanctionsListMock, sanctionedUser);
-
     sanctionsContractAddress = SanctionsListMock.address;
-
-    console.log('SANCTIONED USER', sanctionsContractAddress, sanctionedUser);
   }
 
   await deployProxy(X509, [], { deployer });

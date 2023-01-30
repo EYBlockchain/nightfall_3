@@ -16,7 +16,12 @@ async function main() {
       );
     else throw new Error(err);
   }
-  Web3.disconnect();
+  try {
+    Web3.disconnect();
+  } catch (err) {
+    logger.warn(`Attempt to disconnect web3 failed because ${err}`);
+    process.exit(0);
+  }
 }
 
 main();

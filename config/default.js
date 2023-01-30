@@ -22,12 +22,12 @@ function getDefaultX509Params() {
         '0x06032a0304000000000000000000000000000000000000000000000000000000',
         '0x06032d0607000000000000000000000000000000000000000000000000000000',
       ],
-      // Digicert
+      // mock
       [
         '0x06096086480186fd6c0315000000000000000000000000000000000000000000',
         '0x060a6086480186fd6c0315020000000000000000000000000000000000000000',
       ],
-      // Entrust
+      // mock
       ['0x060a6086480186fa6c0a01060000000000000000000000000000000000000000'],
     ],
     extendedKeyUsageOIDs: [
@@ -37,9 +37,9 @@ function getDefaultX509Params() {
         '0x06082b0601050507030400000000000000000000000000000000000000000000',
         '0x06082b0601050507030800000000000000000000000000000000000000000000',
       ],
-      // Digicert
+      // mock
       ['0x06082b0601050507030300000000000000000000000000000000000000000000'],
-      // Entrust
+      // mock
       [
         '0x06096086480186fa6b280b000000000000000000000000000000000000000000',
         '0x060a2b0601040182370a030c0000000000000000000000000000000000000000',
@@ -539,6 +539,28 @@ module.exports = {
           amount: process.env.MATIC_RESTRICT || '1000000000',
         },
       ],
+      localhost: [
+        {
+          name: 'WETH',
+          address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
+          amount: process.env.WETH_RESTRICT || '1000000000000000000',
+        },
+        {
+          name: 'MATIC',
+          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
+          amount: process.env.MATIC_RESTRICT || '1000000000000000000000',
+        },
+        {
+          name: 'USDC',
+          address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
+          amount: process.env.USDC_RESTRICT || '1000000000',
+        },
+        {
+          name: 'stMATIC',
+          address: '0x9A7c69A167160C507602ecB3Df4911e8E98e1279',
+          amount: process.env.MATIC_RESTRICT || '1000000000',
+        },
+      ],
       ropsten: [
         {
           name: 'WETH',
@@ -564,6 +586,7 @@ module.exports = {
     staging_edge: getDefaultX509Params(),
     goerli: getDefaultX509Params(),
     mainnet: getDefaultX509Params(),
+    localhost: getDefaultX509Params(),
   },
 
   // for Browser use
