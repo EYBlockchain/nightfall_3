@@ -40,7 +40,7 @@ export async function clearCachedContracts() {
 export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
-  const networkId = await web3.eth.getChainId();
+  const networkId = config.ENVIRONMENTS[process.env.ETH_NETWORK].chainId || 1337; // await web3.eth.getChainId();
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
     deployedAddress = contractInterface.networks[networkId].address;
   }
@@ -60,7 +60,11 @@ export async function getContractAbi(contractName) {
 export async function getContractInstance(contractName, deployedAddress) {
   // grab a 'from' account if one isn't set
   if (!options.from) {
-    const accounts = await web3.eth.getAccounts();
+    let accounts;
+    if (config.ETH_PRIVATE_KEY) {
+      accounts = [web3.eth.accounts.privateKeyToAccount(config.ETH_PRIVATE_KEY).address];
+      logger.debug(`Account derived from private key ${accounts[0]}`);
+    } else accounts = await web3.eth.getAccounts(); // this is a last resort and only works if the node holds an account
 
     logger.trace({
       msg: 'blockchain accounts',
@@ -129,6 +133,7 @@ export async function waitForContract(contractName) {
     try {
       error = undefined;
       const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop
+      logger.debug(`contract address was ${address}`);
       if (address === undefined) {
         // contract was cached when retrieving address, so we need to clear
         delete cachedContracts[contractName];

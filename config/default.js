@@ -204,6 +204,14 @@ module.exports = {
       optimistWsUrl: '',
       web3WsUrl: '',
     },
+    mumbai: {
+      name: 'mumbai',
+      chainId: 80001,
+      clientApiUrl: '',
+      optimistApiUrl: '',
+      optimistWsUrl: '',
+      web3WsUrl: '',
+    },
     rinkeby: {
       name: 'Rinkeby',
       chainId: 4,

@@ -1,5 +1,5 @@
-import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import Web3 from '../../common-files/utils/web3.mjs';
+import logger from '../../common-files/utils/logger.mjs';
 import circuits from './circuit-setup.mjs';
 import setupContracts from './contract-setup.mjs';
 
