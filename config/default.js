@@ -581,6 +581,8 @@ module.exports = {
 
   utilApiServerUrl: process.env.LOCAL_UTIL_API_URL,
 
+  explorerUrl: `https://explorer.${process.env.DOMAIN_NAME}`,
+
   // assumption is if LOCAL_PROPOSER is true, wallet UI app
   // is running in local machine
   isLocalRun: process.env.LOCAL_PROPOSER === 'true',
