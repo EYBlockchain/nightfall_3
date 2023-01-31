@@ -176,7 +176,7 @@ describe('ERC20 tests', () => {
       await getUserCommitments(environment.clientApiUrl, nf3User.zkpKeys.compressedZkpPublicKey);
       logger.info(
         `------getTransactions--2-${JSON.stringify(
-          await getTransactions(environment.clientApiUrl)
+          await getTransactions(environment.clientApiUrl),
         )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
       );
       // expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
