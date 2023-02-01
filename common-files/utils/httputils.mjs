@@ -287,7 +287,10 @@ export const setupHttpDefaults = (
   if (process.env.AUTHENTICATION_KEY) {
     const whitelistConf = process.env.ENDPOINTS_WHITELISTED;
 
-    logger.info({ msg: 'Authentication key is defined. Setting up the authentication handler', whitelistConf });
+    logger.info({
+      msg: 'Authentication key is defined. Setting up the authentication handler',
+      whitelistConf,
+    });
 
     app.set(
       ENDPOINTS_WHITELISTED,

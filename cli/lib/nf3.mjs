@@ -107,7 +107,7 @@ class Nf3 {
       web3WsUrl: 'ws://localhost:8546',
     },
     zkpKeys,
-    clientApiAuthenticationKey
+    clientApiAuthenticationKey,
   ) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
@@ -122,7 +122,7 @@ class Nf3 {
   }
 
   applyHttpClientAuthentication() {
-    if (! this.clientAuthenticationKey) {
+    if (!this.clientAuthenticationKey) {
       logger.info('No client authentication key is set!');
       return;
     }

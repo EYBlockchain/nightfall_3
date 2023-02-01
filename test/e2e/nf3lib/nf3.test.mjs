@@ -15,7 +15,6 @@ const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIR
 const { mnemonics, signingKeys } = config.TEST_OPTIONS;
 
 describe('Nf3 Test', () => {
-
   /* This suite of tests require that `nightfall-client` be set with an authentication key (see `AUTHENTICATION_KEY` env var)
    * for it to work. The value of the authentication key should be set in the environment variable `CLIENT_AUTHENTICATION_KEY`
    * so that it can be captured inside the tests.
@@ -32,7 +31,12 @@ describe('Nf3 Test', () => {
     });
 
     it('Should pass since the client authentication key is set', async () => {
-      const nf3User = new Nf3(signingKeys.user1, environment, undefined, process.env.CLIENT_AUTHENTICATION_KEY);
+      const nf3User = new Nf3(
+        signingKeys.user1,
+        environment,
+        undefined,
+        process.env.CLIENT_AUTHENTICATION_KEY,
+      );
 
       try {
         await nf3User.init(mnemonics.user1);
