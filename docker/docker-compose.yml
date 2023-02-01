@@ -101,10 +101,7 @@ services:
       USDC_RESTRICT: ${USDC_RESTRICT}
       UPGRADE: ${UPGRADE_CONTRACTS}
       WHITELISTING: ${WHITELISTING}
-<<<<<<< HEAD
-=======
       WETH_RESTRICT: ${WETH_RESTRICT} 
->>>>>>> master
 
   hosted-utils-api-server:
     build:

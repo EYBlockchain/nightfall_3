@@ -135,7 +135,7 @@ jobs:
         if: always()
         run: cat authentication-test.log
 
-      - name: Authentication Test - heathcheck OK
+      - name: Authentication Test - healthcheck OK
         run: |
           RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/healthcheck)
           if [ $RESULT != "200"]; then
@@ -170,7 +170,7 @@ jobs:
             exit 1
           fi
 
-      - name: Authentication Test - non-whitelisted endpoint failure
+      - name: Authentication Test - non-whitelisted endpoint with wrong auth key
         run: |
           RESULT=$(curl -w "%{http_code}" -o /dev/null --silent --header "X-Api-Key: 0123456789" http://localhost:8080/commitment/)
           if [ $RESULT != "401"]; then
