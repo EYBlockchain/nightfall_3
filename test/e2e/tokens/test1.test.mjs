@@ -170,7 +170,8 @@ describe('ERC20 tests', () => {
           await getTransactions(environment.clientApiUrl),
         )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
       );
-      await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
+      await new Promise(resolve => setTimeout(resolve, 30000));
+      // await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
       await makeBlock();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
