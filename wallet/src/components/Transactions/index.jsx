@@ -15,7 +15,7 @@ import polygonChainImage from '../../assets/img/polygon-chain.svg';
 import tickBox from '../../assets/svg/tickBox.svg';
 import etherscanArrow from '../../assets/svg/etherscanGo.svg';
 import TxInfoModal from '../Modals/txInfoModal.tsx';
-import Web3, { ChainIdMapping } from '../../common-files/utils/web3';
+import Web3 from '../../common-files/utils/web3';
 import './index.scss';
 import { getContractInstance } from '../../common-files/utils/contract';
 import useInterval from '../../hooks/useInterval';
@@ -26,6 +26,7 @@ import exportIndexdDB from '../../utils/CommitmentsBackup/export';
 const supportedTokens = importTokens();
 
 const { SHIELD_CONTRACT_NAME, ZERO } = global.nightfallConstants;
+const { explorerUrl } = global.config;
 
 const txTypeOptions = ['Deposit', 'Transfer', 'Withdraw'];
 const txTypeDest = ['From Ethereum to L2', 'Private Transfer', 'From L2 to Ethereum'];
@@ -42,12 +43,6 @@ const Transactions = () => {
   const [isActive, setActive] = React.useState('all');
   const [showModal, setShowModal] = React.useState({ show: false });
   const [delay, setDelay] = React.useState(50);
-  const targetEnv = process.env.REACT_APP_MODE.replace('-', '_');
-  const [etherscan] = React.useState(
-    ChainIdMapping[targetEnv].chainName === 'Ethereum Mainnet'
-      ? 'etherscan.io'
-      : 'goerli.etherscan.io',
-  );
 
   const initialPrices = {};
   supportedTokens.forEach(t => {
@@ -105,10 +100,11 @@ const Transactions = () => {
         });
 
       const safeValue = value.toString();
-      const { ercAddress } = commitmentsDB.find(c => {
+      const { ercAddress, tokenId } = commitmentsDB.find(c => {
         return tx.commitments.includes(c._id) || tx.nullifiers.includes(c.nullifier);
       })?.preimage ?? {
         ercAddress: '0x00',
+        tokenId: `0x${BigInt(0).toString(16).padStart(64, '0')}`,
       };
 
       // eslint-disable-next-line no-param-reassign
@@ -144,7 +140,9 @@ const Transactions = () => {
       }
 
       const { logoURI, decimals, id, symbol } = supportedTokens.find(
-        t => t.address.toLowerCase() === `0x${ercAddress.slice(-40).toLowerCase()}`,
+        t =>
+          t.address.toLowerCase() === `0x${ercAddress.slice(-40).toLowerCase()}` &&
+          `0x${BigInt(t.tokenId).toString(16).padStart(64, '0')}` === tokenId,
       ) ?? {
         logoURI: null,
         decimals: 0,
@@ -255,7 +253,9 @@ const Transactions = () => {
                     show: true,
                     transactionhash: tx.transactionHash,
                     symbol: tx.symbol,
-                    value: new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4),
+                    value: tx.decimals
+                      ? new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4)
+                      : BigInt(tx.value).toString(),
                     _id: tx._id,
                     recipientaddress: tx.recipientAddress,
                     withdrawready: tx.withdrawReady ? 1 : 0,
@@ -324,7 +324,10 @@ const Transactions = () => {
                     >
                       {/* amount-details */}
                       <div style={{ fontWeight: '600', fontSize: '14px', lineHeight: '20px' }}>
-                        {new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4)} {tx.symbol}
+                        {tx.decimals
+                          ? new BigFloat(BigInt(tx.value), tx.decimals).toFixed(4)
+                          : BigInt(tx.value).toString()}{' '}
+                        {tx.symbol}
                       </div>
                       <div
                         style={{
@@ -337,9 +340,13 @@ const Transactions = () => {
                         }}
                       >
                         $
-                        {new BigFloat(BigInt(tx.value), tx.decimals)
-                          .mul(tx.currencyValue)
-                          .toFixed(4)}
+                        {tx.decimals
+                          ? new BigFloat(BigInt(tx.value), tx.decimals)
+                              .mul(tx.currencyValue)
+                              .toFixed(4)
+                          : new BigFloat(String(tx.value ?? 0).concat('.0000'), 4)
+                              .mul(tx.currencyValue)
+                              .toFixed(4)}
                       </div>
                     </div>
                     <div
@@ -375,7 +382,7 @@ const Transactions = () => {
                       </div>
                     </div>
                     <a
-                      href={`https://${etherscan}/tx/${tx.l1Hash}`}
+                      href={`${explorerUrl}/transaction/${tx.transactionHash}`}
                       className="etherscanLink"
                       rel="noopener noreferrer"
                       target="_blank"
