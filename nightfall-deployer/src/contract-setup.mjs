@@ -39,7 +39,9 @@ async function setupContracts() {
     for (const contractOwnable of contractsOwnables) {
       const transferOwnership = contractOwnable.methods.transferOwnership(simpleMultiSigAddress);
       if (!config.ETH_PRIVATE_KEY) {
-        logger.warn('Attempting to use an unlocked account to submit transactions');
+        logger.warn(
+          'Using an unlocked account to submit transactions - set a private key in ETH_PRIVATE_KEY',
+        );
         await transferOwnership.send();
       } else {
         const rec = await Web3.submitRawTransaction(
