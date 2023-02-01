@@ -239,7 +239,7 @@ const responseLogger = (req, res, next) => {
 const isEndpointWhitelisted = req => {
   let result = false;
   req.app.get(ENDPOINTS_WHITELISTED).forEach(e => {
-    if (!result) {
+    if (result === false && e) {
       result = req.url.match(e) != null;
     }
   });
@@ -256,6 +256,8 @@ const authenticationHandler = (req, res, next) => {
   ) {
     return next();
   }
+
+  logger.warn('Unauthorized access!');
 
   res.sendStatus(401);
 
@@ -283,10 +285,15 @@ export const setupHttpDefaults = (
   app.use(requestLogger);
 
   if (process.env.AUTHENTICATION_KEY) {
+    const whitelistConf = process.env.ENDPOINTS_WHITELISTED;
+
+    logger.info({ msg: 'Authentication key is defined. Setting up the authentication handler', whitelistConf });
+
     app.set(
       ENDPOINTS_WHITELISTED,
-      (process.env.ENDPOINTS_WHITELISTED ?? '').split(',').map(v => v.trim()),
+      whitelistConf ? whitelistConf.split(',').map(v => v.trim()) : [],
     );
+
     app.use(authenticationHandler);
   }
 
