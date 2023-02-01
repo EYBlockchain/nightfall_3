@@ -26,11 +26,12 @@ router.post('/check', async (req, res, next) => {
   }
 });
 
-router.get('/make-now', async (req, res, next) => {
+router.post('/make-now', async (req, res, next) => {
   try {
-    logger.debug(`block make-now endpoint received GET`);
-    setMakeNow();
-    res.send('Making short block');
+    const { setFlag } = req.body;
+    logger.debug(`block make-now endpoint received POST`);
+    setMakeNow(setFlag);
+    res.send(`Make block set to ${setFlag}`);
   } catch (err) {
     next(err);
   }

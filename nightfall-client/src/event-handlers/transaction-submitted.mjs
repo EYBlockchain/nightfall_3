@@ -9,6 +9,7 @@ async function transactionSubmittedEventHandler(eventParams) {
   const { offchain = false, ...data } = eventParams;
   let transaction;
   transaction = data;
+  logger.info(`rrrrrrr11111rrrrrrrr--- ${JSON.stringify(transaction)}`);
   transaction = await getTransactionSubmittedCalldata(data);
   transaction.blockNumber = data.blockNumber;
   transaction.transactionHashL1 = data.transactionHash;

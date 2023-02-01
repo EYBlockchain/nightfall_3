@@ -238,8 +238,8 @@ class Nf3 {
   @method
   @async
   */
-  async makeBlockNow() {
-    return axios.get(`${this.optimistBaseUrl}/block/make-now`);
+  async makeBlockNow(setFlag) {
+    return axios.post(`${this.optimistBaseUrl}/block/make-now`, { setFlag });
   }
 
   async estimateGas(contractAddress, unsignedTransaction) {

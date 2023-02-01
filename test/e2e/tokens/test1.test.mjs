@@ -38,10 +38,10 @@ const nf3UserSanctioned = new Nf3(signingKeys.sanctionedUser, environment);
 
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
-async function makeBlock() {
+async function makeBlock(setFlag = true) {
   logger.debug(`Make block...`);
-  await nf3Proposer.makeBlockNow();
-  await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+  await nf3Proposer.makeBlockNow(setFlag);
+  if (setFlag) await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 }
 
 describe('ERC20 tests', () => {
@@ -93,6 +93,7 @@ describe('ERC20 tests', () => {
 
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       await makeBlock();
+      await makeBlock(false);
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
       logger.info(`---userL2BalanceBefore-- ${userL2BalanceBefore}`);
       const userCommitments = await getUserCommitments(
@@ -169,7 +170,7 @@ describe('ERC20 tests', () => {
           await getTransactions(environment.clientApiUrl),
         )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
       );
-      await web3Client.waitForEvent(eventLogs, ['transactionSubmitted']);
+      // await web3Client.waitForEvent(eventLogs, ['transactionSubmitted']);
       await makeBlock();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
