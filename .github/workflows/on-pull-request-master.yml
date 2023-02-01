@@ -187,7 +187,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: npm run nightfall-down
+        run: CLIENT_AUTHENTICATION_KEY=$AUTHENTICATION_KEY npm run nightfall-down
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
