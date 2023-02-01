@@ -96,6 +96,8 @@ class Nf3 {
 
   nonceMutex = new Mutex();
 
+  clientAuthenticationKey;
+
   constructor(
     ethereumSigningKey,
     environment = {
@@ -105,6 +107,7 @@ class Nf3 {
       web3WsUrl: 'ws://localhost:8546',
     },
     zkpKeys,
+    clientApiAuthenticationKey
   ) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
@@ -113,24 +116,26 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
+    this.clientAuthenticationKey = clientApiAuthenticationKey;
 
     this.applyHttpClientAuthentication();
   }
 
   applyHttpClientAuthentication() {
-    if (!process.env.CLIENT_AUTHENTICATION_KEY) {
+    if (! this.clientAuthenticationKey) {
       logger.info('No client authentication key is set!');
       return;
     }
 
     const clientBaseUrl = this.clientBaseUrl;
+    const clientApiKey = this.clientAuthenticationKey;
 
     axios.interceptors.request.use(function (config) {
       if (!config.url.includes(clientBaseUrl)) {
         return config;
       }
 
-      config.headers['X-API-Key'] = process.env.CLIENT_AUTHENTICATION_KEY;
+      config.headers['X-API-Key'] = clientApiKey;
 
       return config;
     });
