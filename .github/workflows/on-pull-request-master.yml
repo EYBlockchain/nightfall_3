@@ -179,7 +179,7 @@ jobs:
 
       - name: Authentication Test for the NF3 lib
         run: |
-          npm run test-e2e-nf3lib
+          CLIENT_AUTHENTICATION_KEY=$AUTHENTICATION_KEY npm run test-e2e-nf3lib
 
       - name: Debug logs - after integration test run
         if: always()
@@ -187,7 +187,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: CLIENT_AUTHENTICATION_KEY=$AUTHENTICATION_KEY npm run nightfall-down
+        run: npm run nightfall-down
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
