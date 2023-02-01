@@ -1671,6 +1671,20 @@ class Nf3 {
   async getSprintsInSpan() {
     return this.stateContract.methods.getSprintsInSpan().call();
   }
+
+  /**
+   * Find transaction (tx) by L2 hash (for now the route only looks into client mongodb)
+   *
+   * @async
+   * @method getTransactionStatus
+   * @param {string} transactionHash - L2 tx hash
+   * @returns {Promise<number>} - If the tx is found (ie mined), returns the L2 block number that contains the tx,
+   * else returns -1
+   */
+  async getTransactionStatus(l2TransactionHash) {
+    const res = await axios.get(`${this.clientBaseUrl}/transaction/status/${l2TransactionHash}`);
+    return res.data.blockNumberL2;
+  }
 }
 
 export default Nf3;
