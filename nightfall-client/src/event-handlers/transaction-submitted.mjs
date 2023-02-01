@@ -16,11 +16,7 @@ async function transactionSubmittedEventHandler(eventParams) {
   transaction.blockNumber = data.blockNumber;
   transaction.transactionHashL1 = data.transactionHash;
 
-  const transactionDecrypted = await decryptCommitment(
-    transaction,
-    zkpPrivateKeys,
-    nullifierKeys,
-  );
+  const transactionDecrypted = await decryptCommitment(transaction, zkpPrivateKeys, nullifierKeys);
 
   logger.info({
     msg: 'Client Transaction Handler - New transaction received.',
