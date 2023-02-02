@@ -20,7 +20,6 @@ async function doesAnyOfNullifiersExistInDB(nullifiers) {
  * This handler runs whenever a new transaction is submitted to the blockchain
  */
 async function transactionSubmittedEventHandler(eventParams) {
-  logger.info(`rrrrrrrrrrrrrrr--- ${JSON.stringify(eventParams)}`);
   const { offchain = false, ...data } = eventParams;
   let saveTxInDb = false;
 
@@ -44,7 +43,6 @@ async function transactionSubmittedEventHandler(eventParams) {
   }
 
   if (saveTxInDb) {
-    logger.info({ msg: 'Saving transaction', transaction: transaction.transactionHash });
     await saveTransaction({ ...transaction });
   }
 

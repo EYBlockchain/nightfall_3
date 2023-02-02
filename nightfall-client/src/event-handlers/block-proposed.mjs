@@ -45,7 +45,6 @@ async function blockProposedEventHandler(data, syncing) {
   logger.info({
     msg: 'Received Block Proposed event with Layer 2 Block Number and Tx Hash',
     blockNumberL2: block.blockNumberL2,
-    transactions,
     transactionHashL1,
   });
 
@@ -114,8 +113,6 @@ async function blockProposedEventHandler(data, syncing) {
         [transaction.transactionHash],
       );
     }
-
-    logger.info(`-------------xxxxxx-----${duplicateTransactions}`);
 
     return Promise.all([
       saveTxToDb,
