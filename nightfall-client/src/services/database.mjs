@@ -273,20 +273,16 @@ export async function getTransactionsByTransactionHashesByL2Block(transactionHas
 }
 
 /**
- * Function to remove duplicate transactions for an array of commitments or nullifiers
+ * Function to find duplicate transactions for an array of commitments or nullifiers
  * this function is used in blockProposedEventHandler
  */
-export async function deleteDuplicateCommitmentsAndNullifiers(
-  commitments,
-  nullifiers,
-  transactionHashes = [],
-) {
+export async function findDuplicateTransactions(commitments, nullifiers, transactionHashes = []) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   const query = {
     $or: [{ commitments: { $in: commitments } }, { nullifiers: { $in: nullifiers } }],
     transactionHash: { $nin: transactionHashes },
-    mempool: true,
+    blockNumberL2: { $exists: false },
   };
-  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
+  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
 }

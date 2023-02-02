@@ -1072,3 +1072,11 @@ export async function getCommitmentsDepositedRollbacked(compressedZkpPublicKey) 
 
   return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
+
+// // function to delete non nullified commitments
+// export async function deleteCommitments(commitments) {
+//   const connection = await mongo.connection(MONGO_URL);
+//   const query = { _id: { $in: commitments }, isNullifiedOnChain: -1 };
+//   const db = connection.db(COMMITMENTS_DB);
+//   return db.collection(COMMITMENTS_COLLECTION).deleteMany(query);
+// }

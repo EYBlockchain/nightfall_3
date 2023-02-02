@@ -23,6 +23,8 @@ import {
   saveTransaction,
   saveBlock,
   setTransactionHashSiblingInfo,
+  findDuplicateTransactions,
+  deleteTransactionsByTransactionHashes,
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
@@ -56,6 +58,7 @@ async function blockProposedEventHandler(data, syncing) {
 
   const dbUpdates = transactions.map(async transaction => {
     let saveTxToDb = false;
+    let duplicateTransactions = []; // duplicate tx holding same commitments or nullifiers
 
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.filter(c => c !== ZERO);
@@ -103,7 +106,15 @@ async function blockProposedEventHandler(data, syncing) {
         ...transaction,
         isDecrypted,
       });
+
+      duplicateTransactions = await findDuplicateTransactions(
+        nonZeroCommitments,
+        nonZeroNullifiers,
+        [transaction.transactionHash],
+      );
     }
+
+    logger.info(`-------------xxxxxx-----${duplicateTransactions}`);
 
     return Promise.all([
       saveTxToDb,
@@ -114,6 +125,7 @@ async function blockProposedEventHandler(data, syncing) {
         data.blockNumber,
         data.transactionHash,
       ),
+      deleteTransactionsByTransactionHashes([...duplicateTransactions.map(t => t.transactionHash)]),
     ]);
   });
 

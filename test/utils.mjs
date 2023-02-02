@@ -563,6 +563,8 @@ export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {
           value: c.preimage.value,
           isNullified: c.isNullified,
           isNullifiedOnChain: c.isNullifiedOnChain,
+          nullifier: c.nullifier,
+          isDeposited: c.isDeposited,
         };
       }),
     )}`,
