@@ -237,8 +237,8 @@ class Nf3 {
    * @method getMempoolTransactions
    * @async
    */
-  async getMempoolTransactionByL2TransactionHash(l2TransactionHash) {
-    return (await axios.get(`${this.optimistBaseUrl}/proposer/mempool/${l2TransactionHash}`)).data;
+  async requestMempoolTransactionByL2TransactionHash(l2TransactionHash) {
+    return axios.get(`${this.optimistBaseUrl}/proposer/mempool/${l2TransactionHash}`);
   }
 
   /**
