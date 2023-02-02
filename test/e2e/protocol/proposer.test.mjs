@@ -199,7 +199,7 @@ describe('Basic Proposer tests', () => {
     }
   });
 
-  it('should filter the mempool by an l2 transaction hash', async () => {
+  it('should filter the mempool by l2 transaction hash', async () => {
     // Arrange
     // Find out l2 hash from previous deposit
     const depositTx = (await bootProposer.getMempoolTransactions())[0];

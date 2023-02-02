@@ -1,6 +1,5 @@
-/**
-Module containing functions relating to proposers and their registration
-*/
+// ignore unused exports
+
 import { waitForContract } from './contract.mjs';
 import constants from '../constants/index.mjs';
 
