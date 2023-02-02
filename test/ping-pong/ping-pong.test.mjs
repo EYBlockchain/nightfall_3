@@ -38,7 +38,6 @@ let nf3User;
 const getOptimistUrls = async () => {
   const optimistUrls = [];
   const resultProposers = await nf3User.getProposers();
-  console.log('proposers', resultProposers);
   for (const prop of resultProposers.proposers) {
     optimistUrls.push({
       proposer: prop.thisAddress,
