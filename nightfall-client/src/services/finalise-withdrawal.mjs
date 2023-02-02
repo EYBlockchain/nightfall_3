@@ -7,7 +7,6 @@ import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { buildBlockSolidityStruct } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 const { SHIELD_CONTRACT_NAME } = constants;
 
@@ -19,7 +18,7 @@ export async function finaliseWithdrawal(transactionHash) {
   );
 
   // block can contain multiple transactions
-  const index = transactions.findIndex(f => f?.transactionHash ?? '0x0' === transactionHash);
+  const index = transactions.findIndex(f => transactionHash === f?.transactionHash ?? '0x0');
 
   const siblingPath = [transactions[index].transactionHashesRoot].concat(
     transactions[index].transactionHashSiblingPath.path.map(p => p.value).reverse(),
