@@ -27,6 +27,8 @@ describe('Nf3 Test', () => {
         fail();
       } catch (err) {
         expect(err.isAxiosError && err.response.status === 401).to.be.equal(true);
+      } finally {
+        nf3User.close();
       }
     });
 
@@ -42,6 +44,8 @@ describe('Nf3 Test', () => {
         await nf3User.init(mnemonics.user1);
       } catch (err) {
         fail();
+      } finally {
+        nf3User.close();
       }
     });
   });
