@@ -10,6 +10,7 @@ import {
   getNthBlockRoot,
   emptyStoreBlocks,
   emptyStoreTimber,
+  deleteBlocksByBlockNumberL2,
 } from '@Nightfall/services/database';
 import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import * as Storage from '../../utils/lib/local-storage';
@@ -34,6 +35,12 @@ export const initialState = {
 export const UserContext = React.createContext({
   state: initialState,
 });
+
+const EVENT_TYPES = {
+  SYNC: 'sync',
+  BLOCKPROPOSED: 'blockProposed',
+  ROLLBACK: 'rollback',
+};
 
 // eslint-disable-next-line react/prop-types
 export const UserProvider = ({ children }) => {
@@ -88,7 +95,7 @@ export const UserProvider = ({ children }) => {
         `Last local block number is ${indexDbBlockLast}, emitting sync event to fetch next block.`,
       );
 
-      socket.send(JSON.stringify({ type: 'sync', lastBlock: indexDbBlockLast }));
+      socket.send(JSON.stringify({ type: EVENT_TYPES.SYNC, lastBlock: indexDbBlockLast }));
     });
 
     setState(previousState => {
@@ -115,7 +122,7 @@ export const UserProvider = ({ children }) => {
 
       const { nullifierKey, zkpPrivateKey } = await retrieveAndDecrypt(compressedZkpPublicKey);
 
-      if (parsedEvent.type === 'sync') {
+      if (parsedEvent.type === EVENT_TYPES.SYNC) {
         await parsedEvent.historicalData
           .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
           .reduce(async (acc, curr) => {
@@ -144,48 +151,33 @@ export const UserProvider = ({ children }) => {
 
             socket.send(
               JSON.stringify({
-                type: 'sync',
+                type: EVENT_TYPES.SYNC,
                 lastBlock: parsedEvent.numberBlockNext,
               }),
             );
           }
         } else {
           console.log('Resync DB');
-          emptyStoreBlocks();
-          emptyStoreTimber();
-          Storage.shieldAddressSet();
+          await Promise.all([emptyStoreBlocks(), emptyStoreTimber(), Storage.shieldAddressSet()]);
         }
       }
 
-      if (parsedEvent.type === 'blockProposed') {
-        console.log('blockProposed Event');
+      if (parsedEvent.type === EVENT_TYPES.BLOCKPROPOSED) {
         if (
           parsedEvent.data.block.previousBlockHash !== lastBlock.blockHash &&
           Number(lastBlock.blockHash) !== 0
         ) {
-          // resync
           console.log('Resync DB');
-          emptyStoreBlocks();
-          emptyStoreTimber();
-          Storage.shieldAddressSet();
+          await Promise.all([emptyStoreBlocks(), emptyStoreTimber(), Storage.shieldAddressSet()]);
         } else {
           setLastBlock(parsedEvent.data.block);
           await blockProposedEventHandler(parsedEvent.data, [zkpPrivateKey], [nullifierKey]);
         }
       }
 
-      // if (parsedEvent.type === 'rollback') {
-      //   event schema
-      //   {
-      //     type: 'rollback',
-      //     data: {
-      //       blockNumberL2: number,
-      //     }
-      //   to do
-      //   - remove block from indexDB
-      //   - remove timber from indexDB
-      //   - remove all coresponsding data to the removed block (transactions & commitments)
-      // }
+      if (parsedEvent.type === EVENT_TYPES.ROLLBACK) {
+        await deleteBlocksByBlockNumberL2(parsedEvent.data.blockNumberL2);
+      }
     };
 
     socket.addEventListener('message', messageEventHandler);
