@@ -14,6 +14,7 @@ import {
   setSiblingInfo,
   countCircuitTransactions,
   isTransactionHashBelongCircuit,
+  deleteNonNullifiedCommitments,
 } from '../services/commitment-storage.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { zkpPrivateKeys, nullifierKeys } from '../services/keys.mjs';
@@ -126,6 +127,12 @@ async function blockProposedEventHandler(data, syncing) {
         data.transactionHash,
       ),
       deleteTransactionsByTransactionHashes([...duplicateTransactions.map(t => t.transactionHash)]),
+      deleteNonNullifiedCommitments([
+        ...duplicateTransactions
+          .map(t => t.commitments)
+          .flat()
+          .filter(c => c !== ZERO),
+      ]),
     ]);
   });
 
