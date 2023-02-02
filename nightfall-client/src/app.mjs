@@ -18,6 +18,7 @@ import {
   tokenise,
   burn,
   transform,
+  regulator,
 } from './routes/index.mjs';
 
 const app = express();
@@ -48,6 +49,7 @@ setupHttpDefaults(
     app.use('/set-instant-withdrawal', setInstantWithdrawl);
     app.use('/generate-zkp-keys', generateZkpKeys);
     app.use('/x509', x509);
+    app.use('/regulator', regulator);
   },
   true,
   false,
