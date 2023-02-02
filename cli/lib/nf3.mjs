@@ -233,8 +233,8 @@ class Nf3 {
   }
 
   /**
-   * Get all mempool transactions in the optimist
-   * @method getMempoolTransactions
+   * Filter the mempool by l2 transaction hash
+   * @method requestMempoolTransactionByL2TransactionHash
    * @async
    */
   async requestMempoolTransactionByL2TransactionHash(l2TransactionHash) {
@@ -1682,7 +1682,7 @@ class Nf3 {
   }
 
   /**
-   * Find transaction (tx) by L2 hash (for now the route only looks into client mongodb)
+   * Find transaction (tx) by L2 hash
    *
    * @async
    * @method getTransactionStatus
@@ -1692,6 +1692,7 @@ class Nf3 {
    */
   async getTransactionStatus(l2TransactionHash) {
     const res = await axios.get(`${this.clientBaseUrl}/transaction/status/${l2TransactionHash}`);
+    // TODO review return - also in docstring above
     return res.data.blockNumberL2;
   }
 }
