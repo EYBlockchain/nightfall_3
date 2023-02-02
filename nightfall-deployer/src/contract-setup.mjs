@@ -5,9 +5,9 @@ address of the contract that holds global state (State.sol)
 */
 
 import config from 'config';
-import Web3 from '../../common-files/utils/web3.mjs';
-import { getContractInstance } from '../../common-files/utils/contract.mjs';
-import logger from '../../common-files/utils/logger.mjs';
+import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
+import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
 async function setupContracts() {
   const proposersContract = await getContractInstance('Proposers');
