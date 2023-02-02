@@ -31,7 +31,7 @@ router.post('/make-now', async (req, res, next) => {
     const { setFlag } = req.body;
     logger.debug(`block make-now endpoint received POST`);
     setMakeNow(setFlag);
-    res.send(`Make block set to ${setFlag}`);
+    res.send(`Make block is set to ${setFlag}`);
   } catch (err) {
     next(err);
   }
