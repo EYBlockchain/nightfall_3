@@ -51,13 +51,13 @@ export async function getLatestTree() {
     timberObjArr.length === 1
       ? timberObjArr[0]
       : {
-        root: 0,
-        frontier: [],
-        leafCount: 0,
-        tree: undefined,
-        hashType: HASH_TYPE,
-        height: TIMBER_HEIGHT,
-      };
+          root: 0,
+          frontier: [],
+          leafCount: 0,
+          tree: undefined,
+          hashType: HASH_TYPE,
+          height: TIMBER_HEIGHT,
+        };
 
   const t = new Timber(
     timberObj.root,
@@ -275,17 +275,17 @@ export async function getTransactionsByTransactionHashesByL2Block(transactionHas
 
 export async function getRegisterPairSenderReceiver(PKa, PKb, PKx, intermediateXB, sharedSecret) {
   const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  return db.collection(TRANSFER_SECRET_COLLECTION).findOne(
-    { PKa: PKa, PKb: PKb, PKx: PKx, intermediateXB: intermediateXB, sharedSecret: sharedSecret },
-  );
+  const db = connection.db(COMMITMENTS_DB);
+  return db
+    .collection(TRANSFER_SECRET_COLLECTION)
+    .findOne({ PKa, PKb, PKx, intermediateXB, sharedSecret });
 }
 
 export async function saveRegisterPairSenderReceiver(PKa, PKb, PKx, intermediateXB, sharedSecret) {
   const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
+  const db = connection.db(COMMITMENTS_DB);
 
-  logger.debug({ msg: 'Saving register pair sender receiver', PKa, PKb, PKx, intermediateXB, sharedSecret });
-
-  return db.collection(TRANSFER_SECRET_COLLECTION).insertOne({ PKa, PKb, PKx, intermediateXB, sharedSecret });
+  return db
+    .collection(TRANSFER_SECRET_COLLECTION)
+    .insertOne({ PKa, PKb, PKx, intermediateXB, sharedSecret });
 }
