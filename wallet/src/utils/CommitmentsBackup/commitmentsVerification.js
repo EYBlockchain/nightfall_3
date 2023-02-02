@@ -1,4 +1,5 @@
 /* ignore unused exports */
+import { edwardsCompress } from '../../common-files/utils/curve-maths/curves';
 /**
  *
  * @description this function should verify if the commitment's compressedZkpPublicKey match with one of the derived keys.
@@ -11,7 +12,11 @@ const isCommitmentsCPKDMatchDerivedKeys = (indexedDBDerivedKeys, commitmentsFrom
   return new Promise(resolve => {
     commitmentsFromBackup.forEach(commitment => {
       for (let i = 0; i < indexedDBDerivedKeys.length; i++) {
-        if (indexedDBDerivedKeys[i] === commitment.preimage.compressedZkpPublicKey) {
+        const compressedZkpPublicKey = edwardsCompress([
+          BigInt(commitment.preimage.zkpPublicKey[0]),
+          BigInt(commitment.preimage.zkpPublicKey[1]),
+        ]);
+        if (indexedDBDerivedKeys[i] === compressedZkpPublicKey) {
           break;
         }
         if (i === indexedDBDerivedKeys.length - 1) {
