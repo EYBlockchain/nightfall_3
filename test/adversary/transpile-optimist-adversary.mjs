@@ -61,7 +61,7 @@ const transpileBlockApi = _pathToSrc => {
         logger.debug(\`making block with the following bad Block Type: \${badBlockType}\`);
       }
       setMakeNow(setFlag, badBlockType);
-      res.send(\`Make block is set to ${setFlag}\`);
+      res.send(\`Make block is set to \${setFlag}\`);
     } catch (err) {
       next(err);
     }
