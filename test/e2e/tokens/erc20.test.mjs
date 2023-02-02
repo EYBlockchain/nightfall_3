@@ -326,7 +326,7 @@ describe('ERC20 tests', () => {
       await makeBlock();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue / 2 - fee);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(2 * transferValue - transferValue / 2 - fee);
     });
 
     it('Should fail at finalising previous withdrawal because it is too soon', async function () {
