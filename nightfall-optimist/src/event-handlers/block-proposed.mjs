@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import WebSocket from 'ws';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
