@@ -6,6 +6,7 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mj';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import {
   depositNTransactions,
@@ -326,6 +327,7 @@ describe('ERC20 tests', () => {
     it('Should withdraw from L2', async function () {
       expectTransaction(withdrawalTx);
       logger.debug(`Gas used was ${Number(withdrawalTx.gasUsed)}`);
+      await waitForTimeout(5000);
       await makeBlock();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
