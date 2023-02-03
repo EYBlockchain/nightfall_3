@@ -74,7 +74,8 @@ export async function getTreeByBlockNumberL2(blockNumberL2) {
   const db = connection.db(COMMITMENTS_DB);
   if (blockNumberL2 < 0) return new Timber(0, [], 0, undefined, HASH_TYPE, TIMBER_HEIGHT);
   try {
-    const { root, frontier, leafCount } = await db.collection(TIMBER_COLLECTION).findOne({blockNumberL2});
+    const { root, frontier, leafCount } =
+      (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
     const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
     return t;
   } catch (error) {
