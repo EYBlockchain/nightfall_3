@@ -140,12 +140,19 @@ describe('Optimist synchronisation tests', () => {
       const firstBlock = { ...block };
 
       // Now we have a block, let's delete last block from dB and create new one to force resync
-      dropMongoLastBlock();
       p = proposePromise();
+      logger.debug(`      Sending a second deposit...`);
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       await nf3Users[0].makeBlockNow();
+      logger.debug(`      Request make block...`);
+      await waitForTimeout(1000);
+      logger.debug(`      Request Drop last block from mongo...`);
+      dropMongoLastBlock();
+      logger.debug(`      Wait for event blockProposed...`);
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      logger.debug(`      blockProposed...`);
       const { block: secondBlock } = await p;
+      logger.debug(`      resolbe propose promise...`);
 
       await waitForTimeout(5000);
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);

@@ -73,6 +73,8 @@ async function blockProposedEventHandler(data) {
   }
 
   // If an out of order L2 block is detected,
+  // WARNING: if we ever reach this scenario, this optimist may have built a block based
+  //  in an incorrect state and will be challengeable
   if (block.blockNumberL2 > nextBlockNumberL2) {
     consecutiveResyncAttempts++;
     await syncState(lastInOrderL1Block);
