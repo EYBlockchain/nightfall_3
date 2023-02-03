@@ -9,25 +9,28 @@ import { findTransactionInMempools, setL2TransactionStatus } from '../services/t
 const router = express.Router();
 
 /**
- * A successful request will returns a `status` for the specified transaction
+ * A successful request will return `blockNumberL2` and `status` for the specified transaction (tx)
  * If blockNumberL2 => 0, the transaction was 'mined'
  * If blockNumberL2 === -1, the transaction is in the 'mempool'
- * Errors: 404 if not found, 400 if transaction is not valid
+ * Errors: 404 tx not found, 400 tx found not valid
  */
 router.get('/status/:l2TransactionHash', async (req, res, next) => {
   const { l2TransactionHash } = req.params;
 
   try {
     let transaction = await getTransactionByTransactionHash(l2TransactionHash);
+
     if (transaction === null) {
       logger.debug('Transaction not in Client, check mempools..');
       transaction = await findTransactionInMempools(l2TransactionHash);
     }
+
     logger.debug({ msg: 'Transaction found', transaction });
     const status = setL2TransactionStatus(transaction);
-    res.json({ status });
+
+    const { blockNumberL2 } = transaction;
+    res.json({ status, blockNumberL2 });
   } catch (err) {
-    res.json({ error: err.message });
     next(err);
   }
 });

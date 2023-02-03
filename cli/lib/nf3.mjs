@@ -1710,18 +1710,16 @@ class Nf3 {
   }
 
   /**
-   * Find transaction (tx) by L2 hash
+   * Get L2 transaction (tx) status for a given L2 tx hash
    *
    * @async
-   * @method getTransactionStatus
+   * @method getL2TransactionStatus
    * @param {string} transactionHash - L2 tx hash
-   * @returns {Promise<number>} - If the tx is found (ie mined), returns the L2 block number that contains the tx,
-   * else returns -1
+   * @returns {Promise<{ status, blockNumberL2 }>} status - 'mined' | 'mempool'
+   * @throws 404 tx not found, 400 tx is incorrect
    */
-  async getTransactionStatus(l2TransactionHash) {
-    const res = await axios.get(`${this.clientBaseUrl}/transaction/status/${l2TransactionHash}`);
-    // TODO review return - also in docstring above
-    return res.data.blockNumberL2;
+  async getL2TransactionStatus(l2TransactionHash) {
+    return axios.get(`${this.clientBaseUrl}/transaction/status/${l2TransactionHash}`);
   }
 }
 

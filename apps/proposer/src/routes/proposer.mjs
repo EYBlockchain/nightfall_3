@@ -58,8 +58,8 @@ router.get('/mempool/:l2TransactionHash', async (req, res, next) => {
   const { l2TransactionHash } = req.params;
 
   try {
-    const optimistRes = await nf3.requestMempoolTransactionByL2TransactionHash(l2TransactionHash);
-    res.json(optimistRes.data);
+    const { data } = await nf3.requestMempoolTransactionByL2TransactionHash(l2TransactionHash);
+    res.json(data);
   } catch (error) {
     next(error);
   }

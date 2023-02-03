@@ -216,7 +216,7 @@ describe('Basic Proposer tests', () => {
     const currentZkpPublicKeyBalance =
       (await nf3User.getLayer2Balances())[erc20Address]?.[0].balance || 0;
 
-    await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+    // note deposit made in previous mempool test
     await bootProposer.makeBlockNow();
     await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 

@@ -18,7 +18,7 @@ const eventLogs = [];
 const nf3User = new Nf3(signingKeys.user1, environment);
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
-describe('Client API tests via Nf3', () => {
+describe('Client transactions API tests', () => {
   let erc20Address;
   let shieldAddress;
   let stateAddress;
@@ -34,28 +34,31 @@ describe('Client API tests via Nf3', () => {
     await nf3Proposer.startProposer();
 
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
-    shieldAddress = await nf3User.shieldContractAddress;
-    stateAddress = await nf3User.stateContractAddress;
+    shieldAddress = nf3User.shieldContractAddress;
+    stateAddress = nf3User.stateContractAddress;
 
     web3Client.subscribeTo('logs', eventLogs, { address: shieldAddress });
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
   });
 
-  describe('getTransactionStatus', () => {
-    // At the moment, not found will not be signaled as such
-    // We will only suggest that the tx is still in the mempool (ie blockNumberL2 -1)
-    const NOT_FOUND = -1;
+  describe('Status', () => {
     const NO_FEE = 0;
-    const L2_GENESIS_BLOCK_NO = 0;
-
+    const STATUS_MINED = 'mined';
+    const STATUS_MEMPOOL = 'mempool';
+    const BLOCK_NO_L2_MEMPOOL = -1;
+    const BLOCK_NO_L2_GENESIS = 0;
     let l2TxHash = 'pepe';
 
-    it('Should return -1 for any string sent as L2 tx hash', async function () {
-      const result = await nf3User.getTransactionStatus(l2TxHash);
-      expect(result).to.equal(NOT_FOUND);
+    it('Should fail for any string sent as L2 tx hash since the hash cannot be found', async function () {
+      try {
+        await nf3User.getL2TransactionStatus(l2TxHash);
+        expect.fail('Filter mempool did not fail');
+      } catch (err) {
+        expect(err.response).to.have.property('status', 404);
+      }
     });
 
-    it('Should return -1 for a deposit transaction still in the proposers mempool', async function () {
+    it(`Should return status ${STATUS_MEMPOOL} for a deposit tx still in the proposers mempool`, async function () {
       // Arrange: make deposit, then
       // wait for the blockchain event...
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, NO_FEE);
@@ -66,19 +69,23 @@ describe('Client API tests via Nf3', () => {
       const depositTx = (await nf3Proposer.getMempoolTransactions())[0];
       l2TxHash = depositTx._id;
 
-      // Act, assert
-      const result = await nf3User.getTransactionStatus(l2TxHash);
-      expect(result).to.equal(NOT_FOUND);
+      // Act
+      const { data } = await nf3User.getL2TransactionStatus(l2TxHash);
+
+      // Assert
+      expect(data).to.have.property('status', STATUS_MEMPOOL);
+      expect(data).to.have.property('blockNumberL2', BLOCK_NO_L2_MEMPOOL);
     });
 
-    it('Should return l2 block number for mined transactions', async function () {
+    it(`Should return status ${STATUS_MINED} for previous deposit after mining L2 block`, async function () {
       // Arrange: make block
       await nf3Proposer.makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // Act, assert
-      const result = await nf3User.getTransactionStatus(l2TxHash);
-      expect(result).to.equal(L2_GENESIS_BLOCK_NO);
+      const { data } = await nf3User.getL2TransactionStatus(l2TxHash);
+      expect(data).to.have.property('status', STATUS_MINED);
+      expect(data).to.have.property('blockNumberL2', BLOCK_NO_L2_GENESIS);
     });
   });
 
