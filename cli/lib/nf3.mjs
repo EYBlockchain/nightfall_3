@@ -264,6 +264,9 @@ class Nf3 {
    * Filter the mempool by l2 transaction hash
    * @method requestMempoolTransactionByL2TransactionHash
    * @async
+   * @param {string} l2TransactionHash - L2 tx hash
+   * @returns {Promise<AxiosResponse>}
+   * @throws 404 tx not found
    */
   async requestMempoolTransactionByL2TransactionHash(l2TransactionHash) {
     return axios.get(`${this.optimistBaseUrl}/proposer/mempool/${l2TransactionHash}`);
@@ -1714,8 +1717,8 @@ class Nf3 {
    *
    * @async
    * @method getL2TransactionStatus
-   * @param {string} transactionHash - L2 tx hash
-   * @returns {Promise<{ status, blockNumberL2 }>} status - 'mined' | 'mempool'
+   * @param {string} l2TransactionHash - L2 tx hash
+   * @returns {Promise<AxiosResponse>}
    * @throws 404 tx not found, 400 tx is incorrect
    */
   async getL2TransactionStatus(l2TransactionHash) {
