@@ -146,13 +146,18 @@ describe('Optimist synchronisation tests', () => {
       await nf3Users[0].makeBlockNow();
       logger.debug(`      Request make block...`);
       await waitForTimeout(1000);
+      const nL2BlocksOptimistA = await getOptimistMongoL2Blocks();
+      const nL2BlocksClientA = await getClientMongoL2Blocks();
+      logger.debug(
+        `Blocks before dropping: client: ${nL2BlocksClientA}, optimist ${nL2BlocksOptimistA}`,
+      );
       logger.debug(`      Request Drop last block from mongo...`);
       dropMongoLastBlock();
       logger.debug(`      Wait for event blockProposed...`);
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       logger.debug(`      blockProposed...`);
       const { block: secondBlock } = await p;
-      logger.debug(`      resolbe propose promise...`);
+      logger.debug(`      resolve propose promise...${secondBlock}`);
 
       await waitForTimeout(5000);
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
@@ -160,6 +165,7 @@ describe('Optimist synchronisation tests', () => {
       // Check that we have all blocks now
       const nL2BlocksOptimist = await getOptimistMongoL2Blocks();
       const nL2BlocksClient = await getClientMongoL2Blocks();
+      logger.debug(`Blocks after dropping: client: ${nL2BlocksClient}, optimist ${nL2BlocksOptimist}`);
       expect(nL2BlocksOptimist - secondBlock.blockNumberL2).to.equal(1);
       expect(nL2BlocksClient - secondBlock.blockNumberL2).to.equal(1);
     });

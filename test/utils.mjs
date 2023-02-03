@@ -618,6 +618,7 @@ export async function getOptimistMongoL2Blocks() {
   } finally {
     mongo.disconnect();
   }
+  logger.debug(`Optimist's N Blocks: ${nL2Blocks}`);
   return nL2Blocks;
 }
 
@@ -631,6 +632,7 @@ export async function getClientMongoL2Blocks() {
   } finally {
     mongo.disconnect();
   }
+  logger.debug(`Client's N Blocks: ${nL2Blocks}`);
   return nL2Blocks;
 }
 
