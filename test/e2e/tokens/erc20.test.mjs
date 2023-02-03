@@ -6,7 +6,6 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
-import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import {
   depositNTransactions,
@@ -16,6 +15,7 @@ import {
   waitForSufficientTransactionsMempool,
   Web3Client,
   getUserCommitments,
+  waitForTimeout,
 } from '../../utils.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
 import constants from '../../../common-files/constants/index.mjs';
