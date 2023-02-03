@@ -307,6 +307,9 @@ describe('ERC20 tests', () => {
       userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
       // Add two transactions in same block to check that finalize withdrawal works
       // https://github.com/EYBlockchain/nightfall_3/issues/1367
+      logger.debug(`Balance ${userL2BalanceBefore}`);
+      logger.debug(`Deposit of ${transferValue} and fee ${fee}`);
+      logger.debug(`Withdraw of ${transferValue / 2} and fee ${fee}`);
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       withdrawalTx = await nf3User.withdraw(
         false,
@@ -326,6 +329,8 @@ describe('ERC20 tests', () => {
       await makeBlock();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      logger.debug(`Balance Before ${userL2BalanceBefore}`);
+      logger.debug(`Balance After ${userL2BalanceAfter}`);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue / 2 - 2 * fee);
     });
 
