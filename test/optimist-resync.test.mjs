@@ -7,7 +7,13 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { buildBlockSolidityStruct } from '../common-files/utils/block-utils.mjs';
 import Transaction from '../common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
-import { Web3Client, waitForTimeout, restartOptimist } from './utils.mjs';
+import {
+  Web3Client,
+  waitForTimeout,
+  restartOptimist,
+  dropOptimistMongoLastBlock,
+  getOptimistMongoL2Blocks,
+} from './utils.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -116,6 +122,36 @@ describe('Optimist synchronisation tests', () => {
       // The promise resolves once the block is on-chain.
       const { block: secondBlock } = await p;
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
+    });
+
+    it('Drop block from dB, and check optimist catches event and forces a resync', async function () {
+      // We create enough good transactions to fill a block full of deposits.
+      logger.debug(`      Sending a deposit...`);
+      let p = proposePromise();
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+
+      // we can use the emitter that nf3 provides to get the block and transactions we've just made.
+      // The promise resolves once the block is on-chain.
+      const { block } = await p;
+      const firstBlock = { ...block };
+
+      // Now we have a block, let's delete last block from dB and create new one to force resync
+      dropOptimistMongoLastBlock();
+      p = proposePromise();
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      await nf3Users[0].makeBlockNow();
+      await web3Client.waitForEvent(eventLogs, ['blockProposed']);
+      const { block: secondBlock } = await p;
+
+      await waitForTimeout(5000);
+      expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
+
+      // Check that we have all blocks now
+      const nL2Blocks = await getOptimistMongoL2Blocks();
+      expect(nL2Blocks - secondBlock.blockNumberL2).to.equal(1);
     });
 
     it('Resync optimist after making a good block dropping Db', async function () {

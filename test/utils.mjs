@@ -608,7 +608,53 @@ const dropOptimistMongoBlocksCollection = async () => {
   }
 };
 
-export async function restartOptimist(nf3Proposer, dropDb = true) {
+export async function getOptimistMongoL2Blocks() {
+  let mongoConn;
+  let nL2Blocks = 0;
+  try {
+    mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+    nL2Blocks = await mongoConn.db('optimist_data').collection('timber').count();
+  } finally {
+    mongo.disconnect();
+  }
+  return nL2Blocks;
+}
+
+export async function dropOptimistMongoLastBlock() {
+  logger.debug(`Dropping Optimist's Last proposed block from timber and block collections`);
+  let mongoConn;
+  try {
+    mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+    const nL2Blocks = await mongoConn.db('optimist_data').collection('timber').count();
+
+    while (
+      !(await mongoConn
+        .db('optimist_data')
+        .collection('blocks')
+        .deleteMany({ blockNumberL2: nL2Blocks - 1 }))
+    ) {
+      logger.debug(`Retrying dropping MongoDB blocks colection`);
+      await waitForTimeout(2000);
+    }
+    while (
+      !(await mongoConn
+        .db('optimist_data')
+        .collection('timber')
+        .deleteMany({ blockNumberL2: nL2Blocks - 1 }))
+    ) {
+      logger.debug(`Retrying dropping MongoDB timber colection`);
+      await waitForTimeout(2000);
+    }
+
+    logger.debug(`Optimist's Mongo blocks dropped successfuly!`);
+  } finally {
+    mongo.disconnect();
+  }
+};
+
+export async function restartOptimist(nf3Proposer, dropDb = true,) {
   const options = {
     config: [
       'docker/docker-compose.yml',
