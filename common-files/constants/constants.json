@@ -7,6 +7,7 @@
   "DEPOSIT": "deposit",
   "DEPOSIT_FEE": "depositfee",
   "TRANSFER": "transfer",
+  "TRANSFER_REGULATOR": "transfer_regulator",
   "WITHDRAW": "withdraw",
   "TOKENISE": "tokenise",
   "BURN": "burn",

@@ -117,6 +117,7 @@ module.exports = {
     `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
       process.env.BLOCKCHAIN_PATH || ''
     }`,
+  REGULATOR_URL: process.env.REGULATOR_URL,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   WEB3_OPTIONS: {
@@ -160,6 +161,12 @@ module.exports = {
       isWithdrawing: false,
     },
     transfer: {
+      numberNullifiers: 4,
+      numberCommitments: 3,
+      isEscrowRequired: false,
+      isWithdrawing: false,
+    },
+    transfer_regulator: {
       numberNullifiers: 4,
       numberCommitments: 3,
       isEscrowRequired: false,
