@@ -11,8 +11,9 @@ import {
   Web3Client,
   waitForTimeout,
   restartOptimist,
-  dropOptimistMongoLastBlock,
+  dropMongoLastBlock,
   getOptimistMongoL2Blocks,
+  getClientMongoL2Blocks,
 } from './utils.mjs';
 
 // so we can use require with mjs file
@@ -139,7 +140,7 @@ describe('Optimist synchronisation tests', () => {
       const firstBlock = { ...block };
 
       // Now we have a block, let's delete last block from dB and create new one to force resync
-      dropOptimistMongoLastBlock();
+      dropMongoLastBlock();
       p = proposePromise();
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       await nf3Users[0].makeBlockNow();
@@ -150,8 +151,10 @@ describe('Optimist synchronisation tests', () => {
       expect(secondBlock.blockNumberL2 - firstBlock.blockNumberL2).to.equal(1);
 
       // Check that we have all blocks now
-      const nL2Blocks = await getOptimistMongoL2Blocks();
-      expect(nL2Blocks - secondBlock.blockNumberL2).to.equal(1);
+      const nL2BlocksOptimist = await getOptimistMongoL2Blocks();
+      const nL2BlocksClient = await getClientMongoL2Blocks();
+      expect(nL2BlocksOptimist - secondBlock.blockNumberL2).to.equal(1);
+      expect(nL2BlocksClient - secondBlock.blockNumberL2).to.equal(1);
     });
 
     it('Resync optimist after making a good block dropping Db', async function () {
