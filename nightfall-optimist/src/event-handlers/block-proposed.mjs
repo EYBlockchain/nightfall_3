@@ -14,8 +14,7 @@ import {
   getTreeByBlockNumberL2,
   saveTree,
   saveInvalidBlock,
-  deleteDuplicateCommitmentsFromMemPool,
-  deleteDuplicateNullifiersFromMemPool,
+  deleteDuplicateCommitmentsAndNullifiersFromMemPool,
   saveTransaction,
   getNumberOfL2Blocks,
 } from '../services/database.mjs';
@@ -109,8 +108,12 @@ async function blockProposedEventHandler(data) {
     const blockNullifiers = transactions
       .map(t => t.nullifiers.filter(c => c !== ZERO))
       .flat(Infinity);
-    await deleteDuplicateCommitmentsFromMemPool(blockCommitments, block.transactionHashes);
-    await deleteDuplicateNullifiersFromMemPool(blockNullifiers, block.transactionHashes);
+
+    await deleteDuplicateCommitmentsAndNullifiersFromMemPool(
+      blockCommitments,
+      blockNullifiers,
+      block.transactionHashes,
+    );
 
     const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
     const updatedTimber = Timber.statelessUpdate(
