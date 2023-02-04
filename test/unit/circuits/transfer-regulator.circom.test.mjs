@@ -42,56 +42,57 @@ describe('Test transfer regulator circuit', function () {
   let packedErcAddressPrivate;
   let idRemainderPrivate;
   let ephemeralKey;
+  let sharedPubSender;
 
   before(async () => {
     circuit = await tester(circuitPath, { reduceConstraints: false });
     await circuit.loadConstraints();
     console.log(`Constraints: ${circuit.constraints.length}\n`);
 
-    value = '0';
+    value = '52615104113680';
     fee = '1';
     tokenType = '0';
+    historicRootBlockNumberL2 = ['0', '2', '0', '0'];
+    ercAddress = '11037928113065011723621837603297555372128306067490168468476261520333215016451';
     tokenId = [
-      '312823736',
-      '3256528173',
-      '1469971658',
-      '2066892461',
-      '3857016417',
-      '3719684205',
-      '3518546394',
-      '1383280089',
+      '2767640935',
+      '2692862831',
+      '1366970421',
+      '341149654',
+      '3926962466',
+      '3136837739',
+      '2024592492',
+      '1079674086',
     ];
-    historicRootBlockNumberL2 = ['2', '0', '0', '0'];
-    ercAddress = '132879599395472219364501254852296720465866736717521941213348774738587710070';
+    recipientAddress =
+      '7204897914463877751569834808582585821054161548271355365331299819830610376760';
     commitments = [
-      '17757779475771887336357842275909057132037232354039100658148751003055531261983',
-      '12554361619243879049908583107882479056516016877280674758017429953383772997808',
+      '14152439929049712769864808654206087814269625799394135115988216087473179820627',
+      '15934666674837230553448159446654843311594766542351759235099852343111418588705',
       '0',
     ];
     nullifiers = [
-      '117197709477382921538019157130002666423833032783762819352913222960882908146',
-      '14300342375687883043781581600514382717671282147270299098452723711992633103162',
+      '17311493958849545193602041137608621636003642830429344983018506157521356554344',
+      '2207729929134374905111074270014121907881219345201302297326087557849574514218',
       '0',
       '0',
     ];
     compressedSecrets = [
-      '21168098505838680327273190678857184515054246835679269731579160077666503959877',
-      '10169841309943788425388858633837196980948099681313251904021825048923098020873',
+      '11585055354989698269877797980452971517592487277655690579135000134735218481243',
+      '9255503910041462247771821600280469663667490657631042670808205807969725761063',
     ];
     roots = [
-      '20964734282951928498431654994464533343258690792797020655572338130275330702810',
-      '3255859854610022712078710786625410158921384524803529764848754866431549438369',
+      '8115467701260440528096245764453859000019448019831060381341109750413454423249',
+      '912572422606684321134210801401173594062464573954172864442802425149947088851',
       '0',
       '0',
     ];
     feeAddress = '1319533947831612348694315757168650042041713553662';
-    recipientAddress =
-      '7756502216251446190890576589102414109278544248834858022081187213535079180632';
     rootKey = '2279923558995011751611063584918713773156544989985830828459384641106187332209';
-    nullifiersValues = ['0', '10', '0', '0'];
+    nullifiersValues = ['9', '9', '0', '0'];
     nullifiersSalts = [
-      '15340017689176527589104004637940033165402219799349309558245567952247042957987',
-      '17050793308128068127075637850076756759332532730466377884930007248365074989258',
+      '20513902764086722279230790388316452049712019845264173356954799219117530020083',
+      '10841558031173063604568111398826688175705902243878693366886722960342536541599',
       '0',
       '0',
     ];
@@ -127,7 +128,7 @@ describe('Test transfer regulator circuit', function () {
         '0',
         '0',
         '0',
-        '20485083585002706637081569015766164906760950525323997630771107581802573080375',
+        '0',
         '0',
       ],
       [
@@ -161,7 +162,7 @@ describe('Test transfer regulator circuit', function () {
         '0',
         '0',
         '0',
-        '0',
+        '525251941230013484363380026201828190666339810465305938728643722253281424202',
         '0',
       ],
       [
@@ -233,12 +234,11 @@ describe('Test transfer regulator circuit', function () {
         '0',
       ],
     ];
-
-    orders = ['2', '0', '0', '0'];
-    commitmentsValues = ['0', '9', '0'];
+    orders = ['0', '2', '0', '0'];
+    commitmentsValues = ['10', '7', '0'];
     commitmentsSalts = [
-      '21076183789647231661714109116890378504343710611690685717543855437204853365978',
-      '1522068224836897283121160171456811218383856683932886147822804168466578616752',
+      '12151054110963596045688559756029865234382274992995212084244447308464320651325',
+      '17683441280872854890097587392811695118644690590701452057917597918623544285485',
       '0',
     ];
     recipientPublicKey = [
@@ -252,10 +252,13 @@ describe('Test transfer regulator circuit', function () {
       ],
       ['0', '0'],
     ];
-
-    packedErcAddressPrivate = '1569275434574047503899461711674324182407852210045805191109';
-    idRemainderPrivate = '3';
-    ephemeralKey = '963948797541814037237923107657092227793394179262775402387658355273258414634';
+    packedErcAddressPrivate = '1319533947831612348694315757168650042041713553662';
+    idRemainderPrivate = '0';
+    ephemeralKey = '909701221553055453461978359737195753310684621371530022208323508315457158526';
+    sharedPubSender = [
+      '7854089346243255544872520686583446599765321252248122998010154744180687431657',
+      '15142832371551347777184090185309351432826131118144007300084258255168829320473',
+    ];
   });
 
   it('Should verify a valid transfer', async () => {
@@ -284,6 +287,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     const w = await circuit.calculateWitness(input);
@@ -320,6 +324,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -361,6 +366,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -397,6 +403,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -433,6 +440,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -469,6 +477,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -505,6 +514,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -541,6 +551,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -577,6 +588,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -613,6 +625,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -649,6 +662,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -692,6 +706,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey,
+      sharedPubSender,
     };
 
     try {
@@ -728,6 +743,7 @@ describe('Test transfer regulator circuit', function () {
       packedErcAddressPrivate,
       idRemainderPrivate,
       ephemeralKey: 0,
+      sharedPubSender,
     };
 
     try {

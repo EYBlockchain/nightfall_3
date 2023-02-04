@@ -63,7 +63,7 @@ template TransferRegulator(N,C) {
     signal input packedErcAddressPrivate;
     signal input idRemainderPrivate;
     signal input ephemeralKey;
-    signal input sharedPubSender[C][2];
+    signal input sharedPubSender[2];
     
     // Check that the transaction does not have nullifiers nor commitments duplicated
     var checkDuplicates = VerifyDuplicates(N,C)(nullifiers, commitments);
@@ -162,7 +162,7 @@ template TransferRegulator(N,C) {
     var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
     // Check that the encryption of the recipient's commitment preimage was performed appropiately
     var checkEncryption = VerifyEncryptionRegulator()([ercAddress, recipientAddress, compressedSecrets[0], compressedSecrets[1]], 
-        packedErcAddressPrivate, idRemainderPrivate, commitmentsValues[0], commitmentsSalts[0], sharedPubSender[0], 
+        packedErcAddressPrivate, idRemainderPrivate, commitmentsValues[0], commitmentsSalts[0], sharedPubSender, 
         tokenIdBits, ephemeralKey, value);
     checkEncryption === 1;
 }

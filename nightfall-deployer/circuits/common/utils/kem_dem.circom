@@ -4,7 +4,7 @@ include "../../../node_modules/circomlib/circuits/poseidon.circom";
 include "../../../node_modules/circomlib/circuits/escalarmulany.circom";
 include "../../../node_modules/circomlib/circuits/escalarmulfix.circom";
 include "../../../node_modules/circomlib/circuits/bitify.circom";
-
+include "../../../node_modules/circomlib/circuits/gates.circom";
 /**
  * Calculates the shared encryption Key
  * @input ephemeralKey[256] - {Array[Bool]} -
@@ -104,10 +104,15 @@ template KemDemReg(N) {
     var encryptionKeyBits[256] = Num2Bits(256)(encryptionKey);
     var nonceBits[256] = Num2Bits(256)(nonce);
 
-    // var encryptionKeyNonce = encryptionKey ^ nonce; // This is non quadratic constraint!!!
+    var encryptionKeyNonceBits[256];
+    // Calculate the root using the sibling path
+    for(var i = 0; i < 256; i++) {   
+        encryptionKeyNonceBits[i] = XOR()(encryptionKeyBits[i], nonceBits[i]);
+    }
+    var encryptionKeyNonce = Bits2Num(256)(encryptionKeyNonceBits);
 
     // Encrpyt the plain texts using the encryption key
-    cipherText <== Dem(N)(encryptionKey, plainText);
+    cipherText <== Dem(N)(encryptionKeyNonce, plainText);
     
     // Calculate the ephemeral Public key
     ephemeralPublicKey <== EscalarMulFix(256, 

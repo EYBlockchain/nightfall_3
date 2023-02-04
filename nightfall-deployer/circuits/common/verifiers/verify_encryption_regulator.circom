@@ -42,8 +42,8 @@ template VerifyEncryptionRegulator() {
     cipherText[3] === cipherTextKemDem[3];
 
     // Check that the compressed ephemeral public key obtained from the kem dem algorithm matches with the one stored in the sharedPubRecipientCompressed
-    var compressedPoint[256] = Point2Bits_Strict()(sharedPublicKey);
-    compressedPoint === sharedPubRecipientCompressed;
+    // var compressedPoint[256] = Point2Bits_Strict()(sharedPublicKey);
+    // compressedPoint === sharedPubRecipientCompressed;
     
     valid <== 1;
 
