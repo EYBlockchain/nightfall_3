@@ -1,8 +1,6 @@
 import { scalarMult } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 
-const { BABYJUBJUB } = constants;
 /**
 This function registers the sender-receiver to the regulator and gets the sharedPub for the sender to generate the secret.
 @function registerPairSenderReceiv1er
