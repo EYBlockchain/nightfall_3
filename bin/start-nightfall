@@ -34,6 +34,8 @@ while [ -n "$1" ]; do
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
                                     ;;
+      -n  | --nothing)              FILE="-f docker/docker-compose.yml" 
+                                    ;;                              
       * )                           usage
                               exit 1
     esac
@@ -70,6 +72,11 @@ fi
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
   echo -n 'Removing '
   docker volume rm nightfall_3_build
+fi
+
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_.openzeppelin) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_.openzeppelin
 fi
 
 if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth1-chain) ]]; then
