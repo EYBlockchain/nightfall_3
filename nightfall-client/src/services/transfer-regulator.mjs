@@ -21,13 +21,13 @@ import {
 import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
-import { encrypt, genTransferKeysForObservers, packSecrets, randomHexNonce } from './kem-dem.mjs';
+import { encrypt, genTransferKeysForObservers, packSecrets, randomNonce } from './kem-dem.mjs';
 import registerPairSenderReceiverToRegulator from '../utils/regulator.mjs';
 import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
-const { VK_IDS, REGULATOR_URL } = config;
+const { VK_IDS, REGULATOR_URL, NONCE_ENCRYPTION_BITS } = config;
 const { SHIELD_CONTRACT_NAME, TRANSFER_REGULATOR } = constants;
 const { generalise } = gen;
 
@@ -98,13 +98,13 @@ async function transferRegulator(transferParams) {
     );
 
     const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
-    nonce = randomHexNonce(12); // generate a 6 bytes random nonce (12 hex digits)
+    nonce = randomNonce(1, 2 ** NONCE_ENCRYPTION_BITS - 1); // generate a 6 bytes random nonce
 
     const compressedSecrets = encrypt(
       generalise(ePrivate),
       generalise(sharedPubSender),
       [packedErc.bigInt, unpackedTokenID.bigInt, values[0].bigInt, commitmentsInfo.salts[0].bigInt],
-      nonce.bigInt,
+      nonce,
     );
 
     // Compress the public key as it will be put on-chain for the receiver
@@ -125,7 +125,7 @@ async function transferRegulator(transferParams) {
       numberNullifiers: VK_IDS[circuitName].numberNullifiers,
       numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
-      value: nonce ? nonce.bigInt : 0,
+      value: nonce || 0,
     });
 
     const privateData = {

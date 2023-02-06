@@ -122,14 +122,15 @@ const genTransferKeysForObservers = async (senderPrivateKey, receiverPublicKey) 
 };
 
 /**
-This function gets a random hex nonce of numPositions bytes, and another one of 32 bytes based on the previous one.
-@function randomHexNonce
-@param {Number} numPositions - The private key of the sender
+This function gets a random nonce between min and max.
+@function randomNonce
+@param {Number} min - Min value of the nonce
+@param {Number} max - Max value of the nonce
 @returns {GeneralNumber} The random hex nonce 
 */
-export const randomHexNonce = numPositions => {
-  const nonce = (Math.random() * 0xf ** (numPositions + 2)).toString(16).slice(0, numPositions);
-  return new GN(`0x${nonce}`, 'hex');
+export const randomNonce = (min, max) => {
+  const nonce = BigInt(Math.floor(Math.random() * (max - min + 1) + min));
+  return nonce;
 };
 
 /**
