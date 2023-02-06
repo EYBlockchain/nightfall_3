@@ -37,9 +37,11 @@ const web3Client = new Web3Client();
 let erc20Address;
 let stateAddress;
 const eventLogs = [];
-const intermediateCaCert = fs.readFileSync('test/unit/utils/Nightfall_Intermediate_CA.cer');
-const endUserCert = fs.readFileSync('test/unit/utils/Nightfall_end_user_policies.cer');
-const derPrivateKey = fs.readFileSync('test/unit/utils/Nightfall_end_user_policies.der');
+const intermediateCaCert = fs.readFileSync(
+  'test/unit/utils/mock_certs/Nightfall_Intermediate_CA.cer',
+);
+const endUserCert = fs.readFileSync('test/unit/utils/mock_certs/Nightfall_end_user_policies.cer');
+const derPrivateKey = fs.readFileSync('test/unit/utils/mock_certs/Nightfall_end_user_policies.der');
 
 describe('x509 tests', () => {
   before(async () => {
