@@ -12,7 +12,7 @@ import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random
 const { expect } = chai;
 const { WEB3_PROVIDER_OPTIONS } = config;
 
-const ENVIRONMENT = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const ENVIRONMENT = config.ENVIRONMENTS[config.ENVIRONMENT];
 
 const USE_EXTERNAL_NODE = config.USE_EXTERNAL_NODE === 'true';
 

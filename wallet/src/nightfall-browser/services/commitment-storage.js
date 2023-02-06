@@ -374,20 +374,27 @@ export async function getWalletBalance(compressedZkpPublicKey) {
     .map(e => ({
       ercAddress: `0x${BigInt(e.preimage.ercAddress).toString(16).padStart(40, '0')}`, // Pad this to actual address length
       compressedZkpPublicKey: e.compressedZkpPublicKey,
-      tokenId: !!BigInt(e.preimage.tokenId),
+      tokenId: `0x${BigInt(e.preimage.tokenId).toString(16).padStart(64, '0')}`,
       value: BigInt(e.preimage.value),
     }))
-    .filter(e => e.tokenId || e.value > 0) // there should be no commitments with tokenId and value of ZERO
-    .map(e => ({
-      compressedZkpPublicKey: e.compressedZkpPublicKey,
-      ercAddress: e.ercAddress,
-      balance: e.tokenId ? 1 : e.value,
-    }))
+    .map(e => {
+      return {
+        compressedZkpPublicKey: e.compressedZkpPublicKey,
+        ercAddress: e.ercAddress,
+        balance: e.value,
+        tokenId: e.tokenId,
+      };
+    })
     .reduce((acc, e) => {
-      if (!acc[e.compressedZkpPublicKey]) acc[e.compressedZkpPublicKey] = {};
-      if (!acc[e.compressedZkpPublicKey][e.ercAddress])
-        acc[e.compressedZkpPublicKey][e.ercAddress] = 0n;
-      acc[e.compressedZkpPublicKey][e.ercAddress] += e.balance;
+      if (!acc[e.ercAddress]) acc[e.ercAddress] = [];
+
+      const list = acc[e.ercAddress];
+      const tokenIdIndex = list.findIndex(c => c.tokenId === e.tokenId);
+      if (tokenIdIndex >= 0) {
+        list[tokenIdIndex].balance += e.balance;
+      } else {
+        acc[e.ercAddress].push({ balance: e.balance, tokenId: e.tokenId });
+      }
       return acc;
     }, {});
 }

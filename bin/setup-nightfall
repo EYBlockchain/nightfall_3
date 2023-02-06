@@ -2,8 +2,10 @@
 
 set -e
 
-# Install node dependencies
-npm ci
+if [ "$SKIP_NPM_CI" == "" ]; then
+  # Install node dependencies
+  npm ci
+fi
 
 OS_ARCH=$(uname -m)
 NO_CACHE_FLAG=''
@@ -13,7 +15,9 @@ if [ $OS_ARCH != "x86_64" ]; then
   NO_CACHE_FLAG='--no-cache'
 fi
 
-docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
+if [ "$SKIP_CIRCOM_BUILD" == "" ]; then
+  docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
+fi
 
 # containers built separately. A parallel build fails.
 
@@ -42,7 +46,7 @@ if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"optimist"* 
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"proposer"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.apps.yml build ${NO_CACHE_FLAG} proposer
+  docker-compose -f docker/docker-compose.apps.yml build ${NO_CACHE_FLAG} proposer
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"worker"* ]]; then

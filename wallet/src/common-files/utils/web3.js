@@ -5,7 +5,7 @@ import Web3 from 'web3';
 const { ethereum } = global;
 
 export const ChainIdMapping = {
-  preprod: { chainId: '0x5', chainName: 'Goerli' },
+  preprod: { chainId: '0x539', chainName: 'Ganache' },
   testnet: { chainId: '0x5', chainName: 'Goerli' },
   mainnet: { chainId: '0x1', chainName: 'Mainnet' },
   staging: { chainId: '0x5', chainName: 'Goerli' },
@@ -40,16 +40,14 @@ export default {
     });
 
     const chainId = await ethereum.request({ method: 'eth_chainId' });
+    const targetEnv = process.env.REACT_APP_MODE.replace('-', '_');
     console.log('Chain ID', chainId);
-    if (
-      chainId !== ChainIdMapping[process.env.REACT_APP_MODE].chainId &&
-      process.env.REACT_APP_MODE !== 'local'
-    )
+    if (chainId !== ChainIdMapping[targetEnv].chainId && process.env.REACT_APP_MODE !== 'local')
       await ethereum.request({
         method: 'wallet_switchEthereumChain',
         params: [
           {
-            chainId: ChainIdMapping[process.env.REACT_APP_MODE].chainId,
+            chainId: ChainIdMapping[targetEnv].chainId,
           },
         ], // chainId must be in hexadecimal numbers
       });

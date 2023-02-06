@@ -7,8 +7,10 @@ import {
   checkIndexDBForCircuit,
   checkIndexDBForCircuitHash,
   getMaxBlock,
+  getNthBlockRoot,
   emptyStoreBlocks,
   emptyStoreTimber,
+  deleteBlocksByBlockNumberL2,
 } from '@Nightfall/services/database';
 import { fetchAWSfiles } from '@Nightfall/services/fetch-circuit';
 import * as Storage from '../../utils/lib/local-storage';
@@ -33,6 +35,12 @@ export const initialState = {
 export const UserContext = React.createContext({
   state: initialState,
 });
+
+const EVENT_TYPES = {
+  SYNC: 'sync',
+  BLOCKPROPOSED: 'blockProposed',
+  ROLLBACK: 'rollback',
+};
 
 // eslint-disable-next-line react/prop-types
 export const UserProvider = ({ children }) => {
@@ -81,9 +89,13 @@ export const UserProvider = ({ children }) => {
     // Connection opened
     socket.addEventListener('open', async function () {
       console.log(`Websocket is open`);
-      const lastBlockL2 = (await getMaxBlock()) ?? -1;
-      console.log('LastBlock', lastBlockL2);
-      socket.send(JSON.stringify({ type: 'sync', lastBlock: lastBlockL2 }));
+
+      const indexDbBlockLast = await getMaxBlock();
+      console.log(
+        `Last local block number is ${indexDbBlockLast}, emitting sync event to fetch next block.`,
+      );
+
+      socket.send(JSON.stringify({ type: EVENT_TYPES.SYNC, lastBlock: indexDbBlockLast }));
     });
 
     setState(previousState => {
@@ -105,71 +117,67 @@ export const UserProvider = ({ children }) => {
 
     // Listen for messages
     messageEventHandler = async function (event) {
-      console.log('Message from server ', JSON.parse(event.data));
-      const parsed = JSON.parse(event.data);
+      const parsedEvent = JSON.parse(event.data);
+      console.log('Message from server ', parsedEvent);
+
       const { nullifierKey, zkpPrivateKey } = await retrieveAndDecrypt(compressedZkpPublicKey);
-      if (parsed.type === 'sync') {
-        await parsed.historicalData
+
+      if (parsedEvent.type === EVENT_TYPES.SYNC) {
+        await parsedEvent.historicalData
           .sort((a, b) => a.block.blockNumberL2 - b.block.blockNumberL2)
           .reduce(async (acc, curr) => {
             await acc; // Acc is a promise so we await it before processing the next one;
             return blockProposedEventHandler(curr, [zkpPrivateKey], [nullifierKey]); // TODO Should be array
           }, Promise.resolve());
 
-        // We want to verify that the received block is from the current contract deployment.
-        // for this, we store the lastBlock received in lastBlock, and compare the hash with the previousBlockHash
-        // from the received block. If they don't match, then there has been a redeployment.
-        if (Number(parsed.maxBlock) !== 1) {
-          if (
-            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash !==
-              lastBlock.blockHash &&
-            Number(lastBlock.blockHash) !== 0
-          ) {
-            // resync
-            console.log('Resync DB');
-            emptyStoreBlocks();
-            emptyStoreTimber();
-            Storage.shieldAddressSet();
-          } else if (
-            parsed.historicalData[parsed.historicalData.length - 1].block.previousBlockHash ===
-              lastBlock.blockHash ||
-            Number(lastBlock.blockHash) === 0
-          ) {
-            setLastBlock(parsed.historicalData[parsed.historicalData.length - 1].block);
+        const indexDbBlockRoot = await getNthBlockRoot(parsedEvent.numberBlockLast);
+        const matchContract = indexDbBlockRoot === parsedEvent.rootBlockLast;
+        const isFirst = parsedEvent.numberBlockLast === null;
+
+        if (matchContract || isFirst) {
+          if (parsedEvent.isLast) {
+            console.log('Sync complete');
+            setState(previousState => {
+              return {
+                ...previousState,
+                chainSync: true,
+              };
+            });
+          } else {
+            console.log(
+              `Last local block number is ${parsedEvent.numberBlockNext}, emitting sync event to fetch next block.`,
+            );
+            setLastBlock(parsedEvent.historicalData[parsedEvent.historicalData.length - 1].block);
+
             socket.send(
               JSON.stringify({
-                type: 'sync',
-                lastBlock:
-                  parsed.historicalData[parsed.historicalData.length - 1].block.blockNumberL2,
+                type: EVENT_TYPES.SYNC,
+                lastBlock: parsedEvent.numberBlockNext,
               }),
             );
           }
-        } else if (lastBlock.blockHash) {
-          console.log('Sync complete');
-          setState(previousState => {
-            return {
-              ...previousState,
-              chainSync: true,
-            };
-          });
-        }
-      } else if (parsed.type === 'blockProposed') {
-        console.log('blockProposed Event');
-        if (
-          parsed.data.block.previousBlockHash !== lastBlock.blockHash &&
-          Number(lastBlock.blockHash) !== 0
-        ) {
-          // resync
-          console.log('Resync DB');
-          emptyStoreBlocks();
-          emptyStoreTimber();
-          Storage.shieldAddressSet();
         } else {
-          setLastBlock(parsed.data.block);
-          await blockProposedEventHandler(parsed.data, [zkpPrivateKey], [nullifierKey]);
+          console.log('Resync DB');
+          await Promise.all([emptyStoreBlocks(), emptyStoreTimber(), Storage.shieldAddressSet()]);
         }
       }
-      // TODO Rollback Handler
+
+      if (parsedEvent.type === EVENT_TYPES.BLOCKPROPOSED) {
+        if (
+          parsedEvent.data.block.previousBlockHash !== lastBlock.blockHash &&
+          Number(lastBlock.blockHash) !== 0
+        ) {
+          console.log('Resync DB');
+          await Promise.all([emptyStoreBlocks(), emptyStoreTimber(), Storage.shieldAddressSet()]);
+        } else {
+          setLastBlock(parsedEvent.data.block);
+          await blockProposedEventHandler(parsedEvent.data, [zkpPrivateKey], [nullifierKey]);
+        }
+      }
+
+      if (parsedEvent.type === EVENT_TYPES.ROLLBACK) {
+        await deleteBlocksByBlockNumberL2(parsedEvent.data.blockNumberL2);
+      }
     };
 
     socket.addEventListener('message', messageEventHandler);

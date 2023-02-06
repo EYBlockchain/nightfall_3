@@ -18,7 +18,7 @@
 
 ### Running the Wallet locally with AWS infrastructure
 
-1. Copy wallet/.template.copy.env to config file .xxx.env and fill the required `PROPOSER_API_URL`  and `PROPOSER_WS_URL` with
+1. Copy wallet/template.copy.env to config file .xxx.env and fill the required `PROPOSER_API_URL`  and `PROPOSER_WS_URL` with
 the proposer URL and the proposer websocket URL respectively.
 
 2. Add new environment to `ChainIdMapping`. Open `wallet/src/common-files/utils/web3.js` and 
@@ -33,7 +33,7 @@ deployed to a public testnet.
 4. Install dependencies `npm ci`
 
 5. Start the wallet in local development mode. `ENV_NAME=xxx npm run start:env`, where `xxx`is the name of the env config file created 
-in previous step (without .env extension). For example, if config env file is named `.testnet.env`, wallet is started with `ENV_NAME=testnet make run start:env`.
+in previous step (without .env extension). For example, if config env file is named `.testnet.env`, wallet is started with `ENV_NAME=testnet npm run start:env`.
 
 6. Ensure that your account used in metamask has the same tokens as supported by the wallet (See 2);
 
