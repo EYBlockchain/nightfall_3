@@ -35,14 +35,14 @@ const registerPairSenderReceiverToRegulator = (
 
   const privateKeyRegulator = '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e'; // test private key for mock regulator
   // This simulate the response from the regulator (regulatorPublicKey, sharedPubSender)
-  const regulatorPublicKey = scalarMult(BigInt(privateKeyRegulator), BABYJUBJUB.GENERATOR);
+  // const regulatorPublicKey = scalarMult(BigInt(privateKeyRegulator), BABYJUBJUB.GENERATOR);
   const sharedPubSender = scalarMult(
     BigInt(privateKeyRegulator),
     receiverPublicKey.map(r => r.bigInt),
   );
+  const sharedPubReceiver = scalarMult(BigInt(privateKeyRegulator), senderPublicKey);
   // -----------------------------------------------------------------------------
 
-  const sharedPubReceiver = scalarMult(transferPrivateKey.bigInt, regulatorPublicKey);
   return [sharedPubSender, sharedPubReceiver];
 };
 
