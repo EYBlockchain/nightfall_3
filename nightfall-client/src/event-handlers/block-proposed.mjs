@@ -26,7 +26,7 @@ import {
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 
-const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE, REGULATOR_PRIVATE_KEY } = config;
 const { ZERO, WITHDRAW } = constants;
 
 const { generalise } = gen;
@@ -70,6 +70,13 @@ async function blockProposedEventHandler(data, syncing) {
       (transaction.compressedSecrets[0] !== ZERO || transaction.compressedSecrets[1] !== ZERO) &&
       !countOfNonZeroCommitments
     ) {
+      if (REGULATOR_PRIVATE_KEY) {
+        await decryptCommitment(
+          transaction,
+          REGULATOR_PRIVATE_KEY,
+          nullifierKeys,
+        );
+      }
       const transactionDecrypted = await decryptCommitment(
         transaction,
         zkpPrivateKeys,

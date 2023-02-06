@@ -18,12 +18,14 @@ import {
 } from './database.mjs';
 import { syncState } from './state-sync.mjs';
 
-const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
+const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, REGULATOR_PRIVATE_KEY, COMMITMENTS_REGULATOR_COLLECTION } = config;
 const { generalise } = gen;
 const mutex = new Mutex();
 
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment(_commitment, nullifierKey) {
+export async function storeCommitment(_commitment, nullifierKey, zkpPrivateKey) {
+
+
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   // we'll also compute and store the nullifier hash.  This will be useful for
@@ -48,7 +50,13 @@ export async function storeCommitment(_commitment, nullifierKey) {
   logger.debug(`Storing commitment ${commitment._id}`);
   const query = { _id: commitment._id };
   const update = { $set: commitment };
-  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update, { upsert: true });
+  let collection;
+  if (zkpPrivateKey == REGULATOR_PRIVATE_KEY) {
+    collection = db.collection(COMMITMENTS_REGULATOR_COLLECTION);
+  } else {
+    collection = db.collection(COMMITMENTS_COLLECTION)
+  }
+  return collection.updateOne(query, update, { upsert: true });
 }
 // function to update an existing commitment
 export async function updateCommitment(commitment, updates) {
