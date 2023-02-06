@@ -21,6 +21,7 @@ import {
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
 import { syncState } from '../services/state-sync.mjs';
+import Proposer from '../classes/proposer.mjs';
 
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
 const { ZERO } = constants;
@@ -77,7 +78,9 @@ async function blockProposedEventHandler(data) {
   //  in an incorrect state and will be challengeable
   if (block.blockNumberL2 > nextBlockNumberL2) {
     consecutiveResyncAttempts++;
-    await syncState(lastInOrderL1Block);
+    logger.debug('Resyncing...');
+    const proposer = new Proposer();
+    await syncState(proposer, lastInOrderL1Block);
   }
 
   lastInOrderL1Block = currentBlockCount;

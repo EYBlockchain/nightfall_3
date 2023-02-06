@@ -513,6 +513,19 @@ Timber functions
 export async function saveTree(blockNumber, blockNumberL2, timber) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
+  logger.debug({ msg: 'Saving Tree blockNumber', blockNumberL2 });
+  const update = {
+    $set: {
+      _id: blockNumberL2,
+      blockNumber,
+      blockNumberL2,
+      frontier: timber.frontier,
+      leafCount: timber.leafCount,
+      root: timber.root,
+    },
+  };
+  return db.collection(TIMBER_COLLECTION).updateOne({ blockNumberL2 }, update, { upsert: true });
+  /*
   return db.collection(TIMBER_COLLECTION).insertOne({
     _id: timber.blockNumberL2,
     blockNumber,
@@ -521,6 +534,7 @@ export async function saveTree(blockNumber, blockNumberL2, timber) {
     leafCount: timber.leafCount,
     root: timber.root,
   });
+  */
 }
 
 export async function getLatestTree() {

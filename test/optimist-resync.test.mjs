@@ -129,28 +129,22 @@ describe('Optimist synchronisation tests', () => {
       // We create enough good transactions to fill a block full of deposits.
       logger.debug(`      Sending a deposit...`);
       let p = proposePromise();
-      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
+      await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
-
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.
       const { block } = await p;
       const firstBlock = { ...block };
-
       // Now we have a block, let's delete last block from dB and create new one to force resync
       p = proposePromise();
+
       logger.debug(`      Sending a second deposit...`);
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       await nf3Users[0].makeBlockNow();
       logger.debug(`      Request make block...`);
       await waitForTimeout(1000);
-      const nL2BlocksOptimistA = await getOptimistMongoL2Blocks();
-      const nL2BlocksClientA = await getClientMongoL2Blocks();
-      logger.debug(
-        `Blocks before dropping: client: ${nL2BlocksClientA}, optimist ${nL2BlocksOptimistA}`,
-      );
       logger.debug(`      Request Drop last block from mongo...`);
       dropMongoLastBlock();
       logger.debug(`      Wait for event blockProposed...`);
@@ -165,7 +159,9 @@ describe('Optimist synchronisation tests', () => {
       // Check that we have all blocks now
       const nL2BlocksOptimist = await getOptimistMongoL2Blocks();
       const nL2BlocksClient = await getClientMongoL2Blocks();
-      logger.debug(`Blocks after dropping: client: ${nL2BlocksClient}, optimist ${nL2BlocksOptimist}`);
+      logger.debug(
+        `Blocks after dropping: client: ${nL2BlocksClient}, optimist ${nL2BlocksOptimist}`,
+      );
       expect(nL2BlocksOptimist - secondBlock.blockNumberL2).to.equal(1);
       expect(nL2BlocksClient - secondBlock.blockNumberL2).to.equal(1);
     });
