@@ -107,7 +107,7 @@
     "workbox-webpack-plugin": "5.1.4"
   },
   "scripts": {
-    "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' REACT_APP_MODE=local node scripts/start.js",
+    "start": "LOCAL_PROPOSER=true PUBLIC_URL='/nightfall/' REACT_APP_MODE=local env-cmd -f .local.env node scripts/start.js",
     "start:env": "LOCAL_PROPOSER=false PUBLIC_URL='/nightfall/' REACT_APP_MODE=${ENV_NAME} env-cmd -f .${ENV_NAME}.env node scripts/start.js",
     "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/unit/**/*.js'",
     "test:web": "jest",
