@@ -128,7 +128,7 @@ This function gets a random hex nonce of numPositions bytes, and another one of 
 @returns {GeneralNumber} The random hex nonce 
 */
 export const randomHexNonce = numPositions => {
-  const nonce = (Math.random() * 0xf ** (numPositions + 1)).toString(16).slice(0, numPositions);
+  const nonce = (Math.random() * 0xf ** (numPositions + 2)).toString(16).slice(0, numPositions);
   return new GN(`0x${nonce}`, 'hex');
 };
 
