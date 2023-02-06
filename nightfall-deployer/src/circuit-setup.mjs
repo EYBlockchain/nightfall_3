@@ -167,7 +167,7 @@ async function setupCircuits() {
       if (config.ETH_PRIVATE_KEY) {
         await Web3.submitRawTransaction(call.encodeABI(), keyRegistry.options.address);
       } else {
-        call.send();
+        await call.send();
       }
     } catch (err) {
       logger.error(err);
@@ -188,7 +188,7 @@ async function setupCircuits() {
       if (config.ETH_PRIVATE_KEY) {
         await Web3.submitRawTransaction(call.encodeABI(), keyRegistry.options.address);
       } else {
-        call.send();
+        await call.send();
       }
     } catch (err) {
       logger.error(err);
