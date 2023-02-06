@@ -107,16 +107,17 @@ module.exports = {
     APPROVERS: process.env.MULTISIG_APPROVERS
       ? process.env.MULTISIG_APPROVERS.split(',')
       : [
-        '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
-        '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-        '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-        '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
-        '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
-      ],
+          '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
+          '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+          '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+          '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+          '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
+        ],
   },
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
-    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH || ''
+    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
+      process.env.BLOCKCHAIN_PATH || ''
     }`,
   ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
   ETH_ADDRESS: process.env.ETH_ADDRESS,
@@ -235,11 +236,12 @@ module.exports = {
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
-          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH || ''
-          }`
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
+              process.env.BLOCKCHAIN_PATH || ''
+            }`
           : process.env.BLOCKCHAIN_WS_HOST
-            ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
-            : 'ws://localhost:8546',
+          ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+          : 'ws://localhost:8546',
       PROPOSER_KEY:
         process.env.PROPOSER_KEY ||
         process.env.BOOT_PROPOSER_KEY ||

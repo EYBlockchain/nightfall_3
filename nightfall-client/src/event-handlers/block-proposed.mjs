@@ -71,11 +71,7 @@ async function blockProposedEventHandler(data, syncing) {
       !countOfNonZeroCommitments
     ) {
       if (REGULATOR_PRIVATE_KEY) {
-        await decryptCommitment(
-          transaction,
-          REGULATOR_PRIVATE_KEY,
-          nullifierKeys,
-        );
+        await decryptCommitment(transaction, REGULATOR_PRIVATE_KEY, nullifierKeys);
       }
       const transactionDecrypted = await decryptCommitment(
         transaction,
