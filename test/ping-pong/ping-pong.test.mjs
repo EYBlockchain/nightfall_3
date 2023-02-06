@@ -16,7 +16,7 @@ import {
 
 const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls, fee } =
   config.TEST_OPTIONS;
-const environment = config.ENVIRONMENTS[process.env.ENVIRONMENT] || config.ENVIRONMENTS.localhost;
+const environment = config.ENVIRONMENTS[config.ENVIRONMENT];
 const { TEST_ERC20_ADDRESS } = process.env;
 const CLIENT2_TX_TYPES_SEQUENCE = process.env.CLIENT2_TX_TYPES_SEQUENCE || 'ValidTransaction';
 

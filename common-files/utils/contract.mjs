@@ -9,6 +9,7 @@ import logger from './logger.mjs';
 
 export const web3 = Web3.connection();
 
+const retries = config.RETRIES;
 const options = config.WEB3_OPTIONS;
 
 let cachedContracts = {};
@@ -124,7 +125,7 @@ export async function waitForContract(contractName) {
   let errorCount = 0;
   let error;
   let instance;
-  while (errorCount < 600) {
+  while (errorCount < retries) {
     try {
       error = undefined;
       const address = await getContractAddress(contractName); // eslint-disable-line no-await-in-loop

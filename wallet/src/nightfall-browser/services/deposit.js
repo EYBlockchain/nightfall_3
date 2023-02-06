@@ -109,8 +109,8 @@ async function deposit(depositParams, shieldContractAddress) {
 
   const commitmentDB = await getCommitmentByHash(commitment);
 
-  if (commitmentDB) {
-    if (commitmentDB.isOnChain !== -1) {
+  if (commitmentDB.length) {
+    if (commitmentDB[0].isOnChain !== -1) {
       throw new Error('You can not re-send a commitment that is already on-chain');
     } else {
       commitment = commitmentDB;

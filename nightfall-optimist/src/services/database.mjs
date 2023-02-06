@@ -94,13 +94,6 @@ export async function getBlockByTransactionHashL1(transactionHashL1) {
   return db.collection(SUBMITTED_BLOCKS_COLLECTION).findOne(query);
 }
 
-// export async function numberOfBlockWithTransactionHash(transactionHash) {
-//   const connection = await mongo.connection(MONGO_URL);
-//   const db = connection.db(OPTIMIST_DB);
-//   const query = { transactionHashes: transactionHash };
-//   return db.collection(SUBMITTED_BLOCKS_COLLECTION).countDocuments(query);
-// }
-
 /**
 function to get a block by blockHash, if you know the hash of the block. This
 is useful for rolling back Timber.
@@ -342,29 +335,18 @@ export async function removeTransactionsFromMemPool(
 }
 
 /**
-Function to remove a set of commitments from the layer 2 mempool once they've
-been processed into an L2 block
+Function to remove a set of commitments and nullifiers from the layer 2 mempool
+once they've been processed into an L2 block
 */
-export async function deleteDuplicateCommitmentsFromMemPool(commitments, transactionHashes = []) {
+export async function deleteDuplicateCommitmentsAndNullifiersFromMemPool(
+  commitments,
+  nullifiers,
+  transactionHashes = [],
+) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = {
-    commitments: { $in: commitments },
-    transactionHash: { $nin: transactionHashes },
-    mempool: true,
-  };
-  return db.collection(TRANSACTIONS_COLLECTION).deleteMany(query);
-}
-
-/**
-Function to remove a set of nullifiers from the layer 2 mempool once they've
-been processed into an L2 block
-*/
-export async function deleteDuplicateNullifiersFromMemPool(nullifiers, transactionHashes = []) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = {
-    nullifiers: { $in: nullifiers },
+    $or: [{ commitments: { $in: commitments } }, { nullifiers: { $in: nullifiers } }],
     transactionHash: { $nin: transactionHashes },
     mempool: true,
   };

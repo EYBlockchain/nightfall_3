@@ -534,10 +534,6 @@ module.exports = function (webpackEnv) {
               use: {
                 loader: 'worker-loader',
                 options: { inline: 'fallback' },
-                // generator: {
-                //   publicPath: 'https://nightfallv3-wallet.s3.eu-west-1.amazonaws.com/',
-                //   // outputPath: 'cdn-assets/',
-                // },
               },
             },
             {

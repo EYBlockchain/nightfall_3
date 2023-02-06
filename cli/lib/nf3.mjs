@@ -1,4 +1,6 @@
 /* eslint class-methods-use-this: "off" */
+/* eslint prefer-destructuring: "off" */
+/* eslint no-param-reassign: "off" */
 
 import axios from 'axios';
 import Queue from 'queue';
@@ -24,13 +26,20 @@ import {
   GAS_ESTIMATE_ENDPOINT,
 } from './constants.mjs';
 
+function createQueue(options) {
+  const queue = new Queue(options);
+  queue.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
+
+  return queue;
+}
+
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
 // then there will only be one queue here. The constructor does not need to initialise clientBaseUrl
 // for proposer/liquidityProvider/challenger and optimistBaseUrl, optimistWsUrl for a user etc
-const userQueue = new Queue({ autostart: true, concurrency: 1 });
-const proposerQueue = new Queue({ autostart: true });
-const challengerQueue = new Queue({ autostart: true, concurrency: 1 });
-const liquidityProviderQueue = new Queue({ autostart: true, concurrency: 1 });
+const userQueue = createQueue({ autostart: true, concurrency: 1 });
+const proposerQueue = createQueue({ autostart: true });
+const challengerQueue = createQueue({ autostart: true, concurrency: 1 });
+const liquidityProviderQueue = createQueue({ autostart: true, concurrency: 1 });
 
 /**
 @class
@@ -87,6 +96,8 @@ class Nf3 {
 
   nonceMutex = new Mutex();
 
+  clientAuthenticationKey;
+
   constructor(
     ethereumSigningKey,
     environment = {
@@ -96,6 +107,7 @@ class Nf3 {
       web3WsUrl: 'ws://localhost:8546',
     },
     zkpKeys,
+    clientApiAuthenticationKey,
   ) {
     this.clientBaseUrl = environment.clientApiUrl;
     this.optimistBaseUrl = environment.optimistApiUrl;
@@ -104,6 +116,29 @@ class Nf3 {
     this.ethereumSigningKey = ethereumSigningKey;
     this.zkpKeys = zkpKeys;
     this.currentEnvironment = environment;
+    this.clientAuthenticationKey = clientApiAuthenticationKey;
+
+    this.applyHttpClientAuthentication();
+  }
+
+  applyHttpClientAuthentication() {
+    if (!this.clientAuthenticationKey) {
+      logger.info('No client authentication key is set!');
+      return;
+    }
+
+    const clientBaseUrl = this.clientBaseUrl;
+    const clientApiKey = this.clientAuthenticationKey;
+
+    axios.interceptors.request.use(function (config) {
+      if (!config.url.includes(clientBaseUrl)) {
+        return config;
+      }
+
+      config.headers['X-API-Key'] = clientApiKey;
+
+      return config;
+    });
   }
 
   /**

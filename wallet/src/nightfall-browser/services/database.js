@@ -239,6 +239,13 @@ export async function getMaxBlock() {
   return maxKey;
 }
 
+export async function getNthBlockRoot(index) {
+  const db = await connectDB();
+  const timbers = await db.getAll(TIMBER_COLLECTION);
+  if (!timbers.length || index === null) return null;
+  return timbers.find(t => t.blockNumberL2 === index).root;
+}
+
 /**
 Transaction Collection
 */

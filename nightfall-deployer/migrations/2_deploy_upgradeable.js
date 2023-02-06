@@ -19,16 +19,16 @@ const {
   RESTRICTIONS,
   MULTISIG,
   X509: x509Params,
-  SANCTIONS_CONTRACT,
+  SANCTIONS_CONTRACT_ADDRESS,
+  DEPLOY_MOCKED_SANCTIONS_CONTRACT,
   TEST_OPTIONS: {
     addresses: { sanctionedUser },
   },
+  FEE_L2_TOKEN_ID
 } = config;
 const { addresses } = RESTRICTIONS;
 const { SIGNATURE_THRESHOLD, APPROVERS } = MULTISIG;
 const { network_id } = networks[process.env.ETH_NETWORK];
-const { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS } =
-  x509Params[process.env.ETH_NETWORK];
 
 // function to sort addresses into ascending order (required for SimpleMultiSig)
 function sortAscending(hexArray) {
@@ -38,29 +38,38 @@ function sortAscending(hexArray) {
     return x < y ? -1 : x > y ? 1 : 0; // a bit complex because sort expects a number, not a bigint
   });
 }
+
 const sortedOwners = sortAscending(APPROVERS);
 
 module.exports = async function (deployer) {
   await deployer.deploy(Verifier);
   await deployer.link(Verifier, [Challenges, ChallengesUtil]);
+
   await deployer.deploy(Poseidon);
   await deployer.link(Poseidon, MerkleTree_Stateless);
+
   await deployer.deploy(MerkleTree_Stateless);
   await deployer.link(MerkleTree_Stateless, [Challenges, ChallengesUtil]);
+
   await deployer.deploy(Utils);
   await deployer.link(Utils, [Shield, State, Challenges, ChallengesUtil]);
+
   await deployer.deploy(ChallengesUtil);
   await deployer.link(ChallengesUtil, Challenges);
+
   await deployer.deploy(SimpleMultiSig, SIGNATURE_THRESHOLD, sortedOwners, network_id);
 
+  let sanctionsContractAddress = SANCTIONS_CONTRACT_ADDRESS;
   // if we're just testing, we want to deploy a mock sanctions list. We do it here because
   // we need to know the address to give to the Shield contract
-  let sanctionsContractAddress = SANCTIONS_CONTRACT;
-  if (!web3.utils.isAddress(SANCTIONS_CONTRACT)) {
+  if (DEPLOY_MOCKED_SANCTIONS_CONTRACT === 'true') {
     await deployer.deploy(SanctionsListMock, sanctionedUser);
+
     sanctionsContractAddress = SanctionsListMock.address;
-    console.log('SANTIONED', sanctionsContractAddress, sanctionedUser);
+
+    console.log('SANCTIONED USER', sanctionsContractAddress, sanctionedUser);
   }
+
   await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
@@ -74,23 +83,32 @@ module.exports = async function (deployer) {
     unsafeAllowLinkedLibraries: true,
     initializer: 'initializeState',
   });
+
   // initialisation
   const proposers = await Proposers.deployed();
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
   const x509 = await X509.deployed();
+
   await State.deployed();
+
   const { bootProposer, bootChallenger } = addresses;
+
   await proposers.setBootProposer(bootProposer);
   await challengers.setBootChallenger(bootChallenger);
+
   // restrict transfer amounts
   for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
-    if (token.name === 'ERC20Mock') continue; // ignore test tokens, they're already handled in the test_tokens migration
+  
+    if (token.name === 'ERC20Mock') 
+      continue; // ignore test tokens, they're already handled in the test_tokens migration
+
     console.log(
       `Max allowed deposit value for ${token.name}: ${(
         BigInt(token.amount) / BigInt(4)
       ).toString()}`,
     ); // BigInt division returns whole number which is a floor. Not Math.floor() needed
+
     console.log(`Max allowed withdraw value for ${token.name}: ${token.amount}`);
     await shield.setRestriction(
       token.address,
@@ -98,13 +116,21 @@ module.exports = async function (deployer) {
       token.amount,
     );
   }
+
   // set Fee Token Address
   const feeL2TokenAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
-    token => token.name === 'MATIC',
+    token => token.name === FEE_L2_TOKEN_ID,
   ).address;
   await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
-  console.log('Whitelisting is disabled unless it says "enabled" here:', process.env.WHITELISTING);
-  if (process.env.WHITELISTING === 'enable') await x509.enableWhitelisting(true);
+
+  console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
+  if (process.env.WHITELISTING === 'disable') {
+    await x509.enableWhitelisting(false);
+    return;
+  }
+
+  const { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS } = x509Params[process.env.ETH_NETWORK];
+
   // set a trusted RSA root public key for X509 certificate checks
   console.log('setting trusted public key and extended key usage OIDs');
   for (publicKey of RSA_TRUST_ROOTS) {

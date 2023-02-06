@@ -19,6 +19,8 @@ import { isDev, obfuscate } from './utils.mjs';
 
 const { LOG_HTTP_PAYLOAD_ENABLED, LOG_HTTP_FULL_DATA } = config;
 
+const ENDPOINTS_WHITELISTED = 'ENDPOINTS_WHITELISTED';
+
 /**
  * Default obfuscation's rules.
  */
@@ -109,9 +111,9 @@ const applyAxiosDefaults = () => {
 const getRequestParam = req => {
   const dataInput = {};
 
-  if (Object.keys(req.query).length !== 0) dataInput.query = req.query;
-  if (Object.keys(req.params).length !== 0) dataInput.params = req.params;
-  if (Object.keys(req.body).length !== 0) dataInput.body = req.body;
+  if (req.query && Object.keys(req.query).length !== 0) dataInput.query = req.query;
+  if (req.params && Object.keys(req.params).length !== 0) dataInput.params = req.params;
+  if (req.body && Object.keys(req.body).length !== 0) dataInput.body = req.body;
 
   return dataInput;
 };
@@ -234,11 +236,45 @@ const responseLogger = (req, res, next) => {
   }
 };
 
+const isEndpointWhitelisted = req => {
+  let result = false;
+  req.app.get(ENDPOINTS_WHITELISTED).forEach(e => {
+    if (result === false && e) {
+      result = req.url.match(e) != null;
+    }
+  });
+
+  return result;
+};
+
+const HEALTH_CHECK_REGEX = new RegExp(/^\/healthcheck\/?$/);
+const authenticationHandler = (req, res, next) => {
+  if (
+    req.url.match(HEALTH_CHECK_REGEX) != null ||
+    isEndpointWhitelisted(req) ||
+    req.get('x-api-key') === process.env.AUTHENTICATION_KEY
+  ) {
+    return next();
+  }
+
+  logger.warn('Unauthorized access!');
+
+  res.sendStatus(401);
+
+  return null;
+};
+
 /**
- * Setup the default filters for the app being passed as parameter. This can be extended later to allow
- * additional parameters to be passed to customize the filters/handlers.
+ * Setup the default filters for the app being passed as parameter. It also enables endpoint authentication when
+ * the environment variable AUTHENTICATION_KEY is set: this is the key that will be used to authenticate requests
+ * against the request header 'X-API-Key'. Endpoints can be whitelisted by using the environment variable
+ * ENDPOINTS_WHITELISTED listing the whitelisted endpoints (e.g. ENDPOINTS_WHITELISTED="/commitment/save, /commitment/delete").
+ * The env var ENDPOINTS_WHITELISTED accepts regex expression values.
  *
- * @param {*} app - an instance of 'expressjs'.
+ * @param {*} app - an instance of 'expressjs'
+ * @param {Function} routesDefiner - an annonymous function that receives an expressjs instance and defines the routes
+ * @param {boolean} addHealthCheck - adds a /healthcheck endpoint automatically
+ * @param {boolean} useFileUpload - adds a middleware for file uploading
  */
 export const setupHttpDefaults = (
   app,
@@ -246,6 +282,24 @@ export const setupHttpDefaults = (
   addHealthCheck = true,
   useFileUpload = true,
 ) => {
+  app.use(requestLogger);
+
+  if (process.env.AUTHENTICATION_KEY) {
+    const whitelistConf = process.env.ENDPOINTS_WHITELISTED;
+
+    logger.info({
+      msg: 'Authentication key is defined. Setting up the authentication handler',
+      whitelistConf,
+    });
+
+    app.set(
+      ENDPOINTS_WHITELISTED,
+      whitelistConf ? whitelistConf.split(',').map(v => v.trim()) : [],
+    );
+
+    app.use(authenticationHandler);
+  }
+
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     next();
@@ -260,7 +314,6 @@ export const setupHttpDefaults = (
   app.use(cors());
   app.use(bodyParser.json({ limit: '2mb' }));
   app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
-  app.use(requestLogger);
   app.use(responseLogger);
 
   if (routesDefiner) {

@@ -9,6 +9,7 @@ const tokensList = {
       logoURI: 'https://wallet-asset.matic.network/img/tokens/eth.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx'],
       id: 'ethereum',
+      tokenId: '0',
       restrictions: {
         withdraw: '1000000000000000000',
         deposit: '250000000000000000',
@@ -32,6 +33,7 @@ const tokensList = {
       logoURI: 'https://wallet-asset.matic.network/img/tokens/matic.svg',
       tags: ['plasma', 'erc20', 'swapable'],
       id: 'matic-network',
+      tokenId: '0',
       restrictions: {
         withdraw: '1000000000000000000000',
         deposit: '250000000000000000000',
@@ -55,6 +57,7 @@ const tokensList = {
       logoURI: 'https://wallet-asset.matic.network/img/tokens/usdc.svg',
       tags: ['pos', 'erc20', 'swapable', 'metaTx', 'stablecoin'],
       id: 'usd-coin',
+      tokenId: '0',
       restrictions: {
         withdraw: '1000000000',
         deposit: '250000000',
@@ -78,6 +81,7 @@ const tokensList = {
     //   logoURI: 'https://wallet-asset.matic.network/img/tokens/usdt.svg',
     //   tags: ['pos', 'stablecoin', 'erc20', 'swapable', 'metaTx'],
     //   id: 'tether',
+    //   tokenId: '0',
     //   restrictions: {
     //     withdraw: '1000000000',
     //     deposit: '250000000',
@@ -101,6 +105,7 @@ const tokensList = {
       logoURI: 'https://wallet-asset.matic.network/img/tokens/dai.svg',
       tags: ['pos', 'stablecoin', 'erc20', 'swapable', 'metaTx'],
       id: 'dai',
+      tokenId: '0',
       restrictions: {
         withdraw: '1000000000000000000000',
         deposit: '250000000000000000000',

@@ -4,9 +4,6 @@ if [ -f client.env ]; then
   grep -v '^#' client.env
   # Export env vars
   export $(grep -v '^#' client.env | xargs)
-else
-  echo "client.env does not exist. You need to define the client.env with the needed variables to run the client."
-  exit 1
 fi
 
 VOLUME_LIST=$(docker volume ls -q)
@@ -37,23 +34,22 @@ fi
 
 if [ -n "$REMOVE_VOLUMES" ]; then
   # if-else block checks - volume exist and then removes it.
-  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb_client_1) ]]; then
     echo -n 'Removing '
-    docker volume rm nightfall_3_mongodb
+    docker volume rm nightfall_3_mongodb_client_1
   fi
 
-  if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_build_client_1) ]]; then
     echo -n 'Removing '
-    docker volume rm nightfall_3_build
+    docker volume rm nightfall_3_build_client_1
+  fi
+
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_proving_files_client_1) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_proving_files_client_1
   fi
 fi 
 
-# shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
-trap "docker-compose $FILE -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
-
-docker-compose $FILE -p 'nightfall_3' down --remove-orphans
-
-echo "docker-compose $FILE -p 'nightfall_3' up -d --remove-orphans"
-docker-compose $FILE pull
-docker-compose $FILE -p 'nightfall_3' up -d --remove-orphans
-docker-compose -p 'nightfall_3' $FILE logs -f
+echo "docker-compose $FILE -p 'nightfall_3' up -d"
+docker-compose $FILE -p 'nightfall_3' up -d
+docker-compose -p 'nightfall_3' $FILE logs -f 

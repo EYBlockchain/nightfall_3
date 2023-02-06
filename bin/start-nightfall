@@ -34,8 +34,6 @@ while [ -n "$1" ]; do
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
                                     ;;
-      -mpc)                         export MPC="true"
-                                    ;;
       * )                           usage
                               exit 1
     esac
@@ -47,6 +45,7 @@ if [ -z "$FILE" ]; then
   usage
   exit 1
 fi
+
 # shut down cleanly in the event of a cntl-c etc. We don't want to leave containers running
 trap "docker-compose $FILE $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
 
@@ -92,5 +91,9 @@ if [ ! -z "$DEV" ]; then
   cd common-files && npm ci && cd ..
 fi
 
+if [ -z "$NF_SERVICES_TO_LOG" ]; then
+  NF_SERVICES_TO_LOG=$NF_SERVICES_TO_START
+fi
+
 docker-compose $FILE  $DEV $ADVERSARY -p 'nightfall_3' up -d --remove-orphans ${NF_SERVICES_TO_START//,/ }
-docker-compose -p 'nightfall_3' $FILE $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_START//,/ }
+docker-compose -p 'nightfall_3' $FILE $DEV $ADVERSARY logs -f ${NF_SERVICES_TO_LOG//,/ }

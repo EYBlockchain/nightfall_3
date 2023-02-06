@@ -2,8 +2,7 @@
 
 ## Overview
 
-_Please note that this is experimental software and is still undergoing development. It should not
-be used to transfer items of material value_
+_This code is not owned by EY and EY provides no warranty and disclaims any and all liability for use of this code. Users must conduct their own diligence with respect to use for their purposes and any and all usage is on an as-is basis and at your own risk._
 
 Nightfall_3 is an application for transferring ERC20, ERC721 and ERC1155 applications under Zero
 Knowledge. It abstracts away any need to deal directly with ZKP artefacts and provides a simple
@@ -324,6 +323,10 @@ docker volume prune
 
 These will hopefully delete every image, container and volume so you should have a clean slate. Mind
 that you need to run `./bin/setup-nightfall` again.
+
+# Deployment
+
+EY expects to deploy Nightfall as a fully-decentralised application in the near future.
 
 # Acknowledgements
 

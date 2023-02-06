@@ -24,12 +24,22 @@ import config from 'config';
 import logger from './logger.mjs';
 import { web3 } from './contract.mjs';
 
+function createQueue(options) {
+  const queue = new Queue(options);
+  queue.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
+
+  return queue;
+}
+
 const { MAX_QUEUE, CONFIRMATION_POLL_TIME, CONFIRMATIONS } = config;
-const fastQueue = new Queue({ autostart: false, concurrency: 1 });
-const slowQueue = new Queue({ autostart: false, concurrency: 1 });
-const removed = {}; // singleton holding transaction hashes of any removed events
-const stopQueue = new Queue({ autostart: false, concurrency: 1 });
+
+const fastQueue = createQueue({ autostart: false, concurrency: 1 });
+const slowQueue = createQueue({ autostart: false, concurrency: 1 });
+const stopQueue = createQueue({ autostart: false, concurrency: 1 });
+
 export const queues = [fastQueue, slowQueue, stopQueue];
+
+const removed = {}; // singleton holding transaction hashes of any removed events
 
 /**
 This function will wait until all the functions currently in a queue have been

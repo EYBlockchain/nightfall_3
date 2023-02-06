@@ -1,0 +1,78 @@
+#! /bin/bash
+set -e
+
+# select a Geth or Ganache client
+if [ -z "$1" ]; then
+  echo "Please, inform the .env file to be used for deploying!"
+  exit 1
+fi
+
+DEPLOYMENT_ENV_FILE=$1
+
+if [ -z "${DEPLOYMENT_SERVICES}" ]; then
+  DEPLOYMENT_SERVICES=$(cat ${DEPLOYMENT_ENV_FILE} | sed  -n -e 's/^export DEPLOYMENT_SERVICES=//p')
+
+  if [ -z "${DEPLOYMENT_SERVICES}" ]; then
+    DEPLOYMENT_SERVICES="deployer,worker"
+  fi
+fi
+
+if [ -z "${NO_SERVICES_SETUP}" ]; then
+  echo -e "Building applications...\n"
+
+  # Install node dependencies
+  npm ci
+
+  # build common-files
+  cd common-files && npm ci && cd ..
+
+  OS_ARCH=$(uname -m)
+  NO_CACHE_FLAG=''
+
+  # Workaround when building in a Mac
+  if [ $OS_ARCH != "x86_64" ]; then
+    NO_CACHE_FLAG='--no-cache'
+  fi
+
+  echo -e "Building the contaners's images: ${DEPLOYMENT_SERVICES}\n"
+
+  docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
+
+  if [[ "${DEPLOYMENT_SERVICES}" == *"deployer"* ]]; then
+    docker-compose -f docker/docker-compose.deployment.yml --env-file $DEPLOYMENT_ENV_FILE build ${NO_CACHE_FLAG} deployer
+  fi
+
+  if [[ "${DEPLOYMENT_SERVICES}" == *"worker"* ]]; then
+    docker-compose -f docker/docker-compose.deployment.yml --env-file $DEPLOYMENT_ENV_FILE build ${NO_CACHE_FLAG} worker
+  fi
+
+  if [[ "${DEPLOYMENT_SERVICES}" == *"administrator"* ]]; then
+    docker-compose -f docker/docker-compose.deployment.yml --env-file $DEPLOYMENT_ENV_FILE build ${NO_CACHE_FLAG} administrator
+  fi
+
+  if [[ "${DEPLOYMENT_SERVICES}" == *"client"* ]]; then
+    docker-compose -f docker/docker-compose.deployment.yml --env-file $DEPLOYMENT_ENV_FILE build ${NO_CACHE_FLAG} client
+  fi
+
+  if [[ "${DEPLOYMENT_SERVICES}" == *"optimist"* ]]; then
+    docker-compose -f docker/docker-compose.deployment.yml --env-file $DEPLOYMENT_ENV_FILE build ${NO_CACHE_FLAG} optimist
+  fi
+
+  echo -e "Build finished!\n"
+fi
+
+echo -e "Creating volumes folders...\n"
+
+# create the volumes folders
+mkdir -p docker/volumes/build
+mkdir -p docker/volumes/proving_files
+
+echo -e "Starting the services: ${DEPLOYMENT_SERVICES}\n"
+
+DEPLOYMENT_COMPOSER_FILES="-f docker/docker-compose.deployment.yml"
+
+docker-compose $DEPLOYMENT_COMPOSER_FILES --env-file $DEPLOYMENT_ENV_FILE -p 'nightfall_3' up -d ${DEPLOYMENT_SERVICES//,/ }
+
+echo -e "Deployment services started!\n"
+
+docker-compose -p 'nightfall_3' $DEPLOYMENT_COMPOSER_FILES --env-file $DEPLOYMENT_ENV_FILE logs -f ${DEPLOYMENT_SERVICES//,/ }

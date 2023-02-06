@@ -2,82 +2,65 @@ version: '3.5'
 # Use this script for running up nightfall_3 client in 'developer' mode with local
 # bindings.  See the readme for more information.
 services:
-  client:
-    image: public.ecr.aws/m0t3e1j9/nightfall-client:testnet
+  client_1:
+    image: ghcr.io/eyblockchain/nightfall3-client:latest
     volumes:
       - type: volume
-        source: build
+        source: build_client_1
         target: /app/build
     networks:
       - nightfall_network
     ports:
-      - 8080:80
+      - 8090:80
     depends_on:
-      - worker
-      - rabbitmq
-      - mongodb
+      - worker_1
+      - mongodb_client_1
     environment:
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      CIRCOM_WORKER_HOST: worker
-      OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
-      OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
-      MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb:27017}
-      BLOCKCHAIN_URL: wss://${BLOCKCHAIN_WS_HOST}
-      USE_EXTERNAL_NODE: 'true'
-      AUTOSTART_RETRIES: 600
-      ETH_NETWORK: ${ETH_NETWORK}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      CIRCOM_WORKER_HOST: worker_1
+      MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb_client_1}
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
       LAUNCH_LOCAL: 1
+      GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
     command: ['npm', 'run', 'dev']
 
-  rabbitmq:
-    image: rabbitmq
-    ports:
-      - '15674:15674'
-      - '5672:5672'
-    networks:
-      - nightfall_network
-
-  mongodb:
+  mongodb_client_1:
     image: mongo:4.4.1-bionic
-    hostname: mongodb
+    hostname: mongodb_client_1
     ports:
-      - 27017:27017
+      - 27018:27017
     networks:
       - nightfall_network
     command: --quiet
     volumes:
       - type: volume
-        source: mongodb
+        source: mongodb_client_1
         target: /data/db
 
-  worker:
-    image: public.ecr.aws/m0t3e1j9/nightfall-worker:testnet
+  worker_1:
+    image: ghcr.io/eyblockchain/nightfall3-worker:latest
     volumes:
       - type: volume
-        source: proving_files
+        source: proving_files_client_1
         target: /app/output/
-    depends_on:
-      - rabbitmq
     networks:
       - nightfall_network
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      MPC: ${MPC:-true}
-      ETH_NETWORK: ${ETH_NETWORK}
       CIRCUIT_FILES_URL: ${CIRCUIT_FILES_URL}
 
 volumes:
-  mongodb:
-  proving_files:
-  build:
+  mongodb_client_1:
+  proving_files_client_1:
+  build_client_1:
 
 networks:
   nightfall_network:
