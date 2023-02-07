@@ -5,22 +5,25 @@ import { getRegisterPairSenderReceiver, saveRegisterPairSenderReceiver } from '.
 
 const { REGULATOR_PRIVATE_KEY } = constants;
 
-const registerPairSenderReceiver = async (PKa, PKb, PKx, intermediateXB) => {
-  const sharedSecret = scalarMult(
+const registerPairSenderReceiver = async (PKSender, PKReceiver, transferPublicKey, sharedPubRegulator) => {
+  const sharedPubSender = scalarMult(
     REGULATOR_PRIVATE_KEY.bigInt,
-    PKb.map(r => r.bigInt),
+    PKSender.map(r => r.bigInt),
   );
 
-  const { resPKa, resPKb, resPKx, resIntermediateXB, resSharedSecret } =
-    await getRegisterPairSenderReceiver(PKa, PKb, PKx, intermediateXB, sharedSecret);
+  const sharedPubReceiver = scalarMult(
+    REGULATOR_PRIVATE_KEY.bigInt,
+    PKReceiver.map(r => r.bigInt),
+  );
 
-  if (!resPKa && !resPKb && !resPKx && !resIntermediateXB && !resSharedSecret) {
-    await saveRegisterPairSenderReceiver(PKa, PKb, PKx, intermediateXB, sharedSecret);
+  const registerPairSenderReceiver =
+    await getRegisterPairSenderReceiver(PKSender, PKReceiver, transferPublicKey, sharedPubRegulator, sharedPubSender, sharedPubReceiver);
+
+  if (!registerPairSenderReceiver) {
+    await saveRegisterPairSenderReceiver(PKSender, PKReceiver, transferPublicKey, sharedPubRegulator, sharedSecret, sharedPubSender, sharedPubReceiver);
   }
 
-  const actualPKx = resPKx === PKx ? PKx : resPKx;
-
-  return { sharedSecret, actualPKx };
+  return { sharedPubSender, sharedPubReceiver };
 };
 
 export { registerPairSenderReceiver };
