@@ -191,7 +191,7 @@ router.get('/pending-payments', async (req, res, next) => {
   const pendingPayments = [];
   // get blocks by proposer
   try {
-    const blocks = await findBlocksByProposer(proposerAddress);
+    const blocks = await findBlocksByProposer(proposerAddress.toLowerCase());
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
     for (let i = 0; i < blocks.length; i++) {
@@ -251,11 +251,10 @@ router.get('/stake', async (req, res, next) => {
  * Through a successful challenge or proposing state updates. This just
  * provides the tx data, the user will need to call the blockchain client.
  */
-router.get('/withdraw', async (req, res, next) => {
+router.post('/withdraw', async (req, res, next) => {
   try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
-
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
     res.json({ txDataToSign });
   } catch (err) {
     next(err);
@@ -273,7 +272,7 @@ router.post('/payment', async (req, res, next) => {
     const block = await getBlockByBlockHash(blockHash);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
-      .requestBlockPayment(block)
+      .requestBlockPayment(Block.buildSolidityStruct(block))
       .encodeABI();
 
     res.json({ txDataToSign });
