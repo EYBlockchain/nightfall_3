@@ -143,7 +143,7 @@ npm test-chain-reorg
 
 The ping-pong test uses 2 users and 2 proposers by default to test during a period of time:
 
-- 2 users sendin deposit and transfer transactions between them
+- 2 users sending deposit and transfer transactions between them
 - 2 proposers proposing blocks and rotating between them based on the PoS weighted round robin
 - checks for the users layer 2 balances
 - checks for the rotation, stake and statistics for the proposers
