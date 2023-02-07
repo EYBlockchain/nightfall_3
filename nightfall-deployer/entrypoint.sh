@@ -11,8 +11,9 @@ if [ "${SKIP_DEPLOYMENT}" != "true" ]; then
   npx truffle compile --all
 
   if [ -z "${UPGRADE}" ]; then
-    echo 'Deploying contracts'
+    echo "Deploying contracts to ${ETH_NETWORK}"
     npx truffle migrate --to 3 --network=${ETH_NETWORK}
+    echo 'Done'
   else
     echo 'Upgrading contracts'
     npx truffle migrate -f 4 --network=${ETH_NETWORK} --skip-dry-run
