@@ -18,18 +18,13 @@ import {
 } from './database.mjs';
 import { syncState } from './state-sync.mjs';
 
-const {
-  MONGO_URL,
-  COMMITMENTS_DB,
-  COMMITMENTS_COLLECTION,
-  REGULATOR_PRIVATE_KEY,
-  COMMITMENTS_REGULATOR_COLLECTION,
-} = config;
+const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, COMMITMENTS_REGULATOR_COLLECTION } =
+  config;
 const { generalise } = gen;
 const mutex = new Mutex();
 
 // function to format a commitment for a mongo db and store it
-export async function storeCommitment(_commitment, nullifierKey, zkpPrivateKey) {
+export async function storeCommitment(_commitment, nullifierKey) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   // we'll also compute and store the nullifier hash.  This will be useful for
@@ -54,13 +49,36 @@ export async function storeCommitment(_commitment, nullifierKey, zkpPrivateKey) 
   logger.debug(`Storing commitment ${commitment._id}`);
   const query = { _id: commitment._id };
   const update = { $set: commitment };
-  let collection;
-  if (zkpPrivateKey === REGULATOR_PRIVATE_KEY) {
-    collection = db.collection(COMMITMENTS_REGULATOR_COLLECTION);
-  } else {
-    collection = db.collection(COMMITMENTS_COLLECTION);
-  }
-  return collection.updateOne(query, update, { upsert: true });
+  return db.collection(COMMITMENTS_COLLECTION).updateOne(query, update, { upsert: true });
+}
+
+// function to format a commitment for a mongo db and store it
+export async function storeCommitmentRegulator(_commitment, nullifierKey) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  // we'll also compute and store the nullifier hash.  This will be useful for
+  // spotting if the commitment spend is ever rolled back, which would mean the
+  // commitment is once again available to spend
+  const nullifierHash = new Nullifier(_commitment, nullifierKey).hash.hex(32);
+  const preimage = _commitment.preimage.all.hex(32);
+  preimage.ercAddress = preimage.ercAddress.toLowerCase();
+  const commitment = {
+    _id: _commitment.hash.hex(32),
+    compressedZkpPublicKey: _commitment.compressedZkpPublicKey.hex(32),
+    preimage,
+    isDeposited: _commitment.isDeposited || false,
+    isOnChain: Number(_commitment.isOnChain) || -1,
+    isPendingNullification: false, // will not be pending when stored
+    isNullified: _commitment.isNullified,
+    isNullifiedOnChain: Number(_commitment.isNullifiedOnChain) || -1,
+    nullifier: nullifierHash,
+    blockNumber: -1,
+    isCommitmentInTransaction: _commitment.isCommitmentInTransaction || true,
+  };
+  logger.debug(`Storing commitment ${commitment._id}`);
+  const query = { _id: commitment._id };
+  const update = { $set: commitment };
+  return db.collection(COMMITMENTS_REGULATOR_COLLECTION).updateOne(query, update, { upsert: true });
 }
 // function to update an existing commitment
 export async function updateCommitment(commitment, updates) {

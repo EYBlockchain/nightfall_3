@@ -24,7 +24,7 @@ import {
   saveBlock,
   setTransactionHashSiblingInfo,
 } from '../services/database.mjs';
-import { decryptCommitment } from '../services/commitment-sync.mjs';
+import { decryptCommitment, decryptCommitmentRegulator } from '../services/commitment-sync.mjs';
 
 const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE, REGULATOR_PRIVATE_KEY } = config;
 const { ZERO, WITHDRAW } = constants;
@@ -71,7 +71,7 @@ async function blockProposedEventHandler(data, syncing) {
       !countOfNonZeroCommitments
     ) {
       if (REGULATOR_PRIVATE_KEY) {
-        await decryptCommitment(transaction, [REGULATOR_PRIVATE_KEY], nullifierKeys);
+        await decryptCommitmentRegulator(transaction, [REGULATOR_PRIVATE_KEY], nullifierKeys);
       }
       const transactionDecrypted = await decryptCommitment(
         transaction,
