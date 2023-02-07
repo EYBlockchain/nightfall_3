@@ -5,7 +5,12 @@ import { getRegisterPairSenderReceiver, saveRegisterPairSenderReceiver } from '.
 
 const { REGULATOR_PRIVATE_KEY } = constants;
 
-const registerPairSenderReceiver = async (PKSender, PKReceiver, transferPublicKey, sharedPubRegulator) => {
+const registerPairSenderReceiver = async (
+  PKSender,
+  PKReceiver,
+  transferPublicKey,
+  sharedPubRegulator,
+) => {
   const sharedPubSender = scalarMult(
     REGULATOR_PRIVATE_KEY.bigInt,
     PKSender.map(r => r.bigInt),
@@ -16,11 +21,24 @@ const registerPairSenderReceiver = async (PKSender, PKReceiver, transferPublicKe
     PKReceiver.map(r => r.bigInt),
   );
 
-  const registerPairSenderReceiver =
-    await getRegisterPairSenderReceiver(PKSender, PKReceiver, transferPublicKey, sharedPubRegulator, sharedPubSender, sharedPubReceiver);
+  const registeredValue = await getRegisterPairSenderReceiver(
+    PKSender,
+    PKReceiver,
+    transferPublicKey,
+    sharedPubRegulator,
+    sharedPubSender,
+    sharedPubReceiver,
+  );
 
-  if (!registerPairSenderReceiver) {
-    await saveRegisterPairSenderReceiver(PKSender, PKReceiver, transferPublicKey, sharedPubRegulator, sharedSecret, sharedPubSender, sharedPubReceiver);
+  if (!registeredValue) {
+    await saveRegisterPairSenderReceiver(
+      PKSender,
+      PKReceiver,
+      transferPublicKey,
+      sharedPubRegulator,
+      sharedPubSender,
+      sharedPubReceiver,
+    );
   }
 
   return { sharedPubSender, sharedPubReceiver };
