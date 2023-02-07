@@ -38,7 +38,10 @@ const registerPairSenderReceiverToRegulator = (
     BigInt(privateKeyRegulator),
     receiverPublicKey.map(r => r.bigInt),
   );
-  const sharedPubReceiver = scalarMult(BigInt(privateKeyRegulator), senderPublicKey);
+  const sharedPubReceiver = scalarMult(
+    BigInt(privateKeyRegulator),
+    senderPublicKey.map(s => s.bigInt),
+  );
   // -----------------------------------------------------------------------------
 
   return [sharedPubSender, sharedPubReceiver];
