@@ -14,24 +14,21 @@ export async function findTransactionInMempools(l2TransactionHash) {
   const proposerURLs = (await getProposers()).map(p => p.url);
 
   logger.debug('Query each proposer mempool..');
-  const promises = [];
-  proposerURLs.forEach(pURL => {
-    promises.push(axios.get(`${pURL}/proposer/mempool/${l2TransactionHash}`));
-  });
+  const promises = proposerURLs.map(pURL =>
+    axios.get(`${pURL}/proposer/mempool/${l2TransactionHash}`),
+  );
 
   /*
     The user may have sent the transaction multiple times to different proposers,
     but this situation should be resolved when including the tx in L2 block
   */
-  let res;
   try {
-    res = await Promise.any(promises);
+    const { data } = await Promise.any(promises);
+    return data; // ie transaction object
   } catch (err) {
     logger.trace(err);
     throw new NotFoundError(`Could not find L2 transaction hash ${l2TransactionHash}`);
   }
-
-  return res.data; // ie transaction object
 }
 
 export function setL2TransactionStatus(transaction) {
