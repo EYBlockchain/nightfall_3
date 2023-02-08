@@ -1,9 +1,8 @@
 /**
- * This module contains the logic needed create a zkp transfer, i.e. to nullify
- * two input commitments and create two new output commitments to the same value.
+ * This module contains the logic needed create a zkp transfer for regulator
  * It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
- * @module deposit.mjs
- * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
+ * @module transfer-regulator.mjs
+ * @author daveroga
  */
 import config from 'config';
 import gen from 'general-number';
@@ -81,10 +80,8 @@ async function transferRegulator(transferParams) {
   });
 
   try {
-    let nonce = 0;
-
     // KEM-DEM encryption with 3 peers
-    const [ePrivate, ePublic] = await genTransferKeysForObservers(
+    const [observerEphPrivate, observerEphPublic] = await genTransferKeysForObservers(
       generalise(zkpPrivateKey),
       generalise(recipientZkpPublicKeys[0]),
     );
@@ -93,15 +90,15 @@ async function transferRegulator(transferParams) {
       REGULATOR_URL,
       generalise(zkpPublicKey),
       generalise(recipientZkpPublicKeys[0]),
-      generalise(ePublic),
-      generalise(ePrivate),
+      generalise(observerEphPublic),
+      generalise(observerEphPrivate),
     );
 
     const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
-    nonce = randomNonce(1, 2 ** NONCE_ENCRYPTION_BITS - 1); // generate a 6 bytes random nonce
+    const nonce = randomNonce(1, 2 ** NONCE_ENCRYPTION_BITS - 1); // generate a 6 bytes random nonce
 
     const compressedSecrets = encrypt(
-      generalise(ePrivate),
+      generalise(observerEphPrivate),
       generalise(sharedPubSender),
       [packedErc.bigInt, unpackedTokenID.bigInt, values[0].bigInt, commitmentsInfo.salts[0].bigInt],
       nonce,
@@ -125,7 +122,7 @@ async function transferRegulator(transferParams) {
       numberNullifiers: VK_IDS[circuitName].numberNullifiers,
       numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
-      value: nonce || 0,
+      value: nonce,
     });
 
     const privateData = {
@@ -141,7 +138,7 @@ async function transferRegulator(transferParams) {
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
       ercAddress,
       tokenId,
-      ephemeralKey: ePrivate,
+      ephemeralKey: observerEphPrivate,
       sharedPubSender,
     };
 

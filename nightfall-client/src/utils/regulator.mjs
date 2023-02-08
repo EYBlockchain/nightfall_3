@@ -4,9 +4,12 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 /**
 This function registers the sender-receiver to the regulator and gets the sharedPub for the sender to generate the secret.
 @function registerPairSenderReceiv1er
-@param {String} hex1 - parameter 1 hex string
-@param {String} hex2 - parameter 2 hex string
-@returns {String} XOR result hex string
+@param {String} regulatorUrl - regulator Url for registering the pair sender receiver
+@param {String} senderPublicKey - sender public key
+@param {String} receiverPublicKey - receiver public key
+@param {String} transferPublicKey - transfer public key
+@param {String} transferPrivateKey - transfer private key
+@returns {[String, String]} [sharedPubSender, sharedPubReceiver] - shared public secret for sender and receiver
 */
 const registerPairSenderReceiverToRegulator = (
   regulatorUrl,
@@ -36,11 +39,11 @@ const registerPairSenderReceiverToRegulator = (
   // const regulatorPublicKey = scalarMult(BigInt(privateKeyRegulator), BABYJUBJUB.GENERATOR);
   const sharedPubSender = scalarMult(
     BigInt(privateKeyRegulator),
-    receiverPublicKey.map(r => r.bigInt),
+    receiverPublicKey.map(pk => pk.bigInt),
   );
   const sharedPubReceiver = scalarMult(
     BigInt(privateKeyRegulator),
-    senderPublicKey.map(s => s.bigInt),
+    transferPublicKey.map(pk => pk.bigInt),
   );
   // -----------------------------------------------------------------------------
 

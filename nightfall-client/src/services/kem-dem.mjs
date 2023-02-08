@@ -128,9 +128,8 @@ This function gets a random nonce between min and max.
 @param {Number} max - Max value of the nonce
 @returns {GeneralNumber} The random hex nonce 
 */
-export const randomNonce = (min, max) => {
-  const nonce = BigInt(Math.floor(Math.random() * (max - min + 1) + min));
-  return nonce;
+const randomNonce = (min, max) => {
+  return BigInt(Math.floor(Math.random() * (max - min + 1) + min));
 };
 
 /**
@@ -140,7 +139,7 @@ This function performs the kem-dem required to encrypt plaintext.
 @param {Array<GeneralNumber>} ephemeralPub - The ephemeralPubKey
 @param {Array<GeneralNumber>} recipientPkds - The public pkd of the recipients
 @param {Array<BigInt>} plaintexts - The array of plain text to be encrypted, the ordering is [ercAddress,tokenId, value, salt]
-@param {BigInt} nonce - Nonce to do XOR
+@param {BigInt} nonce - Nonce to do XOR. This is used in transfer for regulator so the encryption key has some randomness
 @returns {Array<BigInt>} The encrypted ciphertexts.
 */
 const encrypt = (ephemeralPrivate, recipientPkds, plaintexts, nonce) => {
@@ -158,7 +157,7 @@ This function performs the kem-deDem required to decrypt plaintext.
 @param {GeneralNumber} privateKey - The private key of the recipient pkd
 @param {Array<GeneralNumber>} ephemeralPub - The ephemeralPubKey
 @param {Array<GeneralNumber>} ciphertexts - The array of ciphertexts to be decrypted
-@param {BigInt} nonce - Nonce to do XOR
+@param {BigInt} nonce - Nonce to do XOR. This is used in transfer for regulator so the encryption key has some randomness
 @returns {Array<GeneralNumber>} The decrypted plaintexts, the ordering is [ercAddress,tokenId, value, salt]
 */
 const decrypt = (privateKey, ephemeralPub, cipherTexts, nonce) => {
@@ -170,4 +169,11 @@ const decrypt = (privateKey, ephemeralPub, cipherTexts, nonce) => {
   return deDem(encKey, cipherTexts);
 };
 
-export { encrypt, decrypt, genEphemeralKeys, genTransferKeysForObservers, packSecrets };
+export {
+  encrypt,
+  decrypt,
+  genEphemeralKeys,
+  genTransferKeysForObservers,
+  randomNonce,
+  packSecrets,
+};

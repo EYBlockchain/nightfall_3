@@ -2,7 +2,7 @@
  * This module contains the logic needed create a zkp transfer, i.e. to nullify
  * two input commitments and create two new output commitments to the same value.
  * It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
- * @module deposit.mjs
+ * @module transfer.mjs
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
 import config from 'config';
