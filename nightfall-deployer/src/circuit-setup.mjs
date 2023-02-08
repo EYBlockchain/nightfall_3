@@ -8,11 +8,11 @@ import axios from 'axios';
 import config from 'config';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
 import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import crypto from 'crypto';
 
 const fsPromises = fs.promises;
 
@@ -131,7 +131,9 @@ async function setupCircuits() {
     }
   }
 
+  logger.debug(`Getting key registry contract`);
   const keyRegistry = await waitForContract('State');
+  logger.debug(`Got key registry contract`);
 
   // we should register the vk now
   for (let i = 0; i < vks.length; i++) {
@@ -170,7 +172,7 @@ async function setupCircuits() {
         call.send();
       }
     } catch (err) {
-      logger.error(err);
+      logger.error(`Error registering key ${err}`);
       throw err;
     }
   }
@@ -187,7 +189,9 @@ async function setupCircuits() {
       // since methods like send() don't work
       if (config.ETH_PRIVATE_KEY) {
         await Web3.submitRawTransaction(call.encodeABI(), keyRegistry.options.address);
+        logger.debug('Transaction submitted');
       } else {
+        logger.warn('Attempting to submit a transaction using an unlocked account');
         call.send();
       }
     } catch (err) {

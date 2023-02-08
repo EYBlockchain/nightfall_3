@@ -722,6 +722,19 @@ jobs:
       - name: Build adversary
         run: npm run build-adversary
 
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          npm link @polygon-nightfall/common-files
+          cd cli
+          npm link @polygon-nightfall/common-files
+          cd ..
+          cd test/adversary/adversary-cli
+          npm link @polygon-nightfall/common-files
+          cd .. && cd .. && cd ..
+
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
@@ -766,9 +779,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v1
         with:
           node-version: '16.17.0'
+
+      - name: Build adversary
+        run: npm run build-adversary
 
       - name: Perform npm link
         run: |
@@ -779,9 +795,9 @@ jobs:
           cd cli
           npm link @polygon-nightfall/common-files
           cd ..
-
-      - name: Build adversary
-        run: npm run build-adversary
+          cd test/adversary/adversary-cli
+          npm link @polygon-nightfall/common-files
+          cd .. && cd .. && cd ..
 
       - name: Start Containers
         run: |
@@ -970,3 +986,60 @@ jobs:
         with:
           name: test-apps-logs
           path: ./test-apps.log
+
+  periodic-payment-test:
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          npm link @polygon-nightfall/common-files
+          cd cli
+          npm link @polygon-nightfall/common-files
+          cd ..
+
+      - name: Start Containers
+        run: |
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> periodic-payment-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat periodic-payment-test.log
+
+      - name: Run integration test
+        run: |
+          npm run test-periodic-payment
+
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat periodic-payment-test.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: periodic-payment-test-logs
+          path: ./periodic-payment-test.log

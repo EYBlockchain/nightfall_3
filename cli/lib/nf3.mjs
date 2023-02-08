@@ -15,6 +15,7 @@ import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
+import createJob from './jobScheduler.mjs';
 
 import {
   DEFAULT_FEE_TOKEN_VALUE,
@@ -24,6 +25,8 @@ import {
   GAS_PRICE,
   GAS_PRICE_MULTIPLIER,
   GAS_ESTIMATE_ENDPOINT,
+  DEFAULT_MIN_L1_WITHDRAW,
+  DEFAULT_MIN_L2_WITHDRAW,
 } from './constants.mjs';
 
 function createQueue(options) {
@@ -76,6 +79,8 @@ class Nf3 {
 
   stateContract;
 
+  shieldContract;
+
   ethereumSigningKey;
 
   ethereumAddress;
@@ -97,6 +102,14 @@ class Nf3 {
   nonceMutex = new Mutex();
 
   clientAuthenticationKey;
+
+  // min fee or reward one should hold for withdaw
+  // in State contract.
+  minL1Balance = DEFAULT_MIN_L1_WITHDRAW;
+
+  minL2Balance = DEFAULT_MIN_L2_WITHDRAW;
+
+  periodicPaymentJob;
 
   constructor(
     ethereumSigningKey,
@@ -172,6 +185,7 @@ class Nf3 {
     this.challengesContractAddress = await this.contractGetter('Challenges');
     this.stateContractAddress = await this.contractGetter('State');
     this.stateContract = await this.getContractInstance('State');
+    this.shieldContract = await this.getContractInstance('Shield');
 
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
@@ -1214,6 +1228,11 @@ class Nf3 {
     return this.stateContract.methods.getRotateProposerBlocks().call();
   }
 
+  // used by proposers and challengers
+  async getPendingWithdrawsFromStateContract() {
+    return this.stateContract.methods.pendingWithdrawalsFees(this.ethereumAddress).call();
+  }
+
   /**
     Starts a Proposer that listens for blocks and submits block proposal
     transactions to the blockchain.
@@ -1723,6 +1742,45 @@ class Nf3 {
    */
   async getL2TransactionStatus(l2TransactionHash) {
     return axios.get(`${this.clientBaseUrl}/transaction/status/${l2TransactionHash}`);
+  }
+
+  /**
+   * function start periodic payment
+   * @param cronExp {string} default is At 00:00 on every 6th day-of-week (Saturday).
+   */
+  startPeriodicPayment(cronExp = '0 0 * * */6') {
+    this.periodicPaymentJob = createJob(cronExp, async () => {
+      try {
+        logger.info(`--in cron job --- ${new Date().toLocaleString()}`);
+        const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
+        logger.info(
+          `${this.ethereumAddress} pending balance are feesL1 - ${feesL1}, and feesL2 - ${feesL2}`,
+        );
+        if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
+          return;
+        }
+        const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`))
+          .data;
+        const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0);
+        await this._sendTransaction(tx);
+      } catch (err) {
+        logger.error({
+          msg: 'Error while trying to submit withdraw tx',
+          err,
+        });
+      }
+    });
+    this.periodicPaymentJob.start();
+  }
+
+  /**
+   * This function not just stop periodic payment job
+   * but also destroys it as well
+   */
+  stopPeriodicPayment() {
+    if (!this.periodicPaymentJob) throw Error('Periodic Payment job not created yet');
+    this.periodicPaymentJob.stop();
+    this.periodicPaymentJob = undefined;
   }
 }
 

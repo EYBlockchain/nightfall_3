@@ -69,9 +69,11 @@ module.exports = {
     },
 
     localhost: {
-      url: 'ws://localhost:8546',
+      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 1337, // Any network (default: none)
-      gas: 8000000,
+      networkCheckTimeout: 1000000000,
+      timeoutBlocks: 2000,
+      gas: 6721975,
       websockets: true,
     },
 
@@ -96,15 +98,20 @@ module.exports = {
       networkCheckTimeout: 1000000000,
       timeoutBlocks: 2000,
     },
-    goerli: {
-      provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
-      network_id: 5,
+    mumbai: {
+      provider: () =>
+        new HDWalletProvider({
+          privateKeys: [config.ETH_PRIVATE_KEY],
+          providerOrUrl: config.BLOCKCHAIN_URL,
+          chainId: 80001,
+        }),
+      network_id: 80001,
       networkCheckTimeout: 1000000000,
       timeoutBlocks: 2000,
       skipDryRun: true,
       websockets: true,
       gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: config.WEB3_OPTIONS.gas,
+      gas: 6721975, // config.WEB3_OPTIONS.gas,
     },
     mainnet: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
