@@ -216,6 +216,7 @@ export async function simpleUserTest(
         fee,
       );
       withdrawalTxHash.push(nf3.getLatestWithdrawHash());
+      console.log('WITH HASH', nf3.getLatestWithdrawHash());
       listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         value: valueToTransfer,

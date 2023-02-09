@@ -12,6 +12,7 @@ import {
   getStakeAccount,
   getCurrentProposer,
   simpleUserTest,
+  Web3Client,
 } from './index.mjs';
 
 const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls, fee } =
@@ -26,6 +27,7 @@ const listAddresses = [];
 const listTransactionsTotal = [];
 const TEST_LENGTH = 4;
 const value = 10;
+const web3Client = new Web3Client();
 let ercAddress;
 
 let nf3User;
@@ -393,8 +395,17 @@ describe('Ping-pong tests', () => {
     // check final stats are ok
     await finalStatsCheck(optimistUrls, proposersStats);
 
-    await Promise.all(withdrawalTxHash);
-    console.log("Tx HASH", withdrawalTxHash)
+
+    const nodeInfo = await web3Client.getInfo();
+    if (nodeInfo.includes('TestRPC')) {
+      await web3Client.timeJump(3600 * 24 * 10);
+      const availableWithdrawalTxHash = Promise.all(withdrawalTxHash[0]);
+      const finalRes = [];
+      for (let i = 0; i < availableWithdrawalTxHash.length;  i++) {
+        finalRes.push(nf3User[0].finaliseWithdrawal(availableWithdrawalTxHash[i]));
+      }
+      console.log('sdsdsd', Promise.all(finalRes));
+    }
   });
 
   after(async () => {
