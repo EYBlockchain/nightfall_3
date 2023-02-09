@@ -13,6 +13,7 @@ const { TX_WAIT = 1000 } = process.env;
 let stateContract;
 const tokenType = 'ERC20';
 const tokenId = '0x0000000000000000000000000000000000000000000000000000000000000000';
+const withdrawalTxHash = [];
 
 export const getCurrentProposer = async () => {
   const currentProposer = await stateContract.methods.getCurrentProposer().call();
@@ -214,6 +215,7 @@ export async function simpleUserTest(
         nf3.ethereumAddress,
         fee,
       );
+      withdrawalTxHash.push(nf3.getLatestWithdrawHash());
       listTransactionsSent.push({
         from: nf3.zkpKeys.compressedZkpPublicKey,
         value: valueToTransfer,
@@ -231,6 +233,7 @@ export async function simpleUserTest(
     // await new Promise(resolve => setTimeout(resolve, TX_WAIT)); // this may need to be longer on a real blockchain
     console.log(`Completed ${i + 1} pings`);
   }
+  return withdrawalTxHash;
 }
 
 /**

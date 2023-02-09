@@ -17,7 +17,7 @@ export async function finaliseWithdrawal(transactionHash) {
     block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
   );
 
-  // block can contain multiple transactions
+  // block can contain multiple transactions not in our database
   const index = transactions.findIndex(f => transactionHash === f?.transactionHash ?? '0x0');
 
   const siblingPath = [transactions[index].transactionHashesRoot].concat(

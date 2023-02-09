@@ -16,6 +16,7 @@ import {
 
 const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls, fee } =
   config.TEST_OPTIONS;
+console.log("RRR", process.env.CLIENT1_API_URL)
 const environment = config.ENVIRONMENTS[config.ENVIRONMENT];
 const { TEST_ERC20_ADDRESS } = process.env;
 const CLIENT2_TX_TYPES_SEQUENCE = process.env.CLIENT2_TX_TYPES_SEQUENCE || 'ValidTransaction';
@@ -343,14 +344,19 @@ describe('Ping-pong tests', () => {
 
     nf3User = new Nf3(signingKeys.liquidityProvider, environment);
 
+    console.log("XXXX", config.ENVIRONMENTS)
+    console.log("XXXX", mnemonics.liquidityProvider, config.ENVIRONMENT)
     await nf3User.init(mnemonics.liquidityProvider);
+    console.log("XXXX 1")
     await setParametersConfig(nf3User); // initialize parameters and contracts for test
+    console.log("XXXX 2")
     ercAddress = TEST_ERC20_ADDRESS || (await nf3User.getContractAddress('ERC20Mock'));
   });
 
   it('Runs ping-pong tests', async () => {
     const optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers
     const proposersStats = await getInitialProposerStats(optimistUrls);
+    const withdrawalTxHash = [];
     blockStake = await nf3User.getBlockStake();
     console.log('BLOCKSTAKE: ', blockStake);
     // wait for the current proposer to be ready
@@ -367,14 +373,16 @@ describe('Ping-pong tests', () => {
       );
       const listTransactionsUser = []; // transfers done in the simple user test for this user
       listTransactionsTotal.push(listTransactionsUser);
-      simpleUserTest(
-        TEST_LENGTH,
-        value,
-        fee,
-        ercAddress,
-        nf3Users[i],
-        listAddressesToSend,
-        listTransactionsUser,
+      withdrawalTxHash.push(
+        simpleUserTest(
+          TEST_LENGTH,
+          value,
+          fee,
+          ercAddress,
+          nf3Users[i],
+          listAddressesToSend,
+          listTransactionsUser,
+        ),
       );
     }
 
@@ -389,6 +397,9 @@ describe('Ping-pong tests', () => {
 
     // check final stats are ok
     await finalStatsCheck(optimistUrls, proposersStats);
+
+    await Promise.all(withdrawalTxHash);
+    console.log("Tx HASH", withdrawalTxHash)
   });
 
   after(async () => {
