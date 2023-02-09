@@ -29,6 +29,12 @@ import {
   DEFAULT_MIN_L2_WITHDRAW,
 } from './constants.mjs';
 
+function ping(ws) {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.ping();
+  }
+}
+
 function createQueue(options) {
   const queue = new Queue(options);
   queue.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
@@ -929,7 +935,7 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          connection._ws.ping();
+          ping(connection._ws);
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
@@ -1254,7 +1260,7 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          connection._ws.ping();
+          ping(connection._ws);
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
@@ -1346,7 +1352,7 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          connection._ws.ping();
+          ping(connection._ws);
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong

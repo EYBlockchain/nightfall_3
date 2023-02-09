@@ -1,2 +1,34 @@
+/.git
+/.github
+/.vscode
+/.husky
+
+test
+doc
+bin
+docker
+cli/build
 config/geth/data
+common-files/test
 backup
+wallet
+jsdoc.json
+LICENSE
+
+# Ignore unnecessary files inside allowed directories
+# This should go after the allowed directories
+**/*~
+**/*.log
+**/.DS_Store
+**/Thumbs.db
+**/node_modules/
+**/dist
+**/npm-debug.log
+**/.coverage
+**/.coverage.*
+**/.env
+**/.npmrc
+**/.nvmrc
+**/*.md
+**/.dockerignore
+**/.gitignore
