@@ -55,7 +55,7 @@ export class ZkpKeys {
   // keccak256('nullifierKey') % BN128_GROUP_ORDER 7805187439118198468809896822299973897593108379494079213870562208229492109015
   static generateZkpKeysFromMnemonic(mnemonic, addressIndex) {
     if (validateMnemonic(mnemonic)) {
-      const seed = mnemonicToSeedSync(mnemonic).toString('hex');
+      const seed = mnemonicToSeedSync(mnemonic);
       const rootKey = generalise(
         new GN(
           hdkey
@@ -64,7 +64,6 @@ export class ZkpKeys {
             .getWallet()
             .getPrivateKey(),
         ).bigInt % BN128_GROUP_ORDER,
-        'bigInt',
       );
       const zkpPrivateKey = poseidon([
         rootKey,

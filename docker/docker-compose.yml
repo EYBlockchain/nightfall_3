@@ -69,21 +69,22 @@ services:
       - type: volume
         source: build
         target: /app/build/
+      - type: volume
+        source: .openzeppelin
+        target: /app/.openzeppelin/
     depends_on:
       - worker
     networks:
       - nightfall_network
     environment:
       ALWAYS_DO_TRUSTED_SETUP: ${ALWAYS_DO_TRUSTED_SETUP}
-      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      BLOCKCHAIN_URL: ${BLOCKCHAIN_URL:- ws://blockchain:8546}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
       DEPLOY_MOCK_TOKENS: ${DEPLOY_MOCK_TOKENS:-false}
       DEPLOY_MOCKED_SANCTIONS_CONTRACT: ${DEPLOY_MOCKED_SANCTIONS_CONTRACT:-false}
-      DAI_RESTRICT: ${DAI_RESTRICT}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
-      ERC20MOCK_RESTRICT: ${ERC20MOCK_RESTRICT}
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: ${ETH_NETWORK:-blockchain}
@@ -92,6 +93,8 @@ services:
       FEE_L2_TOKEN_ID: ${FEE_L2_TOKEN_ID:-MATIC}
       GAS: ${GAS}
       GAS_PRICE: ${GAS_PRICE}
+      ERC20MOCK_RESTRICT: ${ERC20MOCK_RESTRICT}
+      DAI_RESTRICT: ${DAI_RESTRICT}
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       MULTISIG_APPROVERS: ${MULTISIG_APPROVERS}
@@ -109,7 +112,10 @@ services:
       context: ..
     image: ghcr.io/eyblockchain/nightfall3-hosted-utils-api-server:latest
     depends_on:
-      - worker
+      worker:
+        condition: service_started
+      deployer:
+        condition: service_completed_successfully
     ports:
       - 8087:80
     volumes:
@@ -191,6 +197,7 @@ volumes:
   mongodb:
   proving_files:
   build:
+  .openzeppelin:
 networks:
   nightfall_network:
     driver: bridge

@@ -17,15 +17,22 @@ export default {
     if (this.web3) return this.web3.currentProvider;
 
     logger.info(`Blockchain Connecting on ${config.BLOCKCHAIN_URL}...`);
-
-    const provider = new Web3.providers.WebsocketProvider(
-      config.BLOCKCHAIN_URL,
-      config.WEB3_PROVIDER_OPTIONS,
-    );
-
-    provider.on('error', err => logger.error(`web3 error: ${err}`));
-    provider.on('connect', () => logger.info('Blockchain Connected ...'));
-    provider.on('end', () => logger.info('Blockchain disconnected'));
+    let provider;
+    if (config.BLOCKCHAIN_URL.includes('http')) {
+      logger.warn('Using the deprecated http provider');
+      provider = new Web3.providers.HttpProvider(
+        config.BLOCKCHAIN_URL,
+        config.WEB3_PROVIDER_OPTIONS,
+      );
+    } else {
+      provider = new Web3.providers.WebsocketProvider(
+        config.BLOCKCHAIN_URL,
+        config.WEB3_PROVIDER_OPTIONS,
+      );
+      provider.on('error', err => logger.error(`web3 error: ${err}`));
+      provider.on('connect', () => logger.info('Blockchain Connected ...'));
+      provider.on('end', () => logger.info('Blockchain disconnected'));
+    }
 
     this.web3 = new Web3(provider);
 
@@ -51,7 +58,7 @@ export default {
     let gas;
     try {
       gas = await this.web3.eth.estimateGas(tx);
-      logger.debug({ msg: 'Gas estimated at', gas });
+      logger.debug(`Gas estimated at ${gas}`);
     } catch (error) {
       gas = config.WEB3_OPTIONS.gas;
       logger.warn({ msg: 'Gas estimation failed, use default', gas });
@@ -77,7 +84,6 @@ export default {
       gasPrice: config.WEB3_OPTIONS.gasPrice,
     };
     tx.gas = await this.estimateGas(tx);
-
     const signed = await this.web3.eth.accounts.signTransaction(tx, config.ETH_PRIVATE_KEY);
     return this.web3.eth.sendSignedTransaction(signed.rawTransaction);
   },

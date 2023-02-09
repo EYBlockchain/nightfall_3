@@ -64,10 +64,7 @@ module.exports = async function (deployer) {
   // we need to know the address to give to the Shield contract
   if (DEPLOY_MOCKED_SANCTIONS_CONTRACT === 'true') {
     await deployer.deploy(SanctionsListMock, sanctionedUser);
-
     sanctionsContractAddress = SanctionsListMock.address;
-
-    console.log('SANCTIONED USER', sanctionsContractAddress, sanctionedUser);
   }
 
   await deployProxy(X509, [], { deployer });
@@ -89,8 +86,7 @@ module.exports = async function (deployer) {
   const challengers = await Challenges.deployed();
   const shield = await Shield.deployed();
   const x509 = await X509.deployed();
-
-  await State.deployed();
+  const state = await State.deployed();
 
   const { bootProposer, bootChallenger } = addresses;
 
@@ -121,7 +117,8 @@ module.exports = async function (deployer) {
   const feeL2TokenAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
     token => token.name === FEE_L2_TOKEN_ID,
   ).address;
-  await shield.setFeeL2TokenAddress(feeL2TokenAddress.toLowerCase());
+  await shield.setFeeL2TokenAddress(feeL2TokenAddress);
+  await state.setFeeL2TokenAddress(feeL2TokenAddress);
 
   console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'disable') {
