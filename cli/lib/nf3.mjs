@@ -281,12 +281,11 @@ class Nf3 {
   }
 
   /**
-  Forces optimist to make a block with whatever transactions it has to hand i.e. it won't wait
-  until the block is full
-  @method
-  @async
-  */
-  async makeBlockNow() {
+   * Start making block in optimist
+   * @method
+   * @async
+   */
+  async startMakeBlock() {
     return axios.get(`${this.optimistBaseUrl}/block/make-now`);
   }
 

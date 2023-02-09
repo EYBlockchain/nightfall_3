@@ -31,9 +31,9 @@ const eventLogs = [];
 const nf3User = new Nf3(signingKeys.user1, environment);
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
-async function makeBlock() {
+// wait for blockProposed event
+async function waitForBlockProposedEventToReceive() {
   logger.debug(`Make block...`);
-  await nf3Proposer.makeBlockNow();
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 }
 
@@ -60,6 +60,7 @@ describe('Periodic Payment', () => {
     );
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
     await nf3Proposer.startProposer();
+    await nf3Proposer.startMakeBlock();
 
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
     const stateAddress = await nf3User.stateContractAddress;
@@ -73,9 +74,9 @@ describe('Periodic Payment', () => {
     const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
     await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-    await makeBlock();
+    await waitForBlockProposedEventToReceive();
     await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-    await makeBlock();
+    await waitForBlockProposedEventToReceive();
 
     const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
     expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
@@ -103,9 +104,9 @@ describe('Periodic Payment', () => {
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
@@ -134,9 +135,9 @@ describe('Periodic Payment', () => {
         const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
         await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-        await makeBlock();
+        await waitForBlockProposedEventToReceive();
         await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-        await makeBlock();
+        await waitForBlockProposedEventToReceive();
 
         const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
         expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
@@ -158,7 +159,7 @@ describe('Periodic Payment', () => {
       // this test satisfy changed withdraw limit from before block
       it('Do one more deposit to make periodic payment cron job work', async () => {
         await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-        await makeBlock();
+        await waitForBlockProposedEventToReceive();
         await web3Client.timeJump(3600 * 24 * 10);
         await nf3Proposer.requestBlockPayment(
           (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash)[0],
@@ -183,9 +184,9 @@ describe('Periodic Payment', () => {
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);

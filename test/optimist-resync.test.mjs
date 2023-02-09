@@ -58,6 +58,7 @@ describe('Optimist synchronisation tests', () => {
     challengeEmitter.on('error', (err, type) =>
       logger.debug(`challenge listener received error ${err.message} of type ${type}`),
     );
+
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
     erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
@@ -88,7 +89,7 @@ describe('Optimist synchronisation tests', () => {
       let p = proposePromise();
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
-      await nf3Users[0].makeBlockNow();
+      await nf3Proposer1.startMakeBlock();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
@@ -109,7 +110,7 @@ describe('Optimist synchronisation tests', () => {
       p = proposePromise();
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
-      await nf3Users[0].makeBlockNow();
+      await nf3Proposer1.startMakeBlock();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
@@ -124,7 +125,6 @@ describe('Optimist synchronisation tests', () => {
       let p = proposePromise();
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
-      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
@@ -143,7 +143,7 @@ describe('Optimist synchronisation tests', () => {
       p = proposePromise();
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
-      await nf3Users[0].makeBlockNow();
+      await nf3Users[0].startMakeBlock();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
@@ -157,8 +157,6 @@ describe('Optimist synchronisation tests', () => {
       logger.debug(`      Sending a deposit...`);
       let p = proposePromise();
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-
-      await nf3Users[0].makeBlockNow();
 
       ({ eventLogs, eventsSeen } = await web3Client.waitForEvent(eventLogs, ['blockProposed']));
 
@@ -214,7 +212,7 @@ describe('Optimist synchronisation tests', () => {
       p = proposePromise();
       await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
 
-      await nf3Users[0].makeBlockNow();
+      await nf3Users[0].startMakeBlock();
 
       // we can use the emitter that nf3 provides to get the block and transactions we've just made.
       // The promise resolves once the block is on-chain.

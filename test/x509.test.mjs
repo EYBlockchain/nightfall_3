@@ -41,6 +41,7 @@ describe('x509 tests', () => {
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
 
     await nf3Proposer.startProposer();
+    await nf3Proposer.startMakeBlock();
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);

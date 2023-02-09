@@ -44,8 +44,7 @@ async function getLayer2Erc721s(_nf3User) {
   return (await _nf3User.getLayer2Balances())[erc721Address]?.length || 0;
 }
 
-async function makeBlock() {
-  await nf3Proposer.makeBlockNow();
+async function waitForBlockProposedEventToReceive() {
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 }
 
@@ -69,6 +68,7 @@ describe('ERC721 tests', () => {
         `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
       );
     });
+    await nf3Proposer.startMakedBlock();
 
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
     erc721Address = await nf3User.getContractAddress('ERC721Mock');
@@ -82,7 +82,7 @@ describe('ERC721 tests', () => {
     ).details.map(t => t.tokenId);
 
     await nf3User.deposit(erc20Address, tokenType, 10 * transferValue, tokenId, 0);
-    await makeBlock();
+    await waitForBlockProposedEventToReceive();
   });
 
   describe('Deposits', () => {
@@ -94,7 +94,7 @@ describe('ERC721 tests', () => {
       const res = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721After = await getLayer2Erc721s(nf3User);
       const userL2FeesBalanceAfter = await getLayer2Balances(nf3User, erc20Address);
@@ -130,7 +130,7 @@ describe('ERC721 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721After = await getLayer2Erc721s(nf3User);
       const userL2FeesBalanceAfter = await getLayer2Balances(nf3User, erc20Address);
@@ -144,7 +144,7 @@ describe('ERC721 tests', () => {
     it('Should decrement user L2 balance after transferring some ERC721 to other wallet, and increment the other wallet balance', async function () {
       const _tokenId = availableTokenIds.shift();
       await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721Before = await getLayer2Erc721s(nf3User);
       const user2L2Erc721Before = await getLayer2Erc721s(nf3User2);
@@ -161,7 +161,7 @@ describe('ERC721 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721After = await getLayer2Erc721s(nf3User);
       const user2L2Erc721After = await getLayer2Erc721s(nf3User2);
@@ -179,7 +179,7 @@ describe('ERC721 tests', () => {
 
       const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
       expectTransaction(deposit);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721Before = await getLayer2Erc721s(nf3User);
       const user2L2Erc721Before = await getLayer2Erc721s(nf3User2);
@@ -215,7 +215,7 @@ describe('ERC721 tests', () => {
       );
       expectTransaction(res);
 
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721After = await getLayer2Erc721s(nf3User);
       const user2L2Erc721After = await getLayer2Erc721s(nf3User2);
@@ -233,7 +233,7 @@ describe('ERC721 tests', () => {
 
       const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
       expectTransaction(deposit);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721Before = await getLayer2Erc721s(nf3User);
       const user2L2Erc721Before = await getLayer2Erc721s(nf3User2);
@@ -263,7 +263,7 @@ describe('ERC721 tests', () => {
       );
       expectTransaction(res);
 
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721After = await getLayer2Erc721s(nf3User);
       const user2L2Erc721After = await getLayer2Erc721s(nf3User2);
@@ -281,7 +281,7 @@ describe('ERC721 tests', () => {
 
       const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
       expectTransaction(deposit);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userCommitments = await getUserCommitments(
         environment.clientApiUrl,
@@ -309,7 +309,7 @@ describe('ERC721 tests', () => {
       );
       expectTransaction(res);
 
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721After = await getLayer2Erc721s(nf3User);
       const user2L2Erc721After = await getLayer2Erc721s(nf3User2);
@@ -327,7 +327,7 @@ describe('ERC721 tests', () => {
 
       const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
       expectTransaction(deposit);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userCommitments = await getUserCommitments(
         environment.clientApiUrl,
@@ -361,7 +361,7 @@ describe('ERC721 tests', () => {
 
       const deposit = await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
       expectTransaction(deposit);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       try {
         const res = await nf3User.transfer(
@@ -391,7 +391,7 @@ describe('ERC721 tests', () => {
     before(async function () {
       const _tokenId = availableTokenIds.shift();
       await nf3User.deposit(erc721Address, tokenTypeERC721, 0, _tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       userL2Erc721Before = await getLayer2Erc721s(nf3User);
       userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);
@@ -410,7 +410,7 @@ describe('ERC721 tests', () => {
     it('Should withdraw from L2', async function () {
       expectTransaction(withdrawalTx);
       logger.debug(`Gas used was ${Number(withdrawalTx.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc721After = await getLayer2Erc721s(nf3User);
       const userL2FeesBalanceAfter = await getLayer2Balances(nf3User, erc20Address);

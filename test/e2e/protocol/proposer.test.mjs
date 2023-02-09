@@ -201,7 +201,7 @@ describe('Basic Proposer tests', () => {
 
   it('should create some blocks and increase the L2 balance', async () => {
     await bootProposer.startProposer(); // start proposer to listen making blocks
-
+    await bootProposer.startMakeBlock();
     await nf3User.deposit(erc20Address, tokenType, transferValue * 2, tokenId, fee);
     await emptyL2({ nf3User, web3: web3Client, logs: eventLogs });
     const currentZkpPublicKeyBalance =

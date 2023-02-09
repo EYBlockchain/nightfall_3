@@ -63,6 +63,7 @@ describe('L2 Tokenisation tests', () => {
         `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
       );
     });
+    await nf3Proposer1.startMakeBlock();
 
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
@@ -261,12 +262,10 @@ describe('L2 Tokenisation tests', () => {
       // the commitment we will provide and a commitment that would otherwise be selected
       await nf3Users[0].tokenise(l2Address, value, privateTokenId, salt.hex(), 1);
 
-      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       await nf3Users[0].tokenise(l2Address, 1, privateTokenId, 1);
 
-      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const beforeCommitments = await nf3Users[0].getLayer2Commitments([l2Address], true);
@@ -286,7 +285,6 @@ describe('L2 Tokenisation tests', () => {
         [commitmentHash],
       );
 
-      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const afterCommitments = await nf3Users[0].getLayer2Commitments([l2Address], true);
@@ -317,7 +315,6 @@ describe('L2 Tokenisation tests', () => {
       // this commitment would be selected if we don't provide a commitment
       await nf3Users[0].deposit(erc20Address, tokenType, 1, tokenId, 0);
 
-      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const { compressedZkpPublicKey } = nf3Users[0].zkpKeys;
@@ -353,7 +350,6 @@ describe('L2 Tokenisation tests', () => {
         [commitmentHash],
       );
 
-      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const afterCommitments = await nf3Users[0].getLayer2Commitments([erc20Address], true);
@@ -424,14 +420,12 @@ describe('L2 Tokenisation tests', () => {
         ).hex(32);
         token.commitmentHash = commitmentHash;
         await nf3Users[0].tokenise(token.address, token.value, token.id, token.salt, fee);
-        await nf3Users[0].makeBlockNow();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
       }
 
       const beforeBalance = await nf3Users[0].getLayer2Balances();
 
       await nf3Users[0].transform(inputTokens, outputTokens, fee);
-      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const afterBalance = await nf3Users[0].getLayer2Balances();

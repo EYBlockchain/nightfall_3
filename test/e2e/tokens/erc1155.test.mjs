@@ -52,8 +52,7 @@ async function getLayer2Erc1155Balance(_nf3User) {
   );
 }
 
-async function makeBlock() {
-  await nf3Proposer.makeBlockNow();
+async function waitForBlockProposedEventToReceive() {
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 }
 
@@ -77,6 +76,7 @@ describe('ERC1155 tests', () => {
         `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
       );
     });
+    await nf3Proposer.startMakedBlock();
 
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
     erc1155Address = await nf3User.getContractAddress('ERC1155Mock');
@@ -94,11 +94,11 @@ describe('ERC1155 tests', () => {
 
     await nf3User.deposit(erc20Address, tokenType, 10 * transferValue, tokenId, 0);
 
-    await makeBlock();
+    await waitForBlockProposedEventToReceive();
 
     await nf3User.deposit(erc1155Address, tokenTypeERC1155, 50 * transferValue, _tokenId, fee);
 
-    await makeBlock();
+    await waitForBlockProposedEventToReceive();
   });
 
   describe('Deposits', () => {
@@ -114,7 +114,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User);
       const userL2FeesBalanceAfter = await getLayer2Balances(nf3User, erc20Address);
@@ -141,7 +141,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User);
       const user2L2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User2);
@@ -187,7 +187,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User);
       const user2L2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User2);
@@ -229,7 +229,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User);
       const user2L2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User2);
@@ -269,7 +269,7 @@ describe('ERC1155 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User);
       const user2L2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User2);
@@ -348,7 +348,7 @@ describe('ERC1155 tests', () => {
     before(async function () {
       _tokenId = availableTokenIds.shift();
       await nf3User.deposit(erc1155Address, tokenTypeERC1155, transferValue, _tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       userL2Erc1155BeforeBalance = await getLayer2Erc1155Balance(nf3User, _tokenId);
       userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);
@@ -367,7 +367,7 @@ describe('ERC1155 tests', () => {
     it('Should withdraw from L2', async function () {
       expectTransaction(withdrawalTx);
       logger.debug(`Gas used was ${Number(withdrawalTx.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2Erc1155BeforeAfter = await getLayer2Erc1155Balance(nf3User);
       const userL2FeesBalanceAfter = await getLayer2Balances(nf3User, erc20Address);

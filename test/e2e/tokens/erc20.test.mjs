@@ -55,9 +55,9 @@ const nf3UserSanctioned = new Nf3(signingKeys.sanctionedUser, environment);
 
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
-async function makeBlock() {
-  logger.debug(`Make block...`);
-  await nf3Proposer.makeBlockNow();
+// wait for blockProposed event
+async function waitForBlockProposedEventToReceive() {
+  logger.debug(`waiting for blockProposedEvent receive...`);
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 }
 
@@ -81,6 +81,7 @@ describe('ERC20 tests', () => {
         `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
       );
     });
+    await nf3Proposer.startMakeBlock();
 
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
     stateAddress = await nf3User.stateContractAddress;
@@ -94,7 +95,7 @@ describe('ERC20 tests', () => {
       const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
@@ -112,7 +113,7 @@ describe('ERC20 tests', () => {
     it('Should fail to send a deposit if commitment is already on chain', async function () {
       const salt = (await randValueLT(BN128_GROUP_ORDER)).hex();
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee, [], salt);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
       try {
         await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee, [], salt);
         expect.fail('Throw error, deposit did not fail');
@@ -134,7 +135,7 @@ describe('ERC20 tests', () => {
   describe('Transfers', () => {
     beforeEach(async () => {
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
     });
 
     it('Should decrement user L2 balance after transferring some ERC20 to other wallet, and increment the other wallet balance', async function () {
@@ -152,7 +153,7 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       const user2L2BalanceAfter = await getLayer2Balances(nf3User2, erc20Address);
@@ -174,7 +175,7 @@ describe('ERC20 tests', () => {
       );
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
@@ -213,7 +214,7 @@ describe('ERC20 tests', () => {
         usedCommitments,
       );
       expectTransaction(res);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
@@ -252,7 +253,7 @@ describe('ERC20 tests', () => {
         usedCommitments,
       );
       expectTransaction(res);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
@@ -302,7 +303,7 @@ describe('ERC20 tests', () => {
 
     before(async function () {
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
       withdrawalTx = await nf3User.withdraw(
@@ -320,7 +321,7 @@ describe('ERC20 tests', () => {
     it('Should withdraw from L2', async function () {
       expectTransaction(withdrawalTx);
       logger.debug(`Gas used was ${Number(withdrawalTx.gasUsed)}`);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-(transferValue / 2 + fee));
@@ -385,7 +386,7 @@ describe('ERC20 tests', () => {
       }
 
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       await nf3User.withdraw(
         false,
@@ -422,7 +423,7 @@ describe('ERC20 tests', () => {
     it('Should allow instant withdraw of existing withdraw', async function () {
       const userL1BalanceBefore = await web3Client.getBalance(nf3User.ethereumAddress);
 
-      await makeBlock();
+      await waitForBlockProposedEventToReceive();
 
       const res = await nf3User.requestInstantWithdrawal(withdrawalTxHash, fee);
       expectTransaction(res);
@@ -506,7 +507,7 @@ describe('ERC20 tests', () => {
           nTransactions: 6,
         });
 
-        await nf3Proposer.makeBlockNow();
+        await nf3Proposer.waitForBlockProposedEventToReceive();
         await waitForSufficientBalance({
           nf3User,
           value: 6 * maxERC20DepositValue,
@@ -523,7 +524,7 @@ describe('ERC20 tests', () => {
           0,
         );
 
-        await nf3Proposer.makeBlockNow();
+        await nf3Proposer.waitForBlockProposedEventToReceive();
 
         await waitForSufficientBalance({
           nf3User,
@@ -541,7 +542,7 @@ describe('ERC20 tests', () => {
           0,
         );
 
-        await nf3Proposer.makeBlockNow();
+        await nf3Proposer.waitForBlockProposedEventToReceive();
         await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
         await new Promise(resolve => setTimeout(resolve, 30000));

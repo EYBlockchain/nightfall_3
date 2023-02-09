@@ -529,7 +529,6 @@ export const emptyL2 = async ({ nf3User, web3, logs }) => {
   await new Promise(resolve => setTimeout(resolve, 6000));
   let count = await pendingCommitmentCount(nf3User);
   while (count !== 0) {
-    await nf3User.makeBlockNow();
     try {
       await web3.waitForEvent(logs, ['blockProposed']);
       count = await pendingCommitmentCount(nf3User);
