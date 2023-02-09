@@ -84,9 +84,9 @@ const nf3Challenger = new Nf3(signingKeys.challenger, environment);
 async function makeBlock(badBlockType) {
   logger.debug(`Make block...`);
   if (badBlockType) {
-    await axios.get(`${adversarialOptimistApiUrl}/block/make-now/${badBlockType}`);
+    await axios.post(`${adversarialOptimistApiUrl}/block/make-now/${badBlockType}`);
   } else {
-    await axios.get(`${adversarialOptimistApiUrl}/block/make-now`);
+    await axios.post(`${adversarialOptimistApiUrl}/block/make-now`);
   }
   await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 }

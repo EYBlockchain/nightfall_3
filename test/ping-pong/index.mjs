@@ -45,7 +45,7 @@ const makeBlock = async (optimistUrls, currentProposer) => {
       );
       if (res.data.result.length > 0) {
         console.log('     Make block...');
-        await axios.get(`${url}/block/make-now`);
+        await axios.post(`${url}/block/make-now`);
       }
     }
   } else {
