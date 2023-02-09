@@ -1,6 +1,6 @@
 import config from 'config';
 import { expect } from 'chai';
-import { retrieveL2Balance } from '../utils.mjs';
+import { retrieveL2Balance, Web3Client } from '../utils.mjs';
 // instead of our usual cli we need to import
 // adversary transpiled version of cli.
 // please do not forget to run `npm run build-adversary`
@@ -12,7 +12,6 @@ import {
   getStakeAccount,
   getCurrentProposer,
   simpleUserTest,
-  Web3Client,
 } from './index.mjs';
 
 const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls, fee } =
@@ -395,13 +394,12 @@ describe('Ping-pong tests', () => {
     // check final stats are ok
     await finalStatsCheck(optimistUrls, proposersStats);
 
-
     const nodeInfo = await web3Client.getInfo();
     if (nodeInfo.includes('TestRPC')) {
       await web3Client.timeJump(3600 * 24 * 10);
       const availableWithdrawalTxHash = Promise.all(withdrawalTxHash[0]);
       const finalRes = [];
-      for (let i = 0; i < availableWithdrawalTxHash.length;  i++) {
+      for (let i = 0; i < availableWithdrawalTxHash.length; i++) {
         finalRes.push(nf3User[0].finaliseWithdrawal(availableWithdrawalTxHash[i]));
       }
       console.log('sdsdsd', Promise.all(finalRes));
