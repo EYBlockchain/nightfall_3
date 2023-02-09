@@ -10,7 +10,7 @@ import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import { removeTransactionsFromMemPool, getMempoolTxsSortedByFee } from './database.mjs';
+import { removeTransactionsFromMemPool, getMempoolTransactionsSortedByFee } from './database.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction } from '../classes/index.mjs';
 import {
@@ -91,7 +91,7 @@ export async function conditionalMakeBlock(proposer) {
     });
 
     // Get all the mempool transactions sorted by fee
-    const mempoolTransactions = await getMempoolTxsSortedByFee();
+    const mempoolTransactions = await getMempoolTransactionsSortedByFee();
 
     // Map each mempool transaction to their byte size
     const mempoolTransactionSizes = mempoolTransactions.map(tx => {

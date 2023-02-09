@@ -260,10 +260,10 @@ class Nf3 {
   }
 
   /**
-    Gets the number of unprocessed transactions on the optimist
-    @method
-    @async
-    */
+   * Get the number of unprocessed transactions in the optimist
+   * @method unprocessedTransactionCount
+   * @async
+   */
 
   async unprocessedTransactionCount() {
     const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
@@ -271,13 +271,25 @@ class Nf3 {
   }
 
   /**
-  Gets the mempool transactions on the optimist
-  @method
-  @async
-  */
+   * Get all mempool transactions in the optimist
+   * @method getMempoolTransactions
+   * @async
+   */
   async getMempoolTransactions() {
     const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
     return mempool;
+  }
+
+  /**
+   * Filter the mempool by l2 transaction hash
+   * @method requestMempoolTransactionByL2TransactionHash
+   * @async
+   * @param {string} l2TransactionHash - L2 tx hash
+   * @returns {Promise<AxiosResponse>}
+   * @throws 404 tx not found
+   */
+  async requestMempoolTransactionByL2TransactionHash(l2TransactionHash) {
+    return axios.get(`${this.optimistBaseUrl}/proposer/mempool/${l2TransactionHash}`);
   }
 
   /**
@@ -1723,6 +1735,19 @@ class Nf3 {
     */
   async getSprintsInSpan() {
     return this.stateContract.methods.getSprintsInSpan().call();
+  }
+
+  /**
+   * Get L2 transaction (tx) status for a given L2 tx hash
+   *
+   * @async
+   * @method getL2TransactionStatus
+   * @param {string} l2TransactionHash - L2 tx hash
+   * @returns {Promise<AxiosResponse>}
+   * @throws 404 tx not found, 400 tx is incorrect
+   */
+  async getL2TransactionStatus(l2TransactionHash) {
+    return axios.get(`${this.clientBaseUrl}/transaction/status/${l2TransactionHash}`);
   }
 
   /**

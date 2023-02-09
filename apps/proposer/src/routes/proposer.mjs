@@ -53,6 +53,18 @@ router.get('/mempool', async (req, res, next) => {
   }
 });
 
+router.get('/mempool/:l2TransactionHash', async (req, res, next) => {
+  const nf3 = req.app.get('nf3');
+  const { l2TransactionHash } = req.params;
+
+  try {
+    const { data } = await nf3.requestMempoolTransactionByL2TransactionHash(l2TransactionHash);
+    res.json(data);
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.get('/fee', async (req, res) => {
   const nf3 = req.app.get('nf3');
   const { proposers } = await nf3.getProposers();

@@ -18,8 +18,8 @@ import { VerificationKey, Proof, TransactionError } from '../classes/index.mjs';
 import {
   getBlockByBlockNumberL2,
   getTransactionHashSiblingInfo,
-  getTransactionMempoolByCommitment,
-  getTransactionMempoolByNullifier,
+  getMempoolTransactionByCommitment,
+  getMempoolTransactionByNullifier,
   getTransactionL2ByCommitment,
   getTransactionL2ByNullifier,
 } from './database.mjs';
@@ -41,7 +41,7 @@ async function checkDuplicateCommitment({
   for (const [index, commitment] of transaction.commitments.entries()) {
     if (commitment !== ZERO) {
       if (checkDuplicatesInMempool) {
-        const transactionMempoolHigherFee = await getTransactionMempoolByCommitment(
+        const transactionMempoolHigherFee = await getMempoolTransactionByCommitment(
           commitment,
           transaction.fee,
         );
@@ -104,7 +104,7 @@ async function checkDuplicateNullifier({
   for (const [index, nullifier] of transaction.nullifiers.entries()) {
     if (nullifier !== ZERO) {
       if (checkDuplicatesInMempool) {
-        const transactionMempoolHigherFee = await getTransactionMempoolByNullifier(
+        const transactionMempoolHigherFee = await getMempoolTransactionByNullifier(
           nullifier,
           transaction.fee,
         );

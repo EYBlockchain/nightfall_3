@@ -1,8 +1,7 @@
-/**
-Module containing functions relating to proposers and their registration
-*/
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+// ignore unused exports
+
+import { waitForContract } from './contract.mjs';
+import constants from '../constants/index.mjs';
 
 const { STATE_CONTRACT_NAME } = constants;
 
