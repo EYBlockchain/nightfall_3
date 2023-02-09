@@ -16,7 +16,6 @@ import {
 
 const { mnemonics, signingKeys, clientApiUrls, optimistApiUrls, optimistWsUrls, fee } =
   config.TEST_OPTIONS;
-console.log("RRR", process.env.CLIENT1_API_URL)
 const environment = config.ENVIRONMENTS[config.ENVIRONMENT];
 const { TEST_ERC20_ADDRESS } = process.env;
 const CLIENT2_TX_TYPES_SEQUENCE = process.env.CLIENT2_TX_TYPES_SEQUENCE || 'ValidTransaction';
@@ -344,12 +343,8 @@ describe('Ping-pong tests', () => {
 
     nf3User = new Nf3(signingKeys.liquidityProvider, environment);
 
-    console.log("XXXX", config.ENVIRONMENTS)
-    console.log("XXXX", mnemonics.liquidityProvider, config.ENVIRONMENT)
     await nf3User.init(mnemonics.liquidityProvider);
-    console.log("XXXX 1")
     await setParametersConfig(nf3User); // initialize parameters and contracts for test
-    console.log("XXXX 2")
     ercAddress = TEST_ERC20_ADDRESS || (await nf3User.getContractAddress('ERC20Mock'));
   });
 
