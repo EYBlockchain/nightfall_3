@@ -77,7 +77,7 @@ describe('Gas test', () => {
           Math.ceil(VK_IDS.deposit.numberNullifiers / 4) +
           VK_IDS.deposit.numberCommitments) *
         32;
-      txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
+      txPerBlock = Math.ceil(txSize / txSize);
     });
 
     after(async () => {
@@ -118,7 +118,7 @@ describe('Gas test', () => {
           Math.ceil(VK_IDS.transfer.numberNullifiers / 4) +
           VK_IDS.transfer.numberCommitments) *
         32;
-      txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
+      txPerBlock = Math.ceil(txSize / txSize);
     });
 
     after(async () => {
@@ -160,7 +160,7 @@ describe('Gas test', () => {
           Math.ceil(VK_IDS.withdraw.numberNullifiers / 4) +
           VK_IDS.withdraw.numberCommitments) *
         32;
-      txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
+      txPerBlock = Math.ceil(txSize / txSize);
     });
 
     afterEach(async () => {
