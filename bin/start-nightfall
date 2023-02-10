@@ -35,6 +35,7 @@ while [ -n "$1" ]; do
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
                                     ;;
       -n  | --nothing)              FILE="-f docker/docker-compose.yml" 
+                                    NO_REMOVE='true'
                                     ;;                              
       * )                           usage
                               exit 1
@@ -53,49 +54,53 @@ trap "docker-compose $FILE $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphan
 
 docker-compose -f docker/docker-compose.yml $FILE $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans
 
-# if-else block checks - volume exist and then removes it.
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_mongodb
-fi
+if [ -z "$NO_REMOVE" ]; then 
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb2) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_mongodb2
-fi
+  # if-else block checks - volume exist and then removes it.
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_mongodb
+  fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb-adversary-db) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_mongodb-adversary-db
-fi
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb2) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_mongodb2
+  fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_build
-fi
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb-adversary-db) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_mongodb-adversary-db
+  fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_.openzeppelin) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_.openzeppelin
-fi
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_build) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_build
+  fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth1-chain) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_geth1-chain
-fi
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_.openzeppelin) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_.openzeppelin
+  fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth-miner-chain1) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_geth-miner-chain1
-fi
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth1-chain) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_geth1-chain
+  fi
 
-if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag1) ]]; then
-  echo -n 'Removing '
-  docker volume rm nightfall_3_dag1
-fi
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_geth-miner-chain1) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_geth-miner-chain1
+  fi
 
-if [ ! -z "$DEV" ]; then
-  cd common-files && npm ci && cd ..
+  if [[ $(echo $VOLUME_LIST | grep nightfall_3_dag1) ]]; then
+    echo -n 'Removing '
+    docker volume rm nightfall_3_dag1
+  fi
+
+  if [ ! -z "$DEV" ]; then
+    cd common-files && npm ci && cd ..
+  fi
+
 fi
 
 if [ -z "$NF_SERVICES_TO_LOG" ]; then
