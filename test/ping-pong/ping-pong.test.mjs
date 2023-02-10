@@ -398,6 +398,7 @@ describe('Ping-pong tests', () => {
     if (nodeInfo.includes('TestRPC')) {
       await web3Client.timeJump(3600 * 24 * 10);
       const availableWithdrawalTxHash = Promise.all(withdrawalTxHash[0]);
+      console.log('tx hash', availableWithdrawalTxHash, withdrawalTxHash[0]);
       const finalRes = [];
       for (let i = 0; i < availableWithdrawalTxHash.length; i++) {
         finalRes.push(nf3User[0].finaliseWithdrawal(availableWithdrawalTxHash[i]));
