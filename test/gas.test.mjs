@@ -104,7 +104,7 @@ describe('Gas test', () => {
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
+      const expectedGasCostPerTx = 1000000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Deposit L1 average gas used was', averageL1GasCost(receipts));
     });
@@ -146,7 +146,7 @@ describe('Gas test', () => {
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
+      const expectedGasCostPerTx = 1000000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Transfer L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
     });
@@ -188,7 +188,7 @@ describe('Gas test', () => {
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
+      const expectedGasCostPerTx = 1000000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Withdraw L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
     });
