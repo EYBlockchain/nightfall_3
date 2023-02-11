@@ -101,6 +101,7 @@ describe('Gas test', () => {
         tokenId,
         0,
       );
+      await nf3Users[0].makeBlockNow();
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
@@ -144,6 +145,7 @@ describe('Gas test', () => {
         0,
       );
 
+      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const expectedGasCostPerTx = 1000000 + 15000 * txPerBlock;
@@ -186,6 +188,7 @@ describe('Gas test', () => {
         0,
       );
 
+      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
       const expectedGasCostPerTx = 1000000 + 15000 * txPerBlock;
