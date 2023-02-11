@@ -77,7 +77,7 @@ describe('Gas test', () => {
           Math.ceil(VK_IDS.deposit.numberNullifiers / 4) +
           VK_IDS.deposit.numberCommitments) *
         32;
-      txPerBlock = Math.ceil(txSize / txSize);
+      txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
     after(async () => {
@@ -101,11 +101,10 @@ describe('Gas test', () => {
         tokenId,
         0,
       );
-      await nf3Users[0].makeBlockNow();
 
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      const expectedGasCostPerTx = 1000000 + 15000 * txPerBlock;
+      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Deposit L1 average gas used was', averageL1GasCost(receipts));
     });
@@ -119,7 +118,7 @@ describe('Gas test', () => {
           Math.ceil(VK_IDS.transfer.numberNullifiers / 4) +
           VK_IDS.transfer.numberCommitments) *
         32;
-      txPerBlock = Math.ceil(txSize / txSize);
+      txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
     after(async () => {
@@ -145,10 +144,9 @@ describe('Gas test', () => {
         0,
       );
 
-      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      const expectedGasCostPerTx = 1000000 + 15000 * txPerBlock;
+      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Transfer L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
     });
@@ -162,7 +160,7 @@ describe('Gas test', () => {
           Math.ceil(VK_IDS.withdraw.numberNullifiers / 4) +
           VK_IDS.withdraw.numberCommitments) *
         32;
-      txPerBlock = Math.ceil(txSize / txSize);
+      txPerBlock = Math.ceil(MAX_BLOCK_SIZE / txSize);
     });
 
     afterEach(async () => {
@@ -188,10 +186,9 @@ describe('Gas test', () => {
         0,
       );
 
-      await nf3Users[0].makeBlockNow();
       await web3Client.waitForEvent(eventLogs, ['blockProposed']);
 
-      const expectedGasCostPerTx = 1000000 + 15000 * txPerBlock;
+      const expectedGasCostPerTx = 100000 + 15000 * txPerBlock;
       expect(gasCost).to.be.lessThan(expectedGasCostPerTx);
       console.log('Withdraw L1 average gas used, if on-chain, was', averageL1GasCost(receipts));
     });
