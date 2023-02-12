@@ -15,6 +15,7 @@ import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';
 import erc721 from './abis/ERC721.mjs';
 import erc1155 from './abis/ERC1155.mjs';
+import createJob from './jobScheduler.mjs';
 
 import {
   DEFAULT_FEE_TOKEN_VALUE,
@@ -24,7 +25,15 @@ import {
   GAS_PRICE,
   GAS_PRICE_MULTIPLIER,
   GAS_ESTIMATE_ENDPOINT,
+  DEFAULT_MIN_L1_WITHDRAW,
+  DEFAULT_MIN_L2_WITHDRAW,
 } from './constants.mjs';
+
+function ping(ws) {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.ping();
+  }
+}
 
 function createQueue(options) {
   const queue = new Queue(options);
@@ -76,6 +85,8 @@ class Nf3 {
 
   stateContract;
 
+  shieldContract;
+
   ethereumSigningKey;
 
   ethereumAddress;
@@ -97,6 +108,14 @@ class Nf3 {
   nonceMutex = new Mutex();
 
   clientAuthenticationKey;
+
+  // min fee or reward one should hold for withdaw
+  // in State contract.
+  minL1Balance = DEFAULT_MIN_L1_WITHDRAW;
+
+  minL2Balance = DEFAULT_MIN_L2_WITHDRAW;
+
+  periodicPaymentJob;
 
   constructor(
     ethereumSigningKey,
@@ -172,6 +191,7 @@ class Nf3 {
     this.challengesContractAddress = await this.contractGetter('Challenges');
     this.stateContractAddress = await this.contractGetter('State');
     this.stateContract = await this.getContractInstance('State');
+    this.shieldContract = await this.getContractInstance('Shield');
 
     // set the ethereumAddress iff we have a signing key
     if (typeof this.ethereumSigningKey === 'string') {
@@ -240,10 +260,10 @@ class Nf3 {
   }
 
   /**
-    Gets the number of unprocessed transactions on the optimist
-    @method
-    @async
-    */
+   * Get the number of unprocessed transactions in the optimist
+   * @method unprocessedTransactionCount
+   * @async
+   */
 
   async unprocessedTransactionCount() {
     const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
@@ -251,13 +271,25 @@ class Nf3 {
   }
 
   /**
-  Gets the mempool transactions on the optimist
-  @method
-  @async
-  */
+   * Get all mempool transactions in the optimist
+   * @method getMempoolTransactions
+   * @async
+   */
   async getMempoolTransactions() {
     const { result: mempool } = (await axios.get(`${this.optimistBaseUrl}/proposer/mempool`)).data;
     return mempool;
+  }
+
+  /**
+   * Filter the mempool by l2 transaction hash
+   * @method requestMempoolTransactionByL2TransactionHash
+   * @async
+   * @param {string} l2TransactionHash - L2 tx hash
+   * @returns {Promise<AxiosResponse>}
+   * @throws 404 tx not found
+   */
+  async requestMempoolTransactionByL2TransactionHash(l2TransactionHash) {
+    return axios.get(`${this.optimistBaseUrl}/proposer/mempool/${l2TransactionHash}`);
   }
 
   /**
@@ -903,7 +935,7 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          connection._ws.ping();
+          ping(connection._ws);
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
@@ -1202,6 +1234,11 @@ class Nf3 {
     return this.stateContract.methods.getRotateProposerBlocks().call();
   }
 
+  // used by proposers and challengers
+  async getPendingWithdrawsFromStateContract() {
+    return this.stateContract.methods.pendingWithdrawalsFees(this.ethereumAddress).call();
+  }
+
   /**
     Starts a Proposer that listens for blocks and submits block proposal
     transactions to the blockchain.
@@ -1223,7 +1260,7 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          connection._ws.ping();
+          ping(connection._ws);
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
@@ -1315,7 +1352,7 @@ class Nf3 {
       // setup a ping every 15s
       this.intervalIDs.push(
         setInterval(() => {
-          connection._ws.ping();
+          ping(connection._ws);
         }, WEBSOCKET_PING_TIME),
       );
       // and a listener for the pong
@@ -1698,6 +1735,58 @@ class Nf3 {
     */
   async getSprintsInSpan() {
     return this.stateContract.methods.getSprintsInSpan().call();
+  }
+
+  /**
+   * Get L2 transaction (tx) status for a given L2 tx hash
+   *
+   * @async
+   * @method getL2TransactionStatus
+   * @param {string} l2TransactionHash - L2 tx hash
+   * @returns {Promise<AxiosResponse>}
+   * @throws 404 tx not found, 400 tx is incorrect
+   */
+  async getL2TransactionStatus(l2TransactionHash) {
+    return axios.get(`${this.clientBaseUrl}/transaction/status/${l2TransactionHash}`);
+  }
+
+  /**
+   * function start periodic payment
+   * @param cronExp {string} default is At 00:00 on every 6th day-of-week (Saturday).
+   */
+  startPeriodicPayment(cronExp = '0 0 * * */6') {
+    this.periodicPaymentJob = createJob(cronExp, async () => {
+      try {
+        logger.info(`--in cron job --- ${new Date().toLocaleString()}`);
+        const { feesL1, feesL2 } = await this.getPendingWithdrawsFromStateContract();
+        logger.info(
+          `${this.ethereumAddress} pending balance are feesL1 - ${feesL1}, and feesL2 - ${feesL2}`,
+        );
+        if (Number(feesL1) < this.minL1Balance && Number(feesL2) < this.minL2Balance) {
+          return;
+        }
+        const { txDataToSign } = (await axios.post(`${this.optimistBaseUrl}/proposer/withdraw`))
+          .data;
+        const tx = await this._signTransaction(txDataToSign, this.stateContractAddress, 0);
+        await this._sendTransaction(tx);
+      } catch (err) {
+        logger.error({
+          msg: 'Error while trying to submit withdraw tx',
+          err,
+        });
+      }
+    });
+    this.periodicPaymentJob.start();
+  }
+
+  /**
+   * This function not just stop periodic payment job
+   * but also destroys it as well
+   */
+  stopPeriodicPayment() {
+    if (!this.periodicPaymentJob) throw Error('Periodic Payment job not created yet');
+    this.periodicPaymentJob.stop();
+    this.periodicPaymentJob = undefined;
   }
 }
 

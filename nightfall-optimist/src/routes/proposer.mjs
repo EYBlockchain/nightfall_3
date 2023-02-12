@@ -13,6 +13,8 @@ import {
 } from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import getProposers from '@polygon-nightfall/common-files/utils/proposer.mjs';
+import NotFoundError from '@polygon-nightfall/common-files/utils/not-found-error.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {
@@ -20,12 +22,12 @@ import {
   isRegisteredProposerAddressMine,
   deleteRegisteredProposerAddress,
   getMempoolTransactions,
+  getMempoolTransactionByL2TransactionHash,
   getLatestTree,
   findBlocksByProposer,
   getBlockByBlockHash,
 } from '../services/database.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
-import getProposers from '../services/proposer.mjs';
 
 const router = express.Router();
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
@@ -191,7 +193,7 @@ router.get('/pending-payments', async (req, res, next) => {
   const pendingPayments = [];
   // get blocks by proposer
   try {
-    const blocks = await findBlocksByProposer(proposerAddress);
+    const blocks = await findBlocksByProposer(proposerAddress.toLowerCase());
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
 
     for (let i = 0; i < blocks.length; i++) {
@@ -251,11 +253,10 @@ router.get('/stake', async (req, res, next) => {
  * Through a successful challenge or proposing state updates. This just
  * provides the tx data, the user will need to call the blockchain client.
  */
-router.get('/withdraw', async (req, res, next) => {
+router.post('/withdraw', async (req, res, next) => {
   try {
-    const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME);
-    const txDataToSign = await proposersContractInstance.methods.withdraw().encodeABI();
-
+    const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME);
+    const txDataToSign = await stateContractInstance.methods.withdraw().encodeABI();
     res.json({ txDataToSign });
   } catch (err) {
     next(err);
@@ -273,7 +274,7 @@ router.post('/payment', async (req, res, next) => {
     const block = await getBlockByBlockHash(blockHash);
     const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME);
     const txDataToSign = await shieldContractInstance.methods
-      .requestBlockPayment(block)
+      .requestBlockPayment(Block.buildSolidityStruct(block))
       .encodeABI();
 
     res.json({ txDataToSign });
@@ -301,12 +302,31 @@ router.get('/change', async (req, res, next) => {
 });
 
 /**
- * Function to get mempool of a connected proposer
+ * Get mempool of a connected proposer
  */
 router.get('/mempool', async (req, res, next) => {
   try {
     const mempool = await getMempoolTransactions();
     res.json({ result: mempool });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * Get L2 transaction in mempool given the l2TransactionHash
+ */
+router.get('/mempool/:l2TransactionHash', async (req, res, next) => {
+  const { l2TransactionHash } = req.params;
+
+  try {
+    const transaction = await getMempoolTransactionByL2TransactionHash(l2TransactionHash);
+    if (transaction === null) {
+      throw new NotFoundError(
+        `Transaction with L2 Hash ${l2TransactionHash} not in ${proposer.address} mempool`,
+      );
+    }
+    res.json(transaction);
   } catch (err) {
     next(err);
   }

@@ -271,8 +271,8 @@ export async function getAllRegisteredProposersCount() {
 }
 
 /**
-Function to save a (unprocessed) Transaction
-*/
+ * Save an unprocessed transaction
+ */
 export async function saveTransaction(_transaction) {
   const { mempool = true, blockNumberL2 = -1 } = _transaction;
   const transaction = {
@@ -297,8 +297,8 @@ export async function saveTransaction(_transaction) {
 }
 
 /**
-Function to add a set of transactions from the layer 2 mempool once a block has been rolled back
-*/
+ * Add a set of L2 transactions back to the mempool after a block has been rolled back
+ */
 export async function addTransactionsToMemPool(transactionHashes, blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
@@ -310,7 +310,7 @@ export async function addTransactionsToMemPool(transactionHashes, blockNumberL2)
     $set: {
       mempool: true,
       blockNumberL2: -1,
-      transacionHashesRoot: null,
+      transactionHashesRoot: null,
       transactionHashSiblingPath: null,
       transactionHashLeafIndex: null,
     },
@@ -319,9 +319,9 @@ export async function addTransactionsToMemPool(transactionHashes, blockNumberL2)
 }
 
 /**
-Function to remove a set of transactions from the layer 2 mempool once they've
-been processed into a block
-*/
+ * Remove a set of L2 transactions from the mempool once they have
+ * been processed into an L2 block
+ */
 export async function removeTransactionsFromMemPool(
   transactionHashes,
   blockNumberL2 = -1,
@@ -335,9 +335,9 @@ export async function removeTransactionsFromMemPool(
 }
 
 /**
-Function to remove a set of commitments and nullifiers from the layer 2 mempool
-once they've been processed into an L2 block
-*/
+ * Remove a set of commitments and nullifiers from the mempool once they have
+ * been processed into an L2 block
+ */
 export async function deleteDuplicateCommitmentsAndNullifiersFromMemPool(
   commitments,
   nullifiers,
@@ -354,9 +354,19 @@ export async function deleteDuplicateCommitmentsAndNullifiersFromMemPool(
 }
 
 /**
-How many transactions are waiting to be processed into a block?
-*/
-export async function getMempoolTxsSortedByFee() {
+ * Return all mempool transactions
+ */
+export async function getMempoolTransactions() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  const query = { mempool: true }; // Transactions in the mempool
+  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
+}
+
+/**
+ * Return all mempool transactions sorted by fee (most profitable first)
+ */
+export async function getMempoolTransactionsSortedByFee() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   return db
@@ -364,6 +374,44 @@ export async function getMempoolTxsSortedByFee() {
     .find({ mempool: true }, { _id: 0 })
     .sort({ fee: -1 })
     .toArray();
+}
+
+/**
+ * Find a transaction in the mempool, given some filters
+ */
+async function getMempoolTransaction(query) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  // eslint-disable-next-line no-param-reassign
+  query.mempool = true;
+  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
+}
+
+/**
+ * Filter mempool by transactionHash (which is the L2 hash)
+ */
+export async function getMempoolTransactionByL2TransactionHash(transactionHash) {
+  return getMempoolTransaction({ transactionHash });
+}
+
+/**
+ * Filter mempool by commitment hash and fee
+ */
+export async function getMempoolTransactionByCommitment(commitmentHash, transactionFee) {
+  return getMempoolTransaction({
+    commitments: { $in: [commitmentHash] },
+    fee: { $gt: transactionFee },
+  });
+}
+
+/**
+ * Filter mempool by nullifier hash and fee
+ */
+export async function getMempoolTransactionByNullifier(nullifierHash, transactionFee) {
+  return getMempoolTransaction({
+    nullifiers: { $in: [nullifierHash] },
+    fee: { $gt: transactionFee },
+  });
 }
 
 /**
@@ -447,34 +495,12 @@ export async function clearBlockNumberL1ForTransaction(transactionHashL1) {
   return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update);
 }
 
-export async function getTransactionMempoolByCommitment(commitmentHash, transactionFee) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = {
-    commitments: { $in: [commitmentHash] },
-    fee: { $gt: transactionFee },
-    mempool: true,
-  };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-}
-
 export async function getTransactionL2ByCommitment(commitmentHash, blockNumberL2OfTx) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = {
     commitments: { $in: [commitmentHash] },
     blockNumberL2: { $gt: -1, $ne: blockNumberL2OfTx },
-  };
-  return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
-}
-
-export async function getTransactionMempoolByNullifier(nullifierHash, transactionFee) {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = {
-    nullifiers: { $in: [nullifierHash] },
-    fee: { $gt: transactionFee },
-    mempool: true,
   };
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
@@ -489,21 +515,16 @@ export async function getTransactionL2ByNullifier(nullifierHash, blockNumberL2Of
   return db.collection(TRANSACTIONS_COLLECTION).findOne(query);
 }
 
-// This function is useful in resetting transacations that have been marked out of the mempool because
-// we have included them in blocks, but those blocks did not end up being mined on-chain.
+/**
+ * This function is useful in resetting transactions that have been marked out of the mempool because
+ * we have included them in blocks, but those blocks did not end up being mined on-chain
+ */
 export async function resetUnsuccessfulBlockProposedTransactions() {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
   const query = { blockNumberL2: -1, mempool: false }; // Transactions out of mempool but not yet on chain
   const update = { $set: { mempool: true, blockNumberL2: -1 } };
   return db.collection(TRANSACTIONS_COLLECTION).updateMany(query, update);
-}
-
-export async function getMempoolTransactions() {
-  const connection = await mongo.connection(MONGO_URL);
-  const db = connection.db(OPTIMIST_DB);
-  const query = { mempool: true }; // Transactions in the mempool
-  return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
 }
 
 /**
