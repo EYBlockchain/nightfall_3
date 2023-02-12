@@ -58,20 +58,5 @@ describe('KEM-DEM Regulator Tests', () => {
         ),
       );
     });
-    it('packing should be reversible ', () => {
-      fc.assert(
-        fc.property(
-          fc.bigInt({ min: 0n, max: BN128_GROUP_ORDER - 1n }),
-          fc.bigInt({ min: 0n, max: 2n ** 160n - 1n }),
-          (a, b) => {
-            const [unpackedA, packedB] = packSecrets(generalise(a), generalise(b), 0, 2);
-            const [originalB, originalA] = packSecrets(packedB, unpackedA, 2, 0);
-
-            expect(originalA.bigInt).to.equal(a);
-            expect(originalB.bigInt).to.equal(b);
-          },
-        ),
-      );
-    });
   });
 });

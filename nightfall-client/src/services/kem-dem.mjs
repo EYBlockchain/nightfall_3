@@ -106,7 +106,7 @@ const deDem = (encryptionKey, ciphertexts) => {
 };
 
 /**
-This function generates the transfer key pair for the observers
+This function generates the transfer key pair for the observers (receiver and regulator)
 @function genTransferKeysForObservers
 @param {GeneralNumber} senderPrivateKey - The private key of the sender
 @param {Array<GeneralNumber>} receiverPublicKey - The public pkd of the recipient
