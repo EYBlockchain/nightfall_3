@@ -1,6 +1,6 @@
 import config from 'config';
 import { expect } from 'chai';
-import { retrieveL2Balance, Web3Client } from '../utils.mjs';
+import { retrieveL2Balance } from '../utils.mjs';
 // instead of our usual cli we need to import
 // adversary transpiled version of cli.
 // please do not forget to run `npm run build-adversary`
@@ -26,7 +26,6 @@ const listAddresses = [];
 const listTransactionsTotal = [];
 const TEST_LENGTH = 4;
 const value = 10;
-const web3Client = new Web3Client();
 let ercAddress;
 
 let nf3User;
@@ -352,7 +351,6 @@ describe('Ping-pong tests', () => {
   it('Runs ping-pong tests', async () => {
     const optimistUrls = await getOptimistUrls(); // get optimist urls for the different proposers
     const proposersStats = await getInitialProposerStats(optimistUrls);
-    const withdrawalTxHash = [];
     blockStake = await nf3User.getBlockStake();
     console.log('BLOCKSTAKE: ', blockStake);
     // wait for the current proposer to be ready
@@ -369,16 +367,14 @@ describe('Ping-pong tests', () => {
       );
       const listTransactionsUser = []; // transfers done in the simple user test for this user
       listTransactionsTotal.push(listTransactionsUser);
-      withdrawalTxHash.push(
-        simpleUserTest(
-          TEST_LENGTH,
-          value,
-          fee,
-          ercAddress,
-          nf3Users[i],
-          listAddressesToSend,
-          listTransactionsUser,
-        ),
+      simpleUserTest(
+        TEST_LENGTH,
+        value,
+        fee,
+        ercAddress,
+        nf3Users[i],
+        listAddressesToSend,
+        listTransactionsUser,
       );
     }
 
@@ -393,18 +389,6 @@ describe('Ping-pong tests', () => {
 
     // check final stats are ok
     await finalStatsCheck(optimistUrls, proposersStats);
-
-    const nodeInfo = await web3Client.getInfo();
-    if (nodeInfo.includes('TestRPC')) {
-      await web3Client.timeJump(3600 * 24 * 10);
-      const availableWithdrawalTxHash = Promise.all(withdrawalTxHash[0]);
-      console.log('tx hash', availableWithdrawalTxHash, withdrawalTxHash[0]);
-      const finalRes = [];
-      for (let i = 0; i < availableWithdrawalTxHash.length; i++) {
-        finalRes.push(nf3User[0].finaliseWithdrawal(availableWithdrawalTxHash[i]));
-      }
-      console.log('sdsdsd', Promise.all(finalRes));
-    }
   });
 
   after(async () => {
