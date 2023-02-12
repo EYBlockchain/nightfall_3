@@ -4,9 +4,6 @@ FROM node:16.17
 RUN apt-get update
 RUN apt-get install -y netcat
 
-# installs libs required for zokrates
-RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
-
 EXPOSE 80 8080 9229
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
