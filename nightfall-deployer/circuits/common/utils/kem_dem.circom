@@ -4,7 +4,7 @@ include "../../../node_modules/circomlib/circuits/poseidon.circom";
 include "../../../node_modules/circomlib/circuits/escalarmulany.circom";
 include "../../../node_modules/circomlib/circuits/escalarmulfix.circom";
 include "../../../node_modules/circomlib/circuits/bitify.circom";
-
+include "../../../node_modules/circomlib/circuits/gates.circom";
 /**
  * Calculates the shared encryption Key
  * @input ephemeralKey[256] - {Array[Bool]} -
@@ -71,6 +71,48 @@ template KemDem(N) {
     
     // Encrpyt the plain texts using the encryption key
     cipherText <== Dem(N)(encryptionKey, plainText);
+    
+    // Calculate the ephemeral Public key
+    ephemeralPublicKey <== EscalarMulFix(256, 
+        [16540640123574156134436876038791482806971768689494387082833631921987005038935, 
+        20819045374670962167435360035096875258406992893633759881276124905556507972311])(ephemeralKeyBits);
+}
+
+/**
+ * Implements the KemDem algorithm: Calculates the shared encryption Key and then encrypts the fields
+ * @param N - number of plain texts to cipher
+ * @input ephemeralKey - {Array[Bool]} - private key of the ephemeral key
+ * @input recipientPub[2] - {Array[Field]} - public key of the recipient
+ * @input plainText[N] - {Array[Field]} - array of fields that will be encrpyted
+ */
+template KemDemReg(N) {
+    signal input ephemeralKey;
+    signal input recipientPub[2];
+    signal input plainText[N];
+    signal input nonce;
+
+    signal output cipherText[N];
+    signal output ephemeralPublicKey[2];
+
+    // Get the binary representation of the ephemeral Key
+    var ephemeralKeyBits[256] = Num2Bits(256)(ephemeralKey);
+   
+    // Calculate the encryption key
+    var encryptionKey = Kem()(ephemeralKeyBits, recipientPub);
+    
+    // Calculate XOR encryptionKey with the nonce
+    var encryptionKeyBits[256] = Num2Bits(256)(encryptionKey);
+    var nonceBits[256] = Num2Bits(256)(nonce);
+
+    var encryptionKeyNonceBits[256];
+    // Calculate the root using the sibling path
+    for(var i = 0; i < 256; i++) {   
+        encryptionKeyNonceBits[i] = XOR()(encryptionKeyBits[i], nonceBits[i]);
+    }
+    var encryptionKeyNonce = Bits2Num(256)(encryptionKeyNonceBits);
+
+    // Encrpyt the plain texts using the encryption key
+    cipherText <== Dem(N)(encryptionKeyNonce, plainText);
     
     // Calculate the ephemeral Public key
     ephemeralPublicKey <== EscalarMulFix(256, 

@@ -1,6 +1,6 @@
 import { scalarMult } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
-import { generalise, stitchLimbs } from 'general-number';
+import { generalise, stitchLimbs, GN } from 'general-number';
 import poseidon from '@polygon-nightfall/common-files/utils/crypto/poseidon/poseidon.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 
@@ -106,18 +106,49 @@ const deDem = (encryptionKey, ciphertexts) => {
 };
 
 /**
+This function generates the transfer key pair for the observers (receiver and regulator)
+@function genTransferKeysForObservers
+@param {GeneralNumber} senderPrivateKey - The private key of the sender
+@param {Array<GeneralNumber>} receiverPublicKey - The public pkd of the recipient
+@returns {Promise<Array<GeneralNumber, Array<BigInt>>>} The private and public key pair
+*/
+const genTransferKeysForObservers = async (senderPrivateKey, receiverPublicKey) => {
+  // We generate a private key derived from sender private key and receiver private key
+  // to be deterministic for the sender
+  let privateKey = await kem(senderPrivateKey, receiverPublicKey).toString(16);
+  privateKey = new GN(`0x${privateKey}`, 'hex');
+  const publicKey = scalarMult(privateKey.bigInt, BABYJUBJUB.GENERATOR);
+  return [privateKey, publicKey];
+};
+
+/**
+This function gets a random nonce between min and max.
+@function randomNonce
+@param {Number} min - Min value of the nonce
+@param {Number} max - Max value of the nonce
+@returns {GeneralNumber} The random hex nonce 
+*/
+const randomNonce = (min, max) => {
+  return BigInt(Math.floor(Math.random() * (max - min + 1) + min));
+};
+
+/**
 This function performs the kem-dem required to encrypt plaintext.
 @function encrypt
 @param {GeneralNumber} ephemeralPrivate - The private key that generates the ephemeralPub
 @param {Array<GeneralNumber>} ephemeralPub - The ephemeralPubKey
 @param {Array<GeneralNumber>} recipientPkds - The public pkd of the recipients
 @param {Array<BigInt>} plaintexts - The array of plain text to be encrypted, the ordering is [ercAddress,tokenId, value, salt]
+@param {BigInt} nonce - Nonce to do XOR. This is used in transfer for regulator so the encryption key has some randomness
 @returns {Array<BigInt>} The encrypted ciphertexts.
 */
-const encrypt = (ephemeralPrivate, recipientPkds, plaintexts) => {
-  const encKey = kem(ephemeralPrivate, recipientPkds);
+const encrypt = (ephemeralPrivate, recipientPkds, plaintexts, nonce) => {
+  let encKey = kem(ephemeralPrivate, recipientPkds);
+  if (nonce) {
+    // eslint-disable-next-line no-bitwise
+    encKey ^= nonce;
+  }
   return dem(encKey, plaintexts);
-  // return cipherTexts;
 };
 
 /**
@@ -126,11 +157,23 @@ This function performs the kem-deDem required to decrypt plaintext.
 @param {GeneralNumber} privateKey - The private key of the recipient pkd
 @param {Array<GeneralNumber>} ephemeralPub - The ephemeralPubKey
 @param {Array<GeneralNumber>} ciphertexts - The array of ciphertexts to be decrypted
+@param {BigInt} nonce - Nonce to do XOR. This is used in transfer for regulator so the encryption key has some randomness
 @returns {Array<GeneralNumber>} The decrypted plaintexts, the ordering is [ercAddress,tokenId, value, salt]
 */
-const decrypt = (privateKey, ephemeralPub, cipherTexts) => {
-  const encKey = kem(privateKey, ephemeralPub);
+const decrypt = (privateKey, ephemeralPub, cipherTexts, nonce) => {
+  let encKey = kem(privateKey, ephemeralPub);
+  if (nonce) {
+    // eslint-disable-next-line no-bitwise
+    encKey ^= nonce;
+  }
   return deDem(encKey, cipherTexts);
 };
 
-export { encrypt, decrypt, genEphemeralKeys, packSecrets };
+export {
+  encrypt,
+  decrypt,
+  genEphemeralKeys,
+  genTransferKeysForObservers,
+  randomNonce,
+  packSecrets,
+};

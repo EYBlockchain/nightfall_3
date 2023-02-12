@@ -3,7 +3,7 @@
 commitmentsync services to decrypt commitments from transaction blockproposed events
 or use clientCommitmentSync to decrypt when new zkpPrivateKey is received.
 */
-
+import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { generalise } from 'general-number';
 import { edwardsDecompress } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
@@ -15,7 +15,7 @@ import { ZkpKeys } from './keys.mjs';
 import Commitment from '../classes/commitment.mjs';
 
 const { ZERO } = constants;
-
+const { REGULATOR_URL } = config;
 /**
 decrypt commitments for a transaction given zkpPrivateKeys and nullifierKeys.
 */
@@ -30,11 +30,23 @@ export async function decryptCommitment(transaction, zkpPrivateKey, nullifierKey
         transaction.recipientAddress, // It contains the tokenID encrypted (which is a field)
         ...transaction.compressedSecrets,
       ];
-      const [packedErc, unpackedTokenID, ...rest] = decrypt(
-        generalise(key),
-        generalise(edwardsDecompress(transaction.tokenId)), // Compressed public key is stored in token ID
-        generalise(cipherTexts),
-      );
+      let packedErc;
+      let unpackedTokenID;
+      let rest;
+      if (!REGULATOR_URL) {
+        [packedErc, unpackedTokenID, ...rest] = decrypt(
+          generalise(key),
+          generalise(edwardsDecompress(transaction.tokenId)), // Compressed public key is stored in token ID
+          generalise(cipherTexts),
+        );
+      } else {
+        [packedErc, unpackedTokenID, ...rest] = decrypt(
+          generalise(key),
+          generalise(edwardsDecompress(transaction.tokenId)), // Compressed public key is stored in token ID
+          generalise(cipherTexts),
+          BigInt(transaction.value),
+        );
+      }
       const [erc, tokenId] = packSecrets(generalise(packedErc), generalise(unpackedTokenID), 2, 0);
       const plainTexts = generalise([erc, tokenId, ...rest]);
       const commitment = new Commitment({

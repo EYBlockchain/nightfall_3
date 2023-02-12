@@ -115,6 +115,7 @@ export const computeCircuitInputs = (
     value,
     inputTokens,
     outputTokens,
+    sharedPubSender,
   } = generalise(privateData);
   if (numberNullifiers > 0) {
     witness = {
@@ -148,6 +149,13 @@ export const computeCircuitInputs = (
 
   if (ephemeralKey) {
     witness.ephemeralKey = ephemeralKey.field(BN128_GROUP_ORDER);
+  }
+
+  if (sharedPubSender) {
+    witness.sharedPubSender = [
+      sharedPubSender[0].field(BN128_GROUP_ORDER),
+      sharedPubSender[1].field(BN128_GROUP_ORDER),
+    ];
   }
 
   if (value) {

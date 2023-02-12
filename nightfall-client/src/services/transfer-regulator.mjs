@@ -1,9 +1,8 @@
 /**
- * This module contains the logic needed create a zkp transfer, i.e. to nullify
- * two input commitments and create two new output commitments to the same value.
+ * This module contains the logic needed create a zkp transfer for regulator
  * It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
- * @module transfer.mjs
- * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
+ * @module transfer-regulator.mjs
+ * @author daveroga
  */
 import config from 'config';
 import gen from 'general-number';
@@ -21,16 +20,17 @@ import {
 import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
-import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
+import { encrypt, genTransferKeysForObservers, packSecrets, randomNonce } from './kem-dem.mjs';
+import registerPairSenderReceiverToRegulator from '../utils/regulator.mjs';
 import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
 
-const { VK_IDS } = config;
-const { SHIELD_CONTRACT_NAME, TRANSFER } = constants;
+const { VK_IDS, REGULATOR_URL, NONCE_ENCRYPTION_BITS } = config;
+const { SHIELD_CONTRACT_NAME, TRANSFER_REGULATOR } = constants;
 const { generalise } = gen;
 
-async function transfer(transferParams) {
+async function transferRegulator(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
   const {
@@ -40,7 +40,9 @@ async function transfer(transferParams) {
     ...items
   } = transferParams;
   const { tokenId, recipientData, rootKey, fee } = generalise(items);
-  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+  const { compressedZkpPublicKey, nullifierKey, zkpPrivateKey, zkpPublicKey } = new ZkpKeys(
+    rootKey,
+  );
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
@@ -56,12 +58,12 @@ async function transfer(transferParams) {
   );
 
   logger.debug({
-    msg: 'Transfer ERC Token & Fee addresses',
+    msg: 'Transfer with regulator ERC Token & Fee addresses',
     ercAddress: ercAddress.hex(32),
     feeL2TokenAddress: feeL2TokenAddress.hex(32),
   });
 
-  const circuitName = TRANSFER;
+  const circuitName = TRANSFER_REGULATOR;
 
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
@@ -78,19 +80,32 @@ async function transfer(transferParams) {
   });
 
   try {
-    // KEM-DEM encryption
-    const [ePrivate, ePublic] = await genEphemeralKeys();
+    // KEM-DEM encryption with 3 peers
+    const [observerEphPrivate, observerEphPublic] = await genTransferKeysForObservers(
+      generalise(zkpPrivateKey),
+      generalise(recipientZkpPublicKeys[0]),
+    );
+
+    const [sharedPubSender, sharedPubReceiver] = registerPairSenderReceiverToRegulator(
+      REGULATOR_URL,
+      generalise(zkpPublicKey),
+      generalise(recipientZkpPublicKeys[0]),
+      generalise(observerEphPublic),
+      generalise(observerEphPrivate),
+    );
+
     const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
-    const compressedSecrets = encrypt(generalise(ePrivate), generalise(recipientZkpPublicKeys[0]), [
-      packedErc.bigInt,
-      unpackedTokenID.bigInt,
-      values[0].bigInt,
-      commitmentsInfo.salts[0].bigInt,
-    ]);
+    const nonce = randomNonce(1, 2 ** NONCE_ENCRYPTION_BITS - 1); // generate a 6 bytes random nonce
 
-    // Compress the public key as it will be put on-chain
-    const compressedEPub = edwardsCompress(ePublic);
+    const compressedSecrets = encrypt(
+      generalise(observerEphPrivate),
+      generalise(sharedPubSender),
+      [packedErc.bigInt, unpackedTokenID.bigInt, values[0].bigInt, commitmentsInfo.salts[0].bigInt],
+      nonce,
+    );
 
+    // Compress the public key as it will be put on-chain for the receiver
+    const compressedEPub = edwardsCompress(sharedPubReceiver);
     const circuitHash = await getCircuitHash(circuitName);
 
     // now we have everything we need to create a Witness and compute a proof
@@ -107,6 +122,7 @@ async function transfer(transferParams) {
       numberNullifiers: VK_IDS[circuitName].numberNullifiers,
       numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
+      value: nonce,
     });
 
     const privateData = {
@@ -122,7 +138,8 @@ async function transfer(transferParams) {
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
       ercAddress,
       tokenId,
-      ephemeralKey: ePrivate,
+      ephemeralKey: observerEphPrivate,
+      sharedPubSender,
     };
 
     const witness = computeCircuitInputs(
@@ -177,4 +194,4 @@ async function transfer(transferParams) {
   }
 }
 
-export default transfer;
+export default transferRegulator;
