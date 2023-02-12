@@ -1,7 +1,11 @@
-FROM node:16.17
+FROM node:16.17-bullseye-slim
 
-RUN apt-get update -y
-RUN apt-get install -y netcat-openbsd
+# 'node-gyp' requires 'python3', 'make' and 'g++''
+# entrypoint script requires 'netcat'
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3 make g++ netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
 
 # websocket port 8080
 EXPOSE 8080
