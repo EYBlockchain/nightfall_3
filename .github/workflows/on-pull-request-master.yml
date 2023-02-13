@@ -961,20 +961,22 @@ jobs:
         with:
           command: |
             curl -i http://localhost:8092/healthcheck
-          attempt_limit: 10
-          attempt_delay: 30000
+          attempt_limit: 100
+          attempt_delay: 20000
       
       - name: 'Check challenger liveliness'
         uses: Wandalen/wretry.action@v1.0.11
         with:
           command: |
             curl -i http://localhost:8192/healthcheck
-          attempt_limit: 10
-          attempt_delay: 30000
+          attempt_limit: 100
+          attempt_delay: 20000
 
       - name: Debug logs - after integration test run
         if: always()
-        run: cat test-apps.log
+        run: |
+          cat test-apps.log
+          cat test-proposer.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -985,7 +987,10 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: test-apps-logs
-          path: ./test-apps.log
+          path: |
+            ./test-apps.log
+            ./test-proposer.log
+
 
   periodic-payment-test:
     env:
