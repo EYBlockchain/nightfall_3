@@ -4,6 +4,8 @@ import crypto from 'crypto';
 import path from 'path';
 import * as snarkjs from 'snarkjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import generateProof from '../utils/rapidsnark.mjs';
+import { readJsonFile } from '../utils/filing.mjs';
 
 const unlink = util.promisify(fs.unlink);
 
@@ -19,6 +21,7 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
   const circuitName = path.basename(folderpath);
   const witnessFile = `${circuitName}_${fileNamePrefix}_witness`;
   const proofJsonFile = `${circuitName}_${fileNamePrefix}_proof.json`;
+  const publicJsonFile = `${circuitName}_${fileNamePrefix}_public.json`;
 
   if (fs.existsSync(`${outputPath}/${folderpath}/${witnessFile}`)) {
     throw Error('Witness file with same name exists');
@@ -26,6 +29,10 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
 
   if (fs.existsSync(`${outputPath}/${folderpath}/${proofJsonFile}`)) {
     throw Error('proof.json file with same name exists');
+  }
+
+  if (fs.existsSync(`${outputPath}/${folderpath}/${publicJsonFile}`)) {
+    throw Error('public.json file with same name exists');
   }
   try {
     logger.debug('Compute witness...');
@@ -37,13 +44,15 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
     );
 
     logger.debug('Generate proof...');
-    const prove = await snarkjs.groth16.prove(
+    await generateProof(
       `${outputPath}/${folderpath}/${circuitName}.zkey`,
       `${outputPath}/${folderpath}/${witnessFile}`,
+      `${outputPath}/${folderpath}/${proofJsonFile}`,
+      `${outputPath}/${folderpath}/${publicJsonFile}`,
     );
 
-    proof = prove.proof;
-    publicInputs = prove.publicSignals;
+    proof = await readJsonFile(`${outputPath}/${folderpath}/${proofJsonFile}`);
+    publicInputs = await readJsonFile(`${outputPath}/${folderpath}/${publicJsonFile}`);
 
     logger.debug({
       msg: 'Responding with proof and inputs',
@@ -54,6 +63,7 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
     try {
       await unlink(`${outputPath}/${folderpath}/${witnessFile}`);
       await unlink(`${outputPath}/${folderpath}/${proofJsonFile}`);
+      await unlink(`${outputPath}/${folderpath}/${publicJsonFile}`);
     } catch {
       // No files to delete. Do nothing.
     }

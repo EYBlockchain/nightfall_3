@@ -19,6 +19,9 @@ if [ "$SKIP_CIRCOM_BUILD" == "" ]; then
   docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-circom -f docker/circom.Dockerfile .
 fi
 
+if [ "$SKIP_RAPIDSNARK_BUILD" == "" ]; then
+  docker build ${NO_CACHE_FLAG} -t ghcr.io/eyblockchain/local-rapidsnark -f docker/rapidsnark.Dockerfile .
+fi
 # containers built separately. A parallel build fails.
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"administrator"* ]]; then
