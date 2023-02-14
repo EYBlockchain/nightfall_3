@@ -9,7 +9,6 @@ const { spawn } = childProcess;
  * @param {String} witness - Witness file
  * @param {String} jsonProof - JSON proof as output
  * @param {String} jsonPublic - JSON public inputs as output
- * @returns {Object} JSON of the proof.
  */
 export default async function generateProof(circuitKey, witness, jsonProof, jsonPublic) {
   const args = [circuitKey, witness, jsonProof, jsonPublic];
