@@ -25,10 +25,15 @@ This configuration assumes that you will run a full Nightfall node with a Propos
 Set:
 
 [ ] `USE_EXTERNAL_NODE=true` This will stop the containers waiting for a blockchain node to start.
+
 [ ] `ETH_PRIVATE_KEY` with the private key of the account which is to sign the Nightfall node's transactions. Do NOT place `0x` at the begining of the key string. Do not use this account for anything else because this appoach is not fully secure.
+
 [ ] `BLOCKCHAIN_URL` to equal the blockchain node RPC port that you are using (as above).
+
 [ ] `NF_SERVICES_TO_START='worker, client, optimist'`.
+
 [ ] `ENVIRONMENT`. The name that you are giving the deployment environment (as described in the ENVIRONMENTS object in `config/default.js`). For the Mumbai testnet, this variable should be set to `mumbai`.
+
 [ ] Ensure that the account has sufficient funds. For the testnet, the amount that a Proposer has to pay to register is set to 1 Wei, so that actual amount has to be enough to propose a reasonable number of blocks (~100kGas/block). 10 Matic/ETH should be plenty for the testnet.
 
 ### Set config items
@@ -99,8 +104,10 @@ We include a build step so that we are not dependent on any local bind mount.  T
 These can be run from another terminal window because the terminal used to deploy the Nightfall node is used for log output.
 
 [ ] Set the `ENVIROMENT` environment variable as above (and to the same value)
-[ ] Set the `PROPOSER_KEY` and `CHALLENGER_KEY` environent variables separately if you want to use different accounts from `ETH_PRIVATE_KEY`, otherwise just set `ETH_PRIVATE_KEY` (the value can be different from the one used for deployment), and that will be used by the Proposer and Challenger applications by default.
+[ ] Set the `PROPOSER_KEY` and `CHALLENGER_KEY` environent variables separately if you want to use different accounts from `ETH_PRIVATE_KEY`, otherwise just set them to the same value as `ETH_PRIVATE_KEY` (the value can be different from the one used for deployment), and that will be used by the Proposer and Challenger applications by default.
+
 [ ] Set the `BLOCKCHAIN_URL` environment variable as above (and to the same value).
+
 [ ] Run `bin/start-apps`.
 
 You now have a complete nightfall node running. The `Nf3` class is the simplest way to interact with it from a user application.
