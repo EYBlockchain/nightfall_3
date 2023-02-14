@@ -3,8 +3,7 @@ import childProcess from 'child_process';
 const { spawn } = childProcess;
 
 /**
- * Takes in a proving key and a compiled code file and outputs a proof.
- * ./build/prove <circuit.zkey> <witness.wtns> <proof.json> <public.json>
+ * Takes in a circuit proving key and a witness and outputs a proof and public inputs json files.
  * @param {String} circuitKey - Path to proving key
  * @param {String} witness - Witness file
  * @param {String} jsonProof - JSON proof as output
