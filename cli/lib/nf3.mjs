@@ -398,26 +398,7 @@ class Nf3 {
   @param {object} tx - An signed web3js transaction object.
   @returns {Promise} This will resolve into a transaction receipt.
   */
-  async _sendTransaction(tx) {
-    if (this.ethereumSigningKey) {
-      const promiseTest = new Promise((resolve, reject) => {
-        this.web3.eth
-          .sendSignedTransaction(tx.rawTransaction)
-          .once('receipt', receipt => {
-            logger.debug(`Send resolved with receipt status ${receipt.status}`);
-            resolve(receipt);
-          })
-          .on('error', err => {
-            logger.error(`Send rejected with error ${err.message}`);
-            reject(err);
-          });
-      });
-      return promiseTest;
-    }
-    return this.web3.eth.sendTransaction(tx);
-  }
-
-  async _sendTransactionV2(tx) {
+  _sendTransaction(tx) {
     if (this.ethereumSigningKey) {
       return this.web3.eth.sendSignedTransaction(tx.rawTransaction);
     }
@@ -438,7 +419,7 @@ class Nf3 {
   async submitTransaction(unsignedTransaction, contractAddress = this.shieldContractAddress, fee) {
     const tx = await this._signTransaction(unsignedTransaction, contractAddress, fee);
     logger.debug(`Sending transaction with hash ${tx.transactionHash}`);
-    return this._sendTransactionV2(tx);
+    return this._sendTransaction(tx);
   }
 
   /**
