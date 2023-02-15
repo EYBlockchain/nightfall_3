@@ -146,10 +146,11 @@ export BLOCKCHAIN_URL=<as set above>
 ```
 
 
-[ ] Also set the Name of the ERC20 coin that you want to use as a source of Layer 1 tokens for testing, this must exist in the `RESTRICTIONS` section of the default config under the `ETH_NETWORK` that you are using (e.g. mumbai). Indeed, it *must have existed* when the Nightfall contracts were deployed because no other tokens can be transacted. Make sure you have funds in that account, controlled by `ETH_PRIVATE_KEY`.
+[ ] Also set the Name of the ERC20 coin that you want to use as a source of Layer 1 tokens for testing, and also the ERC20 coin that you intend to use to pay Proposer fees with (they can be the same), these must exist in the `RESTRICTIONS` section of the default config under the `ETH_NETWORK` that you are using (e.g. mumbai). Indeed, it *must have existed* when the Nightfall contracts were deployed because no other tokens can be transacted. Make sure you have funds in that account, controlled by `ETH_PRIVATE_KEY`.
 
 ```sh
 export ERC20_COIN=USDC
+export FEE_L2_TOKEN_ID=WMATIC
 ```
 
 [ ] The test can then be run against the deployed contracts:

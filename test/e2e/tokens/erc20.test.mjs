@@ -75,7 +75,6 @@ describe('ERC20 tests', () => {
 
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
-console.log('REGISTERED');
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
     newGasBlockEmitter.on('rollback', () => {
@@ -84,15 +83,11 @@ console.log('REGISTERED');
         `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
       );
     });
-console.log('EMITTER');
     erc20Address =
       maxWithdrawValue.find(e => e.name === process.env.ERC20_COIN)?.address ||
       (await nf3User.getContractAddress('ERC20Mock'));
-console.log('MOCK');
     stateAddress = await nf3User.stateContractAddress;
-console.log('STATE');
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
-console.log('SUBSCRIBED');
   });
 
   describe('Deposits', () => {
