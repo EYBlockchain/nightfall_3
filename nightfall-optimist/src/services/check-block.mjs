@@ -240,13 +240,13 @@ async function checkDuplicateNullifiersWithinBlock(block, transactions) {
  */
 // eslint-disable-next-line import/prefer-default-export
 export async function checkBlock(block, transactions) {
-  await checkLeafCount(block);
-  // now we have to check the commitment root.
-  // For this we can make use of Timber with its optimistic extensions.
-  await checkBlockRoot(block);
-  await checkFrontier(block);
-  await checkDuplicateCommitmentsWithinBlock(block, transactions);
-  await checkDuplicateNullifiersWithinBlock(block, transactions);
+  await Promise.all([
+    await checkLeafCount(block),
+    await checkBlockRoot(block),
+    await checkFrontier(block),
+    await checkDuplicateCommitmentsWithinBlock(block, transactions),
+    await checkDuplicateNullifiersWithinBlock(block, transactions),
+  ]);
 
   // check if the transactions are valid - transaction type, public input hash and proof verification are all checked
 
