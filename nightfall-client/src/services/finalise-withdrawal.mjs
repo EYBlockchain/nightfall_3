@@ -16,7 +16,9 @@ export async function finaliseWithdrawal(transactionHash) {
   const transactions = await Promise.all(
     block.transactionHashes.map(t => getTransactionByTransactionHash(t)),
   );
-  const index = transactions.findIndex(f => f.transactionHash === transactionHash);
+
+  // block can contain multiple transactions not in our database
+  const index = transactions.findIndex(f => transactionHash === f?.transactionHash ?? '0x0');
 
   const siblingPath = [transactions[index].transactionHashesRoot].concat(
     transactions[index].transactionHashSiblingPath.path.map(p => p.value).reverse(),
