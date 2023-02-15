@@ -22,10 +22,8 @@ const {
   utilApiServerUrl,
   AWS: { s3Bucket },
   isLocalRun,
+  eventWsUrl,
 } = global.config;
-
-const { eventWsUrl } = global.config;
-
 export const initialState = {
   compressedZkpPublicKey: '',
   chainSync: false,

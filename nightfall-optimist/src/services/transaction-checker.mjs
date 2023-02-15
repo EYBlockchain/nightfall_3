@@ -27,6 +27,8 @@ import {
 const { generalise } = gen;
 const { PROVING_SCHEME, CURVE } = config;
 const { ZERO, STATE_CONTRACT_NAME, SHIELD_CONTRACT_NAME } = constants;
+const CACHE_VERIFICATION_KEY = new Map();
+const CACHE_FEE_L2_TOKEN_ADDRESS = new Map();
 
 async function checkDuplicateCommitment({
   transaction,
@@ -156,13 +158,18 @@ async function checkDuplicateNullifier({
   }
 }
 
-async function checkHistoricRootBlockNumber(transaction, lastValidBlockNumberL2) {
+async function checkHistoricRootBlockNumber(
+  transaction,
+  lastValidBlockNumberL2,
+  stateConractInstance,
+) {
   let latestBlockNumberL2;
   if (lastValidBlockNumberL2) {
     latestBlockNumberL2 = lastValidBlockNumberL2;
   } else {
-    const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
-    latestBlockNumberL2 = Number((await stateInstance.methods.getNumberOfL2Blocks().call()) - 1);
+    latestBlockNumberL2 = Number(
+      (await stateConractInstance.methods.getNumberOfL2Blocks().call()) - 1,
+    );
   }
 
   logger.debug({ msg: `Latest valid block number in L2`, latestBlockNumberL2 });
@@ -188,10 +195,14 @@ async function checkHistoricRootBlockNumber(transaction, lastValidBlockNumberL2)
   });
 }
 
-async function verifyProof(transaction) {
-  // we'll need the verification key.  That's actually stored in the b/c
-  const stateInstance = await waitForContract(STATE_CONTRACT_NAME);
-  const vkArray = await stateInstance.methods.getVerificationKey(transaction.circuitHash).call();
+async function verifyProof(transaction, stateConractInstance, shieldContractInstance) {
+  const vkArrayCached = CACHE_VERIFICATION_KEY.get(transaction.circuitHash);
+  const vkArray =
+    vkArrayCached ??
+    (await stateConractInstance.methods.getVerificationKey(transaction.circuitHash).call());
+  if (!vkArrayCached) {
+    CACHE_VERIFICATION_KEY.set(transaction.circuitHash, vkArray);
+  }
 
   if (vkArray.length < 33) throw new TransactionError('The verification key is incorrect', 2);
 
@@ -211,11 +222,13 @@ async function verifyProof(transaction) {
     roots: historicRoots.map(h => h.root),
   });
 
-  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-
-  const feeL2TokenAddress = (
-    await shieldContractInstance.methods.getFeeL2TokenAddress().call()
-  ).toLowerCase();
+  const feeL2TokenAddressCached = CACHE_FEE_L2_TOKEN_ADDRESS.get(transaction.circuitHash);
+  const feeL2TokenAddress =
+    feeL2TokenAddressCached ??
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase();
+  if (!feeL2TokenAddressCached) {
+    CACHE_FEE_L2_TOKEN_ADDRESS.set(transaction.circuitHash, feeL2TokenAddress);
+  }
 
   const inputs = generalise(
     [
@@ -262,7 +275,12 @@ export async function checkTransaction({
   transactionBlockNumberL2,
   lastValidBlockNumberL2,
 }) {
-  return Promise.all([
+  const [stateConractInstance, shieldContractInstance] = await Promise.all([
+    waitForContract(STATE_CONTRACT_NAME),
+    waitForContract(SHIELD_CONTRACT_NAME),
+  ]);
+
+  await Promise.all([
     checkDuplicateCommitment({
       transaction,
       checkDuplicatesInL2,
@@ -275,7 +293,7 @@ export async function checkTransaction({
       checkDuplicatesInMempool,
       transactionBlockNumberL2,
     }),
-    checkHistoricRootBlockNumber(transaction, lastValidBlockNumberL2),
-    verifyProof(transaction),
+    checkHistoricRootBlockNumber(transaction, lastValidBlockNumberL2, stateConractInstance),
   ]);
+  await verifyProof(transaction, stateConractInstance, shieldContractInstance);
 }
