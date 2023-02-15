@@ -1612,7 +1612,6 @@ class Nf3 {
     @returns {String} - Ether balance in account
     */
   getAccounts() {
-    console.log('ETHEREUM SIGNING KEY', this.ethereumSigningKey);
     const account =
       this.ethereumSigningKey.length === 0
         ? this.web3.eth.getAccounts().then(address => address[0])

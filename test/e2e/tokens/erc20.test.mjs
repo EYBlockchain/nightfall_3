@@ -34,8 +34,9 @@ const {
   restrictions: { erc20default },
 } = config.TEST_OPTIONS;
 const {
+  DEPLOY_MOCKED_SANCTIONS_CONTRACT,
   RESTRICTIONS: {
-    tokens: { blockchain: maxWithdrawValue },
+    tokens: { [process.env.ETH_NETWORK || 'blockchain']: maxWithdrawValue },
   },
 } = config;
 
@@ -51,7 +52,9 @@ let rollbackCount = 0;
 
 const nf3User = new Nf3(signingKeys.user1, environment);
 const nf3User2 = new Nf3(signingKeys.user2, environment);
-const nf3UserSanctioned = new Nf3(signingKeys.sanctionedUser, environment);
+let nf3UserSanctioned;
+if (DEPLOY_MOCKED_SANCTIONS_CONTRACT)
+  nf3UserSanctioned = new Nf3(signingKeys.sanctionedUser, environment);
 
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
@@ -68,11 +71,11 @@ describe('ERC20 tests', () => {
   before(async () => {
     await nf3User.init(mnemonics.user1);
     await nf3User2.init(mnemonics.user2);
-    await nf3UserSanctioned.init(mnemonics.sanctionedUser);
+    if (DEPLOY_MOCKED_SANCTIONS_CONTRACT) await nf3UserSanctioned.init(mnemonics.sanctionedUser);
 
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
-
+console.log('REGISTERED');
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();
     newGasBlockEmitter.on('rollback', () => {
@@ -81,10 +84,15 @@ describe('ERC20 tests', () => {
         `Proposer received a signalRollback complete, Now no. of rollbacks are ${rollbackCount}`,
       );
     });
-
-    erc20Address = await nf3User.getContractAddress('ERC20Mock');
+console.log('EMITTER');
+    erc20Address =
+      maxWithdrawValue.find(e => e.name === process.env.ERC20_COIN)?.address ||
+      (await nf3User.getContractAddress('ERC20Mock'));
+console.log('MOCK');
     stateAddress = await nf3User.stateContractAddress;
+console.log('STATE');
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+console.log('SUBSCRIBED');
   });
 
   describe('Deposits', () => {
@@ -101,6 +109,7 @@ describe('ERC20 tests', () => {
     });
 
     it('Should fail to deposit if the user is sanctioned', async function () {
+      if (!DEPLOY_MOCKED_SANCTIONS_CONTRACT) this.skip();
       try {
         await nf3UserSanctioned.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
         expect.fail('Throw error, deposit did not fail');
@@ -571,7 +580,7 @@ describe('ERC20 tests', () => {
     await nf3Proposer.close();
     await nf3User.close();
     await nf3User2.close();
-    await nf3UserSanctioned.close();
+    if (DEPLOY_MOCKED_SANCTIONS_CONTRACT) await nf3UserSanctioned.close();
     web3Client.closeWeb3();
   });
 });

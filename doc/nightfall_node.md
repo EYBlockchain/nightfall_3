@@ -14,7 +14,7 @@ This document describes how to deploy a Nightfall node to interact with a deploy
 
 ## Configuration
 
-This configuration assumes that you will run a full Nightfall node with a Proposer and a Challenger (see how_it_works.md in the nightfall `doc` folder if these terms are unfamiliar to you) so that you can create layer 2 blocks and also challenge incorrect blocks.  The full node also contains a Nightfall Client so that you can create your own transactions. Provided there are enough independent Proposer and Challenger nodes that you aren't worried about possible censorship of your transactions, you only actually need to run a Client. For now, though, we'll create a full Nightfall node.
+This configuration assumes that you will run a full Nightfall node with an optional Proposer and a Challenger (see how_it_works.md in the nightfall `doc` folder if these terms are unfamiliar to you), so that you can create layer 2 blocks and also challenge incorrect blocks.  The full node also contains a Nightfall Client so that you can create your own transactions. Provided there are enough independent Proposer and Challenger nodes, running their own Optmist nodes so that you aren't worried about possible censorship of your transactions, you only actually need to run a Client. For now, though, we'll create a full Nightfall node.
 
 ### Generate a fresh key pair for the Nightfall node
 
@@ -48,6 +48,7 @@ The Nightfall node requires the ABIs and addresses of the smart contracts that a
 
 ```sh
 tar xzvf mumbai.tar.gz
+cd mumbai
 ls -a
 ```
 
@@ -99,9 +100,9 @@ We include a build step so that we are not dependent on any local bind mount.  T
 
 [ ] Run `bin/start-nightfall -n` *NB: do not use the `-g -d` arguments that you may be habituated with*. Doing so will remove the volumes that you have created.
 
-### Deploy basic Proposer and Challenger applications
+### Deploy basic Proposer and Challenger applications (optional)
 
-These can be run from another terminal window because the terminal used to deploy the Nightfall node is used for log output.
+These can be run from another terminal window because the terminal used to deploy the Nightfall node is used for log output. They are not part of the nightfall node and you may well be using your own versions, in which case they are not required.  Note that the tests provide their own applications and thus you do not eed to deploy these to run tests.
 
 [ ] Set the `ENVIROMENT` environment variable as above (and to the same value)
 [ ] Set the `PROPOSER_KEY` and `CHALLENGER_KEY` environent variables separately if you want to use different accounts from `ETH_PRIVATE_KEY`, otherwise just set them to the same value as `ETH_PRIVATE_KEY` (the value can be different from the one used for deployment), and that will be used by the Proposer and Challenger applications by default.
@@ -111,3 +112,48 @@ These can be run from another terminal window because the terminal used to deplo
 [ ] Run `bin/start-apps`.
 
 You now have a complete nightfall node running. The `Nf3` class is the simplest way to interact with it from a user application.
+
+## Test the deployment
+
+We will test the deployment using the erc20 test, as this is the one of the most comprehensive tests, but other tests can be set up using a similar approach. The test does not require a proproser and challenger to run because the test script creates its own, where needed. It does require working Optimist and Client containers though.
+
+The erc20 test has four actors:
+
+1. User 1
+2. User 2
+3. Proposer
+4. Sanctioned User
+
+There is no sanctions test-contract on the testnet and the sanctioned user test will be skipped automatically because the `DEPLOY_MOCKED_SANCTIONS_CONTRACT` environment variable is not set. We can ignore this user therefore.
+
+For simplicity, we will give two Users and the Proposer the same Ethereum Private Key, which must point to an address with funds in it. If `ETH_PRIVATE_KEY` is still set, we can use that.  
+
+[ ] In a new terminal, do the following:
+
+```sh
+echo $ETH_PRIVATE_KEY #should contain a valid Ethereum Private Key
+export USER1_KEY=$ETH_PRIVATE_KEY
+export USER2_KEY=$ETH_PRIVATE_KEY
+export PROPOSER_KEY=$ETH_PRIVATE_KEY
+```
+
+[ ] if not already set, set the correct environment, Ethereum network and the blockchain url.
+
+```sh
+export ENVIRONMENT=mumbai
+export ETH_NETWORK=mumbai
+export BLOCKCHAIN_URL=<as set above>
+```
+
+
+[ ] Also set the Name of the ERC20 coin that you want to use as a source of Layer 1 tokens for testing, this must exist in the `RESTRICTIONS` section of the default config under the `ETH_NETWORK` that you are using (e.g. mumbai). Indeed, it *must have existed* when the Nightfall contracts were deployed because no other tokens can be transacted. Make sure you have funds in that account, controlled by `ETH_PRIVATE_KEY`.
+
+```sh
+export ERC20_COIN=USDC
+```
+
+[ ] The test can then be run against the deployed contracts:
+
+```sh
+npm run test-erc20-tokens
+```

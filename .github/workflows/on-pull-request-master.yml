@@ -314,6 +314,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+      DEPLOY_MOCKED_SANCTIONS_CONTRACT: true
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
