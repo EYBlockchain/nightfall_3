@@ -22,9 +22,9 @@ This configuration assumes that you will run a full Nightfall node with an optio
 
 ### Set Environment variables
 
-Set:
+Export the following environment variables:
 
-[ ] `USE_EXTERNAL_NODE=true` This will stop the containers waiting for a blockchain node to start.
+[ ] `USE_EXTERNAL_NODE=true` This will stop the containers waiting for a deployer to start.
 
 [ ] `ETH_PRIVATE_KEY` with the private key of the account which is to sign the Nightfall node's transactions. Do NOT place `0x` at the begining of the key string. Do not use this account for anything else because this appoach is not fully secure.
 
@@ -38,7 +38,7 @@ Set:
 
 ### Set config items
 
-[ ] The `ENVIRONMENTS` object needs to be set for your deployment.  There should be an `ENVIRONMENTS` object that matches the name of the deployment `ENVIRONMENT` variable (e.g. 'mumbai'). Set the URLs so that the various Nightfall containers can find each other. If they are running on `localhost` then the values given in 'localhost' can be used. You have the option either to edit an existing object or to add your own.
+[ ] The `ENVIRONMENTS` object needs to be set for your deployment.  There should be an `ENVIRONMENTS` object that matches the name of the deployment `ENVIRONMENT` variable (e.g. 'mumbai'). Set the URLs so that the various Nightfall containers can find each other. If they are running on `localhost` then the values given in 'mumbai' can be used. You have the option either to edit an existing object or to add your own.
 
 ## Create volumes for build and trusted setup artifacts
 
@@ -89,6 +89,20 @@ docker rm temp
 When the containers are started, they will mount these volumes and use the downloaded data to interact with the nighfall smart contracts and to compute zero knowledge proofs.
 
 ## Run the deployment
+
+### Perform npm link
+
+[ ] This will take on board any changes to common files
+
+```sh
+cd common-files
+npm link
+cd ..
+npm link @polygon-nightfall/common-files
+cd cli
+npm link @polygon-nightfall/common-files
+cd ..
+```
 
 ### Build the containers
 

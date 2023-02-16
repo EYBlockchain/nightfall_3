@@ -2,9 +2,12 @@
 node_modules
 cli/build
 mumbai/
+*.tar.gz
+*.tar
 .*swp
 .vscode/*
 .openzeppelin/
+*.log
 
 # wallet
 wallet/build
