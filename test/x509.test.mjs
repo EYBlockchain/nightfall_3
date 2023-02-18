@@ -22,6 +22,13 @@ const {
   mnemonics,
   signingKeys,
 } = config.TEST_OPTIONS;
+
+const {
+  RESTRICTIONS: {
+    tokens: { [process.env.ETH_NETWORK || 'blockchain']: maxWithdrawValue },
+  },
+} = config;
+
 const nf3Users = [new Nf3(signingKeys.user1, environment), new Nf3(signingKeys.user2, environment)];
 const nf3Proposer = new Nf3(signingKeys.proposer1, environment);
 
@@ -39,13 +46,12 @@ describe('x509 tests', () => {
     await nf3Proposer.init(mnemonics.proposer);
     // we must set the URL from the point of view of the client container
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
-
     await nf3Proposer.startProposer();
-
     await nf3Users[0].init(mnemonics.user1);
     await nf3Users[1].init(mnemonics.user2);
-    erc20Address = await nf3Users[0].getContractAddress('ERC20Mock');
-
+    erc20Address =
+      maxWithdrawValue.find(e => e.name === process.env.ERC20_COIN)?.address.toLowerCase() ||
+      (await nf3Users[0].getContractAddress('ERC20Mock'));
     stateAddress = await nf3Users[0].stateContractAddress;
     await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     logger.debug(`User[0] has ethereum address ${nf3Users[0].ethereumAddress}`);
@@ -53,6 +59,12 @@ describe('x509 tests', () => {
 
   describe('Deposits from a non-x509-validated then x509-validated account', () => {
     it('deposits from a non-x509-validated account should revert', async function () {
+      // skip this if running on a proper chain as result is not idempotent
+      const nodeInfo = await web3Client.getInfo();
+      if (!nodeInfo.includes('TestRPC')) {
+        logger.info('Not using a test client so this test is skipped to avoid spending too much');
+        this.skip();
+      }
       logger.debug('Send failing deposit');
       let error;
       try {

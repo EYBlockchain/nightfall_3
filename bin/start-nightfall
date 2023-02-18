@@ -54,13 +54,13 @@ trap "docker-compose $FILE $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphan
 
 docker-compose -f docker/docker-compose.yml $FILE $DEV $ADVERSARY -p 'nightfall_3' down --remove-orphans
 
-if [ -z "$NO_REMOVE" ]; then 
+# if-else block checks - volume exist and then removes it.
+if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
+  echo -n 'Removing '
+  docker volume rm nightfall_3_mongodb
+fi
 
-  # if-else block checks - volume exist and then removes it.
-  if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb) ]]; then
-    echo -n 'Removing '
-    docker volume rm nightfall_3_mongodb
-  fi
+if [ -z "$NO_REMOVE" ]; then 
 
   if [[ $(echo $VOLUME_LIST | grep nightfall_3_mongodb2) ]]; then
     echo -n 'Removing '

@@ -655,7 +655,6 @@ class Nf3 {
         return this.submitTransaction(txDataToSign, ercAddress, 0);
       });
     }
-
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
@@ -670,10 +669,10 @@ class Nf3 {
     if (res.data.error) {
       throw new Error(res.data.error);
     }
-
     return new Promise((resolve, reject) => {
       userQueue.push(async () => {
         try {
+          logger.debug('Deposit transaction being processed');
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.shieldContractAddress,

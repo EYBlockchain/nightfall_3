@@ -84,27 +84,40 @@ describe('ERC20 tests', () => {
       );
     });
     erc20Address =
-      maxWithdrawValue.find(e => e.name === process.env.ERC20_COIN)?.address ||
+      maxWithdrawValue.find(e => e.name === process.env.ERC20_COIN)?.address.toLowerCase() ||
       (await nf3User.getContractAddress('ERC20Mock'));
     stateAddress = await nf3User.stateContractAddress;
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
+    // if we're using a real blockchain, there may be some transactions left from the last run so clear them out
+    const nodeInfo = await web3Client.getInfo();
+    if (!nodeInfo.includes('TestRPC')) {
+      logger.info('Waiting for any existing transactions. This may take up to five minutes');
+      try {
+        await makeBlock();
+      } catch (err) {
+        logger.info(
+          'Timed out: It appears that there were no transactions waiting. This is almost certainly fine',
+        );
+      }
+    }
   });
 
   describe('Deposits', () => {
     it('Should increment user L2 balance after depositing some ERC20', async function () {
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
-
       const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       expectTransaction(res);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
       await makeBlock();
-
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
     });
 
     it('Should fail to deposit if the user is sanctioned', async function () {
-      if (!DEPLOY_MOCKED_SANCTIONS_CONTRACT) this.skip();
+      if (!DEPLOY_MOCKED_SANCTIONS_CONTRACT) {
+        logger.info('Sanction list contract is not being used so this test is skipped');
+        this.skip();
+      }
       try {
         await nf3UserSanctioned.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
         expect.fail('Throw error, deposit did not fail');
@@ -368,7 +381,7 @@ describe('ERC20 tests', () => {
     });
   });
 
-  describe('Instant withdrawals', () => {
+  describe('Instant withdrawals', function () {
     const nf3LiquidityProvider = new Nf3(signingKeys.liquidityProvider, environment);
     let withdrawalTxHash;
 
@@ -452,8 +465,12 @@ describe('ERC20 tests', () => {
     console.log('************************maxERC20WithdrawValue', maxERC20WithdrawValue);
     const maxERC20DepositValue = Math.floor(maxERC20WithdrawValue / 4);
     console.log('************************maxERC20DepositValue', maxERC20DepositValue);
-
-    it('Should restrict deposits', async () => {
+    it('Should restrict deposits', async function () {
+      const nodeInfo = await web3Client.getInfo();
+      if (!nodeInfo.includes('TestRPC')) {
+        logger.info('Not using a test client so this test is skipped to avoid spending too much');
+        this.skip();
+      }
       // Anything equal or above the restricted amount should fail
       try {
         await nf3User.deposit(erc20Address, tokenType, maxERC20DepositValue + 1, tokenId, fee);

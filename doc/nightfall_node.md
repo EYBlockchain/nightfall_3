@@ -2,6 +2,8 @@
 
 This document describes how to deploy a Nightfall node to interact with a deployed nightfall instance. It's a simple deployment, designed to be run on your local machine and run up with docker-compose but it is straightforward to adapt it to a more production-grade environment; so long as you can run up containers and support volumes, you should be good. Generally nightfall containers can be restarted without issue and will sync themselves to the blockchain.  Only your commitment database requires careful handling because, if its contents are lost, you will be unable to prove ownership of any tokens that you deposited into layer 2 (althought you can protect against that by doing a transfer to yourself after a deposit to layer 2).
 
+Although it's a fairly generic document, it focusses on running an node on the Polygon Mumbai testnet.
+
 ## Preliminaries
 
 [ ] Clone the [nightfall_3](https://github.com/EYBlockchain/nightfall_3) repository.
@@ -14,7 +16,7 @@ This document describes how to deploy a Nightfall node to interact with a deploy
 
 ## Configuration
 
-This configuration assumes that you will run a full Nightfall node with an optional Proposer and a Challenger (see how_it_works.md in the nightfall `doc` folder if these terms are unfamiliar to you), so that you can create layer 2 blocks and also challenge incorrect blocks.  The full node also contains a Nightfall Client so that you can create your own transactions. Provided there are enough independent Proposer and Challenger nodes, running their own Optmist nodes so that you aren't worried about possible censorship of your transactions, you only actually need to run a Client. For now, though, we'll create a full Nightfall node.
+This configuration assumes that you will run a full Nightfall node with possibly an optional Proposer and a Challenger (see how_it_works.md in the nightfall `doc` folder if these terms are unfamiliar to you), so that you can create layer 2 blocks and also challenge incorrect blocks.  The full node also contains a Nightfall Client so that you can create your own transactions. Provided there are enough independent Proposer and Challenger nodes, running their own Optmist nodes so that you aren't worried about possible censorship of your transactions, you only actually need to run a Client. For now, though, we'll create a full Nightfall node.
 
 ### Generate a fresh key pair for the Nightfall node
 
@@ -22,7 +24,15 @@ This configuration assumes that you will run a full Nightfall node with an optio
 
 ### Set Environment variables
 
-Export the following environment variables:
+Note, there is a pre-populated script `bin/mumbai-node.env` for the Mumbai network to create all of the variables needed.  This saves having to set them individually and is less error-prone:
+
+```sh
+source mumbai-node.env <my-private-key>
+```
+
+`<my-private-key>` is the `ETH_PRIVATE_KEY` value (and `USER1`, `PROPOSER` - see later). It's passed in as an argument for security reasons.
+
+If you are not using the `mumbai-node script then export the following environment variables:
 
 [ ] `USE_EXTERNAL_NODE=true` This will stop the containers waiting for a deployer to start.
 
@@ -37,6 +47,8 @@ Export the following environment variables:
 [ ] Ensure that the account has sufficient funds. For the testnet, the amount that a Proposer has to pay to register is set to 1 Wei, so that actual amount has to be enough to propose a reasonable number of blocks (~100kGas/block). 10 Matic/ETH should be plenty for the testnet.
 
 ### Set config items
+
+If you are running in Mumbai, there is nothing to do in this section; it's all prepopulated for you in the config.
 
 [ ] The `ENVIRONMENTS` object needs to be set for your deployment.  There should be an `ENVIRONMENTS` object that matches the name of the deployment `ENVIRONMENT` variable (e.g. 'mumbai'). Set the URLs so that the various Nightfall containers can find each other. If they are running on `localhost` then the values given in 'mumbai' can be used. You have the option either to edit an existing object or to add your own.
 
@@ -92,7 +104,7 @@ When the containers are started, they will mount these volumes and use the downl
 
 ### Perform npm link
 
-[ ] This will take on board any changes to common files
+[ ] This will take on board any changes to common files folder, which is imported as a package.
 
 ```sh
 cd common-files
@@ -114,9 +126,11 @@ We include a build step so that we are not dependent on any local bind mount.  T
 
 [ ] Run `bin/start-nightfall -n` *NB: do not use the `-g -d` arguments that you may be habituated with*. Doing so will remove the volumes that you have created.
 
-### Deploy basic Proposer and Challenger applications (optional)
+Note that when the containers start, they will begin to synchronise themselves with the Layer 2 on-chain data. This currently takes about 10 minute but the time will increase as the size of the on-chain data grows. It's analagous to a conventional Blockchain node syncing. Once you see both Client and Optmist containers report that Queue 0 has been started, you are good to go. Do not attempt to make transactions while they are syncing as this is not a fully-tested situation.
 
-These can be run from another terminal window because the terminal used to deploy the Nightfall node is used for log output. They are not part of the nightfall node and you may well be using your own versions, in which case they are not required.  Note that the tests provide their own applications and thus you do not eed to deploy these to run tests.
+### Deploy basic Proposer and Challenger applications (optional - not needed to run tests)
+
+These can be run from another terminal window because the terminal used to deploy the Nightfall node is used for log output. They are not part of the nightfall node and you may well be using your own versions, in which case they are not required.  Note that the tests provide their own applications and thus you do not need to deploy these to run tests. There is no short-cut script for these environment variables, enter them manually or make your own script.
 
 [ ] Set the `ENVIROMENT` environment variable as above (and to the same value)
 [ ] Set the `PROPOSER_KEY` and `CHALLENGER_KEY` environent variables separately if you want to use different accounts from `ETH_PRIVATE_KEY`, otherwise just set them to the same value as `ETH_PRIVATE_KEY` (the value can be different from the one used for deployment), and that will be used by the Proposer and Challenger applications by default.
@@ -127,9 +141,31 @@ These can be run from another terminal window because the terminal used to deplo
 
 You now have a complete nightfall node running. The `Nf3` class is the simplest way to interact with it from a user application.
 
-## Test the deployment
+## Test the deployment (Mumbai only)
 
-We will test the deployment using the erc20 test, as this is the one of the most comprehensive tests, but other tests can be set up using a similar approach. The test does not require a proproser and challenger to run because the test script creates its own, where needed. It does require working Optimist and Client containers though.
+We will test the deployment using the erc20 and x509 tests, as these tests have been adapted to run on Mumbai as well as locally. The test does not require a Proposer and Challenger to run because the test scripts create their own, where needed. It does require working Optimist and Client containers though, so get them running, if you haven't already, and keep the logging window open. Note also that some tests require the blockchain to time-shift over the challenge period. Obviously this only works with a blockchain simulator, so these tests are automatically skipped.
+
+### x509
+
+The first thing we need to do is to whitelist our account by providing the correct x509 certificate to the x509 smart contract. The easiest way to do this is to run the x509 test. You are probably using a different terminal so first re-export the environment variables that you need:
+
+```sh
+source mumbai-node.env <my-private-key> <my-other-private-key>
+```
+
+Relevant at this stage is that the script has also set private keys for the test actors: `USER1_KEY`, `USER2_KEY` and `PROPOSER_KEY`; the `ETH_NETWORK` so that it can find contract addresses; and also the currency that we will deal in `ERC20_COIN=WMATIC`. Note that this coin must have been made avaiable during deployment.  You are not free to use just any coin. The list of acceptable coins is in the `RESTRICTIONS` section of `config/default.js` under `mumbai:`.  The USER1_KEY and the USER2_KEY are set to the values provided as arguments `<my-private-key>` and  `<my-other-private-key>`.
+
+Then we can run the x509 test:
+
+```sh
+npm run test-x509
+```
+
+Note that this test can be very slow to finish (~5 minutes). Don't assume it's hung. Please be patient. Improvements are being worked on.
+
+### ERC20
+
+Complete the previous test first, to activate whitelisting.
 
 The erc20 test has four actors:
 
@@ -138,32 +174,10 @@ The erc20 test has four actors:
 3. Proposer
 4. Sanctioned User
 
-There is no sanctions test-contract on the testnet and the sanctioned user test will be skipped automatically because the `DEPLOY_MOCKED_SANCTIONS_CONTRACT` environment variable is not set. We can ignore this user therefore.
-
-For simplicity, we will give two Users and the Proposer the same Ethereum Private Key, which must point to an address with funds in it. If `ETH_PRIVATE_KEY` is still set, we can use that.  
-
-[ ] In a new terminal, do the following:
+The only new actor here is the Sanctioned User.  This user is on the sanctioned list for the mock Chainalysis sactions list contract that will have been deployed to Mumbai as part of the deployment (Mumbai does not have a real version of the contract). We do not use this test however because that would require setting up a santioned user address to match that in the deployed contract. To skip it, we clear the `DEPLOY_MOCKED_SANCTIONS_CONTRACT` environment variable.
 
 ```sh
-echo $ETH_PRIVATE_KEY #should contain a valid Ethereum Private Key
-export USER1_KEY=$ETH_PRIVATE_KEY
-export USER2_KEY=$ETH_PRIVATE_KEY
-export PROPOSER_KEY=$ETH_PRIVATE_KEY
-```
-
-[ ] if not already set, set the correct environment, Ethereum network and the blockchain url.
-
-```sh
-export ENVIRONMENT=mumbai
-export ETH_NETWORK=mumbai
-export BLOCKCHAIN_URL=<as set above>
-```
-
-
-[ ] Also set the Name of the ERC20 coin that you want to use as a source of Layer 1 tokens for testing, and also the ERC20 coin that you intend to use to pay Proposer fees with (they can be the same), these must exist in the `RESTRICTIONS` section of the default config under the `ETH_NETWORK` that you are using (e.g. mumbai). Indeed, it *must have existed* when the Nightfall contracts were deployed because no other tokens can be transacted. Make sure you have funds in that account, controlled by `ETH_PRIVATE_KEY`.
-
-```sh
-export ERC20_COIN=USDC
+export ERC20_COIN=WMATIC
 export FEE_L2_TOKEN_ID=WMATIC
 ```
 
@@ -172,3 +186,9 @@ export FEE_L2_TOKEN_ID=WMATIC
 ```sh
 npm run test-erc20-tokens
 ```
+
+Note that these tests are very much integration tests and are stateful. They depend on a correct test sequence (you can't transfer a commitment that you haven't yet deposited).
+
+If your tests begin to fail, the most likely cause is that your Client and/or Optimist has dropped out of sync with the blockchain. This can happen if the tests terminate unexpectedly or are stopped during execution. Restarting the Optimist and Client containers will let them re-sync using on-chain data, which is, by definition, the true state of the system.
+
+The tests currently make the assumption that there is no other proposer running. If this is not the case it's possible that another proposer may post the test transactions. The tests listens for a block to be proposed before continuing and if another proposer does post the transactions before the test starts listening for the block proposal, there could be a race-condition failure. This is not known to be an issue but it is something to watch for.

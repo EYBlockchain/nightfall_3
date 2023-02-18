@@ -671,7 +671,7 @@ async function verifyEnoughCommitments(
     const minimumFeeCommits = fee.bigInt > 0n ? 1 : 0;
     const maxPossibleCommitments = Math.min(c, maxNullifiers - minimumFeeCommits);
 
-    logger.trace({ maxPossibleCommitments });
+    logger.debug({ maxPossibleCommitments });
 
     let j = 1;
     let sumHighestCommitments = 0n;
