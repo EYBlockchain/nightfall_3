@@ -20,7 +20,7 @@ import {
   conditionalMakeBlock,
 } from './services/block-assembler.mjs';
 import { setChallengeWebSocketConnection } from './services/challenges.mjs';
-import initialBlockSync from './services/state-sync.mjs';
+import { initialBlockSync } from './services/state-sync.mjs';
 import { setInstantWithdrawalWebSocketConnection } from './services/instant-withdrawal.mjs';
 import { setProposer } from './routes/proposer.mjs';
 import { setBlockProposedWebSocketConnection } from './event-handlers/block-proposed.mjs';

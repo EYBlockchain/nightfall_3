@@ -18,18 +18,26 @@ import {
 import getProposeBlockCalldata from '../services/process-calldata.mjs';
 import { zkpPrivateKeys, nullifierKeys } from '../services/keys.mjs';
 import {
-  getLatestTree,
+  getTreeByBlockNumberL2,
   saveTree,
   saveTransaction,
   saveBlock,
   setTransactionHashSiblingInfo,
+  getNumberOfL2Blocks,
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
+import { syncState } from '../services/state-sync.mjs';
 
 const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
 const { ZERO, WITHDRAW } = constants;
 
 const { generalise } = gen;
+
+// Stores latest L1 block correctly synchronized to speed possible resyncs
+let lastInOrderL1Block = 'earliest';
+// Counter to monitor resync attempts in case something is wrong we can force a
+//   full resync
+let consecutiveResyncAttempts = 0;
 
 /**
  * This handler runs whenever a BlockProposed event is emitted by the blockchain
@@ -38,14 +46,30 @@ async function blockProposedEventHandler(data, syncing) {
   // zkpPrivateKey will be used to decrypt secrets whilst nullifierKey will be used to calculate nullifiers for commitments and store them
   const { blockNumber: currentBlockCount, transactionHash: transactionHashL1 } = data;
   const { transactions, block } = await getProposeBlockCalldata(data);
+  const nextBlockNumberL2 = await getNumberOfL2Blocks();
 
   logger.info({
     msg: 'Received Block Proposed event with Layer 2 Block Number and Tx Hash',
-    blockNumberL2: block.blockNumberL2,
+    receivedBlockNumberL2: block.blockNumberL2,
+    expectedBlockNumberL2: nextBlockNumberL2,
     transactionHashL1,
   });
 
-  const latestTree = await getLatestTree();
+  // Check resync attempts
+  if (consecutiveResyncAttempts > 10) {
+    lastInOrderL1Block = 'earliest';
+    consecutiveResyncAttempts = 0;
+  }
+
+  // If an out of order L2 block is detected,
+  if (block.blockNumberL2 > nextBlockNumberL2) {
+    consecutiveResyncAttempts++;
+    await syncState(lastInOrderL1Block);
+  }
+
+  lastInOrderL1Block = currentBlockCount;
+  const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
+
   const blockCommitments = transactions
     .map(t => t.commitments.filter(c => c !== ZERO))
     .flat(Infinity);
