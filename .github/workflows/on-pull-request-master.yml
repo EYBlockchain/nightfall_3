@@ -5,6 +5,7 @@ on:
     branches: [master]
 
 env:
+  DOCKER_BUILDKIT: 1 # enable docker buildkit
 # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
   WHITELISTING: disable
 
@@ -141,7 +142,7 @@ jobs:
           if [ $RESULT != "200"]; then
             exit 1
           fi
-      
+
       - name: Authentication Test - endpoint whitelisted_1 OK
         run: |
           RESULT=$(curl -w "%{http_code}" -o /dev/null --silent http://localhost:8080/commitment/salt/?salt=0123456789)
@@ -963,7 +964,7 @@ jobs:
             curl -i http://localhost:8092/healthcheck
           attempt_limit: 10
           attempt_delay: 30000
-      
+
       - name: 'Check challenger liveliness'
         uses: Wandalen/wretry.action@v1.0.11
         with:

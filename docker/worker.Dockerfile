@@ -1,12 +1,14 @@
 # build circom from source for local verify
 FROM ghcr.io/eyblockchain/local-circom as builder
 
-FROM ubuntu:20.04
+FROM node:16.17-bullseye-slim
 
-RUN apt-get update -y
-RUN apt-get install -y netcat curl
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
-RUN apt-get install -y nodejs gcc g++ make
+# 'node-gyp' requires 'python3', 'make' and 'g++''
+# entrypoint script requires 'netcat'
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3 make g++ netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 80
 
