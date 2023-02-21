@@ -116,7 +116,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.10",
     "queue": "^6.0.2",
     "reconnecting-websocket": "^4.4.0",
-    "solidity-coverage": "^0.7.22",
+    "solidity-coverage": "^0.8.2",
     "terser": "^5.14.2",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.0",
@@ -140,6 +140,8 @@
     "got": "11.8.5",
     "yargs-parser": "5.0.1",
     "colors": "$colors",
-    "hardhat": "$hardhat"
+    "hardhat": "$hardhat",
+    "solidity-coverage": "^0.8.2",
+    "@solidity-parser/parser": "^0.15.0"
   }
 }
