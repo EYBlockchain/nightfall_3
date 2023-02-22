@@ -25,7 +25,7 @@ const ENDPOINTS_WHITELISTED = 'ENDPOINTS_WHITELISTED';
  * Default obfuscation's rules.
  */
 const OBFUSCATION_SETTINGS = {
-  '^(?!.*public).*key(s)?$|.*password.*|.*secret.*|.*mnemonic.*|.*salt.*': 'ALL',
+  '^(?!.*public).*key(s)?$|.*password.*|.*secret.*|.*mnemonic.*|.*salt.*|.*mnemonic.*': 'ALL',
 };
 
 const doObfuscation = object => {
@@ -282,6 +282,9 @@ export const setupHttpDefaults = (
   addHealthCheck = true,
   useFileUpload = true,
 ) => {
+  app.use(bodyParser.json({ limit: '2mb' }));
+  app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
+
   app.use(requestLogger);
 
   if (process.env.AUTHENTICATION_KEY) {
@@ -312,8 +315,6 @@ export const setupHttpDefaults = (
 
   app.use(handleCorrelationId);
   app.use(cors());
-  app.use(bodyParser.json({ limit: '2mb' }));
-  app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
   app.use(responseLogger);
 
   if (routesDefiner) {
