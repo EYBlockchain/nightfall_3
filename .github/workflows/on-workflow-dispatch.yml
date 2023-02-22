@@ -1,8 +1,13 @@
 name: Check PR
 
 on:
-  pull_request:
-    branches: [master]
+  workflow_dispatch:
+    inputs:
+      run_adversary:
+        description: 'Log level'
+        required: true
+        default: false
+        type: boolean
 
 env:
   DOCKER_BUILDKIT: 1 # enable docker buildkit
@@ -709,6 +714,70 @@ jobs:
         with:
           name: optimist-sync-test-logs
           path: ./optimist-sync-test.log
+
+  adversary-test:
+    env:
+      CONFIRMATIONS: 1
+    runs-on: ubuntu-20.04
+    if: ${{ inputs.run_adversary }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+
+      - name: Build adversary
+        run: npm run build-adversary
+
+      - name: Perform npm link
+        run: |
+          cd common-files
+          npm link
+          cd ..
+          npm link @polygon-nightfall/common-files
+          cd cli
+          npm link @polygon-nightfall/common-files
+          cd ..
+          cd test/adversary/adversary-cli
+          npm link @polygon-nightfall/common-files
+          cd .. && cd .. && cd ..
+
+      - name: Start Containers
+        run: |
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d -a &> adversary-test.log &disown
+
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: debug logs - after container startup
+        if: always()
+        run: cat adversary-test.log
+
+      - name: Run adversary test
+        run: |
+          VERBOSE=true npm run test-adversary
+
+      - name: debug logs - after integration test run
+        if: always()
+        run: cat adversary-test.log
+
+      - name: If adversary test failed, shutdown the Containers
+        if: failure()
+        run: |
+          npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: adversary-test-logs
+          path: ./adversary-test.log
 
   ping-pong-test:
     env:
