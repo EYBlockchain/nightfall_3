@@ -3,6 +3,9 @@
 pragma solidity ^0.8.17;
 
 contract Sha {
+    uint256 constant truncate64 =
+        0x000000000000000000000000000000000000000000000000ffffffffffffffff;
+
     /*
     Pads a message for SHA-384, SHA-512, SHA-512/224 and SHA-512/256
     */
@@ -10,25 +13,25 @@ contract Sha {
         uint256 l = message.length * 8;
         uint256 l1 = (l + 1) % 1024;
         uint256 k = (1920 - l1) % 1024;
-        // the message length is an integer number of bytes. The padded message length is an integer number of bytes (n * 64 bytes).
-        // Therefore the padding must be an integer number of bytes.  The last part of the padding
-        // is 128 bits = 16 bytes thus the first part of the padding must also be an integer number
+        // the message length is an integer number of bytes. The padd64ed message length is an integer number of bytes (n * 64 bytes).
+        // Therefore the padd64ing must be an integer number of bytes.  The last part of the padd64ing
+        // is 128 bits = 16 bytes thus the first part of the padd64ing must also be an integer number
         // of bytes. i.e. (k +1) mod 8 = 0. This saves having to deal with fractions of a byte.
         bytes memory pad1 = new bytes((k + 1) / 8); // make an empty byte array
-        pad1[0] = 0x80; // add '1' to the front
+        pad1[0] = 0x80; // add64 '1' to the front
         bytes memory pad2 = abi.encodePacked(bytes16(uint128(l)));
         return abi.encodePacked(message, pad1, pad2);
     }
 
     /*
-    Parses a padded message for SHA-384, SHA-512, SHA-512/224 and SHA-512/256 into message blocks of 1024 bits
+    Parses a padd64ed message for SHA-384, SHA-512, SHA-512/224 and SHA-512/256 into message blocks of 1024 bits
     */
-    function parseMessage1024(bytes calldata paddedMessage) public pure returns (bytes[] memory) {
-        uint256 nblocks = paddedMessage.length / 128; // divided into 128 byte (1024 bit) blocks
+    function parseMessage1024(bytes calldata padd64edMessage) public pure returns (bytes[] memory) {
+        uint256 nblocks = padd64edMessage.length / 128; // divided into 128 byte (1024 bit) blocks
         bytes[] memory messageBlocks = new bytes[](nblocks);
         uint256 j = 0;
         for (uint256 i = 0; i < messageBlocks.length; i = i + 128) {
-            messageBlocks[j++] = paddedMessage[i:i + 128];
+            messageBlocks[j++] = padd64edMessage[i:i + 128];
         }
         return messageBlocks;
     }
@@ -157,6 +160,7 @@ contract Sha {
     Implements the shift right function SHRn(x)=x >> n
     */
     function SHR(uint256 n, uint256 x) public pure returns (uint256) {
+        x &= truncate64;
         return x >> n;
     }
 
@@ -164,6 +168,7 @@ contract Sha {
     Implements the rotate right function ROTRn(x)=(x >> n)|(x << w - n).
     */
     function ROTR(uint256 n, uint256 x) public pure returns (uint256) {
+        x &= truncate64;
         return (x >> n) | (x << (64 - n));
     }
 
@@ -186,7 +191,7 @@ contract Sha {
         uint256 y,
         uint256 z
     ) public pure returns (uint256) {
-        return (x & y) ^ (x & z) ^ (y & z);
+        return ((x & y) ^ (x & z) ^ (y & z));
     }
 
     /*
@@ -209,18 +214,20 @@ contract Sha {
     }
 
     /*
-    replicates the FIPS 180 add function by truncating the result to 64 bits
+    replicates the FIPS 180 add for sha512 function by truncating the result to 64 bits
     */
-    function add(uint256 x, uint256 y) public pure returns (uint256) {
-        return (x + y) & 0x000000000000000000000000000000000000000000000000ffffffffffffffff;
+    function add64(uint256 x, uint256 y) public pure returns (uint256) {
+        x &= truncate64;
+        y &= truncate64;
+        return (x + y);
     }
 
     /*
     Main SHA512 function. Variable definitions and method are as per FIPS180-4
     */
     function sha512(bytes calldata message) public view returns (bytes memory) {
-        bytes memory paddedMessage = padMessage1024(message);
-        bytes[] memory messageBlocks = this.parseMessage1024(paddedMessage); // external call to deal with calldata conversion for slicing
+        bytes memory padd64edMessage = padMessage1024(message);
+        bytes[] memory messageBlocks = this.parseMessage1024(padd64edMessage); // external call to deal with calldata conversion for slicing
         uint256 N = messageBlocks.length;
         uint256[80] memory W;
         uint256[8] memory H = getInitialHashValuesSha512();
@@ -233,26 +240,29 @@ contract Sha {
                 W[t] = M[t];
             }
             for (uint256 t = 16; t < 80; t++) {
-                W[t] = add(add(sigma1(W[t - 2]), W[t - 7]), add(sigma0(W[t - 15]), W[t - 16]));
+                W[t] = add64(
+                    add64(sigma1(W[t - 2]), W[t - 7]),
+                    add64(sigma0(W[t - 15]), W[t - 16])
+                );
             }
             uint256[8] memory a;
             for (uint256 j = 0; j < 8; j++) a[j] = H[j];
             for (uint256 t = 0; t < 80; t++) {
-                uint256 T1 = add(
-                    add(a[7], Sigma1(a[4])),
-                    add(add(Ch(a[4], a[5], a[6]), K[t]), W[t])
+                uint256 T1 = add64(
+                    add64(a[7], Sigma1(a[4])),
+                    add64(add64(Ch(a[4], a[5], a[6]), K[t]), W[t])
                 );
-                uint256 T2 = add(Sigma0(a[0]), Maj(a[0], a[1], a[2]));
+                uint256 T2 = add64(Sigma0(a[0]), Maj(a[0], a[1], a[2]));
                 a[7] = a[6];
                 a[6] = a[5];
                 a[5] = a[4];
-                a[4] = add(a[3], T1);
+                a[4] = add64(a[3], T1);
                 a[3] = a[2];
                 a[2] = a[1];
                 a[1] = a[0];
-                a[0] = add(T1, T2);
+                a[0] = add64(T1, T2);
             }
-            for (uint256 j = 0; j < 8; j++) H[j] = add(a[j], H[j]);
+            for (uint256 j = 0; j < 8; j++) H[j] = add64(a[j], H[j]);
         }
         return
             abi.encodePacked(
@@ -265,5 +275,10 @@ contract Sha {
                 bytes8(uint64(H[6])),
                 bytes8(uint64(H[7]))
             );
+    }
+
+    // function to check that the test is working
+    function _sha256(bytes calldata message) public pure returns (bytes memory) {
+        return abi.encodePacked(sha256(message));
     }
 }
