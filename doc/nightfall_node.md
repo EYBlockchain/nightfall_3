@@ -29,7 +29,7 @@ Note that to complete the tests, a second account is needed so you may wish to g
 Note, there is a pre-populated script `bin/mumbai-node.env` for the Mumbai network to create all of the variables needed.  This saves having to set them individually and is less error-prone:
 
 ```sh
-source mumbai-node.env <my-private-key> <my-second-private-key> <blockchain node url>
+source bin/mumbai-node.env <my-private-key> <my-second-private-key> <blockchain node url>
 ```
 
 `<my-private-key>` is the `ETH_PRIVATE_KEY` value (and `USER1`, `PROPOSER` - see later). It's passed in as an argument for security reasons. `<my-second-private-key>` is used for running tests (see later).  The `blockchain node url` is exactly that e.g. `ws://1.2.3.4:8546`.
