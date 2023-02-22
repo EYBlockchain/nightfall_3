@@ -4,6 +4,7 @@ node_modules/*
 **/doc/*
 cli/build/*
 wallet/cli/*
+mumbai/
 wallet/src/components/Assets/
 test/adversary/lazy-optimist/*
 test/adversary/adversary-cli/*
