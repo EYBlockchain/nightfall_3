@@ -22,17 +22,19 @@ This configuration assumes that you will run a full Nightfall node with possibly
 
 [ ] Nightfall is designed to be agnostic about how its transactions get signed. It simply returns a raw Ethereum transaction for signature and expects it to be signed and passed into the blockchain. This is so that security of the Ethereum private key can be managed according to local requirements (e.g. storage in an HSM). For test purposes however, Nightfall provides basic applications that can sign transactions and pass them into the blockchain (the Proposer, Challenger and User applications). These applications require access to an Ethereum private key so that they can sign transactions. This key will be exposed on the host and therefore should not be used for anything else, and should be generated specifically for this use. The easiest way to generate a private key and address is to use Metamask, generate a new account and export the private key.
 
+Note that to complete the tests, a second account is needed so you may wish to generate two private keys and fund the accounts with a small amount of matic.
+
 ### Set Environment variables
 
 Note, there is a pre-populated script `bin/mumbai-node.env` for the Mumbai network to create all of the variables needed.  This saves having to set them individually and is less error-prone:
 
 ```sh
-source mumbai-node.env <my-private-key>
+source mumbai-node.env <my-private-key> <my-second-private-key> <blockchain node url>
 ```
 
-`<my-private-key>` is the `ETH_PRIVATE_KEY` value (and `USER1`, `PROPOSER` - see later). It's passed in as an argument for security reasons.
+`<my-private-key>` is the `ETH_PRIVATE_KEY` value (and `USER1`, `PROPOSER` - see later). It's passed in as an argument for security reasons. `<my-second-private-key>` is used for running tests (see later).  The `blockchain node url` is exactly that e.g. `ws://1.2.3.4:8546`.
 
-If you are not using the `mumbai-node script then export the following environment variables:
+If you are not using the `mumbai-node` script then export the following environment variables now:
 
 [ ] `USE_EXTERNAL_NODE=true` This will stop the containers waiting for a deployer to start.
 
@@ -175,6 +177,16 @@ The erc20 test has four actors:
 4. Sanctioned User
 
 The only new actor here is the Sanctioned User.  This user is on the sanctioned list for the mock Chainalysis sactions list contract that will have been deployed to Mumbai as part of the deployment (Mumbai does not have a real version of the contract). We do not use this test however because that would require setting up a santioned user address to match that in the deployed contract. To skip it, we clear the `DEPLOY_MOCKED_SANCTIONS_CONTRACT` environment variable.
+
+Note that you do need to set Ethereum private keys for the Proposer and users though. You can reuse the User 1 key for the Proposer but User 1 and User 2 need different keys. Unless you are using the `mumbai-node.env` script above, which will already have set these keys, you should export these enviroment variables now:
+
+```sh
+export USER1_KEY=<my-private-key>
+export PROPOSER_KEY=$USER1_KEY
+export USER2_KEY=<my-second-private-key>
+```
+
+Again, if not using `mumbai-node.env` you should tell the test which currency to use:
 
 ```sh
 export ERC20_COIN=WMATIC
