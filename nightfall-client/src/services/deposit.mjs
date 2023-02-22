@@ -31,6 +31,9 @@ const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, DEPOSIT, DEPOSIT_FEE } = constants;
 const { generalise } = gen;
 
+/**
+ * Does some sort of treatment and validations in the parameters so that they can be used properly
+ */
 async function getDepositParams(depositParams) {
   const { tokenType, providedCommitmentsFee, ...items } = depositParams;
 
@@ -54,6 +57,9 @@ async function getDepositParams(depositParams) {
   };
 }
 
+/**
+ * Does some checks and returns the data needed for doing a deposit
+ */
 async function getDepositData(
   fee,
   feeL2TokenAddress,
@@ -143,7 +149,7 @@ async function getDepositData(
 }
 
 /**
- * Generates the compressed proof for Deposits.
+ * Generates the compressed proof for the deposit
  */
 async function generateDepositProof(
   commitmentsInfo,
@@ -192,6 +198,9 @@ async function generateDepositProof(
   return compressProof(proof);
 }
 
+/**
+ * Performs a deposit from an Ethereum Account to a Nightfall Account.
+ */
 async function deposit(depositParams) {
   logger.info('Creating a deposit transaction');
 
@@ -262,6 +271,7 @@ async function deposit(depositParams) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
+
     await submitTransaction(
       transaction,
       commitmentsInfo,
@@ -269,6 +279,7 @@ async function deposit(depositParams) {
       nullifierKey,
       false,
     );
+
     return { rawTransaction, transaction };
   } catch (err) {
     logger.error(err);
