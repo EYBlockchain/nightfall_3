@@ -2,17 +2,27 @@
 /* ignore unused exports */
 
 import fs from 'fs';
+import gen from 'general-number';
 import config from 'config';
 
 import Web3 from './web3.mjs';
 import logger from './logger.mjs';
+import constants from '../constants/index.mjs';
+
+const { generalise } = gen;
 
 export const web3 = Web3.connection();
+
+const { SHIELD_CONTRACT_NAME } = constants;
 
 const retries = config.RETRIES;
 const options = config.WEB3_OPTIONS;
 
+// TODO maybe it is better to use an In-memory Cache Manager (e.g. node-cache) or even a distributed cache (Redis).
+// In the latter case, we could apply a "Cache Warming" strategy so that the apps would not need to initialize cache themselves,
+// reducing latency.
 let cachedContracts = {};
+let cachedFeeL2TokenAddress;
 
 const contractPath = contractName => {
   return `${config.CONTRACT_ARTIFACTS}/${contractName}.json`;
@@ -156,4 +166,18 @@ export async function waitForContract(contractName) {
   if (error) throw error;
 
   return instance;
+}
+
+export async function getFeeL2TokenAddress() {
+  if (cachedFeeL2TokenAddress) return cachedFeeL2TokenAddress;
+
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
+
+  const feeL2TokenAddress = generalise(
+    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
+  );
+
+  cachedFeeL2TokenAddress = feeL2TokenAddress;
+
+  return cachedFeeL2TokenAddress;
 }
