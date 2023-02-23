@@ -9,7 +9,10 @@ import config from 'config';
 import gen from 'general-number';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  waitForContract,
+  getFeeL2TokenAddress,
+} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
 import {
   getCircuitHash,
@@ -27,6 +30,7 @@ const { SHIELD_CONTRACT_NAME, WITHDRAW } = constants;
 const { generalise } = gen;
 
 const MAX_WITHDRAW = 5192296858534827628530496329220096n; // 2n**112n
+const circuitName = WITHDRAW;
 
 async function withdraw(withdrawParams) {
   logger.info('Creating a withdraw transaction');
@@ -40,11 +44,7 @@ async function withdraw(withdrawParams) {
   const { tokenId, value, recipientAddress, rootKey, fee } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
-  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-
-  const feeL2TokenAddress = generalise(
-    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
-  );
+  const feeL2TokenAddress = await getFeeL2TokenAddress();
 
   logger.debug({
     msg: 'Withdraw ERC Token and Fee addresses',
@@ -53,9 +53,6 @@ async function withdraw(withdrawParams) {
   });
 
   const withdrawValue = value.bigInt > MAX_WITHDRAW ? MAX_WITHDRAW : value.bigInt;
-
-  const circuitName = WITHDRAW;
-
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: withdrawValue,
     fee,
@@ -134,9 +131,11 @@ async function withdraw(withdrawParams) {
       offchain,
     });
 
+    const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
+
     await submitTransaction(
       transaction,
       commitmentsInfo,
@@ -144,6 +143,7 @@ async function withdraw(withdrawParams) {
       nullifierKey,
       offchain,
     );
+
     return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));

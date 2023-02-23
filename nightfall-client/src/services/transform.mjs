@@ -4,7 +4,10 @@ import config from 'config';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  waitForContract,
+  getFeeL2TokenAddress,
+} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   getCircuitHash,
   generateProof,
@@ -29,11 +32,7 @@ async function transform(transformParams) {
   const { rootKey, fee } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
 
-  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-  const feeL2TokenAddress = generalise(
-    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
-  );
-
+  const feeL2TokenAddress = await getFeeL2TokenAddress();
   const circuitHash = await getCircuitHash('transform');
 
   const commitmentInfoArray = [];
@@ -172,6 +171,7 @@ async function transform(transformParams) {
       transaction,
     });
 
+    const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();

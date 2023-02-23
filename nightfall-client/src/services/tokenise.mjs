@@ -1,7 +1,10 @@
 import config from 'config';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  waitForContract,
+  getFeeL2TokenAddress,
+} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   getCircuitHash,
   generateProof,
@@ -19,6 +22,7 @@ import { submitTransaction } from '../utils/submitTransaction.mjs';
 const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, TOKENISE } = constants;
 const { generalise } = gen;
+const circuitName = TOKENISE;
 
 async function tokenise(items) {
   logger.info('Creating a tokenise transaction');
@@ -40,14 +44,7 @@ async function tokenise(items) {
     hash: commitment.hash.hex(),
   });
 
-  // now we can compute a Witness so that we can generate the proof
-  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-
-  const feeL2TokenAddress = generalise(
-    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
-  );
-
-  const circuitName = TOKENISE;
+  const feeL2TokenAddress = await getFeeL2TokenAddress();
 
   // Currently just the fee commitments
   const commitmentsInfo = await getCommitmentInfo({
@@ -126,9 +123,11 @@ async function tokenise(items) {
       transaction,
     });
 
+    const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
+
     await submitTransaction(
       transaction,
       commitmentsInfo,
@@ -136,6 +135,7 @@ async function tokenise(items) {
       nullifierKey,
       true,
     );
+
     return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));

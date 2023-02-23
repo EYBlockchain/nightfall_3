@@ -1,7 +1,10 @@
 import config from 'config';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import {
+  waitForContract,
+  getFeeL2TokenAddress,
+} from '@polygon-nightfall/common-files/utils/contract.mjs';
 import {
   getCircuitHash,
   generateProof,
@@ -18,6 +21,7 @@ import { ZkpKeys } from './keys.mjs';
 const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BURN } = constants;
 const { generalise } = gen;
+const circuitName = BURN;
 
 async function burn(burnParams) {
   logger.info('Creating a burn transaction');
@@ -25,16 +29,9 @@ async function burn(burnParams) {
   const { providedCommitments, providedCommitmentsFee, ...items } = burnParams;
   const { rootKey, value, fee, tokenId } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
+
   const ercAddress = generalise(items.ercAddress.toLowerCase());
-
-  // now we can compute a Witness so that we can generate the proof
-  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-
-  const feeL2TokenAddress = generalise(
-    (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
-  );
-
-  const circuitName = BURN;
+  const feeL2TokenAddress = await getFeeL2TokenAddress();
 
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend: generalise(value).bigInt,
@@ -121,9 +118,11 @@ async function burn(burnParams) {
       transaction,
     });
 
+    const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
+
     await submitTransaction(
       transaction,
       commitmentsInfo,
@@ -131,6 +130,7 @@ async function burn(burnParams) {
       nullifierKey,
       true,
     );
+
     return { rawTransaction, transaction };
   } catch (error) {
     await Promise.all(commitmentsInfo.oldCommitments.map(o => clearPending(o)));

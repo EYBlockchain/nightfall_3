@@ -168,6 +168,9 @@ export async function waitForContract(contractName) {
   return instance;
 }
 
+/**
+ * Returns the Fee L2 Token address in lower case.
+ */
 export async function getFeeL2TokenAddress() {
   if (cachedFeeL2TokenAddress) return cachedFeeL2TokenAddress;
 
