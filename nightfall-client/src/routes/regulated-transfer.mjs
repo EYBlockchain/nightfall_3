@@ -1,5 +1,5 @@
 /**
- * This module contains the logic needed create a third party regulated zkp transfer, 
+ * This module contains the logic needed create a third party regulated zkp transfer,
  * i.e. to nullify two input commitments and create two new output commitments to the same value
  * with regulator being able observe the transfer.
  * It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
@@ -27,11 +27,11 @@ import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
 import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { submitTransaction } from '../utils/submitTransaction.mjs';
-  
+
 const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, TRANSFER } = constants;
 const { generalise } = gen;
-  
+
 async function transfer(transferParams) {
   logger.info('Creating a transfer transaction');
   // let's extract the input items
@@ -42,7 +42,7 @@ async function transfer(transferParams) {
     ...items
   } = transferParams;
   const { tokenId, recipientData, rootKey, fee } = generalise(items);
-  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey); 
+  const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
   const { recipientCompressedZkpPublicKeys, regulatorCompressedZkpPublicKeys, recipientRegulatorCompressedZkpPublicKeys, values } = recipientData;   
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
@@ -56,26 +56,26 @@ async function transfer(transferParams) {
   );
   if (recipientCompressedZkpPublicKeys.length > 1)
     throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
-  
+
   const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME);
-  
+
   const feeL2TokenAddress = generalise(
     (await shieldContractInstance.methods.getFeeL2TokenAddress().call()).toLowerCase(),
   );
-  
+
   logger.debug({
     msg: 'Transfer ERC Token & Fee addresses',
     ercAddress: ercAddress.hex(32),
     feeL2TokenAddress: feeL2TokenAddress.hex(32),
   });
-  
+
   const circuitName = TRANSFER;
-  
+
   const totalValueToSend = values.reduce((acc, value) => acc + value.bigInt, 0n);
   const commitmentsInfo = await getCommitmentInfo({
     totalValueToSend,
     fee,
-    recipientZkpPublicKeysArray: recipientZkpPublicKeys,    
+    recipientZkpPublicKeysArray: recipientZkpPublicKeys,
     ercAddress,
     feeL2TokenAddress,
     tokenId,
@@ -84,10 +84,10 @@ async function transfer(transferParams) {
     providedCommitments,
     providedCommitmentsFee,
   });
-  
+
   try {
     // KEM-DEM encryption
-    const [ePrivate, ePublic] = await genEphemeralKeys(); 
+    const [ePrivate, ePublic] = await genEphemeralKeys();
     const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
     const compressedSecrets = encrypt(generalise(ePrivate), generalise(recipientRegulatorZkpPublicKeys[0]), [  
       packedErc.bigInt,
@@ -95,32 +95,32 @@ async function transfer(transferParams) {
       values[0].bigInt,
       commitmentsInfo.salts[0].bigInt,
     ]);
-  
+
     // Compress the public keys as they will be put on-chain
-   
-    const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys);  // Regulator requires senderRecipientEPublic for decryption
+
+    const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys);  //Regulator requires senderRecipientEPublic for decryption
     const senderRegulatorEPublic = scalarMult(ePrivate, regulatorZkpPublicKeys);  // Recipient requires senderRegulatorEPublic for decryption
-    const compressedSenderRecipientEPub = edwardsCompress(senderRecipientEPublic);     
-    const compressedSenderRegulatorEPublic = edwardsCompress(senderRegulatorEPublic);  
-  
+    const compressedSenderRecipientEPub = edwardsCompress(senderRecipientEPublic);
+    const compressedSenderRegulatorEPublic = edwardsCompress(senderRegulatorEPublic);
+
     const circuitHash = await getCircuitHash(circuitName);
-  
+
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
       fee,
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
       ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
-      tokenId: compressedSenderRegulatorEPublic,  
-      recipientAddress: compressedSecrets[1], // this is the encrypted tokenID 
+      tokenId: compressedSenderRegulatorEPublic,
+      recipientAddress: compressedSecrets[1], // this is the encrypted tokenID
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      compressedSecrets: compressedSecrets.slice(3), // these are the [compressedSenderRecipientEPub, value, salt] 
+      compressedSecrets: compressedSecrets.slice(3), // these are the[compressedSenderRecipientEPub, value, salt] 
       numberNullifiers: VK_IDS[circuitName].numberNullifiers,
       numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
     });
-  
+
     const privateData = {
       rootKey,
       oldCommitmentPreimage: commitmentsInfo.oldCommitments.map(o => {
@@ -131,12 +131,12 @@ async function transfer(transferParams) {
       newCommitmentPreimage: commitmentsInfo.newCommitments.map(o => {
         return { value: o.preimage.value, salt: o.preimage.salt };
       }),
-      recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),   
+      recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
       ercAddress,
       tokenId,
       ephemeralKey: ePrivate,
     };
- 
+
     const witness = computeCircuitInputs(
       publicData,
       privateData,
@@ -145,12 +145,12 @@ async function transfer(transferParams) {
       VK_IDS[circuitName].numberNullifiers,
       VK_IDS[circuitName].numberCommitments,
     );
-  
+
     logger.debug({
       msg: 'witness input is',
       witness,
     });
- 
+
     // call a worker to generate the proof
     const res = await generateProof({ folderpath: circuitName, witness });
 
@@ -158,7 +158,7 @@ async function transfer(transferParams) {
       msg: 'Received response from generate-proof',
       response: res.data,
     });
-  
+
     const { proof } = res.data;
     // and work out the ABI encoded data that the caller should sign and send to the shield contract
     const transaction = { ...publicData, proof: compressProof(proof) };
