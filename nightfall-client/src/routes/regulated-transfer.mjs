@@ -98,8 +98,8 @@ async function transfer(transferParams) {
 
     // Compress the public keys as they will be put on-chain
 
-    const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys);  // Regulator requires senderRecipientEPublic for decryption
-    const senderRegulatorEPublic = scalarMult(ePrivate, regulatorZkpPublicKeys);  // Recipient requires senderRegulatorEPublic for decryption
+    const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys); // Regulator requires senderRecipientEPublic for decryption
+    const senderRegulatorEPublic = scalarMult(ePrivate, regulatorZkpPublicKeys); // Recipient requires senderRegulatorEPublic for decryption
     const compressedSenderRecipientEPub = edwardsCompress(senderRecipientEPublic);
     const compressedSenderRegulatorEPublic = edwardsCompress(senderRegulatorEPublic);
 
