@@ -6,11 +6,11 @@
  * @module deposit.mjs
  * @author westlad, ChaitanyaKonda, iAmMichaelConnor, will-kim
  */
- import { scalarMult } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs'; 
  import config from 'config';
  import gen from 'general-number';
  import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
  import {
+   scalarMult,
    edwardsCompress,
    compressProof,
  } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
