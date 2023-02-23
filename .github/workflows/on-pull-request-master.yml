@@ -6,7 +6,7 @@ on:
 
 env:
   DOCKER_BUILDKIT: 1 # enable docker buildkit
-# Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
+  # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
   WHITELISTING: disable
 
 jobs:
@@ -125,7 +125,7 @@ jobs:
           ./bin/start-nightfall -g -d &> authentication-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -224,7 +224,7 @@ jobs:
           ./bin/start-nightfall -g -d &> circuit-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -281,7 +281,7 @@ jobs:
           ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -338,7 +338,7 @@ jobs:
           ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -395,7 +395,7 @@ jobs:
           ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -452,7 +452,7 @@ jobs:
           ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -510,7 +510,7 @@ jobs:
           ./bin/start-nightfall -g -d &> ganache-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -567,7 +567,7 @@ jobs:
           ./bin/start-nightfall -g -d &> x509-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -623,7 +623,7 @@ jobs:
           ./bin/start-nightfall -g -d &> administrator-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -680,7 +680,7 @@ jobs:
           ./bin/start-nightfall -g -d &> optimist-sync-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -742,7 +742,7 @@ jobs:
           ./bin/start-nightfall -g -d -a &> adversary-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -806,7 +806,7 @@ jobs:
           ./bin/start-multiproposer-test-env -g &> ping-pong-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -818,7 +818,7 @@ jobs:
         run: cat ping-pong-test.log
 
       - name: 'Check client1 liveliness'
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             curl -i http://localhost:8083/healthcheck
@@ -826,7 +826,7 @@ jobs:
           attempt_delay: 30000
 
       - name: 'Check client2 liveliness'
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             curl -i http://localhost:8086/healthcheck
@@ -884,7 +884,7 @@ jobs:
           ./bin/start-nightfall -g -d &> test-gas.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -941,7 +941,7 @@ jobs:
           ./bin/start-nightfall -g -d &> test-apps.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
@@ -958,7 +958,7 @@ jobs:
 
       - name: 'Check proposer liveliness'
 
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             curl -i http://localhost:8092/healthcheck
@@ -966,7 +966,7 @@ jobs:
           attempt_delay: 30000
 
       - name: 'Check challenger liveliness'
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             curl -i http://localhost:8192/healthcheck
@@ -1015,7 +1015,7 @@ jobs:
           ./bin/start-nightfall -g -d &> periodic-payment-test.log &disown
 
       - name: Wait for images to be ready
-        uses: Wandalen/wretry.action@v1.0.11
+        uses: Wandalen/wretry.action@v1.0.36
         with:
           command: |
             docker wait nightfall_3_deployer_1
