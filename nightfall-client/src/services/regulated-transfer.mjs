@@ -44,7 +44,7 @@ async function transfer(transferParams) {
   const { tokenId, recipientData, rootKey, fee } = generalise(items);
   const { compressedZkpPublicKey, nullifierKey } = new ZkpKeys(rootKey);
   const ercAddress = generalise(items.ercAddress.toLowerCase());
-  const { recipientCompressedZkpPublicKeys, regulatorCompressedZkpPublicKeys, recipientRegulatorCompressedZkpPublicKeys, values } = recipientData;   
+  const { recipientCompressedZkpPublicKeys, regulatorCompressedZkpPublicKeys, recipientRegulatorCompressedZkpPublicKeys, values } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),
   );
