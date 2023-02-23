@@ -4,9 +4,9 @@
   "description": "A container for optimistic proposals and challenges",
   "main": "index.mjs",
   "scripts": {
-    "start": "node src/index.mjs",
+    "start": "pm2-runtime src/index.mjs -i max",
     "start:debug": "node --inspect=0.0.0.0:9229 src/index.mjs",
-    "dev": "nodemon src/index.mjs"
+    "dev": "pm2-dev src/index.mjs"
   },
   "repository": {
     "type": "git",
@@ -22,13 +22,6 @@
     "url": "https://github.com/EYBlockchain/nightfall-optimist/issues"
   },
   "homepage": "https://github.com/EYBlockchain/nightfall-optimist#readme",
-  "nodemonConfig": {
-    "verbose": true,
-    "ignore": [
-      "mongodb/",
-      "build/"
-    ]
-  },
   "dependencies": {
     "@polygon-nightfall/common-files": "*",
     "axios": "^0.21.4",
@@ -50,7 +43,7 @@
   },
   "devDependencies": {
     "mocha": "^10.0.0",
-    "nodemon": "^2.0.19"
+    "pm2": "^5.2.2"
   },
   "overrides": {
     "swarm-js": {
