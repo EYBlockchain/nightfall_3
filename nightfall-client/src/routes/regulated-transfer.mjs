@@ -1,6 +1,6 @@
 /**
  * This module contains the logic needed create a third party regulated zkp transfer, 
- * i.e. to nullify two input commitments and create two new output commitments to the same value,
+ * i.e. to nullify two input commitments and create two new output commitments to the same value
  * with regulator being able observe the transfer.
  * It is agnostic to whether we are dealing with an ERC20 or ERC721 (or ERC1155).
  * @module deposit.mjs
@@ -49,11 +49,11 @@
      ZkpKeys.decompressZkpPublicKey(key),
    );
    const regulatorZkpPublicKeys = regulatorCompressedZkpPublicKeys.map(key =>
-    ZkpKeys.decompressZkpPublicKey(key),
-  );
+     ZkpKeys.decompressZkpPublicKey(key),
+   );
    const recipientRegulatorZkpPublicKeys = recipientRegulatorCompressedZkpPublicKeys.map(key =>  
-    ZkpKeys.decompressZkpPublicKey(key),
-  );
+     ZkpKeys.decompressZkpPublicKey(key),
+   );
    if (recipientCompressedZkpPublicKeys.length > 1)
      throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
  
@@ -98,8 +98,8 @@
  
      // Compress the public keys as they will be put on-chain
   
-     const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys);  // Regulator requires senderRecipientEPublic on-chain
-     const senderRegulatorEPublic = scalarMult(ePrivate, regulatorZkpPublicKeys);  // Recipient requires senderRegulatorEPublic on-chain
+     const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys);  // Regulator requires senderRecipientEPublic for decryption
+     const senderRegulatorEPublic = scalarMult(ePrivate, regulatorZkpPublicKeys);  // Recipient requires senderRegulatorEPublic for decryption
      const compressedSenderRecipientEPub = edwardsCompress(senderRecipientEPublic);     
      const compressedSenderRegulatorEPublic = edwardsCompress(senderRegulatorEPublic);  
  

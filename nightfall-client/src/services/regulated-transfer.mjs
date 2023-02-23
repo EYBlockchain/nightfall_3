@@ -49,11 +49,11 @@
      ZkpKeys.decompressZkpPublicKey(key),
    );
    const regulatorZkpPublicKeys = regulatorCompressedZkpPublicKeys.map(key =>
-    ZkpKeys.decompressZkpPublicKey(key),
-  );
+     ZkpKeys.decompressZkpPublicKey(key),
+   );
    const recipientRegulatorZkpPublicKeys = recipientRegulatorCompressedZkpPublicKeys.map(key =>  
-    ZkpKeys.decompressZkpPublicKey(key),
-  );
+     ZkpKeys.decompressZkpPublicKey(key),
+   );
    if (recipientCompressedZkpPublicKeys.length > 1)
      throw new Error(`Batching is not supported yet: only one recipient is allowed`); // this will not always be true so we try to make the following code agnostic to the number of commitments
  
