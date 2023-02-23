@@ -51,7 +51,7 @@ async function transfer(transferParams) {
   const regulatorZkpPublicKeys = regulatorCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),
   );
-  const recipientRegulatorZkpPublicKeys = recipientRegulatorCompressedZkpPublicKeys.map(key =>  
+  const recipientRegulatorZkpPublicKeys = recipientRegulatorCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),
   );
   if (recipientCompressedZkpPublicKeys.length > 1)
@@ -98,7 +98,7 @@ async function transfer(transferParams) {
 
     // Compress the public keys as they will be put on-chain
 
-    const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys);  //Regulator requires senderRecipientEPublic for decryption
+    const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys);  // Regulator requires senderRecipientEPublic for decryption
     const senderRegulatorEPublic = scalarMult(ePrivate, regulatorZkpPublicKeys);  // Recipient requires senderRegulatorEPublic for decryption
     const compressedSenderRecipientEPub = edwardsCompress(senderRecipientEPublic);
     const compressedSenderRegulatorEPublic = edwardsCompress(senderRegulatorEPublic);
@@ -115,7 +115,7 @@ async function transfer(transferParams) {
       recipientAddress: compressedSecrets[1], // this is the encrypted tokenID
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      compressedSecrets: compressedSecrets.slice(3), // these are the[compressedSenderRecipientEPub, value, salt] 
+      compressedSecrets: compressedSecrets.slice(3), // these are the[compressedSenderRecipientEPub, value, salt]
       numberNullifiers: VK_IDS[circuitName].numberNullifiers,
       numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
