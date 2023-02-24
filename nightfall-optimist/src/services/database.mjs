@@ -534,6 +534,19 @@ Timber functions
 export async function saveTree(blockNumber, blockNumberL2, timber) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
+  logger.debug({ msg: 'Saving Tree blockNumber', blockNumberL2 });
+  const update = {
+    $set: {
+      _id: blockNumberL2,
+      blockNumber,
+      blockNumberL2,
+      frontier: timber.frontier,
+      leafCount: timber.leafCount,
+      root: timber.root,
+    },
+  };
+  return db.collection(TIMBER_COLLECTION).updateOne({ blockNumberL2 }, update, { upsert: true });
+  /*
   return db.collection(TIMBER_COLLECTION).insertOne({
     _id: timber.blockNumberL2,
     blockNumber,
@@ -542,6 +555,7 @@ export async function saveTree(blockNumber, blockNumberL2, timber) {
     leafCount: timber.leafCount,
     root: timber.root,
   });
+  */
 }
 
 export async function getLatestTree() {
@@ -591,6 +605,12 @@ export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   await db.collection(TIMBER_COLLECTION).updateOne({ blockNumberL2 }, { $set: { rollback: true } });
   await new Promise(resolve => setTimeout(() => resolve(), 1000));
   return db.collection(TIMBER_COLLECTION).deleteMany({ blockNumberL2: { $gte: blockNumberL2 } });
+}
+
+export async function getNumberOfL2Blocks() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(TIMBER_COLLECTION).find().count();
 }
 
 // function to set the path of the transaction hash leaf in transaction hash timber

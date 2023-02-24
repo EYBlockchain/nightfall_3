@@ -516,7 +516,7 @@ export const clearMempool = async ({ optimistUrl, web3, logs }) => {
   ).length;
   while (transactionsMempool > 0) {
     console.log(`Transactions still in the mempool: ${transactionsMempool}`);
-    await axios.get(`${optimistUrl}/block/make-now`);
+    await axios.post(`${optimistUrl}/block/make-now`);
     await web3.waitForEvent(logs, ['blockProposed']);
     transactionsMempool = (await axios.get(`${optimistUrl}/proposer/mempool`)).data.result.filter(
       e => e.mempool,
@@ -608,6 +608,89 @@ const dropOptimistMongoBlocksCollection = async () => {
     mongo.disconnect();
   }
 };
+
+export async function getOptimistMongoL2Blocks() {
+  let mongoConn;
+  let nL2Blocks = 0;
+  try {
+    mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+    nL2Blocks = await mongoConn.db('optimist_data').collection('timber').count();
+  } finally {
+    mongo.disconnect();
+  }
+  logger.debug(`Optimist's N Blocks: ${nL2Blocks}`);
+  return nL2Blocks;
+}
+
+export async function getClientMongoL2Blocks() {
+  let mongoConn;
+  let nL2Blocks = 0;
+  try {
+    mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+    nL2Blocks = await mongoConn.db('nightfall_commitments').collection('timber').count();
+  } finally {
+    mongo.disconnect();
+  }
+  logger.debug(`Client's N Blocks: ${nL2Blocks}`);
+  return nL2Blocks;
+}
+
+export async function dropMongoLastBlock() {
+  logger.debug(
+    `Dropping Optimist's and Client's Last proposed block from timber and block collections`,
+  );
+  let mongoConn;
+  try {
+    mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+    const nL2BlocksOptimist = await mongoConn.db('optimist_data').collection('timber').count();
+
+    while (
+      !(await mongoConn
+        .db('optimist_data')
+        .collection('blocks')
+        .deleteMany({ blockNumberL2: nL2BlocksOptimist - 1 }))
+    ) {
+      logger.debug(`Retrying dropping MongoDB Optimist's blocks colection`);
+      await waitForTimeout(2000);
+    }
+    while (
+      !(await mongoConn
+        .db('optimist_data')
+        .collection('timber')
+        .deleteMany({ blockNumberL2: nL2BlocksOptimist - 1 }))
+    ) {
+      logger.debug(`Retrying dropping MongoDB Optimist's timber colection`);
+      await waitForTimeout(2000);
+    }
+
+    const nL2BlocksClient = await mongoConn
+      .db('nightfall_commitments')
+      .collection('timber')
+      .count();
+
+    await mongoConn
+      .db('nightfall_commitments')
+      .collection('blocks')
+      .deleteMany({ blockNumberL2: nL2BlocksClient - 1 });
+
+    while (
+      !(await mongoConn
+        .db('nightfall_commitments')
+        .collection('timber')
+        .deleteMany({ blockNumberL2: nL2BlocksClient - 1 }))
+    ) {
+      logger.debug(`Retrying dropping MongoDB Client's timber colection`);
+      await waitForTimeout(2000);
+    }
+
+    logger.debug(`Optimist's and Client's Mongo blocks dropped successfuly!`);
+  } finally {
+    mongo.disconnect();
+  }
+}
 
 export async function restartOptimist(nf3Proposer, dropDb = true) {
   const options = {

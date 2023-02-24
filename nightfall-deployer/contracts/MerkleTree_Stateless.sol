@@ -99,21 +99,18 @@ library MerkleTree_Stateless {
                 }
             }
 
-            slot := getFrontierSlot(sub(_leafCount, 1)) 
-            nodeValue := mload(add(_frontier, mul(0x20, slot)))
+            slot := getFrontierSlot(sub(_leafCount, 1)) // Get most recently updated frontier depth
+            nodeValue := mload(add(_frontier, mul(0x20, slot))) // Assign the current node value to the frontier at this depth
 
-            nodeIndex := add(sub(_leafCount, 1), sub(exp(2,32), 1))
-
-            if gt(slot, 0) {
-                nodeIndex := sub(div(nodeIndex, exp(2, slot)), 1)
-            }
+            nodeIndex := shr(slot, sub(_leafCount,1)) // Get index of the frontier node from the leaf index (using bit-decomposition)
 
             // So far we've added all leaves, and hashed up to a particular level of the tree. We now need to continue hashing from that level until the root:
-            for { let level := add(slot, 1)} lt(level, 33) { level := add(level, 1) } {
+            // We use slot + 1 to get the parent node of our current nodeValue
+            for { let parent_level := add(slot,1)} lt(parent_level, 33) { parent_level := add(parent_level, 1) } {
                 switch eq(mod(nodeIndex, 2),0)
-                case true {
+                case false { // We are the right child
                     mstore(x, sig)
-                    mstore(add(x, 0x04), mload(add(_frontier, mul(0x20, sub(level, 1)))))
+                    mstore(add(x, 0x04), mload(add(_frontier, mul(0x20, sub(parent_level,1))))) // Load the frontier at the sibling level (left child of parent)
                     mstore(add(x,0x24), nodeValue)
 
 
@@ -127,9 +124,9 @@ library MerkleTree_Stateless {
                         0x20)) // Outputs are 32 bytes long
                     
                     nodeValue := mload(x)
-                    nodeIndex := div(sub(nodeIndex, 1), 2) // move one row up the tree
+                    nodeIndex := shr(1, nodeIndex) // move one row up the tree
                 }
-                case false {
+                case true { // We are the left child
                     mstore(x, sig)
                     mstore(add(x, 0x04), nodeValue)
                     mstore(add(x,0x24), 0)
@@ -144,7 +141,7 @@ library MerkleTree_Stateless {
                         0x20)) // Outputs are 32 bytes long
 
                     nodeValue := mload(x)
-                    nodeIndex := div(nodeIndex, 2) // move one row up the tree
+                    nodeIndex := shr(1, nodeIndex) // move one row up the tree
                 }
             }
 
@@ -204,7 +201,6 @@ library MerkleTree_Stateless {
             for { let index := 0 } lt(index, numberOfLeaves) { index := add(index, 1) } {
 
                 nodeValue := calldataload(add(add(0x4, calldataload(0x04)), mul(0x20, add(index, 1))))
-                nodeIndex := add(add(index, _leafCountBefore), sub(exp(2,32), 1)) // convert the index to a nodeIndex
                 
                 slot := getFrontierSlot(add(index, _leafCountBefore)) // determine at which level we will next need to store a nodeValue
 
@@ -213,13 +209,14 @@ library MerkleTree_Stateless {
                     mstore(_frontier, nodeValue) // update Frontier
                 } 
                 case false {
-                    // hash up to the level whose nodeValue we'll store in the frontier slot:
-                    for { let level := 0 } lt(level, slot) { level := add(level, 1) } {
+                    nodeIndex := add(index, _leafCountBefore) // nodeIndex starts at the leafIndex of the new leaf
+                    // Calculate the hash of the parent node of the current nodeIndex (hence starts at 1)
+                    // Hash up to (and including) the frontier slot that needs to be updated (level <= slot)
+                    for { let level := 1 } lt(level, add(slot,1)) { level := add(level, 1) } {
                         switch eq(mod(nodeIndex, 2),0)
-                        case true {
-                            // even nodeIndex
+                        case false { // We are the right child
                             mstore(x, sig)
-                            mstore(add(x, 0x04), mload(add(_frontier, mul(0x20, level))))
+                            mstore(add(x, 0x04), mload(add(_frontier, mul(0x20, sub(level,1))))) // Load the frontier at the sibling level (left child of parent)
                             mstore(add(x,0x24), nodeValue)
 
                             pop(call(      //This is the critical change (Pop the top stack value)
@@ -232,10 +229,9 @@ library MerkleTree_Stateless {
                                 0x20)) // Outputs are 32 bytes long
                             
                             nodeValue := mload(x)
-                            nodeIndex := div(sub(nodeIndex, 1), 2) // move one row up the tree
+                            nodeIndex := shr(1, nodeIndex) // move one row up the tree
                         }
-                        case false {
-                            // odd nodeIndex
+                        case true { // We are the left child, therefore hash with 0
                             mstore(x, sig)
                             mstore(add(x,0x04), nodeValue)
                             mstore(add(x,0x24), 0)
@@ -250,7 +246,7 @@ library MerkleTree_Stateless {
                                 0x20)) // Outputs are 32 bytes long
 
                             nodeValue := mload(x)
-                            nodeIndex := div(nodeIndex, 2) // move one row up the tree
+                            nodeIndex := shr(1, nodeIndex) // move one row up the tree
                         }
                     }
                     mstore(add(_frontier, mul(0x20, slot)), nodeValue) // update frontier

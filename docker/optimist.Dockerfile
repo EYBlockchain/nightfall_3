@@ -1,11 +1,11 @@
-FROM node:16.17
+FROM node:16.17-bullseye-slim
 
-# install node
-RUN apt-get update
-RUN apt-get install -y netcat
-
-# installs libs required for zokrates
-RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
+# 'node-gyp' requires 'python3', 'make' and 'g++''
+# entrypoint script requires 'netcat'
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    python3 make g++ netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 80 8080 9229
 

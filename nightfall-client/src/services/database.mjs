@@ -69,6 +69,21 @@ export async function getLatestTree() {
   return t;
 }
 
+export async function getTreeByBlockNumberL2(blockNumberL2) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  if (blockNumberL2 < 0) return new Timber(0, [], 0, undefined, HASH_TYPE, TIMBER_HEIGHT);
+  try {
+    const { root, frontier, leafCount } =
+      (await db.collection(TIMBER_COLLECTION).findOne({ blockNumberL2 })) ?? {};
+    const t = new Timber(root, frontier, leafCount, undefined, HASH_TYPE, TIMBER_HEIGHT);
+    return t;
+  } catch (error) {
+    throw Error('Tree not Found');
+    // TODO Should handle this throw
+  }
+}
+
 export async function deleteTreeByBlockNumberL2(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
@@ -79,6 +94,12 @@ export async function deleteTreeByTransactionHashL1(transactionHashL1) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(TIMBER_COLLECTION).deleteOne({ transactionHashL1 });
+}
+
+export async function getNumberOfL2Blocks() {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(TIMBER_COLLECTION).find().count();
 }
 
 /**

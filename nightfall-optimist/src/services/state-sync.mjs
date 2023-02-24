@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+/* eslint-disable import/no-cycle */
 
 import {
   getContractInstance,
@@ -29,12 +30,12 @@ const {
   CHALLENGES_CONTRACT_NAME,
 } = constants;
 
-const syncState = async (
+export async function syncState(
   proposer,
   fromBlock = 'earliest',
   toBlock = 'latest',
   eventFilter = 'allEvents',
-) => {
+) {
   const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME); // NewCurrentProposer (register)
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME); // TransactionSubmitted
   const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // NewCurrentProposer, BlockProposed
@@ -86,7 +87,7 @@ const syncState = async (
         break;
     }
   }
-};
+}
 
 const checkBlocks = async () => {
   const blocks = await getBlocks();
@@ -118,7 +119,7 @@ const checkBlocks = async () => {
   return [['earliest', 'latest']];
 };
 
-export default async proposer => {
+export async function initialBlockSync(proposer) {
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
   const lastBlockNumberL2 = Number(
     (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,
@@ -189,4 +190,4 @@ export default async proposer => {
   unpauseQueue(1);
 
   return (await getLatestBlockInfo()).blockNumber;
-};
+}

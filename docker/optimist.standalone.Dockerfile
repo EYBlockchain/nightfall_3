@@ -8,8 +8,6 @@ RUN apt-get install -y curl
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs gcc g++ make
 RUN apt-get install -y netcat
-# installs libs required for zokrates
-RUN apt-get install -y libgmpxx4ldbl libgmp3-dev
 
 ARG OPTIMIST_PORT=80
 ARG OPTIMIST_WS_PORT=8080

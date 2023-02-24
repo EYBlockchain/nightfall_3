@@ -7,9 +7,9 @@ const transpileLibNf3Sdk = _pathToSrc => {
 
   // Modify makeBlockNow function so that we can pass badBlockType as a parameter
   const regexMakeBlock =
-    /async makeBlockNow\(\) {\n(\s)*return axios.get\(`\${this.optimistBaseUrl}\/block\/make-now`\);\n(\s)*}/g;
+    /async makeBlockNow\(\) {\n(\s)*return axios.post\(`\${this.optimistBaseUrl}\/block\/make-now`\);\n(\s)*}/g;
   const reMakeBlock = `async makeBlockNow(badBlockType) {
-    return axios.get(\`\${this.optimistBaseUrl}/block/make-now/\${badBlockType}\`);
+    return axios.post(\`\${this.optimistBaseUrl}/block/make-now/\${badBlockType}\`);
   }`;
   srcFile = srcFile.replace(regexMakeBlock, reMakeBlock);
 

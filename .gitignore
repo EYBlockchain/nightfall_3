@@ -8,7 +8,7 @@ mumbai/
 .vscode/*
 .openzeppelin/
 *.log
-
+mumbai/
 # wallet
 wallet/build
 wallet/cli
