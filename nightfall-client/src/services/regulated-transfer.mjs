@@ -48,7 +48,7 @@ async function transfer(transferParams) {
     recipientCompressedZkpPublicKeys,
     regulatorCompressedZkpPublicKeys,
     recipientRegulatorCompressedZkpPublicKeys,
-    values
+    values,
   } = recipientData;
   const recipientZkpPublicKeys = recipientCompressedZkpPublicKeys.map(key =>
     ZkpKeys.decompressZkpPublicKey(key),
@@ -94,12 +94,11 @@ async function transfer(transferParams) {
     // KEM-DEM encryption
     const [ePrivate, ePublic] = await genEphemeralKeys();
     const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
-    const compressedSecrets = encrypt(generalise(ePrivate), generalise(recipientRegulatorZkpPublicKeys[0]), [  
-      packedErc.bigInt,
-      unpackedTokenID.bigInt,
-      values[0].bigInt,
-      commitmentsInfo.salts[0].bigInt,
-    ]);
+    const compressedSecrets = encrypt(
+      generalise(ePrivate),
+      generalise(recipientRegulatorZkpPublicKeys[0]),
+      [packedErc.bigInt, unpackedTokenID.bigInt, values[0].bigInt, commitmentsInfo.salts[0].bigInt]
+      );
 
     // Compress the public keys as they will be put on-chain
 
