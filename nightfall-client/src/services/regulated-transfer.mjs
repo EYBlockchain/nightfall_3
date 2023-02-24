@@ -98,7 +98,7 @@ async function transfer(transferParams) {
       generalise(ePrivate),
       generalise(recipientRegulatorZkpPublicKeys[0]),
       [packedErc.bigInt, unpackedTokenID.bigInt, values[0].bigInt, commitmentsInfo.salts[0].bigInt,]
-  );
+      );
 
     // Compress the public keys as they will be put on-chain
 
