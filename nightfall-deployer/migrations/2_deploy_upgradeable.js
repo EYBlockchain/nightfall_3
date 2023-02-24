@@ -108,7 +108,7 @@ module.exports = async function (deployer) {
     console.log(`Max allowed withdraw value for ${token.name}: ${token.amount}`);
     await shield.setRestriction(
       token.address,
-      (BigInt(token.amount) / BigInt(4)).toString(),
+      BigInt(token.amount) < BigInt(0) ? BigInt(token.amount) : (BigInt(token.amount) / BigInt(4)).toString(),
       token.amount,
     );
   }
