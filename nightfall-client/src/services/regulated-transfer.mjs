@@ -104,7 +104,7 @@ async function transfer(transferParams) {
 
     const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys); // Regulator requires senderRecipientEPublic for decryption
     const senderRegulatorEPublic = scalarMult(ePrivate, regulatorZkpPublicKeys); // Recipient requires senderRegulatorEPublic for decryption
-    const compressedSenderRecipientEPub = edwardsCompress(senderRecipientEPublic);
+    //const compressedSenderRecipientEPub = edwardsCompress(senderRecipientEPublic);
     const compressedSenderRegulatorEPublic = edwardsCompress(senderRegulatorEPublic);
 
     const circuitHash = await getCircuitHash(circuitName);
