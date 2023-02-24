@@ -101,7 +101,7 @@ module.exports = async function (deployer) {
 
     console.log(
       `Max allowed deposit value for ${token.name}: ${(
-        BigInt(token.amount) / BigInt(4)
+        BigInt(token.amount) < BigInt(0) ? token.amount : (BigInt(token.amount) / BigInt(4)).toString(),
       ).toString()}`,
     ); // BigInt division returns whole number which is a floor. Not Math.floor() needed
 
