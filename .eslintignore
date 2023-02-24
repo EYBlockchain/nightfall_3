@@ -2,6 +2,7 @@ node_modules/*
 **/node_modules/*
 **/migrations/*
 **/doc/*
+mumbai/
 cli/build/*
 wallet/cli/*
 wallet/src/components/Assets/
