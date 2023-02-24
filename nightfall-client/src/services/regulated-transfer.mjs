@@ -92,7 +92,7 @@ async function transfer(transferParams) {
 
   try {
     // KEM-DEM encryption
-    const [ePrivate, ePublic] = await genEphemeralKeys();
+    const [ePrivate] = await genEphemeralKeys();
     const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
     const compressedSecrets = encrypt(
       generalise(ePrivate),
@@ -104,11 +104,12 @@ async function transfer(transferParams) {
 
     const senderRecipientEPublic = scalarMult(ePrivate, recipientZkpPublicKeys); // Regulator requires senderRecipientEPublic for decryption
     const senderRegulatorEPublic = scalarMult(ePrivate, regulatorZkpPublicKeys); // Recipient requires senderRegulatorEPublic for decryption
-    //const compressedSenderRecipientEPub = edwardsCompress(senderRecipientEPublic);
+    const compressedSenderRecipientEPub = edwardsCompress(senderRecipientEPublic);
     const compressedSenderRegulatorEPublic = edwardsCompress(senderRegulatorEPublic);
 
     const circuitHash = await getCircuitHash(circuitName);
-
+    const array = compressedSecrets.slice(2);
+    array.push(compressedSenderRecipientEPub);
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
       fee,
@@ -119,7 +120,7 @@ async function transfer(transferParams) {
       recipientAddress: compressedSecrets[1], // this is the encrypted tokenID
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
-      compressedSecrets: compressedSecrets.slice(3), // these are the [compressedSenderRecipientEPub, value, salt]
+      compressedSecrets: array, // these are the [value, salt, compressedSenderRecipientEPub]
       numberNullifiers: VK_IDS[circuitName].numberNullifiers,
       numberCommitments: VK_IDS[circuitName].numberCommitments,
       isOnlyL2: true,
