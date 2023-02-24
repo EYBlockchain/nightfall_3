@@ -42,9 +42,9 @@ module.exports = function (deployer, _, accounts) {
         el => el.name === 'ERC20Mock',
       );
       await shield.setRestriction(
-        token.address,
-        BigInt(token.amount) < BigInt(0) ? BigInt(token.amount) : (BigInt(token.amount) / BigInt(4)).toString(),
-        token.amount,
+        ERC20Mock.address,
+        BigInt(erc20Mock.amount) < BigInt(0) ? BigInt(erc20Mock.amount) : (BigInt(erc20Mock.amount) / BigInt(4)).toString(),
+        erc20Mock.amount,
       );
     } catch (err) {
       console.warn(
