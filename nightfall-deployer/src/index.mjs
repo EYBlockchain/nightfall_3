@@ -74,7 +74,8 @@ async function main() {
   if (PARALLEL_SETUP === 'true') {
     await bootstrap();
   } else {
-    await setupCircuits();
+    await circuits.waitForWorker();
+    await circuits.setupCircuits();
     await safeSetupContracts();
   }
   try {

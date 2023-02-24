@@ -7,7 +7,8 @@ if [ -z "${ETH_PRIVATE_KEY}" ]; then
   while ! nc -z ${BLOCKCHAIN_WS_HOST} ${BLOCKCHAIN_PORT}; do sleep 3; done
 fi
 
-if [[ "${SKIP_DEPLOYMENT}" != "true" && "${PARALLEL_SETUP}" == "true" ]]; then
+if [[ "${SKIP_DEPLOYMENT}" != "true" && "${PARALLEL_SETUP}" == "false" ]]; then
+  echo "PARALLEL SETUP DISABLED...."
   npx truffle compile --all
 
   if [ -z "${UPGRADE}" ]; then
