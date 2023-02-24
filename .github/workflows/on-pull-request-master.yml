@@ -654,7 +654,7 @@ jobs:
           path: ./administrator-test.log
 
   optimist-sync-test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
