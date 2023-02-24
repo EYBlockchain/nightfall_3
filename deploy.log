@@ -1,0 +1,762 @@
+nightfall_3-worker-1    | 
+nightfall_3-worker-1    | > @eyblockchain/worker@0.0.0-semantically-released start
+nightfall_3-worker-1    | > node ./src/index.mjs
+nightfall_3-worker-1    | 
+nightfall_3-worker-1    | [2023-02-17 11:06:24.006] [32mINFO[39m: [36mHTTP handlers setup done![39m
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | Compiling your contracts...
+nightfall_3-deployer-1  | ===========================
+nightfall_3-deployer-1  | - Fetching solc version list from solc-bin. Attempt #1
+nightfall_3-deployer-1  | - Fetching solc version list from solc-bin. Attempt #1
+nightfall_3-deployer-1  | - Downloading compiler. Attempt #1.
+nightfall_3-deployer-1  | - Fetching solc version list from solc-bin. Attempt #1
+nightfall_3-deployer-1  | - Downloading compiler. Attempt #1.
+nightfall_3-deployer-1  | > Compiling ./contracts/Challenges.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/ChallengesUtil.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Config.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/DerParser.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Key_Registry.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/MerkleTree_Stateless.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Migrations.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Ownable.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Pairing.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Pausable.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Poseidon.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Proposers.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/SanctionsListInterface.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Shield.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/SimpleMultiSig.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/State.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Stateful.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Structures.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Utils.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Verifier.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/Whitelist.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/X509.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/X509Interface.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/mocks/ERC1155Mock.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/mocks/ERC20Mock.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/mocks/ERC721Mock.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/mocks/MerkleTree_StatelessMock.sol
+nightfall_3-deployer-1  | > Compiling ./contracts/mocks/SanctionsListMock.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts-upgradeable/token/ERC20/extensions/draft-IERC20PermitUpgradeable.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC1155/ERC1155.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC1155/IERC1155.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC20/ERC20.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC20/IERC20.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC721/ERC721.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC721/IERC721.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC721/IERC721Receiver.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/utils/Address.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/utils/Context.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/utils/Counters.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/utils/Strings.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/utils/introspection/ERC165.sol
+nightfall_3-deployer-1  | > Compiling @openzeppelin/contracts/utils/introspection/IERC165.sol
+nightfall_3-deployer-1  | > Compiling hardhat/console.sol
+nightfall_3-deployer-1  | > Compilation warnings encountered:
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |     Warning: SPDX license identifier not provided in source file. Before publishing, consider adding a comment containing "SPDX-License-Identifier: <SPDX-License>" to each source file. Use "SPDX-License-Identifier: UNLICENSED" for non-open-source code. Please see https://spdx.org for more information.
+nightfall_3-deployer-1  | --> project:/contracts/mocks/MerkleTree_StatelessMock.sol
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Visibility for constructor is ignored. If you want the contract to be non-deployable, making it "abstract" is sufficient.
+nightfall_3-deployer-1  |   --> project:/contracts/SimpleMultiSig.sol:99:3:
+nightfall_3-deployer-1  |    |
+nightfall_3-deployer-1  | 99 |   constructor(uint threshold_, address[] memory owners_, uint chainId) public {
+nightfall_3-deployer-1  |    |   ^ (Relevant source part starts here and spans across multiple lines).
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |   --> project:/contracts/Challenges.sol:32:9:
+nightfall_3-deployer-1  |    |
+nightfall_3-deployer-1  | 32 |         bytes32 salt
+nightfall_3-deployer-1  |    |         ^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |   --> project:/contracts/Challenges.sol:63:9:
+nightfall_3-deployer-1  |    |
+nightfall_3-deployer-1  | 63 |         bytes32 salt
+nightfall_3-deployer-1  |    |         ^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Challenges.sol:103:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 103 |         bytes32 salt
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Challenges.sol:128:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 128 |         bytes32 salt
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Challenges.sol:181:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 181 |         bytes32 salt
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Challenges.sol:277:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 277 |         bytes32 salt
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Shield.sol:125:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 125 |         address _from,
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Shield.sol:126:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 126 |         uint256 _tokenId,
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Shield.sol:133:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 133 |         address _operator,
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Shield.sol:134:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 134 |         address _from,
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Shield.sol:135:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 135 |         uint256 _id,
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Shield.sol:136:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 136 |         uint256 _value,
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Unused function parameter. Remove or comment out the variable name to silence this warning.
+nightfall_3-deployer-1  |    --> project:/contracts/Shield.sol:137:9:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 137 |         bytes calldata _data
+nightfall_3-deployer-1  |     |         ^^^^^^^^^^^^^^^^^^^^
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Function state mutability can be restricted to pure
+nightfall_3-deployer-1  |    --> project:/contracts/Shield.sol:123:5:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 123 |     function onERC721Received(
+nightfall_3-deployer-1  |     |     ^ (Relevant source part starts here and spans across multiple lines).
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | ,Warning: Function state mutability can be restricted to pure
+nightfall_3-deployer-1  |    --> project:/contracts/Shield.sol:132:5:
+nightfall_3-deployer-1  |     |
+nightfall_3-deployer-1  | 132 |     function onERC1155Received(
+nightfall_3-deployer-1  |     |     ^ (Relevant source part starts here and spans across multiple lines).
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | > Artifacts written to /app/build/contracts
+nightfall_3-deployer-1  | > Compiled successfully using:
+nightfall_3-deployer-1  |    - solc: 0.8.17+commit.8df45f5f.Emscripten.clang
+nightfall_3-deployer-1  | Deploying contracts to mumbai
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | Compiling your contracts...
+nightfall_3-deployer-1  | ===========================
+nightfall_3-deployer-1  | > Everything is up to date, there is nothing to compile.
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | Starting migrations...
+nightfall_3-deployer-1  | ======================
+nightfall_3-deployer-1  | > Network name:    'mumbai'
+nightfall_3-deployer-1  | > Network id:      80001
+nightfall_3-deployer-1  | > Block gas limit: 20000000 (0x1312d00)
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 1_initial_migration.js
+nightfall_3-deployer-1  | ======================
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'Migrations'
+nightfall_3-deployer-1  |    ----------------------
+nightfall_3-deployer-1  |    > transaction hash:    0x71bbab381e15623ec96a7b10fc8f74eeff6c578faf8c26c3fc1a55f0762a8a8b
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0xd838ec2aa82a99Fc155b5D4Fc4824990B58e0919
+nightfall_3-deployer-1  |    > block number:        32132680
+nightfall_3-deployer-1  |    > block timestamp:     1676632041
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.534584803893100656
+nightfall_3-deployer-1  |    > gas used:            130690 (0x1fe82)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.0026138 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | - Saving migration to chain.
+nightfall_3-deployer-1  |    > Saving migration to chain.
+nightfall_3-deployer-1  |    > Saving artifacts
+nightfall_3-deployer-1  |    -------------------------------------
+nightfall_3-deployer-1  |    > Total cost:           0.0026138 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 2_deploy_upgradeable.js
+nightfall_3-deployer-1  | =======================
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'Verifier'
+nightfall_3-deployer-1  |    --------------------
+nightfall_3-deployer-1  |    > transaction hash:    0x9237ac99bc6467a2c8b37fcb0a92e5fef903b0eaa00ae54187073080b88b386c
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > contract address:    0x5514a00F26c144eCBE01F88D703e3007E9d2f1B4
+nightfall_3-deployer-1  |    > block number:        32132686
+nightfall_3-deployer-1  |    > block timestamp:     1676632053
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.508068023893100656
+nightfall_3-deployer-1  |    > gas used:            1280141 (0x13888d)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.02560282 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Linking
+nightfall_3-deployer-1  |    -------
+nightfall_3-deployer-1  |    * Contract: Challenges <--> Library: Verifier (at address: 0x5514a00F26c144eCBE01F88D703e3007E9d2f1B4)
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'Poseidon'
+nightfall_3-deployer-1  |    --------------------
+nightfall_3-deployer-1  |    > transaction hash:    0xd3beaf7863c7645418c41c88f04067a3f46c373f8796c55f821f7e16d54fcab2
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 1            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 1            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0x27Bb0b00A7afEE0CFf196Bb74eff40a19fB0B9f5
+nightfall_3-deployer-1  |    > block number:        32132688
+nightfall_3-deployer-1  |    > block timestamp:     1676632059
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.462540223893100656
+nightfall_3-deployer-1  |    > gas used:            2276390 (0x22bc26)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.0455278 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Linking
+nightfall_3-deployer-1  |    -------
+nightfall_3-deployer-1  |    * Contract: MerkleTree_Stateless <--> Library: Poseidon (at address: 0x27Bb0b00A7afEE0CFf196Bb74eff40a19fB0B9f5)
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'MerkleTree_Stateless'
+nightfall_3-deployer-1  |    --------------------------------
+nightfall_3-deployer-1  |    > transaction hash:    0x22ff0139a3a3550f674c172944ee28c6b6d8b6e456bedb5d7cfaec4a4f44ad58
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > contract address:    0x4b4C59E7979510c1E0A2694EfcC2bC563aD55351
+nightfall_3-deployer-1  |    > block number:        32132690
+nightfall_3-deployer-1  |    > block timestamp:     1676632063
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.454658703893100656
+nightfall_3-deployer-1  |    > gas used:            394076 (0x6035c)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.00788152 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Linking
+nightfall_3-deployer-1  |    -------
+nightfall_3-deployer-1  |    * Contract: ChallengesUtil <--> Library: MerkleTree_Stateless (at address: 0x4b4C59E7979510c1E0A2694EfcC2bC563aD55351)
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'Utils'
+nightfall_3-deployer-1  |    -----------------
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > transaction hash:    0xb5e2268ffca3e9d280a530a7d0ee41fdd93f6aae9ef2f500d9bd9c7052551b3d
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0x7A6872a5EfBBE2C6fa0139763FA6FE461529EACf
+nightfall_3-deployer-1  |    > block number:        32132693
+nightfall_3-deployer-1  |    > block timestamp:     1676632069
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.439977563893100656
+nightfall_3-deployer-1  |    > gas used:            734057 (0xb3369)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.01468114 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Linking
+nightfall_3-deployer-1  |    -------
+nightfall_3-deployer-1  |    * Contract: State <--> Library: Utils (at address: 0x7A6872a5EfBBE2C6fa0139763FA6FE461529EACf)
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Linking
+nightfall_3-deployer-1  |    -------
+nightfall_3-deployer-1  |    * Contract: Challenges <--> Library: Utils (at address: 0x7A6872a5EfBBE2C6fa0139763FA6FE461529EACf)
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'ChallengesUtil'
+nightfall_3-deployer-1  |    --------------------------
+nightfall_3-deployer-1  |    > transaction hash:    0x2883f1b6d7f617739ae1cf2eca6e513d19213461f2cb4eef899f4b7ec28f3b97
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > contract address:    0x40E73fd7675671cF128280359a2C3b29F6Bf3126
+nightfall_3-deployer-1  |    > block number:        32132695
+nightfall_3-deployer-1  |    > block timestamp:     1676632073
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.426222463893100656
+nightfall_3-deployer-1  |    > gas used:            687755 (0xa7e8b)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.0137551 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Linking
+nightfall_3-deployer-1  |    -------
+nightfall_3-deployer-1  |    * Contract: Challenges <--> Library: ChallengesUtil (at address: 0x40E73fd7675671cF128280359a2C3b29F6Bf3126)
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'SimpleMultiSig'
+nightfall_3-deployer-1  |    --------------------------
+nightfall_3-deployer-1  |    > transaction hash:    0xcd575b132d91803c9a50cf30899d1776228af13c14021e63a5566b711c11f932
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0x74685C5afb51d756Caf5d132e7b06DFf886253dD
+nightfall_3-deployer-1  |    > block number:        32132697
+nightfall_3-deployer-1  |    > block timestamp:     1676632077
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.405191343893100656
+nightfall_3-deployer-1  |    > gas used:            1051556 (0x100ba4)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.02103112 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'SanctionsListMock'
+nightfall_3-deployer-1  |    -----------------------------
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > transaction hash:    0xc329cc4aeca8e959f8a88195234507d8951d2f233f27ed22627cf2aa50364caf
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0xc0A118539Ed0eb4A95486A7b82aad29035a7BC76
+nightfall_3-deployer-1  |    > block number:        32132700
+nightfall_3-deployer-1  |    > block timestamp:     1676632083
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.402692423893100656
+nightfall_3-deployer-1  |    > gas used:            124946 (0x1e812)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.00249892 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'X509'
+nightfall_3-deployer-1  |    ----------------
+nightfall_3-deployer-1  |    > transaction hash:    0x2b77c4c20a22858cfab961f6ec14bb1c87f16d93a590f4ecf1472330e10a5de8
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > contract address:    0xadC3ae16Ab634eD0303d031A01d29d7CD3CbaE10
+nightfall_3-deployer-1  |    > block number:        32132703
+nightfall_3-deployer-1  |    > block timestamp:     1676632089
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.326719623893100656
+nightfall_3-deployer-1  |    > gas used:            3798640 (0x39f670)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.0759728 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'ProxyAdmin'
+nightfall_3-deployer-1  |    ----------------------
+nightfall_3-deployer-1  |    > transaction hash:    0xadc3a6b263c67ac221ee6dfc146998330816264bec228ca9fd3b1ac135ebb639
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0xEa5a2c2C950088773E37f7037f5b71951A9b181A
+nightfall_3-deployer-1  |    > block number:        32132705
+nightfall_3-deployer-1  |    > block timestamp:     1676632095
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.316998283893100656
+nightfall_3-deployer-1  |    > gas used:            486067 (0x76ab3)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.00972134 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'TransparentUpgradeableProxy'
+nightfall_3-deployer-1  |    ---------------------------------------
+nightfall_3-deployer-1  |    > transaction hash:    0x6c666e53433d0a77709719da7197894bf99ea3be3230a5f45c3f896ad0bff738
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > contract address:    0xa0010032Fd842c86d30Ab7a6Bb19db50c35378DE
+nightfall_3-deployer-1  |    > block number:        32132708
+nightfall_3-deployer-1  |    > block timestamp:     1676632101
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.304283643893100656
+nightfall_3-deployer-1  |    > gas used:            635732 (0x9b354)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.01271464 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'Proposers'
+nightfall_3-deployer-1  |    ---------------------
+nightfall_3-deployer-1  |    > transaction hash:    0x1111ab6d8ea5a95bfdbc0011b432630775ccc70d4ef4c84849076b68d6471996
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0x39f45d36b55bCa587CFea30C33E0bfb950938a7E
+nightfall_3-deployer-1  |    > block number:        32132711
+nightfall_3-deployer-1  |    > block timestamp:     1676632107
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.260689323893100656
+nightfall_3-deployer-1  |    > gas used:            2179716 (0x214284)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.04359432 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'TransparentUpgradeableProxy'
+nightfall_3-deployer-1  |    ---------------------------------------
+nightfall_3-deployer-1  |    > transaction hash:    0xb5574896052716a3c514d07f91590444751da7ab82514ac878f2cf5e496dfb70
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > contract address:    0x1F8166D7137c28f0e9EE8c34db99E4917Add0C39
+nightfall_3-deployer-1  |    > block number:        32132714
+nightfall_3-deployer-1  |    > block timestamp:     1676632113
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.244873443893100656
+nightfall_3-deployer-1  |    > gas used:            790794 (0xc110a)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.01581588 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | Warning: Potentially unsafe deployment of Challenges
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |     You are using the `unsafeAllow.external-library-linking` flag to include external libraries.
+nightfall_3-deployer-1  |     Make sure you have manually checked that the linked libraries are upgrade safe.
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'Challenges'
+nightfall_3-deployer-1  |    ----------------------
+nightfall_3-deployer-1  |    > transaction hash:    0x28f20bddddfb01e372255fa2d5102ea968feb6a86bd0a8f3a73bd90d66ebf622
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0x54ceD353C5BD635f8516Ad7aAd7075Bd7d2bF465
+nightfall_3-deployer-1  |    > block number:        32132717
+nightfall_3-deployer-1  |    > block timestamp:     1676632119
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.168228063893100656
+nightfall_3-deployer-1  |    > gas used:            3832269 (0x3a79cd)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.07664538 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'TransparentUpgradeableProxy'
+nightfall_3-deployer-1  |    ---------------------------------------
+nightfall_3-deployer-1  |    > transaction hash:    0xb9322f4a88c4a85cea46979db6ef0354f4c4feb679a1d5ea9c23dc7e1e2ab7c5
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 1            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 1            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0xD4e76EF73a44a9aBD4410802cF03b4a3F09BE790
+nightfall_3-deployer-1  |    > block number:        32132720
+nightfall_3-deployer-1  |    > block timestamp:     1676632127
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.152859743893100656
+nightfall_3-deployer-1  |    > gas used:            768416 (0xbb9a0)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.01536832 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'Shield'
+nightfall_3-deployer-1  |    ------------------
+nightfall_3-deployer-1  |    > transaction hash:    0xecfb7dc4fb9323c19aa82cd19cb346916529d0572ab9ac12a1b8108b16e8bd4d
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0x3B9FE337045FBf64C589588DC5bd8f7D0c059C40
+nightfall_3-deployer-1  |    > block number:        32132723
+nightfall_3-deployer-1  |    > block timestamp:     1676632133
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.079614243893100656
+nightfall_3-deployer-1  |    > gas used:            3662275 (0x37e1c3)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.0732455 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'TransparentUpgradeableProxy'
+nightfall_3-deployer-1  |    ---------------------------------------
+nightfall_3-deployer-1  |    > transaction hash:    0xf9651af85ffe3cfa36f1b48adffa05f90a3a00198f816408c5b93e0c4362cd6d
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0xd4Fa76De78E0F716A42D842f43AEf7eA35812289
+nightfall_3-deployer-1  |    > block number:        32132726
+nightfall_3-deployer-1  |    > block timestamp:     1676632139
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             55.062819743893100656
+nightfall_3-deployer-1  |    > gas used:            839725 (0xcd02d)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.0167945 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | Warning: Potentially unsafe deployment of State
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |     You are using the `unsafeAllow.external-library-linking` flag to include external libraries.
+nightfall_3-deployer-1  |     Make sure you have manually checked that the linked libraries are upgrade safe.
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'State'
+nightfall_3-deployer-1  |    -----------------
+nightfall_3-deployer-1  |    > transaction hash:    0xd4b000ddc0b5aeb35af1bd93bac58c74f17a6bbbfc25acf1dd37ff47e7c345e9
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  | - Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > Blocks: 2            Seconds: 4
+nightfall_3-deployer-1  |    > contract address:    0x52F124CaD9e78a92bAfc5C255fDB8F498b4C2592
+nightfall_3-deployer-1  |    > block number:        32132729
+nightfall_3-deployer-1  |    > block timestamp:     1676632145
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             54.957162223893100656
+nightfall_3-deployer-1  |    > gas used:            5282876 (0x509c3c)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.10565752 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  |    Deploying 'TransparentUpgradeableProxy'
+nightfall_3-deployer-1  |    ---------------------------------------
+nightfall_3-deployer-1  |    > transaction hash:    0x07e81ef51fa843dfd0e3750f1708e08843a30901b7bb60ae682047d458ff90af
+nightfall_3-deployer-1  | - Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > Blocks: 0            Seconds: 0
+nightfall_3-deployer-1  |    > contract address:    0x1BD254dc0D1544AAD2d2184feAfEeec586D38608
+nightfall_3-deployer-1  |    > block number:        32132732
+nightfall_3-deployer-1  |    > block timestamp:     1676632151
+nightfall_3-deployer-1  |    > account:             0xB4482738243946ffAb384Fa5409bcad8F304a757
+nightfall_3-deployer-1  |    > balance:             54.940326843893100656
+nightfall_3-deployer-1  |    > gas used:            841769 (0xcd829)
+nightfall_3-deployer-1  |    > gas price:           20 gwei
+nightfall_3-deployer-1  |    > value sent:          0 ETH
+nightfall_3-deployer-1  |    > total cost:          0.01683538 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | Max allowed deposit value for USDC: 250000000
+nightfall_3-deployer-1  | Max allowed withdraw value for USDC: 1000000000
+nightfall_3-deployer-1  | Max allowed deposit value for WMATIC: 250000000000000000000
+nightfall_3-deployer-1  | Max allowed withdraw value for WMATIC: 1000000000000000000000
+nightfall_3-deployer-1  | Whitelisting is enabled unless it says "disable" here: enable
+nightfall_3-deployer-1  | setting trusted public key and extended key usage OIDs
+nightfall_3-deployer-1  | - Saving migration to chain.
+nightfall_3-deployer-1  |    > Saving migration to chain.
+nightfall_3-deployer-1  |    > Saving artifacts
+nightfall_3-deployer-1  |    -------------------------------------
+nightfall_3-deployer-1  |    > Total cost:            0.593344 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 3_test_tokens_migration.js
+nightfall_3-deployer-1  | ==========================
+nightfall_3-deployer-1  | - Saving migration to chain.
+nightfall_3-deployer-1  |    > Saving migration to chain.
+nightfall_3-deployer-1  |    -------------------------------------
+nightfall_3-deployer-1  |    > Total cost:                   0 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | Summary
+nightfall_3-deployer-1  | =======
+nightfall_3-deployer-1  | > Total deployments:   19
+nightfall_3-deployer-1  | > Final cost:          0.5959578 ETH
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | Done
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | > nightfall-deployer@1.6.2 start
+nightfall_3-deployer-1  | > node src/index.mjs
+nightfall_3-deployer-1  | 
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.435] [32mINFO[39m: [36mBlockchain Connecting on ws://20.22.165.59:8546...[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.445] [32mINFO[39m: [36mchecking for worker[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.485] [32mINFO[39m: [36mworker reports that it is healthy[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.490] [34mDEBUG[39m: [36mchecking for existing setup for burn.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.496] [34mDEBUG[39m: [36mchecking for existing setup for deposit.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.501] [34mDEBUG[39m: [36mchecking for existing setup for depositfee.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.505] [34mDEBUG[39m: [36mchecking for existing setup for tokenise.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.508] [34mDEBUG[39m: [36mchecking for existing setup for transfer.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.511] [34mDEBUG[39m: [36mchecking for existing setup for transform.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.513] [34mDEBUG[39m: [36mchecking for existing setup for withdraw.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.541] [32mINFO[39m: [36mNo existing verification key. Fear not, I will make a new one: calling generate keys[39m
+nightfall_3-deployer-1  |     circuit: "burn.circom"
+nightfall_3-deployer-1  | [2023-02-17 11:10:50.658] [32mINFO[39m: [36mBlockchain Connected ...[39m
+nightfall_3-worker-1    | [2023-02-17 11:10:50.495] [33mWARN[39m: [36mUnable to locate file[39m
+nightfall_3-worker-1    |     vkPath: "/app/output/burn/burn.zkey"
+nightfall_3-worker-1    |     correlationId: "402361f5-64d0-4bc3-8652-01510f4939e2"
+nightfall_3-worker-1    | [2023-02-17 11:10:50.499] [33mWARN[39m: [36mUnable to locate file[39m
+nightfall_3-worker-1    |     vkPath: "/app/output/deposit/deposit.zkey"
+nightfall_3-worker-1    |     correlationId: "8b5fe170-cd44-4e7c-8323-53ccbc5645fb"
+nightfall_3-worker-1    | [2023-02-17 11:10:50.503] [33mWARN[39m: [36mUnable to locate file[39m
+nightfall_3-worker-1    |     vkPath: "/app/output/depositfee/depositfee.zkey"
+nightfall_3-worker-1    |     correlationId: "37fba1bf-2844-40dc-a3a8-46186dfb2d4d"
+nightfall_3-worker-1    | [2023-02-17 11:10:50.507] [33mWARN[39m: [36mUnable to locate file[39m
+nightfall_3-worker-1    |     vkPath: "/app/output/tokenise/tokenise.zkey"
+nightfall_3-worker-1    |     correlationId: "07b71927-ecb4-4d7d-b177-87d602266410"
+nightfall_3-worker-1    | [2023-02-17 11:10:50.510] [33mWARN[39m: [36mUnable to locate file[39m
+nightfall_3-worker-1    |     vkPath: "/app/output/transfer/transfer.zkey"
+nightfall_3-worker-1    |     correlationId: "79572b74-c50f-45be-85c4-b68720ab1fd2"
+nightfall_3-worker-1    | [2023-02-17 11:10:50.513] [33mWARN[39m: [36mUnable to locate file[39m
+nightfall_3-worker-1    |     vkPath: "/app/output/transform/transform.zkey"
+nightfall_3-worker-1    |     correlationId: "44450d88-40d5-4f2c-a251-77d6cd95dc90"
+nightfall_3-worker-1    | [2023-02-17 11:10:50.516] [33mWARN[39m: [36mUnable to locate file[39m
+nightfall_3-worker-1    |     vkPath: "/app/output/withdraw/withdraw.zkey"
+nightfall_3-worker-1    |     correlationId: "af5406bd-af4b-4cf9-aa6d-c2bf056a497b"
+nightfall_3-worker-1    | [2023-02-17 11:10:50.545] [32mINFO[39m: [36mCompiling circuits...[39m
+nightfall_3-worker-1    |     circuitsPath: "./circuits/burn.circom"
+nightfall_3-worker-1    |     outputPath: "./output/burn"
+nightfall_3-worker-1    |     circuitName: "burn"
+nightfall_3-worker-1    |     correlationId: "62b26139-1e2a-4c8d-9c46-ba22167b34db"
+nightfall_3-worker-1    | [2023-02-17 11:10:57.523] [32mINFO[39m: [36mSetup...[39m
+nightfall_3-worker-1    |     correlationId: "62b26139-1e2a-4c8d-9c46-ba22167b34db"
+nightfall_3-worker-1    | [2023-02-17 11:10:58.915] [32mINFO[39m: [36mDownloading powersOfTau with power 15 from Hermez[39m
+nightfall_3-worker-1    |     correlationId: "62b26139-1e2a-4c8d-9c46-ba22167b34db"
+nightfall_3-worker-1    | [2023-02-17 11:11:04.214] [32mINFO[39m: [36mGenerating keys...[39m
+nightfall_3-worker-1    |     correlationId: "62b26139-1e2a-4c8d-9c46-ba22167b34db"
+nightfall_3-worker-1    | [2023-02-17 11:11:48.270] [32mINFO[39m: [36mExporting verification Key...[39m
+nightfall_3-worker-1    |     correlationId: "62b26139-1e2a-4c8d-9c46-ba22167b34db"
+nightfall_3-worker-1    | [2023-02-17 11:11:48.847] [32mINFO[39m: [36mKey generation completed[39m
+nightfall_3-worker-1    |     correlationId: "62b26139-1e2a-4c8d-9c46-ba22167b34db"
+nightfall_3-worker-1    | [2023-02-17 11:11:48.862] [32mINFO[39m: [36mCompiling circuits...[39m
+nightfall_3-worker-1    |     circuitsPath: "./circuits/deposit.circom"
+nightfall_3-worker-1    |     outputPath: "./output/deposit"
+nightfall_3-worker-1    |     circuitName: "deposit"
+nightfall_3-worker-1    |     correlationId: "537f218e-4b0b-45e7-9eb2-dea96934ebc0"
+nightfall_3-deployer-1  | [2023-02-17 11:11:48.860] [32mINFO[39m: [36mNo existing verification key. Fear not, I will make a new one: calling generate keys[39m
+nightfall_3-deployer-1  |     circuit: "deposit.circom"
+nightfall_3-worker-1    | [2023-02-17 11:11:50.925] [32mINFO[39m: [36mSetup...[39m
+nightfall_3-worker-1    |     correlationId: "537f218e-4b0b-45e7-9eb2-dea96934ebc0"
+nightfall_3-worker-1    | [2023-02-17 11:11:51.222] [32mINFO[39m: [36mDownloading powersOfTau with power 10 from Hermez[39m
+nightfall_3-worker-1    |     correlationId: "537f218e-4b0b-45e7-9eb2-dea96934ebc0"
+nightfall_3-worker-1    | [2023-02-17 11:11:52.732] [32mINFO[39m: [36mGenerating keys...[39m
+nightfall_3-worker-1    |     correlationId: "537f218e-4b0b-45e7-9eb2-dea96934ebc0"
+nightfall_3-worker-1    | [2023-02-17 11:12:00.189] [32mINFO[39m: [36mExporting verification Key...[39m
+nightfall_3-worker-1    |     correlationId: "537f218e-4b0b-45e7-9eb2-dea96934ebc0"
+nightfall_3-deployer-1  | [2023-02-17 11:12:00.669] [32mINFO[39m: [36mNo existing verification key. Fear not, I will make a new one: calling generate keys[39m
+nightfall_3-deployer-1  |     circuit: "depositfee.circom"
+nightfall_3-worker-1    | [2023-02-17 11:12:00.663] [32mINFO[39m: [36mKey generation completed[39m
+nightfall_3-worker-1    |     correlationId: "537f218e-4b0b-45e7-9eb2-dea96934ebc0"
+nightfall_3-worker-1    | [2023-02-17 11:12:00.672] [32mINFO[39m: [36mCompiling circuits...[39m
+nightfall_3-worker-1    |     circuitsPath: "./circuits/depositfee.circom"
+nightfall_3-worker-1    |     outputPath: "./output/depositfee"
+nightfall_3-worker-1    |     circuitName: "depositfee"
+nightfall_3-worker-1    |     correlationId: "60dbb2ee-3387-4ebd-a1e0-e6d18f205519"
+nightfall_3-worker-1    | [2023-02-17 11:12:06.356] [32mINFO[39m: [36mSetup...[39m
+nightfall_3-worker-1    |     correlationId: "60dbb2ee-3387-4ebd-a1e0-e6d18f205519"
+nightfall_3-worker-1    | [2023-02-17 11:12:07.116] [32mINFO[39m: [36mGenerating keys...[39m
+nightfall_3-worker-1    |     correlationId: "60dbb2ee-3387-4ebd-a1e0-e6d18f205519"
+nightfall_3-worker-1    | [2023-02-17 11:12:48.450] [32mINFO[39m: [36mExporting verification Key...[39m
+nightfall_3-worker-1    |     correlationId: "60dbb2ee-3387-4ebd-a1e0-e6d18f205519"
+nightfall_3-worker-1    | [2023-02-17 11:12:48.966] [32mINFO[39m: [36mKey generation completed[39m
+nightfall_3-worker-1    |     correlationId: "60dbb2ee-3387-4ebd-a1e0-e6d18f205519"
+nightfall_3-worker-1    | [2023-02-17 11:12:48.985] [32mINFO[39m: [36mCompiling circuits...[39m
+nightfall_3-worker-1    |     circuitsPath: "./circuits/tokenise.circom"
+nightfall_3-worker-1    |     outputPath: "./output/tokenise"
+nightfall_3-worker-1    |     circuitName: "tokenise"
+nightfall_3-worker-1    |     correlationId: "de5121cc-c5b4-4890-91bb-a75af4c6974e"
+nightfall_3-deployer-1  | [2023-02-17 11:12:48.980] [32mINFO[39m: [36mNo existing verification key. Fear not, I will make a new one: calling generate keys[39m
+nightfall_3-deployer-1  |     circuit: "tokenise.circom"
+nightfall_3-worker-1    | [2023-02-17 11:12:55.047] [32mINFO[39m: [36mSetup...[39m
+nightfall_3-worker-1    |     correlationId: "de5121cc-c5b4-4890-91bb-a75af4c6974e"
+nightfall_3-worker-1    | [2023-02-17 11:12:56.947] [32mINFO[39m: [36mGenerating keys...[39m
+nightfall_3-worker-1    |     correlationId: "de5121cc-c5b4-4890-91bb-a75af4c6974e"
+nightfall_3-worker-1    | [2023-02-17 11:13:36.997] [32mINFO[39m: [36mExporting verification Key...[39m
+nightfall_3-worker-1    |     correlationId: "de5121cc-c5b4-4890-91bb-a75af4c6974e"
+nightfall_3-worker-1    | [2023-02-17 11:13:37.413] [32mINFO[39m: [36mKey generation completed[39m
+nightfall_3-worker-1    |     correlationId: "de5121cc-c5b4-4890-91bb-a75af4c6974e"
+nightfall_3-worker-1    | [2023-02-17 11:13:37.422] [32mINFO[39m: [36mCompiling circuits...[39m
+nightfall_3-worker-1    |     circuitsPath: "./circuits/transfer.circom"
+nightfall_3-worker-1    |     outputPath: "./output/transfer"
+nightfall_3-worker-1    |     circuitName: "transfer"
+nightfall_3-worker-1    |     correlationId: "a088d03a-cbea-4d39-bc8d-68c321cba325"
+nightfall_3-deployer-1  | [2023-02-17 11:13:37.420] [32mINFO[39m: [36mNo existing verification key. Fear not, I will make a new one: calling generate keys[39m
+nightfall_3-deployer-1  |     circuit: "transfer.circom"
+nightfall_3-worker-1    | [2023-02-17 11:13:50.639] [32mINFO[39m: [36mSetup...[39m
+nightfall_3-worker-1    |     correlationId: "a088d03a-cbea-4d39-bc8d-68c321cba325"
+nightfall_3-worker-1    | [2023-02-17 11:13:52.054] [32mINFO[39m: [36mDownloading powersOfTau with power 16 from Hermez[39m
+nightfall_3-worker-1    |     correlationId: "a088d03a-cbea-4d39-bc8d-68c321cba325"
+nightfall_3-worker-1    | [2023-02-17 11:14:00.592] [32mINFO[39m: [36mGenerating keys...[39m
+nightfall_3-worker-1    |     correlationId: "a088d03a-cbea-4d39-bc8d-68c321cba325"
+nightfall_3-worker-1    | [2023-02-17 11:14:48.388] [32mINFO[39m: [36mExporting verification Key...[39m
+nightfall_3-worker-1    |     correlationId: "a088d03a-cbea-4d39-bc8d-68c321cba325"
+nightfall_3-deployer-1  | [2023-02-17 11:14:49.910] [32mINFO[39m: [36mNo existing verification key. Fear not, I will make a new one: calling generate keys[39m
+nightfall_3-deployer-1  |     circuit: "transform.circom"
+nightfall_3-worker-1    | [2023-02-17 11:14:49.896] [32mINFO[39m: [36mKey generation completed[39m
+nightfall_3-worker-1    |     correlationId: "a088d03a-cbea-4d39-bc8d-68c321cba325"
+nightfall_3-worker-1    | [2023-02-17 11:14:49.913] [32mINFO[39m: [36mCompiling circuits...[39m
+nightfall_3-worker-1    |     circuitsPath: "./circuits/transform.circom"
+nightfall_3-worker-1    |     outputPath: "./output/transform"
+nightfall_3-worker-1    |     circuitName: "transform"
+nightfall_3-worker-1    |     correlationId: "47139e1c-6b8b-4d8b-bcb1-0cda0cacfb9c"
+nightfall_3-worker-1    | [2023-02-17 11:14:58.551] [32mINFO[39m: [36mSetup...[39m
+nightfall_3-worker-1    |     correlationId: "47139e1c-6b8b-4d8b-bcb1-0cda0cacfb9c"
+nightfall_3-worker-1    | [2023-02-17 11:15:00.789] [32mINFO[39m: [36mGenerating keys...[39m
+nightfall_3-worker-1    |     correlationId: "47139e1c-6b8b-4d8b-bcb1-0cda0cacfb9c"
+nightfall_3-worker-1    | [2023-02-17 11:15:48.651] [32mINFO[39m: [36mExporting verification Key...[39m
+nightfall_3-worker-1    |     correlationId: "47139e1c-6b8b-4d8b-bcb1-0cda0cacfb9c"
+nightfall_3-worker-1    | [2023-02-17 11:15:49.164] [32mINFO[39m: [36mKey generation completed[39m
+nightfall_3-worker-1    |     correlationId: "47139e1c-6b8b-4d8b-bcb1-0cda0cacfb9c"
+nightfall_3-worker-1    | [2023-02-17 11:15:49.179] [32mINFO[39m: [36mCompiling circuits...[39m
+nightfall_3-worker-1    |     circuitsPath: "./circuits/withdraw.circom"
+nightfall_3-worker-1    |     outputPath: "./output/withdraw"
+nightfall_3-worker-1    |     circuitName: "withdraw"
+nightfall_3-worker-1    |     correlationId: "46d05551-a86b-421d-ac4a-6c663cc87c9e"
+nightfall_3-deployer-1  | [2023-02-17 11:15:49.175] [32mINFO[39m: [36mNo existing verification key. Fear not, I will make a new one: calling generate keys[39m
+nightfall_3-deployer-1  |     circuit: "withdraw.circom"
+nightfall_3-worker-1    | [2023-02-17 11:15:56.607] [32mINFO[39m: [36mSetup...[39m
+nightfall_3-worker-1    |     correlationId: "46d05551-a86b-421d-ac4a-6c663cc87c9e"
+nightfall_3-worker-1    | [2023-02-17 11:15:57.788] [32mINFO[39m: [36mGenerating keys...[39m
+nightfall_3-worker-1    |     correlationId: "46d05551-a86b-421d-ac4a-6c663cc87c9e"
+nightfall_3-worker-1    | [2023-02-17 11:16:46.161] [32mINFO[39m: [36mExporting verification Key...[39m
+nightfall_3-worker-1    |     correlationId: "46d05551-a86b-421d-ac4a-6c663cc87c9e"
+nightfall_3-worker-1    | [2023-02-17 11:16:46.720] [32mINFO[39m: [36mKey generation completed[39m
+nightfall_3-worker-1    |     correlationId: "46d05551-a86b-421d-ac4a-6c663cc87c9e"
+nightfall_3-deployer-1  | [2023-02-17 11:16:46.722] [34mDEBUG[39m: [36mGetting key registry contract[39m
+nightfall_3-deployer-1  | [2023-02-17 11:16:46.743] [34mDEBUG[39m: [36mcontract address was 0x1BD254dc0D1544AAD2d2184feAfEeec586D38608[39m
+nightfall_3-deployer-1  | [2023-02-17 11:16:46.755] [34mDEBUG[39m: [36mAccount derived from private key 0xB4482738243946ffAb384Fa5409bcad8F304a757[39m
+nightfall_3-deployer-1  | [2023-02-17 11:16:46.764] [34mDEBUG[39m: [36mGot key registry contract[39m
+nightfall_3-deployer-1  | [2023-02-17 11:16:46.764] [32mINFO[39m: [36mRegistering verification key for burn.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:16:46.764] [32mINFO[39m: [36mThe circuit burn has the following hash: 0x762f3da9fc[39m
+nightfall_3-deployer-1  | [2023-02-17 11:16:46.924] [34mDEBUG[39m: [36mGas estimated at 2750281[39m
+nightfall_3-deployer-1  | [2023-02-17 11:16:55.139] [32mINFO[39m: [36mRegistering verification key for deposit.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:16:55.139] [32mINFO[39m: [36mThe circuit deposit has the following hash: 0x6161ab163f[39m
+nightfall_3-deployer-1  | [2023-02-17 11:16:55.280] [34mDEBUG[39m: [36mGas estimated at 2081909[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:03.002] [32mINFO[39m: [36mRegistering verification key for depositfee.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:03.003] [32mINFO[39m: [36mThe circuit depositfee has the following hash: 0xdcb940245f[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:03.167] [34mDEBUG[39m: [36mGas estimated at 2563115[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:10.758] [32mINFO[39m: [36mRegistering verification key for tokenise.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:10.758] [32mINFO[39m: [36mThe circuit tokenise has the following hash: 0x19b0a68bbe[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:10.901] [34mDEBUG[39m: [36mGas estimated at 2543973[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:18.743] [32mINFO[39m: [36mRegistering verification key for transfer.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:18.743] [32mINFO[39m: [36mThe circuit transfer has the following hash: 0x692b2a798f[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:18.882] [34mDEBUG[39m: [36mGas estimated at 3025254[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:26.804] [32mINFO[39m: [36mRegistering verification key for transform.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:26.804] [32mINFO[39m: [36mThe circuit transform has the following hash: 0x647e0b637d[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:26.943] [34mDEBUG[39m: [36mGas estimated at 3231550[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:35.392] [32mINFO[39m: [36mRegistering verification key for withdraw.circom[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:35.392] [32mINFO[39m: [36mThe circuit withdraw has the following hash: 0xc2d92e17cb[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:35.538] [34mDEBUG[39m: [36mGas estimated at 2975622[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:42.823] [34mDEBUG[39m: [36maddress of State contract is 0x1BD254dc0D1544AAD2d2184feAfEeec586D38608[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:42.938] [34mDEBUG[39m: [36mGas estimated at 39784[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:46.844] [34mDEBUG[39m: [36mGas estimated at 39940[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:50.887] [34mDEBUG[39m: [36mGas estimated at 39828[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:54.746] [34mDEBUG[39m: [36mContracts have been updated so they know the address of the State contract[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:54.859] [34mDEBUG[39m: [36mGas estimated at 36606[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:58.767] [34mDEBUG[39m: [36mGot receipt with transaction hash 0xf1e8d8ca6761ff3f3447e394f536d190019fdf56cee7d4bc9dce6c56499d0158[39m
+nightfall_3-deployer-1  | [2023-02-17 11:17:58.880] [34mDEBUG[39m: [36mGas estimated at 36829[39m
+nightfall_3-deployer-1  | [2023-02-17 11:18:02.910] [34mDEBUG[39m: [36mGot receipt with transaction hash 0x4dd64dbcb598234525d3ae59ab00a63896a50785131508918fb4272641e38de9[39m
+nightfall_3-deployer-1  | [2023-02-17 11:18:03.016] [34mDEBUG[39m: [36mGas estimated at 36740[39m
+nightfall_3-deployer-1  | [2023-02-17 11:18:06.756] [34mDEBUG[39m: [36mGot receipt with transaction hash 0xa7eb69072a1d9059dae7b28708fe27ae84ea1f9084dddc8af5b3642bd19869b3[39m
+nightfall_3-deployer-1  | [2023-02-17 11:18:06.864] [34mDEBUG[39m: [36mGas estimated at 37612[39m
+nightfall_3-deployer-1  | [2023-02-17 11:18:10.754] [34mDEBUG[39m: [36mGot receipt with transaction hash 0xabd57ca599084c3872d52283fc306334cb4352e665c069c7a0d67000046f57cb[39m
+nightfall_3-deployer-1  | [2023-02-17 11:18:10.754] [34mDEBUG[39m: [36mOwnership has been transferred to the Multisig contract[39m
+nightfall_3-deployer-1 exited with code 0
