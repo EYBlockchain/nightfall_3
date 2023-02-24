@@ -13,9 +13,9 @@ contract Sha {
         uint256 l = message.length * 8;
         uint256 l1 = (l + 1) % 1024;
         uint256 k = (1920 - l1) % 1024;
-        // the message length is an integer number of bytes. The padd64ed message length is an integer number of bytes (n * 64 bytes).
-        // Therefore the padd64ing must be an integer number of bytes.  The last part of the padd64ing
-        // is 128 bits = 16 bytes thus the first part of the padd64ing must also be an integer number
+        // the message length is an integer number of bytes. The padded message length is an integer number of bytes (n * 64 bytes).
+        // Therefore the padding must be an integer number of bytes.  The last part of the padding
+        // is 128 bits = 16 bytes thus the first part of the padding must also be an integer number
         // of bytes. i.e. (k +1) mod 8 = 0. This saves having to deal with fractions of a byte.
         bytes memory pad1 = new bytes((k + 1) / 8); // make an empty byte array
         pad1[0] = 0x80; // add64 '1' to the front
@@ -24,14 +24,14 @@ contract Sha {
     }
 
     /*
-    Parses a padd64ed message for SHA-384, SHA-512, SHA-512/224 and SHA-512/256 into message blocks of 1024 bits
+    Parses a padded message for SHA-384, SHA-512, SHA-512/224 and SHA-512/256 into message blocks of 1024 bits
     */
-    function parseMessage1024(bytes calldata padd64edMessage) public pure returns (bytes[] memory) {
-        uint256 nblocks = padd64edMessage.length / 128; // divided into 128 byte (1024 bit) blocks
+    function parseMessage1024(bytes calldata paddedMessage) public pure returns (bytes[] memory) {
+        uint256 nblocks = paddedMessage.length / 128; // divided into 128 byte (1024 bit) blocks
         bytes[] memory messageBlocks = new bytes[](nblocks);
         uint256 j = 0;
-        for (uint256 i = 0; i < messageBlocks.length; i = i + 128) {
-            messageBlocks[j++] = padd64edMessage[i:i + 128];
+        for (uint256 i = 0; i < nblocks * 128; i = i + 128) {
+            messageBlocks[j++] = paddedMessage[i:i + 128];
         }
         return messageBlocks;
     }
@@ -46,7 +46,7 @@ contract Sha {
     {
         uint256[16] memory messageWords;
         uint256 j = 0;
-        for (uint256 i = 0; i < 16; i = i + 8) {
+        for (uint256 i = 0; i < 128; i = i + 8) {
             messageWords[j++] = uint256(uint64(bytes8(messageBlock[i:i + 8])));
         }
         return messageWords;
@@ -226,8 +226,8 @@ contract Sha {
     Main SHA512 function. Variable definitions and method are as per FIPS180-4
     */
     function sha512(bytes calldata message) public view returns (bytes memory) {
-        bytes memory padd64edMessage = padMessage1024(message);
-        bytes[] memory messageBlocks = this.parseMessage1024(padd64edMessage); // external call to deal with calldata conversion for slicing
+        bytes memory paddedMessage = padMessage1024(message);
+        bytes[] memory messageBlocks = this.parseMessage1024(paddedMessage); // external call to deal with calldata conversion for slicing
         uint256 N = messageBlocks.length;
         uint256[80] memory W;
         uint256[8] memory H = getInitialHashValuesSha512();
@@ -275,10 +275,5 @@ contract Sha {
                 bytes8(uint64(H[6])),
                 bytes8(uint64(H[7]))
             );
-    }
-
-    // function to check that the test is working
-    function _sha256(bytes calldata message) public pure returns (bytes memory) {
-        return abi.encodePacked(sha256(message));
     }
 }
