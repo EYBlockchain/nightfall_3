@@ -26,3 +26,4 @@ coverage
 coverage.json
 
 multiproposer-test.env
+.terraform*
