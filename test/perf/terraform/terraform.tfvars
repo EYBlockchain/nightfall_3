@@ -1,13 +1,13 @@
 TOTAL_INSTANCES_SUBNET=2
 
-total_cpu_client="4096"
-total_memory_client="16384"
+TOTAL_CPU_CLIENT="4096"
+TOTAL_MEMORY_CLIENT="16384"
 
-total_cpu_worker="4096"
-total_memory_worker="16384"
+TOTAL_CPU_WORKER="4096"
+TOTAL_MEMORY_WORKER="16384"
 
-total_cpu_optimist="4096"
-total_memory_optimist="16384"
+TOTAL_CPU_OPTIMIST="4096"
+TOTAL_MEMORY_OPTIMIST="16384"
 
-total_cpu_proposer="4096"
-total_memory_proposer="16384"
+TOTAL_CPU_PROPOSER="4096"
+TOTAL_MEMORY_PROPOSER="16384"

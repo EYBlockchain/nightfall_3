@@ -104,7 +104,7 @@
 #          },
 #          {
 #              "name": "BLOCKCHAIN_URL",
-#              "value": "wss://${aws_lb.performance_test_nf-blockchain_lb.dns_name}"
+#              "value": "ws://${aws_lb.performance_test_nf-blockchain_lb.dns_name}"
 #          },
 #          {
 #              "name": "CIRCOM_WORKER_HOST",

@@ -27,7 +27,7 @@ variable "TOTAL_MEMORY_CLIENT" {
   default = "4096"
 }
 
-variable "TOTAL_INSTANCES_worker" {
+variable "TOTAL_INSTANCES_WORKER" {
   default = "1"
 }
 variable "TOTAL_CPU_WORKER" {
@@ -37,7 +37,7 @@ variable "TOTAL_MEMORY_WORKER" {
   default = "4096"
 }
 
-variable "TOTAL_INSTANCES_optimist" {
+variable "TOTAL_INSTANCES_OPTIMIST" {
   default = "1"
 }
 variable "TOTAL_CPU_OPTIMIST" {
