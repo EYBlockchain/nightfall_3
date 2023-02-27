@@ -7,7 +7,7 @@ import setupContracts from './contract-setup.mjs';
 
 const execPromise = promisify(child.exec);
 
-const { SKIP_DEPLOYMENT, UPGRADE = '', ETH_NETWORK } = process.env;
+const { SKIP_DEPLOYMENT, UPGRADE = '', ETH_NETWORK, PARALLEL_SETUP = 'true' } = process.env;
 
 async function execShellCommand(cmd) {
   const shellPromise = execPromise(cmd);
@@ -71,7 +71,13 @@ async function bootstrap() {
 
 async function main() {
   logger.info(`deployer starting bootstrap`);
-  await bootstrap();
+  if (PARALLEL_SETUP === 'true') {
+    await bootstrap();
+  } else {
+    await circuits.waitForWorker();
+    await circuits.setupCircuits();
+    await safeSetupContracts();
+  }
   try {
     Web3.disconnect();
   } catch (err) {
