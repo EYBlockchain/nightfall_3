@@ -541,7 +541,8 @@ export const emptyL2 = async ({ nf3User, web3, logs }) => {
 };
 
 export async function getLayer2Balances(_nf3User, tokenAddress) {
-  return (await _nf3User.getLayer2Balances())[tokenAddress]?.[0].balance || 0;
+  const a = await _nf3User.getLayer2Balances();
+  return a[tokenAddress.toLowerCase()]?.[0].balance || 0;
 }
 
 export async function getUserCommitments(clientApiUrl, compressedZkpPublicKey) {

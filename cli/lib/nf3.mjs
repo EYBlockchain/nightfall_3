@@ -363,7 +363,7 @@ class Nf3 {
       const gas = await this.estimateGas(contractAddress, unsignedTransaction);
 
       // Update nonce if necessary
-      const _nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress);
+      const _nonce = await this.web3.eth.getTransactionCount(this.ethereumAddress, 'pending');
       if (this.nonce < _nonce) {
         this.nonce = _nonce;
       }
@@ -398,19 +398,9 @@ class Nf3 {
   @param {object} tx - An signed web3js transaction object.
   @returns {Promise} This will resolve into a transaction receipt.
   */
-  async _sendTransaction(tx) {
+  _sendTransaction(tx) {
     if (this.ethereumSigningKey) {
-      const promiseTest = new Promise((resolve, reject) => {
-        this.web3.eth
-          .sendSignedTransaction(tx.rawTransaction)
-          .once('receipt', receipt => {
-            resolve(receipt);
-          })
-          .on('error', err => {
-            reject(err);
-          });
-      });
-      return promiseTest;
+      return this.web3.eth.sendSignedTransaction(tx.rawTransaction);
     }
     return this.web3.eth.sendTransaction(tx);
   }
@@ -428,6 +418,7 @@ class Nf3 {
   */
   async submitTransaction(unsignedTransaction, contractAddress = this.shieldContractAddress, fee) {
     const tx = await this._signTransaction(unsignedTransaction, contractAddress, fee);
+    logger.debug(`Sending transaction with hash ${tx.transactionHash}`);
     return this._sendTransaction(tx);
   }
 
@@ -664,7 +655,6 @@ class Nf3 {
         return this.submitTransaction(txDataToSign, ercAddress, 0);
       });
     }
-
     const res = await axios.post(`${this.clientBaseUrl}/deposit`, {
       ercAddress,
       tokenId,
@@ -679,10 +669,10 @@ class Nf3 {
     if (res.data.error) {
       throw new Error(res.data.error);
     }
-
     return new Promise((resolve, reject) => {
       userQueue.push(async () => {
         try {
+          logger.debug('Deposit transaction being processed');
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.shieldContractAddress,
@@ -999,13 +989,16 @@ class Nf3 {
     return new Promise((resolve, reject) => {
       proposerQueue.push(async () => {
         try {
+          logger.debug('Submitting register transaction');
           const receipt = await this.submitTransaction(
             res.data.txDataToSign,
             this.proposersContractAddress,
             stake,
           );
+          logger.debug('Proposer registered on chain');
           resolve(receipt);
         } catch (err) {
+          logger.error(`Register proposer failed with error ${err.message}`);
           reject(err);
         }
       });

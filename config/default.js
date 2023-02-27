@@ -207,18 +207,25 @@ module.exports = {
     mumbai: {
       name: 'mumbai',
       chainId: 80001,
-      clientApiUrl: '',
-      optimistApiUrl: '',
-      optimistWsUrl: '',
-      web3WsUrl: '',
-    },
-    rinkeby: {
-      name: 'Rinkeby',
-      chainId: 4,
-      clientApiUrl: '',
-      optimistApiUrl: '',
-      optimistWsUrl: '',
-      web3WsUrl: '',
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      adversarialClientApiUrl: 'http://localhost:8093',
+      adversarialClientWsUrl: 'ws://localhost:8094',
+      web3WsUrl: process.env.BLOCKCHAIN_URL,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
     localhost: {
       name: 'Localhost',
@@ -341,6 +348,7 @@ module.exports = {
         '0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a',
       challenger:
         process.env.BOOT_CHALLENGER_KEY ||
+        process.env.CHALLENGER_KEY ||
         '0x1da216993fb96745dcba8bc6f2ef5deb75ce602fd92f91ab702d8250033f4e1c',
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_KEY ||
@@ -527,24 +535,14 @@ module.exports = {
       ],
       mumbai: [
         {
-          name: 'WETH',
-          address: '0x3f152B63Ec5CA5831061B2DccFb29a874C317502',
-          amount: process.env.WETH_RESTRICT || '1000000000000000000',
-        },
-        {
-          name: 'MATIC',
-          address: '0x499d11E0b6eAC7c0593d8Fb292DCBbF815Fb29Ae',
-          amount: process.env.MATIC_RESTRICT || '1000000000000000000000',
-        },
-        {
           name: 'USDC',
-          address: '0x07865c6E87B9F70255377e024ace6630C1Eaa37F',
+          address: '0xE097d6B3100777DC31B34dC2c58fB524C2e76921',
           amount: process.env.USDC_RESTRICT || '1000000000',
         },
         {
-          name: 'stMATIC',
-          address: '0x9A7c69A167160C507602ecB3Df4911e8E98e1279',
-          amount: process.env.MATIC_RESTRICT || '1000000000',
+          name: 'WMATIC',
+          address: '0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889',
+          amount: process.env.MATIC_RESTRICT || '1000000000000000000000',
         },
       ],
       localhost: [

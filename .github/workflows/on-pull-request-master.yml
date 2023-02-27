@@ -315,6 +315,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+      DEPLOY_MOCKED_SANCTIONS_CONTRACT: true
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -975,7 +976,9 @@ jobs:
 
       - name: Debug logs - after integration test run
         if: always()
-        run: cat test-apps.log
+        run: |
+          cat test-apps.log
+          cat test-proposer.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -986,7 +989,10 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: test-apps-logs
-          path: ./test-apps.log
+          path: |
+            ./test-apps.log
+            ./test-proposer.log
+
 
   periodic-payment-test:
     env:

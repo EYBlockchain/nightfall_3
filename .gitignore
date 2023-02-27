@@ -1,9 +1,13 @@
 .DS_Store
 node_modules
 cli/build
+mumbai/
+*.tar.gz
+*.tar
 .*swp
 .vscode/*
 .openzeppelin/
+*.log
 mumbai/
 # wallet
 wallet/build
