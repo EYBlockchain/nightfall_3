@@ -13,14 +13,14 @@ function getDefaultX509Params() {
         modulus:
           '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
         exponent: 65537,
-        authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`,
+        authorityKeyIdentifier: '0xef355558d6fdee0d5d02a22d078e057b74644e5f',
       },
-      // entrust root
+      // entrust/digicert mock root
       {
         modulus:
           '0x00ba84b672db9e0c6be299e93001a776ea32b895411ac9da614e5872cffef68279bf7361060aa527d8b35fd3454e1c72d64e32f2728a0ff78319d06a808000451eb0c7e79abf1257271ca3682f0a87bd6a6b0e5e65f31c77d5d4858d7021b4b332e78ba2d5863902b1b8d247cee4c949c43ba7defb547d57bef0e86ec279b23a0b55e250981632135c2f7856c1c294b3f25ae4279a9f24d7c6ecd09b2582e3ccc2c445c58c977a066b2a119fa90a6e483b6fdbd4111942f78f07bff5535f9c3ef4172ce669ac4e324c6277eab7e8e5bb34bc198bae9c51e7b77eb553b13322e56dcf703c1afae29b67b683f48da5af624c4de058ac64341203f8b68d946324a471',
         exponent: 65537,
-        authorityKeyIdentifier: `0x${'6a72267ad01eef7de73b6951d46c8d9f901266ab'.padStart(64, '0')}`,
+        authorityKeyIdentifier: '0x6a72267ad01eef7de73b6951d46c8d9f901266ab',
       },
     ],
     // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
@@ -52,6 +52,32 @@ function getDefaultX509Params() {
         '0x06096086480186fa6b280b000000000000000000000000000000000000000000',
         '0x060a2b0601040182370a030c0000000000000000000000000000000000000000',
       ],
+    ],
+  };
+}
+
+function getLiveX509Params() {
+  return {
+    RSA_TRUST_ROOTS: [
+      // Entrust root
+      {
+        modulus:
+          '0x00ba84b672db9e0c6be299e93001a776ea32b895411ac9da614e5872cffef68279bf7361060aa527d8b35fd3454e1c72d64e32f2728a0ff78319d06a808000451eb0c7e79abf1257271ca3682f0a87bd6a6b0e5e65f31c77d5d4858d7021b4b332e78ba2d5863902b1b8d247cee4c949c43ba7defb547d57bef0e86ec279b23a0b55e250981632135c2f7856c1c294b3f25ae4279a9f24d7c6ecd09b2582e3ccc2c445c58c977a066b2a119fa90a6e483b6fdbd4111942f78f07bff5535f9c3ef4172ce669ac4e324c6277eab7e8e5bb34bc198bae9c51e7b77eb553b13322e56dcf703c1afae29b67b683f48da5af624c4de058ac64341203f8b68d946324a471',
+        exponent: 65537,
+        authorityKeyIdentifier: '0x6a72267ad01eef7de73b6951d46c8d9f901266ab',
+      },
+    ],
+    // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
+    certificatePoliciesOIDs: [
+      // Entrust EV code signer
+      [
+        '0x060a6086480186fa6c0a01020000000000000000000000000000000000000000',
+        '0x060567810c010300000000000000000000000000000000000000000000000000',
+      ],
+    ],
+    extendedKeyUsageOIDs: [
+      // Entrust EV code signer
+      ['0x06082b0601050507030300000000000000000000000000000000000000000000'],
     ],
   };
 }
@@ -601,6 +627,7 @@ module.exports = {
     mumbai: getDefaultX509Params(),
     mainnet: getDefaultX509Params(),
     localhost: getDefaultX509Params(),
+    live: getLiveX509Params(),
   },
 
   // for Browser use

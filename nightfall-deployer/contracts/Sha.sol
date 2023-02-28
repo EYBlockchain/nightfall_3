@@ -9,7 +9,7 @@ contract Sha {
     /*
     Pads a message for SHA-384, SHA-512, SHA-512/224 and SHA-512/256
     */
-    function padMessage1024(bytes calldata message) public pure returns (bytes memory) {
+    function padMessage1024(bytes calldata message) private pure returns (bytes memory) {
         uint256 l = message.length * 8;
         uint256 l1 = (l + 1) % 1024;
         uint256 k = (1920 - l1) % 1024;
@@ -55,7 +55,7 @@ contract Sha {
     /*
     Returns initial hash values for SHA512
     */
-    function getInitialHashValuesSha512() public pure returns (uint256[8] memory) {
+    function getInitialHashValuesSha512() private pure returns (uint256[8] memory) {
         uint256[8] memory H;
         H[0] = 0x6a09e667f3bcc908;
         H[1] = 0xbb67ae8584caa73b;
@@ -71,7 +71,7 @@ contract Sha {
     /*
     Returns the sha512 constants
     */
-    function getConstantsSha512() public pure returns (uint256[80] memory) {
+    function getConstantsSha512() private pure returns (uint256[80] memory) {
         return [
             uint256(0x428a2f98d728ae22),
             0x7137449123ef65cd,
@@ -159,7 +159,7 @@ contract Sha {
     /*
     Implements the shift right function SHRn(x)=x >> n
     */
-    function SHR(uint256 n, uint256 x) public pure returns (uint256) {
+    function SHR(uint256 n, uint256 x) private pure returns (uint256) {
         x &= truncate64;
         return x >> n;
     }
@@ -167,7 +167,7 @@ contract Sha {
     /*
     Implements the rotate right function ROTRn(x)=(x >> n)|(x << w - n).
     */
-    function ROTR(uint256 n, uint256 x) public pure returns (uint256) {
+    function ROTR(uint256 n, uint256 x) private pure returns (uint256) {
         x &= truncate64;
         return (x >> n) | (x << (64 - n));
     }
@@ -179,7 +179,7 @@ contract Sha {
         uint256 x,
         uint256 y,
         uint256 z
-    ) public pure returns (uint256) {
+    ) private pure returns (uint256) {
         return (x & y) ^ (~x & z);
     }
 
@@ -190,33 +190,33 @@ contract Sha {
         uint256 x,
         uint256 y,
         uint256 z
-    ) public pure returns (uint256) {
+    ) private pure returns (uint256) {
         return ((x & y) ^ (x & z) ^ (y & z));
     }
 
     /*
     Implement the big and small sigma functions
     */
-    function Sigma0(uint256 x) public pure returns (uint256) {
+    function Sigma0(uint256 x) private pure returns (uint256) {
         return ROTR(28, x) ^ ROTR(34, x) ^ ROTR(39, x);
     }
 
-    function Sigma1(uint256 x) public pure returns (uint256) {
+    function Sigma1(uint256 x) private pure returns (uint256) {
         return ROTR(14, x) ^ ROTR(18, x) ^ ROTR(41, x);
     }
 
-    function sigma0(uint256 x) public pure returns (uint256) {
+    function sigma0(uint256 x) private pure returns (uint256) {
         return ROTR(1, x) ^ ROTR(8, x) ^ SHR(7, x);
     }
 
-    function sigma1(uint256 x) public pure returns (uint256) {
+    function sigma1(uint256 x) private pure returns (uint256) {
         return ROTR(19, x) ^ ROTR(61, x) ^ SHR(6, x);
     }
 
     /*
     replicates the FIPS 180 add for sha512 function by truncating the result to 64 bits
     */
-    function add64(uint256 x, uint256 y) public pure returns (uint256) {
+    function add64(uint256 x, uint256 y) private pure returns (uint256) {
         x &= truncate64;
         y &= truncate64;
         return (x + y);

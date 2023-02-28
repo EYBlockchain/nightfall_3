@@ -19,8 +19,7 @@ const {
 } = config;
 
 const AUTHORITY_KEY_IDENTIFIER =
-  process.env.AUTHORITY_KEY_IDENTIFIER ||
-  `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`;
+  process.env.AUTHORITY_KEY_IDENTIFIER || '0xef355558d6fdee0d5d02a22d078e057b74644e5f';
 const MODULUS = process.env.MODULUS || modulus;
 const END_USER_PRIV_KEY_PATH =
   process.env.END_USER_PRIV_KEY_PATH ||
@@ -186,6 +185,7 @@ describe('DerParser contract functions', function () {
         certChain[0].tlvLength,
         signature,
         true,
+        false,
         0,
       );
       expect.fail('The certificate check passed, but it should have failed');
@@ -202,6 +202,7 @@ describe('DerParser contract functions', function () {
       certChain[1].tlvLength,
       0,
       false,
+      false,
       0,
     );
 
@@ -212,6 +213,7 @@ describe('DerParser contract functions', function () {
         digicertMock.tlvLength,
         digicertSignature,
         true,
+        false,
         1,
       );
 
@@ -221,6 +223,7 @@ describe('DerParser contract functions', function () {
         entrustMock.tlvLength,
         entrustSignature,
         true,
+        false,
         2,
       );
     }
@@ -234,11 +237,38 @@ describe('DerParser contract functions', function () {
       certChain[0].tlvLength,
       signature,
       true,
+      false,
       oidIndex,
     );
 
     // we should now be able to pass an x509 check for this address
     result = await X509Instance.x509Check(addressToSign);
     expect(result).to.equal(true);
+
+    // but if we revoke the intermediate CA, we won't be able to valdate the end user cert.
+    if (!TEST_SELF_GENERATED_CERTS) {
+      // let's sign our address with the intermediate CA private key
+      const derIntermediatePrivateKey = fs.readFileSync(
+        'test/unit/utils/mock_certs/Nightfall_Intermediate_CA.der',
+      );
+      signature = signEthereumAddress(derIntermediatePrivateKey, addressToSign);
+      const subjectKeyIdentifier = '0xcb3592749299adaacc45b489c25b71d53277664c';
+      // revoke the intermediate CA
+      await X509Instance.revokeKeyByAddressSignature(subjectKeyIdentifier, signature);
+      // and try to validate the end user cert again (should fail)
+      try {
+        await X509Instance.validateCertificate(
+          certChain[0].derBuffer,
+          certChain[0].tlvLength,
+          signature,
+          true,
+          false,
+          oidIndex,
+        );
+        expect.fail('The certificate check passed, but it should have failed');
+      } catch (err) {
+        expect(err.message.includes('VM Exception')).to.equal(true);
+      }
+    }
   });
 });

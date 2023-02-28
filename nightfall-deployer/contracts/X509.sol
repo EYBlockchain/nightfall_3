@@ -6,8 +6,9 @@ pragma solidity ^0.8.3;
 import './DerParser.sol';
 import './Whitelist.sol';
 import './X509Interface.sol';
+import './Sha.sol';
 
-contract X509 is DERParser, Whitelist, X509Interface {
+contract X509 is DERParser, Whitelist, Sha, X509Interface {
     uint256 constant SECONDS_PER_DAY = 24 * 60 * 60;
     int256 constant OFFSET19700101 = 2440588;
 
@@ -61,8 +62,9 @@ contract X509 is DERParser, Whitelist, X509Interface {
 
     function setTrustedPublicKey(
         RSAPublicKey calldata trustedPublicKey,
-        bytes32 authorityKeyIdentifier
+        uint256 _authorityKeyIdentifier
     ) external onlyOwner {
+        bytes32 authorityKeyIdentifier = bytes32(_authorityKeyIdentifier);
         trustedPublicKeys[authorityKeyIdentifier] = trustedPublicKey;
     }
 
@@ -135,7 +137,6 @@ contract X509 is DERParser, Whitelist, X509Interface {
             'X509: Incorrect tag or position for decrypted hash data'
         );
         bytes memory messageHashFromSignature = tlvs[4].value;
-        console.log(tlvs[4].value.length);
         return messageHashFromSignature;
     }
 
@@ -364,7 +365,9 @@ contract X509 is DERParser, Whitelist, X509Interface {
         );
         // we use the keccak hash here as a low cost way to check equality of bytes data
         require(
-            keccak256(messageHashFromSignature) == keccak256(abi.encode(sha256(message))),
+            keccak256(messageHashFromSignature) == keccak256(abi.encode(sha256(message))) ||
+                // if sha256 fails, try sha512.
+                keccak256(messageHashFromSignature) == keccak256(this.sha512(message)),
             'X509: Signature is invalid'
         );
     }
@@ -378,7 +381,8 @@ contract X509 is DERParser, Whitelist, X509Interface {
         bytes calldata certificate,
         uint256 tlvLength,
         bytes calldata addressSignature,
-        bool addAddress,
+        bool isEndUser,
+        bool checkOnly,
         uint256 oidGroup
     ) external {
         DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
@@ -406,11 +410,11 @@ contract X509 is DERParser, Whitelist, X509Interface {
         );
         // finally, before we can whitelist msg.sender, we should check that they are indeed the owner of the cert (certs are public, after all)
         // we do that by getting them to sign msg.sender with the private key corresponding to their certificate public key
-        if (!addAddress) {
+        if (!isEndUser) {
             // if we're not adding an address, check that this certificate can sign certificates (because it must be an intermediate one)
             checkKeyUsage(tlvs, usageBitMaskIntermediate);
             // if yes, we'll trust it
-            trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
+            if (!checkOnly) trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
             return; // we may want to add an intermediate cert to the contract but not add an address.
         }
         // as we are trying to add an address, this certificate should be an end user certificate, created for digital signature
@@ -419,14 +423,18 @@ contract X509 is DERParser, Whitelist, X509Interface {
         // we only check extended key usage for end-user certs; it's not really relevant for CA certs
         checkExtendedKeyUsage(tlvs, oidGroup);
         checkCertificatePolicies(tlvs, oidGroup);
-        checkSignature(
-            addressSignature,
-            abi.encodePacked(uint160(msg.sender)),
-            certificatePublicKey
-        );
-        expires[msg.sender] = expiry;
-        keysByUser[msg.sender] = subjectKeyIdentifier;
-        addUserToWhitelist(msg.sender); // all checks have passed, so they are free to trade for now.
+        // add this user to the whitelist data, unless we're only checking the certificate.
+        if (!checkOnly) {
+            // check the signature over the ethereum address, if given
+            checkSignature(
+                addressSignature,
+                abi.encodePacked(uint160(msg.sender)),
+                certificatePublicKey
+            );
+            expires[msg.sender] = expiry;
+            keysByUser[msg.sender] = subjectKeyIdentifier;
+            addUserToWhitelist(msg.sender); // all checks have passed, so they are free to trade for now.
+        }
     }
 
     // performs an ongoing X509 check (is the user still in the whitelist? Has the public key been revoked? Is the cert in date?)
@@ -441,11 +449,28 @@ contract X509 is DERParser, Whitelist, X509Interface {
         return false;
     }
 
-    // allows a key to be revoked. this cannot be undone!
-    function revokeKey(bytes32 subjectKeyIdentifier) external {
+    // allows a key to be revoked from a whitelisted address (or contract owner). this cannot be undone!
+    function revokeKeyFromUserAddress(uint256 _subjectKeyIdentifier) external {
+        bytes32 subjectKeyIdentifier = bytes32(_subjectKeyIdentifier);
         require(
             keysByUser[msg.sender] == subjectKeyIdentifier || msg.sender == owner(),
             'X509: You are not the owner of this key'
+        );
+        revokedKeys[subjectKeyIdentifier] = true;
+        delete trustedPublicKeys[subjectKeyIdentifier];
+    }
+
+    // allows a key to be revoked by signing the originating address (useful for intermediate certs)
+    function revokeKeyByAddressSignature(
+        uint256 _subjectKeyIdentifier,
+        bytes calldata addressSignature
+    ) external {
+        bytes32 subjectKeyIdentifier = bytes32(_subjectKeyIdentifier);
+        RSAPublicKey memory certificatePublicKey = trustedPublicKeys[subjectKeyIdentifier];
+        checkSignature(
+            addressSignature,
+            abi.encodePacked(uint160(msg.sender)),
+            certificatePublicKey
         );
         revokedKeys[subjectKeyIdentifier] = true;
         delete trustedPublicKeys[subjectKeyIdentifier];
