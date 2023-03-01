@@ -36,35 +36,36 @@ export async function syncState(
   toBlock = 'latest',
   eventFilter = 'allEvents',
 ) {
-  const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME); // NewCurrentProposer (register)
-  const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME); // TransactionSubmitted
-  const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // NewCurrentProposer, BlockProposed
-  const challengesContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME); // NewCurrentProposer, BlockProposed
+  const [
+    proposersContractInstance,
+    shieldContractInstance,
+    stateContractInstance,
+    challengesContractInstance,
+  ] = await Promise.all([
+    getContractInstance(PROPOSERS_CONTRACT_NAME),
+    getContractInstance(SHIELD_CONTRACT_NAME),
+    getContractInstance(STATE_CONTRACT_NAME),
+    getContractInstance(CHALLENGES_CONTRACT_NAME),
+  ]);
 
-  const pastProposerEvents = await proposersContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
-  const pastShieldEvents = await shieldContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
-  const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
-
-  const pastChallengeEvents = await challengesContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
+  const [pastProposerEvents, pastShieldEvents, pastStateEvents, pastChallengeEvents] =
+    await Promise.all([
+      [
+        proposersContractInstance,
+        shieldContractInstance,
+        stateContractInstance,
+        challengesContractInstance,
+      ].map(instance => instance.getPastEvents(eventFilter, { fromBlock, toBlock })),
+    ]);
 
   // Put all events together and sort chronologically as they appear on Ethereum
-  const splicedList = pastProposerEvents
-    .concat(pastShieldEvents)
-    .concat(pastStateEvents)
-    .concat(pastChallengeEvents)
-    .sort((a, b) => a.blockNumber - b.blockNumber);
+  const splicedList = [
+    ...pastProposerEvents,
+    ...pastShieldEvents,
+    ...pastStateEvents,
+    ...pastChallengeEvents,
+  ].sort((a, b) => a.blockNumber - b.blockNumber);
+
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
     switch (pastEvent.event) {
