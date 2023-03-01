@@ -66,4 +66,5 @@ class PerformanceBenchmark {
   }
 }
 
+// ignore unused exports
 export default PerformanceBenchmark;
