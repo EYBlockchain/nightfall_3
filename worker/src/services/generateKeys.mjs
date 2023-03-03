@@ -1,13 +1,19 @@
 import fs from 'fs';
 import path from 'path';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { isDev } from '@polygon-nightfall/common-files/utils/utils.mjs';
 import downloadFile from '@polygon-nightfall/common-files/utils/httputils.mjs';
 import * as snarkjs from 'snarkjs';
 import compile from '../utils/compile.mjs';
+import ValidationError from '@polygon-nightfall/common-files/utils/validation-error.mjs';
+
+const outputPath = `./output`;
+const circuitsPath = `./circuits`;
 
 export default async function generateKeys({ filepath }) {
-  const outputPath = `./output`;
-  const circuitsPath = `./circuits`;
+  if (! isDev()) {
+    throw new ValidationError("Key generation is only supported for non-production environments!");
+  }
 
   const ext = path.extname(filepath);
   const circuitName = path.basename(filepath, '.circom'); // filename without '.circom'
