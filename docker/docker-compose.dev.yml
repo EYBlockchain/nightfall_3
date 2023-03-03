@@ -111,7 +111,7 @@ services:
     ports:
       # to use with postman and etc
       - 8091:80
-    entrypoint: ['npm', 'run', 'start']
+    entrypoint: ['npm', 'run', 'dev']
 
   hosted-utils-api-server:
     volumes:
