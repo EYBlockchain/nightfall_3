@@ -27,3 +27,5 @@ coverage.json
 
 multiproposer-test.env
 .terraform*
+terraform.tfstate*
+*.log
