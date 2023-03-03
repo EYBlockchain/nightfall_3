@@ -50,7 +50,7 @@ export async function clearCachedContracts() {
 export async function getContractAddress(contractName) {
   let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
-  const networkId = config.ENVIRONMENTS[config.ENVIRONMENT].chainId || 1337; // await web3.eth.getChainId();
+  const networkId = config.ENVIRONMENTS[config.ENVIRONMENT].chainId;
   if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
     deployedAddress = contractInterface.networks[networkId].address;
   }
