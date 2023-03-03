@@ -1,5 +1,6 @@
 # build circom from source for local verify
 FROM ghcr.io/eyblockchain/local-circom as builder
+FROM ghcr.io/eyblockchain/local-rapidsnark as rapidsnark
 
 FROM node:16.17-bullseye-slim
 
@@ -7,7 +8,7 @@ FROM node:16.17-bullseye-slim
 # entrypoint script requires 'netcat'
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    python3 make g++ netcat-openbsd \
+    python3 make g++ netcat-openbsd build-essential libgmp-dev libsodium-dev nasm \
     && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 80
@@ -24,6 +25,7 @@ WORKDIR /app
 COPY config/default.js config/default.js
 COPY /nightfall-deployer/circuits circuits
 COPY --from=builder /app/circom/target/release/circom /app/circom
+COPY --from=rapidsnark /app/rapidsnark/build/prover /app/prover
 COPY ./worker/package.json ./worker/package-lock.json ./
 COPY ./worker/src ./src
 COPY ./worker/start-script ./start-script
