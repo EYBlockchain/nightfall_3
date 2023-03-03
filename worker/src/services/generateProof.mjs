@@ -4,46 +4,54 @@ import crypto from 'crypto';
 import path from 'path';
 import * as snarkjs from 'snarkjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import generateProof from '../utils/rapidsnark.mjs';
+import { readJsonFile } from '../utils/filing.mjs';
 
 const unlink = util.promisify(fs.unlink);
 
+const outputPath = `./output`;
+
 export default async ({ folderpath, inputs, transactionInputs }) => {
-  const outputPath = `./output`;
   let proof;
   let publicInputs;
 
   // unique hash to name witness and proof.json files
   // to avoid overwrite on concurrent call.
   const fileNamePrefix = crypto.randomBytes(32).toString('hex');
+  const circuitName = folderpath;
 
-  const circuitName = path.basename(folderpath);
-  const witnessFile = `${circuitName}_${fileNamePrefix}_witness`;
-  const proofJsonFile = `${circuitName}_${fileNamePrefix}_proof.json`;
-
-  if (fs.existsSync(`${outputPath}/${folderpath}/${witnessFile}`)) {
-    throw Error('Witness file with same name exists');
+  const witnessFilePath = `${outputPath}/${circuitName}/${circuitName}_${fileNamePrefix}_witness`;
+  if (fs.existsSync(witnessFilePath)) {
+    throw Error('Files with same name exist');
   }
 
-  if (fs.existsSync(`${outputPath}/${folderpath}/${proofJsonFile}`)) {
-    throw Error('proof.json file with same name exists');
-  }
+  const proofJsonFilePath = `${outputPath}/${circuitName}/${circuitName}_${fileNamePrefix}_proof.json`;
+  const publicJsonFilePath = `${outputPath}/${circuitName}/${circuitName}_${fileNamePrefix}_public.json`;
+
   try {
     logger.debug('Compute witness...');
 
-    await snarkjs.wtns.calculate(
+    const witnessProofPromise = snarkjs.wtns.calculate(
       inputs,
-      `${outputPath}/${folderpath}/${circuitName}_js/${circuitName}.wasm`,
-      `${outputPath}/${folderpath}/${witnessFile}`,
-    );
+      `${outputPath}/${circuitName}/${circuitName}_js/${circuitName}.wasm`,
+      witnessFilePath,
+    ).then(() => {
+      logger.debug('Generate proof...');
 
-    logger.debug('Generate proof...');
-    const prove = await snarkjs.groth16.prove(
-      `${outputPath}/${folderpath}/${circuitName}.zkey`,
-      `${outputPath}/${folderpath}/${witnessFile}`,
-    );
+      return generateProof(
+        `${outputPath}/${circuitName}/${circuitName}.zkey`,
+        witnessFilePath,
+        proofJsonFilePath,
+        publicJsonFilePath,
+      );
+    });
 
-    proof = prove.proof;
-    publicInputs = prove.publicSignals;
+    await witnessProofPromise;
+
+    logger.debug('Proof generated!');
+
+    proof = readJsonFile(proofJsonFilePath);
+    publicInputs = readJsonFile(publicJsonFilePath);
 
     logger.debug({
       msg: 'Responding with proof and inputs',
@@ -52,8 +60,11 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
     });
   } finally {
     try {
-      await unlink(`${outputPath}/${folderpath}/${witnessFile}`);
-      await unlink(`${outputPath}/${folderpath}/${proofJsonFile}`);
+      await Promise.all([
+        unlink(witnessFilePath),
+        unlink(proofJsonFilePath),
+        unlink(publicJsonFilePath)
+      ]);
     } catch {
       // No files to delete. Do nothing.
     }
@@ -63,6 +74,6 @@ export default async ({ folderpath, inputs, transactionInputs }) => {
     proof,
     inputs: publicInputs,
     transactionInputs,
-    type: folderpath,
+    type: circuitName,
   };
 };

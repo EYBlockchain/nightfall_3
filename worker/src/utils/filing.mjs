@@ -75,3 +75,14 @@ export const getFilesRecursively = (dir, fileList = []) => {
 
   return fileList;
 };
+
+export const readJsonFile = filePath => {
+  if (fs.existsSync(filePath)) {
+    const file = fs.readFileSync(filePath);
+    return JSON.parse(file);
+  }
+
+  logger.warn({ msg: 'Unable to locate file', filePath });
+
+  return null;
+};

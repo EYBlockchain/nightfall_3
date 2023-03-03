@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "start": "node ./src/index.mjs",
-    "dev": "nodemon ./src/index.mjs --ignore '**/*.params' --ignore '**/abi.json' --ignore '**/mpc_params/**' --ignore '**/*_out'",
+    "dev": "nodemon ./src/index.mjs --ignore './output/**' --ignore '**/*.params' --ignore '**/abi.json' --ignore '**/mpc_params/**' --ignore '**/*_out'",
     "setup": "./bin/setup.sh",
     "test": "mocha"
   },
