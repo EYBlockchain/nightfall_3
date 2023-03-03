@@ -59,25 +59,39 @@ function getDefaultX509Params() {
 function getLiveX509Params() {
   return {
     RSA_TRUST_ROOTS: [
-      // Entrust root
+      // Entrust G2 root
       {
         modulus:
           '0x00ba84b672db9e0c6be299e93001a776ea32b895411ac9da614e5872cffef68279bf7361060aa527d8b35fd3454e1c72d64e32f2728a0ff78319d06a808000451eb0c7e79abf1257271ca3682f0a87bd6a6b0e5e65f31c77d5d4858d7021b4b332e78ba2d5863902b1b8d247cee4c949c43ba7defb547d57bef0e86ec279b23a0b55e250981632135c2f7856c1c294b3f25ae4279a9f24d7c6ecd09b2582e3ccc2c445c58c977a066b2a119fa90a6e483b6fdbd4111942f78f07bff5535f9c3ef4172ce669ac4e324c6277eab7e8e5bb34bc198bae9c51e7b77eb553b13322e56dcf703c1afae29b67b683f48da5af624c4de058ac64341203f8b68d946324a471',
         exponent: 65537,
         authorityKeyIdentifier: '0x6a72267ad01eef7de73b6951d46c8d9f901266ab',
       },
+      // Entrust 2048 root
+      {
+        modulus:
+          '0x00ad4d4ba91286b2eaa320071516642a2b4bd1bf0b4a4d8eed8076a567b77840c07342c868c0db532bdd5eb8769835938b1a9d7c133a0e1f5bb71ecfe524141eb181a98d7db8cc6b4b03f1020cdcaba54024007f7494a19d0829b3880bf587779d55cde4c37ed76a64ab851486955b9732506f3dc8ba660ce3fcbdb849c176894919fdc0a8bd89a3672fc69fbc711960b82de92cc99076667b94e2af78d665535d3cd69cb2cf2903f92fa450b2d448ce0532558afdb2644c0ee4980775db7fdfb9085560853029f97b48a46986e3353f1e865d7a7a15bdef008e1522541700902693bc0e496891bff847d39d9542c10e4ddf6f26cfc3182162664370d6d5c007e1',
+        exponent: 65537,
+        authorityKeyIdentifier: '0x55e481d11180bed889b908a331f9a1240916b970',
+      },
     ],
     // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
     certificatePoliciesOIDs: [
-      // Entrust EV code signer
+      // Entrust EV code signer (OID Group 0)
       [
         '0x060a6086480186fa6c0a01020000000000000000000000000000000000000000',
         '0x060567810c010300000000000000000000000000000000000000000000000000',
       ],
+      // Entrust EV Document Signer (OID Group 1)
+      ['0x060a6086480186fa6c0a01060000000000000000000000000000000000000000'],
     ],
     extendedKeyUsageOIDs: [
-      // Entrust EV code signer
+      // Entrust EV code signer (OID Group 0)
       ['0x06082b0601050507030300000000000000000000000000000000000000000000'],
+      // Entrust EV Document Signer (OID Group 1)
+      [
+        '0x06096086480186fa6b280b000000000000000000000000000000000000000000',
+        '0x060a2b0601040182370a030c0000000000000000000000000000000000000000',
+      ],
     ],
   };
 }

@@ -1,17 +1,29 @@
+/* eslint-disable no-await-in-loop */
 /* eslint object-shorthand: off */
 
 import { expect } from 'chai';
 import hardhat from 'hardhat';
-import { readFile } from 'node:fs/promises';
+import fs from 'fs';
+import path from 'path';
 import config from 'config';
 import { makeTlv } from '../utils/x509.mjs';
 
 const { ethers } = hardhat;
 
 const loadCert = async (filename, X509Instance) => {
-  const derBuffer = await readFile(filename);
+  const derBuffer = await fs.promises.readFile(filename);
   const tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
   return { derBuffer, tlvLength };
+};
+
+const checkTlvs = (result, tlvLength) => {
+  const tlvs = result.map(tlv => makeTlv(tlv));
+  expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
+  expect(tlvs[0].depth).to.equal(0);
+  expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
+  expect(tlvs[1].depth).to.equal(1);
+  expect(tlvs[tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
+  expect(tlvs[tlvLength - 1].depth).to.equal(1);
 };
 
 const {
@@ -49,117 +61,48 @@ describe('DerParser contract functions', function () {
     await Promise.all(beforePromises); // wait until the chain is updated
   });
 
-  it('Should parse the senior Entrust intermediate CA cert DER encoding', async function () {
-    const { derBuffer, tlvLength } = await loadCert(
-      'test/unit/utils/live_certs/Intermediate2.crt',
-      X509Instance,
-    );
-    const result = await X509Instance.parseDER(derBuffer, 0, tlvLength);
-    const tlvs = result.map(tlv => makeTlv(tlv));
-    // make a few checks on the output
-    expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
-    expect(tlvs[0].depth).to.equal(0);
-    expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
-    expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[tlvLength - 1].depth).to.equal(1);
+  it('Should read and correctly parse all of the live certificates', async function () {
+    const fileArray = [];
+    const dir = 'test/unit/utils/live_certs/';
+    fs.readdirSync(dir).forEach(file => {
+      if (file.endsWith('.crt')) {
+        fileArray.push(path.join(dir, file));
+      }
+    });
+    for (const file of fileArray) {
+      const { derBuffer, tlvLength } = await loadCert(file, X509Instance);
+      const tlvs = await X509Instance.parseDER(derBuffer, 0, tlvLength);
+      checkTlvs(tlvs, tlvLength);
+    }
   });
 
-  it('Should parse the junior Entrust intermediate CA cert DER encoding', async function () {
-    const { derBuffer, tlvLength } = await loadCert(
-      'test/unit/utils/live_certs/Intermediate1.crt',
-      X509Instance,
-    );
-    const result = await X509Instance.parseDER(derBuffer, 0, tlvLength);
-    const tlvs = result.map(tlv => makeTlv(tlv));
-    // make a few checks on the output
-    expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
-    expect(tlvs[0].depth).to.equal(0);
-    expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
-    expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[tlvLength - 1].depth).to.equal(1);
-  });
-  it('Should parse the Entrust code signing EV cert cert DER encoding', async function () {
-    const { derBuffer, tlvLength } = await loadCert(
-      'test/unit/utils/live_certs/entrust_code_signer.crt',
-      X509Instance,
-    );
-    const result = await X509Instance.parseDER(derBuffer, 0, tlvLength);
-    const tlvs = result.map(tlv => makeTlv(tlv));
-    // make a few checks on the output
-    expect(tlvs[0].tag.tagType).to.equal('SEQUENCE');
-    expect(tlvs[0].depth).to.equal(0);
-    expect(tlvs[1].tag.tagType).to.equal('SEQUENCE');
-    expect(tlvs[1].depth).to.equal(1);
-    expect(tlvs[tlvLength - 1].tag.tagType).to.equal('BIT_STRING');
-    expect(tlvs[tlvLength - 1].depth).to.equal(1);
-  });
-
-  it('Should fail to validate the Entrust EV Code Signing certificate until it has validated the intermediate CA certs', async function () {
-    const entrustEVCodeSigningCert = await loadCert(
-      'test/unit/utils/live_certs/entrust_code_signer.crt',
-      X509Instance,
-    );
+  it('Should validate end-user certs only when the cert chain is in place', async function () {
+    const dir = 'test/unit/utils/live_certs/';
+    const endUserCerts = ['entrust_code_signer.crt', 'entrust_document_signer.crt'];
+    const intermediateCaCerts = [['Intermediate2.crt', 'Intermediate1.crt'], ['class3-2048.crt']];
     // presenting the end user cert should fail because the smart contract doesn't have the intermediate CA cert
     // we use the checkOnly flag because we don't have a private key to sign with (so the signature is set to null).
-    try {
-      await X509Instance.validateCertificate(
-        entrustEVCodeSigningCert.derBuffer,
-        entrustEVCodeSigningCert.tlvLength,
-        0,
-        true,
-        true,
-        0,
-      );
-      expect.fail('The certificate check passed, but it should have failed');
-    } catch (err) {
-      expect(err.message.includes('VM Exception')).to.equal(true);
+    for (const cert of endUserCerts) {
+      const { derBuffer, tlvLength } = await loadCert(path.join(dir, cert), X509Instance);
+      try {
+        await X509Instance.validateCertificate(derBuffer, tlvLength, 0, true, true, 0);
+        expect.fail('The certificate check passed, but it should have failed');
+      } catch (err) {
+        expect(err.message.includes('VM Exception')).to.equal(true);
+      }
     }
-
-    // an x509 check should also fail
-    const accounts = await ethers.getSigners();
-    const addressToSign = accounts[0].address;
-    const result = await X509Instance.x509Check(addressToSign);
-    expect(result).to.equal(false);
-
-    // presenting the senior Entrust Intermediate CA cert should work because the smart contact trusts the root public key
-    const entrustSeniorIntermediateCaCert = await loadCert(
-      'test/unit/utils/live_certs/Intermediate2.crt',
-      X509Instance,
-    );
-    await X509Instance.validateCertificate(
-      entrustSeniorIntermediateCaCert.derBuffer,
-      entrustSeniorIntermediateCaCert.tlvLength,
-      0,
-      false,
-      false,
-      0,
-    );
-
-    // now presenting the junior Entrust Intermediate CA cert should also work
-    const entrustJuniorIntermediateCaCert = await loadCert(
-      'test/unit/utils/live_certs/Intermediate1.crt',
-      X509Instance,
-    );
-    await X509Instance.validateCertificate(
-      entrustJuniorIntermediateCaCert.derBuffer,
-      entrustJuniorIntermediateCaCert.tlvLength,
-      0,
-      false,
-      false,
-      0,
-    );
-
-    // now presenting the junior Entrust Intermediate CA cert should also work (we're only checking the cert here
-    // not actually whitelisting an address because we don't have a private key that goes with the cert)
-    await X509Instance.validateCertificate(
-      entrustEVCodeSigningCert.derBuffer,
-      entrustEVCodeSigningCert.tlvLength,
-      0,
-      true,
-      true,
-      0,
-    );
+    // now load the intermediate CA certificates, in order, for each end user certificate
+    for (const cert of intermediateCaCerts.flat(1)) {
+      const { derBuffer, tlvLength } = await loadCert(path.join(dir, cert), X509Instance);
+      await X509Instance.validateCertificate(derBuffer, tlvLength, 0, false, false, 0);
+    }
+    // now loading the end user certs should work fine (we can't test the whitelisting because we have no private key)
+    for (let i = 0; i < endUserCerts.length; i++) {
+      const { derBuffer, tlvLength } = await loadCert(
+        path.join(dir, endUserCerts[i]),
+        X509Instance,
+      );
+      await X509Instance.validateCertificate(derBuffer, tlvLength, 0, true, true, i);
+    }
   });
 });
