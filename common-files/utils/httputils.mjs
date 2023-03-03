@@ -285,6 +285,7 @@ export const setupHttpDefaults = (
   app.use(bodyParser.json({ limit: '2mb' }));
   app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
 
+  app.use(handleCorrelationId);
   app.use(requestLogger);
 
   if (process.env.AUTHENTICATION_KEY) {
@@ -313,7 +314,6 @@ export const setupHttpDefaults = (
   // disable the hint for the framework we're using
   app.disable(`x-powered-by`);
 
-  app.use(handleCorrelationId);
   app.use(cors());
   app.use(responseLogger);
 
