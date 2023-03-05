@@ -7,14 +7,19 @@ import '@openzeppelin/hardhat-upgrades';
 import 'solidity-coverage';
 import 'hardhat-gas-reporter';
 
+const optimizerDefaultSettings = {
+  enabled: true,
+  runs: 200,
+};
+
 const config: HardhatUserConfig = {
   solidity: {
     version: '0.8.17',
     settings: {
       optimizer: {
-        enabled: true,
-        runs: 200,
+        ...optimizerDefaultSettings,
       },
+      viaIR: true,
     },
   },
   gasReporter: { enabled: true },
