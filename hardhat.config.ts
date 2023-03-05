@@ -10,6 +10,20 @@ import 'hardhat-gas-reporter';
 const optimizerDefaultSettings = {
   enabled: true,
   runs: 200,
+  details: {
+    peephole: true,
+    inliner: true,
+    jumpdestRemover: true,
+    orderLiterals: true,
+    deduplicate: true,
+    cse: true,
+    constantOptimizer: true,
+    yulDetails: {
+      stackAllocation: true,
+      optimizerSteps:
+        'dhfoDgvulfnTUtnIf[xa[r]EscLMcCTUtTOntnfDIulLculVcul [j]Tpeulxa[rul]xa[r]cLgvifCTUca[r]LSsTOtfDnca[r]Iulc]jmul[jul] VcTOcul jmul',
+    },
+  },
 };
 
 const config: HardhatUserConfig = {
