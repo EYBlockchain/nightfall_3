@@ -9,7 +9,7 @@ import 'hardhat-gas-reporter';
 
 const optimizerDefaultSettings = {
   enabled: true,
-  runs: 200,
+  runs: 10000,
   details: {
     peephole: true,
     inliner: true,
