@@ -189,7 +189,7 @@ library Utils {
     }
 
     function calculateMerkleRoot(bytes32[] memory leaves) public pure returns (bytes32 result) {
-        assembly {
+        assembly ("memory-safe") {
             let length := mload(leaves)
             let leavesPos := add(leaves, 0x20)
             let transactionHashesPos := mload(0x40)
@@ -253,7 +253,7 @@ library Utils {
         uint256 _e,
         uint256 _m
     ) internal returns (uint256 result) {
-        assembly {
+        assembly ("memory-safe") {
             // Free memory pointer
             let pointer := mload(0x40)
             // Define length of base, exponent and modulus. 0x20 == 32 bytes

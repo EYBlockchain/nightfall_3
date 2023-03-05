@@ -65,7 +65,7 @@ library Pairing {
         input[3] = p2.Y;
         bool success;
         // solium-disable-next-line security/no-inline-assembly
-        assembly {
+        assembly ("memory-safe") {
             success := staticcall(sub(gas(), 2000), 6, input, 0xc0, r, 0x60)
             // Use "invalid" to make gas estimation work
             switch success
@@ -85,7 +85,7 @@ library Pairing {
         input[2] = s;
         bool success;
         // solium-disable-next-line security/no-inline-assembly
-        assembly {
+        assembly ("memory-safe") {
             success := staticcall(sub(gas(), 2000), 7, input, 0x80, r, 0x60)
             // Use "invalid" to make gas estimation work
             switch success
@@ -209,7 +209,7 @@ library Pairing {
         uint256[1] memory out;
         bool success;
         // solium-disable-next-line security/no-inline-assembly
-        assembly {
+        assembly ("memory-safe") {
             success := staticcall(
                 sub(gas(), 2000),
                 8,

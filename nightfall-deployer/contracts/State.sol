@@ -128,7 +128,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         uint256 blockSlots = BLOCK_STRUCTURE_SLOTS; //Number of slots that the block structure has
         uint256 maxBlockSize = MAX_BLOCK_SIZE;
 
-        assembly {
+        assembly ("memory-safe") {
             //Function that calculates the height of the Merkle Tree
             function getTreeHeight(leaves) -> _height {
                 _height := 1

@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 library Poseidon
 {
     function poseidon(uint256 t1, uint256 t2) public pure returns (uint256 t0){
-        assembly {   
+        assembly ("memory-safe") {   
             let q:= 21888242871839275222246405745257275088548364400416034343698204186575808495617         
             function mix(_t0,_t1, _t2) -> nt0, nt1, nt2 {
                 nt0 := addmod(addmod(

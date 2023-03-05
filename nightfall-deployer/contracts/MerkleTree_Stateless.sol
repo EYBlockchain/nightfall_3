@@ -77,7 +77,7 @@ library MerkleTree_Stateless {
 
         uint256 slot = 0;
 
-        assembly {
+        assembly ("memory-safe") {
 
             let x := mload(0x40)
 
@@ -176,7 +176,7 @@ library MerkleTree_Stateless {
 
         uint256 slot = 0;
 
-        assembly {
+        assembly ("memory-safe") {
 
             let x := mload(0x40)
 
