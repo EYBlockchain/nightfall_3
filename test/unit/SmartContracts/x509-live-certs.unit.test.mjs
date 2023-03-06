@@ -102,6 +102,7 @@ describe('DerParser contract functions', function () {
       ['entrust/Intermediate2.crt', 'entrust/Intermediate1.crt'],
       ['entrust/class3-2048.crt'],
       ['ey/EYBlockchain_intermediate.crt'],
+      ['digicert/DigicertEVCodeSigningCA-SHA2.crt'],
     ];
     // presenting the end user cert should fail because the smart contract doesn't have the intermediate CA cert
     // we use the checkOnly flag because we don't have a private key to sign with (so the signature is set to null).

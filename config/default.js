@@ -80,6 +80,13 @@ function getLiveX509Params() {
         exponent: 65537,
         authorityKeyIdentifier: '0x148e058f14da7f94e7b0e5dd232885c4dbc9f722',
       },
+      {
+        // DigiCert High Assurance EV Root CA
+        modulus:
+          '0x00c6cce573e6fbd4bbe52d2d32a6dfe5813fc9cd2549b6712ac3d5943467a20a1cb05f69a640b1c4b7b28fd098a4a941593ad3dc94d63cdb7438a44acc4d2582f74aa5531238eef3496d71917e63b6aba65fc3a484f84f6251bef8c5ecdb3892e306e508910cc4284155fbcb5a89157e71e835bf4d72093dbe3a38505b77311b8db3c724459aa7ac6d00145a04b7ba13eb510a984141224e656187814150a6795c89de194a57d52ee65d1c532c7e98cd1a0616a46873d03404135ca171d35a7c55db5e64e13787305604e511b4298012f1793988a202117c2766b788b778f2ca0aa838ab0a64c2bf665d9584c1a1251e875d1a500b2012cc41bb6e0b5138b84bcb',
+        exponent: 65537,
+        authorityKeyIdentifier: '0xb13ec36903f8bf4701d498261a0802ef63642bc3',
+      },
     ],
     // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
     certificatePoliciesOIDs: [
@@ -92,6 +99,8 @@ function getLiveX509Params() {
       ['0x060a6086480186fa6c0a01060000000000000000000000000000000000000000'],
       // EY end user
       ['0x060a2b060104018f752a01020000000000000000000000000000000000000000'],
+      // Digicert EV code signer
+      ['0x060567810c010300000000000000000000000000000000000000000000000000'],
     ],
     extendedKeyUsageOIDs: [
       // Entrust EV code signer (OID Group 0)
@@ -103,6 +112,8 @@ function getLiveX509Params() {
       ],
       // EY end user
       ['0x060a2b060104018f752a01010000000000000000000000000000000000000000'],
+      // Digicert EV code signer (code siging OID)
+      ['0x06082b0601050507030300000000000000000000000000000000000000000000'],
     ],
   };
 }
