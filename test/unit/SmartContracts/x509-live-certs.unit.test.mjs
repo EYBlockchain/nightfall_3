@@ -29,18 +29,12 @@ const checkTlvs = (result, tlvLength) => {
 // function to extract the files from a directory and its subdirectories
 const extractFiles = directory => {
   const fileArray = [];
-  // Get the list of files in the directory and store it in a variable
   const files = fs.readdirSync(directory);
-  // Loop through each file in the directory
   for (let i = 0; i < files.length; i++) {
-    // Create a path variable to store the full path of each file
     const dir = path.join(directory, files[i]);
-    // Check if the file is a directory or not
     if (fs.statSync(dir).isDirectory()) {
-      // If it is a directory, call this function again with the new path as an argument to get all the files in that subdirectory as well
       extractFiles(dir);
     } else {
-      // If it is not a directory, add it to our array of files.
       fileArray.push(dir);
     }
   }
