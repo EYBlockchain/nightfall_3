@@ -26,6 +26,27 @@ const checkTlvs = (result, tlvLength) => {
   expect(tlvs[tlvLength - 1].depth).to.equal(1);
 };
 
+// function to extract the files from a directory and its subdirectories
+const extractFiles = directory => {
+  const fileArray = [];
+  // Get the list of files in the directory and store it in a variable
+  const files = fs.readdirSync(directory);
+  // Loop through each file in the directory
+  for (let i = 0; i < files.length; i++) {
+    // Create a path variable to store the full path of each file
+    const dir = path.join(directory, files[i]);
+    // Check if the file is a directory or not
+    if (fs.statSync(dir).isDirectory()) {
+      // If it is a directory, call this function again with the new path as an argument to get all the files in that subdirectory as well
+      extractFiles(dir);
+    } else {
+      // If it is not a directory, add it to our array of files.
+      fileArray.push(dir);
+    }
+  }
+  return fileArray;
+};
+
 const {
   X509: {
     live: { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS },
@@ -62,13 +83,7 @@ describe('DerParser contract functions', function () {
   });
 
   it('Should read and correctly parse all of the live certificates', async function () {
-    const fileArray = [];
-    const dir = 'test/unit/utils/live_certs/';
-    fs.readdirSync(dir).forEach(file => {
-      if (file.endsWith('.crt')) {
-        fileArray.push(path.join(dir, file));
-      }
-    });
+    const fileArray = extractFiles('test/unit/utils/live_certs/');
     for (const file of fileArray) {
       const { derBuffer, tlvLength } = await loadCert(file, X509Instance);
       const tlvs = await X509Instance.parseDER(derBuffer, 0, tlvLength);
@@ -78,8 +93,16 @@ describe('DerParser contract functions', function () {
 
   it('Should validate end-user certs only when the cert chain is in place', async function () {
     const dir = 'test/unit/utils/live_certs/';
-    const endUserCerts = ['entrust_code_signer.crt', 'entrust_document_signer.crt'];
-    const intermediateCaCerts = [['Intermediate2.crt', 'Intermediate1.crt'], ['class3-2048.crt']];
+    const endUserCerts = [
+      'entrust/entrust_code_signer.crt',
+      'entrust/entrust_document_signer.crt',
+      'ey/EYblockchain_end_user.crt',
+    ];
+    const intermediateCaCerts = [
+      ['entrust/Intermediate2.crt', 'entrust/Intermediate1.crt'],
+      ['entrust/class3-2048.crt'],
+      ['ey/EYBlockchain_intermediate.crt'],
+    ];
     // presenting the end user cert should fail because the smart contract doesn't have the intermediate CA cert
     // we use the checkOnly flag because we don't have a private key to sign with (so the signature is set to null).
     for (const cert of endUserCerts) {
