@@ -65,12 +65,30 @@ resource "aws_security_group" "performance_test" {
   name        = "performance-test-security-group"
   vpc_id      = aws_vpc.performance_test.id
 
-  ingress {
-    protocol    = "tcp"
-    from_port   = 80
-    to_port     = 80
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  ingress = [
+    {
+      description      = ""
+      protocol         = "tcp"
+      from_port        = 22
+      to_port          = 22
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+      cidr_blocks      = [ "0.0.0.0/0" ]
+    },
+    {
+      description      = ""
+      protocol         = "tcp"
+      from_port        = 8091
+      to_port          = 8091
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+      cidr_blocks      = [ "0.0.0.0/0" ]
+    }
+  ]
 
   egress {
     from_port = 0
@@ -86,27 +104,3 @@ resource "aws_lb" "performance_test" {
   security_groups = [aws_security_group.performance_test.id]
   idle_timeout    = 300
 }
-
-#resource "aws_lb_target_group" "performance_test" {
-#  name        = "performance-test-target-group"
-#  port        = 80
-#  protocol    = "HTTP"
-#  vpc_id      = aws_vpc.performance_test.id
-#  target_type = "ip"
-#
-#  health_check {
-#    path = "/"
-#    mamatcher = "200-499"
-#  }
-#}
-#
-#resource "aws_lb_listener" "performance_test" {
-#  load_balancer_arn = aws_lb.performance_test.id
-#  port              = "80"
-#  protocol          = "HTTP"
-#
-#  default_action {
-#    target_group_arn = aws_lb_target_group.performance_test.id
-#    type             = "forward"
-#  }
-#}
