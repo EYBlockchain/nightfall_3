@@ -1,0 +1,294 @@
+## Tests run using rapidsnark
+
+Deposit
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking performance-test-lb-565915495.eu-west-2.elb.amazonaws.com (be patient).....done
+
+
+Server Software:        
+Server Hostname:        performance-test-lb-565915495.eu-west-2.elb.amazonaws.com
+Server Port:            80
+
+Document Path:          /generate-proof
+Document Length:        1015 bytes
+
+Concurrency Level:      10
+Time taken for tests:   59.874 seconds
+Complete requests:      100
+Failed requests:        77
+   (Connect: 0, Receive: 0, Length: 77, Exceptions: 0)
+Non-2xx responses:      3
+Total transferred:      125831 bytes
+Total body sent:        103100
+HTML transferred:       98706 bytes
+Requests per second:    1.67 [#/sec] (mean)
+Time per request:       5987.403 [ms] (mean)
+Time per request:       598.740 [ms] (mean, across all concurrent requests)
+Transfer rate:          2.05 [Kbytes/sec] received
+                        1.68 kb/s sent
+                        3.73 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       54   62   4.2     61      79
+Processing:   692 5768 2328.4   5841   11368
+Waiting:      687 5768 2328.5   5838   11368
+Total:        750 5830 2329.5   5903   11432
+
+Percentage of the requests served within a certain time (ms)
+  50%   5903
+  66%   6859
+  75%   7449
+  80%   7655
+  90%   8756
+  95%   9824
+  98%  11129
+  99%  11432
+ 100%  11432 (longest request)
+
+Transfer
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking performance-test-lb-565915495.eu-west-2.elb.amazonaws.com (be patient).....done
+
+
+Server Software:        
+Server Hostname:        performance-test-lb-565915495.eu-west-2.elb.amazonaws.com
+Server Port:            80
+
+Document Path:          /generate-proof
+Document Length:        2073 bytes
+
+Concurrency Level:      10
+Time taken for tests:   686.077 seconds
+Complete requests:      100
+Failed requests:        98
+   (Connect: 0, Receive: 0, Length: 98, Exceptions: 0)
+Non-2xx responses:      2
+Total transferred:      231025 bytes
+Total body sent:        490900
+HTML transferred:       203775 bytes
+Requests per second:    0.15 [#/sec] (mean)
+Time per request:       68607.704 [ms] (mean)
+Time per request:       6860.770 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.33 [Kbytes/sec] received
+                        0.70 kb/s sent
+                        1.03 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       54   61   4.6     61      86
+Processing:   562 66009 30184.9  65334  134689
+Waiting:      562 66008 30184.8  65332  134689
+Total:        627 66070 30185.1  65395  134746
+
+Percentage of the requests served within a certain time (ms)
+  50%  65395
+  66%  73627
+  75%  90208
+  80%  95775
+  90%  110732
+  95%  123085
+  98%  132357
+  99%  134746
+ 100%  134746 (longest request)
+Withdraw
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking performance-test-lb-565915495.eu-west-2.elb.amazonaws.com (be patient).....done
+
+
+Server Software:        
+Server Hostname:        performance-test-lb-565915495.eu-west-2.elb.amazonaws.com
+Server Port:            80
+
+Document Path:          /generate-proof
+Document Length:        1580 bytes
+
+Concurrency Level:      10
+Time taken for tests:   643.033 seconds
+Complete requests:      100
+Failed requests:        75
+   (Connect: 0, Receive: 0, Length: 75, Exceptions: 0)
+Non-2xx responses:      2
+Total transferred:      182224 bytes
+Total body sent:        350700
+HTML transferred:       154974 bytes
+Requests per second:    0.16 [#/sec] (mean)
+Time per request:       64303.307 [ms] (mean)
+Time per request:       6430.331 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.28 [Kbytes/sec] received
+                        0.53 kb/s sent
+                        0.81 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       54   63  12.1     61     175
+Processing:  1428 61758 26747.3  60959  117450
+Waiting:     1423 61757 26747.5  60959  117450
+Total:       1492 61820 26747.0  61022  117510
+
+Percentage of the requests served within a certain time (ms)
+  50%  61022
+  66%  73422
+  75%  82014
+  80%  87656
+  90%  99841
+  95%  111003
+  98%  116398
+  99%  117510
+ 100%  117510 (longest request)
+
+Burn
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking performance-test-lb-565915495.eu-west-2.elb.amazonaws.com (be patient).....done
+
+
+Server Software:        
+Server Hostname:        performance-test-lb-565915495.eu-west-2.elb.amazonaws.com
+Server Port:            80
+
+Document Path:          /generate-proof
+Document Length:        1381 bytes
+
+Concurrency Level:      10
+Time taken for tests:   452.154 seconds
+Complete requests:      100
+Failed requests:        82
+   (Connect: 0, Receive: 0, Length: 82, Exceptions: 0)
+Non-2xx responses:      1
+Total transferred:      164331 bytes
+Total body sent:        282400
+HTML transferred:       136956 bytes
+Requests per second:    0.22 [#/sec] (mean)
+Time per request:       45215.368 [ms] (mean)
+Time per request:       4521.537 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.35 [Kbytes/sec] received
+                        0.61 kb/s sent
+                        0.96 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       52   63  15.3     61     205
+Processing:  2396 43637 20238.9  40446   89630
+Waiting:     2396 43636 20239.1  40444   89630
+Total:       2458 43700 20237.7  40505   89684
+
+Percentage of the requests served within a certain time (ms)
+  50%  40505
+  66%  53631
+  75%  60170
+  80%  64721
+  90%  75465
+  95%  77193
+  98%  80183
+  99%  89684
+ 100%  89684 (longest request)
+
+Transform
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking performance-test-lb-565915495.eu-west-2.elb.amazonaws.com (be patient).....done
+
+
+Server Software:        
+Server Hostname:        performance-test-lb-565915495.eu-west-2.elb.amazonaws.com
+Server Port:            80
+
+Document Path:          /generate-proof
+Document Length:        1494 bytes
+
+Concurrency Level:      10
+Time taken for tests:   634.538 seconds
+Complete requests:      100
+Failed requests:        87
+   (Connect: 0, Receive: 0, Length: 87, Exceptions: 0)
+Non-2xx responses:      2
+Total transferred:      173739 bytes
+Total body sent:        390000
+HTML transferred:       146489 bytes
+Requests per second:    0.16 [#/sec] (mean)
+Time per request:       63453.847 [ms] (mean)
+Time per request:       6345.385 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.27 [Kbytes/sec] received
+                        0.60 kb/s sent
+                        0.87 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       53   61   4.0     61      72
+Processing:  2332 60867 26310.3  55434  130192
+Waiting:     2331 60866 26310.1  55434  130192
+Total:       2390 60928 26310.9  55504  130253
+
+Percentage of the requests served within a certain time (ms)
+  50%  55504
+  66%  68404
+  75%  79228
+  80%  84379
+  90%  102454
+  95%  109634
+  98%  124538
+  99%  130253
+ 100%  130253 (longest request)
+
+Tonenise
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking performance-test-lb-565915495.eu-west-2.elb.amazonaws.com (be patient).....done
+
+
+Server Software:        
+Server Hostname:        performance-test-lb-565915495.eu-west-2.elb.amazonaws.com
+Server Port:            80
+
+Document Path:          /generate-proof
+Document Length:        1220 bytes
+
+Concurrency Level:      10
+Time taken for tests:   368.568 seconds
+Complete requests:      100
+Failed requests:        92
+   (Connect: 0, Receive: 0, Length: 92, Exceptions: 0)
+Non-2xx responses:      1
+Total transferred:      148486 bytes
+Total body sent:        229600
+HTML transferred:       121111 bytes
+Requests per second:    0.27 [#/sec] (mean)
+Time per request:       36856.777 [ms] (mean)
+Time per request:       3685.678 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.39 [Kbytes/sec] received
+                        0.61 kb/s sent
+                        1.00 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       53   61   4.8     61      78
+Processing:  1885 35533 17793.2  31701   77502
+Waiting:     1885 35532 17793.2  31699   77496
+Total:       1955 35595 17793.4  31760   77561
+
+Percentage of the requests served within a certain time (ms)
+  50%  31760
+  66%  43419
+  75%  48240
+  80%  54576
+  90%  60020
+  95%  67586
+  98%  76630
+  99%  77561
+ 100%  77561 (longest request)

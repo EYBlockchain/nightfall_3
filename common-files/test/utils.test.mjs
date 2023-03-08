@@ -122,12 +122,12 @@ describe('Utils tests', function () {
     assert.deepEqual(result, OBFUSCATED_OBJECT);
   });
 
-  it('Should obfuscate for the Dev environment', () => {
-    process.env.NODE_ENV = 'developer';
+  it('Should not obfuscate for local environment', () => {
+    process.env.ENVIRONMENT = 'test';
 
     const result = obfuscate(OBJECT_TO_OBFUSCATE, OBFUSCATION_SETTINGS_TEST);
 
-    assert.deepEqual(result, OBFUSCATED_OBJECT);
+    assert.deepEqual(result, OBJECT_TO_OBFUSCATE);
   });
 
   it('Should raise an error if ObfuscationSettings is not an object', () => {

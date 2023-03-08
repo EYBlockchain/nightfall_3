@@ -11,6 +11,11 @@ const {
   DEPLOYMENT_FILES_URL: { CIRCUIT_FILES_URL = '' },
 } = config;
 
+/**
+ * 
+ * 
+ * 
+ */
 export async function checkContractsABI() {
   if (CONTRACT_FILES_URL) {
     const baseUrl = CONTRACT_FILES_URL;
@@ -65,6 +70,11 @@ export async function checkContractsABI() {
   }
 }
 
+
+/**
+ * 
+ * 
+ */
 async function getCircuitNames() {
   const circuits = [];
   const baseUrl = CIRCUIT_FILES_URL;
@@ -79,6 +89,10 @@ async function getCircuitNames() {
   return circuits;
 }
 
+/**
+ * 
+ * 
+ */
 export async function checkCircuits() {
   if (CIRCUIT_FILES_URL) {
     const baseUrl = CIRCUIT_FILES_URL;

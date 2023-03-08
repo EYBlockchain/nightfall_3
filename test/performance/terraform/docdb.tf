@@ -1,5 +1,6 @@
 
 resource "aws_security_group" "performance_test_docdb_sg" {
+  count  = var.DEPLOY_CLIENT == "true" || var.DEPLOY_OPTIMIST == "true" ? 1 : 0
   vpc_id = aws_vpc.performance_test.id
   name   = "performance-test-docdb-sg"
 
@@ -40,6 +41,7 @@ resource "aws_security_group" "performance_test_docdb_sg" {
 }
 
 resource "aws_docdb_subnet_group" "performance_test" {
+  count      = var.DEPLOY_CLIENT == "true" || var.DEPLOY_OPTIMIST == "true" ? 1 : 0
   name       = "performance_test-subnet-group"
   subnet_ids = aws_subnet.performance_test_public.*.id
 
@@ -50,19 +52,20 @@ resource "aws_docdb_subnet_group" "performance_test" {
 }
 
 resource "aws_docdb_cluster" "performance_test" {
+  count                = var.DEPLOY_CLIENT == "true" || var.DEPLOY_OPTIMIST == "true" ? 1 : 0
   cluster_identifier   = "performance-test-docdb-cluster"
   engine               = "docdb"
   master_username      = "xpto"
   master_password      = "PerfTesting"
   skip_final_snapshot  = true
-  vpc_security_group_ids = [ aws_security_group.performance_test_docdb_sg.id ]
-  db_subnet_group_name = aws_docdb_subnet_group.performance_test.name
+  vpc_security_group_ids = [ aws_security_group.performance_test_docdb_sg[0].id ]
+  db_subnet_group_name = aws_docdb_subnet_group.performance_test[0].name
 }
 
 resource "aws_docdb_cluster_instance" "performance_test" {
-  count              = 1
+  count              = var.DEPLOY_CLIENT == "true" || var.DEPLOY_OPTIMIST == "true" ? 1 : 0
   identifier         = "docdb-cluster-nf-${count.index}"
-  cluster_identifier = aws_docdb_cluster.performance_test.id
+  cluster_identifier = aws_docdb_cluster.performance_test[0].id
   instance_class     = "db.r5.large"
   availability_zone  = data.aws_availability_zones.performance_test.names[count.index]
 }

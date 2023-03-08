@@ -1,0 +1,150 @@
+
+Deposit
+
+Concurrency Level: 10
+Time taken for tests: 1165.860 seconds
+Complete requests: 100
+Total transferred: 127220 bytes
+Requests per second: 0.09 [#/sec] (mean)
+Time per request: 116585.984 [ms] (mean)
+Time per request: 11658.598 [ms] (mean, across all concurrent requests)
+Transfer rate:          
+0.11 [Kbytes/sec] received
+0.09 kb/s sent
+0.19 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%  119692
+  66%  124927
+  75%  126759
+  80%  128825
+  90%  133286
+  95%  134756
+  98%  136950
+  99%  142747
+ 100%  142747 (longest request)
+
+--
+Transfer
+Time taken for tests: 1298.004 seconds
+Complete requests: 100
+Non-2xx responses: 2
+Total transferred: 229443 bytes
+Requests per second: 0.08 [#/sec] (mean)
+Time per request: 129800.379 [ms] (mean)
+Time per request: 12980.038 [ms] (mean, across all concurrent requests)
+Transfer rate:
+0.17 [Kbytes/sec] received
+0.37 kb/s sent
+0.54 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%  132914
+  66%  135637
+  75%  138213
+  80%  139756
+  90%  145409
+  95%  148176
+  98%  152575
+  99%  152987
+ 100%  152987 (longest request)
+
+--
+Withdraw
+Time taken for tests:   1297.634 seconds
+Complete requests:      100
+Non-2xx responses:      1
+Total transferred:      182274 bytes
+Requests per second:    0.08 [#/sec] (mean)
+Time per request:       129763.354 [ms] (mean)
+Time per request:       12976.335 [ms] (mean, across all concurrent requests)
+Transfer rate:
+0.14 [Kbytes/sec] received
+0.26 kb/s sent
+0.40 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%  130639
+  66%  135552
+  75%  137220
+  80%  138107
+  90%  140142
+  95%  144689
+  98%  148480
+  99%  151247
+ 100%  151247 (longest request)
+
+--
+Burn
+Time taken for tests: 1274.169 seconds
+Complete requests: 100
+Total transferred: 164086 bytes
+Requests per second: 0.08 [#/sec] (mean)
+Time per request: 127416.859 [ms] (mean)
+Time per request: 12741.686 [ms] (mean, across all concurrent requests)
+Transfer rate:
+0.13 [Kbytes/sec] received
+0.22 kb/s sent
+0.34 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%  128410
+  66%  131278
+  75%  133018
+  80%  134157
+  90%  137523
+  95%  143551
+  98%  146639
+  99%  147152
+ 100%  147152 (longest request)
+
+
+Tonenise
+Transform
+This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking performance-test-lb-565915495.eu-west-2.elb.amazonaws.com (be patient).....done
+
+
+Server Software:        
+Server Hostname:        performance-test-lb-565915495.eu-west-2.elb.amazonaws.com
+Server Port:            80
+
+Document Path:          /generate-proof
+Document Length:        1476 bytes
+
+Concurrency Level:      10
+Time taken for tests:   1306.447 seconds
+Complete requests:      100
+Failed requests:        68
+   (Connect: 0, Receive: 0, Length: 68, Exceptions: 0)
+Non-2xx responses:      1
+Total transferred:      173615 bytes
+Total body sent:        390000
+HTML transferred:       146240 bytes
+Requests per second:    0.08 [#/sec] (mean)
+Time per request:       130644.667 [ms] (mean)
+Time per request:       13064.467 [ms] (mean, across all concurrent requests)
+Transfer rate:          0.13 [Kbytes/sec] received
+                        0.29 kb/s sent
+                        0.42 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:       53   62   8.8     60     138
+Processing:  2002 128119 21770.4 133218  152930
+Waiting:     2002 128118 21770.3 133216  152930
+Total:       2060 128181 21771.5 133282  152987
+
+Percentage of the requests served within a certain time (ms)
+  50%  133282
+  66%  136613
+  75%  139060
+  80%  140085
+  90%  144786
+  95%  148940
+  98%  152233
+  99%  152987
+ 100%  152987 (longest request)

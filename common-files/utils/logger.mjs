@@ -6,6 +6,7 @@ import config from 'config';
 import pino from 'pino';
 import { isLocal } from './utils.mjs';
 import correlator from './correlation-id.mjs';
+import { pid } from 'node:process';
 
 const LOGGER_TIME_STRING = 'yyyy-mm-dd HH:MM:ss.l';
 
@@ -23,7 +24,7 @@ const getInstance = () => {
       },
     },
     mixin() {
-      return { correlationId: correlator.getId() };
+      return { correlationId: correlator.getId(), pid: pid };
     },
     mixinMergeStrategy(mergeObject, mixinObject) {
       return Object.assign(mergeObject, mixinObject);
@@ -39,7 +40,7 @@ const getInstance = () => {
       target: 'pino-pretty',
       options: {
         colorize: true,
-        ignore: 'pid,hostname,filename',
+        ignore: 'hostname,filename',
         translateTime: LOGGER_TIME_STRING,
       },
     },

@@ -2,14 +2,14 @@
 FROM ghcr.io/eyblockchain/local-circom as builder
 FROM ghcr.io/eyblockchain/local-rapidsnark as rapidsnark
 
-FROM node:16.17-bullseye-slim
+FROM ubuntu:22.04
 
-# 'node-gyp' requires 'python3', 'make' and 'g++''
-# entrypoint script requires 'netcat'
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-    python3 make g++ netcat-openbsd build-essential libgmp-dev libsodium-dev nasm \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y
+RUN apt-get install -y netcat curl
+RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
+RUN apt-get install -y nodejs gcc g++ make
+
+RUN npm install pm2 -g
 
 EXPOSE 80
 
@@ -26,6 +26,7 @@ COPY config/default.js config/default.js
 COPY /nightfall-deployer/circuits circuits
 COPY --from=builder /app/circom/target/release/circom /app/circom
 COPY --from=rapidsnark /app/rapidsnark/build/prover /app/prover
+COPY proof /app/proof
 COPY ./worker/package.json ./worker/package-lock.json ./
 COPY ./worker/src ./src
 COPY ./worker/start-script ./start-script

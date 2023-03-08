@@ -29,6 +29,8 @@ export const isLocal = () => {
  *  HALF - ofuscate the second half of the content (e.g. 'private_key': 'HALF')
  */
 export const obfuscate = (object, obfuscationSettings) => {
+  if (isLocal()) return object;
+
   if (!obfuscationSettings) {
     throw new Error('Param obfuscationSettings is required!');
   }

@@ -69,8 +69,8 @@ resource "aws_security_group" "performance_test" {
     {
       description      = ""
       protocol         = "tcp"
-      from_port        = 22
-      to_port          = 22
+      from_port        = 80
+      to_port          = 80
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       security_groups  = []
@@ -80,8 +80,30 @@ resource "aws_security_group" "performance_test" {
     {
       description      = ""
       protocol         = "tcp"
-      from_port        = 8091
-      to_port          = 8091
+      from_port        = 8545
+      to_port          = 8545
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+      cidr_blocks      = [ "0.0.0.0/0" ]
+    },
+    {
+      description      = ""
+      protocol         = "tcp"
+      from_port        = 8546
+      to_port          = 8546
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+      cidr_blocks      = [ "0.0.0.0/0" ]
+    },
+    {
+      description      = ""
+      protocol         = "tcp"
+      from_port        = 8080
+      to_port          = 8080
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       security_groups  = []
@@ -98,9 +120,3 @@ resource "aws_security_group" "performance_test" {
   }
 }
 
-resource "aws_lb" "performance_test" {
-  name            = "performance-test-lb"
-  subnets         = aws_subnet.performance_test_public.*.id
-  security_groups = [aws_security_group.performance_test.id]
-  idle_timeout    = 300
-}

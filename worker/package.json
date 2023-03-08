@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "start": "node ./src/index.mjs",
-    "dev": "nodemon ./src/index.mjs --ignore './output/**' --ignore '**/*.params' --ignore '**/abi.json' --ignore '**/mpc_params/**' --ignore '**/*_out'",
+    "dev": "node ./src/index.mjs",
     "setup": "./bin/setup.sh",
     "test": "mocha"
   },
@@ -34,7 +34,7 @@
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "mocha": "^10.0.0",
-    "nodemon": "^2.0.19",
+    "pm2": "^5.2.2",
     "url-parse": "^1.5.9"
   },
   "nodemonConfig": {

@@ -1,0 +1,154 @@
+### Tests run using PM2
+
+Deposit
+
+Time taken for tests:   58.420 seconds
+Complete requests:      100
+Non-2xx responses:      3
+Total transferred:      125850 bytes
+Requests per second:    1.71 [#/sec] (mean)
+Time per request:       5841.978 [ms] (mean)
+Time per request:       584.198 [ms] (mean, across all concurrent requests)
+Transfer rate:
+2.10 [Kbytes/sec] received
+1.72 kb/s sent
+3.83 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%   5517
+  66%   6806
+  75%   7373
+  80%   8455
+  90%   9217
+  95%   9534
+  98%  11581
+  99%  11942
+ 100%  11942 (longest request)
+
+
+Transfer
+
+Time taken for tests:   620.132 seconds
+Complete requests:      100
+Non-2xx responses:      2
+Total transferred:      231030 bytes
+Requests per second:    0.16 [#/sec] (mean)
+Time per request:       62013.243 [ms] (mean)
+Time per request:       6201.324 [ms] (mean, across all concurrent requests)
+Transfer rate:
+0.36 [Kbytes/sec] received
+0.77 kb/s sent
+1.14 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%  54990
+  66%  69632
+  75%  85196
+  80%  86938
+  90%  96874
+  95%  108898
+  98%  117871
+  99%  120006
+ 100%  120006 (longest request)
+
+
+Withdraw
+Time taken for tests:   576.858 seconds
+Complete requests:      100
+Non-2xx responses:      2
+Total transferred:      182239 bytes
+Requests per second:    0.17 [#/sec] (mean)
+Time per request:       57685.786 [ms] (mean)
+Time per request:       5768.579 [ms] (mean, across all concurrent requests)
+Transfer rate:
+0.31 [Kbytes/sec] received
+0.59 kb/s sent
+0.90 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%  47567
+  66%  60880
+  75%  89033
+  80%  94882
+  90%  105294
+  95%  110174
+  98%  116455
+  99%  119734
+ 100%  119734 (longest request)
+
+
+Burn
+
+Time taken for tests:   403.039 seconds
+Complete requests:      100
+Non-2xx responses:      2
+Total transferred:      162895 bytes
+Requests per second:    0.25 [#/sec] (mean)
+Time per request:       40303.888 [ms] (mean)
+Time per request:       4030.389 [ms] (mean, across all concurrent requests)
+Transfer rate:
+0.39 [Kbytes/sec] received
+0.68 kb/s sent
+1.08 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%  39260
+  66%  47667
+  75%  51071
+  80%  52543
+  90%  59062
+  95%  62055
+  98%  65306
+  99%  71978
+ 100%  71978 (longest request)
+
+
+Tonenise
+
+Time taken for tests:   340.963 seconds
+Complete requests:      100
+Total transferred:      149687 bytes
+Requests per second:    0.29 [#/sec] (mean)
+Time per request:       34096.305 [ms] (mean)
+Time per request:       3409.631 [ms] (mean, across all concurrent requests)
+Transfer rate:
+0.43 [Kbytes/sec] received
+0.66 kb/s sent
+1.09 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%  33170
+  66%  38346
+  75%  40744
+  80%  43237
+  90%  60813
+  95%  65354
+  98%  66239
+  99%  67536
+ 100%  67536 (longest request)
+
+
+Transform
+
+Time taken for tests:   573.367 seconds
+Complete requests:      100
+Non-2xx responses:      1
+Total transferred:      175194 bytes
+Requests per second:    0.17 [#/sec] (mean)
+Time per request:       57336.740 [ms] (mean)
+Time per request:       5733.674 [ms] (mean, across all concurrent requests)
+Transfer rate:
+0.30 [Kbytes/sec] received
+0.66 kb/s sent
+0.96 kb/s total
+
+Percentage of the requests served within a certain time (ms)
+  50%  46054
+  66%  59921
+  75%  73919
+  80%  86430
+  90%  112480
+  95%  117815
+  98%  121480
+  99%  123346
+ 100%  123346 (longest request)
