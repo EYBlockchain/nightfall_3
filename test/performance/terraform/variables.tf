@@ -17,6 +17,12 @@ variable "ECS_TASK_ROLE" {
 
 variable "TOTAL_INSTANCES_SUBNET" {}
 
+variable "DEPLOY_CLIENT" {
+  default = "true"
+}
+variable "PORT_CLIENT" {
+  default = "8080"
+}
 variable "TOTAL_INSTANCES_CLIENT" {
   default = "2"
 }
@@ -27,6 +33,12 @@ variable "TOTAL_MEMORY_CLIENT" {
   default = "4096"
 }
 
+variable "DEPLOY_WORKER" {
+  default = "true"
+}
+variable "PORT_WORKER" {
+  default = "8081"
+}
 variable "TOTAL_INSTANCES_WORKER" {
   default = "1"
 }
@@ -37,6 +49,16 @@ variable "TOTAL_MEMORY_WORKER" {
   default = "4096"
 }
 
+variable "LAUNCH_TYPE_WORKER" {
+  default = "FARGATE"
+}
+
+variable "DEPLOY_OPTIMIST" {
+  default = "true"
+}
+variable "PORT_OPTIMIST" {
+  default = "8082"
+}
 variable "TOTAL_INSTANCES_OPTIMIST" {
   default = "1"
 }
@@ -47,6 +69,12 @@ variable "TOTAL_MEMORY_OPTIMIST" {
   default = "4096"
 }
 
+variable "DEPLOY_PROPOSER" {
+  default = "true"
+}
+variable "PORT_PROPOSER" {
+  default = "8083"
+}
 variable "TOTAL_INSTANCES_PROPOSER" {
   default = "1"
 }
@@ -57,6 +85,9 @@ variable "TOTAL_MEMORY_PROPOSER" {
   default = "4096"
 }
 
+variable "DEPLOY_BLOCKCHAIN" {
+  default = "true"
+}
 variable "TOTAL_CPU_BLOCKCHAIN" {
   default = "2048"
 }
@@ -71,11 +102,11 @@ variable "AUTOSTART_RETRIES" {
 }
 
 variable "CIRCUIT_FILES_URL" {
-  default = "S3 ADDRESS"
+  default = ""
 }
 
 variable "CONTRACT_FILES_URL" {
-  debug = "S3 ADDRESS"
+  default = ""
 }
 
 variable "ENVIRONMENT" {
