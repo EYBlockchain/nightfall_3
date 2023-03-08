@@ -1,38 +1,40 @@
 resource "aws_lb_target_group" "performance_test_worker" {
+  count       = var.DEPLOY_WORKER == "true" ? 1 : 0 
   name        = "performance-test-worker-tg"
-  port        = 80
+  port        = var.PORT_WORKER
   protocol    = "HTTP"
   vpc_id      = aws_vpc.performance_test.id
   target_type = "ip"
 
   health_check {
     path = "/healthcheck"
-    matcher = "200"
+    matcher = "200-499"
   }
 }
 
 resource "aws_lb_listener" "performance_test_worker" {
+  count             = var.DEPLOY_WORKER == "true" ? 1 : 0
   load_balancer_arn = aws_lb.performance_test.id
-  port              = 80
+  port              = var.PORT_WORKER
   protocol          = "HTTP"
 
   default_action {
-    target_group_arn = aws_lb_target_group.performance_test_worker.id
+    target_group_arn = aws_lb_target_group.performance_test_worker[count.index].id
     type             = "forward"
   }
 }
 
-# Grants access to applications in ECS instances
 resource "aws_security_group" "performance_test_nightfall-worker-sg" {
-  name        = "performance_test-worker-sg"
-  vpc_id      = aws_vpc.performance_test.id
+  count  = var.DEPLOY_WORKER == "true" ? 1 : 0
+  name   = "performance_test-worker-sg"
+  vpc_id = aws_vpc.performance_test.id
 
   ingress = [
     {
       description      = ""
       protocol         = "tcp"
-      from_port        = 80
-      to_port          = 80
+      from_port        = var.PORT_WORKER
+      to_port          = var.PORT_WORKER
       ipv6_cidr_blocks = []
       prefix_list_ids  = []
       security_groups  = []
@@ -50,7 +52,8 @@ resource "aws_security_group" "performance_test_nightfall-worker-sg" {
 }
 
 resource "aws_cloudwatch_log_group" "performance_test_worker" {
-  name = "/ecs/performance_test_nightfall_worker"
+  count = var.DEPLOY_WORKER == "true" ? 1 : 0
+  name  = "/ecs/performance_test_nightfall_worker"
 
   retention_in_days = 7
 
@@ -62,6 +65,7 @@ resource "aws_cloudwatch_log_group" "performance_test_worker" {
 
 # ECS Task definition
 resource "aws_ecs_task_definition" "nightfall-worker" {
+  count                    = var.DEPLOY_WORKER == "true" ? 1 : 0
   family                   = "nightfall-worker-app"
   network_mode             = "awsvpc"
   requires_compatibilities = ["EC2", "FARGATE"]
@@ -77,15 +81,15 @@ resource "aws_ecs_task_definition" "nightfall-worker" {
       "essential": true,
       "portMappings": [
           {
-              "containerPort": 80,
-              "hostPort": 80,
+              "containerPort": var.PORT_WORKER,
+              "hostPort": var.PORT_WORKER,
               "protocol": "tcp"
           }
       ],
       "logConfiguration" : {
         "logDriver": "awslogs",
         "options": {
-            "awslogs-group" : "${aws_cloudwatch_log_group.performance_test_worker.name}",
+            "awslogs-group" : "${aws_cloudwatch_log_group.performance_test_worker[count.index].name}",
             "awslogs-region": "${var.REGION}",
             "awslogs-stream-prefix": "ecs"
         }
@@ -121,23 +125,24 @@ resource "aws_ecs_task_definition" "nightfall-worker" {
 }
 
 resource "aws_ecs_service" "nightfall-worker" {
+  count                  = var.DEPLOY_WORKER == "true" ? 1 : 0
   name                   = "nightfall-worker-service"
   cluster                = aws_ecs_cluster.performance_test.id
-  task_definition        = aws_ecs_task_definition.nightfall-worker.id
+  task_definition        = aws_ecs_task_definition.nightfall-worker[count.index].id
 
   desired_count          = var.TOTAL_INSTANCES_WORKER
   launch_type            = "FARGATE"
   enable_execute_command = true
 
   network_configuration {
-    security_groups = [aws_security_group.performance_test_nightfall-worker-sg.id]
+    security_groups = [aws_security_group.performance_test_nightfall-worker-sg[count.index].id]
     subnets         = aws_subnet.performance_test_private.*.id
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.performance_test_worker.id
+    target_group_arn = aws_lb_target_group.performance_test_worker[count.index].id
     container_name   = "nightfall-worker"
-    container_port   = 80
+    container_port   = var.PORT_WORKER
   }
 
   depends_on = [aws_lb_listener.performance_test_worker]
