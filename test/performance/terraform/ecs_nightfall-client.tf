@@ -50,17 +50,6 @@ resource "aws_security_group" "performance_test_nightfall-client-sg" {
       security_groups  = []
       self             = false
       cidr_blocks      = [ aws_vpc.performance_test.cidr_block ]
-    },
-    {
-      description      = ""
-      protocol         = "tcp"
-      from_port        = 80
-      to_port          = 80
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      security_groups  = []
-      self             = false
-      cidr_blocks      = [ aws_vpc.performance_test.cidr_block ]
     }
   ]
 
@@ -140,12 +129,36 @@ resource "aws_ecs_task_definition" "nightfall-client" {
               "value": "${var.ENVIRONMENT}"
           },
           {
+              "name": "LOG_LEVEL",
+              "value": "debug"
+          },
+          {
+              "name": "LOG_HTTP_PAYLOAD_ENABLED",
+              "value": "true"
+          },
+          {
+              "name": "LOG_HTTP_FULL_DATA",
+              "value": "false"
+          },
+          {
               "name": "MONGO_URL",
               "value": "${aws_docdb_cluster.performance_test[0].endpoint}"
           },
           {
+              "name": "NODE_ENV",
+              "value": "testing"
+          },
+          {
               "name": "CONTRACT_FILES_URL",
               "value": "${var.CONTRACT_FILES_URL}"
+          },
+          {
+              "name": "WEBSOCKET_PORT",
+              "value": "8080"
+          },
+          {
+              "name": "MAX_BLOCK_SIZE",
+              "value": "50000"
           }
       ]
    }

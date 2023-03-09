@@ -15,7 +15,9 @@ variable "ECS_TASK_ROLE" {
   default = "arn:aws:iam::950711068211:role/perfTestTaskRole"
 }
 
-variable "TOTAL_INSTANCES_SUBNET" {}
+variable "TOTAL_INSTANCES_SUBNET" {
+  default = 2
+}
 
 variable "DEPLOY_CLIENT" {
   default = "true"
@@ -89,15 +91,15 @@ variable "AUTOSTART_RETRIES" {
 }
 
 variable "CIRCUIT_FILES_URL" {
-  default = ""
+  default = "https://nightfall-perf-test.s3.eu-west-2.amazonaws.com/circuits"
 }
 
 variable "CONTRACT_FILES_URL" {
-  default = ""
+  default = "https://nightfall-perf-test.s3.eu-west-2.amazonaws.com/contracts"
 }
 
 variable "ENVIRONMENT" {
-  default = "aws"
+  default = "perfTest"
 }
 
 variable "LOG_LEVEL" {

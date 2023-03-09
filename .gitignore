@@ -29,3 +29,4 @@ multiproposer-test.env
 .terraform*
 terraform.tfstate*
 *.log
+test/performance/temp-files

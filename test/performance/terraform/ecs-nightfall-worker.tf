@@ -159,3 +159,110 @@ resource "aws_ecs_service" "nightfall-worker" {
 
   depends_on = [aws_lb_listener.performance_test_worker]
 }
+
+#################################################################
+# The following lines are enabled only when using launchType = 'EC2'
+resource "aws_iam_role" "performance_test-ecs" {
+  count              = var.LAUNCH_TYPE_WORKER == "EC2" ? 1 : 0
+  name               = "ecsInstanceRole"
+  assume_role_policy = data.aws_iam_policy_document.ecs_policy_agent.json
+}
+
+data "aws_iam_policy_document" "ecs_policy_agent" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_policy" "iam_PassRole" {
+  count = var.LAUNCH_TYPE_WORKER == "EC2" ? 1 : 0
+  name  = "iam_PassRole"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "iam:PassRole",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "iam_PassRole" {
+  count      = var.LAUNCH_TYPE_WORKER == "EC2" ? 1 : 0
+  role       = aws_iam_role.performance_test-ecs[count.index].name
+  policy_arn = aws_iam_policy.iam_PassRole[count.index].arn
+}
+
+resource "aws_iam_policy" "ecs_startTask" {
+  count = var.LAUNCH_TYPE_WORKER == "EC2" ? 1 : 0
+  name  = "ecs_startTask"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "ecs:StartTask",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_startTask" {
+  count      = var.LAUNCH_TYPE_WORKER == "EC2" ? 1 : 0
+  role       = aws_iam_role.performance_test-ecs[count.index].name
+  policy_arn = aws_iam_policy.ecs_startTask[count.index].arn
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_agent" {
+  count      = var.LAUNCH_TYPE_WORKER == "EC2" ? 1 : 0
+  role       = aws_iam_role.performance_test-ecs[count.index].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
+resource "aws_iam_instance_profile" "ecs_role" {
+  count = var.LAUNCH_TYPE_WORKER == "EC2" ? 1 : 0
+  name  = "ecs-agent"
+  role  = aws_iam_role.performance_test-ecs[count.index].name
+}
+
+data "template_file" "user_data" {
+  template = base64encode("${file("${path.module}/ec2-userdata.tpl")}")
+}
+
+resource "aws_launch_configuration" "performance_test_nightfall-worker" {
+  count = var.LAUNCH_TYPE_WORKER == "EC2" ? 1 : 0
+  name                        = "performance-test"
+  image_id                    = "ami-0a9d0b31a17ab6ef5" # Amazon ECS-optimized Amazon Linux 2 AMI - https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html
+  iam_instance_profile        = aws_iam_instance_profile.ecs_role[count.index].name
+  security_groups             = [ aws_security_group.performance_test_nightfall-worker-sg[count.index].id ]
+  user_data                   = "${data.template_file.user_data.rendered}"
+  instance_type               = "t2.xlarge"
+  associate_public_ip_address = true
+  key_name                    = "performance"
+}
+
+resource "aws_autoscaling_group" "performance_test_nightfall-worker" {
+    count                     = var.LAUNCH_TYPE_WORKER == "EC2" ? 1 : 0
+    name                      = "asg"
+    vpc_zone_identifier       = aws_subnet.performance_test_private.*.id
+    launch_configuration      = aws_launch_configuration.performance_test_nightfall-worker[count.index].name
+    desired_capacity          = var.TOTAL_INSTANCES_WORKER
+    min_size                  = 1
+    max_size                  = 10
+    health_check_grace_period = 300
+    health_check_type         = "EC2"
+}
