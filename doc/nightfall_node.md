@@ -106,11 +106,7 @@ When the containers are started, they will mount these volumes and use the downl
 
 ### Perform npm link
 
-<<<<<<< HEAD
 [ ] This will take on board any changes to common files folder, which is imported as a package.
-=======
-[ ] This will take on board any changes to common files
->>>>>>> 9d83a702 (docs: update with extra steps)
 
 ```sh
 cd common-files
