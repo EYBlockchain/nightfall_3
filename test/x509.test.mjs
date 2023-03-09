@@ -81,7 +81,7 @@ describe('x509 tests', () => {
     });
     it('deposits to a x509-validated account should work', async function () {
       logger.debug('Validating intermediate CA cert');
-      await nf3Users[0].validateCertificate(intermediateCaCert, null, null, false, false);
+      await nf3Users[0].validateCertificate(intermediateCaCert, null, null, false, false, 0, 0);
       logger.debug('Validating end-user cert');
       await nf3Users[0].validateCertificate(
         endUserCert,
@@ -89,6 +89,7 @@ describe('x509 tests', () => {
         derPrivateKey,
         true,
         false,
+        0,
         0,
       );
       logger.debug('doing whitelisted account');

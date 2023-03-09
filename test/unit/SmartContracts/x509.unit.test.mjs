@@ -187,6 +187,7 @@ describe('DerParser contract functions', function () {
         true,
         false,
         0,
+        ethers.constants.AddressZero,
       );
       expect.fail('The certificate check passed, but it should have failed');
     } catch (err) {
@@ -204,6 +205,7 @@ describe('DerParser contract functions', function () {
       false,
       false,
       0,
+      ethers.constants.AddressZero,
     );
 
     if (!TEST_SELF_GENERATED_CERTS) {
@@ -215,9 +217,10 @@ describe('DerParser contract functions', function () {
         true,
         false,
         1,
+        ethers.constants.AddressZero,
       );
 
-      // now presenting the Digicert mock cert should also work
+      // now presenting the Entrust mock cert should also work
       await X509Instance.validateCertificate(
         entrustMock.derBuffer,
         entrustMock.tlvLength,
@@ -225,6 +228,7 @@ describe('DerParser contract functions', function () {
         true,
         false,
         2,
+        ethers.constants.AddressZero,
       );
     }
 
@@ -239,6 +243,7 @@ describe('DerParser contract functions', function () {
       true,
       false,
       oidIndex,
+      ethers.constants.AddressZero,
     );
 
     // we should now be able to pass an x509 check for this address
@@ -264,6 +269,7 @@ describe('DerParser contract functions', function () {
           true,
           false,
           oidIndex,
+          ethers.constants.AddressZero,
         );
         expect.fail('The certificate check passed, but it should have failed');
       } catch (err) {

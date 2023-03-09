@@ -383,8 +383,10 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
         bytes calldata addressSignature,
         bool isEndUser,
         bool checkOnly,
-        uint256 oidGroup
+        uint256 oidGroup,
+        address addr
     ) external {
+        if (addr == address(0)) addr = msg.sender;
         DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         // decode the DER encoded binary certificate data into an array of Tag-Length-Value structs
         tlvs = walkDerTree(certificate, 0, tlvLength);
@@ -426,14 +428,10 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
         // add this user to the whitelist data, unless we're only checking the certificate.
         if (!checkOnly) {
             // check the signature over the ethereum address, if given
-            checkSignature(
-                addressSignature,
-                abi.encodePacked(uint160(msg.sender)),
-                certificatePublicKey
-            );
-            expires[msg.sender] = expiry;
-            keysByUser[msg.sender] = subjectKeyIdentifier;
-            addUserToWhitelist(msg.sender); // all checks have passed, so they are free to trade for now.
+            checkSignature(addressSignature, abi.encodePacked(uint160(addr)), certificatePublicKey);
+            expires[addr] = expiry;
+            keysByUser[addr] = subjectKeyIdentifier;
+            addUserToWhitelist(addr); // all checks have passed, so they are free to trade for now.
         }
     }
 

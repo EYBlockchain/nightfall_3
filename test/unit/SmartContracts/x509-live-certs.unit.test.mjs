@@ -103,7 +103,15 @@ describe('DerParser contract functions', function () {
     for (const cert of endUserCerts) {
       const { derBuffer, tlvLength } = await loadCert(path.join(dir, cert), X509Instance);
       try {
-        await X509Instance.validateCertificate(derBuffer, tlvLength, 0, true, true, 0);
+        await X509Instance.validateCertificate(
+          derBuffer,
+          tlvLength,
+          0,
+          true,
+          true,
+          0,
+          ethers.constants.AddressZero,
+        );
         expect.fail('The certificate check passed, but it should have failed');
       } catch (err) {
         expect(err.message.includes('VM Exception')).to.equal(true);
@@ -112,7 +120,15 @@ describe('DerParser contract functions', function () {
     // now load the intermediate CA certificates, in order, for each end user certificate
     for (const cert of intermediateCaCerts.flat(1)) {
       const { derBuffer, tlvLength } = await loadCert(path.join(dir, cert), X509Instance);
-      await X509Instance.validateCertificate(derBuffer, tlvLength, 0, false, false, 0);
+      await X509Instance.validateCertificate(
+        derBuffer,
+        tlvLength,
+        0,
+        false,
+        false,
+        0,
+        ethers.constants.AddressZero,
+      );
     }
     // now loading the end user certs should work fine (we can't test the whitelisting because we have no private key)
     for (let i = 0; i < endUserCerts.length; i++) {
@@ -120,7 +136,37 @@ describe('DerParser contract functions', function () {
         path.join(dir, endUserCerts[i]),
         X509Instance,
       );
-      await X509Instance.validateCertificate(derBuffer, tlvLength, 0, true, true, i);
+      await X509Instance.validateCertificate(
+        derBuffer,
+        tlvLength,
+        0,
+        true,
+        true,
+        i,
+        ethers.constants.AddressZero,
+      );
     }
+  });
+  it('Should add an address to the whitelist if signed with the private key related to the EY End-User cert', async function () {
+    const address = '0xC31ae312CEc29f37BF96b0859D87ae7E4023BC08';
+    const dir = 'test/unit/utils/live_certs/ey';
+    const signature = Buffer.from(fs.readFileSync(path.join(dir, 'sig.hex')).toString(), 'hex');
+    // check that the address is not whitelisted
+    expect(await X509Instance.x509Check(address)).to.be.equal(false);
+    // then whitelist it
+    const { derBuffer, tlvLength } = await loadCert(
+      path.join(dir, 'EYblockchain_end_user.crt'),
+      X509Instance,
+    );
+    await X509Instance.validateCertificate(
+      derBuffer,
+      tlvLength,
+      signature,
+      true,
+      false,
+      2,
+      address,
+    );
+    expect(await X509Instance.x509Check(address)).to.be.equal(true);
   });
 });
