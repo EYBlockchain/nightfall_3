@@ -12,6 +12,7 @@ const { ethers } = hardhat;
 
 const loadCert = async (filename, X509Instance) => {
   const derBuffer = await fs.promises.readFile(filename);
+  console.log(derBuffer, filename);
   const tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
   return { derBuffer, tlvLength };
 };
@@ -90,7 +91,7 @@ describe('DerParser contract functions', function () {
     const endUserCerts = [
       'entrust/entrust_code_signer.crt',
       'entrust/entrust_document_signer.crt',
-      'ey/EYblockchain_end_user.crt',
+      'ey/EYBlockchain_end_user.crt',
     ];
     const intermediateCaCerts = [
       ['entrust/Intermediate2.crt', 'entrust/Intermediate1.crt'],
@@ -155,7 +156,7 @@ describe('DerParser contract functions', function () {
     expect(await X509Instance.x509Check(address)).to.be.equal(false);
     // then whitelist it
     const { derBuffer, tlvLength } = await loadCert(
-      path.join(dir, 'EYblockchain_end_user.crt'),
+      path.join(dir, 'EYBlockchain_end_user.crt'),
       X509Instance,
     );
     await X509Instance.validateCertificate(
