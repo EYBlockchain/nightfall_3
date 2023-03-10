@@ -12,7 +12,6 @@ const { ethers } = hardhat;
 
 const loadCert = async (filename, X509Instance) => {
   const derBuffer = await fs.promises.readFile(filename);
-  console.log(derBuffer, filename);
   const tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
   return { derBuffer, tlvLength };
 };

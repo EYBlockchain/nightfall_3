@@ -13,6 +13,7 @@ async function validateCertificate(
   isEndUser,
   checkOnly,
   oidGroup,
+  address,
 ) {
   const x509ContractInstance = await waitForContract(X509_CONTRACT_NAME);
   const numberOfTlvs = await x509ContractInstance.methods
@@ -26,6 +27,7 @@ async function validateCertificate(
       isEndUser,
       checkOnly,
       oidGroup,
+      address,
     )
     .encodeABI();
 }

@@ -7,6 +7,7 @@ import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import { emptyL2, expectTransaction, Web3Client } from './utils.mjs';
+import { signEthereumAddress } from './unit/utils/x509.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;
@@ -81,16 +82,15 @@ describe('x509 tests', () => {
     });
     it('deposits to a x509-validated account should work', async function () {
       logger.debug('Validating intermediate CA cert');
-      await nf3Users[0].validateCertificate(intermediateCaCert, null, null, false, false, 0, 0);
+      await nf3Users[0].validateCertificate(intermediateCaCert, null, false, false, 0, 0);
       logger.debug('Validating end-user cert');
       await nf3Users[0].validateCertificate(
         endUserCert,
-        nf3Users[0].ethereumAddress,
-        derPrivateKey,
+        signEthereumAddress(derPrivateKey, nf3Users[0].ethereumAddress),
         true,
         false,
         0,
-        0,
+        nf3Users[0].ethereumAddress,
       );
       logger.debug('doing whitelisted account');
       const res = await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);

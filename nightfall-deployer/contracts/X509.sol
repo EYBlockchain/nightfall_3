@@ -374,7 +374,7 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
 
     /**
     This function is the main one in the module. It calls all of the subsidiary functions necessary to validate an RSA cert
-    If the validation is successful (and addAddress is true), it will add the sender to the whitelist contract, provided they
+    If the validation is successful (and it's and endUserCert), it will add the sender to the whitelist contract, provided they
     are able to sign their ethereum address with the private key corresponding to the certificate.
      */
     function validateCertificate(
@@ -386,6 +386,7 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
         uint256 oidGroup,
         address addr
     ) external {
+        // we can optionally pass in a address to whitelist. If we set address(0) then the function will whitelist msg.sender
         if (addr == address(0)) addr = msg.sender;
         DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         // decode the DER encoded binary certificate data into an array of Tag-Length-Value structs
@@ -396,10 +397,9 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
         bytes memory signature = getSignature(tlvs, tlvLength);
         bytes memory message = getMessage(tlvs);
         RSAPublicKey memory publicKey = trustedPublicKeys[authorityKeyIdentifier];
-        // validate the cert's signature and check that the cert is in date, record the expiry date against msg.sender
+        // validate the cert's signature and check that the cert is in date, and not revoked nor signed by a revoked cert,
         checkSignature(signature, message, publicKey);
         uint256 expiry = checkDates(tlvs);
-        // The certificate is valid and linked to a root we trust, so now we trust the certificate's public key too. Let's add it to our list of trusted keys
         RSAPublicKey memory certificatePublicKey = extractPublicKey(tlvs);
         bytes32 subjectKeyIdentifier = extractSubjectKeyIdentifier(tlvs);
         require(
@@ -410,24 +410,25 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
             !revokedKeys[authorityKeyIdentifier],
             'X509: The authority key of this certificates has been revoked'
         );
-        // finally, before we can whitelist msg.sender, we should check that they are indeed the owner of the cert (certs are public, after all)
-        // we do that by getting them to sign msg.sender with the private key corresponding to their certificate public key
+        // The certificate is valid and linked to a root we trust, so now we trust the certificate's public key too.
+        // If this is not claimed to be an end user cert, we should check it's consistent with being an intermediate CA as that's the only other option
         if (!isEndUser) {
-            // if we're not adding an address, check that this certificate can sign certificates (because it must be an intermediate one)
+            // check that this certificate can sign certificates
             checkKeyUsage(tlvs, usageBitMaskIntermediate);
-            // if yes, we'll trust it
+            // if yes, we conclude it's an intermediate CA from a root we trust and we add its public key to ones we trust (unless we're asked not to)
             if (!checkOnly) trustedPublicKeys[subjectKeyIdentifier] = certificatePublicKey;
-            return; // we may want to add an intermediate cert to the contract but not add an address.
+            // we're done with the intermediate CA cert.
+            return;
         }
-        // as we are trying to add an address, this certificate should be an end user certificate, created for digital signature
-        // and non-repudiation (or possibly other things - we can change this).
+        // If we're here, we should be dealing with an accetable end-user cert, let's check its key usage, extended key usage
+        // and certificate policies all meet our requirements for a valid end user cert.
         checkKeyUsage(tlvs, usageBitMaskEndUser);
-        // we only check extended key usage for end-user certs; it's not really relevant for CA certs
         checkExtendedKeyUsage(tlvs, oidGroup);
         checkCertificatePolicies(tlvs, oidGroup);
-        // add this user to the whitelist data, unless we're only checking the certificate.
+        // If we get here, we're good so add this user to the whitelist data, unless we're only checking the certificate.
         if (!checkOnly) {
-            // check the signature over the ethereum address, if given
+            // Before we finally add the address to the whitelist, just check that the sender of the whitelist request actually owns the
+            // end user cert.  We do this by getting them to sign the Ethereum address they want whitelisted.
             checkSignature(addressSignature, abi.encodePacked(uint160(addr)), certificatePublicKey);
             expires[addr] = expiry;
             keysByUser[addr] = subjectKeyIdentifier;
