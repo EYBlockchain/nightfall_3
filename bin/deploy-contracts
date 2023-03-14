@@ -75,4 +75,6 @@ docker-compose $DEPLOYMENT_COMPOSER_FILES --env-file $DEPLOYMENT_ENV_FILE -p 'ni
 
 echo -e "Deployment services started!\n"
 
-docker-compose -p 'nightfall_3' $DEPLOYMENT_COMPOSER_FILES --env-file $DEPLOYMENT_ENV_FILE logs -f ${DEPLOYMENT_SERVICES//,/ }
+if [ -z "${SKIP_LOGS}" ]; then
+  docker-compose -p 'nightfall_3' $DEPLOYMENT_COMPOSER_FILES --env-file $DEPLOYMENT_ENV_FILE logs -f ${DEPLOYMENT_SERVICES//,/ }
+fi

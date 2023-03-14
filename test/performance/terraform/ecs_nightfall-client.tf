@@ -182,7 +182,7 @@ resource "aws_ecs_service" "nightfall-client" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.performance_test_client[count.index].id
-    container_name   = "client-ganache"
+    container_name   = "nightfall-client"
     container_port   = 80
   }
 

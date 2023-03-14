@@ -1,0 +1,2 @@
+d6f38e5cc5c130d6ef957100a2625905  deploy-services.sh
+9fca67c6147449d7cdf73d325063c00b  hash.txt

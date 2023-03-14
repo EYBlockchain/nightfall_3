@@ -1,4 +1,3 @@
-
 output "blockchain_load_balancer-address" {
   value = var.DEPLOY_BLOCKCHAIN == "true" ? aws_lb.performance_test_blockchain[0].dns_name : ""
 }

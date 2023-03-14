@@ -210,7 +210,7 @@ resource "aws_ecs_service" "nightfall-proposer" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.performance_test_proposer[count.index].id
-    container_name   = "proposer-ganache"
+    container_name   = "nightfall-proposer"
     container_port   = 8080
   }
 

@@ -1,0 +1,10 @@
+Apply complete! Resources: 0 added, 1 changed, 0 destroyed.
+[0m[0m[1m[32m
+Outputs:
+
+[0mblockchain_load_balancer-address = "performance-test-blockchain-lb-1215391648.eu-west-2.elb.amazonaws.com"
+client_load_balancer-address = ""
+empty_output = "---"
+optimist_load_balancer-address = ""
+proposer_load_proposer-address = ""
+worker_load_balancer-address = ""

@@ -195,7 +195,7 @@ resource "aws_ecs_service" "nightfall-optimist" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.performance_test_optimist[count.index].id
-    container_name   = "optimist-ganache"
+    container_name   = "nightfall-optimist"
     container_port   = 8080
   }
 
