@@ -35,6 +35,7 @@ const {
 } = config.TEST_OPTIONS;
 const {
   DEPLOY_MOCKED_SANCTIONS_CONTRACT,
+  RESTRICTIONS,
   RESTRICTIONS: {
     tokens: { [process.env.ETH_NETWORK || 'blockchain']: maxWithdrawValue },
   },
@@ -465,7 +466,7 @@ describe('ERC20 tests', () => {
     console.log('************************maxERC20WithdrawValue', maxERC20WithdrawValue);
     const maxERC20DepositValue = Math.floor(maxERC20WithdrawValue / 4);
     console.log('************************maxERC20DepositValue', maxERC20DepositValue);
-    it('Should restrict deposits', async function () {
+    it('Should restrict deposits if restrictions are enabled', async function () {
       const nodeInfo = await web3Client.getInfo();
       if (!nodeInfo.includes('TestRPC')) {
         logger.info('Not using a test client so this test is skipped to avoid spending too much');
@@ -474,7 +475,7 @@ describe('ERC20 tests', () => {
       // Anything equal or above the restricted amount should fail
       try {
         await nf3User.deposit(erc20Address, tokenType, maxERC20DepositValue + 1, tokenId, fee);
-        expect.fail('Throw error, deposit not restricted');
+        if (RESTRICTIONS.restrict) expect.fail('Throw error, deposit not restricted');
       } catch (err) {
         expect(err.message).to.include('Transaction has been reverted by the EVM');
       }
@@ -501,13 +502,12 @@ describe('ERC20 tests', () => {
     // Transfer 600 + 200 to self       Input [600, 250]   Output [800, 50]     Commitment List after [50, 50, 100, 250, 250, 800]
     // Transfer 800 + 200 to self       Input [800, 250]   Output [800, 50]     Commitment List after [50, 50, 50, 100, 250, 1000]
     // Transfer 1000 + 200 to self      Input [1000, 250]  Output [1200, 50]    Commitment List after [50, 50, 50, 50, 100, 1200]
-    it('Should restrict withdrawals', async function () {
+    it('Should restrict withdrawals if restrictions are enabled', async function () {
       const nodeInfo = await web3Client.getInfo();
       if (!nodeInfo.includes('TestRPC')) {
         logger.info('Not using a time-jump capable test client so this test is skipped');
         this.skip();
       }
-
       try {
         const trnsferValue = Math.floor(maxERC20WithdrawValue / 5); // maxERC20DepositValue < trnsferValue < maxERC20WithdrawValue
         const withdrawValue = trnsferValue * 6; // trnsferValue = ( maxERC20WithdrawValue / 5 ) * 6 > maxERC20WithdrawValue
@@ -573,8 +573,7 @@ describe('ERC20 tests', () => {
         await web3Client.timeJump(3600 * 24 * 10);
         // anything equal or above the restricted amount should fail
         await nf3User.finaliseWithdrawal(withdrawalTxHash);
-
-        expect.fail('Throw error, withdrawal not restricted');
+        if (RESTRICTIONS.restrict) expect.fail('Throw error, withdrawal not restricted');
       } catch (err) {
         expect(err.message).to.include('Transaction has been reverted by the EVM');
       }

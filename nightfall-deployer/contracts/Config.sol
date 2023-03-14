@@ -11,6 +11,7 @@ contract Config is Ownable, Structures {
     uint256 constant MAX_BLOCK_SIZE = 50000;
     uint256 constant BLOCK_STRUCTURE_SLOTS = 5;
 
+    bool RESTRICT_TOKENS; // don't turn off restrictions by default
     uint96 minimumStake;
     uint96 blockStake;
     uint256 rotateProposerBlocks;
@@ -31,6 +32,11 @@ contract Config is Ownable, Structures {
         proposerSetCount = 10;
         sprintsInSpan = 10;
         maxProposers = 100;
+        RESTRICT_TOKENS = true;
+    }
+
+    function restrictTokens(bool restrict) external onlyOwner {
+        RESTRICT_TOKENS = restrict;
     }
 
     /**

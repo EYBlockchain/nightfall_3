@@ -113,6 +113,21 @@ module.exports = {
       gasPrice: config.WEB3_OPTIONS.gasPrice,
       gas: 6721975, // config.WEB3_OPTIONS.gas,
     },
+    polygonPos: {
+      provider: () =>
+        new HDWalletProvider({
+          privateKeys: [config.ETH_PRIVATE_KEY],
+          providerOrUrl: config.BLOCKCHAIN_URL,
+          chainId: 137,
+        }),
+      network_id: 137,
+      networkCheckTimeout: 1000000000,
+      timeoutBlocks: 2000,
+      skipDryRun: true,
+      websockets: true,
+      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gas: 6721975, // config.WEB3_OPTIONS.gas,
+    },
     mainnet: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),
       network_id: 1,

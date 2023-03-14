@@ -297,6 +297,29 @@ module.exports = {
       PROPOSER_KEY: process.env.PROPOSER_KEY,
       CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
+    polygonPos: {
+      name: 'polygonPos',
+      chainId: 137,
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      adversarialClientApiUrl: 'http://localhost:8093',
+      adversarialClientWsUrl: 'ws://localhost:8094',
+      web3WsUrl: process.env.BLOCKCHAIN_URL,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+    },
     localhost: {
       name: 'Localhost',
       chainId: 1337,
@@ -473,6 +496,7 @@ module.exports = {
     },
   },
   RESTRICTIONS: {
+    restrict: !(process.env.RESTRICT_TOKENS === 'disable'),
     signingKeys: {
       bootProposerKey:
         process.env.BOOT_PROPOSER_KEY ||
@@ -615,6 +639,18 @@ module.exports = {
           amount: process.env.MATIC_RESTRICT || '1000000000000000000000',
         },
       ],
+      polygonPos: [
+        {
+          name: 'USDC',
+          address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
+          amount: process.env.USDC_RESTRICT || -1,
+        },
+        {
+          name: 'WMATIC',
+          address: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
+          amount: process.env.MATIC_RESTRICT || -1,
+        },
+      ],
       localhost: [
         {
           name: 'WETH',
@@ -663,7 +699,7 @@ module.exports = {
     mumbai: getDefaultX509Params(),
     mainnet: getDefaultX509Params(),
     localhost: getDefaultX509Params(),
-    live: getLiveX509Params(),
+    polygonPos: getLiveX509Params(),
   },
 
   // for Browser use
