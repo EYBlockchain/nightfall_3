@@ -357,7 +357,10 @@ contract Challenges is Stateful, Config {
         challengeAccepted(transaction.blockL2);
     }
 
-    function challengeHistoricRootBlockNumber(TransactionInfoBlock calldata transaction) external {
+    function challengeHistoricRootBlockNumber(
+        TransactionInfoBlock calldata transaction,
+        bytes32 salt
+    ) external {
         checkCommit(msg.data);
         state.areBlockAndTransactionReal(
             transaction.blockL2,

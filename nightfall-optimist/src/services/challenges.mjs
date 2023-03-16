@@ -319,12 +319,15 @@ export async function createChallenge(block, transactions, err) {
       }
 
       txDataToSign = await challengeContractInstance.methods
-        .challengeHistoricRootBlockNumber({
-          blockL2: Block.buildSolidityStruct(block),
-          transaction: Transaction.buildSolidityStruct(transactions[transactionIndex]),
-          transactionIndex,
-          transactionSiblingPath,
-        })
+        .challengeHistoricRootBlockNumber(
+          {
+            blockL2: Block.buildSolidityStruct(block),
+            transaction: Transaction.buildSolidityStruct(transactions[transactionIndex]),
+            transactionIndex,
+            transactionSiblingPath,
+          },
+          salt,
+        )
         .encodeABI();
       break;
     }
