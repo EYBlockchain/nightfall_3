@@ -43,7 +43,7 @@ const extractFiles = directory => {
 
 const {
   X509: {
-    live: { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS },
+    polygonPos: { extendedKeyUsageOIDs, certificatePoliciesOIDs, RSA_TRUST_ROOTS },
   },
 } = config;
 
