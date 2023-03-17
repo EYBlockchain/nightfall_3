@@ -593,13 +593,17 @@ describe('Challenges contract Challenges functions', function () {
       transactionIndex: 0,
       transactionSiblingPath: siblingPath,
     };
+    const salt = '0x06032a0304000000000000000000000000000000000000000000000000000000';
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeHistoricRootBlockNumber(TransactionInfoBlock)
+      await challenges.populateTransaction.challengeHistoricRootBlockNumber(
+        TransactionInfoBlock,
+        salt,
+      )
     ).data;
     const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
-    const tx = await challenges.challengeHistoricRootBlockNumber(TransactionInfoBlock);
+    const tx = await challenges.challengeHistoricRootBlockNumber(TransactionInfoBlock, salt);
 
     const receipt = await tx.wait();
 
@@ -681,14 +685,18 @@ describe('Challenges contract Challenges functions', function () {
       transactionIndex: 0,
       transactionSiblingPath: siblingPath,
     };
+    const salt = '0x06032a0304000000000000000000000000000000000000000000000000000000';
     // eslint-disable-next-line prefer-destructuring
     const data = (
-      await challenges.populateTransaction.challengeHistoricRootBlockNumber(TransactionInfoBlock)
+      await challenges.populateTransaction.challengeHistoricRootBlockNumber(
+        TransactionInfoBlock,
+        salt,
+      )
     ).data;
     const hashedData = ethers.utils.solidityKeccak256(['bytes'], [data]);
     await challenges.commitToChallenge(hashedData);
     await expect(
-      challenges.challengeHistoricRootBlockNumber(TransactionInfoBlock),
+      challenges.challengeHistoricRootBlockNumber(TransactionInfoBlock, salt),
     ).to.be.rejectedWith('Historic roots are not greater than L2BlockNumber on chain');
   });
 
