@@ -12,13 +12,15 @@ import './Utils.sol';
 import './ChallengesUtil.sol';
 import './Config.sol';
 import './Stateful.sol';
+import './Certified.sol';
 
-contract Challenges is Stateful, Config {
+contract Challenges is Stateful, Config, Certified {
     mapping(bytes32 => address) public committers;
 
-    function initialize() public override(Stateful, Config) initializer {
+    function initialize() public override(Stateful, Config, Certified) initializer {
         Stateful.initialize();
         Config.initialize();
+        Certified.initialize();
     }
 
     /**
@@ -30,7 +32,7 @@ contract Challenges is Stateful, Config {
         Block calldata blockL2,
         Transaction[] calldata transactions,
         bytes32 salt
-    ) external {
+    ) external onlyCertified {
         checkCommit(msg.data);
 
         state.areBlockAndTransactionsReal(blockL2, transactions);
@@ -61,7 +63,7 @@ contract Challenges is Stateful, Config {
         Block calldata blockL2,
         Transaction[] calldata transactions,
         bytes32 salt
-    ) external {
+    ) external onlyCertified {
         checkCommit(msg.data);
 
         state.areBlockAndTransactionsReal(blockL2, transactions);
@@ -101,7 +103,7 @@ contract Challenges is Stateful, Config {
         bytes32[33] calldata frontierAfterBlock, // frontier after all the block commitments has been added.
         Block calldata blockL2,
         bytes32 salt
-    ) external {
+    ) external onlyCertified {
         checkCommit(msg.data);
 
         // check that the current block hash is correct
@@ -126,7 +128,7 @@ contract Challenges is Stateful, Config {
         uint256 commitment1Index,
         uint256 commitment2Index,
         bytes32 salt
-    ) external {
+    ) external onlyCertified {
         checkCommit(msg.data);
 
         // first, check we have real, in-train, contiguous blocks
@@ -179,7 +181,7 @@ contract Challenges is Stateful, Config {
         uint256 nullifier1Index,
         uint256 nullifier2Index,
         bytes32 salt
-    ) external {
+    ) external onlyCertified {
         checkCommit(msg.data);
 
         // first, check we have real, in-train, contiguous blocks
@@ -275,7 +277,7 @@ contract Challenges is Stateful, Config {
         TransactionInfoBlock calldata transaction,
         Block[] calldata blockL2ContainingHistoricRoot,
         bytes32 salt
-    ) external {
+    ) external onlyCertified {
         checkCommit(msg.data);
         state.areBlockAndTransactionReal(
             transaction.blockL2,
@@ -442,7 +444,7 @@ contract Challenges is Stateful, Config {
     }
 
     //To prevent frontrunning, we need to commit to a challenge before we send it
-    function commitToChallenge(bytes32 commitHash) external {
+    function commitToChallenge(bytes32 commitHash) external onlyCertified {
         require(committers[commitHash] == address(0), 'Hash already committed to');
         committers[commitHash] = msg.sender;
         emit CommittedToChallenge(commitHash, msg.sender);

@@ -73,7 +73,7 @@ describe('Proposers contract Proposers functions', function () {
     const sanctionsListAddress = sanctionsListMockInstance.address;
 
     const Shield = await ethers.getContractFactory('Shield');
-    const shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, x509.address], {
+    const shield = await upgrades.deployProxy(Shield, [], {
       initializer: 'initializeState',
     });
     await shield.deployed();
@@ -94,6 +94,7 @@ describe('Proposers contract Proposers functions', function () {
     await state.deployed();
 
     await ProposersInstance.setStateContract(state.address);
+    await ProposersInstance.setAuthorities(sanctionsListAddress, x509.address);
   });
 
   afterEach(async () => {

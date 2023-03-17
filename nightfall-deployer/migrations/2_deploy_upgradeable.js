@@ -70,7 +70,7 @@ module.exports = async function (deployer) {
   await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
-  await deployProxy(Shield, [sanctionsContractAddress, X509.address], {
+  await deployProxy(Shield, [], {
     deployer,
     unsafeAllowLinkedLibraries: true,
     initializer: 'initializeState',
@@ -143,4 +143,8 @@ module.exports = async function (deployer) {
   for (certificatePoliciesOIDGroup of certificatePoliciesOIDs) {
     await x509.addCertificatePolicies(certificatePoliciesOIDGroup);
   }
+  // set the authorisation contract interfaces
+  await shield.setAuthorities(sanctionsContractAddress, X509.address)
+  await proposers.setAuthorities(sanctionsContractAddress, X509.address)
+  await challengers.setAuthorities(sanctionsContractAddress, X509.address)
 };

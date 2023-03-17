@@ -16,39 +16,29 @@ import './Utils.sol';
 import './Config.sol';
 import './Stateful.sol';
 import './Pausable.sol';
-import './X509Interface.sol';
-import './SanctionsListInterface.sol';
+import './Certified.sol';
 
-contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
+contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, Certified {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
-    X509Interface x509;
-    SanctionsListInterface sanctionsList;
 
-    function initializeState(address sanctionsListAddress, address x509Address) public initializer {
-        sanctionsList = SanctionsListInterface(sanctionsListAddress);
-        x509 = X509Interface(x509Address);
+    function initializeState() public initializer {
         initialize();
     }
 
-    function initialize() public override(Stateful, Config, Pausable) onlyInitializing {
+    function initialize() public override(Stateful, Config, Pausable, Certified) onlyInitializing {
         Stateful.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
+        Certified.initialize();
     }
 
-    function submitTransaction(Transaction calldata t) external nonReentrant whenNotPaused {
+    function submitTransaction(
+        Transaction calldata t
+    ) external nonReentrant whenNotPaused onlyCertified {
         // let everyone know what you did
         emit TransactionSubmitted();
-        require(
-            x509.x509Check(msg.sender),
-            'Shield: You are not authorised to transact using Nightfall'
-        );
-        require(
-            !sanctionsList.isSanctioned(msg.sender),
-            'Shield: You are on the Chainalysis sanctions list'
-        );
 
         uint256 maxBlockSize = MAX_BLOCK_SIZE;
         assembly {
@@ -70,7 +60,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
     }
 
     // function to enable a proposer to get paid for proposing a block
-    function requestBlockPayment(Block calldata b) external {
+    function requestBlockPayment(Block calldata b) external onlyCertified {
         bytes32 blockHash = Utils.hashBlock(b);
 
         uint64 blockNumberL2 = Utils.getBlockNumberL2(b.packedInfo);
@@ -183,7 +173,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         Transaction calldata t,
         uint256 index,
         bytes32[] calldata siblingPath
-    ) external {
+    ) external onlyCertified {
         // check this block is a real one, in the queue, not something made up and that the transaction exists in the block
         bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
         // check that the block has been finalised
@@ -215,14 +205,6 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
 
             state.addPendingWithdrawal(recipientAddress, advancedWithdrawal.advanceFee, 0);
         }
-        require(
-            x509.x509Check(msg.sender),
-            'Shield: You are not authorised to transact using Nightfall'
-        );
-        require(
-            !sanctionsList.isSanctioned(msg.sender),
-            'Shield: You are on the Chainalysis sanctions list'
-        );
         payOut(t, recipientAddress);
     }
 
@@ -233,7 +215,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable {
         Transaction calldata t,
         uint256 index,
         bytes32[] calldata siblingPath
-    ) external {
+    ) external onlyCertified {
         // check this block is a real one, in the queue, not something made up.
         bytes32 transactionHash = state.areBlockAndTransactionReal(b, t, index, siblingPath);
 

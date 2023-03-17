@@ -46,12 +46,22 @@ const derPrivateKey = fs.readFileSync('test/unit/utils/mock_certs/Nightfall_end_
 
 describe('x509 tests', () => {
   before(async () => {
+    // first, we need to authorise the proposer
     await nf3Proposer.init(mnemonics.proposer);
+    logger.debug('Validating intermediate CA cert');
+    await nf3Proposer.validateCertificate(intermediateCaCert, null, false, false, 0, 0);
+    await nf3Proposer.validateCertificate(
+      endUserCert,
+      signEthereumAddress(derPrivateKey, nf3Proposer.ethereumAddress),
+      true,
+      false,
+      0,
+      nf3Proposer.ethereumAddress,
+    );
     // we must set the URL from the point of view of the client container
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
     await nf3Proposer.startProposer();
     await nf3Users[0].init(mnemonics.user1);
-    await nf3Users[1].init(mnemonics.user2);
     erc20Address =
       maxWithdrawValue.find(e => e.name === process.env.ERC20_COIN)?.address.toLowerCase() ||
       (await nf3Users[0].getContractAddress('ERC20Mock'));
@@ -81,8 +91,6 @@ describe('x509 tests', () => {
       );
     });
     it('deposits to a x509-validated account should work', async function () {
-      logger.debug('Validating intermediate CA cert');
-      await nf3Users[0].validateCertificate(intermediateCaCert, null, false, false, 0, 0);
       logger.debug('Validating end-user cert');
       await nf3Users[0].validateCertificate(
         endUserCert,
@@ -92,7 +100,6 @@ describe('x509 tests', () => {
         0,
         nf3Users[0].ethereumAddress,
       );
-      logger.debug('doing whitelisted account');
       const res = await nf3Users[0].deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       expectTransaction(res);
       await emptyL2({ nf3User: nf3Users[0], web3: web3Client, logs: eventLogs });
@@ -136,7 +143,6 @@ describe('x509 tests', () => {
     await nf3Proposer.deregisterProposer();
     await nf3Proposer.close();
     await nf3Users[0].close();
-    await nf3Users[1].close();
     await web3Client.closeWeb3();
   });
 });
