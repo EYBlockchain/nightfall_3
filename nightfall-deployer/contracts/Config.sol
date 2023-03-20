@@ -24,7 +24,7 @@ contract Config is Ownable, Structures {
     address feeL2TokenAddress;
     mapping(address => int256[2]) erc20limit;
 
-    function initialize() public virtual override onlyInitializing {
+    function initialize() public virtual override initializer {
         Ownable.initialize();
         minimumStake = 1000000 wei; // 20000000000000 wei; // 20K MATIC in mainnet
         blockStake = 1 wei; // 200000000000 wei; 200 MATIC in mainnet

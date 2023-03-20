@@ -11,7 +11,7 @@ contract Certified is Ownable {
     X509Interface x509;
     SanctionsListInterface sanctionsList;
 
-    function initialize() public virtual override onlyInitializing {
+    function initialize() public virtual override initializer {
         Ownable.initialize();
     }
 
