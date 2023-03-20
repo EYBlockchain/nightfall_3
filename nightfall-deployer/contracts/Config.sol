@@ -11,7 +11,6 @@ contract Config is Ownable, Structures {
     uint256 constant MAX_BLOCK_SIZE = 50000;
     uint256 constant BLOCK_STRUCTURE_SLOTS = 5;
 
-    bool RESTRICT_TOKENS; // don't turn off restrictions by default
     uint96 minimumStake;
     uint96 blockStake;
     uint256 rotateProposerBlocks;
@@ -32,11 +31,6 @@ contract Config is Ownable, Structures {
         proposerSetCount = 10;
         sprintsInSpan = 10;
         maxProposers = 100;
-        RESTRICT_TOKENS = true;
-    }
-
-    function restrictTokens(bool restrict) external onlyOwner {
-        RESTRICT_TOKENS = restrict;
     }
 
     /**
@@ -81,36 +75,6 @@ contract Config is Ownable, Structures {
      */
     function getFeeL2TokenAddress() public view returns (address) {
         return feeL2TokenAddress;
-    }
-
-    // restricting tokens for deposit
-    function getRestrictionDeposit(address tokenAddr) public view returns (int256) {
-        return erc20limit[tokenAddr][0];
-    }
-
-    // restricting tokens for deposit
-    function getRestrictionWithdraw(address tokenAddr) public view returns (int256) {
-        return erc20limit[tokenAddr][1];
-    }
-
-    /**
-     * @dev Set token restriction
-     */
-    function setRestriction(
-        address tokenAddr,
-        int256 depositAmount,
-        int256 withdrawAmount
-    ) external onlyOwner {
-        erc20limit[tokenAddr][0] = depositAmount;
-        erc20limit[tokenAddr][1] = withdrawAmount;
-    }
-
-    /**
-     * @dev Remove token restriction
-     */
-    function removeRestriction(address tokenAddr) external onlyOwner {
-        delete erc20limit[tokenAddr][0];
-        delete erc20limit[tokenAddr][1];
     }
 
     /**

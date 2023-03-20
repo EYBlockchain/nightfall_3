@@ -123,6 +123,11 @@ module.exports = async function (deployer) {
   await shield.setFeeL2TokenAddress(feeL2TokenAddress);
   await state.setFeeL2TokenAddress(feeL2TokenAddress);
 
+   // set the authorisation contract interfaces
+   await shield.setAuthorities(sanctionsContractAddress, X509.address)
+   await proposers.setAuthorities(sanctionsContractAddress, X509.address)
+   await challengers.setAuthorities(sanctionsContractAddress, X509.address)
+
   console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'disable') {
     await x509.enableWhitelisting(false);
@@ -143,8 +148,4 @@ module.exports = async function (deployer) {
   for (certificatePoliciesOIDGroup of certificatePoliciesOIDs) {
     await x509.addCertificatePolicies(certificatePoliciesOIDGroup);
   }
-  // set the authorisation contract interfaces
-  await shield.setAuthorities(sanctionsContractAddress, X509.address)
-  await proposers.setAuthorities(sanctionsContractAddress, X509.address)
-  await challengers.setAuthorities(sanctionsContractAddress, X509.address)
 };

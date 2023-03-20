@@ -21,6 +21,7 @@ import './Certified.sol';
 contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, Certified {
     using SafeERC20Upgradeable for IERC20Upgradeable;
     mapping(bytes32 => AdvanceWithdrawal) public advancedWithdrawals;
+    bool RESTRICT_TOKENS; // don't turn off restrictions by default
 
     function initializeState() public initializer {
         initialize();
@@ -32,6 +33,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, Certi
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
         Pausable.initialize();
         Certified.initialize();
+        RESTRICT_TOKENS = true;
     }
 
     function submitTransaction(
@@ -324,7 +326,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, Certi
         if (tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
                 revert('Shield: ERC20 withdrawal should have tokenId equal to ZERO');
-            int256 check = super.getRestrictionWithdraw(addr);
+            int256 check = getRestrictionWithdraw(addr);
             if (RESTRICT_TOKENS && (int256(uint256(value)) > check && check != -1))
                 revert('Shield: Value is above current restrictions for withdrawals');
             else IERC20Upgradeable(addr).safeTransfer(recipientAddress, uint256(value));
@@ -365,7 +367,7 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, Certi
         if (tokenType == TokenType.ERC20) {
             if (t.tokenId != ZERO)
                 revert('Shield: ERC20 deposit should have tokenId equal to ZERO');
-            int256 check = super.getRestrictionDeposit(addr);
+            int256 check = getRestrictionDeposit(addr);
             if (RESTRICT_TOKENS && (int256(uint256(value)) > check && check != -1))
                 revert('Shield: Value is above current restrictions for deposits');
             else
@@ -384,5 +386,39 @@ contract Shield is Stateful, Config, ReentrancyGuardUpgradeable, Pausable, Certi
                 ''
             );
         }
+    }
+
+    // restricting tokens for deposit
+    function getRestrictionDeposit(address tokenAddr) public view returns (int256) {
+        return erc20limit[tokenAddr][0];
+    }
+
+    // restricting tokens for deposit
+    function getRestrictionWithdraw(address tokenAddr) public view returns (int256) {
+        return erc20limit[tokenAddr][1];
+    }
+
+    /**
+     * @dev Set token restriction
+     */
+    function setRestriction(
+        address tokenAddr,
+        int256 depositAmount,
+        int256 withdrawAmount
+    ) external onlyOwner {
+        erc20limit[tokenAddr][0] = depositAmount;
+        erc20limit[tokenAddr][1] = withdrawAmount;
+    }
+
+    /**
+     * @dev Remove token restriction
+     */
+    function removeRestriction(address tokenAddr) external onlyOwner {
+        delete erc20limit[tokenAddr][0];
+        delete erc20limit[tokenAddr][1];
+    }
+
+    function restrictTokens(bool restrict) external onlyOwner {
+        RESTRICT_TOKENS = restrict;
     }
 }
