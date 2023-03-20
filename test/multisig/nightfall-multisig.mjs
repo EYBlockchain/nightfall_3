@@ -16,6 +16,8 @@ export class NightfallMultiSig {
 
   contractsPausables = ['shield', 'state']; // pausable contracts
 
+  contractsRestrictables = ['shield']; // contracts where values can be restricted
+
   constructor(web3Instance, contractInstances, signatureThreshold, chainId, gasLimit) {
     this.web3 = web3Instance;
     this.multiSig = new MultiSig(
@@ -47,6 +49,14 @@ export class NightfallMultiSig {
   contractInstancesPausables() {
     const contractInstancesResult = [];
     this.contractsPausables.forEach(contract =>
+      contractInstancesResult.push(this.contractInstances[contract]),
+    );
+    return contractInstancesResult;
+  }
+
+  contractInstancesRestrictables() {
+    const contractInstancesResult = [];
+    this.contractsRestrictables.forEach(contract =>
       contractInstancesResult.push(this.contractInstances[contract]),
     );
     return contractInstancesResult;
@@ -92,7 +102,7 @@ export class NightfallMultiSig {
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
     return Promise.all(
-      this.contractInstancesConfigurables().map(async (configurable, i) => {
+      this.contractInstancesRestrictables().map(async (configurable, i) => {
         const contractInstance = configurable;
         const data = contractInstance.methods
           .setRestriction(tokenAddress, depositRestriction, withdrawRestriction)
@@ -117,7 +127,7 @@ export class NightfallMultiSig {
     if (!Number.isInteger(nonce)) nonce = await this.multiSig.getMultiSigNonce();
 
     return Promise.all(
-      this.contractInstancesConfigurables().map(async (configurable, i) => {
+      this.contractInstancesRestrictables().map(async (configurable, i) => {
         const contractInstance = configurable;
         const data = contractInstance.methods.removeRestriction(tokenAddress).encodeABI();
         return this.multiSig.addMultiSigSignature(
