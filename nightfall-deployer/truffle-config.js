@@ -111,7 +111,7 @@ module.exports = {
       skipDryRun: true,
       websockets: true,
       gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: 6721975, // config.WEB3_OPTIONS.gas,
+      gas: config.WEB3_OPTIONS.gas,
     },
     polygonPos: {
       provider: () =>
@@ -126,7 +126,7 @@ module.exports = {
       skipDryRun: true,
       websockets: true,
       gasPrice: config.WEB3_OPTIONS.gasPrice,
-      gas: 6721975, // config.WEB3_OPTIONS.gas,
+      gas: config.WEB3_OPTIONS.gas,
     },
     mainnet: {
       provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),

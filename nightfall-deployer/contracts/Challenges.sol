@@ -32,7 +32,7 @@ contract Challenges is Stateful, Config, Certified {
         Block calldata blockL2,
         Transaction[] calldata transactions,
         bytes32 salt
-    ) external onlyCertified {
+    ) external {
         checkCommit(msg.data);
 
         state.areBlockAndTransactionsReal(blockL2, transactions);
@@ -63,7 +63,7 @@ contract Challenges is Stateful, Config, Certified {
         Block calldata blockL2,
         Transaction[] calldata transactions,
         bytes32 salt
-    ) external onlyCertified {
+    ) external {
         checkCommit(msg.data);
 
         state.areBlockAndTransactionsReal(blockL2, transactions);
@@ -103,7 +103,7 @@ contract Challenges is Stateful, Config, Certified {
         bytes32[33] calldata frontierAfterBlock, // frontier after all the block commitments has been added.
         Block calldata blockL2,
         bytes32 salt
-    ) external onlyCertified {
+    ) external {
         checkCommit(msg.data);
 
         // check that the current block hash is correct
@@ -128,7 +128,7 @@ contract Challenges is Stateful, Config, Certified {
         uint256 commitment1Index,
         uint256 commitment2Index,
         bytes32 salt
-    ) external onlyCertified {
+    ) external {
         checkCommit(msg.data);
 
         // first, check we have real, in-train, contiguous blocks
@@ -181,7 +181,7 @@ contract Challenges is Stateful, Config, Certified {
         uint256 nullifier1Index,
         uint256 nullifier2Index,
         bytes32 salt
-    ) external onlyCertified {
+    ) external {
         checkCommit(msg.data);
 
         // first, check we have real, in-train, contiguous blocks
@@ -277,7 +277,7 @@ contract Challenges is Stateful, Config, Certified {
         TransactionInfoBlock calldata transaction,
         Block[] calldata blockL2ContainingHistoricRoot,
         bytes32 salt
-    ) external onlyCertified {
+    ) external {
         checkCommit(msg.data);
         state.areBlockAndTransactionReal(
             transaction.blockL2,

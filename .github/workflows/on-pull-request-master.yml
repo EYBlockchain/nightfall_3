@@ -714,6 +714,7 @@ jobs:
   adversary-test:
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,lazy-optimist,bad-client
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
