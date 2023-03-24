@@ -49,7 +49,7 @@ export const submitTransaction = async (
     }
 
     logger.debug({ msg: 'Peer List', peerList });
-    await Promise.all(
+    await Promise.any(
       Object.keys(peerList).map(async address => {
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
