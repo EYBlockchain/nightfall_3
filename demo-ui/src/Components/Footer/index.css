@@ -1,0 +1,6 @@
+/* Footer */
+.footer {
+  padding: 18px 0 18px; /* Height of navbar */
+  box-shadow: 0 2px 5px 0 rgb(0 0 0 / 5%), 0 2px 10px 0 rgb(0 0 0 / 5%);
+  z-index: 600;
+}

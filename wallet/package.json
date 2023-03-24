@@ -140,6 +140,7 @@
     "@types/styled-components": "^5.1.24",
     "big-integer": "^1.6.51",
     "chai": "^4.3.6",
+    "eslint-config-codfish": "^10.3.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-import": "^2.26.0",

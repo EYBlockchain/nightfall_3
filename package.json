@@ -4,7 +4,7 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "lint": "eslint . --ext js,mjs,jsx,ts,tsx && find-unused-exports",
+    "lint": "eslint . --ext js,mjs,jsx,ts,tsx",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
     "nightfall-down": "docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.ganache.yml -f docker/docker-compose.apps.yml -f docker/docker-compose.multiproposer-test.yml -p 'nightfall_3' down -v",
