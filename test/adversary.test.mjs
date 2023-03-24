@@ -49,7 +49,7 @@ const eventLogs = [];
 const challengeSelectors = {
   challengeRoot: '0x25009307',
   challengeCommitment: '0x1c80a5a5',
-  challengeHistoricRoot: '0xf0b86f27',
+  challengeHistoricRoot: '0x2a0f8b42',
   challengeLeafCount: '0xb8424d42',
   challengeFrontier: '0x60f611d5',
   challengeNullifier: '0xda5370ca',
