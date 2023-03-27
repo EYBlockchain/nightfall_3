@@ -129,7 +129,7 @@ export async function markPending(commitment) {
 }
 
 // function to mark a commitment as nullified for a mongo db
-export async function markNullified(commitment, transaction) {
+async function markNullified(commitment, transaction) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { _id: commitment.hash.hex(32) };
   const update = {
