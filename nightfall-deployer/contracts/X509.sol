@@ -68,11 +68,10 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
         trustedPublicKeys[authorityKeyIdentifier] = trustedPublicKey;
     }
 
-    function getSignature(DecodedTlv[] memory tlvs, uint256 maxId)
-        private
-        pure
-        returns (bytes memory)
-    {
+    function getSignature(
+        DecodedTlv[] memory tlvs,
+        uint256 maxId
+    ) private pure returns (bytes memory) {
         DecodedTlv memory signatureTlv = tlvs[maxId - 1];
         require(signatureTlv.depth == 1, 'X509: Signature tlv depth is incorrect');
         require(
@@ -111,11 +110,10 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
     /*
     Validate the decrypted signature and returns the message hash
     */
-    function validateSignatureAndExtractMessageHash(bytes memory decrypt, uint256 tlvLength)
-        private
-        view
-        returns (bytes memory)
-    {
+    function validateSignatureAndExtractMessageHash(
+        bytes memory decrypt,
+        uint256 tlvLength
+    ) private view returns (bytes memory) {
         DecodedTlv[] memory tlvs = new DecodedTlv[](tlvLength);
         require(
             decrypt[0] == 0x00 && decrypt[1] == 0x00,
@@ -232,11 +230,9 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
         return skid;
     }
 
-    function extractAuthorityKeyIdentifier(DecodedTlv[] memory tlvs)
-        private
-        view
-        returns (bytes32)
-    {
+    function extractAuthorityKeyIdentifier(
+        DecodedTlv[] memory tlvs
+    ) private view returns (bytes32) {
         // // The AKID begins after the Authority Key Identifier OID at depth 5
         uint256 i;
         for (i = 0; i < tlvs.length; i++) {
@@ -448,7 +444,12 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
         return false;
     }
 
-    // allows a key to be revoked from a whitelisted address (or contract owner). this cannot be undone!
+    /** 
+    This function allows a certificate to be revoked from a whitelisted address (or by the contract owner). This cannot be undone!
+    It is useful if the private key is compromised.  The owner of the whitelisted address can revoke the certificate.
+    Once this is done, they will lose their whitelisted status.
+    @param _subjectKeyIdentifier - the subject key identifier for the certificate that is to be revoked.
+    */
     function revokeKeyFromUserAddress(uint256 _subjectKeyIdentifier) external {
         bytes32 subjectKeyIdentifier = bytes32(_subjectKeyIdentifier);
         require(
@@ -459,7 +460,14 @@ contract X509 is DERParser, Whitelist, Sha, X509Interface {
         delete trustedPublicKeys[subjectKeyIdentifier];
     }
 
-    // allows a key to be revoked by signing the originating address (useful for intermediate certs)
+    /** 
+    This function allows a certifcate to be revoked from any address (or by the contract owner). this cannot be undone!
+    It is useful if the private key is compromised.  The owner of the compromised private key can revoke the corresponding
+    certificate by making a request from any Ethereum address by signing the address with the key which they wish to revoke
+    Once this is done, they will lose their whitelisted status.
+    @param _subjectKeyIdentifier - the subject key identifier for the certificate that is to be revoked.
+    @param addressSignature - the signature over the address msg.sender, made using PKCS#1 padding.
+    */
     function revokeKeyByAddressSignature(
         uint256 _subjectKeyIdentifier,
         bytes calldata addressSignature

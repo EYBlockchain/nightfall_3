@@ -15,7 +15,6 @@ const router = express.Router();
 router.post('/validate', async (req, res, next) => {
   const { certificate, ethereumAddressSignature, isEndUser, checkOnly, oidGroup, address } =
     req.body;
-  console.log('££££££££££££££££££££££££££££££££££', address);
   if (!certificate) next(new Error('Certificate was null or undefined'));
   if (!certificate.type === 'Buffer') next(new Error('Certificate is not a buffer'));
   try {
