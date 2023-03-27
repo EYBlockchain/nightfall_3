@@ -1072,3 +1072,23 @@ export async function getCommitmentsDepositedRollbacked(compressedZkpPublicKey) 
 
   return db.collection(COMMITMENTS_COLLECTION).find(query).toArray();
 }
+
+// saves a transaction with extended information about nullifiers and commitments
+export const saveExtendedTransaction = async (
+  transaction,
+  commitmentsInfo,
+  compressedZkpPublicKey,
+  nullifierKey,
+) => {
+  // Store new commitments that are ours.
+  logger.debug({ msg: 'storing commitments', commitments: commitmentsInfo.newCommitments });
+  const storeNewCommitments = commitmentsInfo.newCommitments
+    .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
+    .map(c => storeCommitment(c, nullifierKey));
+
+  logger.debug({ msg: 'nullifying commitments', commitments: commitmentsInfo.oldCommitments });
+  const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>
+    markNullified(c, transaction),
+  );
+  await Promise.all([...storeNewCommitments, ...nullifyOldCommitments]);
+};

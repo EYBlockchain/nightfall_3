@@ -21,8 +21,7 @@ import { Commitment, Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
-import { submitTransaction } from '../utils/submitTransaction.mjs';
-import { getCommitmentByHash } from './commitment-storage.mjs';
+import { getCommitmentByHash, saveExtendedTransaction } from './commitment-storage.mjs';
 
 const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, DEPOSIT, DEPOSIT_FEE } = constants;
@@ -186,7 +185,7 @@ async function deposit(depositParams) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
-    await submitTransaction(
+    await saveExtendedTransaction(
       transaction,
       commitmentsInfo,
       compressedZkpPublicKey,
