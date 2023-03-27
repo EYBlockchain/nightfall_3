@@ -9,10 +9,9 @@ import { getCircuitHash, generateProof } from 'common-files/utils/worker-calls.m
 import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import gen from 'general-number';
 import { Commitment, Transaction } from '../classes/index.mjs';
-import { clearPending } from './commitment-storage.mjs';
+import { clearPending, saveExtendedTransaction } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
-import { submitTransaction } from '../utils/submitTransaction.mjs';
 import { ZkpKeys } from './keys.mjs';
 
 const { VK_IDS } = config;
@@ -173,7 +172,7 @@ async function transform(transformParams) {
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
 
-    await submitTransaction(
+    await saveExtendedTransaction(
       transaction,
       commitmentInfo,
       compressedZkpPublicKey,

@@ -16,9 +16,8 @@ import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { encrypt, genEphemeralKeys, packSecrets } from './kem-dem.mjs';
-import { clearPending } from './commitment-storage.mjs';
+import { clearPending, saveExtendedTransaction } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
-import { submitTransaction } from '../utils/submitTransaction.mjs';
 
 const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, TRANSFER } = constants;
@@ -154,7 +153,7 @@ async function transfer(transferParams) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
-    await submitTransaction(
+    await saveExtendedTransaction(
       transaction,
       commitmentsInfo,
       compressedZkpPublicKey,

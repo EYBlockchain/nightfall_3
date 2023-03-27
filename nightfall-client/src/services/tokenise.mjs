@@ -9,9 +9,8 @@ import gen from 'general-number';
 import { ZkpKeys } from './keys.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
-import { clearPending } from './commitment-storage.mjs';
+import { clearPending, saveExtendedTransaction } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
-import { submitTransaction } from '../utils/submitTransaction.mjs';
 
 const { VK_IDS } = config;
 const { SHIELD_CONTRACT_NAME, BN128_GROUP_ORDER, TOKENISE } = constants;
@@ -126,7 +125,7 @@ async function tokenise(items) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
-    await submitTransaction(
+    await saveExtendedTransaction(
       transaction,
       commitmentsInfo,
       compressedZkpPublicKey,
