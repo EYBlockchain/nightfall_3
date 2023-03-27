@@ -68,9 +68,10 @@ function Configure({ setERC20Address }) {
             </div>
             <div className="form-group form-custom-field">
               <label>
-                For Localhost chainId 1337, do the switch manually in metamask (code switch will not
-                work because for 1337 it try to reach to rpcURL http://localhost:8545 but our
-                localhost is configure to use rpcURL http://localhost:8546 )
+                To connect Localhost chainId 1337, please do the switch/add manually in metamask as
+                auto-code switch will not work, because for chainId 1337 metamask code API will try
+                to reach to rpcURL http://localhost:8545 but our localhost is configure to use
+                rpcURL http://localhost:8546
               </label>
             </div>
             <div className="form-group form-custom-field">
