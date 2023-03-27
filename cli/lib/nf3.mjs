@@ -1357,9 +1357,14 @@ class Nf3 {
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
         );
+        // sign the transaction if we're required to identify ourself
+        const signature = process.env.ANONYMOUS_USER
+          ? null
+          : this.web3.eth.accounts.sign(JSON.stringify(transaction), this.ethereumSigningKey)
+              .signature;
         return axios.post(
           `${peerList[address]}/proposer/offchain-transaction`,
-          { transaction },
+          { transaction, signature },
           { timeout: 3600000 },
         );
       }),
