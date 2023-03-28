@@ -59,7 +59,10 @@ describe('x509 tests', () => {
       nf3Proposer.ethereumAddress,
     );
     // we must set the URL from the point of view of the client container
-    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
+    await nf3Proposer.registerProposer(
+      'http://localhost:8081',
+      await nf3Proposer.getMinimumStake(),
+    );
     await nf3Proposer.startProposer();
     await nf3Users[0].init(mnemonics.user1);
     erc20Address =

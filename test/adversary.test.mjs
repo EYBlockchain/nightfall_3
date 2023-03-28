@@ -156,7 +156,7 @@ describe('Testing with an adversary', () => {
 
     // Proposer registration
     await nf3AdversarialProposer.registerProposer(
-      'http://optimist',
+      'http://localhost:8081',
       await nf3AdversarialProposer.getMinimumStake(),
     );
 
