@@ -67,7 +67,10 @@ describe('ERC1155 tests', () => {
     await nf3User2.init(mnemonics.user2);
 
     await nf3Proposer.init(mnemonics.proposer);
-    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
+    await nf3Proposer.registerProposer(
+      'http://localhost:8081',
+      await nf3Proposer.getMinimumStake(),
+    );
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer.startProposer();

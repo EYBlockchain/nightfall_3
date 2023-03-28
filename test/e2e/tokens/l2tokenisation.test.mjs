@@ -53,7 +53,10 @@ let rollbackCount = 0;
 describe('L2 Tokenisation tests', () => {
   before(async () => {
     await nf3Proposer1.init(mnemonics.proposer);
-    await nf3Proposer1.registerProposer('http://optimist', await nf3Proposer1.getMinimumStake());
+    await nf3Proposer1.registerProposer(
+      'http://localhost:8081',
+      await nf3Proposer1.getMinimumStake(),
+    );
 
     // Proposer listening for incoming events
     const newGasBlockEmitter = await nf3Proposer1.startProposer();

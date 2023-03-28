@@ -453,7 +453,7 @@ export const retrieveL2Balance = async (client, ercAddress) => {
 */
 export const registerProposerOnNoProposer = async proposer => {
   if ((await proposer.getCurrentProposer()) === '0x0000000000000000000000000000000000000000') {
-    await proposer.registerProposer('http://optimist', await proposer.getMinimumStake());
+    await proposer.registerProposer('http://localhost:8081', await proposer.getMinimumStake());
   }
 };
 
