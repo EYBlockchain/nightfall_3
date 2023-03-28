@@ -38,7 +38,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     uint256 public currentSprint; // the current sprint of the span
     address[] public spanProposersList;
 
-    function initialize() public override(Pausable, Key_Registry, Config) {
+    function initialize() public override(Pausable, Key_Registry, Config) onlyInitializing {
         Pausable.initialize();
         Key_Registry.initialize();
         Config.initialize();
@@ -90,12 +90,10 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
      * so that we don't have cross-contract calls and thus keep Gas to an absolute
      * minimum.
      */
-    function proposeBlock(Block calldata b, Transaction[] calldata t)
-        external
-        payable
-        onlyCurrentProposer
-        whenNotPaused
-    {
+    function proposeBlock(
+        Block calldata b,
+        Transaction[] calldata t
+    ) external payable onlyCurrentProposer whenNotPaused {
         require(t.length >= 1, 'State: Block must contain at least one transaction');
         require(
             Utils.getBlockNumberL2(b.packedInfo) == blockHashes.length,
@@ -336,11 +334,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
         return blockHashes.length;
     }
 
-    function addPendingWithdrawal(
-        address addr,
-        uint256 feesL1,
-        uint256 feesL2
-    ) public {
+    function addPendingWithdrawal(address addr, uint256 feesL1, uint256 feesL2) public {
         require(
             msg.sender == proposersAddress || msg.sender == shieldAddress,
             'State: Not authorised to call this function'
@@ -467,11 +461,7 @@ contract State is ReentrancyGuardUpgradeable, Pausable, Key_Registry, Config {
     /**
      * @dev Set stake account for the address addr with amount of stake and challengeLocked
      */
-    function setStakeAccount(
-        address addr,
-        uint256 amount,
-        uint256 challengeLocked
-    ) public {
+    function setStakeAccount(address addr, uint256 amount, uint256 challengeLocked) public {
         require(
             msg.sender == proposersAddress || msg.sender == shieldAddress,
             'State: Not authorised to call this function'

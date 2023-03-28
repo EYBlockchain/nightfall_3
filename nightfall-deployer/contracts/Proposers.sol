@@ -8,18 +8,23 @@ pragma solidity ^0.8.0;
 import './Config.sol';
 import './Utils.sol';
 import './Stateful.sol';
+import './Certified.sol';
 
-contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
-    function initialize() public override(Stateful, Config) initializer {
+contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable, Certified {
+    function initialize() public override(Stateful, Config, Certified) initializer {
         Stateful.initialize();
         Config.initialize();
         ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+        Certified.initialize();
     }
 
     /**
      @dev register proposer with stake  
      */
-    function registerProposer(string calldata url, uint256 fee) external payable nonReentrant {
+    function registerProposer(
+        string calldata url,
+        uint256 fee
+    ) external payable nonReentrant onlyCertified {
         require(
             state.numProposers() < maxProposers,
             'Proposers: Max number of registered proposers'
@@ -86,7 +91,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
     // Proposers are allowed to deregister themselves at any point (even if they are the current proposer)
     // However, their stake is only withdrawable after the CHALLENGE_PERIOD has passed. This ensures
     // they are not the proposer of any blocks that could be challenged.
-    function deRegisterProposer() external nonReentrant {
+    function deRegisterProposer() external nonReentrant onlyCertified {
         require(
             state.getProposer(msg.sender).thisAddress != address(0),
             'Proposers: Not a proposer'
@@ -96,7 +101,7 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
         state.updateStakeAccountTime(msg.sender, uint32(block.timestamp));
     }
 
-    function withdrawStake() external {
+    function withdrawStake() external onlyCertified {
         TimeLockedStake memory stake = state.getStakeAccount(msg.sender);
         require(
             stake.time + CHALLENGE_PERIOD < block.timestamp,
@@ -113,7 +118,10 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable {
     }
 
     // Proposers can change REST API URL or increment stake
-    function updateProposer(string calldata url, uint256 fee) external payable nonReentrant {
+    function updateProposer(
+        string calldata url,
+        uint256 fee
+    ) external payable nonReentrant onlyCertified {
         require(
             state.getProposer(msg.sender).thisAddress != address(0),
             'Proposers: This proposer is not registered or you are not that proposer'

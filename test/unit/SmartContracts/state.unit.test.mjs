@@ -103,10 +103,11 @@ describe('State contract State functions', function () {
     const sanctionsListAddress = sanctionsListMockInstance.address;
 
     const Shield = await ethers.getContractFactory('Shield');
-    shield = await upgrades.deployProxy(Shield, [sanctionsListAddress, x509Address], {
+    shield = await upgrades.deployProxy(Shield, [], {
       initializer: 'initializeState',
     });
     await shield.deployed();
+    await shield.setAuthorities(sanctionsListAddress, x509Address);
 
     const State = await ethers.getContractFactory('State', {
       libraries: {

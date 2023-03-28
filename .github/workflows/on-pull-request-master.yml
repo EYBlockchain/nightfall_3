@@ -714,6 +714,7 @@ jobs:
   adversary-test:
     env:
       CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,lazy-optimist,bad-client
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -965,7 +966,7 @@ jobs:
             curl -i http://localhost:8092/healthcheck
           attempt_limit: 10
           attempt_delay: 30000
-
+      
       - name: 'Check challenger liveliness'
         uses: Wandalen/wretry.action@v1.0.36
         with:

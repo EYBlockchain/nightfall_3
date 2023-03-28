@@ -23,7 +23,7 @@ contract Config is Ownable, Structures {
     address feeL2TokenAddress;
     mapping(address => int256[2]) erc20limit;
 
-    function initialize() public virtual override onlyInitializing {
+    function initialize() public virtual override initializer {
         Ownable.initialize();
         minimumStake = 1000000 wei; // 20000000000000 wei; // 20K MATIC in mainnet
         blockStake = 1 wei; // 200000000000 wei; 200 MATIC in mainnet
@@ -75,36 +75,6 @@ contract Config is Ownable, Structures {
      */
     function getFeeL2TokenAddress() public view returns (address) {
         return feeL2TokenAddress;
-    }
-
-    // restricting tokens for deposit
-    function getRestrictionDeposit(address tokenAddr) public view returns (int256) {
-        return erc20limit[tokenAddr][0];
-    }
-
-    // restricting tokens for deposit
-    function getRestrictionWithdraw(address tokenAddr) public view returns (int256) {
-        return erc20limit[tokenAddr][1];
-    }
-
-    /**
-     * @dev Set token restriction
-     */
-    function setRestriction(
-        address tokenAddr,
-        int256 depositAmount,
-        int256 withdrawAmount
-    ) external onlyOwner {
-        erc20limit[tokenAddr][0] = depositAmount;
-        erc20limit[tokenAddr][1] = withdrawAmount;
-    }
-
-    /**
-     * @dev Remove token restriction
-     */
-    function removeRestriction(address tokenAddr) external onlyOwner {
-        delete erc20limit[tokenAddr][0];
-        delete erc20limit[tokenAddr][1];
     }
 
     /**

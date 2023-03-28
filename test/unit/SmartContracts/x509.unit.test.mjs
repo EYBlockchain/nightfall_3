@@ -19,15 +19,17 @@ const {
 } = config;
 
 const AUTHORITY_KEY_IDENTIFIER =
-  process.env.AUTHORITY_KEY_IDENTIFIER ||
-  `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`;
+  process.env.AUTHORITY_KEY_IDENTIFIER || '0xef355558d6fdee0d5d02a22d078e057b74644e5f';
 const MODULUS = process.env.MODULUS || modulus;
 const END_USER_PRIV_KEY_PATH =
-  process.env.END_USER_PRIV_KEY_PATH || 'test/unit/utils/Nightfall_end_user_policies.der';
+  process.env.END_USER_PRIV_KEY_PATH ||
+  'test/unit/utils/mock_certs/Nightfall_end_user_policies.der';
 const INTERMEDIATE_CERTIFICATE_PATH =
-  process.env.INTERMEDIATE_CERTIFICATE_PATH || 'test/unit/utils/Nightfall_Intermediate_CA.cer';
+  process.env.INTERMEDIATE_CERTIFICATE_PATH ||
+  'test/unit/utils/mock_certs/Nightfall_Intermediate_CA.cer';
 const END_USER_CERTIFICATE_PATH =
-  process.env.END_USER_CERTIFICATE_PATH || 'test/unit/utils/Nightfall_end_user_policies.cer';
+  process.env.END_USER_CERTIFICATE_PATH ||
+  'test/unit/utils/mock_certs/Nightfall_end_user_policies.cer';
 const TEST_SELF_GENERATED_CERTS = !!process.env.END_USER_PRIV_KEY_PATH;
 
 describe('DerParser contract functions', function () {
@@ -41,8 +43,12 @@ describe('DerParser contract functions', function () {
   let addressToSign;
 
   const derPrivateKey = fs.readFileSync(END_USER_PRIV_KEY_PATH);
-  const digicertPrivateKey = fs.readFileSync('test/unit/utils/digicert_document_signing_mock.der');
-  const entrustPrivateKey = fs.readFileSync('test/unit/utils/entrust_document_signing_mock.der');
+  const digicertPrivateKey = fs.readFileSync(
+    'test/unit/utils/mock_certs/digicert_document_signing_mock.der',
+  );
+  const entrustPrivateKey = fs.readFileSync(
+    'test/unit/utils/mock_certs/entrust_document_signing_mock.der',
+  );
   const certChain = []; // contains the certificate to verify chain, lowest index is lowest cert in chain (i.e. [0] = end user)
   let digicertMock;
   let entrustMock;
@@ -89,12 +95,12 @@ describe('DerParser contract functions', function () {
 
     // sign the ethereum address
     signature = signEthereumAddress(derPrivateKey, addressToSign);
-    derBuffer = fs.readFileSync('test/unit/utils/digicert_document_signing_mock.cer');
+    derBuffer = fs.readFileSync('test/unit/utils/mock_certs/digicert_document_signing_mock.cer');
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     digicertMock = { derBuffer, tlvLength };
 
     digicertSignature = signEthereumAddress(digicertPrivateKey, addressToSign);
-    derBuffer = fs.readFileSync('test/unit/utils/entrust_document_signing_mock.cer');
+    derBuffer = fs.readFileSync('test/unit/utils/mock_certs/entrust_document_signing_mock.cer');
     tlvLength = await X509Instance.computeNumberOfTlvs(derBuffer, 0);
     entrustMock = { derBuffer, tlvLength };
 
@@ -179,7 +185,9 @@ describe('DerParser contract functions', function () {
         certChain[0].tlvLength,
         signature,
         true,
+        false,
         0,
+        ethers.constants.AddressZero,
       );
       expect.fail('The certificate check passed, but it should have failed');
     } catch (err) {
@@ -195,7 +203,9 @@ describe('DerParser contract functions', function () {
       certChain[1].tlvLength,
       0,
       false,
+      false,
       0,
+      ethers.constants.AddressZero,
     );
 
     if (!TEST_SELF_GENERATED_CERTS) {
@@ -205,16 +215,20 @@ describe('DerParser contract functions', function () {
         digicertMock.tlvLength,
         digicertSignature,
         true,
+        false,
         1,
+        ethers.constants.AddressZero,
       );
 
-      // now presenting the Digicert mock cert should also work
+      // now presenting the Entrust mock cert should also work
       await X509Instance.validateCertificate(
         entrustMock.derBuffer,
         entrustMock.tlvLength,
         entrustSignature,
         true,
+        false,
         2,
+        ethers.constants.AddressZero,
       );
     }
 
@@ -227,11 +241,40 @@ describe('DerParser contract functions', function () {
       certChain[0].tlvLength,
       signature,
       true,
+      false,
       oidIndex,
+      ethers.constants.AddressZero,
     );
 
     // we should now be able to pass an x509 check for this address
     result = await X509Instance.x509Check(addressToSign);
     expect(result).to.equal(true);
+
+    // but if we revoke the intermediate CA, we won't be able to valdate the end user cert.
+    if (!TEST_SELF_GENERATED_CERTS) {
+      // let's sign our address with the intermediate CA private key
+      const derIntermediatePrivateKey = fs.readFileSync(
+        'test/unit/utils/mock_certs/Nightfall_Intermediate_CA.der',
+      );
+      signature = signEthereumAddress(derIntermediatePrivateKey, addressToSign);
+      const subjectKeyIdentifier = '0xcb3592749299adaacc45b489c25b71d53277664c';
+      // revoke the intermediate CA
+      await X509Instance.revokeKeyByAddressSignature(subjectKeyIdentifier, signature);
+      // and try to validate the end user cert again (should fail)
+      try {
+        await X509Instance.validateCertificate(
+          certChain[0].derBuffer,
+          certChain[0].tlvLength,
+          signature,
+          true,
+          false,
+          oidIndex,
+          ethers.constants.AddressZero,
+        );
+        expect.fail('The certificate check passed, but it should have failed');
+      } catch (err) {
+        expect(err.message.includes('VM Exception')).to.equal(true);
+      }
+    }
   });
 });

@@ -12,13 +12,15 @@ import './Utils.sol';
 import './ChallengesUtil.sol';
 import './Config.sol';
 import './Stateful.sol';
+import './Certified.sol';
 
-contract Challenges is Stateful, Config {
+contract Challenges is Stateful, Config, Certified {
     mapping(bytes32 => address) public committers;
 
-    function initialize() public override(Stateful, Config) initializer {
+    function initialize() public override(Stateful, Config, Certified) initializer {
         Stateful.initialize();
         Config.initialize();
+        Certified.initialize();
     }
 
     /**
@@ -442,7 +444,7 @@ contract Challenges is Stateful, Config {
     }
 
     //To prevent frontrunning, we need to commit to a challenge before we send it
-    function commitToChallenge(bytes32 commitHash) external {
+    function commitToChallenge(bytes32 commitHash) external onlyCertified {
         require(committers[commitHash] == address(0), 'Hash already committed to');
         committers[commitHash] = msg.sender;
         emit CommittedToChallenge(commitHash, msg.sender);

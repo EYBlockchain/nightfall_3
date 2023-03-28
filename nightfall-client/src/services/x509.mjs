@@ -7,7 +7,14 @@ import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.
 
 const { X509_CONTRACT_NAME } = constants;
 
-async function validateCertificate(certificate, ethereumAddressSignature, oidGroup) {
+async function validateCertificate(
+  certificate,
+  ethereumAddressSignature,
+  isEndUser,
+  checkOnly,
+  oidGroup,
+  address,
+) {
   const x509ContractInstance = await waitForContract(X509_CONTRACT_NAME);
   const numberOfTlvs = await x509ContractInstance.methods
     .computeNumberOfTlvs(certificate, 0)
@@ -17,8 +24,10 @@ async function validateCertificate(certificate, ethereumAddressSignature, oidGro
       certificate,
       numberOfTlvs,
       ethereumAddressSignature || 0,
-      !!ethereumAddressSignature,
+      isEndUser,
+      checkOnly,
       oidGroup,
+      address,
     )
     .encodeABI();
 }

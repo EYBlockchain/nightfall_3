@@ -8,16 +8,24 @@ function configureAWSBucket() {
 function getDefaultX509Params() {
   return {
     RSA_TRUST_ROOTS: [
+      // test root
       {
         modulus:
           '0x00c6cdaeb44c7b8fe697a3b8a269799176078ae3cb065010f55a1f1a839ff203b1e785d6782eb9c04e0e1cf63ec7ef21c6d3201c818647b8cea476112463caa8339f03e678212f0214c4a50de21cabc8001ef269eef4930fcd1dd2911ba40d505fcee5508bd91a79aadc70cc33c77be14908b1c32f880a8bb8e2d863838cfa6bd444c47dd30f78650caf1dd947adcf48b427536d294240d40335eaee5db31399b04b3893936cc41c04602b713603526a1e003112bf213e6f5a99830fa821783340c46597e481e1ee4c0c6b3aca32628b70886a396d737537bcfae5ba51dfd6add1728aa6bde5aeb8c27289fb8e911569a41c3e3f48b9b2671c673faac7f085a195',
         exponent: 65537,
-        authorityKeyIdentifier: `0x${'ef355558d6fdee0d5d02a22d078e057b74644e5f'.padStart(64, '0')}`,
+        authorityKeyIdentifier: '0xef355558d6fdee0d5d02a22d078e057b74644e5f',
+      },
+      // entrust/digicert mock root
+      {
+        modulus:
+          '0x00ba84b672db9e0c6be299e93001a776ea32b895411ac9da614e5872cffef68279bf7361060aa527d8b35fd3454e1c72d64e32f2728a0ff78319d06a808000451eb0c7e79abf1257271ca3682f0a87bd6a6b0e5e65f31c77d5d4858d7021b4b332e78ba2d5863902b1b8d247cee4c949c43ba7defb547d57bef0e86ec279b23a0b55e250981632135c2f7856c1c294b3f25ae4279a9f24d7c6ecd09b2582e3ccc2c445c58c977a066b2a119fa90a6e483b6fdbd4111942f78f07bff5535f9c3ef4172ce669ac4e324c6277eab7e8e5bb34bc198bae9c51e7b77eb553b13322e56dcf703c1afae29b67b683f48da5af624c4de058ac64341203f8b68d946324a471',
+        exponent: 65537,
+        authorityKeyIdentifier: '0x6a72267ad01eef7de73b6951d46c8d9f901266ab',
       },
     ],
     // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
     certificatePoliciesOIDs: [
-      // made up
+      // test
       [
         '0x06032a0304000000000000000000000000000000000000000000000000000000',
         '0x06032d0607000000000000000000000000000000000000000000000000000000',
@@ -31,7 +39,7 @@ function getDefaultX509Params() {
       ['0x060a6086480186fa6c0a01060000000000000000000000000000000000000000'],
     ],
     extendedKeyUsageOIDs: [
-      // made up
+      // test
       [
         '0x06082b0601050507030300000000000000000000000000000000000000000000',
         '0x06082b0601050507030400000000000000000000000000000000000000000000',
@@ -44,6 +52,68 @@ function getDefaultX509Params() {
         '0x06096086480186fa6b280b000000000000000000000000000000000000000000',
         '0x060a2b0601040182370a030c0000000000000000000000000000000000000000',
       ],
+    ],
+  };
+}
+
+function getLiveX509Params() {
+  return {
+    RSA_TRUST_ROOTS: [
+      // Entrust G2 root
+      {
+        modulus:
+          '0x00ba84b672db9e0c6be299e93001a776ea32b895411ac9da614e5872cffef68279bf7361060aa527d8b35fd3454e1c72d64e32f2728a0ff78319d06a808000451eb0c7e79abf1257271ca3682f0a87bd6a6b0e5e65f31c77d5d4858d7021b4b332e78ba2d5863902b1b8d247cee4c949c43ba7defb547d57bef0e86ec279b23a0b55e250981632135c2f7856c1c294b3f25ae4279a9f24d7c6ecd09b2582e3ccc2c445c58c977a066b2a119fa90a6e483b6fdbd4111942f78f07bff5535f9c3ef4172ce669ac4e324c6277eab7e8e5bb34bc198bae9c51e7b77eb553b13322e56dcf703c1afae29b67b683f48da5af624c4de058ac64341203f8b68d946324a471',
+        exponent: 65537,
+        authorityKeyIdentifier: '0x6a72267ad01eef7de73b6951d46c8d9f901266ab',
+      },
+      // Entrust 2048 root
+      {
+        modulus:
+          '0x00ad4d4ba91286b2eaa320071516642a2b4bd1bf0b4a4d8eed8076a567b77840c07342c868c0db532bdd5eb8769835938b1a9d7c133a0e1f5bb71ecfe524141eb181a98d7db8cc6b4b03f1020cdcaba54024007f7494a19d0829b3880bf587779d55cde4c37ed76a64ab851486955b9732506f3dc8ba660ce3fcbdb849c176894919fdc0a8bd89a3672fc69fbc711960b82de92cc99076667b94e2af78d665535d3cd69cb2cf2903f92fa450b2d448ce0532558afdb2644c0ee4980775db7fdfb9085560853029f97b48a46986e3353f1e865d7a7a15bdef008e1522541700902693bc0e496891bff847d39d9542c10e4ddf6f26cfc3182162664370d6d5c007e1',
+        exponent: 65537,
+        authorityKeyIdentifier: '0x55e481d11180bed889b908a331f9a1240916b970',
+      },
+      // EY 4096 root
+      {
+        modulus:
+          '0x00f2d3e67057da14c9245d2dbacb52dd8de93f5d1a7c2ebc523cd22681b3fa098f21c3a3662de98fc45f6962958e37bc603f9805e2a5de300fc604ff6633facd705ef1787eeac66a69c32fa932b56f2d26be758bcfe5451f80e799a6ed5ed704dadf2481e3998069f2c1dc207d8f9828cd24a85f31e7162ed56c0797e82dec8e8341b6cd3a7aac0b03ca1b9fd8a1e370fe8bc5c26e30d9f790521f829d8946dd4001ca295d83cc315b31083156ad9df834be615a633611d949e4aa7041be5ae81d42b3cf8306860886bf9e0f274012fd149a25c712f880637ff33a9aadcb637accce4f85241c46675aca8d07660c03576d294b7f09997139e26a9f9cb00ce652a403e3509b5ab24d7d950537d8cd652a716678d5c78c961ba6dbd892104b891e1dec68a472055d2e5d525ad6005e60fdd0065d3062e62d720320b9c05e7a16dde3bbb898d2c45d1266b37a91bcde0f4159df56fd3aff795f8e77f63b68252735e788923f50f11592e07e7a5e8b5c220d7249d1874fcdcfd1a7bd3ea52d0a5fb9545a6398dd21e966c05dc269e4dbe5e95b0935361cef525403727d02f13a7701c8f3b3e69806b09b19912bd58e8cb9eb0a0274ebe682f94cb2f3de97e3e3b79161ab05a1ab6bfc3807760102a27e8a38a2dddcfbc2aad789a4f60cf37bb473b213c6203a82982a7478964fccfa662bf1dbf44b3ef8bbf2f38c942e972815c1424b',
+        exponent: 65537,
+        authorityKeyIdentifier: '0x148e058f14da7f94e7b0e5dd232885c4dbc9f722',
+      },
+      {
+        // DigiCert High Assurance EV Root CA
+        modulus:
+          '0x00c6cce573e6fbd4bbe52d2d32a6dfe5813fc9cd2549b6712ac3d5943467a20a1cb05f69a640b1c4b7b28fd098a4a941593ad3dc94d63cdb7438a44acc4d2582f74aa5531238eef3496d71917e63b6aba65fc3a484f84f6251bef8c5ecdb3892e306e508910cc4284155fbcb5a89157e71e835bf4d72093dbe3a38505b77311b8db3c724459aa7ac6d00145a04b7ba13eb510a984141224e656187814150a6795c89de194a57d52ee65d1c532c7e98cd1a0616a46873d03404135ca171d35a7c55db5e64e13787305604e511b4298012f1793988a202117c2766b788b778f2ca0aa838ab0a64c2bf665d9584c1a1251e875d1a500b2012cc41bb6e0b5138b84bcb',
+        exponent: 65537,
+        authorityKeyIdentifier: '0xb13ec36903f8bf4701d498261a0802ef63642bc3',
+      },
+    ],
+    // the certificatePoliciesOIDs and the extendedKeyUseageOIDS should contain the full tlv encoding (not just the value)
+    certificatePoliciesOIDs: [
+      // Entrust EV code signer (OID Group 0)
+      [
+        '0x060a6086480186fa6c0a01020000000000000000000000000000000000000000',
+        '0x060567810c010300000000000000000000000000000000000000000000000000',
+      ],
+      // Entrust EV Document Signer (OID Group 1)
+      ['0x060a6086480186fa6c0a01060000000000000000000000000000000000000000'],
+      // EY end user
+      ['0x060a2b060104018f752a01020000000000000000000000000000000000000000'],
+      // Digicert EV code signer
+      ['0x060567810c010300000000000000000000000000000000000000000000000000'],
+    ],
+    extendedKeyUsageOIDs: [
+      // Entrust EV code signer (OID Group 0)
+      ['0x06082b0601050507030300000000000000000000000000000000000000000000'],
+      // Entrust EV Document Signer (OID Group 1)
+      [
+        '0x06096086480186fa6b280b000000000000000000000000000000000000000000',
+        '0x060a2b0601040182370a030c0000000000000000000000000000000000000000',
+      ],
+      // EY end user
+      ['0x060a2b060104018f752a01010000000000000000000000000000000000000000'],
+      // Digicert EV code signer (code siging OID)
+      ['0x06082b0601050507030300000000000000000000000000000000000000000000'],
     ],
   };
 }
@@ -207,6 +277,29 @@ module.exports = {
     mumbai: {
       name: 'mumbai',
       chainId: 80001,
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      adversarialClientApiUrl: 'http://localhost:8093',
+      adversarialClientWsUrl: 'ws://localhost:8094',
+      web3WsUrl: process.env.BLOCKCHAIN_URL,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+    },
+    polygonPos: {
+      name: 'polygonPos',
+      chainId: 137,
       clientApiUrl: process.env.CLIENT_HOST
         ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
         : 'http://localhost:8080',
@@ -403,6 +496,7 @@ module.exports = {
     },
   },
   RESTRICTIONS: {
+    restrict: !(process.env.RESTRICT_TOKENS === 'disable'),
     signingKeys: {
       bootProposerKey:
         process.env.BOOT_PROPOSER_KEY ||
@@ -545,6 +639,18 @@ module.exports = {
           amount: process.env.MATIC_RESTRICT || '1000000000000000000000',
         },
       ],
+      polygonPos: [
+        {
+          name: 'USDC',
+          address: '0x2791bca1f2de4661ed88a30c99a7a9449aa84174',
+          amount: process.env.USDC_RESTRICT || -1,
+        },
+        {
+          name: 'WMATIC',
+          address: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
+          amount: process.env.MATIC_RESTRICT || -1,
+        },
+      ],
       localhost: [
         {
           name: 'WETH',
@@ -593,6 +699,7 @@ module.exports = {
     mumbai: getDefaultX509Params(),
     mainnet: getDefaultX509Params(),
     localhost: getDefaultX509Params(),
+    polygonPos: getLiveX509Params(),
   },
 
   // for Browser use

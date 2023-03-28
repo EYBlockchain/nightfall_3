@@ -6,7 +6,6 @@ import axios from 'axios';
 import Queue from 'queue';
 import Web3 from 'web3';
 import WebSocket from 'ws';
-import crypto from 'crypto';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
@@ -1642,29 +1641,23 @@ class Nf3 {
   /**
    Validates an X509 (RSA) certificate
    */
-  async validateCertificate(certificate, ethereumAddress, derPrivateKey, oidGroup = 0) {
-    // sign the ethereum address
-    let ethereumAddressSignature = null;
-    if (derPrivateKey) {
-      const privateKey = crypto.createPrivateKey({
-        key: derPrivateKey,
-        format: 'der',
-        type: 'pkcs1',
-      });
-      ethereumAddressSignature = crypto.sign(
-        'sha256',
-        Buffer.from(ethereumAddress.toLowerCase().slice(2), 'hex'),
-        {
-          key: privateKey,
-          padding: crypto.constants.RSA_PKCS1_PADDING,
-        },
-      );
-    }
+  async validateCertificate(
+    certificate,
+    ethereumAddressSignature,
+    isEndUser,
+    checkOnly,
+    oidGroup = 0,
+    address,
+  ) {
     // now validate the cert
+    if (!address) address = '0x0000000000000000000000000000000000000000';
     const res = await axios.post(`${this.clientBaseUrl}/x509/validate`, {
       certificate,
       ethereumAddressSignature,
+      isEndUser,
+      checkOnly,
       oidGroup,
+      address,
     });
     const txDataToSign = res.data;
     return this.submitTransaction(txDataToSign, this.x509ContractAddress);

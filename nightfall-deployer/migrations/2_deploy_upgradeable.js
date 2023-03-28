@@ -70,7 +70,7 @@ module.exports = async function (deployer) {
   await deployProxy(X509, [], { deployer });
   await deployProxy(Proposers, [], { deployer, unsafeAllowLinkedLibraries: true });
   await deployProxy(Challenges, [], { deployer, unsafeAllowLinkedLibraries: true });
-  await deployProxy(Shield, [sanctionsContractAddress, X509.address], {
+  await deployProxy(Shield, [], {
     deployer,
     unsafeAllowLinkedLibraries: true,
     initializer: 'initializeState',
@@ -93,25 +93,28 @@ module.exports = async function (deployer) {
   await proposers.setBootProposer(bootProposer);
   await challengers.setBootChallenger(bootChallenger);
 
-  // restrict transfer amounts
-  for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
-  
-    if (token.name === 'ERC20Mock') 
-      continue; // ignore test tokens, they're already handled in the test_tokens migration
+  // restrict transfer amounts if required
+  if (RESTRICTIONS.restrict ) {
+    await shield.restrictTokens(true);
+    for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
+    
+      if (token.name === 'ERC20Mock') 
+        continue; // ignore test tokens, they're already handled in the test_tokens migration
 
-    console.log(
-      `Max allowed deposit value for ${token.name}: ${(
-        BigInt(token.amount) < BigInt(0) ? token.amount : (BigInt(token.amount) / BigInt(4)).toString()
-      ).toString()}`,
-    ); // BigInt division returns whole number which is a floor. Not Math.floor() needed
+      console.log(
+        `Max allowed deposit value for ${token.name}: ${(
+          BigInt(token.amount) < BigInt(0) ? token.amount : (BigInt(token.amount) / BigInt(4)).toString()
+        ).toString()}`,
+      ); // BigInt division returns whole number which is a floor. Not Math.floor() needed
 
-    console.log(`Max allowed withdraw value for ${token.name}: ${token.amount}`);
-    await shield.setRestriction(
-      token.address,
-      BigInt(token.amount) < BigInt(0) ? token.amount : (BigInt(token.amount) / BigInt(4)).toString(),
-      token.amount,
-    );
-  }
+      console.log(`Max allowed withdraw value for ${token.name}: ${token.amount}`);
+      await shield.setRestriction(
+        token.address,
+        BigInt(token.amount) < BigInt(0) ? token.amount : (BigInt(token.amount) / BigInt(4)).toString(),
+        token.amount,
+      );
+    }
+  } else await shield.restrictTokens(false);
 
   // set Fee Token Address
   const feeL2TokenAddress = RESTRICTIONS.tokens[process.env.ETH_NETWORK].find(
@@ -119,6 +122,11 @@ module.exports = async function (deployer) {
   ).address;
   await shield.setFeeL2TokenAddress(feeL2TokenAddress);
   await state.setFeeL2TokenAddress(feeL2TokenAddress);
+
+   // set the authorisation contract interfaces
+   await shield.setAuthorities(sanctionsContractAddress, X509.address)
+   await proposers.setAuthorities(sanctionsContractAddress, X509.address)
+   await challengers.setAuthorities(sanctionsContractAddress, X509.address)
 
   console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'disable') {

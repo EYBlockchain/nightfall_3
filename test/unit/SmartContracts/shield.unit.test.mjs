@@ -86,13 +86,9 @@ describe('Testing Shield Contract', function () {
     const sanctionsListAddress = sanctionsListMockInstance.address;
 
     const ShieldDeployer = await ethers.getContractFactory('Shield');
-    ShieldInstance = await upgrades.deployProxy(
-      ShieldDeployer,
-      [sanctionsListAddress, x509Address],
-      {
-        initializer: 'initializeState',
-      },
-    );
+    ShieldInstance = await upgrades.deployProxy(ShieldDeployer, [], {
+      initializer: 'initializeState',
+    });
     shieldAddress = (await ShieldInstance.deployed()).address;
 
     const PoseidonDeployer = await ethers.getContractFactory('Poseidon');
@@ -155,6 +151,7 @@ describe('Testing Shield Contract', function () {
     stateAddress = (await StateInstance.deployed()).address;
 
     ShieldInstance.setStateContract(stateAddress);
+    ShieldInstance.setAuthorities(sanctionsListAddress, x509Address);
 
     const transactions = createBlockAndTransactions(erc20MockAddress, owner[0].address);
     depositTransaction = transactions.depositTransaction;
@@ -342,7 +339,7 @@ describe('Testing Shield Contract', function () {
     it('fails if user is not whitelisted and whitelisting is active', async function () {
       await X509Instance.enableWhitelisting(true);
       await expect(ShieldInstance.submitTransaction(withdrawTransaction)).to.be.revertedWith(
-        'Shield: You are not authorised to transact using Nightfall',
+        'Certified: You are not authorised to transact using Nightfall',
       );
     });
 
@@ -1214,7 +1211,7 @@ describe('Testing Shield Contract', function () {
 
       await expect(
         ShieldInstance.finaliseWithdrawal(block, withdrawTransaction, index, siblingPath),
-      ).to.be.revertedWith('Shield: You are not authorised to transact using Nightfall');
+      ).to.be.revertedWith('Certified: You are not authorised to transact using Nightfall');
     });
 
     it('fails to finalise withdrawal if tokenType is ERC20 and tokenId not zero', async function () {
