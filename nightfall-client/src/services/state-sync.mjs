@@ -12,8 +12,9 @@ import { unpauseQueue } from 'common-files/utils/event-queue.mjs';
 import constants from 'common-files/constants/index.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
+import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 
-const { STATE_CONTRACT_NAME, CHALLENGES_CONTRACT_NAME } = constants;
+const { STATE_CONTRACT_NAME, SHIELD_CONTRACT_NAME, CHALLENGES_CONTRACT_NAME } = constants;
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION, STATE_GENESIS_BLOCK } = config;
 
 export const syncState = async (
@@ -24,9 +25,15 @@ export const syncState = async (
   logger.info({ msg: 'SyncState parameters', fromBlock, toBlock, eventFilter });
 
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // BlockProposed
+  const shieldContractInstance = await waitForContract(SHIELD_CONTRACT_NAME); // TransactionSubmitted
   const challengesContractInstance = await waitForContract(CHALLENGES_CONTRACT_NAME); // Rollback
 
   const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
+    fromBlock,
+    toBlock,
+  });
+
+  const pastShieldEvents = await shieldContractInstance.getPastEvents(eventFilter, {
     fromBlock,
     toBlock,
   });
@@ -38,6 +45,7 @@ export const syncState = async (
 
   // Put all events together and sort chronologically as they appear on Ethereum
   const splicedList = pastStateEvents
+    .concat(pastShieldEvents)
     .concat(pastChallengeEvents)
     .sort((a, b) => a.blockNumber - b.blockNumber);
 
@@ -51,6 +59,10 @@ export const syncState = async (
       case 'Rollback':
         // eslint-disable-next-line no-await-in-loop
         await rollbackEventHandler(pastEvent);
+        break;
+      case 'TransactionSubmitted':
+        // eslint-disable-next-line no-await-in-loop
+        await transactionSubmittedEventHandler(pastEvent);
         break;
       default:
         break;
