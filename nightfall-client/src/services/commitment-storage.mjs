@@ -16,7 +16,6 @@ import {
   getTransactionByTransactionHash,
   getTransactionHashSiblingInfo,
 } from './database.mjs';
-import { syncState } from './state-sync.mjs';
 
 const { MONGO_URL, COMMITMENTS_DB, COMMITMENTS_COLLECTION } = config;
 const { generalise } = gen;
@@ -976,13 +975,13 @@ export async function findUsableCommitmentsMutex(
 
 /**
  *
- * @function insertCommitmentsAndResync save a list of commitments in the database
+ * @function insertCommitments save a list of commitments in the database
  * @param {[]} listOfCommitments a list of commitments to be saved in the database
  * @throws if all the commitments in the list already exists in the database
  * throw an error
  * @returns return a success message.
  */
-export async function insertCommitmentsAndResync(listOfCommitments) {
+export async function insertCommitments(listOfCommitments) {
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
 
@@ -1005,10 +1004,6 @@ export async function insertCommitmentsAndResync(listOfCommitments) {
   if (onlyNewCommitments.length > 0) {
     // 4. Insert all
     await db.collection(COMMITMENTS_COLLECTION).insertMany(onlyNewCommitments);
-
-    // 5. Sycronize from beggining
-    await syncState();
-
     return { successMessage: 'Commitments have been saved successfully!' };
   }
 

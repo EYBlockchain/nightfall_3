@@ -15,10 +15,11 @@ import {
   getWalletPendingSpentBalance,
   getCommitments,
   getCommitmentsByCompressedZkpPublicKeyList,
-  insertCommitmentsAndResync,
+  insertCommitments,
   getCommitmentsByCircuitHash,
   getCommitmentsDepositedRollbacked,
 } from '../services/commitment-storage.mjs';
+import { syncState } from '../services/state-sync.mjs';
 
 const router = express.Router();
 
@@ -84,7 +85,8 @@ router.get('/commitments', async (req, res, next) => {
 router.post('/save', async (req, res, next) => {
   const listOfCommitments = req.body;
   try {
-    const response = await insertCommitmentsAndResync(listOfCommitments);
+    const response = await insertCommitments(listOfCommitments);
+    await syncState(); // Sycronize from beggining
     res.json(response);
   } catch (err) {
     next(err);
