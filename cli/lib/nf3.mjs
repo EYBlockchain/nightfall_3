@@ -1306,11 +1306,32 @@ class Nf3 {
   }
 
   /**
-    Send offchain transaction to all Optimists that the chain knows about
+    Intended to be called by a Proposer acting as a Proxy for offchain transactions. This
+    function allows the Proposer to forward offchain transactions to its Optimist instance.
     @method
     @async
-    @param {string} transaction
-    @returns {array} A promise that resolves to the API call status
+    @param {object} transaction
+    @returns {object} A promise that resolves to the API call status
+   */
+  async forwardOffchainTransaction(transaction) {
+    const res = await axios.post(
+      `${this.optimistBaseUrl}/proposer/offchain-transaction`,
+      { transaction },
+      { timeout: 3600000 },
+    );
+    console.log(`FORWARDING TO ${this.optimistBaseUrl}/proposer/offchain-transaction`);
+    return res.status;
+  }
+
+  /**
+    Send offchain transaction to all Proposers that the chain knows about
+    This is mainly intended to be called by a User to send the transaction to a Proposer
+    who will act as a proxy and forward the transaction to an Optimist (this allows an
+    Optimist to be firewalled off and only the Proposer exposed to Users).
+    @method
+    @async
+    @param {object} transaction
+    @returns {object} A promise that resolves to the API call status
     */
   async sendOffchainTransaction(transaction) {
     // dig up connection peers
