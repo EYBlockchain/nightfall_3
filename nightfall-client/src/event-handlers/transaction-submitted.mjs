@@ -29,9 +29,10 @@ async function transactionSubmittedEventHandler(eventParams) {
   transaction.transactionHashL1 = data.transactionHash;
 
   // logic: if any of non zero commitment in transaction alraedy exist in db
-  // i.e transaction belong to user using this nightfall-client.
-  // for example: for deposit we store commitment while transaction submit,
-  // similarly for transfer we store change commitment while transaction submit
+  // That means this transaction belong to user using this nightfall-client
+  // Hence, proceed and save tx in db.
+  // Note: for deposit we store commitment in transaction submit event handler,
+  // similarly for transfer we store change commitment in transaction submit event handler.
 
   // filter out non zero commitments and nullifiers
   const nonZeroCommitments = transaction.commitments.filter(c => c !== ZERO);
