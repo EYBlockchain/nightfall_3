@@ -78,8 +78,8 @@ const genGetCommitments = async (query = {}, proj = {}) => {
 
 // eslint-disable-next-line import/prefer-default-export
 export const initialClientSync = async () => {
-  const allCommitments = await genGetCommitments();
-  const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
+  const allCommitments = await genGetCommitments({blockNumber: {$gte: 0}});
+  const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber);
   logger.info({ msg: 'commitmentBlockNumbers', commitmentBlockNumbers });
 
   const firstSeenBlockNumber = Math.min(...commitmentBlockNumbers);
