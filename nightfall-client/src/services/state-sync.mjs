@@ -80,8 +80,7 @@ const genGetCommitments = async (query = {}, proj = {}) => {
 export const initialClientSync = async () => {
   const allCommitments = await genGetCommitments();
   const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
-
-  logger.info(`commitmentBlockNumbers: ${commitmentBlockNumbers}`);
+  logger.info({ msg: 'commitmentBlockNumbers', commitmentBlockNumbers });
 
   const firstSeenBlockNumber = Math.min(...commitmentBlockNumbers);
 

@@ -1,4 +1,3 @@
-/* eslint-disable import/no-cycle */
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import constants from '@polygon-nightfall/common-files/constants/index.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
