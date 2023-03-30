@@ -4,7 +4,7 @@ FROM node:16.17-bullseye-slim
 # entrypoint script requires 'netcat'
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    python3 make g++ netcat-openbsd \
+    python3 make g++ netcat-openbsd iputils-ping\
     && rm -rf /var/lib/apt/lists/*
 
 # websocket port 8080
