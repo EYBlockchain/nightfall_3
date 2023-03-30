@@ -20,12 +20,23 @@ import {
   getCommitmentsDepositedRollbacked,
 } from '../services/commitment-storage.mjs';
 import { syncState } from '../services/state-sync.mjs';
+import { getAllTransactions } from '../services/database.mjs';
 
 const router = express.Router();
 
 const { generalise } = gen;
 
 const { WITHDRAW } = constants;
+
+router.get('/transactions', async (req, res, next) => {
+  console.log(req.body);
+  try {
+    const txs = await getAllTransactions();
+    res.json({ txs });
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/salt', async (req, res, next) => {
   try {
