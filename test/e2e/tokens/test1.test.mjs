@@ -172,7 +172,7 @@ describe('ERC20 tests', () => {
           await getTransactions(environment.clientApiUrl),
         )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
       );
-      await restartClient();
+      await restartClient(nf3User);
       logger.info(
         `------getTransactions-1.1--${JSON.stringify(
           await getTransactions(environment.clientApiUrl),

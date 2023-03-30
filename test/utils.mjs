@@ -576,6 +576,15 @@ const healthy = async nf3Proposer => {
   logger.debug('optimist is healthy');
 };
 
+// setup a healthcheck wait
+const healthyClient = async nf3User => {
+  while (!(await nf3User.healthcheck('client'))) {
+    await waitForTimeout(1000);
+  }
+
+  logger.debug('client is healthy');
+};
+
 const dropOptimistMongoDatabase = async () => {
   logger.debug(`Dropping Optimist's Mongo database`);
   let mongoConn;
@@ -604,7 +613,7 @@ const dropClientMongoDatabase = async () => {
       await waitForTimeout(2000);
     }
 
-    logger.debug(`Optimist's Mongo database dropped successfuly!`);
+    logger.debug(`Client's Mongo database dropped successfuly!`);
   } finally {
     mongo.disconnect();
   }
@@ -740,7 +749,7 @@ export async function restartOptimist(nf3Proposer, dropDb = true) {
   await healthy(nf3Proposer);
 }
 
-export async function restartClient() {
+export async function restartClient(nf3User) {
   const options = {
     config: [
       'docker/docker-compose.yml',
@@ -756,6 +765,7 @@ export async function restartClient() {
 
   await dropClientMongoDatabase();
   logger.debug(`Wait after client database drop`);
-  await new Promise(resolve => setTimeout(resolve, 300000));
+  // await new Promise(resolve => setTimeout(resolve, 300000));
   await compose.upOne('client', options);
+  await healthyClient(nf3User);
 }
