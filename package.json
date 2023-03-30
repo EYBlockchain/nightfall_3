@@ -15,6 +15,7 @@
     "test-circuits": "npx hardhat test --bail --no-compile test/circuits.test.mjs ",
     "test-e2e-nf3lib": "npx hardhat test --bail --no-compile test/e2e/nf3lib/nf3.test.mjs",
     "test-e2e-tokens": "npx hardhat test test/e2e/tokens/* --bail --no-compile",
+    "test1-test-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/test1.test.mjs",
     "test-erc20-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/erc20.test.mjs",
     "test-erc721-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/erc721.test.mjs",
     "test-erc1155-tokens": "npx hardhat test --bail --no-compile test/e2e/tokens/erc1155.test.mjs",
