@@ -1320,12 +1320,12 @@ class Nf3 {
       { timeout: 3600000 },
     );
     console.log(`FORWARDING TO ${this.optimistBaseUrl}/proposer/offchain-transaction`);
-    return res.status;
+    return res;
   }
 
   /**
     Send offchain transaction to all Proposers that the chain knows about
-    This is mainly intended to be called by a User to send the transaction to a Proposer
+    This is intended to be called by a User to send the transaction to a Proposer
     who will act as a proxy and forward the transaction to an Optimist (this allows an
     Optimist to be firewalled off and only the Proposer exposed to Users).
     @method
@@ -1334,6 +1334,7 @@ class Nf3 {
     @returns {object} A promise that resolves to the API call status
     */
   async sendOffchainTransaction(transaction) {
+    // we're proxying offchain transactions through the proposers. We send the transaction to every proposer
     // dig up connection peers
     const currentProposer = await this.stateContract.methods.currentProposer().call();
     const peerList = { [currentProposer.thisAddress]: currentProposer.url };
@@ -1352,7 +1353,7 @@ class Nf3 {
     }
 
     logger.debug({ msg: 'Peer List', peerList });
-    await Promise.any(
+    return Promise.any(
       Object.keys(peerList).map(async address => {
         logger.debug(
           `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
