@@ -12,6 +12,7 @@ import {
   Web3Client,
   getUserCommitments,
   getTransactions,
+  restartClient,
 } from '../../utils.mjs';
 
 const { expect } = chai;
@@ -93,7 +94,7 @@ describe('ERC20 tests', () => {
 
       await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       await makeBlock();
-      await makeBlock(false);
+      // await makeBlock(false);
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
       logger.info(`---userL2BalanceBefore-- ${userL2BalanceBefore}`);
       const userCommitments = await getUserCommitments(
@@ -165,12 +166,18 @@ describe('ERC20 tests', () => {
         usedCommitments,
       );
       expectTransaction(res);
+      await new Promise(resolve => setTimeout(resolve, 300000));
       logger.info(
         `------getTransactions-1--${JSON.stringify(
           await getTransactions(environment.clientApiUrl),
         )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
       );
-      await new Promise(resolve => setTimeout(resolve, 30000));
+      await restartClient();
+      logger.info(
+        `------getTransactions-1.1--${JSON.stringify(
+          await getTransactions(environment.clientApiUrl),
+        )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
+      );
       // await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
       await makeBlock();
 

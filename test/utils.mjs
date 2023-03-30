@@ -593,6 +593,23 @@ const dropOptimistMongoDatabase = async () => {
   }
 };
 
+const dropClientMongoDatabase = async () => {
+  logger.debug(`Dropping Client's Mongo database`);
+  let mongoConn;
+  try {
+    mongoConn = await mongo.connection('mongodb://localhost:27017');
+
+    while (!(await mongoConn.db('nightfall_commitments').dropDatabase())) {
+      logger.debug(`Retrying dropping MongoDB`);
+      await waitForTimeout(2000);
+    }
+
+    logger.debug(`Optimist's Mongo database dropped successfuly!`);
+  } finally {
+    mongo.disconnect();
+  }
+};
+
 const dropOptimistMongoBlocksCollection = async () => {
   logger.debug(`Dropping Optimist's Mongo collection`);
   let mongoConn;
@@ -721,4 +738,24 @@ export async function restartOptimist(nf3Proposer, dropDb = true) {
   await compose.upOne('optimist', options);
 
   await healthy(nf3Proposer);
+}
+
+export async function restartClient() {
+  const options = {
+    config: [
+      'docker/docker-compose.yml',
+      'docker/docker-compose.dev.yml',
+      'docker/docker-compose.ganache.yml',
+    ],
+    log: process.env.LOG_LEVEL || 'silent',
+    composeOptions: [['-p', 'nightfall_3']],
+  };
+
+  await compose.stopOne('client', options);
+  await compose.rm(options, 'client');
+
+  await dropClientMongoDatabase();
+  logger.debug(`Wait after client database drop`);
+  await new Promise(resolve => setTimeout(resolve, 300000));
+  await compose.upOne('client', options);
 }
