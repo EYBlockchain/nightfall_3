@@ -91,6 +91,13 @@ async function blockProposedEventHandler(data, syncing) {
     const countOfNonZeroCommitments = await countCommitments([nonZeroCommitments[0]]);
     const countOfNonZeroNullifiers = await countNullifiers(nonZeroNullifiers);
 
+    logger.debug({
+      mgs: '-countOfNonZeroCommitments-',
+      countOfNonZeroCommitments,
+      is: !countOfNonZeroCommitments,
+    });
+    logger.debug({ mgs: '-countOfNonZeroNullifiers-', countOfNonZeroNullifiers });
+
     let isDecrypted = false;
     // In order to check if the transaction is a transfer, we check if the compressed secrets
     // are different than zero. All other transaction types have compressedSecrets = [0,0]
@@ -103,6 +110,7 @@ async function blockProposedEventHandler(data, syncing) {
         zkpPrivateKeys,
         nullifierKeys,
       );
+      logger.debug({ mgs: '-transactionDecrypted-', transactionDecrypted });
       if (transactionDecrypted) {
         saveTxToDb = true;
         isDecrypted = true;
@@ -113,7 +121,7 @@ async function blockProposedEventHandler(data, syncing) {
       saveTxToDb = true;
     }
 
-    logger.trace({
+    logger.debug({
       transaction: transaction.transactionHash,
       saveTxToDb,
       countOfNonZeroCommitments,
@@ -136,6 +144,13 @@ async function blockProposedEventHandler(data, syncing) {
         nonZeroNullifiers,
         [transaction.transactionHash],
       );
+      logger.debug({
+        mgs: '-duplicateTransactions-',
+        duplicateTransactions,
+        nonZeroCommitments,
+        nonZeroNullifiers,
+        transactionHash: transaction.transactionHash,
+      });
     }
 
     return Promise.all([

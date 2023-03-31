@@ -166,18 +166,24 @@ describe('ERC20 tests', () => {
         usedCommitments,
       );
       expectTransaction(res);
-      await new Promise(resolve => setTimeout(resolve, 300000));
       logger.info(
         `------getTransactions-1--${JSON.stringify(
           await getTransactions(environment.clientApiUrl),
         )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
       );
       await restartClient(nf3User);
+      await new Promise(resolve => setTimeout(resolve, 30000));
       logger.info(
         `------getTransactions-1.1--${JSON.stringify(
           await getTransactions(environment.clientApiUrl),
         )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
       );
+      //   await restartClient(nf3User);
+      //   logger.info(
+      //     `------getTransactions-1.1--${JSON.stringify(
+      //       await getTransactions(environment.clientApiUrl),
+      //     )}---${nf3User2.zkpKeys.compressedZkpPublicKey}`,
+      //   );
       // await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
       await makeBlock();
 

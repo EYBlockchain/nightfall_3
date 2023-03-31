@@ -763,8 +763,9 @@ export async function restartClient(nf3User) {
   await compose.stopOne('client', options);
   await compose.rm(options, 'client');
 
-  await dropClientMongoDatabase();
-  logger.debug(`Wait after client database drop`);
+  // await dropClientMongoDatabase();
+  console.log(dropClientMongoDatabase);
+  // logger.debug(`Wait after client database drop`);
   // await new Promise(resolve => setTimeout(resolve, 300000));
   await compose.upOne('client', options);
   await healthyClient(nf3User);
