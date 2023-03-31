@@ -1319,7 +1319,6 @@ class Nf3 {
       { transaction },
       { timeout: 3600000 },
     );
-    console.log(`FORWARDING TO ${this.optimistBaseUrl}/proposer/offchain-transaction`);
     return res;
   }
 
