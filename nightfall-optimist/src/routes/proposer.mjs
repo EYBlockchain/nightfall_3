@@ -411,8 +411,9 @@ router.post('/offchain-transaction', async (req, res) => {
   // the first thing we'll do is check that the sender is whitelisted (if required by our config)
   if (!process.env.ANONYMOUS_USER) {
     const address = web3.eth.accounts.recover(JSON.stringify(transaction), signature);
+    logger.debug(`Recovered address ${address}`);
     const x509Instance = await getContractInstance('X509');
-    const isWhitelisted = await x509Instance.x509Check(address);
+    const isWhitelisted = await x509Instance.methods.x509Check(address).call();
     if (!isWhitelisted) {
       logger.warn('Attempted transaction by a user who is not whitelisted');
       res.sendStatus(401);

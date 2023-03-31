@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.post('/offchain-transaction', async (req, res, next) => {
   const nf3 = req.app.get('nf3');
-  const { transaction } = req.body;
+  const { transaction, signature } = req.body;
   if (!transaction) {
     res.sendStatus(404);
     return;
@@ -34,7 +34,7 @@ router.post('/offchain-transaction', async (req, res, next) => {
   }
 
   try {
-    const res2 = await nf3.forwardOffchainTransaction(transaction);
+    const res2 = await nf3.forwardOffchainTransaction(transaction, signature);
     res.sendStatus(res2.status);
   } catch (error) {
     next(error);
