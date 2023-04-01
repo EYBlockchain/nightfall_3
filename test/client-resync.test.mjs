@@ -74,6 +74,7 @@ describe('Client synchronisation tests', () => {
       const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       console.log('---res---', res);
       expectTransaction(res);
+      await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
       logger.debug(`Gas used was ${Number(res.gasUsed)}`);
       logger.info(
         `------getTransactions---${JSON.stringify(

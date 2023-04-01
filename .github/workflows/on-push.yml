@@ -10,7 +10,7 @@ env:
   WHITELISTING: disable
 
 jobs:
-  test1-test-tokens:
+  test-client-sync:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -33,7 +33,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> test1-test.log &disown
+          ./bin/start-nightfall -g -d &> test-client-sync.log &disown
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.11
         with:
@@ -44,14 +44,14 @@ jobs:
 
       - name: Debug logs - after image builds
         if: always()
-        run: cat test1-test.log
+        run: cat test-client-sync.log
 
       - name: Run integration test
         run: |
           npm run test-client-sync
       - name: Debug logs - after integration test run
         if: always()
-        run: cat test1-test.log
+        run: cat test-client-sync.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -61,5 +61,5 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: test1-test-logs
-          path: ./test1-test.log
+          name: test-client-sync-logs
+          path: ./test-client-sync.log
