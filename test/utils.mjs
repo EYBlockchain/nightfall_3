@@ -717,3 +717,8 @@ export async function restartOptimist(nf3Proposer, dropDb = true) {
 
   await healthy(nf3Proposer);
 }
+
+export async function getTransactions(clientApiUrl) {
+  const transactions = (await axios.get(`${clientApiUrl}/commitment/transactions`)).data.txs;
+  return transactions;
+}
