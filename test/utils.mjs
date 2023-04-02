@@ -571,6 +571,14 @@ const healthy = async nf3Proposer => {
   logger.debug('optimist is healthy');
 };
 
+const healthyClient = async nf3User => {
+  while (!(await nf3User.healthcheck('client'))) {
+    await waitForTimeout(1000);
+  }
+
+  logger.debug('client is healthy');
+};
+
 const dropOptimistMongoDatabase = async () => {
   logger.debug(`Dropping Optimist's Mongo database`);
   let mongoConn;
@@ -718,7 +726,28 @@ export async function restartOptimist(nf3Proposer, dropDb = true) {
   await healthy(nf3Proposer);
 }
 
-export async function getTransactions(clientApiUrl) {
-  const transactions = (await axios.get(`${clientApiUrl}/commitment/transactions`)).data.txs;
+// unlike optimist, client cannot drop its database.
+// because of commitments stored in database.
+// restartClient function is only used in client-resync.test.mjs
+export async function restartClient(nf3User) {
+  const options = {
+    config: [
+      'docker/docker-compose.yml',
+      'docker/docker-compose.dev.yml',
+      'docker/docker-compose.ganache.yml',
+    ],
+    log: process.env.LOG_LEVEL || 'silent',
+    composeOptions: [['-p', 'nightfall_3']],
+  };
+
+  await compose.stopOne('client', options);
+  await compose.rm(options, 'client');
+
+  await compose.upOne('client', options);
+  await healthyClient(nf3User);
+}
+
+export async function getClientTransactions(clientApiUrl) {
+  const { transactions } = (await axios.get(`${clientApiUrl}/commitment/transactions`)).data;
   return transactions;
 }

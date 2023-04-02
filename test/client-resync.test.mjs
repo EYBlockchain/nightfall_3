@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import chai from 'chai';
+import chai, { expect } from 'chai';
 // import gen from 'general-number';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
@@ -7,15 +7,14 @@ import config from 'config';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import {
-  // getLayer2Balances,
+  getLayer2Balances,
   expectTransaction,
   Web3Client,
-  // getUserCommitments,
-  getTransactions,
-  // restartClient,
+  getUserCommitments,
+  getClientTransactions,
+  restartClient,
 } from './utils.mjs';
 
-// const { expect } = chai;
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);
 
@@ -68,24 +67,95 @@ describe('Client synchronisation tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: nf3User.shieldContractAddress });
   });
 
-  describe('Deposits', () => {
-    it('Should increment user L2 balance after depositing some ERC20', async function () {
-      // const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+  describe('Test nightfall-client', () => {
+    it('Should save transaction from TransactionSubmitEventHandler', async function () {
       const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      console.log('---res---', res);
       expectTransaction(res);
-      await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
-      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
-      logger.info(
-        `------getTransactions---${JSON.stringify(
-          await getTransactions(environment.clientApiUrl),
-        )}`,
-      );
-      await makeBlock();
 
-      // const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-      // logger.info(`---userL2BalanceAfter-- ${userL2BalanceAfter}`);
-      // expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
+      await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
+      const transactions = await getClientTransactions(environment.clientApiUrl);
+      expect(transactions.length).to.be.equal(1);
+      expect(res.transactionHash).to.be.equal(transactions[0].transactionHash);
+    });
+
+    it('Should successfully do one more deposit with create block', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+      const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      expectTransaction(res);
+      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
+      await makeBlock();
+      const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
+    });
+
+    // this test is to check nightfall-client behaviour in a case
+    // where two same transfer transactions is created but second one with higher fee
+    describe('Test nightfall-client duplicate transaction deletion logic', () => {
+      let userCommitments;
+      let firstTransfer;
+      let userL2BalanceBefore;
+      before(async () => {
+        userCommitments = await getUserCommitments(
+          environment.clientApiUrl,
+          nf3User.zkpKeys.compressedZkpPublicKey,
+        );
+        userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+      });
+
+      it('Should successfully create a transfer transaction', async function () {
+        const res = await nf3User.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          transferValue,
+          tokenId,
+          nf3User2.zkpKeys.compressedZkpPublicKey,
+          fee,
+          userCommitments.map(c => c.commitmentHash),
+        );
+        expectTransaction(res);
+        firstTransfer = res.transactionHash;
+        await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
+        const transactions = await getClientTransactions(environment.clientApiUrl);
+
+        expect(transactions.length).to.be.equal(3);
+        expect(res.transactionHash).to.be.equal(transactions[2].transactionHash);
+      });
+
+      it('Should successfully do a transfer with higher fee with create block', async function () {
+        let transactions;
+        const res = await nf3User.transfer(
+          false,
+          erc20Address,
+          tokenType,
+          transferValue,
+          tokenId,
+          nf3User.zkpKeys.compressedZkpPublicKey,
+          fee + 1,
+          userCommitments.map(c => c.commitmentHash),
+        );
+        expectTransaction(res);
+
+        transactions = await getClientTransactions(environment.clientApiUrl);
+        expect(transactions.length).to.be.equal(3);
+        expect(firstTransfer).to.be.equal(transactions[2].transactionHash);
+
+        // here we will also test client resync atleast for TransactionSubmitEvent Handler
+        await restartClient(nf3User);
+
+        transactions = await getClientTransactions(environment.clientApiUrl);
+        // if below expect passes it proves client resync is working.
+        expect(transactions.length).to.be.equal(4);
+        expect(res.transactionHash).to.be.equal(transactions[3].transactionHash);
+
+        await makeBlock();
+        const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
+        expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - (fee + 1));
+        transactions = await getClientTransactions(environment.clientApiUrl);
+        // if below expect passes it proves blockEventHandler delete duplicate transaction is working.
+        expect(transactions.length).to.be.equal(3);
+        expect(res.transactionHash).to.be.equal(transactions[2].transactionHash);
+      });
     });
   });
 });
