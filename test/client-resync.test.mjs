@@ -68,29 +68,35 @@ describe('Client synchronisation tests', () => {
   });
 
   describe('Test nightfall-client', () => {
-    it('Should save transaction from TransactionSubmitEventHandler', async function () {
+    it('Should do two deposit successfully', async function () {
+      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
+
+      // first deposit
       const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
       expectTransaction(res);
 
       await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
       const transactions = await getClientTransactions(environment.clientApiUrl);
+
+      // passing of below expect proves that transaction are save in
+      // transactionEventHandler
       expect(transactions.length).to.be.equal(1);
       expect(res.transactionHashL2).to.be.equal(transactions[0].transactionHash);
-    });
 
-    it('Should successfully do one more deposit with create block', async function () {
-      const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
-      const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
-      expectTransaction(res);
-      logger.debug(`Gas used was ${Number(res.gasUsed)}`);
       await makeBlock();
+
+      // second deposit
+      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+
+      await makeBlock();
+
       const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - fee);
+      expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue * 2 - fee * 2);
     });
 
     // this test is to check nightfall-client behaviour in a case
     // where two same transfer transactions is created but second one with higher fee
-    describe('Test nightfall-client duplicate transaction deletion logic', () => {
+    context('Test nightfall-client duplicate transaction deletion logic', () => {
       let userCommitments;
       let firstTransfer;
       let userL2BalanceBefore;
