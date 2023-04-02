@@ -75,7 +75,7 @@ describe('Client synchronisation tests', () => {
       await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
       const transactions = await getClientTransactions(environment.clientApiUrl);
       expect(transactions.length).to.be.equal(1);
-      expect(res.transactionHash).to.be.equal(transactions[0].transactionHash);
+      expect(res.transactionHashL2).to.be.equal(transactions[0].transactionHash);
     });
 
     it('Should successfully do one more deposit with create block', async function () {
@@ -114,12 +114,12 @@ describe('Client synchronisation tests', () => {
           userCommitments.map(c => c.commitmentHash),
         );
         expectTransaction(res);
-        firstTransfer = res.transactionHash;
+        firstTransfer = res.transactionHashL2;
         await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
         const transactions = await getClientTransactions(environment.clientApiUrl);
 
         expect(transactions.length).to.be.equal(3);
-        expect(res.transactionHash).to.be.equal(transactions[2].transactionHash);
+        expect(res.transactionHashL2).to.be.equal(transactions[2].transactionHash);
       });
 
       it('Should successfully do a transfer with higher fee with create block', async function () {
@@ -146,7 +146,7 @@ describe('Client synchronisation tests', () => {
         transactions = await getClientTransactions(environment.clientApiUrl);
         // if below expect passes it proves client resync is working.
         expect(transactions.length).to.be.equal(4);
-        expect(res.transactionHash).to.be.equal(transactions[3].transactionHash);
+        expect(res.transactionHashL2).to.be.equal(transactions[3].transactionHash);
 
         await makeBlock();
         const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
@@ -154,7 +154,7 @@ describe('Client synchronisation tests', () => {
         transactions = await getClientTransactions(environment.clientApiUrl);
         // if below expect passes it proves blockEventHandler delete duplicate transaction is working.
         expect(transactions.length).to.be.equal(3);
-        expect(res.transactionHash).to.be.equal(transactions[2].transactionHash);
+        expect(res.transactionHashL2).to.be.equal(transactions[2].transactionHash);
       });
     });
   });
