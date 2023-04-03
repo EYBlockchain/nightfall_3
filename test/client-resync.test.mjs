@@ -156,7 +156,8 @@ describe('Client synchronisation tests', () => {
 
         await makeBlock();
         const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
-        expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(transferValue - (fee + 1));
+        expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-(transferValue + fee + 1));
+
         transactions = await getClientTransactions(environment.clientApiUrl);
         // if below expect passes it proves blockEventHandler delete duplicate transaction is working.
         expect(transactions.length).to.be.equal(3);
