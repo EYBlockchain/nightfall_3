@@ -154,6 +154,11 @@ describe('Client synchronisation tests', () => {
         expect(transactions.length).to.be.equal(4);
         expect(res.transactionHashL2).to.be.equal(transactions[3].transactionHash);
 
+        // client re-sync has made sure higer fee transfer transaction is received in
+        // transaction submit eventHandler, infact that what passing of above expect proves
+        // But for optimist to receive same transaction lets wait for TransactionSubmitted
+        // event trigger, needed before proceeding to makeBLock
+        await web3Client.waitForEvent(eventLogs, ['TransactionSubmitted']);
         await makeBlock();
         const userL2BalanceAfter = await getLayer2Balances(nf3User, erc20Address);
         expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-(transferValue + fee + 1));
