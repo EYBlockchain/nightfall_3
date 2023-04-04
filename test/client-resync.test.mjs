@@ -136,7 +136,7 @@ describe('Client synchronisation tests', () => {
           tokenType,
           transferValue,
           tokenId,
-          nf3User.zkpKeys.compressedZkpPublicKey,
+          nf3User2.zkpKeys.compressedZkpPublicKey,
           fee + 1,
           userCommitments.map(c => c.commitmentHash),
         );
