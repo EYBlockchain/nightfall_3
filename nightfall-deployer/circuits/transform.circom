@@ -105,7 +105,7 @@ template Transform(N,C) {
       nullifierValueBits[252] === 0;
     }
     for (var i = 0; i < C; i++) {
-      var commitmentValueBits[254] = Num2Bits(254)(commitmentsValues[0]);
+      var commitmentValueBits[254] = Num2Bits(254)(commitmentsValues[i]);
       commitmentValueBits[253] === 0;
       commitmentValueBits[252] === 0;
     }
