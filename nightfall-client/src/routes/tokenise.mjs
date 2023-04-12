@@ -9,7 +9,6 @@ router.post('/', async (req, res, next) => {
     // convert commitment from GN to hex form for transmission
     res.json({ txDataToSign, transaction });
   } catch (err) {
-    res.json({ error: err.message });
     next(err);
   }
 });
