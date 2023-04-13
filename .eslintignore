@@ -3,6 +3,7 @@ node_modules/*
 **/migrations/*
 **/doc/*
 mumbai/
+proving_files/
 cli/build/*
 wallet/cli/*
 mumbai/
