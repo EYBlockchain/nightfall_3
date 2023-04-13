@@ -105,6 +105,7 @@ services:
       UPGRADE: ${UPGRADE_CONTRACTS}
       WHITELISTING: ${WHITELISTING}
       WETH_RESTRICT: ${WETH_RESTRICT} 
+      PARALLEL_SETUP: ${PARALLEL_SETUP:-true}
 
   hosted-utils-api-server:
     build:
