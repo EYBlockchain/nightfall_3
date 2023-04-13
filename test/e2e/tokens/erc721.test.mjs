@@ -352,7 +352,7 @@ describe('ERC721 tests', () => {
         );
         expectTransaction(res);
       } catch (err) {
-        expect(err.message).to.be.equal('provided commitments do not cover the fee');
+        expect(err.response.data).to.be.equal('provided commitments do not cover the fee');
       }
     });
 
@@ -377,7 +377,9 @@ describe('ERC721 tests', () => {
         );
         expectTransaction(res);
       } catch (err) {
-        expect(err.message).to.include('Some of the commitments provided for the fee were invalid');
+        expect(err.response.data).to.include(
+          'Some of the commitments provided for the fee were invalid',
+        );
       }
     });
   });
