@@ -70,7 +70,7 @@ async function bootstrap() {
 }
 
 async function main() {
-  logger.info(`deployer starting bootstrap`);
+  logger.info(`deployer starting bootstrap ${PARALLEL_SETUP}`);
   if (PARALLEL_SETUP === 'true') {
     await bootstrap();
   } else {
