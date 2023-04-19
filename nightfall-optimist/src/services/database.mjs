@@ -290,8 +290,9 @@ export async function saveTransaction(_transaction) {
 
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHash: transaction.transactionHash };
-  const update = { $set: transaction };
+  // ensure that the update will never modify a transaction that has already been proposed
+  const query = { transactionHash: transaction.transactionHash, mempool: false };
+  const update = { $setOnInsert: transaction };
 
   return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
 }
