@@ -307,7 +307,7 @@ describe('ERC1155 tests', () => {
           [],
         );
       } catch (err) {
-        expect(err.message).to.be.equal('provided commitments do not cover the value');
+        expect(err.response.data).to.be.equal('provided commitments do not cover the value');
       }
     });
 
@@ -334,7 +334,7 @@ describe('ERC1155 tests', () => {
           [erc20Commitments[0].commitmentHash],
         );
       } catch (err) {
-        expect(err.message).to.be.equal('provided commitments do not cover the fee');
+        expect(err.response.data).to.be.equal('provided commitments do not cover the fee');
       }
     });
   });

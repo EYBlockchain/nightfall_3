@@ -135,7 +135,9 @@ describe('ERC20 tests', () => {
         await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee, [], salt);
         expect.fail('Throw error, deposit did not fail');
       } catch (err) {
-        expect(err.message).to.include('You can not re-send a commitment that is already on-chain');
+        expect(err.response.data).to.include(
+          'You can not re-send a commitment that is already on-chain',
+        );
       }
     });
 
@@ -144,7 +146,7 @@ describe('ERC20 tests', () => {
         await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, transferValue);
         expect.fail('Throw error, deposit did not fail');
       } catch (err) {
-        expect(err.message).to.include('Value deposited needs to be greater than the fee');
+        expect(err.response.data).to.include('Value deposited needs to be greater than the fee');
       }
     });
   });
@@ -308,7 +310,7 @@ describe('ERC20 tests', () => {
           usedCommitments,
         );
       } catch (err) {
-        expect(err.message).to.be.equal('provided commitments do not cover the value');
+        expect(err.response.data).to.be.equal('provided commitments do not cover the value');
       }
     });
   });
