@@ -3,6 +3,8 @@ node_modules/*
 **/migrations/*
 **/doc/*
 mumbai/
+polygonpos/
+proving_files/
 cli/build/*
 wallet/cli/*
 mumbai/

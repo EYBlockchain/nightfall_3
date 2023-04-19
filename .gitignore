@@ -7,8 +7,10 @@ mumbai/
 .*swp
 .vscode/*
 .openzeppelin/
+proving_files/
 *.log
 mumbai/
+polygonpos/
 # wallet
 wallet/build
 wallet/cli
