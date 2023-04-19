@@ -278,8 +278,6 @@ export async function saveTransaction(_transaction) {
   const transaction = {
     _id: _transaction.transactionHash,
     ..._transaction,
-    mempool,
-    blockNumberL2,
   };
 
   logger.debug({
@@ -292,7 +290,7 @@ export async function saveTransaction(_transaction) {
   const db = connection.db(OPTIMIST_DB);
   // ensure that the update will never modify a transaction that has already been proposed
   const query = { transactionHash: transaction.transactionHash, mempool: false };
-  const update = { $setOnInsert: transaction };
+  const update = { $set: transaction, $setOnInsert: { mempool, blockNumberL2 } };
 
   return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
 }
