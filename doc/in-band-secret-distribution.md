@@ -68,7 +68,7 @@ $Domain_{D} \coloneqq \text{to\_field}(SHA256(\text{'nightfall-dem'}))$
 
 ## Derivation and generation of the various keys involved in encryption, ownership of commitments and spending
 
-Using BIP39 genenerate a 12 word `mnemonic` and from this generate a `seed` by calling `mnemonicToSeedSync`.
+Using BIP39 generate a 12 word `mnemonic` and from this generate a `seed` by calling `mnemonicToSeedSync`.
 Then following the standards of BIP32 and BIP44, generate a `rootKey` based on this `seed` and `path`.
 
 ```

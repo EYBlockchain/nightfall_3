@@ -2,7 +2,7 @@
 
 Current ZKP circuits used in Nightfall_3 are restricted to 4 inputs, which are used to pay for the
 transfer or withdrawal and the fees. All of those values are higher than zero. If a transactor's set
-of commitment contain primarily low value commitments (dust), they may find it hard to conduct
+of commitment contains primarily low value commitments (dust), they may find it hard to conduct
 future transfers.
 
 **Note:** The fee is paid in MATIC in L2 for transfers and withdrawals. Usually some slots from the

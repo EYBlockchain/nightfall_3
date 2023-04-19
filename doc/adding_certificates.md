@@ -4,7 +4,7 @@ The owner of X509.sol is able to add Certificate Authorities (CAs) to the contra
 
 ## Adding a CA
 
-We start with the Root Certificate of the CA, which can usually be downloaded from their website.  Most CAs have several so it is important to get the right one. We require the certificate to be in binary Destingished Encoding Rules format (DER). If it's in PEM format then it must be converted with a suitable utility (e.g. openssl):
+We start with the Root Certificate of the CA, which can usually be downloaded from their website.  Most CAs have several so it is important to get the right one. We require the certificate to be in binary Distinguished Encoding Rules format (DER). If it's in PEM format then it must be converted with a suitable utility (e.g. openssl):
 
 ```sh
 openssl x509 -in /path/to/cert.pem -out /path/to/cert.der -outform DER 
@@ -93,7 +93,7 @@ function setTrustedPublicKey(
         bytes32 authorityKeyIdentifier) external onlyOwner;
 ```
 
-`RSAPublicKey` has the form { bytes modulus, uint256 exponent}; `authorityKeyIdentifier` is the `Subject Key Indentifier` you've recovered from the certificate but padded to a bytes32 with leading zeros (we may remove the padding requirement in the future as it's superflous really). The latter is used as a lookup for the RSAPublicKey. It's renamed from Subject Key Identifier to Authority Key Identifier because that is how the next certificate in the chain will identify it.
+`RSAPublicKey` has the form { bytes modulus, uint256 exponent}; `authorityKeyIdentifier` is the `Subject Key Identifier` you've recovered from the certificate but padded to a bytes32 with leading zeros (we may remove the padding requirement in the future as it's superfluous really). The latter is used as a lookup for the RSAPublicKey. It's renamed from Subject Key Identifier to Authority Key Identifier because that is how the next certificate in the chain will identify it.
 
 ## Adding a certificate chain
 
@@ -108,12 +108,12 @@ Once _those_ certificate(s) are added, the next certificates down the certificat
 1. The certificate's signature is valid
 1. The certificate is in date
 1. The certificate has `Key Usage` a set by the contract owner (cannot be omitted). Note that the settings can be different for and intermediate and end-user certificate
-1. The `Extended Key Usage` is as set by the contract owner (cannot be ommitted but only checked if the certificate is an end-user one)
+1. The `Extended Key Usage` is as set by the contract owner (cannot be omitted but only checked if the certificate is an end-user one)
 1. The `Certificate Policies` are as set by the contract owner (cannot be omitted but only checked if the certificate is an end-user one)
 
 Note that default values for `Key Usage` are set during contract initialisation as `Certificate Sign, CRL Sign` for intermediate certificates and `Digital Signature` for end-user certificates. These should not normally be changed but there are setters in the contract for that purpose.
 
-The values used for `Extended Key Usage` and `Certificate Policies` are unique to each CA and have to be obtained from the Certificate Practice Statement and list of Object Identifiers (OIDs) used by them. This allows tailoring of the level of checks that the owner of the certificate has to undergo, and hence the level of identity assurance that the certificate confers. Note that at least one OID MUST be chosed for each case, they cannot simply be omitted because such a certificate would be unlikely to confer meaningful assurance of identity. Note also that a separate group of OIDs must be specificed for each CA. See the information in [X509.md](./x509.md) about `oidGroups` for more information on how to add them.
+The values used for `Extended Key Usage` and `Certificate Policies` are unique to each CA and have to be obtained from the Certificate Practice Statement and list of Object Identifiers (OIDs) used by them. This allows tailoring of the level of checks that the owner of the certificate has to undergo, and hence the level of identity assurance that the certificate confers. Note that at least one OID MUST be chosen for each case, they cannot simply be omitted because such a certificate would be unlikely to confer meaningful assurance of identity. Note also that a separate group of OIDs must be specified for each CA. See the information in [X509.md](./x509.md) about `oidGroups` for more information on how to add them.
 
 The encoding of OIDs is a little tricky but there is a good utility [here](https://misc.daniel-marschall.de/asn.1/oid-converter/online.php). Use this to binary encode the OID and then right pad the result to 32 bytes.  So, for example
 
