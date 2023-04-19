@@ -12,11 +12,10 @@
 
 2. running app will land you to configure page where you enter ERC20 Contract address to which you want use demo-ui with.
 
-3. In configure page you could choose to connect your Metamask to two different network.
+3. In configure page you could choose to connect your Metamask to two different networks.
 
-    - mumbai testnet (click *Mumbai Testnet Ploygon* radio button and then click *Configure*).
-    - polygon (click *Ploygon* radio button and then click *Configure*).
+    - Mumbai Testnet (click *Mumbai Testnet Ploygon* radio button and then click *Configure*).
+    - Polygon (click *Ploygon* radio button and then click *Configure*).
+    - Localhost (no radio button for this choice; to connect to localhost follow bellow Note).
 
-    *Note: In case to connect to local ganache please switch manually in Metamask, configure won't work because metamask sdk expect localhost connection to use port 8545 unlike our ganache instance which is using 8546 i.e rpcURL http://localhost:8546*
-
-
+    *Note: In case to connect to local ganache please switch manually in Metamask, code configure won't work because metamask sdk expect localhost connection to use port 8545 unlike our ganache instance which is using 8546 i.e rpcURL http://localhost:8546, after manuall switch click configure button with ERC20 Contract address*
