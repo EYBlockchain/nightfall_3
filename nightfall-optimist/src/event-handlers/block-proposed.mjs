@@ -95,30 +95,12 @@ async function blockProposedEventHandler(data) {
     // update this collection
     await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, timeBlockL2, ...block });
 
-    // It's possible that some of these transactions are new to us. That's because they were
-    // submitted by someone directly to another proposer and so there was never a TransactionSubmitted
-    // event associated with them. Either that, or we lost our database and had to resync from the chain.
-    // In which case this handler is being called be the resync code. either way, we need to add the transaction.
-    // let's use transactionSubmittedEventHandler to do this because it will perform all the duties associated
-    // with saving a transaction.
-    await Promise.all(
-      transactions.map(async tx =>
-        saveTransaction({ ...tx, blockNumberL2: block.blockNumberL2, mempool: false }),
-      ),
-    );
-
     const blockCommitments = transactions
       .map(t => t.commitments.filter(c => c !== ZERO))
       .flat(Infinity);
     const blockNullifiers = transactions
       .map(t => t.nullifiers.filter(c => c !== ZERO))
       .flat(Infinity);
-
-    await deleteDuplicateCommitmentsAndNullifiersFromMemPool(
-      blockCommitments,
-      blockNullifiers,
-      block.transactionHashes,
-    );
 
     const latestTree = await getTreeByBlockNumberL2(block.blockNumberL2 - 1);
     const updatedTimber = Timber.statelessUpdate(
@@ -141,6 +123,24 @@ async function blockProposedEventHandler(data) {
     // will get saved and eventually all these blocks will be removed as part of the rollback
     // of the first bad block
     if (queues[2].length === 0) await checkBlock(block, transactions);
+    // It's possible that some of these transactions are new to us. That's because they were
+    // submitted by someone directly to another proposer and so there was never a TransactionSubmitted
+    // event associated with them. Either that, or we lost our database and had to resync from the chain.
+    // In which case this handler is being called be the resync code. either way, we need to add the transaction.
+    // let's use transactionSubmittedEventHandler to do this because it will perform all the duties associated
+    // with saving a transaction.
+    await Promise.all(
+      transactions.map(async tx =>
+        saveTransaction({ ...tx, blockNumberL2: block.blockNumberL2, mempool: false }),
+      ),
+    );
+    await deleteDuplicateCommitmentsAndNullifiersFromMemPool(
+      blockCommitments,
+      blockNullifiers,
+      block.transactionHashes,
+    );
+
+
     logger.info('Block Checker - Block was valid');
   } catch (err) {
     if (err instanceof BlockError) {
