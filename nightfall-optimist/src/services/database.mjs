@@ -278,6 +278,8 @@ export async function saveTransaction(_transaction) {
   const transaction = {
     _id: _transaction.transactionHash,
     ..._transaction,
+    mempool,
+    blockNumberL2,
   };
 
   logger.debug({
@@ -288,11 +290,14 @@ export async function saveTransaction(_transaction) {
 
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  // ensure that the update will never modify a transaction that has already been proposed
-  const query = { transactionHash: transaction.transactionHash, mempool: false };
-  const update = { $set: transaction, $setOnInsert: { mempool, blockNumberL2 } };
+  const query = { transactionHash: transaction.transactionHash };
+  const update = { $setOnInsert: transaction };
 
-  return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  await db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  await new Promise(resolve => setTimeout(() => resolve(), 100));
+  return db
+    .collection(TRANSACTIONS_COLLECTION)
+    .updateOne({ transactionHash: transaction.transactionHash, blockNumberL2: -1 }, update);
 }
 
 /**
