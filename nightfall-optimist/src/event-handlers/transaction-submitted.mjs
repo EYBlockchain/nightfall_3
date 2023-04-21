@@ -63,8 +63,15 @@ async function transactionSubmittedEventHandler(eventParams) {
       transactionCommitments,
       transactionNullifiers,
     );
-
-    await saveTransaction({ ...transaction });
+    try {
+      await saveTransaction({ ...transaction });
+    } catch (err) {
+      if (err.message.includes('E11000'))
+        logger.warn(
+          `Ignored submitted duplicate transaction. This is probably a resynchronisation artifact`,
+        );
+      else throw new Error(err);
+    }
   } catch (err) {
     if (err instanceof TransactionError) {
       logger.warn(

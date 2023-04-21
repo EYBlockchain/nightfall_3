@@ -281,19 +281,20 @@ export async function saveTransaction(_transaction) {
     mempool,
     blockNumberL2,
   };
-
   logger.debug({
-    msg: 'Saving transaction with layer 1 block number',
+    msg: 'Saving transaction',
     transactionHash: _transaction.transactionHash,
     blockNumber: _transaction.blockNumber,
   });
-
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(OPTIMIST_DB);
-  const query = { transactionHash: transaction.transactionHash };
-  const update = { $set: transaction };
+  return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);
+}
 
-  return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+export async function updateTransaction(transactionHash, updates) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(OPTIMIST_DB);
+  return db.collection(TRANSACTIONS_COLLECTION).updateOne({ transactionHash }, { $set: updates });
 }
 
 /**
