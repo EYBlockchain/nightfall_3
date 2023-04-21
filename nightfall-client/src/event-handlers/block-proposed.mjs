@@ -24,6 +24,8 @@ import {
   saveBlock,
   setTransactionHashSiblingInfo,
   getNumberOfL2Blocks,
+  getTransactionByTransactionHash,
+  updateTransaction,
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 import { syncState } from '../services/state-sync.mjs';
@@ -118,14 +120,29 @@ async function blockProposedEventHandler(data, syncing) {
 
     if (saveTxToDb) {
       logger.info({ msg: 'Saving transaction', transaction: transaction.transactionHash });
-      await saveTransaction({
+      const tx = {
         transactionHashL1,
         blockNumber: data.blockNumber,
         blockNumberL2: block.blockNumberL2,
         timeBlockL2,
         ...transaction,
         isDecrypted,
-      });
+      };
+      try {
+        await saveTransaction(tx);
+      } catch (err) {
+        if (err.message.includes('E11000')) {
+          const storedTx = await getTransactionByTransactionHash(tx.transactionHash);
+          // We should only update the blockNumberL2 of the transaction if it doesn't have one, i.e it's -1
+          if (Number(storedTx.blockNumberL2) === -1) {
+            await updateTransaction(tx.transactionHash, {
+              blockNumberL2: tx.blockNumberL2,
+              mempool: tx.mempool,
+            });
+            logger.info(`Updated stored transaction with L2 block information`);
+          } else logger.warn(`Duplicate transaction in Proposed Block has been dropped`);
+        } else throw new Error(err);
+      }
     }
 
     return Promise.all([
