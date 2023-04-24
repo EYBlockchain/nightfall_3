@@ -81,7 +81,7 @@ const transpileTransactionSubmitEventHandler = _pathToSrc => {
   // Remove transaction check from the optimist so that bad transactions can be added into a blocks
 
   const srcTxDataToSignPreamble = /(\n|.)*(?=await checkTransaction)/g;
-  const srcTxDataToSignPostamble = /await saveTransaction(\n|.)*/g;
+  const srcTxDataToSignPostamble = /\s*try\s*{\n\s+?await saveTransaction(\n|.)*/g;
   const [srcPre] = srcFile.match(srcTxDataToSignPreamble);
   const [srcPost] = srcFile.match(srcTxDataToSignPostamble);
   srcFile = `${srcPre}\n${srcPost}`;
