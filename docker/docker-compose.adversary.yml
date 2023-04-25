@@ -42,7 +42,6 @@ services:
       # so for adversary default is false unlike optimist
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
-    command: ['npm', 'run', 'dev']
 
   bad-client:
     build:
@@ -87,8 +86,6 @@ services:
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
-
-    command: ['npm', 'run', 'dev']
 
   mongodb-adversary:
     image: mongo:4.4.1-bionic

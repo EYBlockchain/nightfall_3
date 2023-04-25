@@ -5,8 +5,7 @@
   "main": "index.mjs",
   "scripts": {
     "start": "node src/index.mjs",
-    "start:debug": "node --inspect=0.0.0.0:9229 src/index.mjs",
-    "dev": "nodemon src/index.mjs"
+    "start:debug": "node --inspect=0.0.0.0:9229 src/index.mjs"
   },
   "repository": {
     "type": "git",
@@ -22,13 +21,6 @@
     "url": "https://github.com/EYBlockchain/nightfall-optimist/issues"
   },
   "homepage": "https://github.com/EYBlockchain/nightfall-optimist#readme",
-  "nodemonConfig": {
-    "verbose": true,
-    "ignore": [
-      "mongodb/",
-      "build/"
-    ]
-  },
   "dependencies": {
     "@polygon-nightfall/common-files": "*",
     "axios": "^0.21.4",
@@ -49,8 +41,7 @@
     "ws": "^7.4.3"
   },
   "devDependencies": {
-    "mocha": "^10.0.0",
-    "nodemon": "^2.0.19"
+    "mocha": "^10.0.0"
   },
   "overrides": {
     "swarm-js": {

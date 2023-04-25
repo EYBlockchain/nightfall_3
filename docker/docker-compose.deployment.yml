@@ -56,7 +56,6 @@ services:
       RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
       STATE_GENESIS_BLOCK: ${STATE_GENESIS_BLOCK:-0}
       USE_EXTERNAL_NODE: ${USE_EXTERNAL_NODE}
-    command: ['npm', 'run', 'start']
 
   deployer:
     image: ghcr.io/eyblockchain/nightfall3-deployer:latest
@@ -143,7 +142,6 @@ services:
       PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
       USE_EXTERNAL_NODE: ${USE_EXTERNAL_NODE}
       WEBSOCKET_PORT: 8080
-    command: ['npm', 'run', 'start']
 
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
@@ -161,7 +159,6 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-    command: ['npm', 'run', 'start']
 
 volumes:
   mongodb:

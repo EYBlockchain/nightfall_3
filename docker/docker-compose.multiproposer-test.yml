@@ -134,7 +134,6 @@ services:
       OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
       MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://optimist_mongodb_1:27017}
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
-    command: ['npm', 'run', 'dev']
 
   client_2:
     build:
@@ -182,7 +181,6 @@ services:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
-    command: ['npm', 'run', 'dev']
 
   proposer_optimist_1:
     build:
@@ -216,7 +214,6 @@ services:
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
-    command: ['npm', 'run', 'dev']
 
   proposer_optimist_2:
     build:
@@ -261,7 +258,6 @@ services:
       IS_CHALLENGER: ${IS_CHALLENGER:-false}
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
-    command: ['npm', 'run', 'dev']
 
   optimist_mongodb_1:
     image: mongo:4.4.1-bionic
