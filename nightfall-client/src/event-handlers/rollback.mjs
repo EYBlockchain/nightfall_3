@@ -86,6 +86,8 @@ async function rollbackEventHandler(data) {
       if (transaction.isDecrypted) {
         invalidTransactions.push(transaction.transactionHash);
         invalidCommitments.push(commitments[0]);
+        // flag nullifier as invalid in case transfer happens between users in the same client
+        invalidNullifiers.push(...nullifiers);
         continue;
       }
 
