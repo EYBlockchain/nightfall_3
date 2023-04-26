@@ -409,9 +409,11 @@ describe('Testing with an adversary', () => {
           0,
         );
         await makeBlock();
+        await new Promise(resolve => setTimeout(resolve, 5000));
       });
 
       it('Test duplicate transaction transfer', async () => {
+        const userL2BalanceBefore = await getLayer2BalancesBadClient(erc20Address);
         console.log('Testing duplicate transaction transfer...');
         await nf3User.transfer(
           'ValidTransaction',
@@ -425,13 +427,30 @@ describe('Testing with an adversary', () => {
         );
         await makeBlock('DuplicateTransaction');
         await waitForRollback();
+        await clearMempool({
+          optimistUrl: adversarialOptimistApiUrl,
+          web3: web3Client,
+          logs: eventLogs,
+        });
+        let count = 10;
+        let userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+        while (userL2BalanceAfter !== userL2BalanceBefore - fee && count > 0) {
+          userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+          logger.info(`    reading balance ${userL2BalanceBefore}/${userL2BalanceAfter}`);
+          count -= 1;
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
         expect(challengeSelector).to.be.oneOf([
           challengeSelectors.challengeCommitment,
           challengeSelectors.challengeNullifier,
         ]);
+        console.log('BALANCE', userL2BalanceBefore, userL2BalanceAfter);
+        expect(userL2BalanceBefore).to.be.equal(userL2BalanceAfter + fee);
       });
 
       it('Test duplicate nullifier transfer', async () => {
+        const userL2BalanceBefore = await getLayer2BalancesBadClient(erc20Address);
         console.log('Testing duplicate nullifier transfer...');
         await nf3User.transfer(
           'DuplicateNullifier',
@@ -445,10 +464,27 @@ describe('Testing with an adversary', () => {
         );
         await makeBlock();
         await waitForRollback();
+        await clearMempool({
+          optimistUrl: adversarialOptimistApiUrl,
+          web3: web3Client,
+          logs: eventLogs,
+        });
+        let count = 10;
+        let userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+        while (userL2BalanceAfter !== userL2BalanceBefore && count > 0) {
+          userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+          logger.info(`    reading balance ${userL2BalanceBefore}/${userL2BalanceAfter}`);
+          count -= 1;
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+        console.log('BALANCE', userL2BalanceBefore, userL2BalanceAfter);
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeNullifier);
+        expect(userL2BalanceBefore).to.be.equal(userL2BalanceAfter);
       });
 
       it('Test incorrect input transfer', async () => {
+        const userL2BalanceBefore = await getLayer2BalancesBadClient(erc20Address);
         console.log('Testing incorrect input transfer...');
         await nf3User.transfer(
           'IncorrectInput',
@@ -462,10 +498,27 @@ describe('Testing with an adversary', () => {
         );
         await makeBlock();
         await waitForRollback();
+        await clearMempool({
+          optimistUrl: adversarialOptimistApiUrl,
+          web3: web3Client,
+          logs: eventLogs,
+        });
+        let count = 10;
+        let userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+        while (userL2BalanceAfter !== userL2BalanceBefore && count > 0) {
+          userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+          logger.info(`    reading balance ${userL2BalanceBefore}/${userL2BalanceAfter}`);
+          count -= 1;
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+        console.log('BALANCE', userL2BalanceBefore, userL2BalanceAfter);
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+        expect(userL2BalanceBefore).to.be.equal(userL2BalanceAfter);
       });
 
       it('Test incorrect proof transfer', async () => {
+        const userL2BalanceBefore = await getLayer2BalancesBadClient(erc20Address);
         await nf3User.transfer(
           'IncorrectProof',
           false,
@@ -478,10 +531,27 @@ describe('Testing with an adversary', () => {
         );
         await makeBlock();
         await waitForRollback();
+        await clearMempool({
+          optimistUrl: adversarialOptimistApiUrl,
+          web3: web3Client,
+          logs: eventLogs,
+        });
+        let count = 10;
+        let userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+        while (userL2BalanceAfter !== userL2BalanceBefore && count > 0) {
+          userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+          logger.info(`    reading balance ${userL2BalanceBefore}/${userL2BalanceAfter}`);
+          count -= 1;
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+        console.log('BALANCE', userL2BalanceBefore, userL2BalanceAfter);
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeProofVerification);
+        expect(userL2BalanceBefore).to.be.equal(userL2BalanceAfter);
       });
 
       it('Test incorrect historic root transfer', async () => {
+        const userL2BalanceBefore = await getLayer2BalancesBadClient(erc20Address);
         console.log('Testing incorrect root...');
         await nf3User.transfer(
           'IncorrectHistoricBlockNumber',
@@ -495,7 +565,23 @@ describe('Testing with an adversary', () => {
         );
         await makeBlock();
         await waitForRollback();
+        await clearMempool({
+          optimistUrl: adversarialOptimistApiUrl,
+          web3: web3Client,
+          logs: eventLogs,
+        });
+        let count = 10;
+        let userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+        while (userL2BalanceAfter !== userL2BalanceBefore && count > 0) {
+          userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+          logger.info(`    reading balance ${userL2BalanceBefore}/${userL2BalanceAfter}`);
+          count -= 1;
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+        userL2BalanceAfter = await getLayer2BalancesBadClient(erc20Address);
+        console.log('BALANCE', userL2BalanceBefore, userL2BalanceAfter);
         expect(challengeSelector).to.be.equal(challengeSelectors.challengeHistoricRoot);
+        expect(userL2BalanceBefore).to.be.equal(userL2BalanceAfter);
       });
     });
 
