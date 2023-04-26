@@ -6,6 +6,7 @@ mumbai/
 cli/build/*
 wallet/cli/*
 mumbai/
+polygonpos/
 wallet/src/components/Assets/
 test/adversary/lazy-optimist/*
 test/adversary/adversary-cli/*

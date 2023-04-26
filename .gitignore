@@ -9,6 +9,7 @@ mumbai/
 .openzeppelin/
 *.log
 mumbai/
+polygonpos/
 # wallet
 wallet/build
 wallet/cli
