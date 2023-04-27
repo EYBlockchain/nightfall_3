@@ -12,10 +12,7 @@ import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
-import {
-  getCircuitHash,
-  generateProof,
-} from 'common-files/utils/worker-calls.mjs';
+import { getCircuitHash, generateProof } from 'common-files/utils/worker-calls.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';

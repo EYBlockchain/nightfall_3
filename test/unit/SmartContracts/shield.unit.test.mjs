@@ -3,10 +3,7 @@ import { expect } from 'chai';
 import hardhat from 'hardhat';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { packBlockInfo, unpackBlockInfo } from 'common-files/utils/block-utils.mjs';
-import {
-  packHistoricRoots,
-  packTransactionInfo,
-} from 'common-files/classes/transaction.mjs';
+import { packHistoricRoots, packTransactionInfo } from 'common-files/classes/transaction.mjs';
 import {
   calculateBlockHash,
   calculateTransactionHash,

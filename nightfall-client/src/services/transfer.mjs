@@ -8,16 +8,10 @@
 import config from 'config';
 import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
-import {
-  edwardsCompress,
-  compressProof,
-} from 'common-files/utils/curve-maths/curves.mjs';
+import { edwardsCompress, compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
-import {
-  getCircuitHash,
-  generateProof,
-} from 'common-files/utils/worker-calls.mjs';
+import { getCircuitHash, generateProof } from 'common-files/utils/worker-calls.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';

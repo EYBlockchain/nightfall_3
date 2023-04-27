@@ -7,10 +7,7 @@ import express from 'express';
 import config from 'config';
 import Timber from 'common-files/classes/timber.mjs';
 import logger from 'common-files/utils/logger.mjs';
-import {
-  getContractInstance,
-  waitForContract,
-} from 'common-files/utils/contract.mjs';
+import { getContractInstance, waitForContract } from 'common-files/utils/contract.mjs';
 import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import constants from 'common-files/constants/index.mjs';
 import getProposers from 'common-files/utils/proposer.mjs';

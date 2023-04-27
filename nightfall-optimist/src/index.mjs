@@ -1,9 +1,5 @@
 import logger from 'common-files/utils/logger.mjs';
-import {
-  queueManager,
-  queues,
-  enqueueEvent,
-} from 'common-files/utils/event-queue.mjs';
+import { queueManager, queues, enqueueEvent } from 'common-files/utils/event-queue.mjs';
 import { checkContractsABI } from 'common-files/utils/sync-files.mjs';
 import app from './app.mjs';
 import {

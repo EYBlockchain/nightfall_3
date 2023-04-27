@@ -2,10 +2,7 @@ import config from 'config';
 import constants from 'common-files/constants/index.mjs';
 import logger from 'common-files/utils/logger.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
-import {
-  getCircuitHash,
-  generateProof,
-} from 'common-files/utils/worker-calls.mjs';
+import { getCircuitHash, generateProof } from 'common-files/utils/worker-calls.mjs';
 import gen from 'general-number';
 import Transaction from 'common-files/classes/transaction.mjs';
 import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';

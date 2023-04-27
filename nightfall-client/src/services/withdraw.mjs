@@ -11,10 +11,7 @@ import logger from 'common-files/utils/logger.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { waitForContract } from 'common-files/utils/contract.mjs';
 import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
-import {
-  getCircuitHash,
-  generateProof,
-} from 'common-files/utils/worker-calls.mjs';
+import { getCircuitHash, generateProof } from 'common-files/utils/worker-calls.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { clearPending } from './commitment-storage.mjs';
