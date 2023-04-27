@@ -23,6 +23,7 @@ const arrayEquality = (as, bs) => {
 };
 
 export const packTransactionInfo = (value, fee, circuitHash, tokenType) => {
+  console.log(generalise(value), '--generalise(value)--');
   const valuePacked = generalise(value).hex(14).slice(2);
   const feePacked = generalise(fee).hex(12).slice(2);
   const circuitHashPacked = generalise(circuitHash).hex(5).slice(2);
