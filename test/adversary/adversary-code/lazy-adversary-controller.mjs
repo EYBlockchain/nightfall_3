@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 /* ignore unused exports */
 
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { setBlockPeriodMs, setMakeNow } from './block-assembler.mjs';
 
 const {

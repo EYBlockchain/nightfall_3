@@ -8,7 +8,7 @@ import chaiAsPromised from 'chai-as-promised';
 import Queue from 'queue';
 import WebSocket from 'ws';
 import { generateMnemonic } from 'bip39';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { createBadBlock, topicEventMapping, Web3Client } from './utils.mjs';
 
 const { expect } = chai;

@@ -7,7 +7,7 @@ import express from 'express';
 import {
   getContractAbi,
   clearCachedContracts,
-} from '@polygon-nightfall/common-files/utils/contract.mjs';
+} from 'common-files/utils/contract.mjs';
 
 const router = express.Router();
 

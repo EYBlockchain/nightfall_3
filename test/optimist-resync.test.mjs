@@ -3,9 +3,9 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { buildBlockSolidityStruct } from '../common-files/utils/block-utils.mjs';
-import Transaction from '../common-files/classes/transaction.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { buildBlockSolidityStruct } from 'common-files/utils/block-utils.mjs';
+import Transaction from 'common-files/classes/transaction.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 import {
   Web3Client,

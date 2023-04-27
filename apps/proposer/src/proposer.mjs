@@ -3,8 +3,8 @@
 /**
 Module that runs up as a proposer
 */
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { waitForTimeout } from '@polygon-nightfall/common-files/utils/utils.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { waitForTimeout } from 'common-files/utils/utils.mjs';
 import config from 'config';
 
 const { TIMER_CHANGE_PROPOSER_SECOND, MAX_ROTATE_TIMES } = config;

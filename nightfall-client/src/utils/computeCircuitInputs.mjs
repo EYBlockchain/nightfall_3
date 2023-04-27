@@ -1,6 +1,6 @@
 import gen from 'general-number';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
+import constants from 'common-files/constants/index.mjs';
+import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
 
 const { generalise } = gen;
 const { BN128_GROUP_ORDER, SHIFT } = constants;

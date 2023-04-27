@@ -5,7 +5,7 @@ Module that runs up as a user
 /* eslint-disable no-await-in-loop */
 
 import axios from 'axios';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { waitForSufficientBalance, retrieveL2Balance, topicEventMapping } from '../utils.mjs';
 
 const { TX_WAIT = 1000 } = process.env;

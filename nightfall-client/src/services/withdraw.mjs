@@ -7,14 +7,14 @@
  */
 import config from 'config';
 import gen from 'general-number';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
+import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import {
   getCircuitHash,
   generateProof,
-} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
+} from 'common-files/utils/worker-calls.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
 import { clearPending } from './commitment-storage.mjs';

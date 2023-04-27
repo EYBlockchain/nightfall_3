@@ -1,13 +1,13 @@
 import { expect } from 'chai';
 import hardhat from 'hardhat';
-import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
+import { unpackBlockInfo } from 'common-files/utils/block-utils.mjs';
 import {
   calculateTransactionHash,
   calculateBlockHash,
   createBlockAndTransactions,
 } from '../utils/utils.mjs';
 import { setCommitmentHashEscrowed } from '../utils/stateStorage.mjs';
-import { unpackBlockInfo } from '../../../common-files/utils/block-utils.mjs';
 
 const { ethers, upgrades } = hardhat;
 

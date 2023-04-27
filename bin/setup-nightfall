@@ -5,6 +5,7 @@ set -e
 if [ "$SKIP_NPM_CI" == "" ]; then
   # Install node dependencies
   npm ci
+  cd cli && npm ci && cd ..
 fi
 
 OS_ARCH=$(uname -m)

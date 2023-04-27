@@ -4,8 +4,8 @@
 
 import express from 'express';
 import gen from 'general-number';
-import { getCircuitHash } from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { getCircuitHash } from 'common-files/utils/worker-calls.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   getCommitmentBySalt,
   getWalletBalance,

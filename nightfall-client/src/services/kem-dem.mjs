@@ -1,8 +1,8 @@
-import { scalarMult } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
-import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import { scalarMult } from 'common-files/utils/curve-maths/curves.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import { generalise, stitchLimbs } from 'general-number';
-import poseidon from '@polygon-nightfall/common-files/utils/crypto/poseidon/poseidon.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
+import constants from 'common-files/constants/index.mjs';
 
 const { BABYJUBJUB, BN128_GROUP_ORDER } = constants;
 // DOMAIN_KEM = field(SHA256('nightfall-kem'))

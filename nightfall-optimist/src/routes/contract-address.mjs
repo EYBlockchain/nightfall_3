@@ -4,7 +4,7 @@
  * funds on a zkp deposit
  */
 import express from 'express';
-import { getContractAddress } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import { getContractAddress } from 'common-files/utils/contract.mjs';
 
 const router = express.Router();
 

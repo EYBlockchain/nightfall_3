@@ -104,20 +104,6 @@ When the containers are started, they will mount these volumes and use the downl
 
 ## Run the deployment
 
-### Perform npm link
-
-[ ] This will take on board any changes to common files folder, which is imported as a package.
-
-```sh
-cd common-files
-npm link
-cd ..
-npm link @polygon-nightfall/common-files
-cd cli
-npm link @polygon-nightfall/common-files
-cd ..
-```
-
 ### Build the containers
 
 We include a build step so that we are not dependent on any local bind mount.  This makes the deploy a little more reproducible.

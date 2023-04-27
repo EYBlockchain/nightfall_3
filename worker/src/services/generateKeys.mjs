@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import downloadFile from '@polygon-nightfall/common-files/utils/httputils.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import downloadFile from 'common-files/utils/httputils.mjs';
 import * as snarkjs from 'snarkjs';
 import compile from '../utils/compile.mjs';
 

@@ -25,6 +25,7 @@
     "camelcase": "^6.1.0",
     "case-sensitive-paths-webpack-plugin": "2.3.0",
     "comlink-loader": "^2.0.0",
+    "common-files": "file:../common-files",
     "crypto-js": "^4.1.1",
     "css-loader": "4.3.0",
     "dexie": "^3.2.2",

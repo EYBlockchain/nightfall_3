@@ -1,10 +1,10 @@
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import {
   queueManager,
   queues,
   enqueueEvent,
-} from '@polygon-nightfall/common-files/utils/event-queue.mjs';
-import { checkContractsABI } from '@polygon-nightfall/common-files/utils/sync-files.mjs';
+} from 'common-files/utils/event-queue.mjs';
+import { checkContractsABI } from 'common-files/utils/sync-files.mjs';
 import app from './app.mjs';
 import {
   startEventQueue,

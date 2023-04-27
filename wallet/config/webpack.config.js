@@ -155,8 +155,8 @@ module.exports = function (webpackEnv) {
   };
 
   const config = require('../../config/default');
-  const constants = require('@polygon-nightfall/common-files/constants/constants.json');
-  const bigIntContants = require('@polygon-nightfall/common-files/constants/bigInts.js');
+  const constants = require('common-files/constants/constants.json');
+  const bigIntContants = require('common-files/constants/bigInts.js');
   return {
     mode: isEnvProduction ? 'production' : isEnvDevelopment && 'development',
     externals: {

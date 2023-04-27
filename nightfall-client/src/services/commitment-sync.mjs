@@ -4,10 +4,10 @@ commitmentsync services to decrypt commitments from transaction blockproposed ev
 or use clientCommitmentSync to decrypt when new zkpPrivateKey is received.
 */
 
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { generalise } from 'general-number';
-import { edwardsDecompress } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import { edwardsDecompress } from 'common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { getAllTransactions } from './database.mjs';
 import { countCommitments, storeCommitment } from './commitment-storage.mjs';
 import { decrypt, packSecrets } from './kem-dem.mjs';

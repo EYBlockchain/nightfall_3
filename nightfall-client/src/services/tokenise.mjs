@@ -1,13 +1,13 @@
 import config from 'config';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import constants from 'common-files/constants/index.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
 import {
   getCircuitHash,
   generateProof,
-} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
-import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
-import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
+} from 'common-files/utils/worker-calls.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import gen from 'general-number';
 import { ZkpKeys } from './keys.mjs';
 import { Commitment, Transaction } from '../classes/index.mjs';

@@ -1,5 +1,5 @@
 import express from 'express';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import getCircuitHash from '../services/getCircuitHash.mjs';
 
 const router = express.Router();

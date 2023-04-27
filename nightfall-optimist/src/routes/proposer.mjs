@@ -5,16 +5,16 @@
  */
 import express from 'express';
 import config from 'config';
-import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import Timber from 'common-files/classes/timber.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import {
   getContractInstance,
   waitForContract,
-} from '@polygon-nightfall/common-files/utils/contract.mjs';
-import { enqueueEvent } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import getProposers from '@polygon-nightfall/common-files/utils/proposer.mjs';
-import NotFoundError from '@polygon-nightfall/common-files/utils/not-found-error.mjs';
+} from 'common-files/utils/contract.mjs';
+import { enqueueEvent } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
+import getProposers from 'common-files/utils/proposer.mjs';
+import NotFoundError from 'common-files/utils/not-found-error.mjs';
 import Block from '../classes/block.mjs';
 import { Transaction, TransactionError } from '../classes/index.mjs';
 import {

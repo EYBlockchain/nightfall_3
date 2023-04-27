@@ -11,7 +11,7 @@ import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
 // instead of our usual cli we need to import
 // adversary transpiled version of cli.

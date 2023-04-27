@@ -131,6 +131,7 @@
   "dependencies": {
     "@polygon-nightfall/common-files": "*",
     "async-mutex": "^0.4.0",
+    "common-files": "file:./common-files",
     "docker-cli-js": "^2.9.0",
     "docker-compose": "^0.23.13",
     "ethereumjs-wallet": "^1.0.2",

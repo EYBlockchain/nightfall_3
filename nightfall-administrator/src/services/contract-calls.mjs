@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import config from 'config';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
 
 const { RESTRICTIONS } = config;
 /**
