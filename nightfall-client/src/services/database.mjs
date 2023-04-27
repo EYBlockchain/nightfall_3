@@ -195,18 +195,30 @@ Transaction Collection
 */
 
 /**
-Function to save a (unprocessed) Transaction
-*/
+ * Save an unprocessed transaction
+ */
 export async function saveTransaction(_transaction) {
+  const { mempool = true, blockNumberL2 = -1 } = _transaction;
   const transaction = {
     _id: _transaction.transactionHash,
     ..._transaction,
+    mempool,
+    blockNumberL2,
   };
+  logger.debug({
+    msg: 'Saving transaction',
+    transactionHash: _transaction.transactionHash,
+    blockNumber: _transaction.blockNumber,
+  });
   const connection = await mongo.connection(MONGO_URL);
   const db = connection.db(COMMITMENTS_DB);
-  const query = { transactionHash: transaction.transactionHash };
-  const update = { $set: transaction };
-  return db.collection(TRANSACTIONS_COLLECTION).updateOne(query, update, { upsert: true });
+  return db.collection(TRANSACTIONS_COLLECTION).insertOne(transaction);
+}
+
+export async function updateTransaction(transactionHash, updates) {
+  const connection = await mongo.connection(MONGO_URL);
+  const db = connection.db(COMMITMENTS_DB);
+  return db.collection(TRANSACTIONS_COLLECTION).updateOne({ transactionHash }, { $set: updates });
 }
 
 /*

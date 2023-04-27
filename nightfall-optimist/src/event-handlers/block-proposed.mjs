@@ -17,6 +17,8 @@ import {
   deleteDuplicateCommitmentsAndNullifiersFromMemPool,
   saveTransaction,
   getNumberOfL2Blocks,
+  getTransactionByTransactionHash,
+  updateTransaction,
 } from '../services/database.mjs';
 import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { increaseBlockInvalidCounter } from '../services/debug-counters.mjs';
@@ -99,13 +101,26 @@ async function blockProposedEventHandler(data) {
     // submitted by someone directly to another proposer and so there was never a TransactionSubmitted
     // event associated with them. Either that, or we lost our database and had to resync from the chain.
     // In which case this handler is being called be the resync code. either way, we need to add the transaction.
-    // let's use transactionSubmittedEventHandler to do this because it will perform all the duties associated
-    // with saving a transaction.
-    await Promise.all(
-      transactions.map(async tx =>
-        saveTransaction({ ...tx, blockNumberL2: block.blockNumberL2, mempool: false }),
-      ),
-    );
+    // What we don't want to do is to overwrite a transaction with a duplicate one in an earlier block, so we check for
+    // duplicates and only update the stored transaction if the transaction was not previously in a block, but is now.
+    transactions.map(async tx => {
+      const transaction = { ...tx, blockNumberL2: block.blockNumberL2, mempool: false };
+      try {
+        await saveTransaction(transaction);
+      } catch (err) {
+        if (err.message.includes('E11000')) {
+          const storedTx = await getTransactionByTransactionHash(transaction.transactionHash);
+          // We should only update the blockNumberL2 of the transaction if it doesn't have one, i.e it's -1
+          if (Number(storedTx.blockNumberL2) === -1) {
+            await updateTransaction(transaction.transactionHash, {
+              blockNumberL2: transaction.blockNumberL2,
+              mempool: transaction.mempool,
+            });
+            logger.info(`Updated stored transaction with L2 block information`);
+          } else logger.warn(`Duplicate transaction in Proposed Block has been dropped`);
+        } else throw new Error(err);
+      }
+    });
 
     const blockCommitments = transactions
       .map(t => t.commitments.filter(c => c !== ZERO))
