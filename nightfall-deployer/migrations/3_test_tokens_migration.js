@@ -16,11 +16,10 @@ const ERC1155Mock = artifacts.require('ERC1155Mock.sol');
 const nERC721 = 35;
 
 module.exports = function (deployer, _, accounts) {
+  if (DEPLOY_MOCK_TOKENS === 'false') return;
   deployer.then(async () => {
     const shield = await Shield.deployed();
     const state = await State.deployed();
-
-    if (DEPLOY_MOCK_TOKENS === 'false') return;
 
     await deployer.deploy(ERC20Mock, 1001010000000000); // initialSupply
 

@@ -76,7 +76,9 @@ async function checkAndRegisterProposer(nf3, proposerBaseUrl) {
       try {
         await nf3.registerProposer(proposerBaseUrl, minimumStake);
       } catch (err) {
-        logger.info(err);
+        logger.info(
+          `Error registering proposer ${proposerBaseUrl} with error message ${err.message}`,
+        );
       }
     }
 

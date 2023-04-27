@@ -108,6 +108,8 @@ class Nf3 {
 
   clientAuthenticationKey;
 
+  NEXT_N_PROPOSERS = 3;
+
   // min fee or reward one should hold for withdaw
   // in State contract.
   minL1Balance = DEFAULT_MIN_L1_WITHDRAW;
@@ -534,7 +536,7 @@ class Nf3 {
     if (res.data.error) {
       throw new Error(res.data.error);
     }
-    return res.status;
+    return this.sendOffchainTransaction(res.data.transaction);
   }
 
   /**
@@ -568,7 +570,7 @@ class Nf3 {
     if (res.data.error) {
       throw new Error(res.data.error);
     }
-    return res.status;
+    return this.sendOffchainTransaction(res.data.transaction);
   }
 
   /**
@@ -604,7 +606,7 @@ class Nf3 {
     if (res.data.error && res.data.error === 'No suitable commitments') {
       throw new Error('No suitable commitments');
     }
-    return res.status;
+    return this.sendOffchainTransaction(res.data.transaction);
   }
 
   /**
@@ -731,23 +733,21 @@ class Nf3 {
     if (res.data.error) {
       throw new Error(res.data.error);
     }
-    if (!offchain) {
-      return new Promise((resolve, reject) => {
-        userQueue.push(async () => {
-          try {
-            const receipt = await this.submitTransaction(
-              res.data.txDataToSign,
-              this.shieldContractAddress,
-              0,
-            );
-            resolve(receipt);
-          } catch (err) {
-            reject(err);
-          }
-        });
+    if (offchain) return this.sendOffchainTransaction(res.data.transaction);
+    return new Promise((resolve, reject) => {
+      userQueue.push(async () => {
+        try {
+          const receipt = await this.submitTransaction(
+            res.data.txDataToSign,
+            this.shieldContractAddress,
+            0,
+          );
+          resolve(receipt);
+        } catch (err) {
+          reject(err);
+        }
       });
-    }
-    return res.status;
+    });
   }
 
   /**
@@ -797,23 +797,21 @@ class Nf3 {
       throw new Error(res.data.error);
     }
     this.latestWithdrawHash = res.data.transaction.transactionHash;
-    if (!offchain) {
-      return new Promise((resolve, reject) => {
-        userQueue.push(async () => {
-          try {
-            const receipt = await this.submitTransaction(
-              res.data.txDataToSign,
-              this.shieldContractAddress,
-              0,
-            );
-            resolve(receipt);
-          } catch (err) {
-            reject(err);
-          }
-        });
+    if (offchain) return this.sendOffchainTransaction(res.data.transaction);
+    return new Promise((resolve, reject) => {
+      userQueue.push(async () => {
+        try {
+          const receipt = await this.submitTransaction(
+            res.data.txDataToSign,
+            this.shieldContractAddress,
+            0,
+          );
+          resolve(receipt);
+        } catch (err) {
+          reject(err);
+        }
       });
-    }
-    return res.status;
+    });
   }
 
   /**
@@ -1308,19 +1306,69 @@ class Nf3 {
   }
 
   /**
-    Send offchain transaction to Optimist
+    Intended to be called by a Proposer acting as a Proxy for offchain transactions. This
+    function allows the Proposer to forward offchain transactions to its Optimist instance.
     @method
     @async
-    @param {string} transaction
-    @returns {array} A promise that resolves to the API call status
-    */
-  async sendOffchainTransaction(transaction) {
-    const res = axios.post(
+    @param {object} transaction
+    @returns {object} A promise that resolves to the API call status
+   */
+  async forwardOffchainTransaction(transaction, signature) {
+    const res = await axios.post(
       `${this.optimistBaseUrl}/proposer/offchain-transaction`,
-      { transaction },
+      { transaction, signature },
       { timeout: 3600000 },
     );
-    return res.status;
+    return res;
+  }
+
+  /**
+    Send offchain transaction to all Proposers that the chain knows about
+    This is intended to be called by a User to send the transaction to a Proposer
+    who will act as a proxy and forward the transaction to an Optimist (this allows an
+    Optimist to be firewalled off and only the Proposer exposed to Users).
+    @method
+    @async
+    @param {object} transaction
+    @returns {object} A promise that resolves to the API call status
+    */
+  async sendOffchainTransaction(transaction) {
+    // we're proxying offchain transactions through the proposers. We send the transaction to every proposer
+    // dig up connection peers
+    const currentProposer = await this.stateContract.methods.currentProposer().call();
+    const peerList = { [currentProposer.thisAddress]: currentProposer.url };
+    let nextProposer = await this.stateContract.methods
+      .proposers(currentProposer.nextAddress)
+      .call();
+    let proposerIdx = 0;
+    while (
+      currentProposer.thisAddress !== nextProposer.thisAddress &&
+      proposerIdx <= this.NEXT_N_PROPOSERS
+    ) {
+      peerList[nextProposer.thisAddress] = nextProposer.url;
+      // eslint-disable-next-line no-await-in-loop
+      nextProposer = await this.stateContract.methods.proposers(nextProposer.nextAddress).call();
+      proposerIdx += 1;
+    }
+
+    logger.debug({ msg: 'Peer List', peerList });
+    return Promise.any(
+      Object.keys(peerList).map(async address => {
+        logger.debug(
+          `offchain transaction - calling ${peerList[address]}/proposer/offchain-transaction`,
+        );
+        // sign the transaction if we're required to identify ourself
+        const signature = process.env.ANONYMOUS_USER
+          ? null
+          : this.web3.eth.accounts.sign(JSON.stringify(transaction), this.ethereumSigningKey)
+              .signature;
+        return axios.post(
+          `${peerList[address]}/proposer/offchain-transaction`,
+          { transaction, signature },
+          { timeout: 3600000 },
+        );
+      }),
+    );
   }
 
   /**

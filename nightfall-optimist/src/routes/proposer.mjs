@@ -5,6 +5,7 @@
  */
 import express from 'express';
 import config from 'config';
+import Web3 from 'web3';
 import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
 import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
 import {
@@ -32,6 +33,7 @@ import transactionSubmittedEventHandler from '../event-handlers/transaction-subm
 const router = express.Router();
 const { TIMBER_HEIGHT, HASH_TYPE } = config;
 const { STATE_CONTRACT_NAME, PROPOSERS_CONTRACT_NAME, SHIELD_CONTRACT_NAME, ZERO } = constants;
+const web3 = new Web3();
 
 let proposer;
 export function setProposer(p) {
@@ -405,7 +407,20 @@ router.post('/encode', async (req, res, next) => {
 });
 
 router.post('/offchain-transaction', async (req, res) => {
-  const { transaction } = req.body;
+  const { transaction, signature } = req.body;
+  // the first thing we'll do is check that the sender is whitelisted (if required by our config)
+  if (!process.env.ANONYMOUS_USER) {
+    const address = web3.eth.accounts.recover(JSON.stringify(transaction), signature);
+    logger.debug(`Recovered address ${address}`);
+    const x509Instance = await getContractInstance('X509');
+    const isWhitelisted = await x509Instance.methods.x509Check(address).call();
+    if (!isWhitelisted) {
+      logger.warn('Attempted transaction by a user who is not whitelisted');
+      res.sendStatus(401);
+      return;
+    }
+  }
+
   /*
     When a transaction is built by client, they are generalised into hex(32) interfacing with web3
     The response from on-chain events converts them to saner string values (e.g. uint64 etc).

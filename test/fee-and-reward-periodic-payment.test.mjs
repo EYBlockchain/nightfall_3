@@ -58,7 +58,10 @@ describe('Periodic Payment', () => {
       `-- proposer account balance before registration ---
       ${await web3.eth.getBalance(nf3Proposer.ethereumAddress)}`,
     );
-    await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
+    await nf3Proposer.registerProposer(
+      'http://http://localhost:8081',
+      await nf3Proposer.getMinimumStake(),
+    );
     await nf3Proposer.startProposer();
 
     erc20Address = await nf3User.getContractAddress('ERC20Mock');
