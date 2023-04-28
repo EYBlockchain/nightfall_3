@@ -27,7 +27,6 @@ services:
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
       LAUNCH_LOCAL: 1
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
-    command: ['npm', 'run', 'dev']
 
   mongodb_client_1:
     image: mongo:4.4.1-bionic

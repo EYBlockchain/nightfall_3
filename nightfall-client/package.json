@@ -5,8 +5,7 @@
   "main": "src/index.mjs",
   "scripts": {
     "start": "node src/index.mjs",
-    "start:debug": "node --inspect=0.0.0.0:9229 src/index.mjs",
-    "dev": "nodemon src/index.mjs"
+    "start:debug": "node --inspect=0.0.0.0:9229 src/index.mjs"
   },
   "repository": {
     "type": "git",
@@ -43,16 +42,6 @@
     "safe-buffer": "^5.2.1",
     "web3": "^1.7.5",
     "ws": "^7.5.0"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.19"
-  },
-  "nodemonConfig": {
-    "verbose": true,
-    "ignore": [
-      "mongodb/",
-      "build/"
-    ]
   },
   "overrides": {
     "swarm-js": {

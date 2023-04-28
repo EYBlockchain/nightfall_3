@@ -28,4 +28,3 @@ services:
     ports:
       # to use with postman and etc
       - 8091:80
-    entrypoint: ['npm', 'run', 'start']
