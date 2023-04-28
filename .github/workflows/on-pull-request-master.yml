@@ -356,7 +356,9 @@ jobs:
 
       - name: Debug logs - after integration test run
         if: always()
-        run: cat ganache-test.log
+        run: |
+          docker exec -it nightfall_3_client_1 cat src/node_modules/general-number/package.json
+          cat ganache-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
