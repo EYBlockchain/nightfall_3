@@ -104,7 +104,7 @@ npm run unit-test-x509
 
 ## Next steps
 
-To understand much more about how Nightfall_3 works, how to run a Nightfall node against its deployed instances, how to configure it and how to get access with an x509 certificate, please see the Nightfall_3 [GitBook](https://westlad.gitbook.io/nightfall_3/).
+To understand much more about how Nightfall_3 works, how to run a Nightfall node against its deployed instances, how to configure it and how to get access with an x509 certificate, please see the Nightfall_3 [GitBook](https://westlad.gitbook.io/nightfall_3/). This is still being added to.
 
 ## Acknowledgements
 
