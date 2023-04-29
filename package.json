@@ -129,7 +129,6 @@
     "ws": "^7.5.0"
   },
   "dependencies": {
-    "@polygon-nightfall/common-files": "*",
     "async-mutex": "^0.4.0",
     "common-files": "file:./common-files",
     "docker-cli-js": "^2.9.0",

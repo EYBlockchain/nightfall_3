@@ -21,7 +21,6 @@
   },
   "homepage": "https://github.com/EYBlockchain/nightfall_3#readme",
   "dependencies": {
-    "@polygon-nightfall/common-files": "*",
     "chalk": "^5.0.1",
     "clear": "^0.1.0",
     "common-files": "file:./../common-files",

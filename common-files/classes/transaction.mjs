@@ -23,9 +23,15 @@ const arrayEquality = (as, bs) => {
 };
 
 export const packTransactionInfo = (value, fee, circuitHash, tokenType) => {
-  console.log(generalise(value), '--generalise(value)--', generalise(value).hex, typeof value);
-  const valuePacked = generalise(value).hex(14).slice(2);
-  const feePacked = generalise(fee).hex(12).slice(2);
+  console.log(
+    generalise(value),
+    '--generalise(value)--',
+    generalise(value).hex,
+    typeof value,
+    typeof Object(value).valueOf(),
+  );
+  const valuePacked = generalise(value._hex).hex(14).slice(2);
+  const feePacked = generalise(fee._hex).hex(12).slice(2);
   const circuitHashPacked = generalise(circuitHash).hex(5).slice(2);
   const tokenTypePacked = generalise(tokenType).hex(1).slice(2);
 
@@ -76,14 +82,16 @@ function keccak(preimage) {
   const transaction = [
     packedInfo,
     historicRootsPacked,
-    tokenId,
-    ercAddress,
+    tokenId._hex,
+    ercAddress._hex,
     recipientAddress,
     commitments,
     nullifiers,
     compressedSecrets,
     proof,
   ];
+
+  console.log('--transaction--', transaction);
 
   const encodedTransaction = web3.eth.abi.encodeParameters([SIGNATURES.TRANSACTION], [transaction]);
   return web3.utils.soliditySha3({

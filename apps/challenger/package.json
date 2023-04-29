@@ -10,7 +10,6 @@
   "author": "daveroga",
   "license": "CC0-1.0",
   "dependencies": {
-    "@polygon-nightfall/common-files": "*",
     "async-mutex": "^0.3.2",
     "body-parser": "^1.19.2",
     "common-files": "file:./../../common-files",

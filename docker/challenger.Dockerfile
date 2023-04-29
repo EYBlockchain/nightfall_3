@@ -12,26 +12,22 @@ EXPOSE 8080
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
-WORKDIR /app
+WORKDIR /
 COPY common-files common-files
+WORKDIR /common-files
+RUN npm ci
+
+WORKDIR /app/app
 COPY cli cli
-WORKDIR /app/common-files
-RUN npm ci
-RUN npm link
-
-WORKDIR /app/cli
+WORKDIR /app/app/cli
 RUN npm ci
 
-WORKDIR /app
+WORKDIR /app/app
 COPY apps/challenger/package*.json ./
 COPY apps/challenger/src src
 COPY apps/challenger/docker-entrypoint.sh docker-entrypoint.sh
 COPY config config
 
 RUN npm ci
-
-COPY common-files/classes node_modules/common-files/classes
-COPY common-files/utils node_modules/common-files/utils
-COPY common-files/constants node_modules/common-files/constants
 
 CMD ["npm", "start"]

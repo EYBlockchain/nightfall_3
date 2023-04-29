@@ -15,7 +15,6 @@ COPY config/default.js app/config/default.js
 
 WORKDIR /common-files
 RUN npm ci
-RUN npm link
 
 WORKDIR /app
 COPY nightfall-deployer/package*.json ./
@@ -27,7 +26,3 @@ COPY nightfall-deployer/circuits circuits
 COPY nightfall-deployer/entrypoint.sh entrypoint.sh
 
 RUN npm ci
-
-COPY common-files/classes node_modules/common-files/classes
-COPY common-files/utils node_modules/common-files/utils
-COPY common-files/constants node_modules/common-files/constants

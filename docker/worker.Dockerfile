@@ -18,7 +18,6 @@ WORKDIR /
 COPY common-files common-files
 WORKDIR /common-files
 RUN npm ci
-RUN npm link
 
 WORKDIR /app
 COPY config/default.js config/default.js
@@ -30,9 +29,5 @@ COPY ./worker/start-script ./start-script
 COPY ./worker/start-dev ./start-dev
 
 RUN npm ci
-
-COPY common-files/classes node_modules/common-files/classes
-COPY common-files/utils node_modules/common-files/utils
-COPY common-files/constants node_modules/common-files/constants
 
 CMD ["npm", "start"]

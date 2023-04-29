@@ -24,7 +24,6 @@ COPY config/default.js app/config/default.js
 
 WORKDIR /common-files
 RUN npm ci
-RUN npm link
 
 WORKDIR /app
 RUN mkdir /app/mongodb
@@ -33,9 +32,5 @@ COPY nightfall-optimist/docker-entrypoint.standalone.sh ./docker-entrypoint.sh
 COPY nightfall-optimist/package*.json  ./
 
 RUN npm ci
-
-COPY common-files/classes node_modules/common-files/classes
-COPY common-files/utils node_modules/common-files/utils
-COPY common-files/constants node_modules/common-files/constants
 
 CMD ["npm", "start"]
