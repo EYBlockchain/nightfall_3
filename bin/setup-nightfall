@@ -6,7 +6,6 @@ if [ "$SKIP_NPM_CI" == "" ]; then
   # Install node dependencies
   npm ci
   cd cli && npm ci && cd ..
-  cd common-files && npm ci && cd ..
 fi
 
 OS_ARCH=$(uname -m)

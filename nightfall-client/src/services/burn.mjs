@@ -60,7 +60,7 @@ async function burn(burnParams) {
 
   try {
     const publicData = new Transaction({
-      fee,
+      fee: fee.hex(32),
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
       commitments: newCommitmentsCircuit,

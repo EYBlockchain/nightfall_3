@@ -622,12 +622,10 @@ jobs:
         with:
           node-version: '16.17.0'
 
-      - name: Build adversary
-        run: npm run build-adversary
-
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
+          npm run build-adversary
           ./bin/start-nightfall -g -d -a &> adversary-test.log &disown
 
       - name: Wait for images to be ready
