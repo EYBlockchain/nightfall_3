@@ -75,12 +75,11 @@ async function transfer(transferParams) {
     // KEM-DEM encryption
     const [ePrivate, ePublic] = await genEphemeralKeys();
     const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
-    const compressedSecrets = encrypt(generalise(ePrivate.hex(32)), generalise(recipientZkpPublicKeys[0]), [
-      packedErc.bigInt,
-      unpackedTokenID.bigInt,
-      values[0].bigInt,
-      commitmentsInfo.salts[0].bigInt,
-    ]);
+    const compressedSecrets = encrypt(
+      generalise(ePrivate.hex(32)),
+      generalise(recipientZkpPublicKeys[0]),
+      [packedErc.bigInt, unpackedTokenID.bigInt, values[0].bigInt, commitmentsInfo.salts[0].bigInt],
+    );
 
     // Compress the public key as it will be put on-chain
     const compressedEPub = edwardsCompress(ePublic);
