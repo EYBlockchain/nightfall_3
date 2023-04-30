@@ -70,14 +70,14 @@ async function withdraw(withdrawParams) {
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
-      fee,
+      fee: fee.hex(32),
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
       tokenType: items.tokenType,
-      tokenId,
-      value,
-      ercAddress,
-      recipientAddress,
+      tokenId: tokenId.hex(32),
+      value: value.hex(32),
+      ercAddress: ercAddress.hex(32),
+      recipientAddress: recipientAddress.hex(32),
       commitments: commitmentsInfo.newCommitments,
       nullifiers: commitmentsInfo.nullifiers,
       numberNullifiers: VK_IDS[circuitName].numberNullifiers,

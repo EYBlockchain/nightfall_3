@@ -14,7 +14,7 @@ class Nullifier {
   constructor(commitment, nullifierKey) {
     this.preimage = generalise({
       nullifierKey,
-      commitment: commitment.hash,
+      commitment: commitment.hash.hex(32),
     });
     this.hash = poseidon([this.preimage.nullifierKey, this.preimage.commitment]);
   }

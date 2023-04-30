@@ -64,7 +64,7 @@ async function transfer(transferParams) {
     recipientZkpPublicKeysArray: recipientZkpPublicKeys,
     ercAddress,
     feeL2TokenAddress,
-    tokenId,
+    tokenId: tokenId.hex(32),
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
@@ -75,7 +75,7 @@ async function transfer(transferParams) {
     // KEM-DEM encryption
     const [ePrivate, ePublic] = await genEphemeralKeys();
     const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
-    const compressedSecrets = encrypt(generalise(ePrivate), generalise(recipientZkpPublicKeys[0]), [
+    const compressedSecrets = encrypt(generalise(ePrivate.hex(32)), generalise(recipientZkpPublicKeys[0]), [
       packedErc.bigInt,
       unpackedTokenID.bigInt,
       values[0].bigInt,
@@ -89,7 +89,7 @@ async function transfer(transferParams) {
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
-      fee,
+      fee: fee.hex(32),
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
       ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
@@ -116,7 +116,7 @@ async function transfer(transferParams) {
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
       ercAddress,
       tokenId,
-      ephemeralKey: ePrivate,
+      ephemeralKey: ePrivate.hex(32),
     };
 
     const witness = computeCircuitInputs(

@@ -117,13 +117,13 @@ async function deposit(depositParams) {
   const circuitHash = await getCircuitHash(circuitName);
 
   const publicData = new Transaction({
-    fee,
+    fee: fee.hex(32),
     historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
     circuitHash,
     tokenType,
-    tokenId,
-    value,
-    ercAddress,
+    tokenId: tokenId.hex(32),
+    value: value.hex(32),
+    ercAddress: ercAddress.hex(32),
     commitments: commitmentsInfo.newCommitments,
     nullifiers: commitmentsInfo.nullifiers,
     numberNullifiers: VK_IDS[circuitName].numberNullifiers,
@@ -183,6 +183,7 @@ async function deposit(depositParams) {
     const rawTransaction = await shieldContractInstance.methods
       .submitTransaction(Transaction.buildSolidityStruct(transaction))
       .encodeABI();
+
     await submitTransaction(
       transaction,
       commitmentsInfo,
