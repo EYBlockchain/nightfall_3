@@ -108,7 +108,7 @@ async function transform(transformParams) {
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
-      fee,
+      fee: fee.hex(32),
       historicRootBlockNumberL2: commitmentInfo.blockNumberL2s,
       circuitHash,
       commitments: commitmentInfo.newCommitments,
