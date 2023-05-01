@@ -160,7 +160,7 @@ export const computeCircuitInputs = (
     witness.outputPackedAddressesPrivate = [];
     witness.outputIdRemaindersPrivate = [];
 
-    const emptyToken = generalise({ address: 0, id: 0 });
+    const emptyToken = { address: 0, id: 0 };
     const inputTokensPadded = utils.padArray(inputTokens, emptyToken, numberNullifiers);
     const outputTokensPadded = utils.padArray(outputTokens, emptyToken, numberCommitments);
 
