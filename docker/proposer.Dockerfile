@@ -10,7 +10,7 @@ RUN apt-get update \
 # websocket port 8080
 EXPOSE 8080
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+ENTRYPOINT ["/app/app/docker-entrypoint.sh"]
 
 WORKDIR /
 COPY common-files common-files

@@ -2,7 +2,7 @@ version: '3.5'
 # Use this script for making nightfall_3 use stubs.
 services:
   proposer:
-    image: ghcr.io/eyblockchain/nightfall3-proposer:latest
+    # image: ghcr.io/eyblockchain/nightfall3-proposer:latest
     build:
       dockerfile: docker/proposer.Dockerfile
       context: ..
@@ -37,13 +37,13 @@ services:
     volumes:
       - type: bind
         source: ../apps/proposer/src
-        target: /app/src
+        target: /app/app/src
         
   challenger:
     build:
       dockerfile: docker/challenger.Dockerfile
       context: ..
-    image: ghcr.io/eyblockchain/nightfall3-challenger:latest
+    # image: ghcr.io/eyblockchain/nightfall3-challenger:latest
     ports:
       # to use with postman and etc
       - 8192:8192
@@ -73,7 +73,7 @@ services:
     volumes:
       - type: bind
         source: ../apps/challenger/src
-        target: /app/src
+        target: /app/app/src
 
 networks:
   nightfall_network:
