@@ -1,8 +1,8 @@
 name: Check PR
 
 on:
-  push:
-    branches: [liju.jose/common-files-revert-to-directory]
+  pull_request:
+    branches: [master]
 
 env:
   DOCKER_BUILDKIT: 1 # enable docker buildkit
