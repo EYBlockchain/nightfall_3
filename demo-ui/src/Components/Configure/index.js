@@ -5,7 +5,7 @@ import './index.css';
 import { swithNetwork, addNetwork } from '../../utils';
 
 function Configure({ setERC20Address }) {
-  let erc20Address;
+  const [erc20Address, setLocalERC20Address] = React.useState('');
   const [chainId, setChainId] = React.useState(
     window.ethereum.networkVersion ? `${window.ethereum.networkVersion}` : '1337',
   );
@@ -34,10 +34,32 @@ function Configure({ setERC20Address }) {
                 type="text"
                 className="form-control"
                 placeholder="ERC 20 Contract Address"
-                onChange={function (e) {
-                  erc20Address = e.target.value;
-                }}
+                onChange={e => setLocalERC20Address(e.target.value)}
+                value={erc20Address}
+                style={{ marginBottom: '5px' }}
               />
+              <input
+                className="form-check-input"
+                type="checkbox"
+                onChange={e => {
+                  if (erc20Address) {
+                    return setLocalERC20Address('');
+                  }
+                  return setLocalERC20Address(e.target.value);
+                }}
+                value="0x4315287906f3fcf2345ad1bfe0f682457b041fa7"
+                checked={erc20Address === '0x4315287906f3fcf2345ad1bfe0f682457b041fa7'}
+                style={{ marginRight: '10px' }}
+              />
+              <label>
+                <small>Use contract address</small>
+              </label>
+              <label>
+                <small>
+                  0x4315287906f3fcf2345ad1bfe0f682457b041fa7, if testing with local ganache from
+                  nightfall start script.
+                </small>
+              </label>
             </div>
             <div
               className="form-group form-custom-field"
