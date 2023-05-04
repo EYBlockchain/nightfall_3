@@ -25,7 +25,7 @@ function Navbar({ users, updateBalances, updateLoader }) {
       <div className="text-center col-10"></div>
       <div className="text-center col-2">
         <button type="button" className="btn btn-success" onClick={makeBlockNow}>
-          Make BLock Now
+          Make Block Now
         </button>
       </div>
     </nav>

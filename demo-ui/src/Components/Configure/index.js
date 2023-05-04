@@ -10,6 +10,7 @@ function Configure({ setERC20Address }) {
     window.ethereum.networkVersion ? `${window.ethereum.networkVersion}` : '1337',
   );
   async function doConfigure(e) {
+    if (!erc20Address) console.log('Provided ERC20 address is not valid');
     e.preventDefault();
     if (window.ethereum.networkVersion !== Number(chainId)) {
       try {
@@ -27,7 +28,7 @@ function Configure({ setERC20Address }) {
     <div className="collapse d-lg-block configure collapse bg-light p-2 bg-opacity-75">
       <main style={{ marginTop: '158px' }}>
         <div className="container pt-4">
-          <form className="form bg-opacity-0 bg-light">
+          <form className="form bg-opacity-0 bg-light" onSubmit={doConfigure}>
             <div className="form-group form-custom-field">
               <input
                 type="text"
