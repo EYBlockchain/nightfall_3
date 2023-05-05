@@ -1,6 +1,6 @@
 import gen from 'general-number';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
+import constants from 'common-files/constants/index.mjs';
+import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
 
 const { generalise } = gen;
 const { BN128_GROUP_ORDER, SHIFT } = constants;
@@ -160,7 +160,7 @@ export const computeCircuitInputs = (
     witness.outputPackedAddressesPrivate = [];
     witness.outputIdRemaindersPrivate = [];
 
-    const emptyToken = generalise({ address: 0, id: 0 });
+    const emptyToken = { address: 0, id: 0 };
     const inputTokensPadded = utils.padArray(inputTokens, emptyToken, numberNullifiers);
     const outputTokensPadded = utils.padArray(outputTokens, emptyToken, numberCommitments);
 

@@ -9,10 +9,10 @@ import config from 'config';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
-import utils from '@polygon-nightfall/common-files/utils/crypto/merkle-tree/utils.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import Web3 from 'common-files/utils/web3.mjs';
+import utils from 'common-files/utils/crypto/merkle-tree/utils.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
 
 const fsPromises = fs.promises;
 

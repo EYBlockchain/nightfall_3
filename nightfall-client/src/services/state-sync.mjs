@@ -5,11 +5,11 @@ their local commitments databsae.
 */
 
 import config from 'config';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import { unpauseQueue } from '@polygon-nightfall/common-files/utils/event-queue.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import mongo from 'common-files/utils/mongo.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
+import { unpauseQueue } from 'common-files/utils/event-queue.mjs';
+import constants from 'common-files/constants/index.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import rollbackEventHandler from '../event-handlers/rollback.mjs';
 

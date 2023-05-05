@@ -1,10 +1,10 @@
 import WebSocket from 'ws';
 import config from 'config';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import Web3 from '@polygon-nightfall/common-files/utils/web3.mjs';
-import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { rand } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import Web3 from 'common-files/utils/web3.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
 import {
   saveCommit,
   getBlockByBlockNumberL2,

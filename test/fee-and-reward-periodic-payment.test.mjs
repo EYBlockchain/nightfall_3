@@ -9,7 +9,7 @@
  */
 import chai from 'chai';
 import config from 'config';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import Nf3 from '../cli/lib/nf3.mjs';
 
 import { getLayer2Balances, Web3Client } from './utils.mjs';

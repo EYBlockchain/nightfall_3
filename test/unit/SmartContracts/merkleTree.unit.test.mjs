@@ -1,9 +1,9 @@
 import config from 'config';
 import { expect } from 'chai';
 import hardhat from 'hardhat';
-import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import poseidonHash from '@polygon-nightfall/common-files/utils/crypto/poseidon/poseidon.mjs';
+import Timber from 'common-files/classes/timber.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import poseidonHash from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 import { generalise } from 'general-number';
 
 const { ethers } = hardhat;

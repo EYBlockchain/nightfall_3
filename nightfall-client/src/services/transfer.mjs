@@ -7,17 +7,11 @@
  */
 import config from 'config';
 import gen from 'general-number';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import {
-  edwardsCompress,
-  compressProof,
-} from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import {
-  getCircuitHash,
-  generateProof,
-} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { edwardsCompress, compressProof } from 'common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
+import { getCircuitHash, generateProof } from 'common-files/utils/worker-calls.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { ZkpKeys } from './keys.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
@@ -70,7 +64,7 @@ async function transfer(transferParams) {
     recipientZkpPublicKeysArray: recipientZkpPublicKeys,
     ercAddress,
     feeL2TokenAddress,
-    tokenId,
+    tokenId: tokenId.hex(32),
     rootKey,
     maxNullifiers: VK_IDS[circuitName].numberNullifiers,
     providedCommitments,
@@ -81,12 +75,11 @@ async function transfer(transferParams) {
     // KEM-DEM encryption
     const [ePrivate, ePublic] = await genEphemeralKeys();
     const [unpackedTokenID, packedErc] = packSecrets(tokenId, ercAddress, 0, 2);
-    const compressedSecrets = encrypt(generalise(ePrivate), generalise(recipientZkpPublicKeys[0]), [
-      packedErc.bigInt,
-      unpackedTokenID.bigInt,
-      values[0].bigInt,
-      commitmentsInfo.salts[0].bigInt,
-    ]);
+    const compressedSecrets = encrypt(
+      generalise(ePrivate.hex(32)),
+      generalise(recipientZkpPublicKeys[0]),
+      [packedErc.bigInt, unpackedTokenID.bigInt, values[0].bigInt, commitmentsInfo.salts[0].bigInt],
+    );
 
     // Compress the public key as it will be put on-chain
     const compressedEPub = edwardsCompress(ePublic);
@@ -95,7 +88,7 @@ async function transfer(transferParams) {
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
-      fee,
+      fee: fee.hex(32),
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
       ercAddress: compressedSecrets[0], // this is the encrypted ercAddress
@@ -122,7 +115,7 @@ async function transfer(transferParams) {
       recipientPublicKeys: commitmentsInfo.newCommitments.map(o => o.preimage.zkpPublicKey),
       ercAddress,
       tokenId,
-      ephemeralKey: ePrivate,
+      ephemeralKey: ePrivate.hex(32),
     };
 
     const witness = computeCircuitInputs(

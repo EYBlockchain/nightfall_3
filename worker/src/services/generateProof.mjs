@@ -3,7 +3,7 @@ import util from 'util';
 import crypto from 'crypto';
 import path from 'path';
 import * as snarkjs from 'snarkjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
 const unlink = util.promisify(fs.unlink);
 

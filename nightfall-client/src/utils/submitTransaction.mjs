@@ -1,7 +1,7 @@
 import axios from 'axios';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
 import { markNullified, storeCommitment } from '../services/commitment-storage.mjs';
 
 const { STATE_CONTRACT_NAME } = constants;
@@ -18,9 +18,10 @@ export const submitTransaction = async (
 ) => {
   // Store new commitments that are ours.
   logger.debug({ msg: 'storing commitments', commitments: commitmentsInfo.newCommitments });
+
   const storeNewCommitments = commitmentsInfo.newCommitments
     .filter(c => c.compressedZkpPublicKey.hex(32) === compressedZkpPublicKey.hex(32))
-    .map(c => storeCommitment(c, nullifierKey));
+    .map(c => storeCommitment(c, nullifierKey.hex(32)));
 
   logger.debug({ msg: 'nullifying commitments', commitments: commitmentsInfo.oldCommitments });
   const nullifyOldCommitments = commitmentsInfo.oldCommitments.map(c =>

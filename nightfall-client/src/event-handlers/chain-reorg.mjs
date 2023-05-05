@@ -8,7 +8,7 @@
  * function to update the state of a commitment following the removal of a
  * BlockProposed event.
  */
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import {
   getCommitmentsByTransactionHashL1,
   getNullifiedByTransactionHashL1,

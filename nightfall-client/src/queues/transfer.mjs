@@ -1,4 +1,4 @@
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import transfer from '../services/transfer.mjs';
 import rabbitmq from '../utils/rabbitmq.mjs';
 

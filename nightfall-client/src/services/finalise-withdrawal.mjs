@@ -2,9 +2,9 @@
 Module to endable withdrawal of funds from the Shield contract to the user's
 address.
 */
-import { getContractInstance } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { buildBlockSolidityStruct } from '@polygon-nightfall/common-files/utils/block-utils.mjs';
+import { getContractInstance } from 'common-files/utils/contract.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { buildBlockSolidityStruct } from 'common-files/utils/block-utils.mjs';
 import { Transaction } from '../classes/index.mjs';
 import { getTransactionByTransactionHash, getBlockByTransactionHash } from './database.mjs';
 

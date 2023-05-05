@@ -1,7 +1,7 @@
 import gen from 'general-number';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import constants from 'common-files/constants/index.mjs';
 import Nullifier from '../classes/nullifier.mjs';
 import {
   clearPending,
@@ -258,7 +258,7 @@ export const getCommitmentInfo = async txInfo => {
 
     // Compute the nullifiers
     const nullifiers = [...oldCommitments, ...oldCommitmentsFee].map(
-      commitment => new Nullifier(commitment, nullifierKey),
+      commitment => new Nullifier(commitment, nullifierKey.hex(32)),
     );
 
     // then the new output commitment(s)

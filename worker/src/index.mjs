@@ -1,5 +1,5 @@
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { checkCircuits } from '@polygon-nightfall/common-files/utils/sync-files.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { checkCircuits } from 'common-files/utils/sync-files.mjs';
 import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';

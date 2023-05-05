@@ -1,10 +1,10 @@
 /* eslint-disable import/prefer-default-export */
 
 import axios from 'axios';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import getProposers from '@polygon-nightfall/common-files/utils/proposer.mjs';
-import NotFoundError from '@polygon-nightfall/common-files/utils/not-found-error.mjs';
-import ValidationError from '@polygon-nightfall/common-files/utils/validation-error.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import getProposers from 'common-files/utils/proposer.mjs';
+import NotFoundError from 'common-files/utils/not-found-error.mjs';
+import ValidationError from 'common-files/utils/validation-error.mjs';
 
 const STATUS_MINED = 'mined';
 const STATUS_MEMPOOL = 'mempool';

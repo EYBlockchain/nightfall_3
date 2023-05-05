@@ -4,10 +4,7 @@ This code assumes that the Shield contract already has approval to spend
 funds on a zkp deposit
 */
 import express from 'express';
-import {
-  getContractAbi,
-  clearCachedContracts,
-} from '@polygon-nightfall/common-files/utils/contract.mjs';
+import { getContractAbi, clearCachedContracts } from 'common-files/utils/contract.mjs';
 
 const router = express.Router();
 

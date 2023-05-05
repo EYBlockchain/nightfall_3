@@ -8,7 +8,7 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { Mutex } from 'async-mutex';
 import { approve } from './tokens.mjs';
 import erc20 from './abis/ERC20.mjs';

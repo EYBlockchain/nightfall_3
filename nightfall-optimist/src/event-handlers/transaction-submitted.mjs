@@ -1,9 +1,9 @@
 /**
  * Module to handle new Transactions being posted
  */
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
 import {
   deleteDuplicateCommitmentsAndNullifiersFromMemPool,
   saveTransaction,

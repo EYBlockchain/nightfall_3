@@ -2,13 +2,13 @@
 An optimistic layer 2 Block class
 */
 import config from 'config';
-import Timber from '@polygon-nightfall/common-files/classes/timber.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import Timber from 'common-files/classes/timber.mjs';
+import constants from 'common-files/constants/index.mjs';
 import {
   buildBlockSolidityStruct,
   calcBlockHash,
   calculateFrontierHash,
-} from '@polygon-nightfall/common-files/utils/block-utils.mjs';
+} from 'common-files/utils/block-utils.mjs';
 import {
   getLatestBlockInfo,
   getTreeByBlockNumberL2,

@@ -4,14 +4,14 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import mongo from '@polygon-nightfall/common-files/utils/mongo.mjs';
-import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import mongo from 'common-files/utils/mongo.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import poseidonHash from 'common-files/utils/crypto/poseidon/poseidon.mjs';
+import constants from 'common-files/constants/index.mjs';
 import gen from 'general-number';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import { /* expectTransaction, */ emptyL2, Web3Client } from '../../utils.mjs';
-import poseidonHash from '../../../common-files/utils/crypto/poseidon/poseidon.mjs';
-import constants from '../../../common-files/constants/index.mjs';
 
 // so we can use require with mjs file
 // const { expect } = chai;

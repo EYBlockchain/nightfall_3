@@ -1,13 +1,13 @@
 import { GN, generalise } from 'general-number';
-import poseidon from '@polygon-nightfall/common-files/utils/crypto/poseidon/poseidon.mjs';
+import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 import bip39Pkg from 'bip39';
 import pkg from 'ethereumjs-wallet';
 import {
   scalarMult,
   edwardsCompress,
   edwardsDecompress,
-} from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+} from 'common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
 
 const { hdkey } = pkg;
 const { validateMnemonic, mnemonicToSeedSync } = bip39Pkg;

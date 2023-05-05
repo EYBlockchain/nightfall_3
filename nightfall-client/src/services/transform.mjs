@@ -1,15 +1,12 @@
 /* eslint-disable no-await-in-loop */
 
 import config from 'config';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import {
-  getCircuitHash,
-  generateProof,
-} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
-import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
+import constants from 'common-files/constants/index.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
+import { getCircuitHash, generateProof } from 'common-files/utils/worker-calls.mjs';
+import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import gen from 'general-number';
 import { Commitment, Transaction } from '../classes/index.mjs';
 import { clearPending } from './commitment-storage.mjs';
@@ -111,7 +108,7 @@ async function transform(transformParams) {
 
     // now we have everything we need to create a Witness and compute a proof
     const publicData = new Transaction({
-      fee,
+      fee: fee.hex(32),
       historicRootBlockNumberL2: commitmentInfo.blockNumberL2s,
       circuitHash,
       commitments: commitmentInfo.newCommitments,

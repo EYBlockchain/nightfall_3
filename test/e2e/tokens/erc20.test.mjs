@@ -4,8 +4,9 @@ import gen from 'general-number';
 import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { randValueLT } from '@polygon-nightfall/common-files/utils/crypto/crypto-random.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
+import constants from 'common-files/constants/index.mjs';
 import Nf3 from '../../../cli/lib/nf3.mjs';
 import {
   depositNTransactions,
@@ -17,7 +18,6 @@ import {
   getUserCommitments,
 } from '../../utils.mjs';
 import { approve } from '../../../cli/lib/tokens.mjs';
-import constants from '../../../common-files/constants/index.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);

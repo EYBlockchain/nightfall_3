@@ -7,7 +7,7 @@ import {
   decompressG1,
   compressG2,
   decompressG2,
-} from '../../../common-files/utils/curve-maths/curves.mjs';
+} from 'common-files/utils/curve-maths/curves.mjs';
 
 const { ethers, upgrades } = hardhat;
 

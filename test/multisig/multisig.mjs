@@ -1,6 +1,6 @@
 /* ignore unused exports */
 import { ecsign } from 'ethereumjs-util';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 
 // eslint-disable-next-line import/prefer-default-export
 export class MultiSig {

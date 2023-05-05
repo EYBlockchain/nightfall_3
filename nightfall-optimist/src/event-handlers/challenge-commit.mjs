@@ -1,4 +1,4 @@
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { revealChallenge } from '../services/challenges.mjs';
 import { getCommit } from '../services/database.mjs';
 

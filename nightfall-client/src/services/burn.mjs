@@ -1,14 +1,11 @@
 import config from 'config';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import { waitForContract } from '@polygon-nightfall/common-files/utils/contract.mjs';
-import {
-  getCircuitHash,
-  generateProof,
-} from '@polygon-nightfall/common-files/utils/worker-calls.mjs';
+import constants from 'common-files/constants/index.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import { waitForContract } from 'common-files/utils/contract.mjs';
+import { getCircuitHash, generateProof } from 'common-files/utils/worker-calls.mjs';
 import gen from 'general-number';
-import Transaction from '@polygon-nightfall/common-files/classes/transaction.mjs';
-import { compressProof } from '@polygon-nightfall/common-files/utils/curve-maths/curves.mjs';
+import Transaction from 'common-files/classes/transaction.mjs';
+import { compressProof } from 'common-files/utils/curve-maths/curves.mjs';
 import { clearPending } from './commitment-storage.mjs';
 import { getCommitmentInfo } from '../utils/getCommitmentInfo.mjs';
 import { computeCircuitInputs } from '../utils/computeCircuitInputs.mjs';
@@ -63,7 +60,7 @@ async function burn(burnParams) {
 
   try {
     const publicData = new Transaction({
-      fee,
+      fee: fee.hex(32),
       historicRootBlockNumberL2: commitmentsInfo.blockNumberL2s,
       circuitHash,
       commitments: newCommitmentsCircuit,

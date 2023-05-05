@@ -1,18 +1,10 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable import/no-cycle */
 
-import {
-  getContractInstance,
-  waitForContract,
-} from '@polygon-nightfall/common-files/utils/contract.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
-import {
-  pauseQueue,
-  unpauseQueue,
-  queues,
-  flushQueue,
-} from '@polygon-nightfall/common-files/utils/event-queue.mjs';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import { getContractInstance, waitForContract } from 'common-files/utils/contract.mjs';
+import constants from 'common-files/constants/index.mjs';
+import { pauseQueue, unpauseQueue, queues, flushQueue } from 'common-files/utils/event-queue.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import blockProposedEventHandler from '../event-handlers/block-proposed.mjs';
 import transactionSubmittedEventHandler from '../event-handlers/transaction-submitted.mjs';
 import newCurrentProposerEventHandler from '../event-handlers/new-current-proposer.mjs';

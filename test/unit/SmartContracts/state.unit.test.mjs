@@ -1,17 +1,14 @@
 /* eslint-disable no-await-in-loop */
 import { expect } from 'chai';
 import hardhat from 'hardhat';
+import { packHistoricRoots, packTransactionInfo } from 'common-files/classes/transaction.mjs';
+import { packBlockInfo } from 'common-files/utils/block-utils.mjs';
 import {
   calculateBlockHash,
   calculateTransactionHash,
   createBlockAndTransactions,
 } from '../utils/utils.mjs';
 import { setCommitmentHashEscrowed } from '../utils/stateStorage.mjs';
-import {
-  packHistoricRoots,
-  packTransactionInfo,
-} from '../../../common-files/classes/transaction.mjs';
-import { packBlockInfo } from '../../../common-files/utils/block-utils.mjs';
 
 const { ethers, upgrades } = hardhat;
 

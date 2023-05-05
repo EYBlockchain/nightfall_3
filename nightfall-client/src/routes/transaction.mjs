@@ -2,7 +2,7 @@
  * Routes for interacting with client transactions data.
  */
 import express from 'express';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { getTransactionByTransactionHash } from '../services/database.mjs';
 import { findTransactionInMempools, setL2TransactionStatus } from '../services/transaction.mjs';
 
