@@ -3,6 +3,11 @@
   width: 340px;
 }
 
+.form-custom-field-d {
+  padding: 24px 1px 1px 24px;
+  width: 450px;
+}
+
 .form {
   padding: 85px;
 }
