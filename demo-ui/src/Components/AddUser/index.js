@@ -48,7 +48,7 @@ function AddUser({ addNewUser }) {
               className="form-select"
               aria-label="Default select example"
               value={userMnemonic}
-              style={{ width: '10%', display: 'inline-block', marginLeft: '10px' }}
+              style={{ width: '6%', display: 'inline-block', marginLeft: '10px' }}
               onChange={e => setUserMnemonic(e.target.value)}
             >
               <option value=""> </option>
@@ -60,8 +60,8 @@ function AddUser({ addNewUser }) {
             </select>
             <label>
               <small>
-                Enter or copy paste mnemonic in input box, or select from options from config (only
-                applicable in test local ganache)
+                Enter or copy paste mnemonic in input box, or select from options (these options are
+                from config and are applicable, while testing with local ganache)
               </small>
             </label>
           </div>
