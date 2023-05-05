@@ -65,7 +65,6 @@ function AddUser({ addNewUser }) {
               </small>
             </label>
           </div>
-          <div className="form-group form-custom-field"></div>
           <div className="form-group form-custom-field">
             <button type="button" className="btn btn-primary" onClick={submitNewUser}>
               Add User
