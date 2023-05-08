@@ -23,7 +23,11 @@ function Transfer({ users, updateLoader, erc20Address }) {
         '0x00',
         users[Number(receipent)].nf3Object.zkpKeys.compressedZkpPublicKey,
       )
-      .then(() => updateLoader(false));
+      .then(() => updateLoader(false))
+      .catch(err => {
+        console.log(err);
+        updateLoader(false);
+      });
     setTransferValue('');
     setReceipent('');
   }

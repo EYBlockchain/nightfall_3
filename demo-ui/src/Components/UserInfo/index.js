@@ -1,7 +1,7 @@
 import React from 'react';
 import './index.css';
 
-function UserInfo({ users, updateBalances }) {
+function UserInfo({ users, updateBalances, upateUserFee }) {
   return (
     <nav className="collapse d-lg-block userInfo collapse bg-white">
       {users[0] && (
@@ -50,6 +50,17 @@ function UserInfo({ users, updateBalances }) {
                   <td>L2-Balance</td>
                   <td>{users[0].l2Balance}</td>
                 </tr>
+                <tr>
+                  <td>Set-Fee</td>
+                  <td>
+                    <input
+                      type="number"
+                      style={{ fontSize: '70%', width: '50%' }}
+                      value={users[0].nf3Object.defaultFeeTokenValue}
+                      onChange={e => upateUserFee(0, e.target.value)}
+                    />
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -83,6 +94,17 @@ function UserInfo({ users, updateBalances }) {
                 <tr>
                   <td>L2-Balance</td>
                   <td>{users[1].l2Balance}</td>
+                </tr>
+                <tr>
+                  <td>Set-Fee</td>
+                  <td>
+                    <input
+                      type="number"
+                      style={{ fontSize: '70%', width: '50%' }}
+                      value={users[1].nf3Object.defaultFeeTokenValue}
+                      onChange={e => upateUserFee(1, e.target.value)}
+                    />
+                  </td>
                 </tr>
               </tbody>
             </table>

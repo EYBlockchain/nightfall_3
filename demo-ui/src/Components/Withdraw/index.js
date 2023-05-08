@@ -20,7 +20,11 @@ function Withdraw({ users, updateLoader, erc20Address }) {
         '0x00',
         nf3Object.ethereumAddress,
       )
-      .then(() => updateLoader(false));
+      .then(() => updateLoader(false))
+      .catch(err => {
+        console.log(err);
+        updateLoader(false);
+      });
     setWithdrawValue('');
   }
 

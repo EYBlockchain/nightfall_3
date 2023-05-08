@@ -42,6 +42,14 @@ function App() {
     ]);
   }
 
+  function upateUserFee(index, fee) {
+    setUsers(users => {
+      // eslint-disable-next-line no-param-reassign
+      users[index].nf3Object.defaultFeeTokenValue = fee;
+      return [...users];
+    });
+  }
+
   async function changeCurrentUser() {
     const metamaskEOA = (await getMetamaskEOA())[0];
     setUsers(users =>
@@ -78,7 +86,7 @@ function App() {
       {!erc20Address && <Configure setERC20Address={setERC20Address} />}
       <Sidebar tab={tab} onChangeTab={setTab} users={users} />
       <Navbar users={users} updateBalances={updateBalances} updateLoader={setLoader} />
-      <UserInfo users={users} updateBalances={updateBalances} />
+      <UserInfo users={users} updateBalances={updateBalances} upateUserFee={upateUserFee} />
       {tab === 'AddUser' && <AddUser addNewUser={addNewUser} />}
       {tab === 'Deposit' && (
         <Deposit users={users} updateLoader={setLoader} erc20Address={erc20Address} />
