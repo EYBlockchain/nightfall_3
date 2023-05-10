@@ -1,5 +1,5 @@
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
-import constants from '@polygon-nightfall/common-files/constants/index.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import constants from 'common-files/constants/index.mjs';
 import { getTransactionSubmittedCalldata } from '../services/process-calldata.mjs';
 import { countCommitments, countNullifiers } from '../services/commitment-storage.mjs';
 import { saveTransaction } from '../services/database.mjs';

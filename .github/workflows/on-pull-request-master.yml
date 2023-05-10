@@ -907,15 +907,6 @@ jobs:
         with:
           node-version: '16.17.0'
 
-      - name: Perform npm link
-        run: |
-          cd common-files
-          npm link
-          cd ..
-          npm link @polygon-nightfall/common-files
-          cd cli
-          npm link @polygon-nightfall/common-files
-          cd ..
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
