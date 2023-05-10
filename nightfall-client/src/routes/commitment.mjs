@@ -20,6 +20,7 @@ import {
   getCommitmentsDepositedRollbacked,
 } from '../services/commitment-storage.mjs';
 import { syncState } from '../services/state-sync.mjs';
+import { getAllTransactions } from '../services/database.mjs';
 
 const router = express.Router();
 
@@ -144,6 +145,15 @@ router.get('/commitmentsRollbacked', async (req, res, next) => {
     const { compressedZkpPublicKey } = req.query;
     const commitmentsRollbacked = await getCommitmentsDepositedRollbacked(compressedZkpPublicKey);
     res.json({ commitmentsRollbacked });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/transactions', async (req, res, next) => {
+  try {
+    const transactions = await getAllTransactions();
+    res.json({ transactions });
   } catch (err) {
     next(err);
   }

@@ -677,7 +677,7 @@ class Nf3 {
             this.shieldContractAddress,
             0,
           );
-          resolve(receipt);
+          resolve({ ...receipt, transactionHashL2: res.data.transaction.transactionHash });
         } catch (err) {
           reject(err);
         }
@@ -740,7 +740,7 @@ class Nf3 {
               this.shieldContractAddress,
               0,
             );
-            resolve(receipt);
+            resolve({ ...receipt, transactionHashL2: res.data.transaction.transactionHash });
           } catch (err) {
             reject(err);
           }

@@ -22,6 +22,7 @@
     "ping-pong": ". ./bin/export-multiproposer-test-env && npx hardhat test --bail --no-compile test/ping-pong/ping-pong.test.mjs",
     "test-administrator": "npx hardhat test --bail --no-compile test/multisig/administrator.test.mjs ",
     "test-optimist-sync": "npx hardhat test --no-compile --bail test/optimist-resync.test.mjs",
+    "test-client-sync": "npx hardhat test --no-compile --bail test/client-resync.test.mjs",
     "test-adversary": "npx hardhat test --no-compile --bail test/adversary.test.mjs",
     "test-general-stuff": "npx hardhat test --bail --no-compile test/kem-dem.test.mjs test/timber.test.mjs",
     "test-x509": "LOG_LEVEL=debug npx hardhat test --bail --no-compile test/x509.test.mjs",
