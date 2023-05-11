@@ -315,7 +315,7 @@ export async function findDuplicateTransactions(commitments, nullifiers, transac
   const query = {
     $or: [{ commitments: { $in: commitments } }, { nullifiers: { $in: nullifiers } }],
     transactionHash: { $nin: transactionHashes },
-    blockNumberL2: { $exists: false },
+    blockNumberL2: { $eq: -1 },
   };
   return db.collection(TRANSACTIONS_COLLECTION).find(query).toArray();
 }

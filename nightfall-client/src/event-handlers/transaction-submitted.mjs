@@ -44,7 +44,12 @@ async function transactionSubmittedEventHandler(eventParams) {
   }
 
   if (saveTxInDb) {
-    await saveTransaction({ ...transaction });
+    await saveTransaction({ ...transaction }).catch(err =>
+      logger.error({
+        msg: 'error while saving transaction in transactionSubmittedEventHandler',
+        err,
+      }),
+    );
   }
 
   logger.info({
