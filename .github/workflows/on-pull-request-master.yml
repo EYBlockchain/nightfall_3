@@ -895,3 +895,48 @@ jobs:
         with:
           name: periodic-payment-test-logs
           path: ./periodic-payment-test.log
+
+  test-client-sync:
+    env:
+      CONFIRMATIONS: 1
+      NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.17.0'
+
+      - name: Start Containers
+        run: |
+          ./bin/setup-nightfall
+          ./bin/start-nightfall -g -d &> test-client-sync.log &disown
+      - name: Wait for images to be ready
+        uses: Wandalen/wretry.action@v1.0.11
+        with:
+          command: |
+            docker wait nightfall_3_deployer_1
+          attempt_limit: 100
+          attempt_delay: 20000
+
+      - name: Debug logs - after image builds
+        if: always()
+        run: cat test-client-sync.log
+
+      - name: Run integration test
+        run: |
+          npm run test-client-sync
+      - name: Debug logs - after integration test run
+        if: always()
+        run: cat test-client-sync.log
+
+      - name: If integration test failed, shutdown the Containers
+        if: failure()
+        run: npm run nightfall-down
+
+      - name: If integration test failed, upload logs files as artifacts
+        if: failure()
+        uses: actions/upload-artifact@master
+        with:
+          name: test-client-sync-logs
+          path: ./test-client-sync.log

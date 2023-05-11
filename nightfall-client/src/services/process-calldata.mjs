@@ -10,7 +10,7 @@ import { unpackBlockInfo } from 'common-files/utils/block-utils.mjs';
 
 const { SIGNATURES } = config;
 
-async function getProposeBlockCalldata(eventData) {
+export async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
   const { transactionHash } = eventData;
   const tx = await web3.eth.getTransaction(transactionHash);
@@ -76,4 +76,47 @@ async function getProposeBlockCalldata(eventData) {
   return { transactions, block };
 }
 
-export default getProposeBlockCalldata;
+export async function getTransactionSubmittedCalldata(eventData) {
+  const web3 = Web3.connection();
+  const { transactionHash } = eventData;
+  const tx = await web3.eth.getTransaction(transactionHash);
+  // Remove the '0x' and function signature to recove rhte abi bytecode
+  const abiBytecode = `0x${tx.input.slice(10)}`;
+  const transactionData = web3.eth.abi.decodeParameter(SIGNATURES.SUBMIT_TRANSACTION, abiBytecode);
+  const [
+    packedTransactionInfo,
+    historicRootBlockNumberL2Packed,
+    tokenId,
+    ercAddress,
+    recipientAddress,
+    commitments,
+    nullifiers,
+    compressedSecrets,
+    proof,
+  ] = transactionData;
+
+  const { value, fee, circuitHash, tokenType } =
+    Transaction.unpackTransactionInfo(packedTransactionInfo);
+
+  const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
+    nullifiers.length,
+    historicRootBlockNumberL2Packed,
+  );
+
+  const transaction = {
+    value,
+    fee,
+    circuitHash,
+    tokenType,
+    historicRootBlockNumberL2,
+    tokenId,
+    ercAddress,
+    recipientAddress,
+    commitments,
+    nullifiers,
+    compressedSecrets,
+    proof,
+  };
+  transaction.transactionHash = Transaction.calcHash(transaction);
+  return transaction;
+}

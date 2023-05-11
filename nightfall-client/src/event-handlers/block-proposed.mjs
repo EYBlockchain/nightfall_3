@@ -14,8 +14,9 @@ import {
   setSiblingInfo,
   countCircuitTransactions,
   isTransactionHashBelongCircuit,
+  deleteNonNullifiedCommitments,
 } from '../services/commitment-storage.mjs';
-import getProposeBlockCalldata from '../services/process-calldata.mjs';
+import { getProposeBlockCalldata } from '../services/process-calldata.mjs';
 import { zkpPrivateKeys, nullifierKeys } from '../services/keys.mjs';
 import {
   getTreeByBlockNumberL2,
@@ -26,6 +27,8 @@ import {
   getNumberOfL2Blocks,
   getTransactionByTransactionHash,
   updateTransaction,
+  findDuplicateTransactions,
+  deleteTransactionsByTransactionHashes,
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 import { syncState } from '../services/state-sync.mjs';
@@ -81,6 +84,7 @@ async function blockProposedEventHandler(data, syncing) {
 
   const dbUpdates = transactions.map(async transaction => {
     let saveTxToDb = false;
+    let duplicateTransactions = []; // duplicate tx holding same commitments or nullifiers
 
     // filter out non zero commitments and nullifiers
     const nonZeroCommitments = transaction.commitments.filter(c => c !== ZERO);
@@ -143,6 +147,12 @@ async function blockProposedEventHandler(data, syncing) {
           } else logger.warn(`Duplicate transaction in Proposed Block has been dropped`);
         } else throw new Error(err);
       }
+
+      duplicateTransactions = await findDuplicateTransactions(
+        nonZeroCommitments,
+        nonZeroNullifiers,
+        [transaction.transactionHash],
+      );
     }
 
     return Promise.all([
@@ -154,6 +164,13 @@ async function blockProposedEventHandler(data, syncing) {
         data.blockNumber,
         data.transactionHash,
       ),
+      deleteTransactionsByTransactionHashes([...duplicateTransactions.map(t => t.transactionHash)]),
+      deleteNonNullifiedCommitments([
+        ...duplicateTransactions
+          .map(t => t.commitments)
+          .flat()
+          .filter(c => c !== ZERO),
+      ]),
     ]);
   });
 
