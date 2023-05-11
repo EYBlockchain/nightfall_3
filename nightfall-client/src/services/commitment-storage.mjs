@@ -203,12 +203,7 @@ export async function clearNullifiedOnChain(blockNumberL2) {
   const connection = await mongo.connection(MONGO_URL);
   const query = { isNullifiedOnChain: { $gte: blockNumberL2 } };
   const update = {
-    $set: {
-      isNullifiedOnChain: -1,
-      blockNumber: -1,
-      transactionHashNullifiedL1: null,
-      isNullified: false,
-    },
+    $set: { isNullifiedOnChain: -1, blockNumber: -1, transactionHashNullifiedL1: null },
   };
   const db = connection.db(COMMITMENTS_DB);
   return db.collection(COMMITMENTS_COLLECTION).updateMany(query, update);
