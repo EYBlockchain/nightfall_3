@@ -1,7 +1,7 @@
 import Web3 from 'web3';
 import getAbi from './abi.mjs';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from './constants.mjs';
-import { fromBaseUnit } from './units.mjs';
+import fromBaseUnit from './units.mjs';
 
 /**
 Sends an approve transaction to an ERC20/ERC721/ERC1155 contract for a certain amount of tokens
@@ -231,4 +231,4 @@ async function getERCInfo(ercAddress, ethereumAddress, provider, options) {
   return result;
 }
 
-export { approve, getDecimals, getERCInfo };
+export { approve, getERCInfo };

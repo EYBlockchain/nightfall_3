@@ -4,12 +4,12 @@ export const TOKEN_TYPE = {
   ERC1155: 'ERC1155',
 };
 
-export const TX_TYPES = {
-  DEPOSIT: 'deposit',
-  TRANSFER: 'transfer',
-  WITHDRAW: 'withdraw',
-  INSTANT_WITHDRAW: 'instant-withdraw',
-};
+// export const TX_TYPES = {
+//   DEPOSIT: 'deposit',
+//   TRANSFER: 'transfer',
+//   WITHDRAW: 'withdraw',
+//   INSTANT_WITHDRAW: 'instant-withdraw',
+// };
 
 export const APPROVE_AMOUNT =
   '115792089237316195423570985008687907853269984665640564039457584007913129639935';
