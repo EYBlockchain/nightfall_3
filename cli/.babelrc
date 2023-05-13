@@ -1,7 +1,0 @@
-// .babelrc
-{
-  "plugins": [["@babel/plugin-proposal-class-properties"], ["module-extension", {
-    "mjs": "js"
-  }]],
-  "presets": ["@babel/preset-env"]
-}
