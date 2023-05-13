@@ -11,9 +11,9 @@ import EventEmitter from 'events';
 import logger from 'common-files/utils/logger.mjs';
 import { Mutex } from 'async-mutex';
 import { approve } from './tokens.mjs';
-import erc20 from './abis/ERC20.mjs';
-import erc721 from './abis/ERC721.mjs';
-import erc1155 from './abis/ERC1155.mjs';
+// import erc20 from './abis/ERC20.mjs';
+// import erc721 from './abis/ERC721.mjs';
+// import erc1155 from './abis/ERC1155.mjs';
 import createJob from './jobScheduler.mjs';
 
 import {
@@ -98,7 +98,7 @@ class Nf3 {
 
   mnemonic = {};
 
-  contracts = { ERC20: erc20, ERC721: erc721, ERC1155: erc1155 };
+  // contracts = { ERC20: erc20, ERC721: erc721, ERC1155: erc1155 };
 
   currentEnvironment;
 
