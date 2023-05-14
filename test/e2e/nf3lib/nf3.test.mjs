@@ -5,7 +5,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import { fail } from 'assert';
-import Nf3 from '../../../cli/lib/nf3.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);

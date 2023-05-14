@@ -7,7 +7,8 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import { randValueLT } from 'common-files/utils/crypto/crypto-random.mjs';
 import constants from 'common-files/constants/index.mjs';
-import Nf3 from '../../../cli/lib/nf3.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
+import { approve } from 'common-files/utils/tokens.mjs';
 import {
   depositNTransactions,
   getLayer2Balances,
@@ -17,7 +18,6 @@ import {
   Web3Client,
   getUserCommitments,
 } from '../../utils.mjs';
-import { approve } from '../../../cli/lib/tokens.mjs';
 
 const { expect } = chai;
 chai.use(chaiHttp);
