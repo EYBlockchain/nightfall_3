@@ -1,4 +1,3 @@
-/* eslint class-methods-use-this: "off" */
 /* eslint no-param-reassign: "off" */
 
 import axios from 'axios';
@@ -35,6 +34,17 @@ function createQueue(options) {
   queue.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
 
   return queue;
+}
+
+function createEmitter() {
+  const emitter = new EventEmitter();
+
+  /*
+    Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
+   */
+  emitter.on('error', error => logger.error({ msg: 'Error caught by emitter', error }));
+
+  return emitter;
 }
 
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
@@ -1178,17 +1188,6 @@ class Nf3 {
     });
   }
 
-  createEmitter() {
-    const emitter = new EventEmitter();
-
-    /*
-      Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
-     */
-    emitter.on('error', error => logger.error({ msg: 'Error caught by emitter', error }));
-
-    return emitter;
-  }
-
   /**
     Get block stake
     @method
@@ -1231,7 +1230,7 @@ class Nf3 {
     @async
     */
   async startProposer() {
-    const proposeEmitter = this.createEmitter();
+    const proposeEmitter = createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
 
     this.websockets.push(connection); // save so we can close it properly later
@@ -1323,7 +1322,7 @@ class Nf3 {
     @async
     */
   async startChallenger() {
-    const challengeEmitter = this.createEmitter();
+    const challengeEmitter = createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
 
     this.websockets.push(connection); // save so we can close it properly later
