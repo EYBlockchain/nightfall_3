@@ -18,6 +18,7 @@ import logger from 'common-files/utils/logger.mjs';
 // please do not forget to run `npm run build-adversary`
 // eslint-disable-next-line import/no-unresolved
 import Nf3 from './adversary/adversary-common-files/classes/nf3.mjs';
+// eslint-disable-next-line import/no-unresolved
 import { getERCInfo } from './adversary/adversary-common-files/utils/tokens.mjs';
 import {
   clearMempool,
