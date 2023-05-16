@@ -6,7 +6,7 @@ import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import { buildBlockSolidityStruct } from 'common-files/utils/block-utils.mjs';
 import Transaction from 'common-files/classes/transaction.mjs';
-import Nf3 from '../cli/lib/nf3.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
 import {
   Web3Client,
   waitForTimeout,

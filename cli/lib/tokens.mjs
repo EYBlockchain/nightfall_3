@@ -1,3 +1,4 @@
+/* ignore unused exports */
 import Web3 from 'web3';
 import getAbi from './abi.mjs';
 import { TOKEN_TYPE, APPROVE_AMOUNT } from './constants.mjs';

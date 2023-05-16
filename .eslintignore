@@ -10,6 +10,7 @@ polygonpos/
 wallet/src/components/Assets/
 test/adversary/lazy-optimist/*
 test/adversary/adversary-cli/*
+test/adversary/adversary-common-files/*
 test/adversary/adversary-code/*
 test/adversary/bad-client/*
 /**/*.d.ts

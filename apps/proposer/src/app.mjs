@@ -5,9 +5,9 @@
 import express from 'express';
 import config from 'config';
 import { setupHttpDefaults } from 'common-files/utils/httputils.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
 import { proposer, contracts } from './routes/index.mjs';
 import startProposer from './proposer.mjs';
-import Nf3 from '../cli/lib/nf3.mjs';
 
 const PROPOSER_PORT = process.env.PROPOSER_PORT || 8092;
 

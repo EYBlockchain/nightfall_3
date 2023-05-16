@@ -5,7 +5,7 @@
 import express from 'express';
 import config from 'config';
 import { setupHttpDefaults } from 'common-files/utils/httputils.mjs';
-import Nf3 from '../cli/lib/nf3.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
 import startChallenger from './challenger.mjs';
 
 const CHALLENGER_PORT = process.env.CHALLENGER_PORT || 8192;

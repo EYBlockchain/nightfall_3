@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import config from 'config';
-import Nf3 from '../cli/lib/nf3.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
 import { Web3Client } from './utils.mjs';
 
 const environment = config.ENVIRONMENTS[config.ENVIRONMENT];
