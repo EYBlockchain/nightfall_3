@@ -1,4 +1,4 @@
-/* This test relies on nightfall_3/cli
+/* This test relies on nightfall_3/common-files/classes/nf3.mjs
  */
 
 /* eslint-disable no-await-in-loop */

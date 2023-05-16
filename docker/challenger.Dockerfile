@@ -18,11 +18,6 @@ WORKDIR /common-files
 RUN npm ci
 
 WORKDIR /app/app
-COPY cli cli
-WORKDIR /app/app/cli
-RUN npm ci
-
-WORKDIR /app/app
 COPY apps/challenger/package*.json ./
 COPY apps/challenger/src src
 COPY apps/challenger/docker-entrypoint.sh docker-entrypoint.sh

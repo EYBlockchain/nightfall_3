@@ -6,4 +6,4 @@
 #  --environment : test environment (such us localhost, docker, testnet). If no argument given
 #     liquitidty-provider is launched in localhost environment
 
-/usr/bin/env node cli/src/liquidity-provider.mjs "${@:1}"
+/usr/bin/env node js-scripts/liquidity-provider.mjs "${@:1}"
