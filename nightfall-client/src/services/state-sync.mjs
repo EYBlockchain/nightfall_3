@@ -22,25 +22,26 @@ export const syncState = async (
   eventFilter = 'allEvents',
 ) => {
   logger.info({ msg: 'SyncState parameters', fromBlock, toBlock, eventFilter });
+  logger.info({ msg: 'Assembling ordered list of past events' });
 
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME); // BlockProposed
   const challengesContractInstance = await waitForContract(CHALLENGES_CONTRACT_NAME); // Rollback
-
-  const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
-
-  const pastChallengeEvents = await challengesContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
+  const [pastStateEvents, pastChallengeEvents] = await Promise.all([
+    stateContractInstance.getPastEvents(eventFilter, {
+      fromBlock,
+      toBlock,
+    }),
+    challengesContractInstance.getPastEvents(eventFilter, {
+      fromBlock,
+      toBlock,
+    }),
+  ]);
 
   // Put all events together and sort chronologically as they appear on Ethereum
   const splicedList = pastStateEvents
     .concat(pastChallengeEvents)
     .sort((a, b) => a.blockNumber - b.blockNumber);
-
+  logger.info({ msg: 'Replaying past events' });
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
     switch (pastEvent.event) {

@@ -35,24 +35,25 @@ export async function syncState(
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME); // TransactionSubmitted
   const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // NewCurrentProposer, BlockProposed
   const challengesContractInstance = await getContractInstance(CHALLENGES_CONTRACT_NAME); // NewCurrentProposer, BlockProposed
-
-  const pastProposerEvents = await proposersContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
-  const pastShieldEvents = await shieldContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
-  const pastStateEvents = await stateContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
-
-  const pastChallengeEvents = await challengesContractInstance.getPastEvents(eventFilter, {
-    fromBlock,
-    toBlock,
-  });
+  const [pastProposerEvents, pastShieldEvents, pastStateEvents, pastChallengeEvents] =
+    await Promise.all([
+      proposersContractInstance.getPastEvents(eventFilter, {
+        fromBlock,
+        toBlock,
+      }),
+      shieldContractInstance.getPastEvents(eventFilter, {
+        fromBlock,
+        toBlock,
+      }),
+      stateContractInstance.getPastEvents(eventFilter, {
+        fromBlock,
+        toBlock,
+      }),
+      challengesContractInstance.getPastEvents(eventFilter, {
+        fromBlock,
+        toBlock,
+      }),
+    ]);
 
   // Put all events together and sort chronologically as they appear on Ethereum
   const splicedList = pastProposerEvents
@@ -60,7 +61,7 @@ export async function syncState(
     .concat(pastStateEvents)
     .concat(pastChallengeEvents)
     .sort((a, b) => a.blockNumber - b.blockNumber);
-  logger.info({ msg: 'replaying past events' });
+  logger.info({ msg: 'Replaying past events' });
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
     switch (pastEvent.event) {
