@@ -28,6 +28,9 @@ export async function syncState(
   toBlock = 'latest',
   eventFilter = 'allEvents',
 ) {
+  logger.info({ msg: 'SyncState parameters', fromBlock, toBlock, eventFilter });
+  logger.info({ msg: 'Assembling ordered list of past events' });
+
   const proposersContractInstance = await getContractInstance(PROPOSERS_CONTRACT_NAME); // NewCurrentProposer (register)
   const shieldContractInstance = await getContractInstance(SHIELD_CONTRACT_NAME); // TransactionSubmitted
   const stateContractInstance = await getContractInstance(STATE_CONTRACT_NAME); // NewCurrentProposer, BlockProposed
@@ -57,6 +60,7 @@ export async function syncState(
     .concat(pastStateEvents)
     .concat(pastChallengeEvents)
     .sort((a, b) => a.blockNumber - b.blockNumber);
+  logger.info({ msg: 'replaying past events' });
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
     switch (pastEvent.event) {
