@@ -55,7 +55,7 @@ async function transactionSubmittedEventHandler(eventParams) {
       checkDuplicatesInL2: true,
       checkDuplicatesInMempool: true,
     });
-
+    logger.info({ msg: 'Transaction was valid' });
     const transactionCommitments = transaction.commitments.filter(c => c !== ZERO);
     const transactionNullifiers = transaction.nullifiers.filter(n => n !== ZERO);
 
