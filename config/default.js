@@ -200,6 +200,8 @@ module.exports = {
       keepalive: true,
       // Keep keepalive interval small so that socket doesn't die
       keepaliveInterval: 1500,
+      maxReceivedFrameSize: 10000000000,
+      maxReceivedMessageSize: 10000000000,
     },
     timeout: 0,
     reconnect: {
