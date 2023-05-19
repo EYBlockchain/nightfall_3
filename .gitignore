@@ -25,6 +25,7 @@ cache/
 config/geth/data/
 backup
 docker/volumes
+**/tmp
 
 #hardhat coverage
 coverage
