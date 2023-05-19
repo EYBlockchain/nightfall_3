@@ -1,8 +1,8 @@
 name: Check PR
 
 on:
-  pull_request:
-    branches: [master]
+  push:
+    branches: [liju.jose/refactor-docker-compose-files]
 
 env:
   DOCKER_BUILDKIT: 1 # enable docker buildkit
