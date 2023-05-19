@@ -5,6 +5,7 @@ much cheaper, although the offchain part is more complex.
 */
 import config from 'config';
 import Web3 from 'common-files/utils/web3.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import Transaction from 'common-files/classes/transaction.mjs';
 import { unpackBlockInfo } from 'common-files/utils/block-utils.mjs';
 
@@ -14,6 +15,12 @@ async function getProposeBlockCalldata(eventData) {
   const web3 = Web3.connection();
   const { transactionHash } = eventData;
   const tx = await web3.eth.getTransaction(transactionHash);
+  if (tx === null) {
+    logger.error(
+      'The transaction was null. This may be a problem with the blockchain node you are connected to. Make sure it indexes old transactions.  For a Geth node set --txlookuplimit 0',
+    );
+    throw new Error('transaction retrieved from calldata had null value');
+  }
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
