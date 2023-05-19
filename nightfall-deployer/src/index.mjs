@@ -24,6 +24,7 @@ async function setupCircuits() {
 
 async function main() {
   logger.info(`setup circuits`);
+  console.log('--dddd---', process.env);
   await setupCircuits();
   await safeSetupContracts();
   try {

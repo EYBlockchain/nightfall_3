@@ -10,6 +10,7 @@ import { initialClientSync } from './services/state-sync.mjs';
 import { startEventQueue, eventHandlers } from './event-handlers/index.mjs';
 
 const main = async () => {
+  console.log('--ccccc---', process.env);
   // we want to have endpoints responding as soon as possible, but prevent
   // them from taking action before syncing is complete. So, we have a variable
   // _isSyncing that informs if client is syncing. On the other hand,
