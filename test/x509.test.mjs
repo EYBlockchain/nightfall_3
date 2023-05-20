@@ -47,9 +47,12 @@ const derPrivateKey = fs.readFileSync('test/unit/utils/mock_certs/Nightfall_end_
 describe('x509 tests', () => {
   before(async () => {
     // first, we need to authorise the proposer
+    console.log(1);
     await nf3Proposer.init(mnemonics.proposer);
+    console.log(2);
     logger.debug('Validating intermediate CA cert');
     await nf3Proposer.validateCertificate(intermediateCaCert, null, false, false, 0, 0);
+    console.log(3);
     await nf3Proposer.validateCertificate(
       endUserCert,
       signEthereumAddress(derPrivateKey, nf3Proposer.ethereumAddress),
@@ -58,16 +61,22 @@ describe('x509 tests', () => {
       0,
       nf3Proposer.ethereumAddress,
     );
+    console.log(4);
     // we must set the URL from the point of view of the client container
     await nf3Proposer.registerProposer('http://optimist', await nf3Proposer.getMinimumStake());
+    console.log(5);
     await nf3Proposer.startProposer();
+    console.log(6);
     await nf3Users[0].init(mnemonics.user1);
+    console.log(7);
     erc20Address =
       maxWithdrawValue.find(e => e.name === process.env.ERC20_COIN)?.address.toLowerCase() ||
       (await nf3Users[0].getContractAddress('ERC20Mock'));
+    console.log(8);
     stateAddress = await nf3Users[0].stateContractAddress;
     await web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     logger.debug(`User[0] has ethereum address ${nf3Users[0].ethereumAddress}`);
+    console.log(9);
   });
 
   describe('Deposits from a non-x509-validated then x509-validated account', () => {

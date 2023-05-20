@@ -24,7 +24,7 @@ rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
       -g  | --ganache )             FILE="-f docker/docker-compose.yml -f docker/docker-compose.ganache.yml";
-                                    # source bin/local-default.env
+                                    source bin/local-default.env
                                     ;;
       -l  | --localhost )           FILE="-f docker/docker-compose.yml -f docker/docker-compose.host.docker.internal.yml"
                                     # source bin/local-default.env
