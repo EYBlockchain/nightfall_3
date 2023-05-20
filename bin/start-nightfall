@@ -24,17 +24,17 @@ rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
       -g  | --ganache )             FILE="-f docker/docker-compose.yml -f docker/docker-compose.ganache.yml";
-                                    source bin/local-default.env
+                                    # source bin/local-default.env
                                     ;;
       -l  | --localhost )           FILE="-f docker/docker-compose.yml -f docker/docker-compose.host.docker.internal.yml"
-                                    source bin/local-default.env
+                                    # source bin/local-default.env
                                     ;;
       -e  | --edge )                FILE="-f docker/docker-compose.yml -f docker/docker-compose.polygon-edge.yml"
                                     ;;
       -h  | --help )                usage
                                     ;;
       -d  | --dev )                 DEV="-f docker/docker-compose.dev.yml"
-                                    source bin/local-dev.env
+                                    # source bin/local-dev.env
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
                                     ;;
