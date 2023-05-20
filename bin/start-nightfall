@@ -34,7 +34,7 @@ while [ -n "$1" ]; do
       -h  | --help )                usage
                                     ;;
       -d  | --dev )                 DEV="-f docker/docker-compose.dev.yml"
-                                    # source bin/local-dev.env
+                                    source bin/local-dev.env
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
                                     ;;
