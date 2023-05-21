@@ -29,7 +29,7 @@ while [ -n "$1" ]; do
                                     source bin/local-default.env
                                     ;;
       -l  | --localhost )           FILE="-f docker/docker-compose.yml -f docker/docker-compose.host.docker.internal.yml"
-                                    # source bin/local-default.env
+                                    source bin/local-default.env
                                     ;;
       -e  | --edge )                FILE="-f docker/docker-compose.yml -f docker/docker-compose.polygon-edge.yml"
                                     ;;
