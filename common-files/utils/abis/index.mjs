@@ -1,8 +1,8 @@
-import { TOKEN_TYPE } from './constants.mjs';
-import ERC20ABI from './abis/ERC20.mjs';
-import ERC721ABI from './abis/ERC721.mjs';
-import ERC1155ABI from './abis/ERC1155.mjs';
-import ERC165 from './abis/ERC165.mjs';
+import { TOKEN_TYPE } from '../../constants/nf3.mjs';
+import ERC20ABI from './ERC20.mjs';
+import ERC721ABI from './ERC721.mjs';
+import ERC1155ABI from './ERC1155.mjs';
+import ERC165 from './ERC165.mjs';
 
 function getAbi(tokenType) {
   switch (tokenType) {

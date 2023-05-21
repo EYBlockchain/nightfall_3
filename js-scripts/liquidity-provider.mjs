@@ -10,10 +10,10 @@ import clear from 'clear';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import logger from 'common-files/utils/logger.mjs';
-import Nf3 from '../lib/nf3.mjs';
-import { APPROVE_AMOUNT, TOKEN_TYPE } from '../lib/constants.mjs';
-import { setEnvironment, getCurrentEnvironment } from '../lib/environment.mjs';
-import { approve } from '../lib/tokens.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
+import { approve } from 'common-files/utils/tokens.mjs';
+import { APPROVE_AMOUNT, TOKEN_TYPE } from 'common-files/constants/nf3.mjs';
+import { setEnvironment, getCurrentEnvironment } from 'common-files/utils/environment.mjs';
 
 const defaultKey = '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6';
 const defaultMnemonic = 'toy vivid real shove evolve kidney captain flock hungry evoke lawn plunge';

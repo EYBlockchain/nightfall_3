@@ -4,7 +4,7 @@ import chaiHttp from 'chai-http';
 import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
-import Nf3 from '../cli/lib/nf3.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
 import { emptyL2, expectTransaction, Web3Client } from './utils.mjs';
 
 // so we can use require with mjs file

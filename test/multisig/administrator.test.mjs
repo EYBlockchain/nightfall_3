@@ -1,4 +1,4 @@
-/* This test relies on nightfall_3/cli
+/* This test relies on nightfall_3/common-files/classes/nf3.mjs
  */
 
 /* eslint-disable no-await-in-loop */
@@ -6,7 +6,7 @@ import chai from 'chai';
 import chaiHttp from 'chai-http';
 import config from 'config';
 import chaiAsPromised from 'chai-as-promised';
-import Nf3 from '../../cli/lib/nf3.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
 import { NightfallMultiSig } from './nightfall-multisig.mjs';
 import { expectTransaction } from '../utils.mjs';
 

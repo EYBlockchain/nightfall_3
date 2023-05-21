@@ -13,12 +13,13 @@ import chaiAsPromised from 'chai-as-promised';
 import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
 
-// instead of our usual cli we need to import
-// adversary transpiled version of cli.
+// instead of our usual Nf3 class we need to import
+// adversary transpiled version of Nf3 class.
 // please do not forget to run `npm run build-adversary`
 // eslint-disable-next-line import/no-unresolved
-import Nf3 from './adversary/adversary-cli/lib/nf3.mjs';
-
+import Nf3 from './adversary/adversary-common-files/classes/nf3.mjs';
+// eslint-disable-next-line import/no-unresolved
+import { getERCInfo } from './adversary/adversary-common-files/utils/tokens.mjs';
 import {
   clearMempool,
   getLayer2Balances,
@@ -26,7 +27,6 @@ import {
   waitForSufficientTransactionsMempool,
   Web3Client,
 } from './utils.mjs';
-import { getERCInfo } from '../cli/lib/tokens.mjs';
 
 chai.use(chaiHttp);
 chai.use(chaiAsPromised);

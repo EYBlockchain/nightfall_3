@@ -6,14 +6,14 @@ import chaiAsPromised from 'chai-as-promised';
 import config from 'config';
 import gen from 'general-number';
 import logger from 'common-files/utils/logger.mjs';
-import Nf3 from '../../../cli/lib/nf3.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
+import { getERCInfo } from 'common-files/utils/tokens.mjs';
 import {
   expectTransaction,
   Web3Client,
   getLayer2Balances,
   getUserCommitments,
 } from '../../utils.mjs';
-import { getERCInfo } from '../../../cli/lib/tokens.mjs';
 
 // so we can use require with mjs file
 const { expect } = chai;

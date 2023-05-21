@@ -1,5 +1,4 @@
-/* eslint class-methods-use-this: "off" */
-/* eslint prefer-destructuring: "off" */
+/* ignore unused exports */
 /* eslint no-param-reassign: "off" */
 
 import axios from 'axios';
@@ -8,13 +7,10 @@ import Web3 from 'web3';
 import WebSocket from 'ws';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import EventEmitter from 'events';
-import logger from 'common-files/utils/logger.mjs';
 import { Mutex } from 'async-mutex';
-import { approve } from './tokens.mjs';
-import erc20 from './abis/ERC20.mjs';
-import erc721 from './abis/ERC721.mjs';
-import erc1155 from './abis/ERC1155.mjs';
-import createJob from './jobScheduler.mjs';
+import logger from '../utils/logger.mjs';
+import { approve } from '../utils/tokens.mjs';
+import createJob from '../utils/jobScheduler.mjs';
 
 import {
   DEFAULT_FEE_TOKEN_VALUE,
@@ -26,7 +22,7 @@ import {
   GAS_ESTIMATE_ENDPOINT,
   DEFAULT_MIN_L1_WITHDRAW,
   DEFAULT_MIN_L2_WITHDRAW,
-} from './constants.mjs';
+} from '../constants/nf3.mjs';
 
 function ping(ws) {
   if (ws.readyState === WebSocket.OPEN) {
@@ -39,6 +35,17 @@ function createQueue(options) {
   queue.on('error', error => logger.error({ msg: 'Error caught by queue', error }));
 
   return queue;
+}
+
+function createEmitter() {
+  const emitter = new EventEmitter();
+
+  /*
+    Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
+   */
+  emitter.on('error', error => logger.error({ msg: 'Error caught by emitter', error }));
+
+  return emitter;
 }
 
 // TODO when SDK is refactored such that these functions are split by user, proposer and challenger,
@@ -98,8 +105,6 @@ class Nf3 {
 
   mnemonic = {};
 
-  contracts = { ERC20: erc20, ERC721: erc721, ERC1155: erc1155 };
-
   currentEnvironment;
 
   nonce = 0;
@@ -145,8 +150,7 @@ class Nf3 {
       return;
     }
 
-    const clientBaseUrl = this.clientBaseUrl;
-    const clientApiKey = this.clientAuthenticationKey;
+    const { clientBaseUrl, clientAuthenticationKey: clientApiKey } = this;
 
     axios.interceptors.request.use(function (config) {
       if (!config.url.includes(clientBaseUrl)) {
@@ -1185,17 +1189,6 @@ class Nf3 {
     });
   }
 
-  createEmitter() {
-    const emitter = new EventEmitter();
-
-    /*
-      Listen for 'error' events. If no event listeners are found for 'error', then the error stops node instance.
-     */
-    emitter.on('error', error => logger.error({ msg: 'Error caught by emitter', error }));
-
-    return emitter;
-  }
-
   /**
     Get block stake
     @method
@@ -1238,7 +1231,7 @@ class Nf3 {
     @async
     */
   async startProposer() {
-    const proposeEmitter = this.createEmitter();
+    const proposeEmitter = createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
 
     this.websockets.push(connection); // save so we can close it properly later
@@ -1330,7 +1323,7 @@ class Nf3 {
     @async
     */
   async startChallenger() {
-    const challengeEmitter = this.createEmitter();
+    const challengeEmitter = createEmitter();
     const connection = new ReconnectingWebSocket(this.optimistWsUrl, [], { WebSocket });
 
     this.websockets.push(connection); // save so we can close it properly later

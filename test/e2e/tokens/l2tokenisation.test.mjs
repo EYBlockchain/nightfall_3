@@ -10,7 +10,7 @@ import logger from 'common-files/utils/logger.mjs';
 import poseidonHash from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 import constants from 'common-files/constants/index.mjs';
 import gen from 'general-number';
-import Nf3 from '../../../cli/lib/nf3.mjs';
+import Nf3 from 'common-files/classes/nf3.mjs';
 import { /* expectTransaction, */ emptyL2, Web3Client } from '../../utils.mjs';
 
 // so we can use require with mjs file
