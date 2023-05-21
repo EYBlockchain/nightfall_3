@@ -1,4 +1,4 @@
-import { TOKEN_TYPE } from '../../constants/sdk.mjs';
+import { TOKEN_TYPE } from '../../constants/nf3.mjs';
 import ERC20ABI from './ERC20.mjs';
 import ERC721ABI from './ERC721.mjs';
 import ERC1155ABI from './ERC1155.mjs';

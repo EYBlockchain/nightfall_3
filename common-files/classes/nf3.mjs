@@ -22,7 +22,7 @@ import {
   GAS_ESTIMATE_ENDPOINT,
   DEFAULT_MIN_L1_WITHDRAW,
   DEFAULT_MIN_L2_WITHDRAW,
-} from '../constants/sdk.mjs';
+} from '../constants/nf3.mjs';
 
 function ping(ws) {
   if (ws.readyState === WebSocket.OPEN) {

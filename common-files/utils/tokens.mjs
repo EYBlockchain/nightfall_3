@@ -1,7 +1,7 @@
 /* ignore unused exports */
 import Web3 from 'web3';
 import getAbi from './abis/index.mjs';
-import { TOKEN_TYPE, APPROVE_AMOUNT } from '../constants/sdk.mjs';
+import { TOKEN_TYPE, APPROVE_AMOUNT } from '../constants/nf3.mjs';
 import fromBaseUnit from './units.mjs';
 
 /**
