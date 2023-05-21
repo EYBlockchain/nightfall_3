@@ -472,7 +472,6 @@ jobs:
           path: ./ganache-test.log
   x509-test:
     env:
-      WHITELISTING: enable
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
@@ -485,7 +484,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> x509-test.log &disown
+          ./bin/start-nightfall -g -d -w &> x509-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.36

@@ -12,6 +12,7 @@ usage()
   echo "  -h or --help; to print this message"
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
   echo "  -n or --nothing; This flag should be used alone, used when building volume manually"
+  echo "  -w  or --whitelisting; to enable whitelisting feature"
 }
 
 # select a Geth or Ganache client
