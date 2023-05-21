@@ -82,8 +82,8 @@ services:
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT}
       BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST}
-      DEPLOY_MOCK_TOKENS: ${DEPLOY_MOCK_TOKENS:-false}
-      DEPLOY_MOCKED_SANCTIONS_CONTRACT: ${DEPLOY_MOCKED_SANCTIONS_CONTRACT:-false}
+      DEPLOY_MOCK_TOKENS: ${DEPLOY_MOCK_TOKENS}
+      DEPLOY_MOCKED_SANCTIONS_CONTRACT: ${DEPLOY_MOCKED_SANCTIONS_CONTRACT}
       ENVIRONMENT: ${ENVIRONMENT}
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
