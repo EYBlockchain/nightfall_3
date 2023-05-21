@@ -67,11 +67,6 @@ services:
       - type: bind
         source: ../nightfall-deployer/entrypoint.sh
         target: /app/entrypoint.sh
-    environment:
-      DEPLOY_MOCK_TOKENS: 'true'
-      DEPLOY_MOCKED_SANCTIONS_CONTRACT: 'true'
-      # NB WHITELISTING is an important security feature and should not be disabled in production.
-      WHITELISTING: ${WHITELISTING:-disable}
 
   optimist:
     build:
