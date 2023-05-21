@@ -16,11 +16,11 @@ services:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT}
       ENVIRONMENT: ${ENVIRONMENT}
-      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      ETH_NETWORK: ${ETH_NETWORK}
       LOG_LEVEL: ${LOG_LEVEL}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA}
-      MONGO_URL: ${ADMIN_MONGO_URL:-mongodb://mongodb:27017}
+      MONGO_URL: ${ADMIN_MONGO_URL}
 
   client:
     image: ghcr.io/eyblockchain/nightfall3-client:latest
@@ -88,7 +88,7 @@ services:
       ENVIRONMENT: ${ENVIRONMENT}
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
-      ETH_NETWORK: ${ETH_NETWORK:-blockchain}
+      ETH_NETWORK: ${ETH_NETWORK}
       ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
       ETH_ADDRESS: ${ETH_ADDRESS}
       FEE_L2_TOKEN_ID: ${FEE_L2_TOKEN_ID:-MATIC}
