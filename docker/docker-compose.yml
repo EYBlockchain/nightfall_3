@@ -15,7 +15,7 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      ENVIRONMENT: ${ENVIRONMENT}
       ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       LOG_LEVEL: ${LOG_LEVEL:-error}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
@@ -45,7 +45,7 @@ services:
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
       ENDPOINTS_WHITELISTED: ${ENDPOINTS_WHITELISTED}
       ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      ENVIRONMENT: ${ENVIRONMENT}
       ETH_ADDRESS: ${ETH_ADDRESS}
       ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
       ETH_NETWORK: ${ETH_NETWORK}
@@ -85,7 +85,7 @@ services:
       CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST:-worker}
       DEPLOY_MOCK_TOKENS: ${DEPLOY_MOCK_TOKENS:-false}
       DEPLOY_MOCKED_SANCTIONS_CONTRACT: ${DEPLOY_MOCKED_SANCTIONS_CONTRACT:-false}
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      ENVIRONMENT: ${ENVIRONMENT}
       # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: ${ETH_NETWORK:-blockchain}
@@ -143,7 +143,7 @@ services:
       BLOCKCHAIN_URL: ${BLOCKCHAIN_URL}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      ENVIRONMENT: ${ENVIRONMENT}
       HASH_TYPE: poseidon
       IS_CHALLENGER: ${IS_CHALLENGER:-true}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
@@ -188,7 +188,7 @@ services:
     networks:
       - nightfall_network
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
+      ENVIRONMENT: ${ENVIRONMENT}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
