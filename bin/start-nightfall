@@ -11,6 +11,7 @@ usage()
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
   echo "  -h or --help; to print this message"
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
+  echo "  -n or --nothing; This flag should be used alone, used when building volume manually"
 }
 
 # select a Geth or Ganache client
@@ -35,6 +36,10 @@ while [ -n "$1" ]; do
                                     ;;
       -d  | --dev )                 DEV="-f docker/docker-compose.dev.yml"
                                     source bin/local-dev.env
+                                    ;;
+      -w  | --whitelisting )        DEV="-f docker/docker-compose.dev.yml"
+                                    source bin/local-dev.env
+                                    source bin/local-dev-with-whiteListing-enabled.env
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
                                     ;;
