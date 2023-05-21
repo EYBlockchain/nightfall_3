@@ -700,7 +700,7 @@ export async function restartOptimist(nf3Proposer, dropDb = true) {
       'docker/docker-compose.ganache.yml',
     ],
     log: process.env.LOG_LEVEL || 'silent',
-    composeOptions: [['-p', 'nightfall_3', '--env-file', 'bin/local-default.env' ]],
+    composeOptions: [['-p', 'nightfall_3', '--env-file', 'bin/local-default.env']],
   };
 
   await compose.stopOne('optimist', options);
