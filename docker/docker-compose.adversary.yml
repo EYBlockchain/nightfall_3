@@ -27,21 +27,19 @@ services:
         source: ../config/default.js
         target: /app/config/default.js
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
-      WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8080}
-      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
-      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
-      PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS:-0}
-      MAX_BLOCK_SIZE: ${MAX_BLOCK_SIZE:-50000}
-      MONGO_URL: ${MONGO_URL:-mongodb://mongodb-adversary:27017}
-      HASH_TYPE: poseidon
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
-      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      # we don't want adversary who create bad block to be challenger as well
-      # so for adversary default is false unlike optimist
-      IS_CHALLENGER: ${IS_CHALLENGER:-false}
-      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
+      ENVIRONMENT: ${ENVIRONMENT}
+      WEBSOCKET_PORT: ${WEBSOCKET_PORT}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT}
+      PROPOSER_MAX_BLOCK_PERIOD_MILIS: ${PROPOSER_MAX_BLOCK_PERIOD_MILIS}
+      MAX_BLOCK_SIZE: ${MAX_BLOCK_SIZE}
+      MONGO_URL: ${MONGO_URL}
+      HASH_TYPE: ${HASH_TYPE}
+      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA}
+      IS_CHALLENGER: ${IS_CHALLENGER}
+      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES}
     command: ['npm', 'run', 'dev']
 
   bad-client:
@@ -70,23 +68,23 @@ services:
         source: ../config/default.js
         target: /app/config/default.js
     environment:
-      ENVIRONMENT: ${ENVIRONMENT:-localhost}
-      LOG_LEVEL: ${LOG_LEVEL:-debug}
-      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
-      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      CIRCOM_WORKER_HOST: worker
-      OPTIMIST_HOST: ${OPTIMIST_HOST:-optimist}
-      OPTIMIST_PORT: ${OPTIMIST_PORT:-80}
-      MONGO_URL: ${CLIENT_MONGO_URL:-mongodb://mongodb-adversary:27017}
-      RABBITMQ_HOST: ${RABBITMQ_HOST:-amqp://rabbitmq}
-      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
-      ENABLE_QUEUE: ${ENABLE_QUEUE:-1}
-      USE_EXTERNAL_NODE: 'true'
-      AUTOSTART_RETRIES: 600
+      ENVIRONMENT: ${ENVIRONMENT}
+      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED}
+      LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA}
+      CIRCOM_WORKER_HOST: ${CIRCOM_WORKER_HOST}
+      OPTIMIST_HOST: ${OPTIMIST_HOST}
+      OPTIMIST_PORT: ${OPTIMIST_PORT}
+      MONGO_URL: ${MONGO_URL}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      ENABLE_QUEUE: ${ENABLE_QUEUE}
+      USE_EXTERNAL_NODE: ${USE_EXTERNAL_NODE}
+      AUTOSTART_RETRIES: ${AUTOSTART_RETRIES}
       ETH_NETWORK: ${ETH_NETWORK}
       CONTRACT_FILES_URL: ${CONTRACT_FILES_URL}
-      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
-      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT:-8546}
+      BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST}
+      BLOCKCHAIN_PORT: ${BLOCKCHAIN_PORT}
 
     command: ['npm', 'run', 'dev']
 

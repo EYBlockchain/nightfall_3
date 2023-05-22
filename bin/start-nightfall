@@ -43,6 +43,7 @@ while [ -n "$1" ]; do
                                     source bin/local-dev-with-whiteListing-enabled.env
                                     ;;
       -a  | --adversary)            ADVERSARY="-f docker/docker-compose.adversary.yml"
+                                    source bin/local-adversary.env
                                     ;;
       -n  | --nothing)              FILE="-f docker/docker-compose.yml" 
                                     NO_REMOVE='true'
