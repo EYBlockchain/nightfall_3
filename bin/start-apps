@@ -33,5 +33,4 @@ if [ -z "$APP_SERVICES_TO_START" ]; then
     done
 fi
 
-docker-compose -f docker/docker-compose.apps.yml -p 'nightfall_3' up -d --remove-orphans ${APP_SERVICES_TO_START//,/ }
-docker-compose -f docker/docker-compose.apps.yml -p 'nightfall_3' logs -f ${APP_SERVICES_TO_START//,/ }
+docker-compose -f docker/docker-compose.apps.yml -p 'nightfall_3' up ${APP_SERVICES_TO_START//,/ }
