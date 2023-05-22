@@ -1,2 +1,3 @@
 #! /bin/bash
+printenv
 docker-compose -f docker/docker-compose.apps.yml -p 'nightfall_3' up
