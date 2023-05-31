@@ -70,7 +70,7 @@ export async function simpleUserTest(
 
   const startBalance = await retrieveL2Balance(nf3, ercAddress);
   console.log(`start balance ${nf3.zkpKeys.compressedZkpPublicKey}`, startBalance);
-  let offchainTx = true;
+  const offchainTx = true;
 
   const { txTypes } = nf3;
 
@@ -130,7 +130,7 @@ export async function simpleUserTest(
         to: userAdressTo,
         value: valueToTransfer,
         fee,
-        transactionHashL1: res.transactionHash,
+        transactionHashL1: res?.transactionHash,
         blockHash: res.blockHash,
         onchain: !offchainTx,
         type: 'transfer',
@@ -161,7 +161,7 @@ export async function simpleUserTest(
           to: userAdressTo,
           value: valueToTransfer,
           fee,
-          transactionHashL1: res.transactionHash,
+          transactionHashL1: res?.transactionHash,
           blockHash: res.blockHash,
           onchain: !offchainTx,
           type: 'transfer',
@@ -171,7 +171,6 @@ export async function simpleUserTest(
         console.warn('Error transfer', err);
       }
     }
-    offchainTx = !offchainTx;
 
     try {
       const res = await nf3.deposit(
@@ -206,7 +205,7 @@ export async function simpleUserTest(
     try {
       const res = await nf3.withdraw(
         txTypes[i * 3 + 2],
-        offchainTx,
+        !offchainTx,
         ercAddress,
         tokenType,
         valueToTransfer,

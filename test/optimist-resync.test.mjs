@@ -54,7 +54,7 @@ describe('Optimist synchronisation tests', () => {
     await nf3Challenger.init(mnemonics.challenger);
     minimumStake = await nf3Proposer1.getMinimumStake();
     // we must set the URL from the point of view of the client container
-    await nf3Proposer1.registerProposer('http://optimist', minimumStake);
+    await nf3Proposer1.registerProposer('http://localhost:8081', minimumStake);
 
     // Proposer listening for incoming events
     blockProposeEmitter = await nf3Proposer1.startProposer();
@@ -107,7 +107,7 @@ describe('Optimist synchronisation tests', () => {
       await restartOptimist(nf3Proposer1, false);
 
       // we need to remind optimist which proposer it's connected to
-      await nf3Proposer1.registerProposer('http://optimist', minimumStake);
+      await nf3Proposer1.registerProposer('http://localhost:8081', minimumStake);
       await waitForTimeout(5000);
       // TODO - get optimist to do this automatically.
       // Now we'll add another block and check that it's blocknumber is correct, indicating
@@ -183,7 +183,7 @@ describe('Optimist synchronisation tests', () => {
       await restartOptimist(nf3Proposer1, true);
 
       // we need to remind optimist which proposer it's connected to
-      await nf3Proposer1.registerProposer('http://optimist', minimumStake);
+      await nf3Proposer1.registerProposer('http://localhost:8081', minimumStake);
       // TODO - get optimist to do this automatically.
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a resync correctly occured
@@ -255,7 +255,7 @@ describe('Optimist synchronisation tests', () => {
       logger.debug('rollback complete event received');
       // the rollback will have removed us as proposer. We need to re-register because we
       // were the only proposer in town!
-      await nf3Proposer1.registerProposer('http://optimist', minimumStake);
+      await nf3Proposer1.registerProposer('http://localhost:8081', minimumStake);
       // Now we'll add another block and check that it's blocknumber is correct, indicating
       // that a rollback correctly occured
       logger.debug(`      Sending a deposit...`);

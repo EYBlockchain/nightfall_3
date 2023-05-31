@@ -12,10 +12,11 @@ class Nullifier {
   hash;
 
   constructor(commitment, nullifierKey) {
-    this.preimage = generalise({
-      nullifierKey,
-      commitment: commitment.hash.hex(32),
-    });
+    // make sure the preimage contains a General-Number type nullifier key
+    this.preimage = {
+      nullifierKey: nullifierKey?.bigInt ? nullifierKey : generalise(nullifierKey),
+      commitment: commitment.hash,
+    };
     this.hash = poseidon([this.preimage.nullifierKey, this.preimage.commitment]);
   }
 }

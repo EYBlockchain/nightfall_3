@@ -258,7 +258,7 @@ export const getCommitmentInfo = async txInfo => {
 
     // Compute the nullifiers
     const nullifiers = [...oldCommitments, ...oldCommitmentsFee].map(
-      commitment => new Nullifier(commitment, nullifierKey.hex(32)),
+      commitment => new Nullifier(commitment, nullifierKey),
     );
 
     // then the new output commitment(s)
