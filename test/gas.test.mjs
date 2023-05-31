@@ -49,7 +49,7 @@ describe('Gas test', () => {
   before(async () => {
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.registerProposer(
-      'http://localhost:8081optimist',
+      'http://localhost:8081',
       await nf3Proposer.getMinimumStake(),
     );
 
