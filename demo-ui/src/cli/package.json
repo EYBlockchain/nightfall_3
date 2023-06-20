@@ -24,7 +24,7 @@
     "node-cron": "^3.0.2",
     "queue": "^6.0.2",
     "reconnecting-websocket": "^4.4.0",
-    "web3": "^1.7.5",
+    "web3": "^4.0.1",
     "ws": "^8.2.2",
     "yargs": "^17.2.1"
   },
