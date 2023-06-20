@@ -30,6 +30,10 @@ function Configure({ setERC20Address }) {
         <div className="container pt-4">
           <form className="form bg-opacity-0 bg-light" onSubmit={doConfigure}>
             <div className="form-group form-custom-field">
+              <p>
+                Note: Look up ERC20Mock in the deployer container logs to find the contract address
+                if the suggested one does not work.
+              </p>
               <input
                 type="text"
                 className="form-control"
