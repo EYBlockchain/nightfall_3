@@ -75,7 +75,7 @@ function Configure({ setERC20Address }) {
                   value="137"
                   checked={chainId === '137'}
                 />
-                <label className="form-check-label">Ploygon</label>
+                <label className="form-check-label">Polygon</label>
               </div>
               <div className="form-check">
                 <input
@@ -86,7 +86,7 @@ function Configure({ setERC20Address }) {
                   value="80001"
                   checked={chainId === '80001'}
                 />
-                <label className="form-check-label">Mumbai Testnet Ploygon</label>
+                <label className="form-check-label">Mumbai Testnet Polygon</label>
               </div>
             </div>
             <div className="form-group form-custom-field">

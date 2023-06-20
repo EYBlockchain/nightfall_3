@@ -1,70 +1,70 @@
-# Getting Started with Create React App
+# demo-ui
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Demo-UI is a thin UI on top of the APIs, it is not intended for production use. Its puprpose it to
+test ERC20 operations (Such as Deposit, Transfer and Withdraw) in a bare minimal way.
 
-## Available Scripts
+### Running the demo-ui locally
 
-In the project directory, you can run:
+1.  Install dependencies `npm ci`
 
-### `npm start`
+2.  Start the app in local development mode. `npm start`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### To run demo-ui with local ganache, follow below steps
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. read nightfall read me and setup and start nightfall `./bin/start-nightfall -g -d`
 
-### `npm test`
+2. After nightfall app finished starting up i.e seeing `nightfall_3_deployer_1 exited with code 0`
+   in logs, start proposer in another terminal `npm run start-proposer`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+3. at last start demo-ui app in a new terminal
 
-### `npm run build`
+```sh
+cd demo-ui\
+npm ci
+npm start
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### UI Walk through
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Running app will land you to configure page where you enter ERC20 Contract address to which you
+   want to use with demo-ui. for example: deployed ERC20 Contract Address is
+   0x4315287906f3fcf2345ad1bfe0f682457b041fa7 for local ganache network (setuped when one runs
+   `./bin/start-nightfall -g -d`)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. In configure page you could choose to connect your Metamask to two different networks.
 
-### `npm run eject`
+- Mumbai Testnet (click _Mumbai Testnet Polygon_ radio button and then click _Configure_).
+- Polygon (click _Polygon_ radio button and then click _Configure_).
+- Localhost (no radio button for this choice; to connect to localhost follow bellow Note).
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+_Note: In case to connect to local ganache please switch manually in Metamask,
+implemented-code-logic won't work because metamask sdk expect localhost connection to use port 8545
+unlike our ganache instance which is using 8546 i.e rpcURL http://localhost:8546, after manuall
+switch, click configure button with ERC20 Contract address_
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. After Configure page (landing screen) next page is the Add User.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- Description: Intention here is user should add/configure Alice and Bob to test all ERC20
+  operation.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- fields
 
-## Learn More
+  - User Name (any name can be given this is just to distinguish user in further screen/page) for
+    example: "Alice"
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+  - User Menmonic (any valid menmonic, will be used to generate ZKP keys for this user). for testing
+    against localhost copy menmonic from config, like `test/e2e/tokens/erc20.test.mjs` does
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- Notes
 
-### Code Splitting
+  - User need to do Add user twice before moving to next page which is Deposit page.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+  - In between adding/configure two users(Alice and Bob) please do not forget swtich EOA(External
+    Owned Account) in Metamask. Otherwise Alice and Bob will end with same EOA.
 
-### Analyzing the Bundle Size
+4. After successful adding two users next page will be Deposit, here user has options in left-hand
+   sidebar to swtich to different operations page like Transfer or Withdraw.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+5. After each successful operations(Deposit, Transfer and Withdraw) please do not forget to click
+   "Make Block Now" Button (in top-left corner in nav bar) this will make block in optimist, and
+   should update Alice and Bob balance in righthand sidebar.
