@@ -1,6 +1,6 @@
 /* eslint no-param-reassign: "off" */
 const { aliasWebpack } = require('react-app-alias-ex');
-const rootConfig = require('./src/config/default')
+const rootConfig = require('./src/config/default');
 
 module.exports = function override(config) {
   config.externals = {

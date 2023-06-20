@@ -30,5 +30,6 @@ module.exports = {
     'react/jsx-no-bind': 'off',
     'jsx-a11y/label-has-associated-control': 'off',
     'react/self-closing-comp': 'off',
+    'default-param-last': 'off', // nightfall_3/demo-ui/src/cli/lib/nf3.mjs complains a lot about it and I don't want to break it.
   },
 };
