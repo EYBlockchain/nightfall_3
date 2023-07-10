@@ -1,8 +1,8 @@
 {
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@cli-library/*": ["../cli/lib/*"]
+    "compilerOptions": {
+      "baseUrl": ".",
+      "paths": {
+        "@cli-library/*": ["./src/cli/lib/*"]
+      }
     }
   }
-}

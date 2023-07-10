@@ -1,16 +1,16 @@
 /* eslint import/no-extraneous-dependencies: "off" */
 
 import Web3 from 'web3';
-import logger from '@polygon-nightfall/common-files/utils/logger.mjs';
+// import logger from './common-files/utils/logger.mjs'; - depends on a non-browsify'able module
 
 /*
  * update mocked logger module to native console
  * as to experience logs from SDK
  */
-logger.info = console.info;
-logger.debug = console.debug;
-logger.error = console.error;
-logger.warn = console.warn;
+// logger.info = console.info;
+// logger.debug = console.debug;
+// logger.error = console.error;
+// logger.warn = console.warn;
 
 export function parseBalance(obj, erc20Address) {
   return obj[erc20Address.toLowerCase()]?.[0].balance || 0;

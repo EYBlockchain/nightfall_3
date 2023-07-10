@@ -1,6 +1,6 @@
 // ignore unused exports
 import React from 'react';
-import config from 'config'; // eslint-disable-line  import/no-extraneous-dependencies
+import config from '../../config/default'; // eslint-disable-line  import/no-extraneous-dependencies
 import './index.css';
 
 function AddUser({ addNewUser }) {
