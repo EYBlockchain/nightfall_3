@@ -60,7 +60,7 @@ template DepositFee(N,C) {
 
     // Check that the transaction does not have nullifiers nor commitments duplicated
     var checkDuplicates = VerifyDuplicates(N,C)(nullifiers, commitments);
-    checkDuplicates === 1;
+    checkDuplicates === 0;
 
     // Check that compressed secrets is zero
     compressedSecrets[0] === 0;

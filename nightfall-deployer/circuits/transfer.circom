@@ -68,7 +68,7 @@ template Transfer(N,C) {
     
     // Check that the transaction does not have nullifiers nor commitments duplicated
     var checkDuplicates = VerifyDuplicates(N,C)(nullifiers, commitments);
-    checkDuplicates === 1;
+    checkDuplicates === 0;
 
     // Check that the ercAddress is different than zero (it contains one of the 4 encrypted KemDem values)
     // assert(ercAddress != 0);
