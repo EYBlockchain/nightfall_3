@@ -6,6 +6,8 @@ include "./common/verifiers/verify_duplicates.circom";
 include "./common/verifiers/commitments/verify_commitments_generic.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers_generic.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/gates.circom";
 
 include "../node_modules/circomlib/circuits/bitify.circom";
 
@@ -65,7 +67,9 @@ template Withdraw(N,C) {
     compressedSecrets[1] === 0;
  
     // Check that ercAddress is different than zero
-    assert(ercAddress != 0);
+    // assert(ercAddress != 0);
+    signal a1 <== IsZero()(ercAddress);
+    a1 === 0;
 
     var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
     var tokenIdNum = Bits2Num(256)(tokenIdBits);
@@ -74,14 +78,27 @@ template Withdraw(N,C) {
     //ERC20 -> Value > 0 and Id == 0
     //ERC721 -> Value == 0
     //ERC1155 -> Value > 0
-    assert((tokenType == 1 && value == 0) || (tokenType != 1 && value != 0));
-    assert((tokenType == 0 && tokenIdNum == 0) || tokenType != 0);
+    // assert((tokenType == 1 && value == 0) || (tokenType != 1 && value != 0));
+    signal b1 <== IsZero()(tokenType - 1);
+    signal b2 <== IsZero()(value);
+    signal r <== XOR()(b1, b2);
+    r === 0;
+
+    // assert((tokenType == 0 && tokenIdNum == 0) || tokenType != 0);
+    signal c1 <== IsZero()(tokenType);
+    signal c2 <== IsZero()(tokenIdNum);
+    signal s <== OR()(AND()(c1, c2), NOT()(c1));
+    s === 1;
     
     // Check that the recipientAddress is not zero
-    assert(recipientAddress != 0);
+    //assert(recipientAddress != 0);
+    signal d1 <== IsZero()(recipientAddress);
+    d1 === 0;
 
     // Check that the first nullifier is different than zero
-    assert(nullifiers[0] != 0);
+    //assert(nullifiers[0] != 0);
+    signal e1 <== IsZero()(nullifiers[0]);
+    e1 === 0;
 
     // Convert the nullifiers values to numbers and calculate its sum
     var nullifiersSum = 0;
@@ -147,12 +164,23 @@ template Withdraw(N,C) {
     checkCommitments === 1;
 
     // Verify the withdraw change
-    assert(commitmentsValues[C - 2] == 0 || 
-        (zkpPublicKeys[0] == recipientPublicKey[C - 2][0] && zkpPublicKeys[1] == recipientPublicKey[C - 2][1]));
+    // assert(commitmentsValues[C - 2] == 0 || 
+    //     (zkpPublicKeys[0] == recipientPublicKey[C - 2][0] && zkpPublicKeys[1] == recipientPublicKey[C - 2][1]));
+    signal f1 <== IsZero()(commitmentsValues[C - 2]);
+    signal f2 <== IsEqual()([zkpPublicKeys[0], recipientPublicKey[C - 2][0]]);
+    signal f3 <== IsEqual()([zkpPublicKeys[1], recipientPublicKey[C - 2][1]]);
+    signal t <== OR()(f1, AND()(f2, f3));
+    t === 1;
+
     
     // Verify the fee change
-    assert(commitmentsValues[C - 1] == 0 || 
-        (zkpPublicKeys[0] == recipientPublicKey[C - 1][0] && zkpPublicKeys[1] == recipientPublicKey[C - 1][1])); 
+    // assert(commitmentsValues[C - 1] == 0 || 
+    //     (zkpPublicKeys[0] == recipientPublicKey[C - 1][0] && zkpPublicKeys[1] == recipientPublicKey[C - 1][1])); 
+    signal g1 <== IsZero()(commitmentsValues[C - 1]);
+    signal g2 <== IsEqual()([zkpPublicKeys[0], recipientPublicKey[C - 1][0]]);
+    signal g3 <== IsEqual()([zkpPublicKeys[1], recipientPublicKey[C - 1][1]]);
+    signal u <== OR()(g1, AND()(g2, g3));
+    u === 1;
 }
 
 component main {public [value, fee, circuitHash, tokenType, historicRootBlockNumberL2, tokenId, ercAddress, recipientAddress, commitments, nullifiers, compressedSecrets, roots, feeAddress]} = Withdraw(4,2);

@@ -3,6 +3,8 @@ pragma circom 2.1.2;
 include "./common/verifiers/verify_duplicates.circom";
 include "./common/verifiers/commitments/verify_commitments.circom";
 include "./common/utils/array_uint32_to_bits.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/gates.circom";
 
 include "../node_modules/circomlib/circuits/bitify.circom";
 
@@ -52,7 +54,9 @@ template Deposit(N,C) {
     compressedSecrets[1] === 0;
     
     // Check that ercAddress is different than zero
-    assert(ercAddress != 0);
+    // assert(ercAddress != 0);
+    signal a1 <== IsZero()(ercAddress);
+    a1 === 0;
 
     var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
     var tokenIdNum = Bits2Num(256)(tokenIdBits);
@@ -60,13 +64,24 @@ template Deposit(N,C) {
     //ERC20 -> Value > 0 and Id == 0
     //ERC721 -> Value == 0
     //ERC1155 -> Value > 0
-    assert((tokenType == 1 && value == 0) || (tokenType != 1 && value != 0));
-    assert((tokenType == 0 && tokenIdNum == 0) || tokenType != 0);
+    // assert((tokenType == 1 && value == 0) || (tokenType != 1 && value != 0));
+    signal b1 <== IsZero()(tokenType - 1);
+    signal b2 <== IsZero()(value);
+    signal r1 <== XOR()(b1, b2);
+    r1 === 0;
+
+    // assert((tokenType == 0 && tokenIdNum == 0) || tokenType != 0);
+    signal c1 <== IsZero()(tokenType);
+    signal c2 <== IsZero()(tokenIdNum);
+    signal r2 <== OR()(AND()(c1, c2), NOT()(c1));
+    r2 === 1;
 
     recipientAddress === 0;
 
     // Check that the first commitment is different than zero
-    assert(commitments[0] != 0);
+    // assert(commitments[0] != 0);
+    signal d1 <== IsZero()(commitments[0]);
+    d1 === 0;
     
     // Convert the commitment values to numbers and calculate its sum
     var commitmentsSum = 0;

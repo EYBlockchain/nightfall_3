@@ -3,6 +3,8 @@ pragma circom 2.1.2;
 include "../../../../node_modules/circomlib/circuits/comparators.circom";
 include "../../../../node_modules/circomlib/circuits/mux1.circom";
 include "../../../../node_modules/circomlib/circuits/poseidon.circom";
+include "../../../../node_modules/circomlib/circuits/comparators.circom";
+include "../../../../node_modules/circomlib/circuits/gates.circom";
 
 include "../../utils/calculate_root.circom";
 
@@ -36,6 +38,8 @@ template VerifyNullifiersGeneric(N) {
 
     signal output valid;
 
+    signal r[N];
+
     for(var i=0; i < N; i++) {
         // Check if the commitment value is zero
         var isNullifierValueZero = IsZero()(oldCommitmentValues[i]);
@@ -59,27 +63,28 @@ template VerifyNullifiersGeneric(N) {
         var nullifierFee = Mux1()([poseidonNullifierFee, 0], isNullifierValueZero);
 
         // Calculate if the nullifier is equal to the public transaction nullifier hash
-        var isEqualNullifier = IsEqual()([nullifier, nullifiersHashes[i]]);
+        var IsEqualNullifier = IsEqual()([nullifier, nullifiersHashes[i]]);
         
         // Calculate if the nullifier fee is equal to the public transaction nullifier hash
-        var isEqualNullifierFee = IsEqual()([nullifierFee, nullifiersHashes[i]]);
+        var IsEqualNullifierFee = IsEqual()([nullifierFee, nullifiersHashes[i]]);
 
         // Check either one of the two reconstructed nullifiers matches with the public transaction nullifier hash 
-        assert(isEqualNullifier == 1 || isEqualNullifierFee == 1);
+        // assert(IsEqualNullifier == 1 || IsEqualNullifierFee == 1);
+        r[i] <== OR()(IsZero()(IsEqualNullifier - 1), IsZero()(IsEqualNullifierFee - 1));
+        r[i] === 1;
 
         // Check if the calculated root matches with the public root
-        var validCalculatedOldCommitmentHash = Mux1()([calculatedCommitmentHashFee, calculatedCommitmentHash], isEqualNullifier);
+        var validCalculatedOldCommitmentHash = Mux1()([calculatedCommitmentHashFee, calculatedCommitmentHash], IsEqualNullifier);
         
         // Calculate the merkle tree root from from the commitment hash and its sibling path
         var calculatedRoot = CalculateRoot()(orders[i], validCalculatedOldCommitmentHash, paths[i]);
        
         // Calculate if the calculated root is equal to the public one
-        var isEqualRoots = IsEqual()([calculatedRoot, roots[i]]);
+        var IsEqualRoots = IsEqual()([calculatedRoot, roots[i]]);
 
         // Check that the roots are equal. If nullifierValue is zero it will directly be considered valid
-        var isValidRoot = Mux1()([isEqualRoots, 1], isNullifierValueZero);
+        var isValidRoot = Mux1()([IsEqualRoots, 1], isNullifierValueZero);
         isValidRoot === 1;
-
     }
 
     valid <== 1;

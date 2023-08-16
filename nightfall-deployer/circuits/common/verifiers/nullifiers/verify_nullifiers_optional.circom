@@ -55,10 +55,10 @@ template VerifyNullifiersOptional(N) {
         var calculatedRoot = CalculateRoot()(orders[i], calculatedCommitmentHash, paths[i]);
         
         // Check if the calculated root matches with the public root
-        var isEqualRoots = IsEqual()([calculatedRoot, roots[i]]);
+        var IsEqualRoots = IsEqual()([calculatedRoot, roots[i]]);
         
         // Check that the root is valid
-        var isValidRoot = Mux1()([isEqualRoots, 1], isNullifierValueZero);
+        var isValidRoot = Mux1()([IsEqualRoots, 1], isNullifierValueZero);
         isValidRoot === 1;
     }
 

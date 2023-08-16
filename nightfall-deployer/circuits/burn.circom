@@ -7,6 +7,8 @@ include "./common/verifiers/commitments/verify_commitments_optional.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers_optional.circom";
 include "./common/verifiers/verify_encryption.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/gates.circom";
 
 include "../node_modules/circomlib/circuits/bitify.circom";
 
@@ -83,10 +85,13 @@ template Burn(N,C) {
     tokenIdNum === 0;
     
     // Check that the recipient address is zero
-    assert(recipientAddress == 0);
+    // assert(recipientAddress == 0);
+    recipientAddress === 0;
 
     // Check that the first nullifier is different than zero
-    assert(nullifiers[0] != 0);
+    // assert(nullifiers[0] != 0);
+    signal n1 <== IsZero()(nullifiers[0]);
+    n1 === 0;
 
     // Convert the nullifiers values to numbers and calculate its sum
     var nullifiersSum = 0;
@@ -153,11 +158,21 @@ template Burn(N,C) {
     var checkCommitmentFee = VerifyCommitmentsOptional(1)(feeAddress, 0, [commitments[1]],[commitmentsValues[1]], [commitmentsSalts[1]], [recipientPublicKey[1]]);
     checkCommitmentFee === 1;
 
-    assert(commitmentsValues[0] == 0 || (
-        zkpPublicKeys[0] == recipientPublicKey[0][0] && zkpPublicKeys[1] == recipientPublicKey[0][1]));
+    // assert(commitmentsValues[0] == 0 || (
+    //   zkpPublicKeys[0] == recipientPublicKey[0][0] && zkpPublicKeys[1] == recipientPublicKey[0][1]));
+    signal a1 <== IsZero()(commitmentsValues[0]);
+    signal a2 <== IsEqual()([zkpPublicKeys[0], recipientPublicKey[0][0]]);
+    signal a3 <== IsEqual()([zkpPublicKeys[1], recipientPublicKey[0][1]]);
+    signal r <== OR()(a1, AND()(a2, a3));
+    r === 1;
 
-    assert(commitmentsValues[1] == 0 || (
-        zkpPublicKeys[0] == recipientPublicKey[1][0] && zkpPublicKeys[1] == recipientPublicKey[1][1]));
+    // assert(commitmentsValues[1] == 0 || (
+    //    zkpPublicKeys[0] == recipientPublicKey[1][0] && zkpPublicKeys[1] == recipientPublicKey[1][1]));
+    signal b1 <== IsZero()(commitmentsValues[1]);
+    signal b2 <== IsEqual()([zkpPublicKeys[0], recipientPublicKey[1][0]]);
+    signal b3 <== IsEqual()([zkpPublicKeys[1], recipientPublicKey[1][1]]);
+    signal s <== OR()(b1, AND()(b2, b3));
+    s === 1;
 }
 
 component main {public [value, fee, circuitHash, tokenType, historicRootBlockNumberL2, tokenId, ercAddress, recipientAddress, commitments, nullifiers, compressedSecrets,roots, feeAddress]} = Burn(3,2);

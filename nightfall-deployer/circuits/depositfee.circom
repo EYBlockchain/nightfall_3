@@ -6,6 +6,8 @@ include "./common/verifiers/commitments/verify_commitments_optional.circom";
 include "./common/verifiers/commitments/verify_commitments.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers_optional.circom";
 include "./common/utils/array_uint32_to_bits.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/gates.circom";
 
 include "../node_modules/circomlib/circuits/bitify.circom";
 
@@ -65,7 +67,9 @@ template DepositFee(N,C) {
     compressedSecrets[1] === 0;
     
     // Check that ercAddress is different than zero
-    assert(ercAddress != 0);
+    // assert(ercAddress != 0);
+    signal a1 <== IsZero()(ercAddress);
+    a1 === 0;
 
     var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
     var tokenIdNum = Bits2Num(256)(tokenIdBits);
@@ -73,13 +77,24 @@ template DepositFee(N,C) {
     //ERC20 -> Value > 0 and Id == 0
     //ERC721 -> Value == 0
     //ERC1155 -> Value > 0
-    assert((tokenType == 1 && value == 0) || (tokenType != 1 && value != 0));
-    assert((tokenType == 0 && tokenIdNum == 0) || tokenType != 0);
+    // assert((tokenType == 1 && value == 0) || (tokenType != 1 && value != 0));
+    signal b1 <== IsZero()(tokenType - 1);
+    signal b2 <== IsZero()(value);
+    signal r <== XOR()(b1, b2);
+    r === 0;
+
+    // assert((tokenType == 0 && tokenIdNum == 0) || tokenType != 0);
+    signal c1 <== IsZero()(tokenType);
+    signal c2 <== IsZero()(tokenIdNum);
+    signal s <== OR()(AND()(c1, c2), NOT()(c1));
+    s === 1;
 
     recipientAddress === 0;
 
     // Check that the first commitment is different than zero
-    assert(commitments[0] != 0);
+    // assert(commitments[0] != 0);
+    signal d1 <== IsZero()(commitments[0]);
+    d1 === 0;
     
     // Convert the commitment values to numbers and calculate its sum
     var commitmentsSum = 0;
@@ -130,8 +145,12 @@ template DepositFee(N,C) {
     checkNullifier === 1;
 
     // Verify the fee change
-    assert(commitmentsValues[1] == 0 || (
-        zkpPublicKeys[0] == recipientPublicKey[1][0] && zkpPublicKeys[1] == recipientPublicKey[1][1]));
+    // assert(commitmentsValues[1] == 0 || (
+    //    zkpPublicKeys[0] == recipientPublicKey[1][0] && zkpPublicKeys[1] == recipientPublicKey[1][1]));
+    signal e1 <== IsEqual()([zkpPublicKeys[0], recipientPublicKey[1][0]]);
+    signal e2 <== IsEqual()([zkpPublicKeys[1], recipientPublicKey[1][1]]);
+    signal t <== AND()(e1, e2);
+    t === 1;
 }
 
 component main {public [value, fee, circuitHash, tokenType, historicRootBlockNumberL2, tokenId, ercAddress, recipientAddress, commitments, nullifiers, compressedSecrets, roots, feeAddress]} = DepositFee(2,2);
