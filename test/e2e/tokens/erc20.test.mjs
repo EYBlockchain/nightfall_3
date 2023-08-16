@@ -71,7 +71,7 @@ describe('ERC20 tests', () => {
 
   before(async () => {
     await nf3User.init(mnemonics.user1);
-    console.log( '**********************KEY DATA********************');
+    console.log('**********************KEY DATA********************');
     console.log(mnemonics.user1);
     console.log(nf3User.zkpKeys);
     await nf3User2.init(mnemonics.user2);
