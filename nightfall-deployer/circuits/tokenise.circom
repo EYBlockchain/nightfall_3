@@ -7,6 +7,8 @@ include "./common/verifiers/commitments/verify_commitments_optional.circom";
 include "./common/verifiers/commitments/verify_commitments.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers_optional.circom";
 include "./common/verifiers/verify_encryption.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/gates.circom";
 
 include "../node_modules/circomlib/circuits/bitify.circom";
 
@@ -65,7 +67,7 @@ template Tokenise(N,C) {
     
     // Check that the transaction does not have nullifiers nor commitments duplicated
     var checkDuplicates = VerifyDuplicates(N,C)(nullifiers, commitments);
-    checkDuplicates === 1;
+    checkDuplicates === 0;
 
     // Check that ercAddress is zero
     ercAddress === 0;
@@ -86,7 +88,9 @@ template Tokenise(N,C) {
     recipientAddress === 0;
 
     // Check that the first commitment is different than zero
-    assert(commitments[0] != 0);
+    // assert(commitments[0] != 0);
+    signal a1 <== IsZero()(commitments[0]);
+    a1 === 0;
  
     // Convert the nullifiers values to numbers and calculate its sum
     var nullifiersSum = 0;
@@ -137,8 +141,13 @@ template Tokenise(N,C) {
     checkCommitmentFee === 1;
 
     // Verify the fee change
-    assert(commitmentsValues[1] == 0 || (
-        zkpPublicKeys[0] == recipientPublicKey[1][0] && zkpPublicKeys[1] == recipientPublicKey[1][1]));
+    // assert(commitmentsValues[1] == 0 || (
+    //     zkpPublicKeys[0] == recipientPublicKey[1][0] && zkpPublicKeys[1] == recipientPublicKey[1][1]));
+    signal b1 <== IsZero()(commitmentsValues[1]);
+    signal b2 <== IsEqual()([zkpPublicKeys[0], recipientPublicKey[1][0]]);
+    signal b3 <== IsEqual()([zkpPublicKeys[1], recipientPublicKey[1][1]]);
+    signal r <== OR()(b1, AND()(b2, b3));
+    r === 1;
 }
 
 component main {public [value, fee, circuitHash, tokenType, historicRootBlockNumberL2, tokenId, ercAddress, recipientAddress, commitments, nullifiers, compressedSecrets,roots, feeAddress]} = Tokenise(2,2);

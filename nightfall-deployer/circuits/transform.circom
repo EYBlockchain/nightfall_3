@@ -75,7 +75,7 @@ template Transform(N,C) {
     
     // Check that the transaction does not have nullifiers nor commitments duplicated
     var checkDuplicates = VerifyDuplicates(N,C)(nullifiers, commitments);
-    checkDuplicates === 1;
+    checkDuplicates === 0;
 
     // Check that ercAddress is zero
     ercAddress === 0;
@@ -93,10 +93,13 @@ template Transform(N,C) {
     tokenIdNum === 0;
     
     // Check that the recipient address is zero
-    assert(recipientAddress == 0);
+    // assert(recipientAddress == 0);
+    recipientAddress === 0;
 
     // Check that the first nullifier is different than zero
-    assert(nullifiers[0] != 0);
+    // assert(nullifiers[0] != 0);
+    signal a1 <== IsZero()(nullifiers[0]);
+    a1 === 0;
 
     // check that none of the values overflow
     for (var i = 0; i < N; i++) {
@@ -105,7 +108,7 @@ template Transform(N,C) {
       nullifierValueBits[252] === 0;
     }
     for (var i = 0; i < C; i++) {
-      var commitmentValueBits[254] = Num2Bits(254)(commitmentsValues[0]);
+      var commitmentValueBits[254] = Num2Bits(254)(commitmentsValues[i]);
       commitmentValueBits[253] === 0;
       commitmentValueBits[252] === 0;
     }

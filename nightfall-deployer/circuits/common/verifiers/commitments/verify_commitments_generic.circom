@@ -3,6 +3,8 @@ pragma circom 2.1.2;
 include "../../../../node_modules/circomlib/circuits/comparators.circom";
 include "../../../../node_modules/circomlib/circuits/mux1.circom";
 include "../../../../node_modules/circomlib/circuits/poseidon.circom";
+include "../../../../node_modules/circomlib/circuits/comparators.circom";
+include "../../../../node_modules/circomlib/circuits/gates.circom";
 
 /**
  * Verifies that a commitment can be reconstructed from its preimage values. As long as the commitment comes from either the ercAddress
@@ -28,6 +30,8 @@ template VerifyCommitmentsGeneric(C) {
 
     signal output valid;
 
+    signal r[C];
+
     for(var i=0; i < C; i++) {
         // Check if the commitment value is zero
         var isCommitmentValueZero = IsZero()(newCommitmentsValues[i]);
@@ -45,7 +49,9 @@ template VerifyCommitmentsGeneric(C) {
         var commitmentFee = Mux1()([calculatedCommitmentHashFee, 0], isCommitmentValueZero);
 
         // Check either one of the two reconstructed commitments matches with the public transaction commitment hash 
-        assert(commitment == commitmentsHashes[i] || commitmentFee == commitmentsHashes[i]);
+        //  assert(commitment == commitmentsHashes[i] || commitmentFee == commitmentsHashes[i]);
+        r[i] <== OR()(IsEqual()([commitment, commitmentsHashes[i]]), IsEqual()([commitmentFee, commitmentsHashes[i]]));
+        r[i] === 1;
     }
 
     valid <== 1;

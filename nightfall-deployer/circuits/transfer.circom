@@ -8,6 +8,8 @@ include "./common/verifiers/commitments/verify_commitments.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers_generic.circom";
 include "./common/verifiers/verify_encryption.circom";
+include "../node_modules/circomlib/circuits/comparators.circom";
+include "../node_modules/circomlib/circuits/gates.circom";
 
 include "../node_modules/circomlib/circuits/bitify.circom";
 
@@ -66,25 +68,37 @@ template Transfer(N,C) {
     
     // Check that the transaction does not have nullifiers nor commitments duplicated
     var checkDuplicates = VerifyDuplicates(N,C)(nullifiers, commitments);
-    checkDuplicates === 1;
+    checkDuplicates === 0;
 
     // Check that the ercAddress is different than zero (it contains one of the 4 encrypted KemDem values)
-    assert(ercAddress != 0);
+    // assert(ercAddress != 0);
+    signal a1 <== IsZero()(ercAddress);
+    a1 === 0;
 
     // Check that the recipientAddress is different than zero (it contains the second cipher text)
-    assert(recipientAddress != 0);
+    // assert(recipientAddress != 0);
+    signal b1 <== IsZero()(recipientAddress);
+    b1 === 0;
 
     // Check that at least one of the compressed secrets is not zero
-    assert(compressedSecrets[0] != 0 || compressedSecrets[1] != 0);
+    // assert(compressedSecrets[0] != 0 || compressedSecrets[1] != 0);
+    signal c1 <== IsZero()(compressedSecrets[0]);
+    signal c2 <== IsZero()(compressedSecrets[1]);
+    signal r <== AND()(c1, c2);
+    r === 0;
 
     // Check that value is zero
     value === 0;
 
     // Check that the first commitment is different than zero
-    assert(commitments[0] != 0);
+    // assert(commitments[0] != 0);
+    signal d1 <== IsZero()(commitments[0]);
+    d1 === 0;
 
     // Check that the first nullifier is different than zero
-    assert(nullifiers[0] != 0);
+    // assert(nullifiers[0] != 0);
+    signal e1 <== IsZero()(nullifiers[0]);
+    e1 === 0;
 
     // Convert the nullifiers values to numbers and calculate its sum
     var nullifiersSum = 0;
@@ -153,13 +167,22 @@ template Transfer(N,C) {
     checkGenericCommitments.valid === 1;
 
     // Verify the withdraw change
-    assert(commitmentsValues[C - 2] == 0 || (
-        zkpPublicKeys[0] == recipientPublicKey[C - 2][0] && zkpPublicKeys[1] == recipientPublicKey[C - 2][1]));
+    //assert(commitmentsValues[C - 2] == 0 || (
+    //    zkpPublicKeys[0] == recipientPublicKey[C - 2][0] && zkpPublicKeys[1] == recipientPublicKey[C - 2][1]));
+    signal f1 <== IsZero()(commitmentsValues[C - 2]);
+    signal f2 <== IsEqual()([zkpPublicKeys[0], recipientPublicKey[C - 2][0]]);
+    signal f3 <== IsEqual()([zkpPublicKeys[1], recipientPublicKey[C - 2][1]]);
+    signal s <== OR()(f1, AND()(f2, f3));
+    s === 1;
     
     // Verify the fee change
-    assert(commitmentsValues[C - 1] == 0 || (
-        zkpPublicKeys[0] == recipientPublicKey[C - 1][0] && zkpPublicKeys[1] == recipientPublicKey[C - 1][1]));
-
+    // assert(commitmentsValues[C - 1] == 0 || (
+    //     zkpPublicKeys[0] == recipientPublicKey[C - 1][0] && zkpPublicKeys[1] == recipientPublicKey[C - 1][1]));
+    signal g1 <== IsZero()(commitmentsValues[C - 1]);
+    signal g2 <== IsEqual()([zkpPublicKeys[0], recipientPublicKey[C - 1][0]]);
+    signal g3 <== IsEqual()([zkpPublicKeys[1], recipientPublicKey[C - 1][1]]);
+    signal t <== OR()(g1, AND()(g2, g3));
+    t === 1;
 
     var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
     // Check that the encryption of the recipient's commitment preimage was performed appropiately
