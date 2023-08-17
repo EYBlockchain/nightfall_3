@@ -20,8 +20,6 @@ This document describes how to deploy Nightfall so that others can use it after 
 
 [ ] Ensure you can connect to a synchronised blockchain node, exposing a websocket or http port, connected to the chain onto which you wish to deploy. One way to do this if you have Geth installed is with `geth attach <ws | http>://<host>:<port>`
 
-Node connected to <ws://20.22.165.59:8546> (not reachable on EY networks)
-
 [ ] Check that the chain Id is correct.  If you are attached with Geth you can do `net.version` it should be 80001 for Mumbai and 137 for Polygon PoS.
 
 ## Configuration
