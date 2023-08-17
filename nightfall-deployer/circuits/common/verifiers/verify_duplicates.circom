@@ -24,7 +24,7 @@ template VerifyDuplicates(N, C) {
     for(var i = 0; i < N; i++) {
         for(var j = i+1; j < N; j++) {
             // assert(nullifiers[j] == 0 || nullifiers[i] != nullifiers[j]);
-             r[i][j] <-- NOR()(IsZero()(nullifiers[j]), NOT()(IsEqual()([nullifiers[i], nullifiers[j]])));
+             r[i][j] <== NOR()(IsZero()(nullifiers[j]), NOT()(IsEqual()([nullifiers[i], nullifiers[j]])));
              x += r[i][j];
         }
     }
@@ -33,7 +33,7 @@ template VerifyDuplicates(N, C) {
     for(var i = 0; i < C; i++) {
          for(var j = i+1; j < C; j++) {
             // assert(commitments[j] == 0 || commitments[i] != commitments[j]);
-            s[i][j] <-- NOR()(IsZero()(commitments[j]), NOT()(IsEqual()([commitments[i], commitments[j]])));
+            s[i][j] <== NOR()(IsZero()(commitments[j]), NOT()(IsEqual()([commitments[i], commitments[j]])));
             x += s[i][j];
         }
     }

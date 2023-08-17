@@ -50,7 +50,7 @@ describe('Test verify duplicates', function () {
     };
 
     const output = {
-      valid: 1,
+      valid: 0,
     };
 
     const w = await circuit.calculateWitness(input, { logOutput: false });
