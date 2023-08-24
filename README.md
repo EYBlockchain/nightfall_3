@@ -12,7 +12,7 @@ Nightfall is intended as an enterprise application. In its basic form, it does n
 
 This readme, and the other documents that it points to will help you get up and running. There is a Nightfall_3 [Discord](https://discord.gg/EE8CrJ63vP) server too.
 
-We recommend that you get Nightfall_3 operating locally on your laptop before attempting to use it with the deployments on Mumbai or Polygon PoS. It is a fairly complex but powerful application, and so you will need to invest some time to understand it.
+We recommend that you get Nightfall_3 operating locally on your laptop first. It is a fairly complex but powerful application, and so you will need to invest some time to understand it.
 
 ## How to run a local instance for test purposes
 
