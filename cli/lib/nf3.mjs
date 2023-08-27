@@ -1597,7 +1597,7 @@ class Nf3 {
 
     this.web3 = new Web3(provider);
     this.web3.eth.transactionBlockTimeout = 2000;
-    this.web3.eth.transactionConfirmationBlocks = 12;
+    this.web3.eth.transactionConfirmationBlocks = process.env.CONFIRMATIONS || 12;
     if (typeof window !== 'undefined') {
       if (window.ethereum && this.ethereumSigningKey === '') {
         this.web3 = new Web3(window.ethereum);
