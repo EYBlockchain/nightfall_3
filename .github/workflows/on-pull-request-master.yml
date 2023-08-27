@@ -11,7 +11,7 @@ env:
 
 jobs:
   dependency-review:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
@@ -19,7 +19,7 @@ jobs:
         uses: actions/dependency-review-action@v2
 
   eslint-check:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -34,7 +34,7 @@ jobs:
           npm run lint
 
   general-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -49,7 +49,7 @@ jobs:
           npm run test
 
   unit-tests:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -72,7 +72,7 @@ jobs:
             npm run unit-test-x509
 
   unit-test-circuits:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -102,7 +102,7 @@ jobs:
       AUTHENTICATION_KEY: a3322a85-7222-4713-907b-b569679b2dd9
       ENDPOINTS_WHITELISTED: '/commitment/salt\?.*, /contract-address/\w+/?'
       NF_SERVICES_TO_START: blockchain,client,deployer,worker
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -191,7 +191,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -238,7 +238,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -286,7 +286,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
       DEPLOY_MOCKED_SANCTIONS_CONTRACT: true
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -334,7 +334,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -381,7 +381,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -428,7 +428,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -475,7 +475,7 @@ jobs:
       WHITELISTING: enable
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -518,7 +518,7 @@ jobs:
           path: ./ganacx509he-test.log
 
   administrator-test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: administrator,blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -615,7 +615,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,lazy-optimist,bad-client
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -666,7 +666,7 @@ jobs:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,deployer,worker
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -737,7 +737,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     name: check gas transactions per block
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -782,7 +782,7 @@ jobs:
 
   test-apps:
     name: check apps for liveliness
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
     steps:
@@ -820,7 +820,7 @@ jobs:
             curl -i http://localhost:8092/healthcheck
           attempt_limit: 10
           attempt_delay: 30000
-      
+
       - name: 'Check challenger liveliness'
         uses: Wandalen/wretry.action@v1.0.36
         with:
@@ -848,12 +848,11 @@ jobs:
             ./test-apps.log
             ./test-proposer.log
 
-
   periodic-payment-test:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
