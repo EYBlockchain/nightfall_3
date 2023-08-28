@@ -7,6 +7,11 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Cancel in-progress runs only if triggered by 'pull_request'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   DOCKER_BUILDKIT: 1 # enable docker buildkit
   # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
