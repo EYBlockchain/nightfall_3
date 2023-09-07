@@ -131,8 +131,17 @@ template DepositFee(N,C) {
     var checkCommitments = VerifyCommitments(1)(packedErcAddress, idRemainder.out, [commitments[0]], [commitmentsValues[0]], [commitmentsSalts[0]], [recipientPublicKey[0]]);
     checkCommitments === 1;
 
-    var checkCommitmentsFee = VerifyCommitmentsOptional(1)(feeAddress, 0, [commitments[1]], [commitmentsValues[1]], [commitmentsSalts[1]], [recipientPublicKey[1]]);
-    checkCommitmentsFee === 1;
+    component checkCommitmentsFee = VerifyCommitmentsOptional(C-1);
+        checkCommitmentsFee.packedErcAddress <== feeAddress;
+        checkCommitmentsFee.idRemainder <== 0;
+    for(var i = 1; i < C; i++) {
+        checkCommitmentsFee.commitmentsHashes[i-1] <== commitments[i];
+        checkCommitmentsFee.newCommitmentsValues[i-1] <== commitmentsValues[i];
+        checkCommitmentsFee.newCommitmentsSalts[i-1] <== commitmentsSalts[i];
+        checkCommitmentsFee.recipientPublicKey[i-1][0] <== recipientPublicKey[i][0];
+        checkCommitmentsFee.recipientPublicKey[i-1][1] <== recipientPublicKey[i][1];
+    }
+    checkCommitmentsFee.valid === 1;
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
     var nullifierKeys, zkpPublicKeys[2];
@@ -140,9 +149,9 @@ template DepositFee(N,C) {
 
     
     // Check that the nullifiers are valid either using the feeAddress or if value is zero
-    var checkNullifier = VerifyNullifiersOptional(N)(feeAddress, 0, nullifierKeys, zkpPublicKeys, nullifiers, roots,
+    component checkNullifier = VerifyNullifiersOptional(N)(feeAddress, 0, nullifierKeys, zkpPublicKeys, nullifiers, roots,
         nullifiersValues, nullifiersSalts, paths, orders);
-    checkNullifier === 1;
+    checkNullifier.valid === 1;
 
     // Verify the fee change
     // assert(commitmentsValues[1] == 0 || (

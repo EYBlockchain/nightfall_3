@@ -37,8 +37,14 @@ template VerifyNullifiersGeneric(N) {
     signal input feeAddress;
 
     signal output valid;
+    signal output feeTotal;
+    signal output nonFeeTotal;
+
 
     signal r[N];
+
+    var nonFeeSum = 0;
+    var feeSum = 0;
 
     for(var i=0; i < N; i++) {
         // Check if the commitment value is zero
@@ -85,7 +91,13 @@ template VerifyNullifiersGeneric(N) {
         // Check that the roots are equal. If nullifierValue is zero it will directly be considered valid
         var isValidRoot = Mux1()([IsEqualRoots, 1], isNullifierValueZero);
         isValidRoot === 1;
-    }
 
+        // add up the fees and the commitment values. These can be different coins and so can't be validly added together
+        // In the casde where they have the same address, these values will end up equal
+        feeSum += IsEqualNullifierFee * oldCommitmentValues[i];
+        nonFeeSum += IsEqualNullifier * oldCommitmentValues[i];
+    }
     valid <== 1;
+    feeTotal <-- feeSum;
+    nonFeeTotal <-- nonFeeSum;
 }

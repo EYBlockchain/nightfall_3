@@ -34,7 +34,9 @@ template VerifyNullifiersOptional(N) {
     signal input orders[N];
 
     signal output valid;
+    signal output total;
 
+    var sum = 0;
     for(var i=0; i < N; i++) {
         // Check if the commitment value is zero
         var isNullifierValueZero = IsZero()(oldCommitmentValues[i]);
@@ -60,7 +62,9 @@ template VerifyNullifiersOptional(N) {
         // Check that the root is valid
         var isValidRoot = Mux1()([IsEqualRoots, 1], isNullifierValueZero);
         isValidRoot === 1;
+        sum += oldCommitmentValues[i];
     }
 
     valid <== 1;
+    total <-- sum;
 }

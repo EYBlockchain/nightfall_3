@@ -29,9 +29,15 @@ template VerifyCommitmentsGeneric(C) {
     signal input feeAddress;
 
     signal output valid;
+    signal output feeTotal;
+    signal output nonFeeTotal;
 
     signal r[C];
+    signal f[C];
+    signal s[C];
 
+    var feeSum = 0;
+    var nonFeeSum = 0;
     for(var i=0; i < C; i++) {
         // Check if the commitment value is zero
         var isCommitmentValueZero = IsZero()(newCommitmentsValues[i]);
@@ -52,7 +58,15 @@ template VerifyCommitmentsGeneric(C) {
         //  assert(commitment == commitmentsHashes[i] || commitmentFee == commitmentsHashes[i]);
         r[i] <== OR()(IsEqual()([commitment, commitmentsHashes[i]]), IsEqual()([commitmentFee, commitmentsHashes[i]]));
         r[i] === 1;
-    }
 
+        // add up the fees and the commitment values. These can be different coins and so can't always be validly added together
+        // in the case where the address is the same, the two values will end up equal
+        var IsEqualCommitment = IsEqual()([commitment, commitmentsHashes[i]]);
+        var IsEqualCommitmentFee = IsEqual()([commitmentFee, commitmentsHashes[i]]);
+        feeSum += IsEqualCommitmentFee * newCommitmentsValues[i];
+        nonFeeSum += IsEqualCommitment * newCommitmentsValues[i];
+    }
     valid <== 1;
+    feeTotal <-- feeSum;
+    nonFeeTotal <-- nonFeeSum;
 }

@@ -120,7 +120,7 @@ template Withdraw(N,C) {
      
         
     // Check that the value holds
-    nullifiersSum === commitmentsSum + fee + value;
+    // nullifiersSum === commitmentsSum + fee + value;
 
     // Calculate the token Id remainder without the 4 top bytes
     component idRemainder = Bits2Num(224);
@@ -160,8 +160,26 @@ template Withdraw(N,C) {
     checkGenericNullifiers.valid === 1;
 
     // Check that the commimtents are valid either using the ercAddress, the feeAddress or if value is zero
-    var checkCommitments = VerifyCommitmentsGeneric(C)(packedErcAddress, idRemainder.out, commitments, commitmentsValues, commitmentsSalts, recipientPublicKey, feeAddress);
-    checkCommitments === 1;
+    component checkGenericCommitments = VerifyCommitmentsGeneric(C);
+    checkGenericCommitments.packedErcAddress <== packedErcAddress;
+    checkGenericCommitments.idRemainder <== idRemainder.out;
+    checkGenericCommitments.feeAddress <== feeAddress;
+    for(var i = 0; i < C; i++) {
+        checkGenericCommitments.commitmentsHashes[i] <== commitments[i];
+        checkGenericCommitments.newCommitmentsValues[i] <== commitmentsValues[i];
+        checkGenericCommitments.newCommitmentsSalts[i] <== commitmentsSalts[i];
+        checkGenericCommitments.recipientPublicKey[i][0] <== recipientPublicKey[i][0];
+        checkGenericCommitments.recipientPublicKey[i][1] <== recipientPublicKey[i][1];
+    }
+    checkGenericCommitments.valid === 1;
+
+     // constrain input and output values to be equal for both the fee and transaction values.
+    // We have to count differently if the feeAddress and the packedERCAddress are the same and the idRemainder is zero because
+    // then we have no way to differentiate fee and non-fee commitments - in this case we just sum all the values, noting that the fee and non-fee
+    // values are the same becuase they both contain a copy of everything. In this 'degenerate' case, the two constraints become identical.
+    var isDegenerate = AND()(IsEqual()([packedErcAddress, feeAddress]), IsZero()(idRemainder.out));
+    checkGenericNullifiers.nonFeeTotal + nullifiersValues[0] === checkGenericCommitments.nonFeeTotal + fee * isDegenerate + value;
+    checkGenericNullifiers.feeTotal + (nullifiersValues[0] - value) * isDegenerate === checkGenericCommitments.feeTotal + fee;
 
     // Verify the withdraw change
     // assert(commitmentsValues[C - 2] == 0 || 
@@ -172,7 +190,6 @@ template Withdraw(N,C) {
     signal t <== OR()(f1, AND()(f2, f3));
     t === 1;
 
-    
     // Verify the fee change
     // assert(commitmentsValues[C - 1] == 0 || 
     //     (zkpPublicKeys[0] == recipientPublicKey[C - 1][0] && zkpPublicKeys[1] == recipientPublicKey[C - 1][1])); 
