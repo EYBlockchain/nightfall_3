@@ -3,7 +3,6 @@ pragma circom 2.1.2;
 include "./common/utils/calculate_keys.circom";
 include "./common/utils/array_uint32_to_bits.circom";
 include "./common/verifiers/verify_duplicates.circom";
-include "./common/verifiers/commitments/verify_commitments.circom";
 include "./common/verifiers/commitments/verify_commitments_optional.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers_optional.circom";
@@ -95,18 +94,18 @@ template Burn(N,C) {
     n1 === 0;
 
     // Convert the nullifiers values to numbers and calculate its sum
-    // var nullifiersSum = 0;
+    var nullifiersSum = 0;
     for(var i = 0; i < N; i++) {
-        // nullifiersSum += nullifiersValues[i];
+        nullifiersSum += nullifiersValues[i];
         var nullifierValueBits[254] = Num2Bits(254)(nullifiersValues[i]);
         nullifierValueBits[253] === 0;
         nullifierValueBits[252] === 0;
     }
     
     // Convert the commitment values to numbers and calculate its sum
-    // var commitmentsSum = 0;
+    var commitmentsSum = 0;
     for(var i = 0; i < C; i++) {
-        // commitmentsSum += commitmentsValues[i];
+        commitmentsSum += commitmentsValues[i];
         var commitmentValueBits[254] = Num2Bits(254)(commitmentsValues[i]);
         commitmentValueBits[253] === 0;
         commitmentValueBits[252] === 0;
@@ -118,7 +117,7 @@ template Burn(N,C) {
     valuePrivateBits[252] === 0;
 
     // Check that the value holds
-    //nullifiersSum === commitmentsSum + fee + valuePrivate;
+    nullifiersSum === commitmentsSum + fee + valuePrivate;
 
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
@@ -151,32 +150,13 @@ template Burn(N,C) {
     }
     checkFeeNullifiers.valid === 1;
    
-    // Check that the first commitment is valid with packedErcAddress
-    var checkCommitment = VerifyCommitments(1)(packedErcAddressPrivate, idRemainderPrivate, [commitments[0]],[commitmentsValues[0]], [commitmentsSalts[0]], [recipientPublicKey[0]]);
+    // Check that the first commitment is valid either with packedErcAddress or if value is zero
+    var checkCommitment = VerifyCommitmentsOptional(1)(packedErcAddressPrivate, idRemainderPrivate, [commitments[0]],[commitmentsValues[0]], [commitmentsSalts[0]], [recipientPublicKey[0]]);
     checkCommitment === 1;
 
     // Check that the second commitment is valid either with feeAddress or if value is zero
-   // var checkCommitmentFee = VerifyCommitmentsOptional(1)(feeAddress, 0, [commitments[1]],[commitmentsValues[1]], [commitmentsSalts[1]], [recipientPublicKey[1]]);
-   // checkCommitmentFee === 1;
-
-    // Check that the other commitments are valid either using the feeAddress or if value is zero
-    // note that this means we only support burning a single token for simplicity all other commitments are expected to be fees
-    component checkOptionalCommitments = VerifyCommitmentsOptional(C -1);
-    checkOptionalCommitments.packedErcAddress <== feeAddress;
-    checkOptionalCommitments.idRemainder <== 0;
-    for(var i = 1; i < C; i++) {
-        checkOptionalCommitments.commitmentsHashes[i-1] <== commitments[i];
-        checkOptionalCommitments.newCommitmentsValues[i-1] <== commitmentsValues[i];
-        checkOptionalCommitments.newCommitmentsSalts[i-1] <== commitmentsSalts[i];
-        checkOptionalCommitments.recipientPublicKey[i-1][0] <== recipientPublicKey[i][0];
-        checkOptionalCommitments.recipientPublicKey[i-1][1] <== recipientPublicKey[i][1];
-    }
-    checkOptionalCommitments.valid === 1;
-
-    // constrain the fees
-    checkFeeNullifiers.total === checkOptionalCommitments.total + fee;
-    // constrain the L2 value
-    nullifiersValues[0] === commitmentsValues[0] + value;
+    var checkCommitmentFee = VerifyCommitmentsOptional(1)(feeAddress, 0, [commitments[1]],[commitmentsValues[1]], [commitmentsSalts[1]], [recipientPublicKey[1]]);
+    checkCommitmentFee === 1;
 
     // assert(commitmentsValues[0] == 0 || (
     //   zkpPublicKeys[0] == recipientPublicKey[0][0] && zkpPublicKeys[1] == recipientPublicKey[0][1]));

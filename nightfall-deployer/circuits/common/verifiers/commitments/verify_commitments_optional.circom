@@ -24,9 +24,8 @@ template VerifyCommitmentsOptional(C) {
     signal input recipientPublicKey[C][2];
 
     signal output valid;
-    signal output total;
 
-    var sum = 0;
+
     for(var i=0; i < C; i++) {
 
         // Check if the commitment value is zero
@@ -40,9 +39,7 @@ template VerifyCommitmentsOptional(C) {
         
         // Check that the reconstructed commitment hash is equal to the public transaction commitment hash
         commitment === commitmentsHashes[i];
-        sum += newCommitmentsValues[i];
     }
 
     valid <== 1;
-    total <-- sum;
 }
