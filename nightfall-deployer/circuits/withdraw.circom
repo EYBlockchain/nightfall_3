@@ -2,6 +2,7 @@ pragma circom 2.1.2;
 
 include "./common/utils/calculate_keys.circom";
 include "./common/utils/array_uint32_to_bits.circom";
+include "./common/utils/is_token_id_zero.circom";
 include "./common/verifiers/verify_duplicates.circom";
 include "./common/verifiers/commitments/verify_commitments_generic.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers.circom";
@@ -71,9 +72,6 @@ template Withdraw(N,C) {
     signal a1 <== IsZero()(ercAddress);
     a1 === 0;
 
-    var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
-    var tokenIdNum = Bits2Num(256)(tokenIdBits);
-
     //Check that combination id and value matches the token type
     //ERC20 -> Value > 0 and Id == 0
     //ERC721 -> Value == 0
@@ -84,9 +82,9 @@ template Withdraw(N,C) {
     signal r <== XOR()(b1, b2);
     r === 0;
 
-    // assert((tokenType == 0 && tokenIdNum == 0) || tokenType != 0);
+    // assert((tokenType == 0 && tokenId == 0) || tokenType != 0);
     signal c1 <== IsZero()(tokenType);
-    signal c2 <== IsZero()(tokenIdNum);
+    signal c2 <== isTokenIdZero()(tokenId);
     signal s <== OR()(AND()(c1, c2), NOT()(c1));
     s === 1;
     
@@ -117,12 +115,9 @@ template Withdraw(N,C) {
         commitmentValueBits[253] === 0;
         commitmentValueBits[252] === 0;
     }
-     
         
-    // Check that the value holds
-    // nullifiersSum === commitmentsSum + fee + value;
-
     // Calculate the token Id remainder without the 4 top bytes
+    var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
     component idRemainder = Bits2Num(224);
     for(var i = 0; i < 224; i++) {
         idRemainder.in[i] <== tokenIdBits[i];

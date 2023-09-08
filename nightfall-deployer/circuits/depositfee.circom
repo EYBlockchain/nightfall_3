@@ -6,6 +6,7 @@ include "./common/verifiers/commitments/verify_commitments_optional.circom";
 include "./common/verifiers/commitments/verify_commitments.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers_optional.circom";
 include "./common/utils/array_uint32_to_bits.circom";
+include "./common/utils/is_token_id_zero.circom";
 include "../node_modules/circomlib/circuits/comparators.circom";
 include "../node_modules/circomlib/circuits/gates.circom";
 
@@ -71,8 +72,6 @@ template DepositFee(N,C) {
     signal a1 <== IsZero()(ercAddress);
     a1 === 0;
 
-    var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
-    var tokenIdNum = Bits2Num(256)(tokenIdBits);
     //Check that combination id and value matches the token type
     //ERC20 -> Value > 0 and Id == 0
     //ERC721 -> Value == 0
@@ -83,9 +82,9 @@ template DepositFee(N,C) {
     signal r <== XOR()(b1, b2);
     r === 0;
 
-    // assert((tokenType == 0 && tokenIdNum == 0) || tokenType != 0);
+    // assert((tokenType == 0 && tokenId == 0) || tokenType != 0);
     signal c1 <== IsZero()(tokenType);
-    signal c2 <== IsZero()(tokenIdNum);
+    signal c2 <== isTokenIdZero()(tokenId);
     signal s <== OR()(AND()(c1, c2), NOT()(c1));
     s === 1;
 
@@ -114,10 +113,8 @@ template DepositFee(N,C) {
         nullifierValueBits[252] === 0;
     }
 
-    // Check that the commitments sum is equal to the value
-    commitmentsSum + fee === value + nullifiersSum;
-
     // Calculate the token Id remainder without the 4 top bytes
+    var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
     component idRemainder = Bits2Num(224);
     for(var i = 0; i < 224; i++) {
         idRemainder.in[i] <== tokenIdBits[i];
@@ -143,6 +140,11 @@ template DepositFee(N,C) {
     var checkNullifier = VerifyNullifiersOptional(N)(feeAddress, 0, nullifierKeys, zkpPublicKeys, nullifiers, roots,
         nullifiersValues, nullifiersSalts, paths, orders);
     checkNullifier === 1;
+
+    // check that fees are conserved
+    commitmentsValues[1] + fee === nullifiersSum;
+    // check non-fees are conserved
+    nullifiersValues[0] === value;
 
     // Verify the fee change
     // assert(commitmentsValues[1] == 0 || (
