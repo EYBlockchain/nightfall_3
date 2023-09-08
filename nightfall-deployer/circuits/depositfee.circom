@@ -144,7 +144,7 @@ template DepositFee(N,C) {
     // check that fees are conserved
     commitmentsValues[1] + fee === nullifiersSum;
     // check non-fees are conserved
-    nullifiersValues[0] === value;
+    commitmentsValues[0] === value;
 
     // Verify the fee change
     // assert(commitmentsValues[1] == 0 || (
