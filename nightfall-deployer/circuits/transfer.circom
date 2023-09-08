@@ -103,23 +103,23 @@ template Transfer(N,C) {
     // Convert the nullifiers values to numbers and calculate its sum
     var nullifiersSum = 0;
     for(var i = 0; i < N; i++) {
-        nullifiersSum += nullifiersValues[i];
+        // nullifiersSum += nullifiersValues[i];
         var nullifierValueBits[254] = Num2Bits(254)(nullifiersValues[i]);
         nullifierValueBits[253] === 0;
         nullifierValueBits[252] === 0;
     }
     
     // Convert the commitment values to numbers and calculate its sum
-    var commitmentsSum = 0;
+    // var commitmentsSum = 0;
     for(var i = 0; i < C; i++) {
-        commitmentsSum += commitmentsValues[i];
+    //    commitmentsSum += commitmentsValues[i];
         var commitmentValueBits[254] = Num2Bits(254)(commitmentsValues[i]);
         commitmentValueBits[253] === 0;
         commitmentValueBits[252] === 0;
     }
 
     // Check that the value holds
-    nullifiersSum === commitmentsSum + fee;
+   // nullifiersSum === commitmentsSum + fee;
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
     var nullifierKeys, zkpPublicKeys[2];
@@ -166,6 +166,14 @@ template Transfer(N,C) {
     }
     checkGenericCommitments.valid === 1;
 
+    // constrain input and output values to be equal for both the fee and transaction values.
+    // We have to count differently if the feeAddress and the packedERCAddress are the same and the idRemainder is zero because
+    // then we have no way to differentiate fee and non-fee commitments - in this case we just sum all the values, noting that the fee and non-fee
+    // values are the same becuase they both contain a copy of everything. In this 'degenerate' case, the two constraints become identical.
+    var isDegenerate = AND()(IsEqual()([packedErcAddressPrivate, feeAddress]), IsZero()(idRemainderPrivate));
+    checkGenericNullifiers.nonFeeTotal + nullifiersValues[0] === checkGenericCommitments.nonFeeTotal + commitmentsValues[0] + fee * isDegenerate;
+    checkGenericNullifiers.feeTotal + (nullifiersValues[0] - commitmentsValues[0]) * isDegenerate === checkGenericCommitments.feeTotal + fee;
+  
     // Verify the withdraw change
     //assert(commitmentsValues[C - 2] == 0 || (
     //    zkpPublicKeys[0] == recipientPublicKey[C - 2][0] && zkpPublicKeys[1] == recipientPublicKey[C - 2][1]));

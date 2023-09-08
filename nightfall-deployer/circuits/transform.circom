@@ -2,6 +2,7 @@ pragma circom 2.1.0;
 
 include "./common/utils/calculate_keys.circom";
 include "./common/utils/array_uint32_to_bits.circom";
+include "./common/utils/is_token_id_zero.circom";
 include "./common/verifiers/verify_duplicates.circom";
 include "./common/verifiers/commitments/verify_commitments.circom";
 include "./common/verifiers/commitments/verify_commitments_optional.circom";
@@ -88,9 +89,8 @@ template Transform(N,C) {
     value === 0;
 
     // Check that tokenId is zero
-    var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
-    var tokenIdNum = Bits2Num(256)(tokenIdBits);
-    tokenIdNum === 0;
+    var isZero = isTokenIdZero()(tokenId);
+    isZero === 1;
     
     // Check that the recipient address is zero
     // assert(recipientAddress == 0);
@@ -116,18 +116,20 @@ template Transform(N,C) {
     // check the fee nullifiers and fee commitments by looking at the input addresses
     var feeNullifiersSum = 0;
     for (var i = 0; i < N; i++) {
-      var isFee = inputPackedAddressesPrivate[i] == feeAddress;
+      var isFee = IsEqual()([inputPackedAddressesPrivate[i],feeAddress]);
       feeNullifiersSum += nullifiersValues[i] * isFee;
     }
 
     var feeCommitmentSum = 0;
     for (var i = 0; i < C; i++) {
-      var isFee = outputPackedAddressesPrivate[i] == feeAddress;
+      var isFee = IsEqual()([outputPackedAddressesPrivate[i], feeAddress]);
       feeCommitmentSum += commitmentsValues[i] * isFee;
     }
+    signal in <-- feeNullifiersSum;
+    signal out <-- feeCommitmentSum;
 
-    // Check that the value holds
-    var feeIsCovered = feeNullifiersSum - feeCommitmentSum - fee;
+    // Constrain the fees so that new 'fees' can't be added from an L2 commitment
+    in === fee + out;
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
     var nullifierKeys, zkpPublicKeys[2];

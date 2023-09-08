@@ -2,6 +2,7 @@ pragma circom 2.1.2;
 
 include "./common/utils/calculate_keys.circom";
 include "./common/utils/array_uint32_to_bits.circom";
+include "./common/utils/is_token_id_zero.circom";
 include "./common/verifiers/verify_duplicates.circom";
 include "./common/verifiers/commitments/verify_commitments_optional.circom";
 include "./common/verifiers/commitments/verify_commitments.circom";
@@ -80,9 +81,8 @@ template Tokenise(N,C) {
     value === 0;
 
     // Check that tokenId is zero
-    var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
-    var tokenIdNum = Bits2Num(256)(tokenIdBits);
-    tokenIdNum === 0;
+    var isZero = isTokenIdZero()(tokenId);
+    isZero === 1;
     
     // Check that the recipient address is zero
     recipientAddress === 0;
@@ -115,8 +115,10 @@ template Tokenise(N,C) {
     valuePrivateBits[253] === 0;
     valuePrivateBits[252] === 0;
 
-    // Check that the value holds
-    nullifiersSum + valuePrivate === commitmentsSum + fee;
+    // Check that fees are conserved
+    nullifiersSum === fee + commitmentsValues[1];
+    // check that the non-fees are conserved
+    valuePrivate === commitmentsValues[0];
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
     var nullifierKeys, zkpPublicKeys[2];

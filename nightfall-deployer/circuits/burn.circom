@@ -2,6 +2,7 @@ pragma circom 2.1.2;
 
 include "./common/utils/calculate_keys.circom";
 include "./common/utils/array_uint32_to_bits.circom";
+include "./common/utils/is_token_id_zero.circom";
 include "./common/verifiers/verify_duplicates.circom";
 include "./common/verifiers/commitments/verify_commitments_optional.circom";
 include "./common/verifiers/nullifiers/verify_nullifiers.circom";
@@ -80,9 +81,12 @@ template Burn(N,C) {
     value === 0;
 
     // Check that tokenId is zero
+    var isZero = isTokenIdZero()(tokenId);
+    isZero === 1;
+    
     var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
-    var tokenIdNum = Bits2Num(256)(tokenIdBits);
-    tokenIdNum === 0;
+    // var tokenIdNum = Bits2Num(256)(tokenIdBits);
+    // tokenIdNum === 0;
     
     // Check that the recipient address is zero
     // assert(recipientAddress == 0);
@@ -94,31 +98,33 @@ template Burn(N,C) {
     n1 === 0;
 
     // Convert the nullifiers values to numbers and calculate its sum
-    var nullifiersSum = 0;
     for(var i = 0; i < N; i++) {
-        nullifiersSum += nullifiersValues[i];
         var nullifierValueBits[254] = Num2Bits(254)(nullifiersValues[i]);
         nullifierValueBits[253] === 0;
         nullifierValueBits[252] === 0;
     }
+    var feeNullifiersSum = 0;
+    for(var i = 1; i < N; i++) {
+        feeNullifiersSum += nullifiersValues[i];
+    }    
     
     // Convert the commitment values to numbers and calculate its sum
-    var commitmentsSum = 0;
     for(var i = 0; i < C; i++) {
-        commitmentsSum += commitmentsValues[i];
         var commitmentValueBits[254] = Num2Bits(254)(commitmentsValues[i]);
         commitmentValueBits[253] === 0;
         commitmentValueBits[252] === 0;
     }
 
+    signal nullifiedFees <-- feeNullifiersSum;
+    // Constrain the fees so that new 'fees' can't be added from an L2 commitment
+    nullifiedFees === fee + commitmentsValues[1];
+    // constrain the value
+    nullifiersValues[0] === valuePrivate + commitmentsValues[0];
+
     // Check that value doesn't overflow
     var valuePrivateBits[254] = Num2Bits(254)(valuePrivate);
     valuePrivateBits[253] === 0;
     valuePrivateBits[252] === 0;
-
-    // Check that the value holds
-    nullifiersSum === commitmentsSum + fee + valuePrivate;
-
 
     // Calculate the nullifierKeys and the zkpPublicKeys from the root key
     var nullifierKeys, zkpPublicKeys[2];

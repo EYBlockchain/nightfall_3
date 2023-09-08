@@ -3,6 +3,7 @@ pragma circom 2.1.2;
 include "./common/verifiers/verify_duplicates.circom";
 include "./common/verifiers/commitments/verify_commitments.circom";
 include "./common/utils/array_uint32_to_bits.circom";
+include "./common/utils/is_token_id_zero.circom";
 include "../node_modules/circomlib/circuits/comparators.circom";
 include "../node_modules/circomlib/circuits/gates.circom";
 
@@ -58,8 +59,6 @@ template Deposit(N,C) {
     signal a1 <== IsZero()(ercAddress);
     a1 === 0;
 
-    var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
-    var tokenIdNum = Bits2Num(256)(tokenIdBits);
     //Check that combination id and value matches the token type
     //ERC20 -> Value > 0 and Id == 0
     //ERC721 -> Value == 0
@@ -70,9 +69,9 @@ template Deposit(N,C) {
     signal r1 <== XOR()(b1, b2);
     r1 === 0;
 
-    // assert((tokenType == 0 && tokenIdNum == 0) || tokenType != 0);
+    // assert((tokenType == 0 && tokenId == 0) || tokenType != 0);
     signal c1 <== IsZero()(tokenType);
-    signal c2 <== IsZero()(tokenIdNum);
+    signal c2 <== isTokenIdZero()(tokenId);
     signal r2 <== OR()(AND()(c1, c2), NOT()(c1));
     r2 === 1;
 
@@ -96,6 +95,7 @@ template Deposit(N,C) {
     commitmentsSum + fee === value;
 
     // Calculate the token Id remainder without the 4 top bytes
+    var tokenIdBits[256] = ArrayUint32ToBits(8)(tokenId);
     component idRemainder = Bits2Num(224);
     for(var i = 0; i < 224; i++) {
         idRemainder.in[i] <== tokenIdBits[i];
