@@ -29,8 +29,14 @@ import {
 } from '../services/database.mjs';
 import { decryptCommitment } from '../services/commitment-sync.mjs';
 import { syncState } from '../services/state-sync.mjs';
+import DataPublisher from '../utils/dataPublisher.mjs';
 
-const { TIMBER_HEIGHT, HASH_TYPE, TXHASH_TREE_HASH_TYPE } = config;
+const {
+  TIMBER_HEIGHT,
+  HASH_TYPE,
+  TXHASH_TREE_HASH_TYPE,
+  WEBHOOK: { CALL_WEBHOOK_ON_CONFIRMATION, WEBHOOK_PATH, WEBHOOK_SIGNING_KEY },
+} = config;
 const { ZERO, WITHDRAW } = constants;
 
 const { generalise } = gen;
@@ -241,6 +247,31 @@ async function blockProposedEventHandler(data, syncing) {
         }
       }),
     );
+  }
+
+  // Send finalization details via webhook optionally, if CALL_WEBHOOK_ON_CONFIRMATION
+  // is enabled
+  if (CALL_WEBHOOK_ON_CONFIRMATION) {
+    if (!WEBHOOK_PATH) {
+      throw new Error('WEBHOOK_PATH is not set');
+    }
+    const dataToPublish = {
+      proposer: block.proposer,
+      blockNumberL2: block.blockNumberL2,
+      transactionHashes: block.transactionHashes,
+    };
+    logger.info({ msg: 'Calling webhook', url: WEBHOOK_PATH, data: dataToPublish });
+    try {
+      await new DataPublisher([
+        {
+          type: 'webhook',
+          url: `${WEBHOOK_PATH}`,
+          signingKey: WEBHOOK_SIGNING_KEY,
+        },
+      ]).publish(dataToPublish);
+    } catch (err) {
+      logger.error(`ERROR: Calling webhook ${JSON.stringify(err)}`);
+    }
   }
 }
 
