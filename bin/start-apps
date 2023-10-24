@@ -1,2 +1,36 @@
 #! /bin/bash
-docker-compose -f docker/docker-compose.apps.yml -p 'nightfall_3' up
+
+trap "docker-compose -f docker/docker-compose.apps.yml -p 'nightfall_3' down --remove-orphans -t 1; exit 1" SIGHUP SIGINT SIGTERM
+
+usage()
+{
+  echo "Usage:"
+  echo "  -c or --challenger; to start the challenger"
+  echo "  -p or --proposer; to start the proposer"
+  echo "  -h or --help; to print this message"
+  echo "If nothing is specified then both challenger and proposer will be run"
+  echo "if APP_SERVICES_TO _START is exported then it will override the above, acceptable values are 'challenger', 'proposer', 'challenger,proposer'"
+}
+# if APP_SERVICES_TO_START already exists then it overrides anything we attempt to set with this script.
+if [ -z "$APP_SERVICES_TO_START" ]; then
+    if [ -z "$$1" ]; then
+    APP_SERVICES_TO_START="challenger,proposer"
+    fi
+
+    while [ -n "$1" ]; do
+    case $1 in
+        -c  | --challenger )            APP_SERVICES_TO_START=$APP_SERVICES_TO_START" challenger"
+                                        ;;
+        -p  | --proposer )              APP_SERVICES_TO_START=$APP_SERVICES_TO_START" proposer"
+                                        ;;
+        -h  | --help )                  usage
+                                        exit 0
+                                        ;;
+        * )                             usage
+                                        exit 1
+        esac
+    shift
+    done
+fi
+
+docker-compose -f docker/docker-compose.apps.yml -p 'nightfall_3' up ${APP_SERVICES_TO_START//,/ }
