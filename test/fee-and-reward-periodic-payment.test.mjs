@@ -10,6 +10,7 @@
 import chai from 'chai';
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
+import sinon from 'sinon';
 import Nf3 from '../cli/lib/nf3.mjs';
 
 import { getLayer2Balances, Web3Client } from './utils.mjs';
@@ -47,9 +48,14 @@ async function logProposerStats() {
 }
 
 describe('Periodic Payment', () => {
+  let clock;
   let erc20Address;
 
   before(async () => {
+    clock = sinon.useFakeTimers({
+      now: Date.now(),
+      shouldAdvanceTime: true,
+    });
     await nf3User.init(mnemonics.user1);
     await nf3Proposer.init(mnemonics.proposer);
     await nf3Proposer.setWeb3Provider();
@@ -96,7 +102,7 @@ describe('Periodic Payment', () => {
 
   it('Start periodic payment job', async () => {
     nf3Proposer.startPeriodicPayment('*/03 * * * *'); // At every 3rd minute
-    await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+    await clock.tickAsync(300_000); // wait till cron job trigger next and does it job
     const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
     expect(Number(feesL2)).to.be.equal(0);
   });
@@ -120,7 +126,7 @@ describe('Periodic Payment', () => {
       for (const blockHash of blockHashs) {
         await nf3Proposer.requestBlockPayment(blockHash);
       }
-      await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+      await clock.tickAsync(300_000); // wait till cron job trigger next and does it job
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(0);
     });
@@ -153,7 +159,7 @@ describe('Periodic Payment', () => {
         for (const blockHash of blockHashs) {
           await nf3Proposer.requestBlockPayment(blockHash);
         }
-        await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+        await clock.tickAsync(300_000); // wait till cron job trigger next and does it job
         const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
         expect(Number(feesL2)).to.be.equal(2); // could not withdraw because limit is 3 now
       });
@@ -166,7 +172,7 @@ describe('Periodic Payment', () => {
         await nf3Proposer.requestBlockPayment(
           (await nf3Proposer.getProposerPendingPayments()).map(rec => rec.blockHash)[0],
         );
-        await new Promise(reslove => setTimeout(reslove, 300000)); // wait till cron job trigger next and does it job
+        await clock.tickAsync(300_000); // wait till cron job trigger next and does it job
         const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
         expect(Number(feesL2)).to.be.equal(0);
       });
@@ -200,7 +206,7 @@ describe('Periodic Payment', () => {
       for (const blockHash of blockHashs) {
         await nf3Proposer.requestBlockPayment(blockHash);
       }
-      await new Promise(reslove => setTimeout(reslove, 600000)); // wait till cron job trigger next and does it job (if cron job exist)
+      await clock.tickAsync(600_000); // wait till cron job trigger next and does it job
       const { feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL2)).to.be.equal(2);
     });
@@ -217,7 +223,7 @@ describe('Periodic Payment', () => {
 
     it('Start periodic payment job', async () => {
       nf3Proposer.startPeriodicPayment('*/01 * * * *'); // At every minute
-      await new Promise(reslove => setTimeout(reslove, 100000)); // wait till cron job trigger next and does it job
+      await clock.tickAsync(100_000); // wait till cron job trigger next and does it job
       const { feesL1, feesL2 } = await nf3Proposer.getPendingWithdrawsFromStateContract();
       expect(Number(feesL1)).to.be.equal(0);
       expect(Number(feesL2)).to.be.equal(0);
@@ -229,5 +235,6 @@ describe('Periodic Payment', () => {
     await nf3Proposer.close();
     await nf3User.close();
     web3Client.closeWeb3();
+    clock.restore();
   });
 });
