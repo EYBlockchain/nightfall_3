@@ -4,6 +4,14 @@ on:
   pull_request:
     branches: [master]
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Cancel in-progress runs only if triggered by 'pull_request'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   DOCKER_BUILDKIT: 1 # enable docker buildkit
   # Whitelisting is disabled during testing for backwards compatibility with these tests.  It must not be disabled in production.
@@ -12,6 +20,7 @@ env:
 jobs:
   dependency-review:
     runs-on: ubuntu-20.04
+    timeout-minutes: 20
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
@@ -20,6 +29,7 @@ jobs:
 
   eslint-check:
     runs-on: ubuntu-20.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -35,6 +45,7 @@ jobs:
 
   general-tests:
     runs-on: ubuntu-20.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -50,6 +61,7 @@ jobs:
 
   unit-tests:
     runs-on: ubuntu-20.04
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -73,6 +85,7 @@ jobs:
 
   unit-test-circuits:
     runs-on: ubuntu-20.04
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -103,6 +116,7 @@ jobs:
       ENDPOINTS_WHITELISTED: '/commitment/salt\?.*, /contract-address/\w+/?'
       NF_SERVICES_TO_START: blockchain,client,deployer,worker
     runs-on: ubuntu-20.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -192,6 +206,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -239,6 +254,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -287,6 +303,7 @@ jobs:
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
       DEPLOY_MOCKED_SANCTIONS_CONTRACT: true
     runs-on: ubuntu-20.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -335,6 +352,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -382,6 +400,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -429,6 +448,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -470,12 +490,14 @@ jobs:
         with:
           name: ganache-test-logs
           path: ./ganache-test.log
+
   x509-test:
     env:
       WHITELISTING: enable
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -519,6 +541,7 @@ jobs:
 
   administrator-test:
     runs-on: ubuntu-20.04
+    timeout-minutes: 45
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: administrator,blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -566,6 +589,7 @@ jobs:
 
   optimist-sync-test:
     runs-on: ubuntu-22.04
+    timeout-minutes: 50
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -616,6 +640,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker,lazy-optimist,bad-client
     runs-on: ubuntu-20.04
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -667,6 +692,7 @@ jobs:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,deployer,worker
     runs-on: ubuntu-20.04
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -738,6 +764,7 @@ jobs:
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     name: check gas transactions per block
     runs-on: ubuntu-20.04
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -783,6 +810,7 @@ jobs:
   test-apps:
     name: check apps for liveliness
     runs-on: ubuntu-20.04
+    timeout-minutes: 45
     env:
       NF_SERVICES_TO_START: blockchain,deployer,optimist,worker
     steps:
@@ -820,7 +848,7 @@ jobs:
             curl -i http://localhost:8092/healthcheck
           attempt_limit: 10
           attempt_delay: 30000
-      
+
       - name: 'Check challenger liveliness'
         uses: Wandalen/wretry.action@v1.0.36
         with:
@@ -848,12 +876,12 @@ jobs:
             ./test-apps.log
             ./test-proposer.log
 
-
   periodic-payment-test:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
     runs-on: ubuntu-20.04
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
