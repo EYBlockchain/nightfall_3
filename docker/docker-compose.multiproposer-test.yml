@@ -119,6 +119,7 @@ services:
       - optimist_mongodb_1
       - client_rabbitmq_1
     environment:
+      CONFIRMATIONS: ${CONFIRMATIONS}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
@@ -164,6 +165,7 @@ services:
       - optimist_mongodb_2
       - client_rabbitmq_2
     environment:
+      CONFIRMATIONS: ${CONFIRMATIONS}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
@@ -202,6 +204,7 @@ services:
         source: build
         target: /app/build/
     environment:
+      CONFIRMATIONS: ${CONFIRMATIONS}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8080}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
@@ -245,6 +248,7 @@ services:
         source: ../config/default.js
         target: /app/config/default.js
     environment:
+      CONFIRMATIONS: ${CONFIRMATIONS}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       WEBSOCKET_PORT: ${WEBSOCKET_PORT:-8080}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
@@ -304,6 +308,7 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: 8546
+      CONFIRMATIONS: ${CONFIRMATIONS}
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: proposer_optimist_1
       OPTIMIST_PORT: 80
@@ -336,6 +341,7 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: 8546
+      CONFIRMATIONS: ${CONFIRMATIONS}
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: proposer_optimist_2
       OPTIMIST_PORT: 80
@@ -368,6 +374,7 @@ services:
     environment:
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
       BLOCKCHAIN_PORT: 8546
+      CONFIRMATIONS: ${CONFIRMATIONS}
       ENABLE_QUEUE: 1
       OPTIMIST_HOST: proposer_optimist_1
       OPTIMIST_PORT: 80

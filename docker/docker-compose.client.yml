@@ -16,6 +16,7 @@ services:
       - worker_1
       - mongodb_client_1
     environment:
+      CONFIRMATIONS: ${CONFIRMATIONS}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}

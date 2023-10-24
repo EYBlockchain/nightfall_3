@@ -17,6 +17,7 @@ services:
         source: build_optimist_1
         target: /app/build/
     environment:
+      CONFIRMATIONS: ${CONFIRMATIONS}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
       WEBSOCKET_PORT: 8080
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
