@@ -25,8 +25,7 @@
     "ffjavascript": "^0.2.62",
     "jsonfile": "^6.1.0",
     "snarkjs": "^0.5.0",
-    "tar": "^6.2.0",
-    "web3": "^1.10.3"
+    "tar": "^6.2.0"
   },
   "devDependencies": {
     "async": "^3.2.5",
