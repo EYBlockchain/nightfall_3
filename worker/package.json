@@ -18,23 +18,23 @@
     "circomlib": "^2.0.5",
     "cls-hooked": "^4.2.2",
     "common-files": "file:../common-files",
-    "config": "^3.3.7",
+    "config": "^3.3.9",
     "cors": "2.8.5",
-    "express": "^4.17.1",
-    "express-fileupload": "^1.4.0",
-    "ffjavascript": "^0.2.56",
+    "express": "^4.18.2",
+    "express-fileupload": "^1.4.2",
+    "ffjavascript": "^0.2.62",
     "jsonfile": "^6.1.0",
     "snarkjs": "^0.5.0",
-    "tar": "^6.1.11",
-    "web3": "^1.7.5"
+    "tar": "^6.2.0",
+    "web3": "^1.10.3"
   },
   "devDependencies": {
-    "async": "^3.2.2",
-    "chai": "^4.2.0",
-    "chai-http": "^4.3.0",
-    "mocha": "^10.0.0",
-    "nodemon": "^2.0.19",
-    "url-parse": "^1.5.9"
+    "async": "^3.2.5",
+    "chai": "^4.3.10",
+    "chai-http": "^4.4.0",
+    "mocha": "^10.2.0",
+    "nodemon": "^2.0.22",
+    "url-parse": "^1.5.10"
   },
   "nodemonConfig": {
     "verbose": true,

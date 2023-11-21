@@ -9,25 +9,25 @@
   "description": "nightfall_3 common files",
   "dependencies": {
     "axios": "^0.21.4",
-    "body-parser": "^1.19.0",
+    "body-parser": "^1.20.2",
     "cls-hooked": "^4.2.2",
-    "config": "^3.3.8",
+    "config": "^3.3.9",
     "cors": "^2.8.5",
-    "express-fileupload": "^1.4.0",
+    "express-fileupload": "^1.4.2",
     "general-number": "^1.0.1",
-    "keccak": "^3.0.2",
-    "mongodb": "^4.7.0",
-    "pino": "^8.3.1",
+    "keccak": "^3.0.4",
+    "mongodb": "^4.17.1",
+    "pino": "^8.16.2",
     "pino-pretty": "^8.1.0",
     "queue": "^6.0.2",
     "safe-buffer": "^5.2.1",
     "uuid": "^8.3.2",
-    "web3": "^1.7.5",
-    "ws": "^8.5.0"
+    "web3": "^1.10.3",
+    "ws": "^8.14.2"
   },
   "devDependencies": {
-    "chai": "^4.3.6",
-    "mocha": "^10.0.0"
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0"
   },
   "overrides": {
     "swarm-js": {
