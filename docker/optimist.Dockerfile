@@ -29,7 +29,12 @@ COPY --chown=$USERNAME config/default.js app/config/default.js
 WORKDIR /common-files
 RUN npm ci
 
+USER root
 WORKDIR /app
+RUN chown -R $USERNAME:$USERNAME /app
+ 
+USER $USERNAME
+
 COPY --chown=$USERNAME nightfall-optimist/src src
 COPY --chown=$USERNAME nightfall-optimist/docker-entrypoint.sh nightfall-optimist/package*.json ./
 
