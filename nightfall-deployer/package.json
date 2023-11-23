@@ -19,6 +19,7 @@
     "url": "https://github.com/EYBlockchain/nightfall-deployer/issues"
   },
   "homepage": "https://github.com/EYBlockchain/nightfall-deployer#readme",
+
   "dependencies": {
     "@openzeppelin/contracts": "^4.7.2",
     "@openzeppelin/contracts-upgradeable": "^4.7.3",
@@ -32,12 +33,12 @@
     "hex-to-binary": "^1.0.1",
     "safe-buffer": "^5.2.1",
     "truffle": "^5.5.28",
-    "web3": "^1.7.5"
+    "web3": "^4.1.0"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@openzeppelin/truffle-upgrades": "^1.13.0",
-    "@truffle/hdwallet-provider": "^2.0.10",
+    "@truffle/hdwallet-provider": "^2.1.15",
     "hardhat": "^2.11.2",
     "solc": "^0.8.9",
     "truffle-contract-size": "^2.0.1"
@@ -54,6 +55,9 @@
     },
     "solc": {
       "yargs-parser": "5.0.1"
+    },
+    "request": {
+      "tough-cookie": "4.1.3"
     }
   }
 }
