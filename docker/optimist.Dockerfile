@@ -24,14 +24,14 @@ ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 WORKDIR /
 COPY --chown=$USERNAME common-files common-files
-COPY config/default.js app/config/default.js
+COPY --chown=$USERNAME config/default.js app/config/default.js
 
 WORKDIR /common-files
 RUN npm ci
 
 WORKDIR /app
-COPY nightfall-optimist/src src
-COPY nightfall-optimist/docker-entrypoint.sh nightfall-optimist/package*.json ./
+COPY --chown=$USERNAME nightfall-optimist/src src
+COPY --chown=$USERNAME nightfall-optimist/docker-entrypoint.sh nightfall-optimist/package*.json ./
 
 RUN npm ci
 
