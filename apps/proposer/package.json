@@ -11,14 +11,14 @@
   "license": "CC0-1.0",
   "dependencies": {
     "async-mutex": "^0.3.2",
-    "body-parser": "^1.19.2",
-    "common-files": "file:./../../common-files",
-    "config": "^3.3.1",
+    "body-parser": "^1.20.2",
+    "common-files": "file:../../common-files",
+    "config": "^3.3.9",
     "cors": "^2.8.5",
-    "express": "^4.17.3",
+    "express": "^4.18.2",
     "reconnecting-websocket": "^4.4.0",
-    "web3": "^1.7.5",
-    "ws": "^8.2.3"
+    "web3": "^4.1.0",
+    "ws": "^8.14.2"
   },
   "overrides": {
     "swarm-js": {
