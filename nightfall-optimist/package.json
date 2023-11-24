@@ -30,8 +30,8 @@
     ]
   },
   "dependencies": {
-    "axios": "^0.21.4",
-    "body-parser": "1.19.0",
+    "axios": "^1.6.2",
+    "body-parser": "^1.20.2",
     "common-files": "file:../common-files",
     "config": "^3.3.1",
     "cors": "2.8.5",
@@ -43,14 +43,14 @@
     "mongodb": "^4.7.0",
     "queue": "^6.0.2",
     "safe-buffer": "^5.2.1",
-    "snarkjs": "^0.5.0",
+    "snarkjs": "^0.7.2",
     "tar": "^6.1.11",
-    "web3": "^1.7.5",
+    "web3": "^4.2.2",
     "ws": "^7.4.3"
   },
   "devDependencies": {
     "mocha": "^10.0.0",
-    "nodemon": "^2.0.19"
+    "nodemon": "^3.0.1"
   },
   "overrides": {
     "swarm-js": {
