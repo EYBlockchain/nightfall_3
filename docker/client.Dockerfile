@@ -1,4 +1,11 @@
-FROM node:16.17-bullseye-slim
+FROM node:20.9.0-bullseye-slim
+
+ARG USERNAME=app_user
+ARG USER_UID=1001
+ARG USER_GID=$USER_UID
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 
 # 'node-gyp' requires 'python3', 'make' and 'g++''
 # entrypoint script requires 'netcat'
@@ -12,17 +19,19 @@ EXPOSE 80 9229
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 WORKDIR /
-COPY common-files common-files
-COPY config/default.js app/config/default.js
+COPY --chown=$USERNAME common-files common-files
+COPY --chown=$USERNAME config/default.js app/config/default.js
 
 WORKDIR /common-files
 RUN npm ci
 
 WORKDIR /app
 
-COPY nightfall-client/src src
-COPY nightfall-client/docker-entrypoint.sh nightfall-client/package.json nightfall-client/package-lock.json ./
+COPY --chown=$USERNAME nightfall-client/src src
+COPY --chown=$USERNAME nightfall-client/docker-entrypoint.sh nightfall-client/package.json nightfall-client/package-lock.json ./
 
 RUN npm ci
+
+USER $USERNAME
 
 CMD ["npm", "start"]
