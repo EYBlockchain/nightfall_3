@@ -24,8 +24,16 @@ async function getProposeBlockCalldata(eventData) {
   // Remove the '0x' and function signature to recove rhte abi bytecode
   const abiBytecode = `0x${tx.input.slice(10)}`;
   const decoded = web3.eth.abi.decodeParameters(SIGNATURES.PROPOSE_BLOCK, abiBytecode);
-  const blockData = decoded['0'];
-  const transactionsData = decoded['1'];
+  const blockData = Object.values(decoded['0']).map(value => value.toString());
+
+  const transactionsData = decoded['1'].map(obj =>
+    Object.keys(obj) // get all keys of the object
+      .sort((a, b) => Number(a) - Number(b)) // sort keys in numeric order
+      .filter(key => !isNaN(key)) // we don't want non-numeric keys
+      .map(key => {
+        return Array.isArray(obj[key]) ? obj[key].map(val => val.toString()) : obj[key].toString();
+      }),
+  );
   const [packedBlockInfo, root, previousBlockHash, frontierHash, transactionHashesRoot] = blockData;
 
   const { leafCount, proposer, blockNumberL2 } = unpackBlockInfo(packedBlockInfo);
@@ -53,7 +61,6 @@ async function getProposeBlockCalldata(eventData) {
 
     const { value, fee, circuitHash, tokenType } =
       Transaction.unpackTransactionInfo(packedTransactionInfo);
-
     const historicRootBlockNumberL2 = Transaction.unpackHistoricRoot(
       nullifiers.length,
       historicRootBlockNumberL2Packed,

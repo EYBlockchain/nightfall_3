@@ -83,7 +83,7 @@ async function blockProposedEventHandler(data, syncing) {
     .flat(Infinity);
 
   let timeBlockL2 = await getTimeByBlock(transactionHashL1);
-  timeBlockL2 = new Date(timeBlockL2 * 1000);
+  timeBlockL2 = new Date(Number(timeBlockL2) * 1000);
 
   const dbUpdates = transactions.map(async transaction => {
     let saveTxToDb = false;
@@ -151,15 +151,11 @@ async function blockProposedEventHandler(data, syncing) {
       }
     }
 
+    const bNumber = Number(data.blockNumber);
     return Promise.all([
       saveTxToDb,
-      markOnChain(nonZeroCommitments, block.blockNumberL2, data.blockNumber, data.transactionHash),
-      markNullifiedOnChain(
-        nonZeroNullifiers,
-        block.blockNumberL2,
-        data.blockNumber,
-        data.transactionHash,
-      ),
+      markOnChain(nonZeroCommitments, block.blockNumberL2, bNumber, data.transactionHash),
+      markNullifiedOnChain(nonZeroNullifiers, block.blockNumberL2, bNumber, data.transactionHash),
     ]);
   });
 
@@ -167,7 +163,12 @@ async function blockProposedEventHandler(data, syncing) {
     // only save block if any transaction in it is saved/stored to db
     const saveBlockToDb = updateReturn.map(d => d[0]);
     if (saveBlockToDb.includes(true)) {
-      await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, timeBlockL2, ...block });
+      await saveBlock({
+        blockNumber: Number(currentBlockCount),
+        transactionHashL1,
+        timeBlockL2,
+        ...block,
+      });
     }
   });
 

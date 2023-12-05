@@ -167,9 +167,8 @@ async function checkHistoricRootBlockNumber(
   if (lastValidBlockNumberL2) {
     latestBlockNumberL2 = lastValidBlockNumberL2;
   } else {
-    latestBlockNumberL2 = Number(
-      (await stateConractInstance.methods.getNumberOfL2Blocks().call()) - 1,
-    );
+    latestBlockNumberL2 =
+      Number(await stateConractInstance.methods.getNumberOfL2Blocks()) - Number(1);
   }
 
   logger.debug({ msg: `Latest valid block number in L2`, latestBlockNumberL2 });

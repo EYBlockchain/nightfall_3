@@ -60,7 +60,7 @@ export async function syncState(
     .concat(pastShieldEvents)
     .concat(pastStateEvents)
     .concat(pastChallengeEvents)
-    .sort((a, b) => a.blockNumber - b.blockNumber);
+    .sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
   logger.info({ msg: 'Replaying past events' });
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];
@@ -118,9 +118,9 @@ const checkBlocks = async () => {
 
 export async function initialBlockSync(proposer) {
   const stateContractInstance = await waitForContract(STATE_CONTRACT_NAME);
-  const lastBlockNumberL2 = Number(
-    (await stateContractInstance.methods.getNumberOfL2Blocks().call()) - 1,
-  );
+  const lastBlockNumberL2 =
+    Number(await stateContractInstance.methods.getNumberOfL2Blocks().call()) - Number(1);
+
   if (lastBlockNumberL2 === -1) {
     unpauseQueue(0); // queues are started paused, therefore we need to unpause them before proceeding.
     unpauseQueue(1);

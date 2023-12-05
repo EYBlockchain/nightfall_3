@@ -112,7 +112,7 @@ find which block a transaction went into. Note, we'll save all blocks, that get
 posted to the blockchain, not just ours.
 */
 export async function saveBlock(_block) {
-  const block = { _id: _block.blockNumberL2, ..._block };
+  const block = { _id: _block.blockNumberL2, blockNumber: Number(_block.blockNumber), ..._block };
   if (!block.transactionHashL1)
     throw new Error('Layer 2 blocks must be saved with a valid Layer 1 transactionHash');
   if (!block.blockNumber)
@@ -198,12 +198,13 @@ Transaction Collection
  * Save an unprocessed transaction
  */
 export async function saveTransaction(_transaction) {
-  const { mempool = true, blockNumberL2 = -1 } = _transaction;
+  const { mempool = true, blockNumberL2 = -1, blockNumber } = _transaction;
   const transaction = {
     _id: _transaction.transactionHash,
     ..._transaction,
     mempool,
     blockNumberL2,
+    blockNumber: Number(blockNumber),
   };
   logger.debug({
     msg: 'Saving transaction',

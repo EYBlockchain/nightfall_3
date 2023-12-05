@@ -89,13 +89,18 @@ async function blockProposedEventHandler(data) {
 
   // We get the L1 block time in order to save it in the database to have this information available
   let timeBlockL2 = await getTimeByBlock(transactionHashL1);
-  timeBlockL2 = new Date(timeBlockL2 * 1000);
+  timeBlockL2 = new Date(Number(timeBlockL2) * 1000);
   try {
     // save the block to facilitate later lookup of block data
     // we will save before checking because the database at any time should reflect the state the blockchain holds
     // when a challenge is raised because the is correct block data, then the corresponding block deleted event will
     // update this collection
-    await saveBlock({ blockNumber: currentBlockCount, transactionHashL1, timeBlockL2, ...block });
+    await saveBlock({
+      blockNumber: Number(currentBlockCount),
+      transactionHashL1,
+      timeBlockL2,
+      ...block,
+    });
 
     // It's possible that some of these transactions are new to us. That's because they were
     // submitted by someone directly to another proposer and so there was never a TransactionSubmitted
@@ -142,7 +147,8 @@ async function blockProposedEventHandler(data) {
       HASH_TYPE,
       TIMBER_HEIGHT,
     );
-    const res = await saveTree(currentBlockCount, block.blockNumberL2, updatedTimber);
+    const blockNumber = Number(currentBlockCount);
+    const res = await saveTree(blockNumber, block.blockNumberL2, updatedTimber);
     logger.debug(`Saving tree with block number ${block.blockNumberL2}, ${res}`);
     // signal to the block-making routines that a block is received: they
     // won't make a new block until their previous one is stored on-chain.

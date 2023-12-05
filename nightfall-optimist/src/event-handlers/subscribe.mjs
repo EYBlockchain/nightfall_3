@@ -116,7 +116,8 @@ export async function subscribeToProposedBlockWebSocketConnection(callback, ...a
   wss.on('connection', ws => {
     ws.on('message', message => {
       try {
-        if (JSON.parse(message).type === 'sync') {
+        // if (JSON.parse(message).type === 'sync') {
+        if (message === 'sync') {
           logger.info(`Subscribing to ProposedBlock`);
 
           setupWebsocketEvents(ws, 'publisher');

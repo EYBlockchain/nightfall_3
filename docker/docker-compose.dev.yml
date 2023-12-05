@@ -36,6 +36,10 @@ services:
         target: /config/default.js
     ports:
       - 9239:9229
+    environment:
+      - CALL_WEBHOOK_ON_CONFIRMATION=true
+      - WEBHOOK_PATH=http://host.docker.internal:3099/zk-tx-response
+      - WEBHOOK_SIGNING_KEY='test'
     command: ['npm', 'run', 'dev']
 
   deployer:

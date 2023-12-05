@@ -40,7 +40,7 @@ export const syncState = async (
   // Put all events together and sort chronologically as they appear on Ethereum
   const splicedList = pastStateEvents
     .concat(pastChallengeEvents)
-    .sort((a, b) => a.blockNumber - b.blockNumber);
+    .sort((a, b) => Number(a.blockNumber) - Number(b.blockNumber));
   logger.info({ msg: 'Replaying past events' });
   for (let i = 0; i < splicedList.length; i++) {
     const pastEvent = splicedList[i];

@@ -44,6 +44,12 @@ COPY --chown=$USERNAME nightfall-deployer/truffle-config.js truffle-config.js
 COPY --chown=$USERNAME nightfall-deployer/circuits circuits
 COPY --chown=$USERNAME nightfall-deployer/entrypoint.sh entrypoint.sh
 
+RUN mkdir -p /app/build/contracts
+RUN mkdir /app/.openzeppelin
+
+RUN chown -R $USERNAME:$USERNAME /app/build/contracts
+RUN chown -R $USERNAME:$USERNAME /app/.openzeppelin
+
 
 RUN npm install --no-optional
 
