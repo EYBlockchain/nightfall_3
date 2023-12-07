@@ -104,6 +104,7 @@ module.exports = {
           privateKeys: [config.ETH_PRIVATE_KEY],
           providerOrUrl: config.BLOCKCHAIN_URL,
           chainId: 80001,
+          pollingInterval: 40000,
         }),
       network_id: 80001,
       networkCheckTimeout: 1000000000,
@@ -112,6 +113,7 @@ module.exports = {
       websockets: true,
       gasPrice: config.WEB3_OPTIONS.gasPrice,
       gas: config.WEB3_OPTIONS.gas,
+      disableConfirmationListener: true,
     },
     polygonPos: {
       provider: () =>
