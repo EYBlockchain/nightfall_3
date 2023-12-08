@@ -17,9 +17,8 @@ RUN  apt-get update \
     python3 make g++ netcat-openbsd \
     &&  rm -rf /var/lib/apt/lists/*
 
-USER $USERNAME
 
-EXPOSE 80
+# EXPOSE 80
 
 ENV CIRCOM_HOME /app
 
@@ -46,5 +45,7 @@ RUN mkdir /app/output
 RUN chown -R $USERNAME:$USERNAME /app/output
 
 RUN npm ci
+
+USER $USERNAME
 
 CMD ["npm", "start"]
