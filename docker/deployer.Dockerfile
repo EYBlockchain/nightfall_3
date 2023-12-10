@@ -1,4 +1,4 @@
-FROM node:20.9.0-bullseye-slim
+FROM node:18.19.0-bullseye-slim
 
 ARG USERNAME=app_user
 ARG USER_UID=1001
@@ -51,6 +51,6 @@ RUN chown -R $USERNAME:$USERNAME /app/build/contracts
 RUN chown -R $USERNAME:$USERNAME /app/.openzeppelin
 
 
-RUN npm install --no-optional
+RUN npm ci
 
 ENTRYPOINT ["/app/entrypoint.sh"]
