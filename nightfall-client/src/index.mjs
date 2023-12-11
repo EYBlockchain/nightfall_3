@@ -15,7 +15,7 @@ const main = async () => {
   // _isSyncing that informs if client is syncing. On the other hand,
   // a middleware function is checking this variable. If client is still syncing,
   // it will just return a 400
-  app.listen(80);
+  app.listen(process.env.CLIENT_SERVER_PORT || 80);
   app.set('isSyncing', true);
   try {
     if (process.env.ENABLE_QUEUE) {

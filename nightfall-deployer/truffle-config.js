@@ -104,7 +104,7 @@ module.exports = {
           privateKeys: [config.ETH_PRIVATE_KEY],
           providerOrUrl: config.BLOCKCHAIN_URL,
           chainId: 80001,
-          pollingInterval: 40000,
+          pollingInterval: 40000000,
         }),
       network_id: 80001,
       networkCheckTimeout: 1000000000,
