@@ -1,4 +1,4 @@
-FROM node:18.19.0-bullseye-slim
+FROM node:16.17.0-bullseye-slim
 
 ARG USERNAME=app_user
 ARG USER_UID=1001
