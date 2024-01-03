@@ -63,7 +63,8 @@ export default {
       gas = config.WEB3_OPTIONS.gas;
       logger.warn({ msg: 'Gas estimation failed, use default', gas });
     }
-    gas = Math.ceil(gas * 2); // 50% seems a more than reasonable buffer
+    // gas = Math.ceil(gas * 2); // 50% seems a more than reasonable buffer
+    gas *= BigInt(2);
     return gas;
   },
 

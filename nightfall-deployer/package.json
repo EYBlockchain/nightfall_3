@@ -31,7 +31,7 @@
     "config": "^3.3.1",
     "hex-to-binary": "^1.0.1",
     "safe-buffer": "^5.2.1",
-    "truffle": "5.1.35",
+    "truffle": "^5.1.35",
     "web3": "^1.7.5"
   },
   "devDependencies": {
@@ -39,7 +39,7 @@
     "@openzeppelin/truffle-upgrades": "^1.13.0",
     "@truffle/hdwallet-provider": "^2.0.10",
     "hardhat": "^2.11.2",
-    "solc": "^0.8.9",
+    "solc": "0.8.17",
     "truffle-contract-size": "^2.0.1"
   },
   "overrides": {
