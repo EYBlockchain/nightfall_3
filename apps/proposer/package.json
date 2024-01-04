@@ -23,6 +23,9 @@
   "overrides": {
     "swarm-js": {
       "got": "11.8.5"
+    },
+    "request": {
+      "tough-cookie": "4.1.3"
     }
   }
 }
