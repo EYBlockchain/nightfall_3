@@ -1,0 +1,11 @@
+# This container is intended to support a run of the mend/whitesource scanner for this codebase
+version: '3.8'
+
+services:
+  mend-scanner:
+    # Uncomment the below line if you want to debug the container
+    # command: ['tail', '-f', '/dev/null']
+    build:
+      context: ./
+      dockerfile: mend/mend.dockerfile
+    pull_policy: never
