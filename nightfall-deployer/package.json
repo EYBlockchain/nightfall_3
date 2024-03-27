@@ -35,10 +35,13 @@
     "web3": "^1.7.5"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.0.5",
     "@openzeppelin/truffle-upgrades": "^1.13.0",
     "@truffle/hdwallet-provider": "^2.0.10",
-    "hardhat": "^2.11.2",
+    "ethers": "^6.11.1",
+    "hardhat": "^2.22.2",
     "solc": "^0.8.9",
     "truffle-contract-size": "^2.0.1"
   },
