@@ -9,22 +9,6 @@ module.exports = {
     'func-names': 'off',
     'no-sparse-arrays': 'off',
   },
-  parser: 'babel-eslint', // Uses babel-eslint transforms.
-  parserOptions: {
-    ecmaFeatures: {
-      jsx: true,
-    },
-    ecmaVersion: 2018, // Allows for the parsing of modern ECMAScript features
-    sourceType: 'module', // Allows for the use of imports
-  },
-  settings: {
-    'import/resolver': {
-      node: {
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        moduleDirectory: ['./wallet/node_modules', './wallet/src/'],
-      },
-    },
-  },
   globals: {
     BigInt: 'true',
   },

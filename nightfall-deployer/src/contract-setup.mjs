@@ -10,6 +10,7 @@ import { getContractInstance } from 'common-files/utils/contract.mjs';
 import logger from 'common-files/utils/logger.mjs';
 
 async function setupContracts() {
+  logger.debug('Getting web3js contract instances');
   const proposersContract = await getContractInstance('Proposers');
   const shieldContract = await getContractInstance('Shield');
   const challengesContract = await getContractInstance('Challenges');

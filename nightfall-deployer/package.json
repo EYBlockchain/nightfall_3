@@ -32,7 +32,8 @@
     "hex-to-binary": "^1.0.1",
     "safe-buffer": "^5.2.1",
     "truffle": "^5.5.28",
-    "web3": "^1.7.5"
+    "web3": "^1.7.5",
+    "hardhat": "^2.22.2"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
@@ -41,7 +42,6 @@
     "@openzeppelin/truffle-upgrades": "^1.13.0",
     "@truffle/hdwallet-provider": "^2.0.10",
     "ethers": "^6.11.1",
-    "hardhat": "^2.22.2",
     "solc": "^0.8.9",
     "truffle-contract-size": "^2.0.1"
   },

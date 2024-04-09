@@ -94,11 +94,11 @@ module.exports = async function (deployer) {
   await challengers.setBootChallenger(bootChallenger);
 
   // restrict transfer amounts if required
-  if (RESTRICTIONS.restrict ) {
+  if (RESTRICTIONS.restrict) {
     await shield.restrictTokens(true);
     for (const token of RESTRICTIONS.tokens[process.env.ETH_NETWORK]) {
-    
-      if (token.name === 'ERC20Mock') 
+
+      if (token.name === 'ERC20Mock')
         continue; // ignore test tokens, they're already handled in the test_tokens migration
 
       console.log(
@@ -123,10 +123,10 @@ module.exports = async function (deployer) {
   await shield.setFeeL2TokenAddress(feeL2TokenAddress);
   await state.setFeeL2TokenAddress(feeL2TokenAddress);
 
-   // set the authorisation contract interfaces
-   await shield.setAuthorities(sanctionsContractAddress, X509.address)
-   await proposers.setAuthorities(sanctionsContractAddress, X509.address)
-   await challengers.setAuthorities(sanctionsContractAddress, X509.address)
+  // set the authorisation contract interfaces
+  await shield.setAuthorities(sanctionsContractAddress, X509.address)
+  await proposers.setAuthorities(sanctionsContractAddress, X509.address)
+  await challengers.setAuthorities(sanctionsContractAddress, X509.address)
 
   console.log('Whitelisting is enabled unless it says "disable" here:', process.env.WHITELISTING);
   if (process.env.WHITELISTING === 'disable') {

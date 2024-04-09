@@ -20,8 +20,8 @@ WORKDIR /app
 COPY nightfall-deployer/package*.json ./
 COPY nightfall-deployer/src src
 COPY nightfall-deployer/contracts contracts
-COPY nightfall-deployer/migrations migrations
-COPY nightfall-deployer/truffle-config.js truffle-config.js
+COPY nightfall-deployer/scripts scripts
+COPY nightfall-deployer/hardhat.config.js hardhat.config.js
 COPY nightfall-deployer/circuits circuits
 COPY nightfall-deployer/entrypoint.sh entrypoint.sh
 
