@@ -6,7 +6,7 @@ FILE=
 usage()
 {
   echo "Usage:"
-  echo "  -g or --ganache; for a ganache simulator"
+  echo "  -g or --hardhat; for a hardhat simulator"
   echo "  -l or --localhost; to connect to an already running blockchain on ws://localhost:8546"
   echo "  -h or --help; to print this message"
   echo "  -d or --dev; to bind mount the filesystem and use it for development"
@@ -22,7 +22,7 @@ fi
 rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
-      -g  | --ganache )             FILE="-f docker/docker-compose.yml -f docker/docker-compose.ganache.yml";
+      -g  | --hardhat )             FILE="-f docker/docker-compose.yml -f docker/docker-compose.hardhat.yml"
                                     ;;
       -l  | --localhost )           FILE="-f docker/docker-compose.yml -f docker/docker-compose.host.docker.internal.yml"
                                     ;;
