@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v2
+        uses: actions/dependency-review-action@v4
 
   eslint-check:
     runs-on: ubuntu-20.04
@@ -512,7 +512,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: x509-test-logs
-          path: ./ganacx509he-test.log
+          path: ./x509-test.log
 
   administrator-test:
     runs-on: ubuntu-20.04
