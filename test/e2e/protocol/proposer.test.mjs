@@ -289,7 +289,7 @@ describe('Basic Proposer tests', () => {
     }
   });
 
-  it('should create a passing withdrawStake (because sufficient time has passed)', async () => {
+  it('should create a passing withdrawStake (because sufficient time has passed)', async function () {
     const nodeInfo = await web3Client.getInfo();
     if (!nodeInfo.includes('TestRPC')) {
       logger.info('Not using a time-jump capable test client so this test is skipped');
