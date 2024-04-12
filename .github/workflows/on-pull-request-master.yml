@@ -24,13 +24,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
       - name: eslint check
         run: |
           npm ci
-          cd wallet/
-          npm ci
-          cd ..
           npm run lint
 
   general-tests:
@@ -39,7 +36,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
       - name: General Tests
         run: |
           npm ci
@@ -54,7 +51,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
       - name: Unit Tests
         run: |
           npm ci
@@ -77,7 +74,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
       - name: Install Circom
         run: |
           curl https://sh.rustup.rs -sSf -o rust.sh
@@ -107,7 +104,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -196,7 +193,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -243,7 +240,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -291,7 +288,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -339,7 +336,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -386,7 +383,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -433,7 +430,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -480,7 +477,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -526,7 +523,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -573,7 +570,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
@@ -620,7 +617,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Build adversary
         run: npm run build-adversary
@@ -671,7 +668,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Build adversary
         run: npm run build-adversary
@@ -742,7 +739,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers with anvil
         run: |
@@ -789,7 +786,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers with anvil
         run: |
@@ -858,7 +855,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.17.0'
+          node-version: '18.19.1'
 
       - name: Start Containers
         run: |
