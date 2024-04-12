@@ -234,7 +234,7 @@ jobs:
           name: circuit-test-logs
           path: ./circuit-test.log
 
-  ganache-protocol-test:
+  anvil-protocol-test:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -248,7 +248,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g -d &> anvil-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.36
@@ -260,7 +260,7 @@ jobs:
 
       - name: Debug logs - after image builds
         if: always()
-        run: cat ganache-test.log
+        run: cat anvil-test.log
 
       - name: Run integration test
         run: |
@@ -268,7 +268,7 @@ jobs:
 
       - name: Debug logs - after integration test run
         if: always()
-        run: cat ganache-test.log
+        run: cat anvil-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -278,10 +278,10 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
+          name: anvil-test-logs
+          path: ./anvil-test.log
 
-  ganache-erc20-test:
+  anvil-erc20-test:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -296,7 +296,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g -d &> anvil-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.36
@@ -308,7 +308,7 @@ jobs:
 
       - name: Debug logs - after image builds
         if: always()
-        run: cat ganache-test.log
+        run: cat anvil-test.log
 
       - name: Run integration test
         run: |
@@ -317,7 +317,7 @@ jobs:
       - name: Debug logs - after integration test run
         if: always()
         run: |
-          cat ganache-test.log
+          cat anvil-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -327,10 +327,10 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
+          name: anvil-test-logs
+          path: ./anvil-test.log
 
-  ganache-erc721-test:
+  anvil-erc721-test:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -344,7 +344,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g -d &> anvil-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.36
@@ -356,7 +356,7 @@ jobs:
 
       - name: Debug logs - after image builds
         if: always()
-        run: cat ganache-test.log
+        run: cat anvil-test.log
 
       - name: Run integration test
         run: |
@@ -364,7 +364,7 @@ jobs:
 
       - name: Debug logs - after integration test run
         if: always()
-        run: cat ganache-test.log
+        run: cat anvil-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -374,10 +374,10 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
+          name: anvil-test-logs
+          path: ./anvil-test.log
 
-  ganache-erc1155-test:
+  anvil-erc1155-test:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -391,7 +391,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g -d &> anvil-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.36
@@ -403,7 +403,7 @@ jobs:
 
       - name: Debug logs - after image builds
         if: always()
-        run: cat ganache-test.log
+        run: cat anvil-test.log
 
       - name: Run integration test
         run: |
@@ -411,7 +411,7 @@ jobs:
 
       - name: Debug logs - after integration test run
         if: always()
-        run: cat ganache-test.log
+        run: cat anvil-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -421,10 +421,10 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
+          name: anvil-test-logs
+          path: ./anvil-test.log
 
-  ganache-tokenisation-l2-test:
+  anvil-tokenisation-l2-test:
     env:
       CONFIRMATIONS: 1
       NF_SERVICES_TO_START: blockchain,client,deployer,mongodb,optimist,rabbitmq,worker
@@ -438,7 +438,7 @@ jobs:
       - name: Start Containers
         run: |
           ./bin/setup-nightfall
-          ./bin/start-nightfall -g -d &> ganache-test.log &disown
+          ./bin/start-nightfall -g -d &> anvil-test.log &disown
 
       - name: Wait for images to be ready
         uses: Wandalen/wretry.action@v1.0.36
@@ -450,7 +450,7 @@ jobs:
 
       - name: Debug logs - after image builds
         if: always()
-        run: cat ganache-test.log
+        run: cat anvil-test.log
 
       - name: Run integration test
         run: |
@@ -458,7 +458,7 @@ jobs:
 
       - name: Debug logs - after integration test run
         if: always()
-        run: cat ganache-test.log
+        run: cat anvil-test.log
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
@@ -468,8 +468,8 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@master
         with:
-          name: ganache-test-logs
-          path: ./ganache-test.log
+          name: anvil-test-logs
+          path: ./anvil-test.log
   x509-test:
     env:
       WHITELISTING: enable
@@ -508,7 +508,7 @@ jobs:
 
       - name: If integration test failed, shutdown the Containers
         if: failure()
-        run: docker-compose -f docker-compose.yml -f docker-compose.ganache.yml down -v
+        run: docker-compose -f docker-compose.yml -f docker-compose.anvil.yml down -v
 
       - name: If integration test failed, upload logs files as artifacts
         if: failure()
@@ -744,7 +744,7 @@ jobs:
         with:
           node-version: '16.17.0'
 
-      - name: Start Containers with ganache
+      - name: Start Containers with anvil
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-gas.log &disown
@@ -791,7 +791,7 @@ jobs:
         with:
           node-version: '16.17.0'
 
-      - name: Start Containers with ganache
+      - name: Start Containers with anvil
         run: |
           ./bin/setup-nightfall
           ./bin/start-nightfall -g -d &> test-apps.log &disown

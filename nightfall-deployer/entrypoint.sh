@@ -18,8 +18,8 @@ if [[ "${SKIP_DEPLOYMENT}" != "true" ]]; then
     npx hardhat --network "${ETH_NETWORK}" run scripts/deploy.js 
     echo 'Contracts deployed successfully'
   else
-    echo 'Upgrading contracts'
-    npx hardhat --network "${ETH_NETWORK}" run scripts/upgrade.js
+    echo 'Upgrading contracts is not implemented yet'
+    # npx hardhat --network "${ETH_NETWORK}" run scripts/upgrade.js
   fi
 fi
 

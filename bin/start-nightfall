@@ -22,7 +22,7 @@ fi
 rm -f ${ENV_FILE}
 while [ -n "$1" ]; do
   case $1 in
-      -g  | --hardhat )             FILE="-f docker/docker-compose.yml -f docker/docker-compose.hardhat.yml"
+      -g  | --hardhat )             FILE="-f docker/docker-compose.yml -f docker/docker-compose.anvil.yml"
                                     ;;
       -l  | --localhost )           FILE="-f docker/docker-compose.yml -f docker/docker-compose.host.docker.internal.yml"
                                     ;;

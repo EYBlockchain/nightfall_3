@@ -60,5 +60,5 @@ if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"worker"* ]]
 fi
 
 if [[ -z "${NF_SERVICES_TO_START}" || "${NF_SERVICES_TO_START}" == *"blockchain"* ]]; then
-  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.hardhat.yml build ${NO_CACHE_FLAG} blockchain
+  docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.anvil.yml build ${NO_CACHE_FLAG} blockchain
 fi

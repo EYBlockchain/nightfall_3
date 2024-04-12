@@ -42,11 +42,12 @@ module.exports = {\
                     balance: "10000000000000000000000",\
                 },\
             ],\
-            loggingEnabled: false,\
+            loggingEnabled: true,\
             mining: {\
                 auto: false,\
-                interval: 1000,\
+                interval: 10000,\
             },\
+            timeout: 100_000_000,\
         },\
     },\
 }\

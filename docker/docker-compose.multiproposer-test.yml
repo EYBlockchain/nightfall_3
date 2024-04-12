@@ -27,11 +27,11 @@ services:
         source: ../config/default.js
         target: /app/config/default.js
       - type: bind
-        source: ../nightfall-deployer/migrations
-        target: /app/migrations
+        source: ../nightfall-deployer/scripts
+        target: /app/scripts
       - type: bind
-        source: ../nightfall-deployer/truffle-config.js
-        target: /app/truffle-config.js
+        source: ../nightfall-deployer/hardhat.config.js
+        target: /app/hardhat.config.js
       - type: bind
         source: ../nightfall-deployer/entrypoint.sh
         target: /app/entrypoint.sh
@@ -44,7 +44,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-debug}
       LOG_HTTP_PAYLOAD_ENABLED: ${LOG_HTTP_PAYLOAD_ENABLED:-true}
       LOG_HTTP_FULL_DATA: ${LOG_HTTP_FULL_DATA:-false}
-      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # ETH_NETWORK sets the network selected by Hardhat from hardhat.config.js
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}

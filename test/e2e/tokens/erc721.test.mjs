@@ -89,6 +89,7 @@ describe('ERC721 tests', () => {
   });
 
   describe('Deposits', () => {
+    console.log('**********************Starting tests');
     it('Should increment user L2 balance after depositing some ERC721', async function () {
       const userL2Erc721Before = await getLayer2Erc721s(nf3User);
       const userL2FeesBalanceBefore = await getLayer2Balances(nf3User, erc20Address);

@@ -106,6 +106,10 @@ export class Web3Client {
     return this.web3.eth.getBalance(account);
   }
 
+  getBlockTime() {
+    return this.web3.eth.getBlock('latest');
+  }
+
   getIsSubmitTxLocked() {
     return this.isSubmitTxLocked;
   }
@@ -207,8 +211,8 @@ export class Web3Client {
     }
     if (counter < 0) {
       throw new Error(
-        `No events found with in ${
-          retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
+        // eslint-disable-next-line prettier/prettier
+        `No events found with in ${retries || Number(process.env.EVENT_RETRIEVE_RETRIES) || 3
         }retries of ${WAIT}ms wait`,
       );
     }

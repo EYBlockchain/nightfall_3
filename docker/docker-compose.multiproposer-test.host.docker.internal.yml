@@ -23,7 +23,7 @@ services:
       - 'host.docker.internal:host-gateway'
     environment:
       LOG_LEVEL: debug
-      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # ETH_NETWORK sets the network selected by Hardhart from hardhat.config.js
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: development
       BLOCKCHAIN_WS_HOST: host.docker.internal
