@@ -701,7 +701,7 @@ export async function restartOptimist(nf3Proposer, dropDb = true) {
     config: [
       'docker/docker-compose.yml',
       'docker/docker-compose.dev.yml',
-      'docker/docker-compose.ganache.yml',
+      'docker/docker-compose.anvil.yml',
     ],
     log: process.env.LOG_LEVEL || 'silent',
     composeOptions: [['-p', 'nightfall_3']],
