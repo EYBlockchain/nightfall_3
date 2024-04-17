@@ -219,7 +219,6 @@ describe('DerParser contract functions', function () {
         1,
         ethers.constants.AddressZero,
       );
-
       // now presenting the Entrust mock cert should also work
       await X509Instance.validateCertificate(
         entrustMock.derBuffer,
@@ -234,7 +233,6 @@ describe('DerParser contract functions', function () {
 
     // refer to index 3 in the contract if testing self-signed certs
     const oidIndex = TEST_SELF_GENERATED_CERTS ? 3 : 0;
-
     // now presenting the end user cert should also work
     await X509Instance.validateCertificate(
       certChain[0].derBuffer,
@@ -245,7 +243,6 @@ describe('DerParser contract functions', function () {
       oidIndex,
       ethers.constants.AddressZero,
     );
-
     // we should now be able to pass an x509 check for this address
     result = await X509Instance.x509Check(addressToSign);
     expect(result).to.equal(true);
