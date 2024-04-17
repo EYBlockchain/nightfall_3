@@ -5,6 +5,7 @@ address.
 import { getContractInstance } from 'common-files/utils/contract.mjs';
 import constants from 'common-files/constants/index.mjs';
 import { buildBlockSolidityStruct } from 'common-files/utils/block-utils.mjs';
+import logger from 'common-files/utils/logger.mjs';
 import { Transaction } from '../classes/index.mjs';
 // eslint-disable-next-line import/no-cycle
 
@@ -24,6 +25,7 @@ export async function isValidWithdrawal({ block, transaction, index, siblingPath
       .call();
     return valid;
   } catch (err) {
+    logger.error(err);
     return false;
   }
 }

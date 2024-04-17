@@ -12,7 +12,7 @@ To perform a deployment follow the instructions bellow:
   - `MULTISIG_SIGNATURE_THRESHOLD`
   - `MULTISIG_APPROVERS`
 
-2. One entry should be added under `networks` in the `truffle-config.js` file, similar to the following:
+2. One entry should be added under `networks` in the `hardhat.config.js` file, similar to the following:
   ```
       [NETWORK_NAME]: {
         provider: () => new HDWalletProvider(config.ETH_PRIVATE_KEY, config.BLOCKCHAIN_URL),

@@ -1,4 +1,4 @@
-FROM node:16.17-bullseye-slim
+FROM node:18.19.1-bullseye-slim
 
 # 'node-gyp' requires 'python3', 'make' and 'g++''
 # entrypoint script requires 'netcat'

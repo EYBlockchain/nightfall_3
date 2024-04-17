@@ -38,13 +38,8 @@ export async function clearCachedContracts() {
 }
 
 export async function getContractAddress(contractName) {
-  let deployedAddress;
   const contractInterface = await getContractInterface(contractName);
-  const networkId = config.ENVIRONMENTS[config.ENVIRONMENT].chainId || 1337; // await web3.eth.getChainId();
-  if (contractInterface && contractInterface.networks && contractInterface.networks[networkId]) {
-    deployedAddress = contractInterface.networks[networkId].address;
-  }
-  return deployedAddress;
+  return contractInterface.address;
 }
 
 export async function getContractAbi(contractName) {
@@ -78,7 +73,6 @@ export async function getContractInstance(contractName, deployedAddress) {
     // eslint-disable-next-line no-param-reassign
     deployedAddress = await getContractAddress(contractName);
   }
-
   const contractInstance = deployedAddress
     ? new web3.eth.Contract(contractInterface.abi, deployedAddress, options)
     : new web3.eth.Contract(contractInterface.abi, options);
@@ -146,11 +140,12 @@ export async function waitForContract(contractName) {
       errorCount++;
 
       logger.warn({
-        msg: 'Unable to get contract instance, retrying in 3 secs',
+        msg: 'Unable to get contract instance, retrying in 10 secs',
         contractName,
       });
 
-      await new Promise(resolve => setTimeout(() => resolve(), 3000)); // eslint-disable-line no-await-in-loop
+      // eslint-disable-next-line no-undef
+      await new Promise(resolve => setTimeout(() => resolve(), 10000)); // eslint-disable-line no-await-in-loop
     }
   }
   if (error) throw error;

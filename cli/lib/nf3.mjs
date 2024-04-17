@@ -401,6 +401,7 @@ class Nf3 {
   */
   _sendTransaction(tx) {
     if (this.ethereumSigningKey) {
+      logger.debug('sending signed transaction');
       return this.web3.eth.sendSignedTransaction(tx.rawTransaction);
     }
     return this.web3.eth.sendTransaction(tx);

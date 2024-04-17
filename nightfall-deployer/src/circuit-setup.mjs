@@ -31,6 +31,7 @@ async function waitForWorker() {
         `No response from worker yet.  That's ok. We'll wait three seconds and try again...`,
       );
 
+      // eslint-disable-next-line no-undef
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
   } catch (err) {
@@ -46,6 +47,7 @@ async function waitForWorker() {
 async function walk(dir) {
   let files = await fsPromises.readdir(dir);
   files = files.filter(file => !file.includes(config.EXCLUDE_DIRS)); // remove common dir
+  // eslint-disable-next-line no-undef
   files = await Promise.all(
     files.map(async file => {
       const filePath = path.join(dir, file);

@@ -59,11 +59,11 @@ services:
         source: ../config/default.js
         target: /app/config/default.js
       - type: bind
-        source: ../nightfall-deployer/migrations
-        target: /app/migrations
+        source: ../nightfall-deployer/scripts
+        target: /app/scripts
       - type: bind
-        source: ../nightfall-deployer/truffle-config.js
-        target: /app/truffle-config.js
+        source: ../nightfall-deployer/hardhat.config.js
+        target: /app/hardhat.config.js
       - type: bind
         source: ../nightfall-deployer/entrypoint.sh
         target: /app/entrypoint.sh

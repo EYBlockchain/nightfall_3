@@ -85,7 +85,7 @@ services:
       DEPLOY_MOCK_TOKENS: ${DEPLOY_MOCK_TOKENS:-false}
       DEPLOY_MOCKED_SANCTIONS_CONTRACT: ${DEPLOY_MOCKED_SANCTIONS_CONTRACT:-false}
       ENVIRONMENT: ${ENVIRONMENT:-localhost}
-      # ETH_NETWORK sets the network selected by Truffle from truffle-config.js
+      # ETH_NETWORK sets the network selected by Hardhat from harhdat-config.js
       # startup routines will wait for a blockchain client to be reachable on this network
       ETH_NETWORK: ${ETH_NETWORK:-blockchain}
       ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}

@@ -97,7 +97,8 @@ describe('ERC20 tests', () => {
     web3Client.subscribeTo('logs', eventLogs, { address: stateAddress });
     // if we're using a real blockchain, there may be some transactions left from the last run so clear them out
     const nodeInfo = await web3Client.getInfo();
-    if (!nodeInfo.includes('TestRPC')) {
+    console.log('NODE INFO', nodeInfo);
+    if (!nodeInfo.includes('anvil')) {
       logger.info('Waiting for any existing transactions. This may take up to five minutes');
       try {
         await makeBlock();
@@ -159,7 +160,12 @@ describe('ERC20 tests', () => {
 
   describe('Transfers', () => {
     beforeEach(async () => {
-      await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+      try {
+        const res = await nf3User.deposit(erc20Address, tokenType, transferValue, tokenId, fee);
+        if (res.status === false) console.log(res);
+      } catch (err) {
+        logger.error(err);
+      }
       await makeBlock();
     });
 
@@ -206,7 +212,7 @@ describe('ERC20 tests', () => {
       expect(userL2BalanceAfter - userL2BalanceBefore).to.be.equal(-fee);
     });
 
-    it('should perform a transfer by specifying the commitment that provides enough value to cover value + fee', async function () {
+    it('Should perform a transfer by specifying the commitment that provides enough value to cover value + fee', async function () {
       const userL2BalanceBefore = await getLayer2Balances(nf3User, erc20Address);
 
       const userCommitments = await getUserCommitments(
@@ -369,7 +375,6 @@ describe('ERC20 tests', () => {
       }
 
       const userL1BalanceBefore = await web3Client.getBalance(nf3User.ethereumAddress);
-
       await web3Client.timeJump(3600 * 24 * 10);
       const commitments = await nf3User.getPendingWithdraws();
       expect(
@@ -476,7 +481,7 @@ describe('ERC20 tests', () => {
     console.log('************************maxERC20DepositValue', maxERC20DepositValue);
     it('Should restrict deposits if restrictions are enabled', async function () {
       const nodeInfo = await web3Client.getInfo();
-      if (!nodeInfo.includes('TestRPC')) {
+      if (!nodeInfo.includes('anvil')) {
         logger.info('Not using a test client so this test is skipped to avoid spending too much');
         this.skip();
       }

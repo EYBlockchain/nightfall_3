@@ -137,7 +137,7 @@ The script `./bin/geth-standalone` will run up a private blockchain consisting o
 on `host.docker.internal:8546`. On a Mac this will map to `localhost` but it won't work on any other machine. If you aren't on a Mac then you can do one of these 3 options:
 
 - If you are on a Linux you can edit `/etc/hosts` file and add a map from the private IP address of your connected interface to the domain `host.docker.internal`. In this case, `127.0.0.1` is not valid. You can check your private IP address with `ip address`.
-- Edit `nightfall-deployer/truffle-config.js` to point to the IP of your `localhost`
+- Edit `nightfall-deployer/hardhat.config.js` to point to the IP of your `localhost`
 - Use the docker-compose line `external_servers` to inject a hostname into the containers host file (see the GitHub workflows for further clues about how to do that).
 
 To use the private blockchain:

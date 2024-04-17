@@ -58,8 +58,8 @@ describe('Gas test', () => {
     newGasBlockEmitter.on('receipt', async receipt => {
       const { gasUsed } = receipt;
       console.log(
-        `Block proposal gas used was ${gasUsed}, gas used per transaction was ${
-          gasUsed / txPerBlock
+        // eslint-disable-next-line prettier/prettier
+        `Block proposal gas used was ${gasUsed}, gas used per transaction was ${gasUsed / txPerBlock
         }`,
       );
       gasCost = gasUsed;

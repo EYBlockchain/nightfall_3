@@ -77,7 +77,7 @@ describe('x509 tests', () => {
     it('deposits from a non-x509-validated account should revert', async function () {
       // skip this if running on a proper chain as result is not idempotent
       const nodeInfo = await web3Client.getInfo();
-      if (!nodeInfo.includes('TestRPC')) {
+      if (!nodeInfo.includes('anvil')) {
         logger.info('Not using a test client so this test is skipped to avoid spending too much');
         this.skip();
       }

@@ -4,10 +4,10 @@
   "description": "Optimistic Nightfall",
   "main": "./nightfall-client/src/index.mjs",
   "scripts": {
-    "lint": "eslint . --ext js,mjs,jsx,ts,tsx",
+    "lint": "eslint . --ext js,mjs",
     "prepare": "husky install",
     "doc:build:sdk": "jsdoc -c jsdoc.json cli/lib/nf3.mjs",
-    "nightfall-down": "docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.ganache.yml -f docker/docker-compose.apps.yml -f docker/docker-compose.multiproposer-test.yml -p 'nightfall_3' down -v",
+    "nightfall-down": "docker-compose -f docker/docker-compose.yml -f docker/docker-compose.dev.yml -f docker/docker-compose.anvil.yml -f docker/docker-compose.apps.yml -f docker/docker-compose.multiproposer-test.yml -p 'nightfall_3' down -v",
     "build-adversary": "node test/adversary/transpile-optimist-adversary.mjs && node test/adversary/transpile-client-adversary.mjs && node test/adversary/transpile-nf3-adversary.mjs; (cd test/adversary/adversary-cli && npm install);",
     "test": "LOG_LEVEL=silent npx hardhat test --bail --no-compile",
     "test-e2e-protocol": "npx hardhat test test/e2e/protocol/* --bail --no-compile",
@@ -57,8 +57,8 @@
   },
   "homepage": "https://github.com/EYBlockchain/optimistic-nightfall#readme",
   "engines": {
-    "node": ">=16.17 <17",
-    "npm": ">=8.15 <9"
+    "node": ">=18.19 <19",
+    "npm": ">=10.2.4 <11"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.1.1",
@@ -133,6 +133,7 @@
     "common-files": "file:./common-files",
     "docker-cli-js": "^2.9.0",
     "docker-compose": "^0.23.13",
+    "ethereumjs-util": "^7.1.5",
     "ethereumjs-wallet": "^1.0.2",
     "ffjavascript": "^0.2.57",
     "general-number": "^1.0.1",

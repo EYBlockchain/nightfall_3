@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 function configureAWSBucket() {
   const bucket = process.env.S3_WALLET_BUCKET || 'nightfallv3';
   const mode = process.env.REACT_APP_MODE; // options are 'local', 'internal', 'preprod', 'production', 'staging', and 'testnet'
@@ -132,7 +133,7 @@ module.exports = {
   CIRCUIT_COLLECTION: 'circuit_storage',
   CIRCUIT_HASH_COLLECTION: 'circuit_hash_storage',
   KEYS_COLLECTION: 'keys',
-  CONTRACT_ARTIFACTS: '/app/build/contracts',
+  CONTRACT_ARTIFACTS: '/app/build',
   EXCLUDE_DIRS: 'common',
   MAX_QUEUE: 10,
   TIMBER_HEIGHT: 32,
@@ -175,19 +176,18 @@ module.exports = {
     APPROVERS: process.env.MULTISIG_APPROVERS
       ? process.env.MULTISIG_APPROVERS.split(',')
       : [
-          '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
-          '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-          '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-          '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
-          '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
-        ],
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+        '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+        '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
+        '0xa0Ee7A142d267C1f36714E4a8F75612F20a79720',
+      ],
   },
   BLOCKCHAIN_URL:
     process.env.BLOCKCHAIN_URL ||
-    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
-      process.env.BLOCKCHAIN_PATH || ''
+    `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH || ''
     }`,
-  ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY, // owner's/deployer's private key
+  ETH_PRIVATE_KEY: process.env.ETH_PRIVATE_KEY || '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80', // owner's/deployer's private key (defaults to test key)
   ETH_ADDRESS: process.env.ETH_ADDRESS,
   WEB3_OPTIONS: {
     gas: process.env.GAS || 8000000,
@@ -344,20 +344,19 @@ module.exports = {
       web3WsUrl:
         // eslint-disable-next-line no-nested-ternary
         process.env.BLOCKCHAIN_WS_HOST && process.env.BLOCKCHAIN_PORT
-          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${
-              process.env.BLOCKCHAIN_PATH || ''
-            }`
+          ? `ws://${process.env.BLOCKCHAIN_WS_HOST}:${process.env.BLOCKCHAIN_PORT}${process.env.BLOCKCHAIN_PATH || ''
+          }`
           : process.env.BLOCKCHAIN_WS_HOST
-          ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
-          : 'ws://localhost:8546',
+            ? `wss://${process.env.BLOCKCHAIN_WS_HOST}`
+            : 'ws://localhost:8546',
       PROPOSER_KEY:
         process.env.PROPOSER_KEY ||
         process.env.BOOT_PROPOSER_KEY ||
-        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d', // owner's/deployer's private key
+        '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
       CHALLENGER_KEY:
         process.env.CHALLENGER_KEY ||
         process.env.BOOT_CHALLENGER_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+        '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
     },
     aws: {
       name: 'AWS',
@@ -404,7 +403,7 @@ module.exports = {
       tokenTypeERC1155: 'ERC1155',
     },
     transferValue: process.env.TRANSFER_VALUE || 10,
-    privateKey: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
+    privateKey: '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
     gas: 10000000,
     gasCosts: 80000000000000000,
     fee: 1,
@@ -424,46 +423,46 @@ module.exports = {
     signingKeys: {
       walletTest:
         process.env.WALLET_TEST_KEY ||
-        '0x955ff4fac3c1ae8a1b7b9ff197476de1f93e9f0bf5f1c21ff16456e3c84da587',
+        '0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6',
       user1:
         process.env.USER1_KEY ||
-        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69e',
+        '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
       user2:
         process.env.USER2_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+        '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
       proposer1:
         process.env.BOOT_PROPOSER_KEY ||
         process.env.PROPOSER_KEY ||
-        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+        '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
       proposer2:
         process.env.PROPOSER2_KEY ||
-        '0xabf4ed9f30bd1e4a290310d726c7bbdf39cd75a25eebd9a3a4874e10b4a0c4ce',
+        '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a',
       proposer3:
         process.env.PROPOSER3_KEY ||
-        '0xcbbf1d0686738a444cf9f66fdc96289035c384c4e8d26768f94fa81f3ab6596a',
+        '0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356',
       challenger:
         process.env.BOOT_CHALLENGER_KEY ||
         process.env.CHALLENGER_KEY ||
-        '0x1da216993fb96745dcba8bc6f2ef5deb75ce602fd92f91ab702d8250033f4e1c',
+        '0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97',
       liquidityProvider:
         process.env.LIQUIDITY_PROVIDER_KEY ||
-        '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+        '0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6',
       sanctionedUser:
         process.env.SANCTIONED_USER ||
-        '0xfbc1ee1c7332e2e5a76a99956f50b3ba2639aff73d56477e877ef8390c41e0c6',
+        '0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6',
     },
     addresses: {
-      walletTest: process.env.WALLET_TEST_ADDRESS || '0xb9e9997dF5b3ac021AB3B29C64F3c339A2546816',
-      user1: process.env.USER1_ADDRESS || '0x9C8B2276D490141Ae1440Da660E470E7C0349C63',
-      user2: process.env.USER2_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
-      proposer1: process.env.BOOT_PROPOSER_ADDRESS || '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
-      proposer2: process.env.PROPOSER2_ADDRESS || '0xa12D5C4921518980c57Ce3fFe275593e4BAB9211',
-      proposer3: process.env.PROPOSER3_ADDRESS || '0xdb080dC48961bC1D67a0A4151572eCb824cC76E8',
+      walletTest: process.env.WALLET_TEST_ADDRESS || '0xa0Ee7A142d267C1f36714E4a8F75612F20a79720',
+      user1: process.env.USER1_ADDRESS || '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+      user2: process.env.USER2_ADDRESS || '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+      proposer1: process.env.BOOT_PROPOSER_ADDRESS || '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
+      proposer2: process.env.PROPOSER2_ADDRESS || '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
+      proposer3: process.env.PROPOSER3_ADDRESS || '0x14dC79964da2C08b23698B3D3cc7Ca32193d9955',
       challenger:
-        process.env.BOOT_CHALLENGER_ADDRESS || '0xFFF578cDdc48792522F4a7Fdc3973Ec0d41A831f',
+        process.env.BOOT_CHALLENGER_ADDRESS || '0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f',
       liquidityProvider:
-        process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
-      sanctionedUser: process.env.SANCTIONED_USER || '0x4789FD18D5d71982045d85d5218493fD69F55AC4',
+        process.env.LIQUIDITY_PROVIDER_ADDRESS || '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
+      sanctionedUser: process.env.SANCTIONED_USER || '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
     },
     zkpPublicKeys: {
       user1:
@@ -502,16 +501,16 @@ module.exports = {
     signingKeys: {
       bootProposerKey:
         process.env.BOOT_PROPOSER_KEY ||
-        '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d',
+        '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
       bootChallengerKey:
         process.env.BOOT_CHALLENGER_KEY ||
-        '0xd42905d0582c476c4b74757be6576ec323d715a0c7dcff231b6348b7ab0190eb',
+        '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
     },
     addresses: {
       bootProposer:
-        process.env.BOOT_PROPOSER_ADDRESS || '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0',
+        process.env.BOOT_PROPOSER_ADDRESS || '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
       bootChallenger:
-        process.env.BOOT_CHALLENGER_ADDRESS || '0xfCb059A4dB5B961d3e48706fAC91a55Bad0035C9',
+        process.env.BOOT_CHALLENGER_ADDRESS || '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
     },
     tokens: {
       blockchain: [
