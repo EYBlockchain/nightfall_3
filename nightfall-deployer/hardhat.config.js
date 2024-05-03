@@ -72,6 +72,15 @@ module.exports = {
             gas: config.WEB3_OPTIONS.gas,
         },
 
+        amoy: {
+            url: toHttpUrl(config.BLOCKCHAIN_URL),
+            accounts: [config.ETH_PRIVATE_KEY],
+            chainId: 80002,
+            timeout: 1000000000,
+            gasMultiplier: 2,
+            gas: config.WEB3_OPTIONS.gas,
+        },
+
         polygonPos: {
             url: toHttpUrl(config.BLOCKCHAIN_URL),
             accounts: [config.ETH_PRIVATE_KEY],

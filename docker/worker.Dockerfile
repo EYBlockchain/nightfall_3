@@ -43,6 +43,7 @@ COPY  ./worker/start-dev ./start-dev
 RUN mkdir /app/output
 
 RUN chown -R $USERNAME:$USERNAME /app/output
+RUN find /app/output -type d -exec chmod 755 {} \;
 
 RUN npm ci
 

@@ -117,7 +117,6 @@ export default async function startProposer(nf3, proposerBaseUrl) {
       );
       if (error.message.includes('Transaction has been reverted by the EVM')) {
         const stakeAccount = await nf3.getProposerStake();
-        console.log('CURRENT STAKE: ', stakeAccount);
         const blockStake = await nf3.getBlockStake();
         const minimumStake = await nf3.getMinimumStake();
         if (stakeAccount.amount <= blockStake) {

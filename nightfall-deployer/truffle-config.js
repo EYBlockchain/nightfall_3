@@ -116,6 +116,24 @@ module.exports = {
       disableConfirmationListener: true,
       pollingInterval: 180000,
     },
+    amoy: {
+      provider: () =>
+        new HDWalletProvider({
+          privateKeys: [config.ETH_PRIVATE_KEY],
+          providerOrUrl: config.BLOCKCHAIN_URL,
+          chainId: 80002,
+          pollingInterval: 180000,
+        }),
+      network_id: 80002,
+      networkCheckTimeout: 1000000000,
+      timeoutBlocks: 2000,
+      skipDryRun: true,
+      websockets: true,
+      gasPrice: config.WEB3_OPTIONS.gasPrice,
+      gas: config.WEB3_OPTIONS.gas,
+      disableConfirmationListener: true,
+      pollingInterval: 180000,
+    },
     polygonPos: {
       provider: () =>
         new HDWalletProvider({

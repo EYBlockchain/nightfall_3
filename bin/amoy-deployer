@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "Setting up the environment variables for nf3 deployer ..."
+
+source bin/amoy-deployment.env <"private key without 0x"> <"https provider RPC">
+
+echo "Running nightfall deployer script..."
+
+./bin/deploy-contracts .env.deployment.amoy

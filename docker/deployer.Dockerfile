@@ -32,15 +32,6 @@ RUN npm ci
 # RUN chown -R $USERNAME:$USERNAME /app
 USER root
 WORKDIR /app
-<<<<<<< HEAD
-COPY nightfall-deployer/package*.json ./
-COPY nightfall-deployer/src src
-COPY nightfall-deployer/contracts contracts
-COPY nightfall-deployer/scripts scripts
-COPY nightfall-deployer/hardhat.config.js hardhat.config.js
-COPY nightfall-deployer/circuits circuits
-COPY nightfall-deployer/entrypoint.sh entrypoint.sh
-=======
 RUN chown -R $USERNAME:$USERNAME /app
 
 USER $USERNAME
@@ -48,8 +39,8 @@ USER $USERNAME
 COPY --chown=$USERNAME nightfall-deployer/package*.json ./
 COPY --chown=$USERNAME nightfall-deployer/src src
 COPY --chown=$USERNAME nightfall-deployer/contracts contracts
-COPY --chown=$USERNAME nightfall-deployer/migrations migrations
-COPY --chown=$USERNAME nightfall-deployer/truffle-config.js truffle-config.js
+COPY --chown=$USERNAME nightfall-deployer/scripts scripts
+COPY --chown=$USERNAME nightfall-deployer/hardhat.config.js hardhat.config.js
 COPY --chown=$USERNAME nightfall-deployer/circuits circuits
 COPY --chown=$USERNAME nightfall-deployer/entrypoint.sh entrypoint.sh
 
@@ -59,7 +50,6 @@ RUN mkdir /app/.openzeppelin
 RUN chown -R $USERNAME:$USERNAME /app/build/contracts
 RUN chown -R $USERNAME:$USERNAME /app/.openzeppelin
 
->>>>>>> c29a30a2 (feat: fix node version 18)
 
 RUN npm ci
 
