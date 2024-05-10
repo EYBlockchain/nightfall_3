@@ -259,6 +259,7 @@ async function blockProposedEventHandler(data, syncing) {
       proposer: block.proposer,
       blockNumberL2: block.blockNumberL2,
       transactionHashes: block.transactionHashes,
+      transactionHashL1,
     };
     logger.info({ msg: 'Calling webhook', url: WEBHOOK_PATH, data: dataToPublish });
     try {
