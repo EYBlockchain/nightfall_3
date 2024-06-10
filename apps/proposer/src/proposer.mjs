@@ -68,22 +68,26 @@ async function checkAndChangeProposer(nf3) {
 async function checkAndRegisterProposer(nf3, proposerBaseUrl) {
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const { proposers } = await nf3.getProposers();
-    const thisProposer = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
-    if (!thisProposer.length) {
-      logger.info('Attempting to register proposer');
-      const blockStake = await nf3.getBlockStake();
-      const minimumStake = await nf3.getMinimumStake();
+    try {
+      const { proposers } = await nf3.getProposers();
+      const thisProposer = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
+      if (!thisProposer.length) {
+        logger.info('Attempting to register proposer');
+        const blockStake = await nf3.getBlockStake();
+        const minimumStake = await nf3.getMinimumStake();
 
-      logger.info(`blockStake: ${blockStake}, minimumStake: ${minimumStake}`);
+        logger.info(`blockStake: ${blockStake}, minimumStake: ${minimumStake}`);
 
-      try {
-        await nf3.registerProposer(proposerBaseUrl, minimumStake);
-      } catch (err) {
-        logger.info(
-          `Error registering proposer ${proposerBaseUrl} with error message ${err.message}`,
-        );
+        try {
+          await nf3.registerProposer(proposerBaseUrl, minimumStake);
+        } catch (err) {
+          logger.info(
+            `Error registering proposer ${proposerBaseUrl} with error message ${err.message}`,
+          );
+        }
       }
+    } catch (err) {
+      logger.info(`Error during checkAndRegisterProposer with error message ${err.message}`);
     }
 
     await waitForTimeout(CHECK_REGISTER_PROPOSER_SECOND * 1000);
