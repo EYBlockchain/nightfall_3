@@ -24,6 +24,7 @@ const { STATE_CONTRACT_NAME } = constants;
 
 let ws;
 let makeNow = false;
+let enableHeartBeatLogging = true;
 let lastBlockTimestamp = new Date().getTime();
 let blockPeriodMs = PROPOSER_MAX_BLOCK_PERIOD_MILIS;
 
@@ -37,6 +38,10 @@ export function setMakeNow(_makeNow = true) {
 
 export function setBlockPeriodMs(timeMs) {
   blockPeriodMs = timeMs;
+}
+
+export function setEnableHeartBeatLogging(flagValue) {
+  enableHeartBeatLogging = flagValue;
 }
 
 /**
@@ -79,16 +84,19 @@ export async function conditionalMakeBlock(proposer) {
     transaction. If not, we must wait until either we have enough (hooray)
     or we're no-longer the proposer (boo).
    */
-
-  logger.info(`I am the current proposer: ${proposer.isMe}`);
+  if (enableHeartBeatLogging) {
+    logger.info(`Current proposer: ${proposer.address} is me: ${proposer.isMe}`);
+  }
 
   if (proposer.isMe) {
-    logger.info({
-      msg: 'The maximum size of the block is',
-      blockSize: MAX_BLOCK_SIZE,
-      blockPeriodMs,
-      makeNow,
-    });
+    if (enableHeartBeatLogging) {
+      logger.info({
+        msg: 'The maximum size of the block is',
+        blockSize: MAX_BLOCK_SIZE,
+        blockPeriodMs,
+        makeNow,
+      });
+    }
 
     // Get all the mempool transactions sorted by fee
     const mempoolTransactions = await getMempoolTransactionsSortedByFee();
@@ -108,11 +116,13 @@ export async function conditionalMakeBlock(proposer) {
     const totalBytes = mempoolTransactionSizes.reduce((acc, curr) => acc + curr, 0);
     const currentTime = new Date().getTime();
 
-    logger.info({
-      msg: 'In the mempool there are the following number of transactions',
-      numberTransactions: mempoolTransactions.length,
-      totalBytes,
-    });
+    if (enableHeartBeatLogging) {
+      logger.info({
+        msg: 'In the mempool there are the following number of transactions',
+        numberTransactions: mempoolTransactions.length,
+        totalBytes,
+      });
+    }
 
     const transactionBatches = [];
     if (totalBytes > 0) {
@@ -134,10 +144,12 @@ export async function conditionalMakeBlock(proposer) {
       }
     }
 
-    logger.info({
-      msg: 'The proposer can create the following number of blocks',
-      transactionBatches: transactionBatches.length,
-    });
+    if (enableHeartBeatLogging) {
+      logger.info({
+        msg: 'The proposer can create the following number of blocks',
+        transactionBatches: transactionBatches.length,
+      });
+    }
 
     if (transactionBatches.length >= 1) {
       lastBlockTimestamp = currentTime;

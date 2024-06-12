@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node --trace-warnings src/app.mjs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/app.mjs"
   },
   "author": "westlad",
   "license": "CC0-1.0",
@@ -19,6 +20,9 @@
     "reconnecting-websocket": "^4.4.0",
     "web3": "^1.7.5",
     "ws": "^8.2.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.19"
   },
   "overrides": {
     "swarm-js": {

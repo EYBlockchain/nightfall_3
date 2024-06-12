@@ -7,9 +7,13 @@ import logger from 'common-files/utils/logger.mjs';
 import { waitForTimeout } from 'common-files/utils/utils.mjs';
 import config from 'config';
 
-const { TIMER_CHANGE_PROPOSER_SECOND, MAX_ROTATE_TIMES } = config;
+const {
+  TIMER_CHANGE_PROPOSER_SECOND,
+  MAX_ROTATE_TIMES,
+  ENABLE_CHECK_AND_CHANGE_PROPOSER,
+  CHECK_REGISTER_PROPOSER_SECOND,
+} = config;
 
-const CHECK_REGISTER_PROPOSER_SECOND = 10;
 /**
  * check that it is possible to make the proposer change by checking the following conditions:
  * the number of registered proposers is greater than 1
@@ -18,7 +22,7 @@ const CHECK_REGISTER_PROPOSER_SECOND = 10;
  */
 async function checkAndChangeProposer(nf3) {
   // eslint-disable-next-line no-constant-condition
-  while (true) {
+  while (ENABLE_CHECK_AND_CHANGE_PROPOSER === 'true') {
     logger.info('Checking Proposer...');
     const proposerStartBlock = await nf3.proposerStartBlock();
     const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
