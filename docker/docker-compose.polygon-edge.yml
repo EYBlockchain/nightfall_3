@@ -5,9 +5,10 @@ services:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 10002
       BLOCKCHAIN_PATH: /ws
+      CONFIRMATIONS: ${CONFIRMATIONS}
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
-      FROM_ADDRESS: "0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0"
+      FROM_ADDRESS: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0'
       ETH_NETWORK: staging_edge
 
   deployer:
@@ -16,8 +17,8 @@ services:
       BLOCKCHAIN_PORT: 10002
       BLOCKCHAIN_PATH: /ws
       USE_EXTERNAL_NODE: 'true'
-      FROM_ADDRESS: "0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0"
-      ETH_PRIVATE_KEY: "0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d"
+      FROM_ADDRESS: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0'
+      ETH_PRIVATE_KEY: '0x4775af73d6dc84a0ae76f8726bda4b9ecf187c377229cb39e1afa7a18236a69d'
       ETH_NETWORK: staging_edge
 
   optimist:
@@ -25,9 +26,10 @@ services:
       BLOCKCHAIN_WS_HOST: host.docker.internal
       BLOCKCHAIN_PORT: 10002
       BLOCKCHAIN_PATH: /ws
+      CONFIRMATIONS: ${CONFIRMATIONS}
       USE_EXTERNAL_NODE: 'true'
       AUTOSTART_RETRIES: 600
-      FROM_ADDRESS: "0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0"
+      FROM_ADDRESS: '0xfeEDA3882Dd44aeb394caEEf941386E7ed88e0E0'
       ETH_NETWORK: staging_edge
 
   administrator:

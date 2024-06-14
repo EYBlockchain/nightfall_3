@@ -10,7 +10,7 @@ import mongo from 'common-files/utils/mongo.mjs';
 import { rand } from 'common-files/utils/crypto/crypto-random.mjs';
 
 const { expect } = chai;
-const { WEB3_PROVIDER_OPTIONS } = config;
+const { WEB3_PROVIDER_OPTIONS, CONFIRMATIONS } = config;
 
 const ENVIRONMENT = config.ENVIRONMENTS[config.ENVIRONMENT];
 
@@ -149,13 +149,13 @@ export class Web3Client {
       // receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
       receipt = await this.web3.eth.sendSignedTransaction(signed.rawTransaction);
       // the confirmations Promivent doesn't seem to terminate in Ganache, so we'll
-      // just count 12 blocks before returning. TODO this won't handle a chain reorg.
+      // just count <CONFIRMATIONS> blocks before returning. TODO this won't handle a chain reorg.
       // console.log('waiting for twelve confirmations of transaction');
       const startBlock = await this.web3.eth.getBlock('latest');
       await new Promise(resolve => {
         const id = setInterval(async () => {
           const block = await this.web3.eth.getBlock('latest');
-          if (block.number - startBlock.number > 12) {
+          if (block.number - startBlock.number > CONFIRMATIONS) {
             clearInterval(id);
             resolve();
           }
@@ -241,7 +241,7 @@ export class Web3Client {
 
     await this.subscribeTo('newBlockHeaders', blockHeaders);
 
-    while (blockHeaders.length < 12) {
+    while (blockHeaders.length < CONFIRMATIONS) {
       await waitForTimeout(3000);
     }
 
