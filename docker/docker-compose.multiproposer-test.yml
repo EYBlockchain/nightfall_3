@@ -56,19 +56,6 @@ services:
       DEPLOY_MOCKED_SANCTIONS_CONTRACT: 'true'
       GAS_ESTIMATE_ENDPOINT: ${GAS_ESTIMATE_ENDPOINT}
 
-  hosted-utils-api-server:
-    build:
-      dockerfile: docker/hosted-utils-api-server.Dockerfile
-      context: ..
-    depends_on:
-      - worker
-    ports:
-      - 8087:80
-    volumes:
-      - type: volume
-        source: proving_files
-        target: /app/public/
-
   worker:
     image: ghcr.io/eyblockchain/nightfall3-worker:latest
     build:
