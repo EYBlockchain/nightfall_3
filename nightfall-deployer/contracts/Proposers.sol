@@ -9,7 +9,6 @@ import './Config.sol';
 import './Utils.sol';
 import './Stateful.sol';
 import './Certified.sol';
-import "hardhat/console.sol";
 
 contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable, Certified {
     function initialize() public override(Stateful, Config, Certified) initializer {
@@ -22,11 +21,12 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable, Certified {
     /**
      @dev register proposer with stake  
      */
-    function registerProposer(
-        string calldata url,
-        uint256 fee
-    ) external payable nonReentrant onlyCertified {
-        console.log("registering proposer ", url);
+    function registerProposer(string calldata url, uint256 fee)
+        external
+        payable
+        nonReentrant
+        onlyCertified
+    {
         require(
             state.numProposers() < maxProposers,
             'Proposers: Max number of registered proposers'
@@ -43,7 +43,6 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable, Certified {
         (bool success, ) = payable(address(state)).call{value: msg.value}('');
         require(success, 'Proposers: Transfer failed.');
         state.setStakeAccount(msg.sender, stake.amount, stake.challengeLocked);
-        console.log("Sent stake to state contract");
 
         LinkedAddress memory currentProposer = state.getCurrentProposer();
         // cope with this being the first proposer
@@ -53,7 +52,6 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable, Certified {
             state.setProposerStartBlock(block.number);
             emit NewCurrentProposer(currentProposer.thisAddress);
         } else {
-            console.log("This is a new proposer");
             // only if it's not a proposer yet
             if (state.getProposer(msg.sender).thisAddress == address(0)) {
                 // else, splice the new proposer into the circular linked list of proposers just behind the current proposer
@@ -88,7 +86,6 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable, Certified {
                 state.setProposer(msg.sender, proposer);
             }
         }
-        console.log("Current proposer: ", currentProposer.thisAddress);
         state.setCurrentProposer(currentProposer.thisAddress);
         state.setNumProposers(state.numProposers() + 1);
     }
@@ -123,10 +120,12 @@ contract Proposers is Stateful, Config, ReentrancyGuardUpgradeable, Certified {
     }
 
     // Proposers can change REST API URL or increment stake
-    function updateProposer(
-        string calldata url,
-        uint256 fee
-    ) external payable nonReentrant onlyCertified {
+    function updateProposer(string calldata url, uint256 fee)
+        external
+        payable
+        nonReentrant
+        onlyCertified
+    {
         require(
             state.getProposer(msg.sender).thisAddress != address(0),
             'Proposers: This proposer is not registered or you are not that proposer'

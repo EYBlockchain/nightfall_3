@@ -816,4 +816,5 @@ module.exports = {
     WEBHOOK_PATH: process.env.WEBHOOK_PATH, // For posting optional layer 2 transaction finalization details
     WEBHOOK_SIGNING_KEY: process.env.WEBHOOK_SIGNING_KEY,
   },
+  MEMPOOL_TXS_FETCH_LIMIT: Number(process.env.MEMPOOL_TXS_FETCH_LIMIT),
 };
