@@ -807,7 +807,7 @@ module.exports = {
   },
   TIMER_CHANGE_PROPOSER_SECOND: Number(process.env.TIMER_CHANGE_PROPOSER_SECOND) || 30,
   CHECK_REGISTER_PROPOSER_SECOND: Number(process.env.CHECK_REGISTER_PROPOSER_SECOND) || 10,
-  ENABLE_CHECK_AND_CHANGE_PROPOSER: process.env.ENABLE_CHECK_AND_CHANGE_PROPOSER || true,
+  ENABLE_CHECK_AND_CHANGE_PROPOSER: process.env.ENABLE_CHECK_AND_CHANGE_PROPOSER || 'true',
   MAX_ROTATE_TIMES: Number(process.env.MAX_ROTATE_TIMES) || 2,
   WEBHOOK: {
     CALL_WEBHOOK_ON_CONFIRMATION: process.env.CALL_WEBHOOK_ON_CONFIRMATION,
@@ -816,4 +816,5 @@ module.exports = {
     WEBHOOK_PATH: process.env.WEBHOOK_PATH, // For posting optional layer 2 transaction finalization details
     WEBHOOK_SIGNING_KEY: process.env.WEBHOOK_SIGNING_KEY,
   },
+  MEMPOOL_TXS_FETCH_LIMIT: Number(process.env.MEMPOOL_TXS_FETCH_LIMIT),
 };

@@ -23,11 +23,12 @@ import {
 
 const app = express();
 
-// Add check for syncing state. If it is in syncing state, just respond 400
+// Add check for syncing state. If it is in syncing state, just respond 503
 app.use((req, res, next) => {
+  if (req.path === '/healthcheck') return next();
+
   if (req.app.get('isSyncing')) {
-    res.sendStatus(400);
-    return res.status;
+    return res.status(503).send('Nightfall3 Client is syncing');
   }
   return next();
 });

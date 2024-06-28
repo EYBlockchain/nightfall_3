@@ -33,7 +33,7 @@ services:
       ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
       PROPOSER_KEY: ${PROPOSER_KEY}
       CHALLENGER_KEY: ${CHALLENGER_KEY}
-      ENABLE_CHECK_AND_CHANGE_PROPOSER: true
+      # ENABLE_CHECK_AND_CHANGE_PROPOSER: 'false'
       # CHECK_REGISTER_PROPOSER_SECOND: 3600
     networks:
       - nightfall_network

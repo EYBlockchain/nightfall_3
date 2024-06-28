@@ -19,7 +19,12 @@ import {
   increaseProposerBlockNotSent,
 } from './debug-counters.mjs';
 
-const { MAX_BLOCK_SIZE, MINIMUM_TRANSACTION_SLOTS, PROPOSER_MAX_BLOCK_PERIOD_MILIS } = config;
+const {
+  MAX_BLOCK_SIZE,
+  MINIMUM_TRANSACTION_SLOTS,
+  PROPOSER_MAX_BLOCK_PERIOD_MILIS,
+  MEMPOOL_TXS_FETCH_LIMIT,
+} = config;
 const { STATE_CONTRACT_NAME } = constants;
 
 let ws;
@@ -117,8 +122,12 @@ export async function conditionalMakeBlock(proposer) {
     const currentTime = new Date().getTime();
 
     if (enableHeartBeatLogging) {
+      let hbMsg = 'In the mempool there are the following number of transactions';
+      if (MEMPOOL_TXS_FETCH_LIMIT) {
+        hbMsg = 'In this throttled mempool batch there are the following number of transactions';
+      }
       logger.info({
-        msg: 'In the mempool there are the following number of transactions',
+        msg: hbMsg,
         numberTransactions: mempoolTransactions.length,
         totalBytes,
       });
