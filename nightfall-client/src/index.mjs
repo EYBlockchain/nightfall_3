@@ -1,7 +1,7 @@
 import config from 'config';
 import logger from 'common-files/utils/logger.mjs';
 import mongo from 'common-files/utils/mongo.mjs';
-import { queueManager, pauseQueue, unpauseQueue } from 'common-files/utils/event-queue.mjs';
+import { queueManager, pauseQueue } from 'common-files/utils/event-queue.mjs';
 import { checkContractsABI } from 'common-files/utils/sync-files.mjs';
 import app from './app.mjs';
 import rabbitmq from './utils/rabbitmq.mjs';
@@ -15,7 +15,7 @@ const main = async () => {
   // _isSyncing that informs if client is syncing. On the other hand,
   // a middleware function is checking this variable. If client is still syncing,
   // it will just return a 400
-  app.listen(80);
+  app.listen(process.env.CLIENT_SERVER_PORT || 80);
   app.set('isSyncing', true);
   try {
     if (process.env.ENABLE_QUEUE) {
@@ -27,10 +27,9 @@ const main = async () => {
     await checkContractsABI();
     await startEventQueue(queueManager, eventHandlers);
     await pauseQueue(0);
-    initialClientSync().then(() => {
-      app.set('isSyncing', false);
-      unpauseQueue(0);
-    });
+    await initialClientSync();
+    app.set('isSyncing', false);
+    logger.info('Syncing complete, queues unpaused');
   } catch (err) {
     logger.error(err);
     process.exit(1);

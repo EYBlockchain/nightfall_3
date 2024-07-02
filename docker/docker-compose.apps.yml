@@ -11,6 +11,7 @@ services:
     ports:
       # to use with postman and etc
       - 8092:8092
+    command: ['npm', 'run', 'dev']
     environment:
       AUTOSTART_RETRIES: ${AUTOSTART_RETRIES:-100}
       BLOCKCHAIN_WS_HOST: ${BLOCKCHAIN_WS_HOST:-blockchain}
@@ -32,13 +33,15 @@ services:
       ETH_PRIVATE_KEY: ${ETH_PRIVATE_KEY}
       PROPOSER_KEY: ${PROPOSER_KEY}
       CHALLENGER_KEY: ${CHALLENGER_KEY}
+      # ENABLE_CHECK_AND_CHANGE_PROPOSER: 'false'
+      # CHECK_REGISTER_PROPOSER_SECOND: 3600
     networks:
       - nightfall_network
     volumes:
       - type: bind
         source: ../apps/proposer/src
         target: /app/app/src
-        
+
   challenger:
     build:
       dockerfile: docker/challenger.Dockerfile

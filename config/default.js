@@ -299,6 +299,52 @@ module.exports = {
       PROPOSER_KEY: process.env.PROPOSER_KEY,
       CHALLENGER_KEY: process.env.CHALLENGER_KEY,
     },
+    amoy: {
+      name: 'amoy',
+      chainId: 80002,
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      adversarialClientApiUrl: 'http://localhost:8093',
+      adversarialClientWsUrl: 'ws://localhost:8094',
+      web3WsUrl: process.env.BLOCKCHAIN_URL,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+    },
+    baseSepolia: {
+      name: 'baseSepolia',
+      chainId: 84532,
+      clientApiUrl: process.env.CLIENT_HOST
+        ? `http://${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}`
+        : 'http://localhost:8080',
+      optimistApiUrl: process.env.OPTIMIST_HOST
+        ? `http://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_PORT}`
+        : 'http://localhost:8081',
+      optimistWsUrl: process.env.OPTIMIST_HOST
+        ? `ws://${process.env.OPTIMIST_HOST}:${process.env.OPTIMIST_WS_PORT}`
+        : 'ws://localhost:8082',
+      proposerBaseUrl: process.env.PROPOSER_HOST
+        ? `http://${process.env.PROPOSER_HOST}:${process.env.PROPOSER_PORT}`
+        : 'http://localhost:8092',
+      adversarialOptimistApiUrl: 'http://localhost:8088',
+      adversarialOptimistWsUrl: 'ws://localhost:8089',
+      adversarialClientApiUrl: 'http://localhost:8093',
+      adversarialClientWsUrl: 'ws://localhost:8094',
+      web3WsUrl: process.env.BLOCKCHAIN_URL,
+      PROPOSER_KEY: process.env.PROPOSER_KEY,
+      CHALLENGER_KEY: process.env.CHALLENGER_KEY,
+    },
     polygonPos: {
       name: 'polygonPos',
       chainId: 137,
@@ -640,6 +686,30 @@ module.exports = {
           amount: process.env.MATIC_RESTRICT || '1000000000000000000000',
         },
       ],
+      amoy: [
+        {
+          name: 'USDC',
+          address: '0xE097d6B3100777DC31B34dC2c58fB524C2e76921',
+          amount: process.env.USDC_RESTRICT || '1000000000',
+        },
+        {
+          name: 'WMATIC',
+          address: '0x768fE7cDf628c214D59b4941Db59Be731cC4B0Cd',
+          amount: process.env.MATIC_RESTRICT || '1000000000000000000000',
+        },
+      ],
+      baseSepolia: [
+        {
+          name: 'USDC',
+          address: '0xE097d6B3100777DC31B34dC2c58fB524C2e76921',
+          amount: process.env.USDC_RESTRICT || '1000000000',
+        },
+        {
+          name: 'ETH',
+          address: '0x768fE7cDf628c214D59b4941Db59Be731cC4B0Cd',
+          amount: process.env.MATIC_RESTRICT || '1000000000000000000000',
+        },
+      ],
       polygonPos: [
         {
           name: 'USDC',
@@ -698,6 +768,7 @@ module.exports = {
     staging: getDefaultX509Params(),
     staging_edge: getDefaultX509Params(),
     mumbai: getDefaultX509Params(),
+    amoy: getDefaultX509Params(),
     mainnet: getDefaultX509Params(),
     localhost: getDefaultX509Params(),
     polygonPos: getLiveX509Params(),
@@ -735,6 +806,8 @@ module.exports = {
       '(uint256,uint256[],bytes32,bytes32,bytes32,bytes32[],bytes32[],bytes32[2],uint256[4])',
   },
   TIMER_CHANGE_PROPOSER_SECOND: Number(process.env.TIMER_CHANGE_PROPOSER_SECOND) || 30,
+  CHECK_REGISTER_PROPOSER_SECOND: Number(process.env.CHECK_REGISTER_PROPOSER_SECOND) || 10,
+  ENABLE_CHECK_AND_CHANGE_PROPOSER: process.env.ENABLE_CHECK_AND_CHANGE_PROPOSER || 'true',
   MAX_ROTATE_TIMES: Number(process.env.MAX_ROTATE_TIMES) || 2,
   WEBHOOK: {
     CALL_WEBHOOK_ON_CONFIRMATION: process.env.CALL_WEBHOOK_ON_CONFIRMATION,
@@ -743,4 +816,5 @@ module.exports = {
     WEBHOOK_PATH: process.env.WEBHOOK_PATH, // For posting optional layer 2 transaction finalization details
     WEBHOOK_SIGNING_KEY: process.env.WEBHOOK_SIGNING_KEY,
   },
+  MEMPOOL_TXS_FETCH_LIMIT: Number(process.env.MEMPOOL_TXS_FETCH_LIMIT),
 };

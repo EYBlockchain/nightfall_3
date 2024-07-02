@@ -67,20 +67,18 @@ const genGetCommitments = async (query = {}, proj = {}) => {
 
 // eslint-disable-next-line import/prefer-default-export
 export const initialClientSync = async () => {
-  const allCommitments = await genGetCommitments();
-  const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
-
-  logger.info(`commitmentBlockNumbers: ${commitmentBlockNumbers}`);
-
-  const firstSeenBlockNumber = Math.min(...commitmentBlockNumbers);
-
-  logger.info(`firstSeenBlockNumber: ${firstSeenBlockNumber}`);
-
-  // fistSeenBlockNumber can be infinity if the commitmentBlockNumbers array is empty
-  if (firstSeenBlockNumber === Infinity) {
+  const allCommitments = await genGetCommitments({ isOnChain: { $ne: '-1' } });
+  if (allCommitments?.length < 1) {
+    logger.info(`No existing commitments to sync, starting from L1 block ${STATE_GENESIS_BLOCK}`);
     await syncState(STATE_GENESIS_BLOCK);
   } else {
-    await syncState(firstSeenBlockNumber);
+    const commitmentBlockNumbers = allCommitments.map(a => a.blockNumber).filter(n => n >= 0);
+    logger.info(`commitmentBlockNumbers: ${commitmentBlockNumbers}`);
+
+    const lastProcessedBlockNumber = Math.max(...commitmentBlockNumbers);
+    logger.info(`lastProcessedBlockNumber: ${lastProcessedBlockNumber}`);
+
+    await syncState(lastProcessedBlockNumber);
   }
 
   unpauseQueue(0); // the queues are paused to start with, so get them going once we are synced

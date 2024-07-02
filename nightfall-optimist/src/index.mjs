@@ -54,7 +54,7 @@ const main = async () => {
 
     // try to sync any missing blockchain state (event queues will be paused until this finishes)
     initialBlockSync(proposer);
-    app.listen(80);
+    app.listen(process.env.OPTIMIST_SERVER_PORT || 80);
   } catch (err) {
     logger.error(err);
     process.exit(1);

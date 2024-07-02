@@ -7,9 +7,13 @@ import logger from 'common-files/utils/logger.mjs';
 import { waitForTimeout } from 'common-files/utils/utils.mjs';
 import config from 'config';
 
-const { TIMER_CHANGE_PROPOSER_SECOND, MAX_ROTATE_TIMES } = config;
+const {
+  TIMER_CHANGE_PROPOSER_SECOND,
+  MAX_ROTATE_TIMES,
+  ENABLE_CHECK_AND_CHANGE_PROPOSER,
+  CHECK_REGISTER_PROPOSER_SECOND,
+} = config;
 
-const CHECK_REGISTER_PROPOSER_SECOND = 10;
 /**
  * check that it is possible to make the proposer change by checking the following conditions:
  * the number of registered proposers is greater than 1
@@ -18,7 +22,7 @@ const CHECK_REGISTER_PROPOSER_SECOND = 10;
  */
 async function checkAndChangeProposer(nf3) {
   // eslint-disable-next-line no-constant-condition
-  while (true) {
+  while (ENABLE_CHECK_AND_CHANGE_PROPOSER === 'true') {
     logger.info('Checking Proposer...');
     const proposerStartBlock = await nf3.proposerStartBlock();
     const rotateProposerBlocks = await nf3.getRotateProposerBlocks();
@@ -64,22 +68,26 @@ async function checkAndChangeProposer(nf3) {
 async function checkAndRegisterProposer(nf3, proposerBaseUrl) {
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const { proposers } = await nf3.getProposers();
-    const thisProposer = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
-    if (!thisProposer.length) {
-      logger.info('Attempting to register proposer');
-      const blockStake = await nf3.getBlockStake();
-      const minimumStake = await nf3.getMinimumStake();
+    try {
+      const { proposers } = await nf3.getProposers();
+      const thisProposer = proposers.filter(p => p.thisAddress === nf3.ethereumAddress);
+      if (!thisProposer.length) {
+        logger.info('Attempting to register proposer');
+        const blockStake = await nf3.getBlockStake();
+        const minimumStake = await nf3.getMinimumStake();
 
-      logger.info(`blockStake: ${blockStake}, minimumStake: ${minimumStake}`);
+        logger.info(`blockStake: ${blockStake}, minimumStake: ${minimumStake}`);
 
-      try {
-        await nf3.registerProposer(proposerBaseUrl, minimumStake);
-      } catch (err) {
-        logger.info(
-          `Error registering proposer ${proposerBaseUrl} with error message ${err.message}`,
-        );
+        try {
+          await nf3.registerProposer(proposerBaseUrl, minimumStake);
+        } catch (err) {
+          logger.info(
+            `Error registering proposer ${proposerBaseUrl} with error message ${err.message}`,
+          );
+        }
       }
+    } catch (err) {
+      logger.info(`Error during checkAndRegisterProposer with error message ${err.message}`);
     }
 
     await waitForTimeout(CHECK_REGISTER_PROPOSER_SECOND * 1000);
@@ -117,7 +125,6 @@ export default async function startProposer(nf3, proposerBaseUrl) {
       );
       if (error.message.includes('Transaction has been reverted by the EVM')) {
         const stakeAccount = await nf3.getProposerStake();
-        console.log('CURRENT STAKE: ', stakeAccount);
         const blockStake = await nf3.getBlockStake();
         const minimumStake = await nf3.getMinimumStake();
         if (stakeAccount.amount <= blockStake) {
