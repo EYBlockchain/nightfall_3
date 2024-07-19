@@ -76,10 +76,12 @@ export async function clientCommitmentSync(zkpPrivateKey, nullifierKey) {
     const nonZeroCommitments = transactions[i].commitments.filter(n => n !== ZERO);
     // In order to check if the transaction is a transfer, we check if the compressed secrets
     // are different than zero. All other transaction types have compressedSecrets = [ZERO,ZERO]
+    // eslint-disable-next-line no-await-in-loop
+    const countOfCommitments = await countCommitments([nonZeroCommitments[0]]);
     if (
       (transactions[i].compressedSecrets[0] !== ZERO ||
         transactions[i].compressedSecrets[1] !== ZERO) &&
-      countCommitments([nonZeroCommitments[0]]) === 0
+      countOfCommitments === 0
     )
       decryptCommitment(transactions[i], zkpPrivateKey, nullifierKey);
   }
