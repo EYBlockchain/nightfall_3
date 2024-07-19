@@ -8,6 +8,7 @@ import rabbitmq from './utils/rabbitmq.mjs';
 import queues from './queues/index.mjs';
 import { initialClientSync } from './services/state-sync.mjs';
 import { startEventQueue, eventHandlers } from './event-handlers/index.mjs';
+import { loadKeysFromPersistence } from './services/keys.mjs';
 
 const main = async () => {
   // we want to have endpoints responding as soon as possible, but prevent
@@ -27,6 +28,7 @@ const main = async () => {
     await checkContractsABI();
     await startEventQueue(queueManager, eventHandlers);
     await pauseQueue(0);
+    await loadKeysFromPersistence();
     await initialClientSync();
     app.set('isSyncing', false);
     logger.info('Syncing complete, queues unpaused');

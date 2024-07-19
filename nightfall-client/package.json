@@ -51,7 +51,8 @@
     "verbose": true,
     "ignore": [
       "mongodb/",
-      "build/"
+      "build/",
+      "keys/"
     ]
   },
   "overrides": {

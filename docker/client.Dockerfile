@@ -31,6 +31,7 @@ COPY --chown=$USERNAME nightfall-client/src src
 COPY --chown=$USERNAME nightfall-client/docker-entrypoint.sh nightfall-client/package.json nightfall-client/package-lock.json ./
 
 RUN npm ci
+RUN mkdir keys && chown $USERNAME:$USERNAME keys
 
 USER $USERNAME
 

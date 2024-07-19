@@ -1,19 +1,26 @@
+/* eslint-disable no-await-in-loop */
 import { GN, generalise } from 'general-number';
 import poseidon from 'common-files/utils/crypto/poseidon/poseidon.mjs';
 import bip39Pkg from 'bip39';
 import pkg from 'ethereumjs-wallet';
+import fs from 'fs';
 import {
   scalarMult,
   edwardsCompress,
   edwardsDecompress,
 } from 'common-files/utils/curve-maths/curves.mjs';
 import constants from 'common-files/constants/index.mjs';
+import logger from 'common-files/utils/logger.mjs';
+import path from 'path';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { createHash } from 'crypto';
 
 const { hdkey } = pkg;
 const { validateMnemonic, mnemonicToSeedSync } = bip39Pkg;
 export const zkpPrivateKeys = [];
 export const nullifierKeys = [];
 const { BABYJUBJUB, BN128_GROUP_ORDER } = constants;
+const KEY_BACKUP_FILE_PATH = '/app/keys';
 
 export class ZkpKeys {
   rootKey;
@@ -105,11 +112,85 @@ export class ZkpKeys {
   }
 }
 
-export function storeMemoryKeysForDecryption(zkpPrivateKey, nullifierKey) {
-  return Promise.all([
-    zkpPrivateKeys.includes(zkpPrivateKey[0])
-      ? zkpPrivateKeys
-      : zkpPrivateKeys.push(...zkpPrivateKey),
-    nullifierKeys.includes(nullifierKey[0]) ? nullifierKey : nullifierKeys.push(...nullifierKey),
-  ]);
+async function isValidPath(filename) {
+  try {
+    logger.info(`Validating if filepath ${filename} exists...`);
+    await fs.promises.access(filename);
+    logger.info(`Filepath ${filename} exists`);
+    return true;
+  } catch (error) {
+    logger.error(error);
+    logger.error(`Non-Fatal Error: Filepath ${filename} does not exist`);
+    return false;
+  }
+}
+
+export async function addKeysToPersistence(_zkpPrivateKeys, _nullifierKeys) {
+  const stringifiedZkpPrivateKeys = _zkpPrivateKeys.map(zkpPrivateKey => zkpPrivateKey.toString());
+  const stringifiedNullifierKeys = _nullifierKeys.map(nullifierKey => nullifierKey.toString());
+
+  const fileContent = JSON.stringify([stringifiedZkpPrivateKeys, stringifiedNullifierKeys]);
+  const fileNameHash = `${createHash('sha256').update(fileContent).digest('hex')}.json`;
+  logger.info(`New filename: ${fileNameHash}`);
+
+  await fs.promises.writeFile(path.join(KEY_BACKUP_FILE_PATH, fileNameHash), fileContent);
+}
+
+export async function storeMemoryKeysForDecryption(
+  _zkpPrivateKeys,
+  _nullifierKeys,
+  persist = true,
+) {
+  if (!zkpPrivateKeys.includes(_zkpPrivateKeys[0])) {
+    zkpPrivateKeys.push(..._zkpPrivateKeys);
+  }
+
+  if (!nullifierKeys.includes(_nullifierKeys[0])) {
+    nullifierKeys.push(..._nullifierKeys);
+  }
+
+  if (persist) {
+    logger.info(`Attempting to persist key to backup`);
+    await addKeysToPersistence(_zkpPrivateKeys, _nullifierKeys);
+  }
+}
+
+/**
+ * This method is intended to "restore" any viewing keys that are lost during a restart of the client.
+ */
+export async function loadKeysFromPersistence() {
+  try {
+    if (await isValidPath(KEY_BACKUP_FILE_PATH)) {
+      logger.info(`Reading viewing keys from backup`);
+      const allFiles = await fs.promises.readdir(KEY_BACKUP_FILE_PATH);
+
+      const jsonFiles = allFiles.filter(file => path.extname(file) === '.json');
+
+      for (const file of jsonFiles) {
+        logger.info(`Restoring keys from ${file}`);
+        const fileContent = await fs.promises.readFile(
+          path.join(KEY_BACKUP_FILE_PATH, file),
+          'utf-8',
+        );
+        const parsedFileContent = JSON.parse(fileContent);
+
+        const _zkpPrivateKeys = parsedFileContent[0].map(zkpPrivateKey => BigInt(zkpPrivateKey));
+        const _nullifierKeys = parsedFileContent[1].map(nullifierKey => BigInt(nullifierKey));
+
+        await storeMemoryKeysForDecryption(_zkpPrivateKeys, _nullifierKeys, false);
+      }
+
+      logger.info(`Viewing keys restored`);
+    }
+  } catch (error) {
+    logger.error(`loadKeysFromPersistence: ${error}`);
+    throw error;
+  }
+}
+
+export function getCurrentKeys() {
+  return {
+    zkpPrivateKeys,
+    nullifierKeys,
+  };
 }
