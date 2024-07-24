@@ -1,0 +1,62 @@
+#!/bin/bash
+
+source bin/basesepolia-node.env <private key 1> <private key 2> <wss RPC provider>
+
+# Define volume names
+VOLUME_BUILD="nightfall_3_build"
+VOLUME_PROVING_FILES="nightfall_3_proving_files"
+
+# Define paths for the source directories
+SOURCE_BUILD_PATH="docker/volumes/build/."
+SOURCE_PROVING_FILES_PATH="docker/volumes/proving_files/."
+
+# Bring down existing Docker Compose setup
+echo "Bringing down existing Docker Compose setup..."
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.apps.yml -p 'nightfall_3' down -v
+
+# Remove existing volumes
+echo "Removing existing Docker volumes..."
+docker volume rm $VOLUME_BUILD
+docker volume rm $VOLUME_PROVING_FILES
+
+# Create new volumes
+echo "Creating new Docker volumes..."
+docker volume create $VOLUME_BUILD
+docker volume create $VOLUME_PROVING_FILES
+
+# Copy build files to the build volume
+echo "Copying build files to the build volume..."
+docker container create --name temp -v $VOLUME_BUILD:/mnt busybox
+docker cp $SOURCE_BUILD_PATH temp:/mnt
+docker rm temp
+
+# Copy proving files to the proving files volume
+echo "Copying proving files to the proving files volume..."
+docker container create --name temp -v $VOLUME_PROVING_FILES:/mnt busybox
+docker cp $SOURCE_PROVING_FILES_PATH temp:/mnt
+docker rm temp
+
+echo "Docker operations completed successfully."
+
+# Navigate to common-files directory and link package
+echo "Linking npm packages..."
+cd common-files
+npm link
+cd ..
+
+# Link @polygon-nightfall/common-files globally
+npm link @polygon-nightfall/common-files
+
+# Navigate to cli directory and link @polygon-nightfall/common-files
+cd cli
+npm link @polygon-nightfall/common-files
+cd ..
+
+echo "NPM linking operations completed successfully."
+
+# Call the additional shell script
+echo "Running setup-nightfall script..."
+./bin/setup-nightfall
+
+echo "Running start-nightfall script..."
+./bin/start-nightfall -n

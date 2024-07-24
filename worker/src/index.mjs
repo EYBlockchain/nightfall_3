@@ -15,7 +15,7 @@ const main = async () => {
       queues();
     }
 
-    app.listen(80);
+    app.listen(process.env.WORKER_PORT || 80);
   } catch (err) {
     logger.error(err);
     process.exit(1);

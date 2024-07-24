@@ -37,6 +37,10 @@ services:
     ports:
       - 9239:9229
     command: ['npm', 'run', 'dev']
+    # environment:
+    #   - CALL_WEBHOOK_ON_CONFIRMATION=true
+    #   - WEBHOOK_PATH=http://host.docker.internal:3099/zk-tx-response
+    #   - WEBHOOK_SIGNING_KEY=0x720117fdc01793b32217d32622916babc66350c4bb60905336ec8b29b1f16757
 
   deployer:
     build:
@@ -87,6 +91,8 @@ services:
       - type: bind
         source: ../config/default.js
         target: /app/config/default.js
+    # environment:
+    #   MEMPOOL_TXS_FETCH_LIMIT: 5
     ports:
       - 9229:9229
     command: ['npm', 'run', 'dev']
